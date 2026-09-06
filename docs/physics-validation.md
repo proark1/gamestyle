@@ -11,3 +11,5 @@ Physics uses compound cuboids for solid geometry and an upright player controlle
 The deployment is packaged from the last published revision plus the owned physics files in `work/physics-release`. Unrelated collection/Act Natural work in the shared checkout is excluded from this release.
 
 Railway deployment `3b32010a-2abb-44cd-9286-01dfd01f444d` is live at https://stack-or-sink-production.up.railway.app. The four-client carry-and-stack integration test passes at that public URL. The corrected practice button was verified by clicking it at 1280 × 720, and the final mouse-placement check visibly stacked a rotated bathtub on a crate with matching x/z coordinates and the expected support height.
+
+The concurrent GameStyle task subsequently published deployment `25424767-257d-49ec-8a3f-1f261cc889d4`, retaining these physics changes and moving the game's page to https://stack-or-sink-production.up.railway.app/stack-or-sink. Both public four-client suites were rerun successfully against that combined deployment. The transient 502 during its service switch cleared when deployment completed.
