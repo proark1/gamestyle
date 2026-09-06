@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/postcss';
 import vinext from 'vinext';
 import { defineConfig } from 'vite';
 import hostingConfig from './.openai/hosting.json';
+import { fileURLToPath } from 'node:url';
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   '00000000-0000-4000-8000-000000000000';
@@ -35,6 +36,25 @@ const localBindingConfig = {
 };
 
 export default defineConfig(async () => {
+  if (process.env.GAME_RUNTIME === 'node') {
+    const cloudflareStore = fileURLToPath(new URL('./db/rooms.ts', import.meta.url)).replaceAll('\\', '/');
+    const nodeStore = fileURLToPath(new URL('./db/rooms-node.ts', import.meta.url)).replaceAll('\\', '/');
+    return {
+      css: { postcss: { plugins: [tailwindcss()] } },
+      plugins: [
+        {
+          name: 'stack-or-sink-node-storage',
+          enforce: 'pre',
+          load(id: string) {
+            if (id.replaceAll('\\', '/').split('?')[0] === cloudflareStore) {
+              return `export { roomStore } from ${JSON.stringify(nodeStore)};`;
+            }
+          },
+        },
+        vinext(),
+      ],
+    };
+  }
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= 'false';
