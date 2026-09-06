@@ -1,4 +1,16 @@
-# Stack or Sink
+# GameStyle
+
+A collection of matching browser party games. The landing page at `/` explains both games with illustrated cards. Play **Stack or Sink** at `/stack-or-sink` and **Act Natural** at `/act-natural`. Old Stack or Sink invite links still work.
+
+## Act Natural
+
+One farmer watches up to three friends disguised as cows among an 18-cow herd. Graze when the herd grazes, follow when it moves, and sneak away to steal both gate keys and cut the fence power. A visible, slower ladder provides an alternative route over the east fence. Three-minute rounds rotate the farmer; the farmer gets five inspections. Solo practice includes a computer farmer.
+
+WASD / arrows move, Space toggles grazing, E interacts or inspects, and Q drops an item. Farmer players can click a cow to select it. Touch devices have a joystick and action dock. Create a farm and share the room link for two to four players. This game uses the same Three.js helpers and room database as Stack or Sink, with separate room namespaces and private role snapshots.
+
+Run the four-client farm check against a running server with `node scripts/act-natural-integration.mjs` (defaults to port 3001; override with `GAME_TEST_URL`).
+
+## Stack or Sink
 
 A browser game for one to four players. Stack a limited supply of salvage, climb to a suspended rescue platform, and keep the crew above a rising flood. Built in Three.js and React, with a shared authoritative simulation and persistent multiplayer rooms.
 
@@ -38,7 +50,7 @@ npm run typecheck
 npm run build
 ```
 
-Room state uses compare-and-swap writes to preserve concurrent actions and enforce four-player capacity. Crew tokens are hashed in storage and excluded from public snapshots. Rooms use HTTP synchronization; this initial version is intended for small private groups, and simulation is deliberately simplified to axis-aligned salvage with gravity, support checks, and unstable overhangs.
+Room state uses compare-and-swap writes to preserve concurrent actions and enforce four-player capacity. Crew tokens are hashed in storage and excluded from public snapshots. Rooms use HTTP synchronization and are intended for small private groups. Cannon rigid-body physics runs at 60 steps per second, with shared compound collision shapes, mass, gravity, friction, rotation and persistent sleep state. Removing a support wakes the stack. Placement commits the exact preview pose or rejects an obstruction, and aiming at salvage snaps to its center.
 
 Sites deployment is configured in `.openai/hosting.json`. A private deployment is visible only to its owner until sharing is enabled. The local preview and game state tests do not substitute for a real four-person internet playtest. WebMCP exposes read-state and start-practice tools when the browser supports it.
 
@@ -56,6 +68,7 @@ For a local production check:
 npm run build:railway
 npm run start:railway
 node scripts/integration.mjs
+node --import tsx scripts/physics-integration.mjs
 ```
 
 The default local database is `data/stack-or-sink.sqlite`. For a deployed integration test, set `GAME_TEST_URL` to the Railway HTTPS origin. Railway deployment uploads exclude local databases, outputs, dependencies, and environment files.

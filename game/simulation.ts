@@ -1,193 +1,115 @@
-import { BOUNDS, GOAL, ITEMS, clamp, dimensions, type Action, type Input, type Kind, type Piece, type Player, type World } from './types';
+import { GOAL, ITEMS, clamp, dimensions, type Action, type Input, type Kind, type Piece, type Player, type World } from './types';
+import { FLOOR } from './geometry';
+import { Physics, STEP, landingHeight, playerSpotClear, poseError, predictPlayer, resetMotion, supportSurface, topOf, touchPiece } from './physics';
 
-const FLOOR = .13;
-const RADIUS = .32;
-const HEIGHT = 1.8;
-const GRAVITY = 19;
-const SPEED = 4.4;
-export const emptyInput = (): Input => ({ x: 0, z: 0, jump: false, seq: 0 });
-export function createPlayer(id: string, name: string, color: number, slot: number, now: number): Player {
-  return { id, name, color, x: -2.4 + slot*1.5, y: FLOOR, z: 7.8, vy: 0, angle: Math.PI, grounded: true, breath: 8, down: false, rescued: false, seen: now, input: emptyInput(), lastJump: -1 };
-}
-export function freshWorld(now: number, mode: World['mode'] = 'normal', seed = 1): World {
-  const kinds: Kind[] = ['crate','pallet','sofa','crate','fridge','plank','bathtub','crate','pallet'];
-  const pieces: Piece[] = [];
-  // Generous spacing, an open build area, and a clear spawn corridor.
-  for(let row=0;row<5;row++) for(let col=0;col<5;col++) {
+export const emptyInput=():Input=>({x:0,z:0,jump:false,seq:0});
+export function createPlayer(id:string,name:string,color:number,slot:number,now:number):Player{return {id,name,color,x:-2.4+slot*1.5,y:FLOOR,z:7.8,vy:0,angle:Math.PI,grounded:true,breath:8,down:false,rescued:false,seen:now,input:emptyInput(),lastJump:-1};}
+export function freshWorld(now:number,mode:World['mode']='normal',seed=1):World{
+  const world:World={phase:'lobby',mode,started:0,clock:now,water:-.4,pieces:[],players:[],bestHeight:0,events:[],crane:{owner:null,piece:null,x:0,y:3,z:0},seed,remainder:0};
+  const kinds:Kind[]=['crate','pallet','sofa','crate','fridge','plank','bathtub','crate','pallet'];
+  for(let row=0;row<5;row++)for(let col=0;col<5;col++){
     if((row===0&&col===0)||(row===2&&col===2)||(row===4&&col>0&&col<4))continue;
-    const index=pieces.length,kind=row===0&&col===1?'crate':kinds[(index+seed)%kinds.length];
-    pieces.push({id:`junk-${index}`,kind,x:-7.4+col*3.7,y:FLOOR,z:-7.4+row*3.7,rotation:0,vy:0,tilt:0,unstable:0});
+    const i=world.pieces.length,kind=row===0&&col===1?'crate':kinds[(i+seed)%kinds.length];
+    const p:Piece={id:`junk-${i}`,kind,x:-7.4+col*3.7,y:FLOOR,z:-7.4+row*3.7,rotation:0,vy:0,tilt:0,unstable:0,revision:0};
+    if(!poseError(world,p))world.pieces.push(p);
   }
-  // Eight second-hand crates arrive already stacked on their supports.
-  for(let i=0;i<8;i++){const base=pieces[i];pieces.push({...base,id:`junk-${pieces.length}`,kind:'crate',y:base.y+dimensions(base).h});}
-  return {phase:'lobby',mode,started:0,clock:now,water:-.4,pieces,players:[],bestHeight:0,events:[],crane:{owner:null,piece:null,x:0,y:3,z:0},seed};
-}
-export function emit(world: World, text: string, kind: 'info'|'danger'|'good' = 'info') {
-  world.events.push({id:`${world.clock}-${world.events.length}-${text.slice(0,12)}`,text,kind,at:world.clock});
-  world.events=world.events.slice(-12);
-}
-export function waterAt(world: World, now: number) {
-  return world.mode==='practice'||!world.started?-.4:Math.min(15,-.4+Math.max(0,(now-world.started)/1000-60)*.025);
-}
-export function overlaps(x: number,z: number,w: number,d: number,p: Piece,pad=0) {
-  const s=dimensions(p);return Math.abs(x-p.x)<(w+s.w)/2-pad && Math.abs(z-p.z)<(d+s.d)/2-pad;
-}
-export function supportHeight(world: World,x: number,z: number,w: number,d: number,ceiling: number,ignore?: string) {
-  let top=FLOOR;
-  for(const p of world.pieces) {
-    if(p.id===ignore||p.heldBy)continue;
-    const h=p.y+dimensions(p).h;
-    if(h<=ceiling+.025 && overlaps(x,z,w,d,p,.025))top=Math.max(top,h);
-  }
-  if(Math.abs(x)<2.35+w/2 && Math.abs(z)<2.35+d/2 && ceiling>=GOAL-.01)top=Math.max(top,GOAL);
-  return top;
-}
-function blocked(world: World,p: Player,x: number,z: number) {
-  if(x < -BOUNDS+.4||x>BOUNDS-.4||z<-BOUNDS+.4||z>BOUNDS-.4)return true;
-  // The shed and crane base are solid scenery, just as they appear.
-  if(x>-9.3-RADIUS && x<-4.7+RADIUS && z>-8.65-RADIUS && z<-5.35+RADIUS && p.y<2.85)return true;
-  for(const piece of world.pieces) {
-    if(piece.heldBy)continue;
-    const s=dimensions(piece);
-    if(piece.y+s.h<=p.y+.22 || piece.y>=p.y+HEIGHT-.12)continue;
-    if(overlaps(x,z,RADIUS*2,RADIUS*2,piece,.02))return true;
-  }
-  return false;
-}
-export function movePlayer(world: World,p: Player,dt: number,input: Input=p.input) {
-  if(p.down||p.rescued)return;
-  let ix=input.x,iz=input.z;const length=Math.hypot(ix,iz);if(length>1){ix/=length;iz/=length;}
-  if(world.crane.owner===p.id){ix=0;iz=0;}
-  if(Math.hypot(ix,iz)>.01)p.angle=Math.atan2(ix,iz);
-  if(input.jump && input.seq!==p.lastJump && p.grounded){p.vy=8.4;p.grounded=false;p.lastJump=input.seq;}
-  const carrying=world.pieces.some(item=>item.heldBy===p.id),speed=SPEED*(carrying?.82:1);
-  const nx=p.x+ix*speed*dt,nz=p.z+iz*speed*dt;
-  if(!blocked(world,p,nx,p.z))p.x=nx;
-  if(!blocked(world,p,p.x,nz))p.z=nz;
-  p.vy-=GRAVITY*dt;const oldY=p.y;let nextY=p.y+p.vy*dt;
-  const floor=supportHeight(world,p.x,p.z,RADIUS*1.7,RADIUS*1.7,oldY+.23);
-  if(p.vy<=0 && nextY<=floor && oldY>=floor-.24){nextY=floor;p.vy=0;p.grounded=true;} else p.grounded=false;
-  // Collide with the underside of platforms on ascent.
-  if(p.vy>0)for(const piece of world.pieces){if(piece.heldBy)continue;if(overlaps(p.x,p.z,.5,.5,piece)&&oldY+HEIGHT<=piece.y+.03&&nextY+HEIGHT>=piece.y){nextY=piece.y-HEIGHT;p.vy=0;}}
-  p.y=Math.max(FLOOR,nextY);
-  if(p.y<=FLOOR){p.grounded=true;p.vy=0;}
-}
-function advancePieces(world: World,dt: number) {
-  const sorted=[...world.pieces].sort((a,b)=>a.y-b.y);
-  for(const p of sorted) {
-    const size=dimensions(p);
-    if(p.heldBy){
-      if(p.heldBy==='crane'){p.x=world.crane.x;p.y=world.crane.y;p.z=world.crane.z;}
-      else {const holder=world.players.find(a=>a.id===p.heldBy);if(!holder||holder.down){delete p.heldBy;continue;}p.x=holder.x;p.y=holder.y+2.05;p.z=holder.z;}
-      p.vy=0;p.tilt=0;p.unstable=0;continue;
-    }
-    const floor=supportHeight(world,p.x,p.z,size.w,size.d,p.y+.03,p.id);
-    if(p.y>floor+.025){p.vy-=GRAVITY*dt;p.y=Math.max(floor,p.y+p.vy*dt);p.tilt*=.95;if(p.y===floor)p.vy=0;}
-    else {p.y=floor;p.vy=0;}
-    if(p.y>FLOOR+.05 && Math.abs(p.y-GOAL)>.03){
-      const supports=world.pieces.filter(s=>s.id!==p.id&&!s.heldBy&&Math.abs(s.y+dimensions(s).h-p.y)<.04&&overlaps(p.x,p.z,size.w,size.d,s));
-      const stable=supports.some(s=>{const d=dimensions(s);return Math.abs(p.x-s.x)<d.w*.46 && Math.abs(p.z-s.z)<d.d*.46;});
-      const bridge=supports.length>1&&p.x>=Math.min(...supports.map(s=>s.x))&&p.x<=Math.max(...supports.map(s=>s.x))&&p.z>=Math.min(...supports.map(s=>s.z))-.15&&p.z<=Math.max(...supports.map(s=>s.z))+.15;
-      if(supports.length&&!stable&&!bridge){
-        p.unstable+=dt;p.tilt=Math.sin(p.unstable*8)*Math.min(.13,p.unstable*.055);
-        if(p.unstable>1.5){const s=supports[0];let dx=p.x-s.x,dz=p.z-s.z;const len=Math.hypot(dx,dz)||1;dx/=len;dz/=len;p.x=clamp(p.x+dx*dt*1.5,-9,9);p.z=clamp(p.z+dz*dt*1.5,-9,9);}
-      }else {p.unstable=0;p.tilt*=.8;}
-    } else {p.unstable=0;p.tilt*=.8;}
-  }
-}
-export function tick(world: World,now: number) {
-  if(now<=world.clock)return world;
-  const elapsed=Math.min((now-world.clock)/1000,2);world.clock=now;
-  if(world.phase==='won'||world.phase==='lost')return world;
-  world.water=waterAt(world,now);
-  const count=Math.ceil(elapsed/(1/45)),dt=elapsed/count;
-  for(let step=0;step<count;step++){
-    advancePieces(world,dt);
-    for(const p of world.players){
-      movePlayer(world,p,dt,now-p.seen>750?emptyInput():p.input);
-      if(world.phase==='playing'){
-        if(world.water>p.y+1.5){p.breath=Math.max(0,p.breath-dt);if(p.breath===0&&!p.down){p.down=true;p.input=emptyInput();emit(world,`${p.name} needs a rescue!`,'danger');releasePlayer(world,p.id);}}
-        else p.breath=Math.min(8,p.breath+dt*2);
-        if(p.down)p.y=Math.max(p.y,world.water-1.2);
-        if(!p.down&&p.y>=GOAL-.04&&Math.abs(p.x)<2.3&&Math.abs(p.z)<2.3){p.rescued=true;world.phase='won';emit(world,`${p.name} reached rescue. The whole crew is coming home!`,'good');return world;}
-      }
-    }
-  }
-  world.bestHeight=Math.max(world.bestHeight,...world.pieces.filter(p=>!p.heldBy&&p.vy===0).map(p=>p.y+dimensions(p).h-FLOOR));
-  if(world.phase==='playing'&&world.players.length&&world.players.every(p=>p.down)){world.phase='lost';emit(world,'The water won this round. Build it better.','danger');}
+  // Supply 28 pieces while checking the actual compound supports.
+  const bases=[...world.pieces];let index=0;
+  while(world.pieces.length<28){const base=bases[index++%bases.length],p:Piece={id:`junk-${world.pieces.length}`,kind:'crate',x:base.x,y:0,z:base.z,rotation:0,vy:0,tilt:0,unstable:0,revision:0};p.y=landingHeight(world,p,p.x,p.z,6);if(!poseError(world,p))world.pieces.push(p);if(index>100)throw new Error('Unable to arrange salvage safely.');}
   return world;
 }
-export function releasePlayer(world: World,id: string) {
-  for(const piece of world.pieces)if(piece.heldBy===id)delete piece.heldBy;
-  if(world.crane.owner===id){const p=world.pieces.find(p=>p.id===world.crane.piece);if(p)delete p.heldBy;world.crane.owner=null;world.crane.piece=null;}
+export function emit(world:World,text:string,kind:'info'|'danger'|'good'='info'){world.events.push({id:`${world.clock}-${world.events.length}-${text.slice(0,12)}`,text,kind,at:world.clock});world.events=world.events.slice(-12);}
+export function waterAt(world:World,now:number){return world.mode==='practice'||!world.started?-.4:Math.min(15,-.4+Math.max(0,(now-world.started)/1000-60)*.025);}
+export function overlaps(x:number,z:number,w:number,d:number,p:Piece,pad=0){const s=dimensions(p);return Math.abs(x-p.x)<(w+s.w)/2-pad&&Math.abs(z-p.z)<(d+s.d)/2-pad;}
+export const supportHeight=supportSurface;
+export const movePlayer=predictPlayer;
+export function tick(world:World,now:number){
+  if(now<=world.clock)return world;const elapsed=Math.min((now-world.clock)/1000,2);world.clock=now;
+  if(world.phase==='won'||world.phase==='lost')return world;world.water=waterAt(world,now);
+  const total=elapsed+(world.remainder||0),count=Math.floor((total+1e-9)/STEP);world.remainder=total-count*STEP;
+  if(count){const physics=new Physics(world);
+    for(let step=0;step<count;step++){
+      for(const p of world.players)physics.controls(p,now-p.seen>750?emptyInput():p.input,STEP);
+      physics.step(STEP);for(const p of world.players)physics.readPlayer(p);
+      for(const p of world.players){if(world.phase!=='playing')continue;
+        if(world.water>p.y+1.5){p.breath=Math.max(0,p.breath-STEP);if(p.breath===0&&!p.down){p.down=true;p.input=emptyInput();emit(world,`${p.name} needs a rescue!`,'danger');releasePlayer(world,p.id);}}
+        else p.breath=Math.min(8,p.breath+STEP*2);
+        if(!p.down&&p.y>=GOAL-.08&&p.grounded&&Math.abs(p.x)<2.3&&Math.abs(p.z)<2.3){p.rescued=true;world.phase='won';emit(world,`${p.name} reached rescue. The whole crew is coming home!`,'good');break;}
+      }
+      if(world.phase==='won')break;
+    }
+    physics.save();
+  }
+  for(const p of world.players)if(p.down)p.y=Math.max(p.y,world.water-1.2);
+  world.bestHeight=Math.max(world.bestHeight,...world.pieces.filter(p=>!p.heldBy&&Math.abs(p.vy)<.12).map(p=>topOf(p)-FLOOR));
+  if(world.phase==='playing'&&world.players.length&&world.players.every(p=>p.down)){world.phase='lost';emit(world,'The water won this round. Build it better.','danger');}return world;
 }
-export function nearestPiece(world: World,p: Player) {
-  return world.pieces.filter(item=>!item.heldBy&&Math.hypot(item.x-p.x,item.z-p.z)<3.8&&item.y<p.y+2.8&&item.y+dimensions(item).h>p.y-1.4).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
+export function releasePlayer(world:World,id:string){
+  for(const piece of world.pieces)if(piece.heldBy===id){delete piece.heldBy;resetMotion(piece);touchPiece(piece);}
+  if(world.crane.owner===id){const p=world.pieces.find(p=>p.id===world.crane.piece);if(p){delete p.heldBy;resetMotion(p);touchPiece(p);}world.crane.owner=null;world.crane.piece=null;}
 }
-export function placement(world: World,p: Player,item: Piece,x: number,z: number) {
-  const d=dimensions(item);x=Math.round(x*4)/4;z=Math.round(z*4)/4;
-  const y=supportHeight(world,x,z,d.w,d.d,p.y+2.25,item.id);
-  let error: string|null=null;
-  if(Math.hypot(x-p.x,z-p.z)>4.3)error='Move a little closer to place it.';
-  else if(Math.abs(x)+d.w/2>9.8||Math.abs(z)+d.d/2>9.8)error='Keep your salvage inside the yard.';
-  else if(x-d.w/2 < -4.7 && x+d.w/2 > -9.3 && z-d.d/2 < -5.35 && z+d.d/2 > -8.65 && y<2.85)error='The shed is in the way.';
-  else if(world.players.some(a=>!a.down&&Math.abs(a.x-x)<d.w/2+.34&&Math.abs(a.z-z)<d.d/2+.34&&a.y<y+d.h-.05&&a.y+HEIGHT>y+.05))error='Someone is standing there.';
-  else if(world.pieces.some(s=>s.id!==item.id&&!s.heldBy&&overlaps(x,z,d.w,d.d,s,.035)&&s.y<y+d.h-.04&&s.y+dimensions(s).h>y+.04))error='There is another piece in the way.';
-  return {x,y,z,error};
+export function nearestPiece(world:World,p:Player){return world.pieces.filter(item=>!item.heldBy&&Math.hypot(item.x-p.x,item.z-p.z)<3.8&&item.y<p.y+2.8&&topOf(item)>p.y-1.4).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];}
+export function placement(world:World,p:Player,item:Piece,x:number,z:number,y?:number){
+  // Explicit poses from the ghost are never moved to a different support.
+  x=Math.round(x*20)/20;z=Math.round(z*20)/20;
+  const height=y??landingHeight(world,item,x,z,p.y+2.25),candidate={...item,x,y:height,z,quaternion:undefined};
+  const d=dimensions(item);let error:string|null=null;
+  if(![x,height,z].every(Number.isFinite))error='Choose a surface inside the yard.';
+  else if(Math.hypot(x-p.x,z-p.z)>4.5||height>p.y+2.3||height<p.y-3.5)error='Move a little closer to place it.';
+  else if(Math.abs(x)+d.w/2>9.85||Math.abs(z)+d.d/2>9.85||height<FLOOR-.03)error='Keep your salvage inside the yard.';
+  else error=poseError(world,candidate);
+  return {x,y:height,z,error};
 }
-export function act(world: World,id: string,action: Action,host: string) {
+function ensureTarget(item:Piece,action:Action){if(action.target&&action.target!==item.id)throw new Error('The held piece changed. Aim again.');if(action.revision!==undefined&&action.revision!==(item.revision||0))throw new Error('The piece changed. Wait for the updated preview.');}
+function setHeldPose(item:Piece,p:Player){item.x=p.x;item.y=p.y+2.1;item.z=p.z;resetMotion(item);}
+export function act(world:World,id:string,action:Action,host:string){
   const p=world.players.find(p=>p.id===id);if(!p)throw new Error('Rejoin the crew to play.');
   if(action.type==='start'||action.type==='restart'){
-    if(id!==host)throw new Error('Only the crew captain can start a round.');
-    if(action.type==='start'&&world.phase!=='lobby')return;
-    const next=freshWorld(world.clock,world.mode,world.seed);next.phase='playing';next.started=world.clock;
-    next.players=world.players.map((a,i)=>createPlayer(a.id,a.name,a.color,i,world.clock));Object.assign(world,next);emit(world,world.mode==='practice'?'Practice run. Take your time.':'One minute before the tide turns. Start stacking!','good');return;
+    if(id!==host)throw new Error('Only the crew captain can start a round.');if(action.type==='start'&&world.phase!=='lobby')return;
+    const next=freshWorld(world.clock,world.mode,world.seed);next.phase='playing';next.started=world.clock;next.players=world.players.map((a,i)=>createPlayer(a.id,a.name,a.color,i,world.clock));Object.assign(world,next);emit(world,world.mode==='practice'?'Practice run. Take your time.':'One minute before the tide turns. Start stacking!','good');return;
   }
-  if(world.phase==='won'||world.phase==='lost')throw new Error('Start another round to keep building.');
-  if(p.down)throw new Error('Call a teammate over. They can rescue you with F.');
+  if(world.phase==='won'||world.phase==='lost')throw new Error('Start another round to keep building.');if(p.down)throw new Error('Call a teammate over. They can rescue you with F.');
   const held=world.pieces.find(item=>item.heldBy===id);
   if(action.type==='grab'){
-    if(held)throw new Error('Place what you are carrying first.');
-    if(world.crane.owner===id)throw new Error('Release the crane first.');
+    if(held)throw new Error('Place what you are carrying first.');if(world.crane.owner===id)throw new Error('Release the crane first.');
     const item=action.target?world.pieces.find(s=>s.id===action.target):nearestPiece(world,p);
     if(!item||item.heldBy)throw new Error('Move close to a piece of junk and press E.');
-    if(Math.hypot(item.x-p.x,item.z-p.z)>4.3||item.y>p.y+2.8||item.y+dimensions(item).h<p.y-1.4)throw new Error('That piece is out of reach.');
-    item.heldBy=id;item.vy=0;item.unstable=0;return;
+    if(Math.hypot(item.x-p.x,item.z-p.z)>4.3||item.y>p.y+2.8||topOf(item)<p.y-1.4)throw new Error('That piece is out of reach.');
+    const lifted={...item};setHeldPose(lifted,p);const error=poseError(world,lifted,p.id);if(error)throw new Error('There is no room above you to carry that piece.');
+    Object.assign(item,lifted);item.heldBy=id;touchPiece(item);return;
   }
   if(action.type==='place'){
-    if(!held)throw new Error('Pick up a piece of junk first.');
-    if(!Number.isFinite(action.x)||!Number.isFinite(action.z))throw new Error('Choose a place inside the yard.');
-    const spot=placement(world,p,held,action.x!,action.z!);if(spot.error)throw new Error(spot.error);
-    Object.assign(held,{x:spot.x,y:spot.y,z:spot.z,vy:0});delete held.heldBy;emit(world,`${p.name} placed ${ITEMS[held.kind].name.toLowerCase()}.`);return;
+    if(!held)throw new Error('Pick up a piece of junk first.');ensureTarget(held,action);
+    if(!Number.isFinite(action.x)||!Number.isFinite(action.z)||(action.y!==undefined&&!Number.isFinite(action.y)))throw new Error('Choose a place inside the yard.');
+    if(action.rotation!==undefined&&(!Number.isInteger(action.rotation)||action.rotation!==held.rotation))throw new Error('Wait for the rotated preview before placing.');
+    const spot=placement(world,p,held,action.x!,action.z!,action.y);if(spot.error)throw new Error(spot.error);
+    Object.assign(held,{x:spot.x,y:spot.y,z:spot.z});delete held.heldBy;resetMotion(held);touchPiece(held);emit(world,`${p.name} placed ${ITEMS[held.kind].name.toLowerCase()}.`);return;
   }
   if(action.type==='rotate'){
-    const item=held||(world.crane.owner===id?world.pieces.find(s=>s.id===world.crane.piece):undefined);
-    if(!item)throw new Error('Pick up a piece before rotating it.');item.rotation=(item.rotation+1)%4;return;
+    const item=held||(world.crane.owner===id?world.pieces.find(s=>s.id===world.crane.piece):undefined);if(!item)throw new Error('Pick up a piece before rotating it.');
+    const rotated={...item,rotation:(item.rotation+1)%4,quaternion:undefined};const error=poseError(world,rotated,p.id);if(error)throw new Error('Move the load clear before rotating it.');Object.assign(item,rotated);touchPiece(item);return;
   }
   if(action.type==='rescue'){
-    const teammate=world.players.find(s=>s.down&&Math.hypot(s.x-p.x,s.z-p.z)<4&&Math.abs(s.y-p.y)<5);
-    if(!teammate)throw new Error('Get within four metres of a teammate who needs help.');
-    Object.assign(teammate,{down:false,breath:8,x:p.x+.65,z:p.z,y:p.y+1,vy:0,grounded:false});emit(world,`${p.name} rescued ${teammate.name}!`,'good');return;
+    const teammate=world.players.find(s=>s.down&&Math.hypot(s.x-p.x,s.z-p.z)<4&&Math.abs(s.y-p.y)<5);if(!teammate)throw new Error('Get within four metres of a teammate who needs help.');
+    let spot:Player|undefined;for(const [dx,dz] of [[.85,0],[-.85,0],[0,.85],[0,-.85],[.85,.85],[-.85,-.85]]){const candidate={...teammate,x:p.x+dx,z:p.z+dz,y:p.y+.05};if(playerSpotClear(world,candidate)){spot=candidate;break;}}
+    if(!spot)throw new Error('Move to a clear surface to rescue your teammate.');Object.assign(teammate,{down:false,breath:8,x:spot.x,z:spot.z,y:spot.y,vy:0,grounded:false});emit(world,`${p.name} rescued ${teammate.name}!`,'good');return;
   }
   if(action.type==='crane'){
-    if(held)throw new Error('Place your salvage before taking the crane.');
-    if(world.crane.owner){if(world.crane.owner===id){releasePlayer(world,id);return;}throw new Error('A teammate is using the crane.');}
-    const item=action.target?world.pieces.find(s=>s.id===action.target):nearestPiece(world,p);
-    if(!item||item.heldBy)throw new Error('Click a piece of salvage, then take the crane.');
-    world.crane={owner:id,piece:item.id,x:item.x,y:item.y+.3,z:item.z};item.heldBy='crane';emit(world,`${p.name} has the crane. Mind your heads!`);return;
+    if(held)throw new Error('Place your salvage before taking the crane.');if(world.crane.owner){if(world.crane.owner===id){releasePlayer(world,id);return;}throw new Error('A teammate is using the crane.');}
+    const item=action.target?world.pieces.find(s=>s.id===action.target):nearestPiece(world,p);if(!item||item.heldBy)throw new Error('Click a piece of salvage, then take the crane.');
+    const lifted={...item,quaternion:undefined};const error=poseError(world,lifted);if(error)throw new Error('The load needs clear space before the crane can lift it.');
+    resetMotion(item);item.heldBy='crane';touchPiece(item);world.crane={owner:id,piece:item.id,x:item.x,y:item.y,z:item.z};emit(world,`${p.name} has the crane. Mind your heads!`);return;
   }
   if(action.type==='crane-move'){
-    if(world.crane.owner!==id)throw new Error('Take the crane first.');
-    for(const key of ['x','y','z'] as const)if(!Number.isFinite(action[key]))throw new Error('Invalid crane movement.');
-    world.crane.x=clamp(world.crane.x+clamp(action.x!,-1,1),-8,8);world.crane.z=clamp(world.crane.z+clamp(action.z!,-1,1),-8,8);
-    world.crane.y=clamp(world.crane.y+clamp(action.y!,-1,1),FLOOR,Math.min(GOAL+1,world.bestHeight+2.2));return;
+    if(world.crane.owner!==id)throw new Error('Take the crane first.');for(const key of ['x','y','z'] as const)if(!Number.isFinite(action[key]))throw new Error('Invalid crane movement.');
+    const load=world.pieces.find(s=>s.id===world.crane.piece);if(!load)throw new Error('The crane is empty.');const c=world.crane;
+    const next={x:clamp(c.x+clamp(action.x!,-1,1),-8,8),z:clamp(c.z+clamp(action.z!,-1,1),-8,8),y:clamp(c.y+clamp(action.y!,-1,1),FLOOR,Math.min(GOAL+1,world.bestHeight+2.2))};
+    const steps=Math.ceil(Math.hypot(next.x-c.x,next.y-c.y,next.z-c.z)/.06);
+    for(let i=1;i<=steps;i++){const f=i/steps,probe={...load,x:c.x+(next.x-c.x)*f,y:c.y+(next.y-c.y)*f,z:c.z+(next.z-c.z)*f};if(poseError(world,probe))throw new Error('The load is blocked. Raise it or move around the obstacle.');}
+    Object.assign(c,next);Object.assign(load,next);return;
   }
   if(action.type==='crane-drop'){
-    if(world.crane.owner!==id)throw new Error('Take the crane first.');
-    const load=world.pieces.find(item=>item.id===world.crane.piece);
-    if(load){const size=dimensions(load);const surface=supportHeight(world,world.crane.x,world.crane.z,size.w,size.d,GOAL+4,load.id);if(surface>world.crane.y+.04)throw new Error('Raise the load above the stack before releasing it.');Object.assign(load,{x:world.crane.x,y:world.crane.y,z:world.crane.z});}
-    releasePlayer(world,id);emit(world,'Delivery incoming. Clear the landing zone!');return;
+    if(world.crane.owner!==id)throw new Error('Take the crane first.');const load=world.pieces.find(item=>item.id===world.crane.piece);if(load&&poseError(world,load))throw new Error('Move the load clear before releasing it.');releasePlayer(world,id);emit(world,'Delivery incoming. Clear the landing zone!');return;
   }
-  if(action.type==='wave'){emit(world,`${p.name}: Over here!`);return;}
-  throw new Error('Unknown game action.');
+  if(action.type==='wave'){emit(world,`${p.name}: Over here!`);return;}throw new Error('Unknown game action.');
 }
