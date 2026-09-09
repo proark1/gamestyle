@@ -32,6 +32,36 @@ export function landingPose(
 /** Catches shrink on the way in, so even the Lake Manager fits through the hatch. */
 export const landingScale = (t: number, size: number) =>
   size * (1 - 0.55 * Math.max(0, t - 0.6) * 2.5);
+/** How hard the wind shoves the boat across the lake. */
+export const WIND_FORCE = 10;
+/**
+ * How far a gust heels the boat. Low enough that weather rocks the deck and
+ * makes casting awkward instead of sweeping the crew straight over the rail.
+ */
+export const WIND_ROLL = 0.3;
+export const WIND_PITCH = 0.22;
+/** How close to the hull a swimmer has to be to catch hold of it. */
+export const GRAB_REACH = 1.6;
+/** Held-E milliseconds to haul yourself up the side and over the gunwale. */
+export const CLIMB_MS = 5000;
+/** Damage to a swimmer, out of one whole angler. Two shark bites is fatal. */
+export const SHARK_BITE = 0.55;
+export const JELLY_STING = 0.2;
+/** How close the wildlife has to get to land a hit. */
+export const SHARK_REACH = 1.7;
+export const JELLY_REACH = 1.9;
+/**
+ * Long enough that an angler who swims straight back after a bite can just
+ * finish the climb before the shark comes round again. Slower than that and
+ * the water wins.
+ */
+export const BITE_COOLDOWN = 6000;
+export const STING_COOLDOWN = 1800;
+/** A sting shocks the hands open: no grip and no climbing until it passes. */
+export const STING_STUN_MS = 1600;
+/** Pulled under. The crew hauls you out, and the boat pays for the delay. */
+export const DOWNED_MS = 6000;
+export const DOWNED_PENALTY = 15;
 export const ANGLER_COLORS = ['#edac39', '#56a6a0', '#e9745b', '#807dcc'];
 export const CATCHES = {
   perch: {
@@ -125,6 +155,14 @@ export type Angler = {
   slipX: number;
   slipZ: number;
   swimming: boolean;
+  /** Hanging off the hull, riding with the boat, ready to climb. */
+  clinging: boolean;
+  /** Progress up the side, 0 to 1, while E is held. */
+  climb: number;
+  /** A swimmer's remaining fight, 1 down to 0. Only the water takes it. */
+  health: number;
+  stunUntil: number;
+  downedUntil: number;
   overboardAt: number;
   recoveredAt: number;
   seen: number;
@@ -168,7 +206,9 @@ export type ReelEvent = {
     | 'weather'
     | 'thunder'
     | 'shark'
+    | 'chomp'
     | 'jellyfish'
+    | 'sting'
     | 'start'
     | 'finish';
 };
