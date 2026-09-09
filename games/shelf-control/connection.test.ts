@@ -1,4 +1,4 @@
-import { MIN_POLL_MS } from '../../shared/rooms/input-rate';
+import { waitFor } from '../../shared/rooms/wait-for';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ShelfConnection } from './connection';
@@ -37,8 +37,10 @@ void test('Input changes wake an idle connection and coalesce behind an in-fligh
     assert.equal(requests.length, 1, 'never overlap movement polls');
     reply(0);
     await first;
-    await new Promise((resolve) => setTimeout(resolve, MIN_POLL_MS + 15));
-    assert.equal(requests.length, 2);
+    assert.ok(
+      await waitFor(() => requests.length === 2),
+      'the queued move follows once the floor elapses',
+    );
     assert.equal(
       requests[1].input.z,
       -1,

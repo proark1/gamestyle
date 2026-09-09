@@ -1,3 +1,4 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as THREE from 'three';
 import {
@@ -142,13 +143,17 @@ export class ReelScene {
         transparent: true,
         opacity: 0.55,
       });
+    const ripples = new THREE.Group();
     for (let i = 0; i < 45; i++) {
       const m = new THREE.Mesh(rippleGeometry, rippleMaterial);
       m.rotation.x = Math.PI / 2;
       m.position.set(Math.sin(i * 7.1) * 33, 0.03, Math.cos(i * 3.7) * 33);
       m.scale.setScalar(0.6 + (i % 3));
-      this.scene.add(m);
+      ripples.add(m);
     }
+    // They are placed once and never touched again, so they draw as one.
+    batchScenery(ripples);
+    this.scene.add(ripples);
     this.camera.position.set(0, 28, 30);
     this.camera.lookAt(0, 0, 0);
     // Observer delivery must not write layout and trigger another delivery.

@@ -1,3 +1,4 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import * as THREE from 'three';
 import { CATCHES, HULL_HALF, WELL_SURFACE, type CatchKind } from './types';
 
@@ -290,6 +291,8 @@ export function addShore(scene: THREE.Scene) {
   for (const x of [-2.4, 2.4])
     for (const z of [38, 43])
       cylinder(dock, 0.19, 2.4, [x, 0, z], material('#947150'));
+  // Planks and pilings never move, so they draw as one mesh per material.
+  batchScenery(dock);
   scene.add(dock);
 }
 export function nameLabel(text: string, color: string) {

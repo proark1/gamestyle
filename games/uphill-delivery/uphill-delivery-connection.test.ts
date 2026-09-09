@@ -1,4 +1,4 @@
-import { MIN_POLL_MS } from '../../shared/rooms/input-rate';
+import { waitFor } from '../../shared/rooms/wait-for';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DeliveryConnection } from './connection';
@@ -24,8 +24,10 @@ void test('movement transmits immediately, in-flight inputs coalesce, and a jump
     connection.setInput({ x: 0, z: 0, jump: false, seq: 3 });
     assert.equal(requests.length, 1, 'one sync in flight');
     requests[0].resolve(Response.json({}));
-    await new Promise((resolve) => setTimeout(resolve, MIN_POLL_MS + 15));
-    assert.equal(requests.length, 2);
+    assert.ok(
+      await waitFor(() => requests.length === 2),
+      'the queued input follows once the floor elapses',
+    );
     assert.deepEqual(requests[1].input, { x: 0, z: 0, jump: true, seq: 3 });
     assert.equal(connection.input.jump, false);
   } finally {
