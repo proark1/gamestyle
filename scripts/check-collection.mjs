@@ -5,6 +5,7 @@ const base = process.argv[2];
 if (!base) throw new Error('Pass the running Jumbleyard origin.');
 const origin = new URL(base).origin;
 const paths = [
+  '/siege-and-desist',
   '/wrong-floor',
   '/one-more-button',
   '/four-brain-cells',
@@ -81,6 +82,7 @@ for (const path of [
     );
 }
 for (const path of [
+  '/images/siege-and-desist.png',
   '/images/one-more-button.png',
   '/images/four-brain-cells.png',
   '/images/reel-problems.png',

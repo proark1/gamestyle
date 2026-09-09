@@ -1,0 +1,820 @@
+/*
+ * The siege chrome follows the Medieval Empires house style: charcoal panels,
+ * a single gold rule, parchment text, and Cinzel small caps for headings.
+ * The display stack degrades to a classical serif wherever Cinzel is absent.
+ */
+.sad-game {
+  --ink: #16191c;
+  --panel: #23272ceb;
+  --panel-solid: #23272c;
+  --edge: #4a4034;
+  --gold: #d9b464;
+  --gold-bright: #f1d8a7;
+  --parchment: #f3e4c6;
+  --cream: #fff1e3;
+  --muted: #a89e8c;
+  --red: #c2472f;
+  --display:
+    'Cinzel', 'Trajan Pro', 'Optima', 'Palatino Linotype', 'Book Antiqua',
+    Georgia, serif;
+  --body:
+    'EB Garamond', 'Palatino Linotype', 'Book Antiqua', Georgia,
+    'Times New Roman', serif;
+  position: relative;
+  height: 100dvh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #d9bb8a;
+  color: var(--parchment);
+  font-family: var(--body);
+  font-size: 17px;
+}
+.sad-game button,
+.sad-dialog button {
+  cursor: pointer;
+}
+.sad-game button:disabled,
+.sad-dialog button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.sad-game :is(button, a, input):focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.sad-canvas {
+  position: absolute;
+  inset: 0;
+}
+.sad-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.sad-spin {
+  animation: sad-spin 1s linear infinite;
+}
+@keyframes sad-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Header ------------------------------------------------------------------ */
+.sad-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 84px;
+  padding: 0 28px;
+  background: linear-gradient(#16191ce0, #16191c00);
+}
+.sad-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cream);
+  font: 600 21px/1 var(--display);
+  letter-spacing: 3px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.sad-brand em {
+  font-style: italic;
+  font-family: var(--body);
+  letter-spacing: 0;
+  text-transform: lowercase;
+  color: var(--gold);
+}
+.sad-brand > span:first-child {
+  display: flex;
+  padding: 9px;
+  color: var(--ink);
+  background: linear-gradient(160deg, var(--gold-bright), var(--gold));
+  border-radius: 4px;
+}
+.sad-dot {
+  color: var(--red);
+  margin-left: -2px;
+}
+
+/* Menu -------------------------------------------------------------------- */
+.sad-menu {
+  position: relative;
+  z-index: 2;
+  width: min(1240px, 94%);
+  margin: max(10px, calc((100dvh - 780px) / 3)) auto 0;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: 34px;
+}
+.sad-menu-copy {
+  padding: 32px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-top: 3px solid var(--gold);
+  border-radius: 6px;
+  box-shadow: 0 22px 60px #16191c66;
+  backdrop-filter: blur(3px);
+}
+.sad-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.6px;
+  color: var(--gold);
+}
+.sad-kicker > span {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--red);
+}
+.sad-menu h1 {
+  font: 600 clamp(40px, 4.3vw, 62px)/1.04 var(--display);
+  letter-spacing: 0.5px;
+  color: var(--cream);
+  margin: 20px 0 16px;
+}
+.sad-menu h1 em {
+  font-style: normal;
+  color: var(--gold);
+}
+.sad-menu p {
+  font-size: 18px;
+  line-height: 1.62;
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+.sad-meta {
+  display: flex;
+  gap: 18px;
+  font-size: 15px;
+  margin-bottom: 20px;
+  color: var(--parchment);
+}
+.sad-meta span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.sad-name {
+  display: block;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.sad-name input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 15px;
+  font: 400 17px var(--body);
+  color: var(--cream);
+  background: #16191c99;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.sad-name input::placeholder {
+  color: #7d7466;
+}
+.sad-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 20px;
+  font: 600 14px var(--display);
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: linear-gradient(165deg, var(--gold-bright), var(--gold));
+  border: 0;
+  border-radius: 4px;
+  box-shadow: 0 6px 0 #8d6f36;
+}
+.sad-primary:not(:disabled):hover {
+  filter: brightness(1.07);
+}
+.sad-primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 #8d6f36;
+}
+.sad-menu-secondary {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+.sad-menu-secondary button {
+  flex: 1;
+  padding: 13px;
+  font: 600 12px var(--display);
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--parchment);
+  background: #16191c66;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+}
+.sad-menu-secondary button:not(:disabled):hover {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+.sad-menu-note {
+  display: block;
+  margin-top: 14px;
+  font-size: 15px;
+  color: #8b8271;
+}
+.sad-menu-art {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--edge);
+  border-top: 3px solid var(--red);
+  border-radius: 6px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #2b3036, #16191c);
+  box-shadow: 0 22px 60px #16191c66;
+}
+.sad-menu-art-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  min-height: 300px;
+  color: #4a4034;
+}
+.sad-menu-art figcaption {
+  padding: 18px 22px 22px;
+  border-top: 1px solid var(--edge);
+}
+.sad-menu-art figcaption span {
+  display: block;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 2.4px;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.sad-menu-art figcaption strong {
+  font: 400 italic 22px var(--body);
+  color: var(--cream);
+}
+
+/* In-session panels -------------------------------------------------------- */
+.sad-panel {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  backdrop-filter: blur(3px);
+}
+.sad-scoreboard,
+.sad-crew,
+.sad-engine,
+.sad-lobby,
+.sad-results,
+.sad-your-status,
+.sad-camera,
+.sad-notice,
+.sad-loading {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  backdrop-filter: blur(3px);
+}
+.sad-scoreboard {
+  position: absolute;
+  top: 92px;
+  left: 28px;
+  z-index: 6;
+  display: flex;
+  gap: 26px;
+  padding: 14px 20px;
+  border-top: 2px solid var(--gold);
+}
+.sad-scoreboard span {
+  display: block;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+.sad-scoreboard strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 30px var(--display);
+  color: var(--cream);
+  line-height: 1.2;
+}
+.sad-scoreboard small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sad-clock.urgent span,
+.sad-clock.urgent strong {
+  color: var(--red);
+  animation: sad-pulse 1.1s ease-in-out infinite;
+}
+@keyframes sad-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+.sad-crew {
+  position: absolute;
+  top: 92px;
+  right: 28px;
+  z-index: 6;
+  width: 232px;
+  padding: 12px 14px;
+}
+.sad-crew-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 9px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--edge);
+}
+.sad-crew-title span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--gold);
+}
+.sad-crew-title button {
+  padding: 5px 10px;
+  font: 600 10px var(--display);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--gold);
+  border: 0;
+  border-radius: 3px;
+}
+.sad-crew-person {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 15px;
+  color: var(--parchment);
+}
+.sad-crew-person i {
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+.sad-crew-person span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sad-crew-person small {
+  font-family: var(--display);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+}
+
+/* Trebuchet readout ------------------------------------------------------- */
+.sad-engine {
+  position: absolute;
+  left: 50%;
+  bottom: 158px;
+  z-index: 6;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  padding: 12px 22px;
+  border-top: 2px solid var(--gold);
+}
+.sad-wind {
+  min-width: 250px;
+}
+.sad-wind span,
+.sad-payload span {
+  display: block;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.sad-wind-track {
+  height: 12px;
+  background: #16191c;
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.sad-wind-track i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #8d6f36, var(--gold-bright));
+  transition: width 0.1s linear;
+}
+.sad-wind small {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sad-payload {
+  padding-left: 22px;
+  border-left: 1px solid var(--edge);
+  text-align: right;
+  min-width: 140px;
+}
+.sad-payload strong {
+  display: block;
+  font: 600 19px var(--display);
+  color: var(--cream);
+}
+.sad-payload small {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Lobby and results ------------------------------------------------------- */
+.sad-lobby,
+.sad-results {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 8;
+  transform: translate(-50%, -50%);
+  width: min(470px, 92%);
+  padding: 30px;
+  text-align: center;
+  border-top: 3px solid var(--gold);
+}
+.sad-lobby h2,
+.sad-results h2 {
+  font: 600 clamp(28px, 3.2vw, 38px)/1.1 var(--display);
+  color: var(--cream);
+  margin: 14px 0 18px;
+}
+.sad-lobby p,
+.sad-results p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 14px 0 18px;
+}
+.sad-results svg {
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.sad-room-code {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px;
+  font: 600 28px var(--display);
+  letter-spacing: 7px;
+  color: var(--gold-bright);
+  background: #16191c99;
+  border: 1px dashed var(--gold);
+  border-radius: 4px;
+}
+.sad-result-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+.sad-result-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 15px;
+  background: #16191c66;
+  border-radius: 3px;
+}
+.sad-result-list b {
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--gold);
+}
+.sad-text-button {
+  margin-top: 12px;
+  padding: 8px;
+  width: 100%;
+  font: 400 15px var(--body);
+  color: var(--muted);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+}
+
+/* Field HUD --------------------------------------------------------------- */
+.sad-camera {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  z-index: 6;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--parchment);
+}
+.sad-your-status {
+  position: absolute;
+  left: 50%;
+  bottom: 108px;
+  z-index: 6;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  font-size: 15px;
+  color: var(--parchment);
+  white-space: nowrap;
+}
+.sad-your-status svg {
+  color: var(--gold);
+}
+.sad-action-dock {
+  /* Anchored on both edges: an absolutely positioned row pinned only by
+     left:50% is limited to half the viewport and wraps for no good reason. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 38px;
+  z-index: 7;
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 18px;
+}
+.sad-action {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 15px;
+  text-align: left;
+  color: var(--parchment);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  backdrop-filter: blur(3px);
+  touch-action: manipulation;
+}
+.sad-action span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font: 600 12px var(--display);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+.sad-action kbd {
+  font: 400 12px var(--body);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+.sad-action:not(:disabled):hover {
+  border-color: var(--gold);
+}
+.sad-action.loose:not(:disabled) {
+  color: var(--ink);
+  background: linear-gradient(165deg, var(--gold-bright), var(--gold));
+  border-color: var(--gold-bright);
+}
+.sad-action.loose:not(:disabled) kbd {
+  color: #5b4a24;
+}
+.sad-action.wind:not(:disabled),
+.sad-action.ride:not(:disabled) {
+  border-color: #6d5c40;
+}
+.sad-movement-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  z-index: 5;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #16191cbb;
+  background: #f3e4c6cc;
+  padding: 3px 12px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.sad-notice,
+.sad-loading {
+  position: absolute;
+  left: 50%;
+  top: 92px;
+  z-index: 9;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px;
+  font-size: 16px;
+  color: var(--cream);
+  border-left: 3px solid var(--gold);
+  max-width: min(620px, 90vw);
+  text-align: center;
+}
+.sad-game.in-session .sad-notice {
+  top: 148px;
+}
+
+/* Dialog ------------------------------------------------------------------ */
+.sad-dialog {
+  background: var(--panel-solid) !important;
+  border: 1px solid var(--edge) !important;
+  border-top: 3px solid var(--gold) !important;
+  border-radius: 6px !important;
+  color: var(--parchment);
+  font-family: var(--body);
+  max-height: 88dvh;
+  overflow-y: auto;
+}
+.sad-dialog [data-slot='dialog-title'] {
+  font: 600 24px var(--display) !important;
+  color: var(--cream);
+}
+.sad-dialog [data-slot='dialog-description'] {
+  color: var(--muted) !important;
+  font-size: 16px;
+}
+.sad-help p {
+  font-size: 16px;
+  line-height: 1.62;
+  margin: 0 0 13px;
+  color: var(--parchment);
+}
+.sad-help strong {
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.sad-ammo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 6px;
+}
+.sad-ammo-list span {
+  padding: 5px 11px;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: #16191c99;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+}
+.sad-join-form {
+  display: grid;
+  gap: 4px;
+}
+
+/* Responsive -------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .sad-movement-hint {
+    display: none;
+  }
+}
+@media (max-width: 1120px) {
+  .sad-engine {
+    bottom: 214px;
+  }
+  .sad-your-status {
+    bottom: 166px;
+  }
+}
+@media (max-width: 900px) {
+  .sad-menu {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-top: 8px;
+  }
+  .sad-menu-art {
+    display: none;
+  }
+  .sad-scoreboard {
+    left: 14px;
+    padding: 10px 15px;
+    gap: 16px;
+  }
+  .sad-scoreboard strong {
+    font-size: 23px;
+  }
+  .sad-crew {
+    right: 14px;
+    width: 190px;
+  }
+  .sad-header {
+    padding: 0 14px;
+    height: 72px;
+  }
+}
+@media (max-width: 760px) {
+  .sad-crew {
+    display: none;
+  }
+  .sad-engine {
+    left: 14px;
+    right: 14px;
+    transform: none;
+    bottom: 186px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .sad-wind {
+    min-width: 0;
+  }
+  .sad-payload {
+    padding-left: 0;
+    padding-top: 10px;
+    border-left: 0;
+    border-top: 1px solid var(--edge);
+    text-align: left;
+  }
+  .sad-your-status {
+    display: none;
+  }
+  .sad-action-dock {
+    bottom: 14px;
+    gap: 6px;
+    padding: 0 8px;
+  }
+  .sad-action {
+    padding: 8px 11px;
+  }
+  .sad-action span {
+    font-size: 11px;
+  }
+  .sad-action kbd {
+    display: none;
+  }
+  .sad-camera {
+    left: auto;
+    right: 14px;
+    transform: none;
+  }
+}
+@media (max-width: 420px) {
+  .sad-brand {
+    font-size: 16px;
+    letter-spacing: 1.6px;
+  }
+  .sad-menu-copy {
+    padding: 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sad-spin,
+  .sad-clock.urgent span,
+  .sad-clock.urgent strong {
+    animation: none;
+  }
+  .sad-wind-track i {
+    transition: none;
+  }
+}

@@ -135,6 +135,7 @@ async function run(game) {
     );
     const started = latest.get(sessions[1].id).world.started;
     let reelRecoveryTarget;
+    let siegeRecovery;
     if (game === 'reel-problems') {
       const world = () => latest.get(sessions[1].id).world;
       for (let i = 0; i < 4; i++)
@@ -346,6 +347,56 @@ async function run(game) {
         'one-more-button: guest and host presses, shared prize/hazards, and crew STOP call passed over real WebRTC.',
       );
     }
+    if (game === 'siege-and-desist') {
+      const world = () => latest.get(sessions[1].id).world;
+      // Two guests put their shoulders to the winch; the counterweight is
+      // shared state, so every client must watch the same one rise.
+      await Promise.all(
+        [connections[1], connections[2]].map((c) => c.action({ type: 'wind' })),
+      );
+      await until(
+        () =>
+          sessions.every(
+            (s) =>
+              latest.get(s.id).world.players.filter((p) => p.winding).length ===
+              2,
+          ),
+        'both winders are visible on all four clients',
+      );
+      await until(
+        () => sessions.every((s) => latest.get(s.id).world.wind > 0.2),
+        'the shared counterweight rises on every client',
+      );
+      await Promise.all(
+        [connections[1], connections[2]].map((c) =>
+          c.action({ type: 'stopWind' }),
+        ),
+      );
+      const held = world().wind;
+      // The opening aim is deliberately off-centre; a guest leans it back.
+      const opening = world().turn;
+      const pusher = world().players.find((p) => p.id === sessions[3].id);
+      const expected = pusher.x < 0 ? 1 : -1;
+      await connections[3].action({ type: 'push' });
+      await until(
+        () =>
+          sessions.every(
+            (s) =>
+              Math.sign(latest.get(s.id).world.turn - opening) === expected,
+          ),
+        'a shoulder on the frame swings the aim the same way for everyone',
+      );
+      await connections[3].action({ type: 'stopPush' });
+      siegeRecovery = { wind: held, turn: world().turn };
+      await assert.rejects(
+        connections[0].action({ type: 'loose' }),
+        /lever/i,
+        'nobody can loose from across the field',
+      );
+      console.log(
+        'siege-and-desist: shared winch, swung aim and lever proximity passed over real WebRTC.',
+      );
+    }
     if (game === 'four-brain-cells') {
       const view = () => latest.get(sessions[1].id).world;
       assert.deepEqual(
@@ -463,6 +514,20 @@ async function run(game) {
     if (game === 'one-more-button') {
       assert.equal(latest.get(sessions[1].id).world.pot, 1250);
       assert.equal(latest.get(sessions[1].id).world.hazards.length, 2);
+    }
+    if (game === 'siege-and-desist') {
+      const w = latest.get(sessions[1].id).world;
+      assert.ok(
+        Math.abs(w.wind - siegeRecovery.wind) < 0.05,
+        'the wound counterweight survives the host handover',
+      );
+      assert.ok(
+        Math.abs(w.turn - siegeRecovery.turn) < 0.02,
+        'the swung aim survives the host handover',
+      );
+      // Snapshots carry only moved masonry, so the castle's size is asserted
+      // through the count each client rebuilds its local baseline from.
+      assert.ok(w.totalBlocks > 50, 'the castle survives the host handover');
     }
     assert.equal(
       leases[1].mesh.links.get(sessions[2].id).pc,

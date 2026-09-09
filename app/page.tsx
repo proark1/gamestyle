@@ -4,6 +4,7 @@
 import {
   ArrowDown,
   ArrowUpRight,
+  Castle,
   Gamepad2,
   Users,
   Waves,
@@ -26,6 +27,7 @@ import './collection.css';
 // The shelf opens with a fixed running order, then shuffles everything after it
 // so the rest of the collection gets a turn in the top row.
 const PINNED = [
+  'siege-and-desist',
   'stack-or-sink',
   'uphill-delivery',
   'reel-problems',
@@ -51,6 +53,55 @@ function shuffle(slugs: readonly string[]) {
 }
 
 const CARDS: Record<string, ReactElement> = {
+  'siege-and-desist': (
+    <a
+      key="siege-and-desist"
+      className="game-card siege-card"
+      href="/siege-and-desist"
+    >
+      <div className="game-card-art">
+        <img
+          src="/images/siege-and-desist.png"
+          alt="Four tiny medieval crew members work one enormous wooden trebuchet on a golden hillside while a boulder sails toward a sandstone keep flying a red banner."
+          width="1536"
+          height="1024"
+          fetchPriority="high"
+        />
+        <span className="game-card-tag">
+          <Castle size={14} /> EVERYONE VS. THE KEEP
+        </span>
+        <span className="new-game-tag">NEW TO JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 players
+          </span>
+          <span>
+            <Timer size={14} /> 4-minute sieges
+          </span>
+        </div>
+        <h2>
+          Siege <span>and</span> Desist
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          One trebuchet, four opinions, and a castle that genuinely falls over.
+          Wind the counterweight, load the sling, and bring the banner down
+          before dawn.
+        </p>
+        <div className="game-card-bottom">
+          <span>Someone will end up in the sling.</span>
+          <strong>
+            Play Siege and Desist <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
   'stack-or-sink': (
     <a
       key="stack-or-sink"
