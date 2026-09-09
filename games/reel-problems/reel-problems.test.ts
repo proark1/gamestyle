@@ -16,6 +16,8 @@ import {
   CATCHES,
   NET_REACH,
   ROUND_MS,
+  landingPose,
+  landingScale,
   type CatchKind,
   type ReelWorld,
 } from './types';
@@ -88,6 +90,37 @@ void test('A catch reeled right up to the boat stays in the water, never on the 
     // It must still come within netting reach, or a beaten fish could never land.
     assert.ok(closest < NET_REACH, `${kind} never came alongside`);
   }
+});
+void test('A landed catch arcs out of the lake and finishes in the live well', () => {
+  // Boat-local metres, from models.ts: rail top 1.03, well rim 1.41, water 1.12.
+  const well = { x: 0, y: 1.12, z: 0 };
+  for (const from of [
+    { x: 3.6, y: -0.03, z: 0 }, // alongside, at the water line
+    { x: -3.4, y: 1.05, z: 2.9 }, // off the quarter, mid-surge
+    { x: 0, y: 0, z: -5.2 }, // straight off the bow
+  ]) {
+    const start = landingPose(0, from, well),
+      end = landingPose(1, from, well);
+    assert.deepEqual(start, from, 'starts where the fish was fought');
+    assert.ok(
+      Math.hypot(end.x - well.x, end.z - well.z) < 1e-9,
+      'ends over the well',
+    );
+    assert.ok(
+      end.y < 1.41 && Math.abs(end.y - (well.y - 0.1)) < 1e-9,
+      `ends on the well water line, not above the rim (${end.y})`,
+    );
+    let peak = -Infinity;
+    for (let i = 0; i <= 200; i++)
+      peak = Math.max(peak, landingPose(i / 200, from, well).y);
+    assert.ok(peak > 1.41 + 0.2, `clears the well rim (peak ${peak})`);
+    assert.ok(peak > from.y + 0.5, 'visibly leaves the water');
+  }
+  // Shrinks only at the end, and enough that the biggest catch fits the hatch.
+  const monster = CATCHES.monster.size;
+  assert.equal(landingScale(0, monster), monster);
+  assert.equal(landingScale(0.6, monster), monster);
+  assert.ok(landingScale(1, monster) < monster * 0.5);
 });
 void test('Crew weight rolls the boat and outriggers reduce the lean', () => {
   const plain = game(4),

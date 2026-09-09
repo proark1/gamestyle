@@ -7,6 +7,31 @@ export const BOAT_HALF = { x: 2.25, z: 3.4 };
 export const HULL_HALF = { x: 2.65, z: 3.9 };
 /** How far off the hull a beaten catch can be lifted aboard. */
 export const NET_REACH = 1.8;
+/** Live-well water line in boat-local metres: where a landed catch drops in. */
+export const WELL_SURFACE = 1.12;
+/** How long a catch spends arcing out of the lake and into the well. */
+export const LANDING_MS = 780;
+/** Hump on that arc, enough to clear the gunwale and the well rim. */
+export const LANDING_ARC = 5.6;
+/**
+ * Where a catch sits at progress `t` of being lifted from the lake into the
+ * well: a straight run to the well plus a hump, finishing on the water line
+ * rather than under it.
+ */
+export function landingPose(
+  t: number,
+  from: { x: number; y: number; z: number },
+  well: { x: number; y: number; z: number },
+) {
+  return {
+    x: from.x + (well.x - from.x) * t,
+    y: from.y + (well.y - 0.1 - from.y) * t + LANDING_ARC * (t - t * t),
+    z: from.z + (well.z - from.z) * t,
+  };
+}
+/** Catches shrink on the way in, so even the Lake Manager fits through the hatch. */
+export const landingScale = (t: number, size: number) =>
+  size * (1 - 0.55 * Math.max(0, t - 0.6) * 2.5);
 export const ANGLER_COLORS = ['#edac39', '#56a6a0', '#e9745b', '#807dcc'];
 export const CATCHES = {
   perch: {
