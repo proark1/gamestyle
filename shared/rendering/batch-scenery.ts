@@ -1,3 +1,4 @@
+import { disposeGeometry } from './primitives';
 import * as T from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -40,7 +41,7 @@ export function batchScenery(root: T.Group) {
     root.add(merged);
     for (const mesh of meshes) {
       mesh.removeFromParent();
-      mesh.geometry.dispose();
+      disposeGeometry(mesh.geometry);
     }
   }
 }

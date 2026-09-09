@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as THREE from 'three';
 import {
   blocked,
@@ -512,7 +513,7 @@ export class ShelfScene {
     object.removeFromParent();
     object.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.geometry.dispose();
+        disposeGeometry(child.geometry);
         for (const mat of Array.isArray(child.material)
           ? child.material
           : [child.material]) {

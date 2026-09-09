@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import { actorLevel, levelOf, pieceBase, STOREY_HEIGHT } from './levels';
 import { mapBounds, mapConfig } from './maps';
 import * as T from 'three';
@@ -1950,7 +1951,7 @@ export class GameScene {
         this.scene.remove(effect.mesh);
         this.disposeLabel(effect.mesh);
         if (effect.mesh instanceof T.Mesh) {
-          effect.mesh.geometry.dispose();
+          disposeGeometry(effect.mesh.geometry);
           (effect.mesh.material as T.Material).dispose();
         }
         return false;
