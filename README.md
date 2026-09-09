@@ -1,13 +1,14 @@
 # Jumbleyard
 
-**Jumbleyard** is a collection of eleven matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
+**Jumbleyard** is a collection of twelve matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
 
-## The eleven games
+## The twelve games
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
 | Game | Play at | Game code | Route |
 | --- | --- | --- | --- |
+| Siege and Desist | `/siege-and-desist` | `games/siege-and-desist/` | `app/siege-and-desist/` |
 | Stack or Sink | `/stack-or-sink` | `games/stack-or-sink/` | `app/stack-or-sink/` |
 | Blend Business | `/act-natural` | `games/act-natural/` | `app/act-natural/` |
 | Uphill Delivery | `/uphill-delivery` | `games/uphill-delivery/` | `app/uphill-delivery/` |
@@ -20,7 +21,21 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Reel Problems | `/reel-problems` | `games/reel-problems/` | `app/reel-problems/` |
 | Shelf Control | `/shelf-control` | `games/shelf-control/` | `app/shelf-control/` |
 
-Ten of the eleven have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
+Eleven of the twelve have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
+
+## Siege and Desist
+
+Play at `/siege-and-desist`. One to four players crew a single enormous trebuchet on an Anatolian hillside and have four minutes to bring the keep's banner to the ground. The engine is deliberately too big for one person: someone holds the winch, someone fetches from the supply pile and loads the sling, someone leans on the frame to swing the aim, and someone pulls the release lever.
+
+The counterweight is the only range control. Roughly two fifths of a wind reaches the gate, three quarters reaches the keep behind it, and a full wind sails over everything; the gold ring on the ground shows where the current wind lands. Every extra pair of hands winds faster. Each assault starts with the aim swung off centre, so the crew has to push the frame round before any of it counts as aiming. Defenders answer with clay pots that flatten crew and knock both the wind and the aim back.
+
+Boulders break stone, fire pots burn a course of timber away, the beehive clears the battlements, and the cow is the cow. `C` climbs into the sling, which is a real option and a terrible one — a solo player cannot launch themselves, because somebody else has to be at the lever.
+
+The castle is around a hundred rigid bodies on a Cannon solver rather than a mesh that swaps to a broken version, so no two collapses match. Snapshots carry only masonry that has actually moved and each guest rebuilds the rest locally.
+
+WASD/arrows move, `R` holds the winch, `E` fetches and loads, `Q` swings the aim, `F` looses, `C` rides the sling, `H` hauls up a flattened crewmate, Space jumps, and `V` changes camera; the camera rides the shot by default. Rooms, invitations, crew voice, touch controls, host recovery, and `/siege-and-desist/admin` use the collection's shared infrastructure.
+
+Run `node scripts/test.mjs games/siege-and-desist` for the rules, ballistics, destruction and snapshot tests, and `node scripts/peer-integration.mjs siege-and-desist` for four real WebRTC clients sharing the winch and surviving host loss. See [Siege and Desist design and validation](games/siege-and-desist/docs/design-and-validation.md).
 
 ## Wrong Floor
 

@@ -11,6 +11,16 @@ Approved on 2026-09-07:
 | Chaotic cooperative construction | Permit Pending | `/chaos` |
 | First-person construction | Brick by Hand | `/first-person` |
 
+Added 2026-09-09:
+
+| Game | Display name | Route / internal ID |
+| --- | --- | --- |
+| Cooperative medieval siege | Siege and Desist | `/siege-and-desist` |
+
+Siege and Desist is a Medieval Empires-themed mini game. The display name, route,
+game identifier, audio namespace and room namespace are all `siege-and-desist`,
+so nothing here needed a compatibility alias.
+
 The platform is **Jumbleyard**, with this exact spelling. Blend Business and
 Tiptoe Thieves are deliberately independent of a particular animal, disguise,
 map, or opponent. Current game descriptions still describe their playable maps;
