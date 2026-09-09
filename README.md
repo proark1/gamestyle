@@ -42,6 +42,20 @@ Open `http://localhost:3000`. Solo practice needs no database. For multiplayer, 
 
 Normal rounds give 60 seconds to prepare, followed by a flood rising 1.5 metres per minute. The rescue platform is 13.5 metres high. One teammate reaching it wins for the crew; everyone drowning ends the run. Practice has no flood.
 
+## Audio
+
+Every effect, the ambience and the music are synthesised at runtime through the Web Audio API. The only recorded assets are sixteen short crew voice lines.
+
+`game/audio.ts` builds the mix: effects, ambience, music and interface buses run into a shared low-pass that models being underwater, then a master gain and a limiter. Effects are panned using the orbiting camera's own basis and attenuated by distance, and a voice budget drops the least important sounds rather than letting a collapsing stack spawn dozens of oscillators.
+
+`game/audio-cues.ts` turns snapshot deltas into sound. The authoritative physics runs on the server in multiplayer, so impacts, creaks, splashes, footsteps, lifts and crane movement are all derived from state the client already receives — velocities, sleep flags, breath and grounded transitions — and nothing was added to the wire format. An impact takes its force from the speed the piece lost and its timbre from the material struck; timber, upholstery, porcelain and sheet metal each ring differently. Footsteps take their surface from whatever the player is standing on.
+
+The flood drives an ambience bed, a low-pass while submerged, a heartbeat and gasp as breath runs down, and a klaxon when the tide turns. A generative pad glides between four chords with its intensity following the water level, and the round ends on a sting rather than a beep.
+
+Crew barks are the one exception to the synthesis rule. `public/audio/barks` holds sixteen clips, generated with ElevenLabs text to speech, giving each of the four hard hats its own voice for “Over here!”, a call for help and a rescue confirmation. They are fetched once after the audio unlocks, placed in the stereo field like any other effect, and picked at random from two variants where a line repeats often. A clip that is missing or fails to decode falls back to the synthesised cue, so the game never depends on them.
+
+The speaker button mutes and releases the audio hardware, the slider sets the volume, and the note button toggles music; all three persist. A hidden tab suspends audio, and the first click or key press anywhere unlocks it, so reloading into a live round is not silent.
+
 ## Validation and deployment
 
 ```sh

@@ -1,4 +1,4 @@
-import { GOAL, ITEMS, clamp, dimensions, type Action, type Input, type Kind, type Piece, type Player, type World } from './types';
+import { GOAL, ITEMS, clamp, dimensions, type Action, type EventTag, type Input, type Kind, type Piece, type Player, type World } from './types';
 import { FLOOR } from './geometry';
 import { Physics, STEP, landingHeight, playerSpotClear, poseError, predictPlayer, resetMotion, supportSurface, topOf, touchPiece } from './physics';
 
@@ -18,7 +18,11 @@ export function freshWorld(now:number,mode:World['mode']='normal',seed=1):World{
   while(world.pieces.length<28){const base=bases[index++%bases.length],p:Piece={id:`junk-${world.pieces.length}`,kind:'crate',x:base.x,y:0,z:base.z,rotation:0,vy:0,tilt:0,unstable:0,revision:0};p.y=landingHeight(world,p,p.x,p.z,6);if(!poseError(world,p))world.pieces.push(p);if(index>100)throw new Error('Unable to arrange salvage safely.');}
   return world;
 }
-export function emit(world:World,text:string,kind:'info'|'danger'|'good'='info'){world.events.push({id:`${world.clock}-${world.events.length}-${text.slice(0,12)}`,text,kind,at:world.clock});world.events=world.events.slice(-12);}
+export function emit(world:World,text:string,kind:'info'|'danger'|'good'='info',tag?:EventTag,from?:Player){
+  // The tag and position let the client pick a sound and place it, without parsing the text.
+  world.events.push({id:`${world.clock}-${world.events.length}-${text.slice(0,12)}`,text,kind,at:world.clock,...(tag?{tag}:{}),...(from?{actor:from.id,x:Math.round(from.x*100)/100,z:Math.round(from.z*100)/100}:{})});
+  world.events=world.events.slice(-12);
+}
 export function waterAt(world:World,now:number){return world.mode==='practice'||!world.started?-.4:Math.min(15,-.4+Math.max(0,(now-world.started)/1000-60)*.025);}
 export function overlaps(x:number,z:number,w:number,d:number,p:Piece,pad=0){const s=dimensions(p);return Math.abs(x-p.x)<(w+s.w)/2-pad&&Math.abs(z-p.z)<(d+s.d)/2-pad;}
 export const supportHeight=supportSurface;
@@ -32,9 +36,9 @@ export function tick(world:World,now:number){
       for(const p of world.players)physics.controls(p,now-p.seen>750?emptyInput():p.input,STEP);
       physics.step(STEP);for(const p of world.players)physics.readPlayer(p);
       for(const p of world.players){if(world.phase!=='playing')continue;
-        if(world.water>p.y+1.5){p.breath=Math.max(0,p.breath-STEP);if(p.breath===0&&!p.down){p.down=true;p.input=emptyInput();emit(world,`${p.name} needs a rescue!`,'danger');releasePlayer(world,p.id);}}
+        if(world.water>p.y+1.5){p.breath=Math.max(0,p.breath-STEP);if(p.breath===0&&!p.down){p.down=true;p.input=emptyInput();emit(world,`${p.name} needs a rescue!`,'danger','down',p);releasePlayer(world,p.id);}}
         else p.breath=Math.min(8,p.breath+STEP*2);
-        if(!p.down&&p.y>=GOAL-.08&&p.grounded&&Math.abs(p.x)<2.3&&Math.abs(p.z)<2.3){p.rescued=true;world.phase='won';emit(world,`${p.name} reached rescue. The whole crew is coming home!`,'good');break;}
+        if(!p.down&&p.y>=GOAL-.08&&p.grounded&&Math.abs(p.x)<2.3&&Math.abs(p.z)<2.3){p.rescued=true;world.phase='won';emit(world,`${p.name} reached rescue. The whole crew is coming home!`,'good','win',p);break;}
       }
       if(world.phase==='won')break;
     }
@@ -42,7 +46,7 @@ export function tick(world:World,now:number){
   }
   for(const p of world.players)if(p.down)p.y=Math.max(p.y,world.water-1.2);
   world.bestHeight=Math.max(world.bestHeight,...world.pieces.filter(p=>!p.heldBy&&Math.abs(p.vy)<.12).map(p=>topOf(p)-FLOOR));
-  if(world.phase==='playing'&&world.players.length&&world.players.every(p=>p.down)){world.phase='lost';emit(world,'The water won this round. Build it better.','danger');}return world;
+  if(world.phase==='playing'&&world.players.length&&world.players.every(p=>p.down)){world.phase='lost';emit(world,'The water won this round. Build it better.','danger','lose');}return world;
 }
 export function releasePlayer(world:World,id:string){
   for(const piece of world.pieces)if(piece.heldBy===id){delete piece.heldBy;resetMotion(piece);touchPiece(piece);}
@@ -66,7 +70,7 @@ export function act(world:World,id:string,action:Action,host:string){
   const p=world.players.find(p=>p.id===id);if(!p)throw new Error('Rejoin the crew to play.');
   if(action.type==='start'||action.type==='restart'){
     if(id!==host)throw new Error('Only the crew captain can start a round.');if(action.type==='start'&&world.phase!=='lobby')return;
-    const next=freshWorld(world.clock,world.mode,world.seed);next.phase='playing';next.started=world.clock;next.players=world.players.map((a,i)=>createPlayer(a.id,a.name,a.color,i,world.clock));Object.assign(world,next);emit(world,world.mode==='practice'?'Practice run. Take your time.':'One minute before the tide turns. Start stacking!','good');return;
+    const next=freshWorld(world.clock,world.mode,world.seed);next.phase='playing';next.started=world.clock;next.players=world.players.map((a,i)=>createPlayer(a.id,a.name,a.color,i,world.clock));Object.assign(world,next);emit(world,world.mode==='practice'?'Practice run. Take your time.':'One minute before the tide turns. Start stacking!','good','start');return;
   }
   if(world.phase==='won'||world.phase==='lost')throw new Error('Start another round to keep building.');if(p.down)throw new Error('Call a teammate over. They can rescue you with F.');
   const held=world.pieces.find(item=>item.heldBy===id);
@@ -83,7 +87,7 @@ export function act(world:World,id:string,action:Action,host:string){
     if(!Number.isFinite(action.x)||!Number.isFinite(action.z)||(action.y!==undefined&&!Number.isFinite(action.y)))throw new Error('Choose a place inside the yard.');
     if(action.rotation!==undefined&&(!Number.isInteger(action.rotation)||action.rotation!==held.rotation))throw new Error('Wait for the rotated preview before placing.');
     const spot=placement(world,p,held,action.x!,action.z!,action.y);if(spot.error)throw new Error(spot.error);
-    Object.assign(held,{x:spot.x,y:spot.y,z:spot.z});delete held.heldBy;resetMotion(held);touchPiece(held);emit(world,`${p.name} placed ${ITEMS[held.kind].name.toLowerCase()}.`);return;
+    Object.assign(held,{x:spot.x,y:spot.y,z:spot.z});delete held.heldBy;resetMotion(held);touchPiece(held);emit(world,`${p.name} placed ${ITEMS[held.kind].name.toLowerCase()}.`,'info','place',p);return;
   }
   if(action.type==='rotate'){
     const item=held||(world.crane.owner===id?world.pieces.find(s=>s.id===world.crane.piece):undefined);if(!item)throw new Error('Pick up a piece before rotating it.');
@@ -92,13 +96,13 @@ export function act(world:World,id:string,action:Action,host:string){
   if(action.type==='rescue'){
     const teammate=world.players.find(s=>s.down&&Math.hypot(s.x-p.x,s.z-p.z)<4&&Math.abs(s.y-p.y)<5);if(!teammate)throw new Error('Get within four metres of a teammate who needs help.');
     let spot:Player|undefined;for(const [dx,dz] of [[.85,0],[-.85,0],[0,.85],[0,-.85],[.85,.85],[-.85,-.85]]){const candidate={...teammate,x:p.x+dx,z:p.z+dz,y:p.y+.05};if(playerSpotClear(world,candidate)){spot=candidate;break;}}
-    if(!spot)throw new Error('Move to a clear surface to rescue your teammate.');Object.assign(teammate,{down:false,breath:8,x:spot.x,z:spot.z,y:spot.y,vy:0,grounded:false});emit(world,`${p.name} rescued ${teammate.name}!`,'good');return;
+    if(!spot)throw new Error('Move to a clear surface to rescue your teammate.');Object.assign(teammate,{down:false,breath:8,x:spot.x,z:spot.z,y:spot.y,vy:0,grounded:false});emit(world,`${p.name} rescued ${teammate.name}!`,'good','rescue',p);return;
   }
   if(action.type==='crane'){
     if(held)throw new Error('Place your salvage before taking the crane.');if(world.crane.owner){if(world.crane.owner===id){releasePlayer(world,id);return;}throw new Error('A teammate is using the crane.');}
     const item=action.target?world.pieces.find(s=>s.id===action.target):nearestPiece(world,p);if(!item||item.heldBy)throw new Error('Click a piece of salvage, then take the crane.');
     const lifted={...item,quaternion:undefined};const error=poseError(world,lifted);if(error)throw new Error('The load needs clear space before the crane can lift it.');
-    resetMotion(item);item.heldBy='crane';touchPiece(item);world.crane={owner:id,piece:item.id,x:item.x,y:item.y,z:item.z};emit(world,`${p.name} has the crane. Mind your heads!`);return;
+    resetMotion(item);item.heldBy='crane';touchPiece(item);world.crane={owner:id,piece:item.id,x:item.x,y:item.y,z:item.z};emit(world,`${p.name} has the crane. Mind your heads!`,'info','crane',p);return;
   }
   if(action.type==='crane-move'){
     if(world.crane.owner!==id)throw new Error('Take the crane first.');for(const key of ['x','y','z'] as const)if(!Number.isFinite(action[key]))throw new Error('Invalid crane movement.');
@@ -109,7 +113,7 @@ export function act(world:World,id:string,action:Action,host:string){
     Object.assign(c,next);Object.assign(load,next);return;
   }
   if(action.type==='crane-drop'){
-    if(world.crane.owner!==id)throw new Error('Take the crane first.');const load=world.pieces.find(item=>item.id===world.crane.piece);if(load&&poseError(world,load))throw new Error('Move the load clear before releasing it.');releasePlayer(world,id);emit(world,'Delivery incoming. Clear the landing zone!');return;
+    if(world.crane.owner!==id)throw new Error('Take the crane first.');const load=world.pieces.find(item=>item.id===world.crane.piece);if(load&&poseError(world,load))throw new Error('Move the load clear before releasing it.');releasePlayer(world,id);emit(world,'Delivery incoming. Clear the landing zone!','info','crane-drop');return;
   }
-  if(action.type==='wave'){emit(world,`${p.name}: Over here!`);return;}throw new Error('Unknown game action.');
+  if(action.type==='wave'){emit(world,`${p.name}: Over here!`,'info','wave',p);return;}throw new Error('Unknown game action.');
 }

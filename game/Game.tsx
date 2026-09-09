@@ -1,28 +1,28 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Waves, Users, Volume2, VolumeX, CircleHelp, ArrowUpRight, LifeBuoy, HardHat, Copy, Check, X, Hand, RotateCw, Construction, Mountain, ArrowUp, ArrowDown, ArrowLeft, Flag, LogOut, Eye, Timer, PackageOpen, Trophy, Anchor, LoaderCircle, Plus } from 'lucide-react';
+import { ArrowRight, Waves, Users, Volume2, VolumeX, Music, CircleHelp, ArrowUpRight, LifeBuoy, HardHat, Copy, Check, X, Hand, RotateCw, Construction, Mountain, ArrowUp, ArrowDown, ArrowLeft, Flag, LogOut, Eye, Timer, PackageOpen, Trophy, Anchor, LoaderCircle, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { act, createPlayer, freshWorld, tick } from './simulation';
 import { Connection, requestRoom } from './connection';
 import { COLORS, GOAL, ITEMS, type Action, type Input, type Kind, type Session, type Snapshot, type World } from './types';
 import type { GameScene, Hud } from './scene';
-import { Sound } from './sound';
+import { Audio } from './audio';
 
 const INITIAL_HUD:Hud={target:'',carrying:'',placementError:null,height:0,crane:false};
 const clock=(seconds:number)=>`${Math.floor(Math.max(0,seconds)/60)}:${String(Math.floor(Math.max(0,seconds)%60)).padStart(2,'0')}`;
 type ModelContext={registerTool:(tool:{name:string;description:string;inputSchema:object;annotations:object;execute:(input:unknown)=>unknown},options:{signal:AbortSignal})=>void|Promise<void>};
 export default function Game(){
-  const canvas=useRef<HTMLDivElement>(null),scene=useRef<GameScene|null>(null),network=useRef<Connection|null>(null),sound=useRef<Sound|null>(null);
+  const canvas=useRef<HTMLDivElement>(null),scene=useRef<GameScene|null>(null),network=useRef<Connection|null>(null),sound=useRef<Audio|null>(null);
   const local=useRef<World|null>(null),current=useRef<Snapshot|null>(null),sessionRef=useRef<Session|null>(null),events=useRef(new Set<string>()),actionRef=useRef<(a:Action)=>Promise<void>>(async()=>{});
   const [state,setState]=useState<Snapshot|null>(null),[session,setSession]=useState<Session|null>(null),[name,setName]=useState(''),[color,setColor]=useState(0),[ready,setReady]=useState(false),[busy,setBusy]=useState(false);
-  const [status,setStatus]=useState<'online'|'reconnecting'|'expired'>('online'),[hud,setHud]=useState<Hud>(INITIAL_HUD),[notice,setNotice]=useState(''),[help,setHelp]=useState(false),[join,setJoin]=useState(false),[invite,setInvite]=useState(false),[code,setCode]=useState(''),[copied,setCopied]=useState(false),[muted,setMuted]=useState(false),[exitDialog,setExitDialog]=useState(false),[overview,setOverview]=useState(false);
+  const [status,setStatus]=useState<'online'|'reconnecting'|'expired'>('online'),[hud,setHud]=useState<Hud>(INITIAL_HUD),[notice,setNotice]=useState(''),[help,setHelp]=useState(false),[join,setJoin]=useState(false),[invite,setInvite]=useState(false),[code,setCode]=useState(''),[copied,setCopied]=useState(false),[muted,setMuted]=useState(false),[volume,setVolume]=useState(.7),[music,setMusic]=useState(true),[exitDialog,setExitDialog]=useState(false),[overview,setOverview]=useState(false);
   const world=state?.world,player=world?.players.find(p=>p.id===session?.id),isLocal=session?.code==='PRACTICE',isHost=state?.host===session?.id;
   const ended=world?.phase==='won'||world?.phase==='lost';
-  const notify=(message:string)=>setNotice(message);
+  const notify=(message:string)=>{setNotice(message);sound.current?.click('deny');};
   function accept(next:Snapshot,s:Session){
     current.current=next;setState(next);scene.current?.setSnapshot(next,s.id,s.code==='PRACTICE');
-    for(const e of next.world.events)if(!events.current.has(e.id)){events.current.add(e.id);if(next.world.clock-e.at<2000){sound.current?.cue(e.kind);if(e.kind!=='info')setNotice(e.text);}}
+    for(const e of next.world.events)if(!events.current.has(e.id)){events.current.add(e.id);if(next.world.clock-e.at<2000){sound.current?.event(e,s.id,next.world.players.find(p=>p.id===e.actor)?.color??0);if(e.kind!=='info')setNotice(e.text);}}
   }
   function attach(s:Session,next?:Snapshot){
     network.current?.stop();local.current=null;sessionRef.current=s;setSession(s);setStatus('online');events.current.clear();
@@ -31,8 +31,18 @@ export default function Game(){
     const connection=new Connection(s,snapshot=>accept(snapshot,s),setStatus);network.current=connection;connection.start();
   }
   useEffect(()=>{
-    let disposed=false;const audio=new Sound();sound.current=audio;
-    try{const saved=JSON.parse(localStorage.getItem('stack-or-sink-prefs-v1')||'{}');setName(typeof saved.name==='string'?saved.name:'');setColor(Number.isInteger(saved.color)?Math.max(0,Math.min(3,saved.color)):0);setMuted(!!saved.muted);audio.enabled=!saved.muted;}catch{}
+    let disposed=false;const audio=new Audio();sound.current=audio;const listeners=new AbortController();
+    try{const saved=JSON.parse(localStorage.getItem('stack-or-sink-prefs-v1')||'{}');setName(typeof saved.name==='string'?saved.name:'');setColor(Number.isInteger(saved.color)?Math.max(0,Math.min(3,saved.color)):0);setMuted(!!saved.muted);audio.enabled=!saved.muted;
+      if(Number.isFinite(saved.volume)){setVolume(Math.max(0,Math.min(1,saved.volume)));audio.volume=Math.max(0,Math.min(1,saved.volume));}
+      if(saved.music===false){setMusic(false);audio.musicEnabled=false;}}catch{}
+    // Autoplay policy needs a gesture, and a player who reloads mid-round never sees a menu button.
+    const wake=()=>{void audio.unlock();};
+    for(const type of ['pointerdown','keydown','touchstart'] as const)window.addEventListener(type,wake,{signal:listeners.signal,passive:true});
+    document.addEventListener('pointerdown',event=>{
+      const button=(event.target as HTMLElement|null)?.closest?.('button');
+      if(!button||button.disabled||button.classList.contains('touch-jump'))return;
+      audio.click(button.classList.contains('primary-button')?'confirm':'tap');
+    },{signal:listeners.signal});
     const url=new URL(location.href);const room=url.searchParams.get('room');if(room&&/^[A-Z2-9]{6}$/i.test(room)){setCode(room.toUpperCase());setJoin(true);}
     import('./scene').then(({GameScene})=>{
       if(disposed||!canvas.current)return;
@@ -42,6 +52,7 @@ export default function Game(){
           action:a=>{void actionRef.current(a);},
           hud:h=>setHud(previous=>previous.target===h.target&&previous.carrying===h.carrying&&previous.placementError===h.placementError&&Math.abs(previous.height-h.height)<.1&&previous.crane===h.crane?previous:h),
           error:notify,
+          audio,
         });setReady(true);
         if(!room){try{const saved=JSON.parse(sessionStorage.getItem('stack-or-sink-session-v1')||'null');if(saved?.code&&saved?.id&&saved?.token&&saved.code!=='PRACTICE')attach(saved);}catch{}}
       }catch{notify('This browser could not start the 3D view. Enable hardware acceleration and reload.');}
@@ -51,10 +62,18 @@ export default function Game(){
       if(!local.current||!sessionRef.current)return;const now=Date.now();tick(local.current,now);
       if(now-lastPublish>110){accept({code:'PRACTICE',host:sessionRef.current.id,world:structuredClone(local.current),version:now},sessionRef.current);lastPublish=now;}
     },22);
-    return()=>{disposed=true;clearInterval(timer);network.current?.stop();scene.current?.dispose();audio.dispose();};
+    return()=>{disposed=true;listeners.abort();clearInterval(timer);network.current?.stop();scene.current?.dispose();audio.dispose();};
   },[]);
-  useEffect(()=>{try{localStorage.setItem('stack-or-sink-prefs-v1',JSON.stringify({name,color,muted}));}catch{}if(sound.current)sound.current.enabled=!muted;},[name,color,muted]);
-  useEffect(()=>{scene.current?.setPaused(help||join||invite||exitDialog||status!=='online');},[help,join,invite,exitDialog,status]);
+  useEffect(()=>{
+    try{localStorage.setItem('stack-or-sink-prefs-v1',JSON.stringify({name,color,muted,volume,music}));}catch{}
+    const audio=sound.current;if(!audio)return;
+    audio.setVolume(volume);audio.setMusic(music);
+    // A hidden tab releases the audio hardware rather than playing to nobody.
+    const apply=()=>audio.setEnabled(!muted&&!document.hidden);
+    apply();document.addEventListener('visibilitychange',apply);
+    return()=>document.removeEventListener('visibilitychange',apply);
+  },[name,color,muted,volume,music]);
+  useEffect(()=>{const paused=help||join||invite||exitDialog||status!=='online';scene.current?.setPaused(paused);sound.current?.setDucked(paused);},[help,join,invite,exitDialog,status]);
   async function action(a:Action){
     try{setNotice('');if(local.current&&sessionRef.current){act(local.current,sessionRef.current.id,a,sessionRef.current.id);accept({code:'PRACTICE',host:sessionRef.current.id,world:structuredClone(local.current),version:Date.now()},sessionRef.current);}else if(network.current)await network.current.action(a);}
     catch(e){notify(e instanceof Error?e.message:'That did not work. Try again.');}
@@ -90,7 +109,7 @@ export default function Game(){
     <div className="world-canvas" ref={canvas}/>
     <header className="topbar"><a className="wordmark" href="/" onClick={e=>{if(session){e.preventDefault();setExitDialog(true);}}}><span className="brand-icon"><Waves size={22}/></span>STACK <span className="wordmark-or">or</span> SINK</a>
       {session&&world?<div className="crew-bar">{world.players.map(p=><span className={`crew-member ${p.down?'down':''}`} key={p.id}><span style={{background:COLORS[p.color]}}><HardHat size={17}/></span><b>{p.name}</b>{p.id===state.host&&<small>CAPTAIN</small>}</span>)}{!isLocal&&Array.from({length:4-world.players.length},(_,i)=><button key={i} className="crew-empty" onClick={()=>setInvite(true)} aria-label="Invite a teammate"><Plus size={17}/></button>)}</div>:<span className="top-note"><span className="live-dot"/> A LITTLE TEAMWORK. A LOT OF JUNK.</span>}
-      <div className="top-actions"><button className="icon-button" onClick={()=>{void sound.current?.unlock();setMuted(!muted);}} aria-label={muted?'Enable sound':'Mute sound'}>{muted?<VolumeX size={20}/>:<Volume2 size={20}/>}</button><button className="icon-button" onClick={()=>setHelp(true)} aria-label="How to play"><CircleHelp size={20}/></button>{session&&<button className="icon-button leave-icon" onClick={()=>setExitDialog(true)} aria-label="Leave game"><LogOut size={18}/></button>}</div>
+      <div className="top-actions"><div className="audio-controls"><button className="icon-button" onClick={()=>{void sound.current?.unlock();setMuted(!muted);}} aria-label={muted?'Enable sound':'Mute sound'}>{muted?<VolumeX size={20}/>:<Volume2 size={20}/>}</button><input className="volume-slider" type="range" min={0} max={100} step={1} value={Math.round(volume*100)} disabled={muted} onChange={e=>{void sound.current?.unlock();setVolume(Number(e.target.value)/100);}} aria-label="Sound volume"/><button className={`icon-button ${music&&!muted?'active':''}`} disabled={muted} onClick={()=>{void sound.current?.unlock();setMusic(!music);}} aria-label={music?'Turn music off':'Turn music on'}><Music size={18}/></button></div><button className="icon-button" onClick={()=>setHelp(true)} aria-label="How to play"><CircleHelp size={20}/></button>{session&&<button className="icon-button leave-icon" onClick={()=>setExitDialog(true)} aria-label="Leave game"><LogOut size={18}/></button>}</div>
     </header>
     {!session&&<><section className="start-panel"><div className="eyebrow"><span className="tiny-line"/> CO-OP SURVIVAL · 1–4 PLAYERS</div><h1>STACK<span className="title-middle"><i/>or<i/></span><span className="sink-title">SINK<span className="title-dot">.</span></span></h1><p className="intro">The water’s rising.<br/>Your escape plan is a pile of junk.</p><div className="setup-card"><label htmlFor="player-name">YOUR NAME</label><input id="player-name" value={name} onChange={e=>setName(e.target.value)} placeholder="Salvage apprentice" maxLength={18}/><div className="color-row"><span>Pick your hard hat</span><div>{COLORS.map((c,i)=><button aria-label={['Yellow hard hat','Teal hard hat','Coral hard hat','Purple hard hat'][i]} aria-pressed={color===i} className={color===i?'color-choice selected':'color-choice'} style={{background:c}} key={c} onClick={()=>setColor(i)}><HardHat size={20}/></button>)}</div></div><button disabled={!ready||busy} className="primary-button" onClick={()=>void create()}>{busy?'Opening the yard…':ready?'Create a crew':'Loading the yard…'}{busy||!ready?<LoaderCircle size={20} className="spin"/>:<ArrowRight size={20}/>}</button><button disabled={!ready||busy} className="secondary-button" onClick={()=>setJoin(true)}>Join with a room code <Users size={18}/></button><button disabled={!ready||busy} className="practice-link" onClick={practice}>Just me? Try a practice run <ArrowUpRight size={15}/></button></div><button className="start-tip" onClick={()=>setHelp(true)}><LifeBuoy size={18}/><span>Build together. Climb together. Panic together.</span></button></section><aside className="scene-caption"><span className="map-badge">THE SALVAGE YARD</span><span>A perfectly terrible place to get stranded.</span></aside><footer className="start-footer"><span><span className="live-dot"/> NO DOWNLOAD. JUST BRING YOUR CREW.</span><span>DON’T GET TOO ATTACHED TO THE SOFA.</span></footer></>}
     {session&&world&&<>

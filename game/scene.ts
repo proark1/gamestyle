@@ -3,10 +3,12 @@ import { box, island, junk, label, worker } from './objects';
 import { previewPieces } from './preview';
 import { emptyInput, movePlayer, nearestPiece, placement, supportHeight } from './simulation';
 import { orientation, topOf } from './physics';
+import { AudioCues } from './audio-cues';
+import type { AudioSink } from './audio';
 import { COLORS, GOAL, ITEMS, clamp, dimensions, type Action, type Input, type Piece, type Player, type Snapshot } from './types';
 
 export type Hud = { target: string; carrying: string; placementError: string|null; height: number; crane: boolean };
-type Callbacks = { input:(i:Input)=>void; action:(a:Action)=>void; hud:(h:Hud)=>void; error:(s:string)=>void };
+type Callbacks = { input:(i:Input)=>void; action:(a:Action)=>void; hud:(h:Hud)=>void; error:(s:string)=>void; audio:AudioSink };
 export class GameScene {
   renderer:T.WebGLRenderer;scene=new T.Scene();camera=new T.OrthographicCamera();water:T.Mesh;
   resize:ResizeObserver;abort=new AbortController();frameId=0;last=0;time=0;lastHud=0;lastInput=0;lastCrane=0;
@@ -14,11 +16,12 @@ export class GameScene {
   keys=new Set<string>();touch={x:0,z:0};jumpSeq=0;jumpHeld=false;paused=false;menu=true;overview=false;yaw=.65;zoom=1;target=new T.Vector3();
   pointer=new T.Vector2(-20,-20);ray=new T.Raycaster();pointerActive=false;selected:string|null=null;drag:{id:number;x:number;y:number;moved:boolean}|null=null;
   ghost:T.Group|null=null;ghostKind='';ghostSpot:{x:number;y:number;z:number;error:string|null;target:string;rotation:number;revision:number}|null=null;
-  scenery:T.Group;lastGhost=0;
+  scenery:T.Group;lastGhost=0;cues:AudioCues;audioVersion=-1;ghostError:boolean|null=null;
   ring=new T.Mesh(new T.RingGeometry(.65,.73,40),new T.MeshBasicMaterial({color:'#ffe181',side:T.DoubleSide,depthTest:false,transparent:true,opacity:.95}));
   hook=new T.Group();rope=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3()]),new T.LineBasicMaterial({color:'#526f63'}));
   seaLines=new T.Group();reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;projectionDirty=true;
   constructor(public host:HTMLElement,public callbacks:Callbacks){
+    this.cues=new AudioCues(callbacks.audio);
     const mobile=matchMedia('(pointer:coarse)').matches;
     this.renderer=new T.WebGLRenderer({antialias:!mobile,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.3:1.8));
     this.renderer.shadowMap.enabled=!mobile;this.renderer.shadowMap.type=T.PCFShadowMap;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.3;
@@ -58,7 +61,7 @@ export class GameScene {
       const m=worker(p.color);const name=label(`${p.name}${p.id===id?' · YOU':''}`,p.id===id?'#fff2b7':'#edf1de','#345449',2);name.position.y=2.35;m.add(name);m.userData.name=name;m.position.set(p.x,p.y,p.z);this.actors.set(p.id,m);this.scene.add(m);
     }
   }
-  resetMenu(){this.world=null;this.predicted=null;this.menu=true;this.preview.visible=true;this.clearInput();this.ghost?.removeFromParent();this.ghost=null;this.ghostKind='';for(const m of this.pieces.values()){m.removeFromParent();this.disposeObject(m);}this.pieces.clear();for(const m of this.actors.values()){m.removeFromParent();this.disposeObject(m);}this.actors.clear();this.ring.visible=false;this.hook.visible=false;this.rope.visible=false;this.projectionDirty=true;}
+  resetMenu(){this.cues.clear();this.audioVersion=-1;this.ghostError=null;this.world=null;this.predicted=null;this.menu=true;this.preview.visible=true;this.clearInput();this.ghost?.removeFromParent();this.ghost=null;this.ghostKind='';for(const m of this.pieces.values()){m.removeFromParent();this.disposeObject(m);}this.pieces.clear();for(const m of this.actors.values()){m.removeFromParent();this.disposeObject(m);}this.actors.clear();this.ring.visible=false;this.hook.visible=false;this.rope.visible=false;this.projectionDirty=true;}
   setPaused(paused:boolean){this.paused=paused;if(paused)this.clearInput();}
   clearInput=()=>{this.keys.clear();this.touch={x:0,z:0};this.jumpHeld=false;this.callbacks.input({...emptyInput(),seq:this.jumpSeq});};
   keyDown=(e:KeyboardEvent)=>{
@@ -109,7 +112,7 @@ export class GameScene {
   crane(){this.callbacks.action({type:'crane',target:this.currentTarget()?.id});}
   updateGhost(){
     if(!this.world||!this.predicted)return;const held=this.world.world.pieces.find(p=>p.heldBy===this.localId);
-    if(!held){if(this.ghost)this.ghost.visible=false;this.ghostSpot=null;return;}
+    if(!held){if(this.ghost)this.ghost.visible=false;this.ghostSpot=null;this.ghostError=null;return;}
     if(this.ghostKind!==held.kind){if(this.ghost){this.ghost.removeFromParent();this.disposeObject(this.ghost,true);}this.ghost=junk(held.kind);this.ghost.traverse(o=>{if(o instanceof T.Mesh){o.material=(o.material as T.MeshStandardMaterial).clone();Object.assign(o.material,{transparent:true,opacity:.42,depthWrite:false});o.castShadow=false;if(o.userData.surface)o.add(new T.LineSegments(new T.EdgesGeometry(o.geometry,25),new T.LineBasicMaterial({color:'#347844',transparent:true,opacity:.9,depthTest:false})));}});this.scene.add(this.ghost);this.ghostKind=held.kind;}
     let x=this.predicted.x+Math.sin(this.predicted.angle)*2.9,z=this.predicted.z+Math.cos(this.predicted.angle)*2.9;
     if(this.drag)return;
@@ -117,6 +120,8 @@ export class GameScene {
     const player=this.world.world.players.find(p=>p.id===this.localId)!;
     this.ghostSpot={...placement(this.world.world,player,held,x,z),target:held.id,rotation:held.rotation,revision:held.revision||0};const spot=this.ghostSpot;this.ghost!.visible=true;this.ghost!.position.set(spot.x,spot.y,spot.z);this.ghost!.rotation.y=held.rotation*Math.PI/2;
     this.ghost!.traverse(o=>{if(o instanceof T.Mesh)(o.material as T.MeshStandardMaterial).color.set(spot.error?'#de6b53':'#91cf8a');if(o instanceof T.LineSegments)(o.material as T.LineBasicMaterial).color.set(spot.error?'#ba3623':'#347844');});
+    // A click on the flip lets players aim without watching the ghost.
+    const invalid=!!spot.error;if(this.ghostError!==null&&this.ghostError!==invalid)this.callbacks.audio.click('tick');this.ghostError=invalid;
   }
   updateCamera(dt:number){
     const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;const aspect=w/h;
@@ -141,8 +146,11 @@ export class GameScene {
       if(item)this.ring.position.set(item.x,topOf(item)+.03,item.z);
       this.hook.visible=this.rope.visible=!!world.crane.owner;
       if(world.crane.owner){const c=world.crane;const piece=world.pieces.find(p=>p.id===c.piece);const bottom=c.y+(piece?dimensions(piece).h:0)+.4;this.hook.position.set(c.x,bottom,c.z);this.rope.geometry.setFromPoints([new T.Vector3(c.x,16,c.z),new T.Vector3(c.x,bottom,c.z)]);}
+      const changed=this.world.version!==this.audioVersion;if(changed)this.audioVersion=this.world.version;
+      const ear=this.predicted;this.cues.observe(world,this.localId,this.predicted,{x:ear.x,y:ear.y+1.5,z:ear.z,yaw:this.yaw},now,changed);
       if(now-this.lastHud>130){this.callbacks.hud({target:item?ITEMS[item.kind].name:'',carrying:world.pieces.find(p=>p.heldBy===this.localId)?.kind||'',placementError:this.ghostSpot?.error||null,height:this.predicted.y-.13,crane:world.crane.owner===this.localId});this.lastHud=now;}
     }
+    if(this.menu){this.callbacks.audio.setListener(0,3,0,this.yaw);this.callbacks.audio.setAmbience(.34);this.callbacks.audio.setSubmersion(0);this.callbacks.audio.setIntensity(.12);this.callbacks.audio.update();}
     const sea=this.world?.world.water??-.35;this.water.position.y=sea+(this.reduceMotion?0:Math.sin(this.time*.7)*.025);this.seaLines.position.y=this.water.position.y+.03;
     if(!this.reduceMotion)this.seaLines.position.x=Math.sin(this.time*.13)*.5;
     if(!this.world||!this.predicted)this.updateCamera(dt);this.renderer.render(this.scene,this.camera);this.frameId=requestAnimationFrame(this.frame);
