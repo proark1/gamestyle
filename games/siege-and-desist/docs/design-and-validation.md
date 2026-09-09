@@ -108,6 +108,44 @@ effectively a top-down plan with the engine looming in the foreground; it now
 sits behind and above the frame so the crew, the trebuchet and the keep share
 one frame and a throw reads as an arc.
 
+## Phones and tablets
+
+The touch layout was rebuilt after measuring it rather than assuming it worked,
+and it did not: the shared skin parks the joystick at `bottom: 160px`, which is
+exactly where this game's trebuchet readout sits. Both thumb controls were
+underneath a panel and hit-testing at their centres returned the readout, so the
+game could not be played on a phone at all. The thumbs now own the bottom
+corners at `z-index: 8`, with the action dock above them and the readout above
+that.
+
+Two absolutely positioned elements had the same latent bug, which is worth
+knowing about before adding a third: an element pinned only by `left: 50%` has an
+available width of half the viewport, so it can never be wider than that no
+matter what `max-width` says. It made the action dock wrap onto three rows on a
+laptop, and it squeezed the event banner to 180px on a phone, where it wrapped to
+five lines and grew down over the readout. Both are now anchored `left: 0;
+right: 0` and centred, the dock with `justify-content`, the banner with `margin`.
+
+Layout is verified by measuring every HUD box and reporting any pair that
+actually intersects, plus hit-testing each control's centre through
+`elementFromPoint`. Six viewports pass with zero intersections, nothing
+off-screen, no page scroll and every control reachable: 320x568, 360x640,
+375x812, 768x1024, 812x375 and 1440x900. Landscape needed its own rules — the
+600px minimum height is taller than a handset on its side, which pushed the dock
+below the fold and made the page scroll — and there the dock is held clear of
+the thumb corners with `left: 140px; right: 140px`.
+
+Beyond layout: held actions listen for `pointercancel` as well as `pointerup`
+and `pointerleave`, since a cancelled touch would otherwise leave a crewmate
+winding forever with no way to stop; dock buttons are at least 44px tall on a
+coarse pointer and suppress text selection and the iOS callout; and a hundred
+rigid bodies with soft shadows is too much for a handset GPU, so touch devices
+and small screens drop antialiasing, render at a 1.3 pixel ratio instead of 1.7
+and halve the shadow map to 1024.
+
+Emulated viewports and a hit-test are not a real device. Frame rate on actual
+handset hardware is unmeasured.
+
 ## Known gaps
 
 - The sound catalog is written but no clips are generated. The game is fully
@@ -120,4 +158,5 @@ one frame and a throw reads as an arc.
 - The simulation advances on `requestAnimationFrame`, as every game here does,
   so a backgrounded host tab pauses the round for the crew. That is existing
   collection behaviour rather than anything specific to this game.
-- Not playtested by four people over the internet.
+- Not playtested by four people over the internet, and not run on a physical
+  phone — the mobile work above is verified against emulated viewports.
