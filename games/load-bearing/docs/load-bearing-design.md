@@ -24,6 +24,16 @@ updates arrive. Rendering uses the shared worker model and its limb rig, the
 shared primitives, touch controls, toolbar and peer voice. NPC crew use the
 shared roster slots, and are game-owned occupancy rather than network members.
 
+The look is the collection's, not a second one. The lobby is built from the
+shared kit in `shared/styles/game-ui.css` — eyebrow, two-tone wordmark, setup
+card, primary and secondary buttons, tool dock, dialogs — so Load Bearing sits
+beside its siblings rather than beneath them. `models.ts` exports a named
+`palette` in the house family: sage turf, teal ink matching the shared worker's
+overalls, clay brick, oak timber, stone and ivory masonry, amber plant and coral
+hazard. The renderer runs ACES filmic tone mapping at the same exposure as the
+other outdoor games, under the same hemisphere and sun colours, so the site is
+lit like the rest of the collection.
+
 ## Play
 
 - Sledgehammer with E. Three hits destroy a wall panel, five a column. Each hit is telegraphed by cracks so the crew can see what is about to give.

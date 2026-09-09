@@ -2,12 +2,14 @@ import * as T from 'three';
 import { worker } from '../../shared/rendering/worker';
 import { SiteMotion, emptyPose } from './motion';
 import { CABLE } from './physics';
+import { PIANO_BAY, buildHouse } from './structure';
 import {
   DustBursts,
   JIB_Y,
   PART_COLORS,
   cable,
   crane,
+  palette,
   partMesh,
   piano,
   pianoBeacon,
@@ -84,6 +86,7 @@ export class LoadBearingScene {
   private craneHeld = 0;
   private pointer = new T.Vector2();
   private caster = new T.Raycaster();
+  private preview = new T.Group();
   private motion = new SiteMotion();
   private dust = new DustBursts();
   private pose = emptyPose();
@@ -101,18 +104,21 @@ export class LoadBearingScene {
       powerPreference: 'high-performance',
     });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-    this.renderer.setClearColor('#cfd9c6');
+    this.renderer.setClearColor(palette.sky);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
+    this.renderer.toneMapping = T.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.25;
+    this.renderer.outputColorSpace = T.SRGBColorSpace;
     this.renderer.domElement.setAttribute(
       'aria-label',
       'Load Bearing demolition site. WASD moves, E swings the hammer, C takes the crane, Q marks a part, F helps a teammate.',
     );
     this.renderer.domElement.tabIndex = 0;
     container.appendChild(this.renderer.domElement);
-    this.scene.fog = new T.Fog('#cfd9c6', 60, 190);
-    this.scene.add(new T.HemisphereLight('#fff4d7', '#8a8570', 2.6));
-    const sun = new T.DirectionalLight('#fff1cf', 2.9);
+    this.scene.fog = new T.Fog(palette.sky, 65, 175);
+    this.scene.add(new T.HemisphereLight('#fff2d4', palette.sage, 3));
+    const sun = new T.DirectionalLight('#fff1d2', 3.2);
     sun.position.set(-16, 30, 18);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
@@ -126,6 +132,7 @@ export class LoadBearingScene {
     this.scene.add(
       sun,
       site(),
+      this.preview,
       this.pianoMesh,
       this.beacon,
       this.craneMesh,
@@ -135,6 +142,15 @@ export class LoadBearingScene {
       this.dust.group,
     );
     this.craneMesh.position.set(0, 0, -12);
+    // The lobby needs its subject. Stand the condemned house up, with the
+    // piano beaconing through its walls, until a real world arrives.
+    for (const part of buildHouse()) {
+      const mesh = partMesh(part);
+      mesh.position.set(part.x, part.y, part.z);
+      this.preview.add(mesh);
+    }
+    this.pianoMesh.position.set(PIANO_BAY.x, 4.25, PIANO_BAY.z);
+    this.beacon.position.copy(this.pianoMesh.position);
 
     const signal = this.abort.signal;
     const dom = this.renderer.domElement;
@@ -159,6 +175,7 @@ export class LoadBearingScene {
   }
   setSnapshot(snapshot: LoadSnapshot | null) {
     this.snapshot = snapshot;
+    this.preview.visible = !snapshot;
     if (snapshot) this.motion.push(snapshot, performance.now());
     else this.motion.clear();
   }
@@ -328,7 +345,7 @@ export class LoadBearingScene {
           mesh.position.x,
           mesh.position.y,
           mesh.position.z,
-          PART_COLORS[kind] ?? '#b06a4e',
+          PART_COLORS[kind] ?? palette.clay,
           1.3,
         );
         this.scene.remove(mesh);
@@ -355,7 +372,8 @@ export class LoadBearingScene {
       }
       const shown = this.motion.player(player);
       const moving =
-        Math.hypot(mesh.position.x - shown.x, mesh.position.z - shown.z) > 0.012;
+        Math.hypot(mesh.position.x - shown.x, mesh.position.z - shown.z) >
+        0.012;
       mesh.position.set(shown.x, shown.y, shown.z);
       mesh.rotation.y = shown.facing;
       const body = mesh.userData.body as T.Group;

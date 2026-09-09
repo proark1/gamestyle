@@ -565,14 +565,14 @@
 /* Load Bearing. The painted illustration is still to be generated; until then
    the card draws its own demolition site so the shelf stays complete. */
 .wreck-card .game-card-tag {
-  background: #f58b39;
-  color: #fff8ef;
+  background: #f6dfb4;
+  color: #9a5238;
 }
 .wreck-card .game-title-dot {
-  color: #b06a4e;
+  color: #c9805c;
 }
 .wreck-art {
-  background: #cfd9c6;
+  background: #c7d3b6;
   overflow: hidden;
 }
 .wreck-scene {

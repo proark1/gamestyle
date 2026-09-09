@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
 import {
+  ArrowRight,
   Check,
   Copy,
   Hammer,
@@ -251,7 +252,11 @@ export default function LoadBearing() {
         throw new Error('The crew could not be joined. Try again.');
       attach(reply.session, reply.snapshot);
       setModal(null);
-      history.replaceState(null, '', `/load-bearing?room=${reply.session.code}`);
+      history.replaceState(
+        null,
+        '',
+        `/load-bearing?room=${reply.session.code}`,
+      );
     } catch (error) {
       setNotice(
         error instanceof Error
@@ -385,12 +390,12 @@ export default function LoadBearing() {
   return (
     <main className={`lb-game${session ? ' in-session' : ''}`}>
       <div className="lb-canvas" ref={container} />
-      <header className="lb-header">
-        <a href="/" className="lb-brand">
-          <span>
+      <header className="topbar">
+        <a href="/" className="wordmark">
+          <span className="lb-mark">
             <Hammer size={22} />
           </span>{' '}
-          LOAD BEARING<span className="lb-dot">.</span>
+          LOAD BEARING<span className="title-dot">.</span>
         </a>
         <GameToolbar
           muted={muted}
@@ -420,56 +425,106 @@ export default function LoadBearing() {
       </header>
 
       {!session && (
-        <section className="lb-lobby">
-          <h1>Load Bearing</h1>
-          <p className="lb-pitch">
-            Three minutes to bring a condemned house down. The client&rsquo;s
-            piano is on the upper floor and has to survive. Cut the wrong
-            support and the floor above pancakes.
+        <section className="lb-welcome">
+          <p className="eyebrow">
+            <span className="tiny-line" /> A THREE-MINUTE DEMOLITION JOB
           </p>
-          <label className="lb-field">
-            <span>Your name</span>
+          <h1>
+            LOAD
+            <span>BEARING.</span>
+          </h1>
+          <p className="lb-tagline">
+            It all has to come down.
+            <br />
+            Except the piano.
+          </p>
+          <p className="lb-intro">
+            One condemned house, one wrecking ball, and a client&rsquo;s piano
+            on the upper floor.
+            <br />
+            Cut the wrong support and the storey pancakes onto it.
+          </p>
+          <form
+            className="setup-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (ready && !busy) void enter('create');
+            }}
+          >
+            <label htmlFor="lb-name">YOUR NAME</label>
             <input
+              id="lb-name"
               value={name}
               autoComplete="nickname"
               maxLength={18}
               placeholder="Wrecker"
               onChange={(event) => setName(event.target.value)}
             />
-          </label>
-          <div className="lb-lobby-actions">
-            <button
-              className="lb-primary"
-              disabled={!ready || busy}
-              onClick={() => void enter('create')}
-            >
-              {busy ? <LoaderCircle className="lb-spin" size={17} /> : null}
-              Start a crew
+            <button className="primary-button" disabled={!ready || busy}>
+              {busy ? (
+                <LoaderCircle className="spin" size={18} />
+              ) : (
+                <>
+                  Start a crew <ArrowRight size={18} />
+                </>
+              )}
             </button>
             <button
-              className="lb-secondary"
+              className="secondary-button"
+              type="button"
               disabled={!ready || busy}
               onClick={() => setModal('join')}
             >
-              Join with a code
+              Join with a room code <Users size={17} />
             </button>
-            <button
-              className="lb-ghost"
-              disabled={!ready || busy}
-              onClick={() => startPractice(1)}
-            >
-              Practice alone
-            </button>
-            <button
-              className="lb-ghost"
-              disabled={!ready || busy}
-              onClick={() => startPractice(4)}
-            >
-              Practice with a crew
-            </button>
+            <div className="lb-practice">
+              <button
+                className="practice-link"
+                type="button"
+                disabled={!ready || busy}
+                onClick={() => startPractice(1)}
+              >
+                Just me? Try it solo <HardHat size={14} />
+              </button>
+              <button
+                className="practice-link"
+                type="button"
+                disabled={!ready || busy}
+                onClick={() => startPractice(4)}
+              >
+                Practice with a crew <Users size={14} />
+              </button>
+            </div>
+            <p className="start-tip">
+              {ready
+                ? 'Invite friends or fill the crew with NPC wreckers.'
+                : 'Preparing the site…'}
+            </p>
+          </form>
+          <div className="lb-facts">
+            <span>
+              <Users size={14} /> 1–4 players + NPCs
+            </span>
+            <span>
+              <Timer size={14} /> 3-minute jobs
+            </span>
           </div>
-          {!ready && <p className="lb-loading">Preparing the site&hellip;</p>}
         </section>
+      )}
+
+      {!session && (
+        <>
+          <aside className="scene-caption">
+            <span className="map-badge">MIND THE PIANO</span>
+            <span>Second floor. Client&rsquo;s. Priceless.</span>
+          </aside>
+          <footer className="start-footer">
+            <span>
+              <span className="live-dot" /> NO DOWNLOAD. JUST BRING YOUR CREW.
+            </span>
+            <span>THE SURVEYOR SAID THAT WALL WAS FINE.</span>
+          </footer>
+        </>
       )}
 
       {session && w && (
@@ -511,14 +566,20 @@ export default function LoadBearing() {
           {w.phase === 'lobby' && (
             <section className="lb-start">
               {foreman ? (
-                <button className="lb-primary" onClick={() => action({ type: 'start' })}>
+                <button
+                  className="primary-button"
+                  onClick={() => action({ type: 'start' })}
+                >
                   Start the job
                 </button>
               ) : (
                 <p>Waiting for the foreman to start the job.</p>
               )}
               {!practice && (
-                <button className="lb-ghost" onClick={() => setModal('invite')}>
+                <button
+                  className="secondary-button"
+                  onClick={() => setModal('invite')}
+                >
                   Invite the crew
                 </button>
               )}
@@ -531,7 +592,7 @@ export default function LoadBearing() {
               <p>{w.events.at(-1)?.text}</p>
               {foreman && (
                 <button
-                  className="lb-primary"
+                  className="primary-button"
                   onClick={() => action({ type: 'restart' })}
                 >
                   Another job
@@ -540,17 +601,23 @@ export default function LoadBearing() {
             </section>
           )}
 
-          <nav className="lb-dock" aria-label="Site actions">
+          <nav className="tool-dock" aria-label="Site actions">
             <button
               disabled={disabled}
               onClick={() => action({ type: 'swing' })}
             >
               Swing <kbd>E</kbd>
             </button>
-            <button disabled={disabled} onClick={() => action({ type: 'mark' })}>
+            <button
+              disabled={disabled}
+              onClick={() => action({ type: 'mark' })}
+            >
               Mark <kbd>Q</kbd>
             </button>
-            <button disabled={disabled} onClick={() => action({ type: 'help' })}>
+            <button
+              disabled={disabled}
+              onClick={() => action({ type: 'help' })}
+            >
               Help <kbd>F</kbd>
             </button>
             <button
@@ -585,20 +652,20 @@ export default function LoadBearing() {
       )}
 
       <Dialog open={modal === 'join'} onOpenChange={() => setModal(null)}>
-        <DialogContent>
+        <DialogContent className="game-dialog">
           <DialogTitle>Join a crew</DialogTitle>
           <DialogDescription>
             Enter the six-character code your foreman shared.
           </DialogDescription>
           <input
-            className="lb-code-input"
+            className="dialog-input code-input"
             value={code}
             maxLength={6}
             placeholder="ABC123"
             onChange={(event) => setCode(event.target.value.toUpperCase())}
           />
           <button
-            className="lb-primary"
+            className="primary-button"
             disabled={busy || code.trim().length !== 6}
             onClick={() => void enter('join')}
           >
@@ -608,13 +675,16 @@ export default function LoadBearing() {
       </Dialog>
 
       <Dialog open={modal === 'invite'} onOpenChange={() => setModal(null)}>
-        <DialogContent>
+        <DialogContent className="game-dialog">
           <DialogTitle>Invite the crew</DialogTitle>
           <DialogDescription>
             Up to four wreckers. Share this code or the link.
           </DialogDescription>
-          <p className="lb-code">{session?.code}</p>
-          <button className="lb-secondary" onClick={() => void copyInvite()}>
+          <p className="invite-code">{session?.code}</p>
+          <button
+            className="secondary-button"
+            onClick={() => void copyInvite()}
+          >
             {copied ? <Check size={16} /> : <Copy size={16} />}
             {copied ? 'Link copied' : 'Copy invite link'}
           </button>
@@ -622,13 +692,13 @@ export default function LoadBearing() {
       </Dialog>
 
       <Dialog open={modal === 'help'} onOpenChange={() => setModal(null)}>
-        <DialogContent>
+        <DialogContent className="game-dialog">
           <DialogTitle>How to bring it down</DialogTitle>
           <DialogDescription>
             Destroy every part of the house inside three minutes without
             destroying the piano on the upper floor.
           </DialogDescription>
-          <ul className="lb-help">
+          <ul className="lb-help help-note">
             <li>
               <kbd>WASD</kbd> move, <kbd>Space</kbd> jump, <kbd>V</kbd> changes
               camera.
@@ -654,13 +724,13 @@ export default function LoadBearing() {
       </Dialog>
 
       <Dialog open={modal === 'leave'} onOpenChange={() => setModal(null)}>
-        <DialogContent>
+        <DialogContent className="game-dialog">
           <DialogTitle>Leave the site?</DialogTitle>
           <DialogDescription>
             The rest of the crew keeps working without you.
           </DialogDescription>
           <button
-            className="lb-primary"
+            className="primary-button"
             disabled={busy}
             onClick={() => void leave()}
           >

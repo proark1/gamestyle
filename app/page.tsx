@@ -289,30 +289,34 @@ const CARDS: Record<string, ReactElement> = {
       aria-label="Load Bearing: bring a condemned house down without destroying the piano"
     >
       <div className="game-card-art wreck-art">
-        <svg viewBox="0 0 384 256" className="wreck-scene" preserveAspectRatio="xMidYMid slice">
+        <svg
+          viewBox="0 0 384 256"
+          className="wreck-scene"
+          preserveAspectRatio="xMidYMid slice"
+        >
           <title>
             A condemned house half demolished, a wrecking ball swinging past an
             upright piano still standing on the exposed upper floor.
           </title>
-          <rect width="384" height="256" fill="#cfd9c6" />
-          <circle cx="286" cy="58" r="34" fill="#fff1cf" />
-          <rect y="188" width="384" height="68" fill="#b3a892" />
-          <g fill="#cfc6b8">
+          <rect width="384" height="256" fill="#c7d3b6" />
+          <circle cx="286" cy="58" r="34" fill="#fff1d2" />
+          <rect y="188" width="384" height="68" fill="#a4b98d" />
+          <g fill="#e9d9b0">
             <rect x="70" y="96" width="14" height="92" />
             <rect x="196" y="96" width="14" height="92" />
           </g>
-          <rect x="70" y="82" width="140" height="16" fill="#c49a63" />
-          <rect x="70" y="118" width="112" height="70" fill="#b06a4e" />
-          <rect x="70" y="66" width="86" height="18" fill="#c3bcae" />
-          <rect x="70" y="52" width="60" height="16" fill="#8e8577" />
-          <g fill="#4a3327">
+          <rect x="70" y="82" width="140" height="16" fill="#d3b07b" />
+          <rect x="70" y="118" width="112" height="70" fill="#c9805c" />
+          <rect x="70" y="66" width="86" height="18" fill="#f1e5c8" />
+          <rect x="70" y="52" width="60" height="16" fill="#6f9a92" />
+          <g fill="#6d4530">
             <rect x="160" y="44" width="38" height="24" rx="3" />
-            <rect x="163" y="56" width="32" height="5" fill="#f4ead6" />
+            <rect x="163" y="56" width="32" height="5" fill="#f7edd4" />
           </g>
-          <rect x="150" y="68" width="58" height="14" fill="#c3bcae" />
-          <path d="M300 0 L300 96" stroke="#3c3630" strokeWidth="3" />
-          <circle cx="300" cy="112" r="17" fill="#4b4f55" />
-          <g fill="#b06a4e" opacity="0.9">
+          <rect x="150" y="68" width="58" height="14" fill="#f1e5c8" />
+          <path d="M300 0 L300 96" stroke="#385d53" strokeWidth="3" />
+          <circle cx="300" cy="112" r="17" fill="#4a6b62" />
+          <g fill="#c9805c" opacity="0.9">
             <rect x="222" y="176" width="30" height="12" rx="2" />
             <rect x="252" y="182" width="22" height="8" rx="2" />
             <rect x="40" y="180" width="26" height="10" rx="2" />
