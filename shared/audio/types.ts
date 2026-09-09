@@ -7,7 +7,8 @@ export type GameId =
   | 'one-more-button'
   | 'four-brain-cells'
   | 'siege-and-desist'
-  | 'dont-wake-the-giant';
+  | 'dont-wake-the-giant'
+  | 'load-bearing';
 export type AudioCategory =
   | 'material'
   | 'speech'
@@ -63,6 +64,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'four-brain-cells': 'Four Brain Cells',
   'siege-and-desist': 'Siege and Desist',
   'dont-wake-the-giant': 'Tiptoe Thieves',
+  'load-bearing': 'Load Bearing',
 };
 export const isGameId = (v: unknown): v is GameId =>
   v === 'wrong-floor' ||
@@ -73,7 +75,8 @@ export const isGameId = (v: unknown): v is GameId =>
   v === 'one-more-button' ||
   v === 'four-brain-cells' ||
   v === 'siege-and-desist' ||
-  v === 'dont-wake-the-giant';
+  v === 'dont-wake-the-giant' ||
+  v === 'load-bearing';
 /** Reused clips keep their original immutable storage path. */
 export function audioFileUrl(file: string) {
   const [game, name] = file.split('/');

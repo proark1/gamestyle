@@ -8,6 +8,7 @@ import { createEngine as reel } from '../../games/reel-problems/peer';
 import { createEngine as button } from '../../games/one-more-button/peer';
 import { createEngine as hotel } from '../../games/wrong-floor/peer';
 import { createEngine as breakfast } from '../../games/four-brain-cells/peer';
+import { createEngine as demolition } from '../../games/load-bearing/peer';
 import { createEngine as siege } from '../../games/siege-and-desist/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
 const engines = {
@@ -19,6 +20,7 @@ const engines = {
   'reel-problems': reel,
   'one-more-button': button,
   'four-brain-cells': breakfast,
+  'load-bearing': demolition,
   'siege-and-desist': siege,
 };
 export function createPeerEngine(
