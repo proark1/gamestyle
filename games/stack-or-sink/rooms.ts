@@ -137,7 +137,7 @@ export async function handleRoom(
       }
     if (!room.world.players.some((p) => p.id === room.host))
       room.host = room.world.players[0]?.id || id;
-    tick(room.world, now);
+    tick(room.world, now, `room:${code}`);
     if (joining) {
       if (room.world.players.length >= 4)
         throw new RoomError(

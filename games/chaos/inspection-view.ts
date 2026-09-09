@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import type { Snapshot } from './model';
 import { footprint } from './placement';
@@ -100,7 +101,7 @@ export class InspectionView {
     this.root.removeFromParent();
     this.root.traverse((o) => {
       if (o instanceof T.Mesh || o instanceof T.LineSegments) {
-        o.geometry.dispose();
+        disposeGeometry(o.geometry);
         for (const m of Array.isArray(o.material) ? o.material : [o.material])
           m.dispose();
       }

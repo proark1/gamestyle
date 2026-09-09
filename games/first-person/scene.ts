@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import {
@@ -590,7 +591,7 @@ export class FirstPersonScene {
     for (const [key, mesh] of this.bedMeshes)
       if (!world.beds.some((b) => b.key === key)) {
         this.scene.remove(mesh);
-        mesh.geometry.dispose();
+        disposeGeometry(mesh.geometry);
         this.bedMeshes.delete(key);
       }
     for (const b of world.beds)
@@ -831,13 +832,13 @@ export class FirstPersonScene {
           const ghostKey = `${this.tool}:${p.rotation}`;
           if (this.ghostKind !== ghostKey) {
             this.ghostKind = ghostKey;
-            this.ghost.geometry.dispose();
+            disposeGeometry(this.ghost.geometry);
             this.ghost.geometry = new T.BoxGeometry(
               actual.w,
               actual.h,
               actual.d,
             );
-            this.ghostEdges.geometry.dispose();
+            disposeGeometry(this.ghostEdges.geometry);
             this.ghostEdges.geometry = new T.EdgesGeometry(this.ghost.geometry);
           }
           this.ghost.position.set(p.x, actual.y, p.z);
@@ -989,7 +990,7 @@ export class FirstPersonScene {
   private disposeObject(object: T.Object3D, materials: boolean) {
     object.traverse((o) => {
       if (o instanceof T.Mesh || o instanceof T.LineSegments) {
-        o.geometry.dispose();
+        disposeGeometry(o.geometry);
         if (materials)
           for (const m of Array.isArray(o.material) ? o.material : [o.material])
             m.dispose();

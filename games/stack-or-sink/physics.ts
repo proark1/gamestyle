@@ -373,6 +373,49 @@ export class Physics {
       this.players.set(p.id, body);
     }
   }
+  /** A room round-trips through JSON between requests, so an unchanged
+   *  rigid-body world is re-pointed at the freshly parsed objects rather than
+   *  rebuilt. Only dynamic state moves across; topology decides a rebuild, so
+   *  shapes, mass and body membership are already correct. */
+  adopt(world: World) {
+    this.world = world;
+    for (const p of world.pieces) {
+      if (p.heldBy && p.heldBy !== 'crane') continue;
+      const body = this.pieces.get(p.id);
+      if (!body) continue;
+      const q = orientation(p);
+      body.quaternion.copy(q);
+      body.position.copy(
+        vec(p.x, p.y, p.z).vadd(q.vmult(vec(0, ITEMS[p.kind].h / 2, 0))),
+      );
+      body.velocity.set(p.vx || 0, p.vy || 0, p.vz || 0);
+      body.angularVelocity.set(
+        p.angular?.x || 0,
+        p.angular?.y || 0,
+        p.angular?.z || 0,
+      );
+      body.force.setZero();
+      body.torque.setZero();
+      body.wakeUp();
+      if (!p.heldBy) {
+        if (p.sleeping) body.sleep();
+        else if (p.idle) {
+          body.sleepState = C.Body.SLEEPY;
+          // The engine clock persists across requests, unlike a fresh build.
+          body.timeLastSleepy = this.engine.time - p.idle;
+        }
+      }
+      body.aabbNeedsUpdate = true;
+    }
+    for (const p of world.players) {
+      const body = this.players.get(p.id);
+      if (!body) continue;
+      body.position.set(p.x, p.y + PLAYER_HEIGHT / 2, p.z);
+      body.velocity.set(0, p.vy, 0);
+      body.force.setZero();
+      body.aabbNeedsUpdate = true;
+    }
+  }
   controls(p: Player, input: Input, _dt: number) {
     const body = this.players.get(p.id);
     if (!body) return;
@@ -484,16 +527,39 @@ export class Physics {
 function topology(w: World) {
   return `${w.started}|${w.pieces.map((p) => `${p.id}:${p.kind}:${p.heldBy || ''}:${p.revision || 0}`).join('|')}|${w.players.map((p) => `${p.id}:${p.down}:${p.rescued}`).join('|')}`;
 }
-const simulationCache = new WeakMap<
-  World,
-  { physics: Physics; signature: string; pieces: Piece[] }
->();
-export function simulationPhysics(w: World) {
+const simulationCache = new WeakMap<object, SimulationEntry>();
+type SimulationEntry = {
+  physics: Physics;
+  signature: string;
+  pieces: Piece[];
+};
+/** A server request parses a fresh World every time, so the object-keyed cache
+ *  can never hit there. Callers that own a stable identity (a room code) pass
+ *  it instead. Bounded because rooms come and go and each entry holds a world. */
+const KEYED_LIMIT = 128;
+const keyedCache = new Map<string, SimulationEntry>();
+export function simulationPhysics(w: World, cacheKey: object | string = w) {
   const signature = topology(w);
-  let cached = simulationCache.get(w);
-  if (!cached || cached.signature !== signature || cached.pieces !== w.pieces) {
+  const keyed = typeof cacheKey === 'string';
+  let cached = keyed ? keyedCache.get(cacheKey) : simulationCache.get(cacheKey);
+  if (!cached || cached.signature !== signature) {
     cached = { physics: new Physics(w), signature, pieces: w.pieces };
-    simulationCache.set(w, cached);
+    if (keyed) {
+      keyedCache.delete(cacheKey);
+      keyedCache.set(cacheKey, cached);
+      for (const stale of keyedCache.keys()) {
+        if (keyedCache.size <= KEYED_LIMIT) break;
+        keyedCache.delete(stale);
+      }
+    } else simulationCache.set(cacheKey, cached);
+  } else if (cached.pieces !== w.pieces) {
+    cached.physics.adopt(w);
+    cached.pieces = w.pieces;
+    if (keyed) {
+      // Keep insertion order as recency so eviction drops the coldest room.
+      keyedCache.delete(cacheKey);
+      keyedCache.set(cacheKey, cached);
+    }
   }
   return cached.physics;
 }

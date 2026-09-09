@@ -14,6 +14,7 @@ Each game owns its implementation in `games/<id>/`. The folder identifiers match
 | `games/dont-wake-the-giant` | Tiptoe Thieves  | `/dont-wake-the-giant` |
 | `games/one-more-button`     | One More Button | `/one-more-button`     |
 | `games/load-bearing`        | Load Bearing    | `/load-bearing`        |
+| `games/siege-and-desist`   | Siege and Desist | `/siege-and-desist`   |
 | `games/chaos`               | Permit Pending  | `/chaos`               |
 | `games/first-person`        | Brick by Hand   | `/first-person`        |
 

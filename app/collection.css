@@ -195,6 +195,9 @@
 .cow-card .game-title-dot {
   color: #92a279;
 }
+.siege-card .game-title-dot {
+  color: #c2472f;
+}
 .delivery-card .game-title-dot {
   color: #bc8950;
 }

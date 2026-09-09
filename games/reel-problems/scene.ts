@@ -1,7 +1,13 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as THREE from 'three';
 import {
   ANGLER_COLORS,
+  LANDING_MS,
+  WELL_SURFACE,
   idleInput,
+  landingPose,
+  landingScale,
   type ReelInput,
   type ReelAction,
   type ReelSnapshot,
@@ -42,6 +48,15 @@ export class ReelScene {
     new THREE.RingGeometry(0.4, 0.48, 24),
     new THREE.MeshBasicMaterial({ color: '#fff3b4', side: THREE.DoubleSide }),
   );
+  private splash = new THREE.Mesh(
+    new THREE.RingGeometry(0.2, 0.34, 18),
+    new THREE.MeshBasicMaterial({
+      color: '#f0ffff',
+      side: THREE.DoubleSide,
+      transparent: true,
+    }),
+  );
+  private splashAt = -1e9;
   private observer: ResizeObserver;
   private resizePending = true;
   private viewportWidth = 0;
@@ -107,6 +122,11 @@ export class ReelScene {
     this.ring.position.y = 0.1;
     this.ring.visible = false;
     this.scene.add(this.ring);
+    // Rides in the boat so the splash stays over the well however it pitches.
+    this.splash.rotation.x = -Math.PI / 2;
+    this.splash.position.set(0, WELL_SURFACE + 0.02, 0);
+    this.splash.visible = false;
+    this.boat.add(this.splash);
     for (let i = 0; i < 4; i++)
       this.demo.players.push(
         newAngler(
@@ -123,13 +143,17 @@ export class ReelScene {
         transparent: true,
         opacity: 0.55,
       });
+    const ripples = new THREE.Group();
     for (let i = 0; i < 45; i++) {
       const m = new THREE.Mesh(rippleGeometry, rippleMaterial);
       m.rotation.x = Math.PI / 2;
       m.position.set(Math.sin(i * 7.1) * 33, 0.03, Math.cos(i * 3.7) * 33);
       m.scale.setScalar(0.6 + (i % 3));
-      this.scene.add(m);
+      ripples.add(m);
     }
+    // They are placed once and never touched again, so they draw as one.
+    batchScenery(ripples);
+    this.scene.add(ripples);
     this.camera.position.set(0, 28, 30);
     this.camera.lookAt(0, 0, 0);
     // Observer delivery must not write layout and trigger another delivery.
@@ -371,26 +395,37 @@ export class ReelScene {
           object.position.set(p.x, p.swimming ? -0.45 : 0.52, p.z);
         }
       }
-      object.position.lerp(
-        new THREE.Vector3(
-          p.x,
-          p.swimming ? -0.48 + Math.sin(now / 200) * 0.08 : 0.52,
-          p.z,
-        ),
-        smooth,
-      );
-      object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
+      const downed = p.swimming && world.clock < p.downedUntil;
       const falling =
         p.swimming && now - (object.userData.fellAt ?? -1000) < 500;
-      object.rotation.x = falling
-        ? Math.sin(((now - object.userData.fellAt) / 500) * Math.PI) * 0.9
-        : 0;
-      object.rotation.z = falling
-        ? 0.65
-        : p.input.brace
+      // Height alone tells the story: face down, hanging on, or back aboard.
+      const height = downed
+        ? -0.74
+        : p.clinging
+          ? -0.5 + p.climb * 1.02
+          : p.swimming
+            ? -0.48 + Math.sin(now / 200) * 0.08
+            : 0.52;
+      object.position.lerp(new THREE.Vector3(p.x, height, p.z), smooth);
+      object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
+      if (falling) {
+        object.rotation.x =
+          Math.sin(((now - object.userData.fellAt) / 500) * Math.PI) * 0.9;
+        object.rotation.z = 0.65;
+      } else if (downed) {
+        object.rotation.x = 1.45;
+        object.rotation.z = 0.6;
+      } else if (p.clinging) {
+        // Scrambling up the side: the harder you haul, the more you swing.
+        object.rotation.x = -0.35;
+        object.rotation.z = Math.sin(now / 90) * (p.input.reel ? 0.18 : 0.05);
+      } else {
+        object.rotation.x = 0;
+        object.rotation.z = p.input.brace
           ? -0.12
           : Math.sin(now / 110) *
             Math.min(0.06, Math.hypot(p.input.x, p.input.z) * 0.06);
+      }
       const line = this.lines.get(p.id)!,
         bobber = this.bobbers.get(p.id)!;
       line.visible = bobber.visible = !!p.line;
@@ -431,17 +466,54 @@ export class ReelScene {
       let object = this.fish.get(f.id);
       if (!object) {
         object = createCatch(f.kind);
+        // createCatch already sizes fish but not salvage; keep whichever it chose.
+        object.userData.size = object.scale.x;
         this.fish.set(f.id, object);
         this.scene.add(object);
         object.position.set(f.x, 0.05, f.z);
       }
-      object.visible = !f.respawnAt;
+      // land() is the only thing that sets respawnAt, so this edge is a catch
+      // coming aboard. Every client sees it from the snapshot alone.
+      const afloat = !f.respawnAt;
+      if (object.userData.afloat === false && afloat)
+        object.position.set(f.x, 0.05, f.z);
+      else if (object.userData.afloat && !afloat) {
+        object.userData.landedAt = now;
+        object.userData.from = object.position.clone();
+        this.splashAt = now + LANDING_MS * 0.86;
+      }
+      object.userData.afloat = afloat;
+      const landing = afloat
+        ? 0
+        : Math.min(1, (now - (object.userData.landedAt ?? -1e9)) / LANDING_MS);
+      object.visible = afloat || landing < 1;
+      if (!object.visible) continue;
+      if (landing) {
+        this.yaw.updateMatrixWorld(true);
+        const well = this.boat.localToWorld(
+          new THREE.Vector3(0, WELL_SURFACE, 0),
+        );
+        const t = landing,
+          pose = landingPose(t, object.userData.from as THREE.Vector3, well);
+        object.position.set(pose.x, pose.y, pose.z);
+        // Flip tail over head on the way in, then settle on the water line.
+        object.rotation.set(t * Math.PI * 2.4, f.angle, Math.sin(t * 9) * 0.5);
+        object.scale.setScalar(landingScale(t, object.userData.size));
+        continue;
+      }
+      object.scale.setScalar(object.userData.size);
       const y = f.surge
         ? 0.45 + Math.abs(Math.sin(now / 230)) * 0.65
         : -0.03 + Math.sin(now / 650 + f.x) * 0.05;
       object.position.lerp(new THREE.Vector3(f.x, y, f.z), smooth);
-      object.rotation.y = f.angle;
-      object.rotation.z = f.surge ? Math.sin(now / 90) * 0.12 : 0;
+      object.rotation.set(0, f.angle, f.surge ? Math.sin(now / 90) * 0.12 : 0);
+    }
+    const splash = (now - this.splashAt) / 420;
+    this.splash.visible = splash >= 0 && splash < 1;
+    if (this.splash.visible) {
+      this.splash.scale.setScalar(0.35 + splash * 1.5);
+      (this.splash.material as THREE.MeshBasicMaterial).opacity =
+        0.9 * (1 - splash);
     }
     const zoom = this.wide ? 1.6 : 1;
     const small = this.camera.aspect < 0.8 ? 1.2 : 1;
@@ -459,7 +531,7 @@ export class ReelScene {
         o instanceof THREE.Line ||
         o instanceof THREE.Sprite
       ) {
-        if ('geometry' in o) o.geometry.dispose();
+        if ('geometry' in o) disposeGeometry(o.geometry);
         for (const mat of Array.isArray(o.material)
           ? o.material
           : [o.material]) {

@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { FrameStats } from '../../shared/rendering/frame-stats';
-import { label } from '../../shared/rendering/primitives';
+import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { bridgePose, goatPose, GOATS, LEVEL, routeStage } from './level';
 import {
   deliverySofa,
@@ -611,7 +611,8 @@ export class DeliveryScene {
   }
   disposeObject(root: T.Object3D) {
     root.traverse((o) => {
-      if (o instanceof T.Mesh || o instanceof T.Line) o.geometry.dispose();
+      if (o instanceof T.Mesh || o instanceof T.Line)
+        disposeGeometry(o.geometry);
       if (o instanceof T.Sprite) {
         o.material.map?.dispose();
         o.material.dispose();

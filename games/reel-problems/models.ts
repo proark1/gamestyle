@@ -1,5 +1,6 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import * as THREE from 'three';
-import { CATCHES, HULL_HALF, type CatchKind } from './types';
+import { CATCHES, HULL_HALF, WELL_SURFACE, type CatchKind } from './types';
 
 export function material(color: string, roughness = 0.85) {
   return new THREE.MeshStandardMaterial({ color, roughness });
@@ -66,8 +67,24 @@ export function createBoat() {
     box(group, [5.35, 0.9, 0.28], [0, 0.45, z], hull);
     box(group, [5.4, 0.14, 0.35], [0, 0.96, z], cream);
   }
-  box(group, [2.4, 0.8, 0.9], [0, 0.9, 0], material('#739e98'));
-  box(group, [2.5, 0.12, 1], [0, 1.35, 0], cream);
+  // Live well, open at the top so a landed catch is visibly dropped inside.
+  const well = material('#739e98');
+  for (const x of [-1.14, 1.14])
+    box(group, [0.12, 0.8, 0.9], [x, 0.9, 0], well);
+  for (const z of [-0.39, 0.39])
+    box(group, [2.4, 0.8, 0.12], [0, 0.9, z], well);
+  box(group, [2.4, 0.1, 0.9], [0, 0.55, 0], well);
+  const brine = box(
+    group,
+    [2.16, 0.02, 0.66],
+    [0, WELL_SURFACE, 0],
+    material('#3f9aa2', 0.25),
+  );
+  brine.name = 'brine';
+  for (const x of [-1.19, 1.19])
+    box(group, [0.12, 0.12, 1], [x, 1.35, 0], cream);
+  for (const z of [-0.44, 0.44])
+    box(group, [2.5, 0.12, 0.12], [0, 1.35, z], cream);
   box(group, [0.16, 0.16, 8.5], [-2.9, 1.1, 0], dark).rotation.y = 0.14;
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.15, 8, 16), cream);
   ring.position.set(0.3, 0.6, 2.65);
@@ -274,6 +291,8 @@ export function addShore(scene: THREE.Scene) {
   for (const x of [-2.4, 2.4])
     for (const z of [38, 43])
       cylinder(dock, 0.19, 2.4, [x, 0, z], material('#947150'));
+  // Planks and pilings never move, so they draw as one mesh per material.
+  batchScenery(dock);
   scene.add(dock);
 }
 export function nameLabel(text: string, color: string) {

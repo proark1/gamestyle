@@ -5,6 +5,7 @@ import {
 } from './request-budget';
 import { RoomError, type RoomStore } from '../rooms/types';
 import { isRoomOriginAllowed } from './request-origin';
+import { sweepExpiredRooms } from '../rooms/expiry';
 
 type RoomHandlerOptions = {
   store: () => RoomStore;
@@ -30,7 +31,9 @@ export function createRoomHandler(options: RoomHandlerOptions) {
       if (!isRoomOriginAllowed(request, process.env.PUBLIC_GAME_ORIGIN))
         return jsonResponse({ error: options.originError }, 403);
       const body = await readRoomRequest(request);
-      return jsonResponse(await options.handle(options.store(), body));
+      const store = options.store();
+      sweepExpiredRooms(store);
+      return jsonResponse(await options.handle(store, body));
     } catch (error) {
       if (error instanceof RoomError) return budgetError(error);
       console.error(options.logLabel, error);

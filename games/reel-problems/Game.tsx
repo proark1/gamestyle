@@ -409,8 +409,13 @@ export default function ReelProblems() {
     me?.line?.kind === 'fish'
       ? w?.fish.find((f) => f.id === me.line?.target)
       : null;
+  const downed = !!me?.swimming && !!w && w.clock < me.downedUntil;
   const lineLabel = me?.swimming
-    ? 'Overboard! Swim to the boat'
+    ? downed
+      ? 'Pulled under! The crew is hauling you out'
+      : me.clinging
+        ? 'Holding on — hold E to climb aboard'
+        : 'Overboard! Swim to the hull'
     : me?.line?.tangled
       ? 'Tangled! Press R to loosen'
       : me?.line?.kind === 'player'
@@ -609,7 +614,11 @@ export default function ReelProblems() {
                 </span>
                 <small>
                   {p.swimming
-                    ? 'swimming'
+                    ? w && w.clock < p.downedUntil
+                      ? 'under!'
+                      : p.clinging
+                        ? 'climbing'
+                        : 'swimming'
                     : p.line?.tangled
                       ? 'tangled'
                       : p.line?.kind === 'fish'
@@ -675,19 +684,51 @@ export default function ReelProblems() {
                 >
                   {lineLabel}
                 </span>
-                <div className="reel-tension">
-                  <small>LINE TENSION</small>
-                  <meter
-                    aria-label="Line tension"
-                    min={0}
-                    max={1.2}
-                    low={0.65}
-                    high={0.92}
-                    optimum={0.35}
-                    value={me?.line?.tension ?? 0}
-                  />
-                  <b>{Math.round((me?.line?.tension ?? 0) * 100)}%</b>
-                </div>
+                {!me?.swimming && (
+                  <div className="reel-tension">
+                    <small>LINE TENSION</small>
+                    <meter
+                      aria-label="Line tension"
+                      min={0}
+                      max={1.2}
+                      low={0.65}
+                      high={0.92}
+                      optimum={0.35}
+                      value={me?.line?.tension ?? 0}
+                    />
+                    <b>{Math.round((me?.line?.tension ?? 0) * 100)}%</b>
+                  </div>
+                )}
+                {me?.swimming && (
+                  <div className="reel-fish-stamina">
+                    <small>CONDITION</small>
+                    <progress
+                      aria-label="Your condition in the water"
+                      max={1}
+                      value={me.health}
+                    />
+                    <span>
+                      {downed
+                        ? 'Under'
+                        : me.health >= 1
+                          ? 'Fine'
+                          : me.health > 0.5
+                            ? 'Rattled'
+                            : 'Barely'}
+                    </span>
+                  </div>
+                )}
+                {me?.clinging && (
+                  <div className="reel-fish-stamina">
+                    <small>CLIMB</small>
+                    <progress
+                      aria-label="Climb progress"
+                      max={1}
+                      value={me.climb}
+                    />
+                    <span>{Math.round(me.climb * 100)}%</span>
+                  </div>
+                )}
                 {fishOn && (
                   <p className="reel-team-pull">
                     {helpers.length > 1
@@ -730,14 +771,15 @@ export default function ReelProblems() {
                   </span>
                 </button>
                 <HoldButton
-                  label="Hold to reel"
+                  label={me?.clinging ? 'Hold to climb' : 'Hold to reel'}
                   active={!!me?.input.reel}
                   hold={(held) => scene.current?.hold('reel', held)}
-                  disabled={uiDisabled || !me?.line}
+                  disabled={uiDisabled || (!me?.line && !me?.clinging)}
                 >
                   <Anchor size={18} />
                   <span>
-                    Reel<kbd>Hold E</kbd>
+                    {me?.clinging ? 'Climb' : 'Reel'}
+                    <kbd>Hold E</kbd>
                   </span>
                 </HoldButton>
                 <HoldButton
@@ -777,7 +819,7 @@ export default function ReelProblems() {
                 >
                   <LifeBuoy size={18} />
                   <span>
-                    {me?.swimming ? 'Climb in' : 'Rescue'}
+                    {me?.swimming ? 'Grab on' : 'Rescue'}
                     <kbd>F</kbd>
                   </span>
                 </button>
@@ -895,13 +937,22 @@ export default function ReelProblems() {
                 and use R to free your line.
               </p>
               <p>
+                <b>In the water:</b> swim to the hull and you grab hold
+                automatically, then hold E for five seconds to climb aboard.
+                WASD shimmies you along the side. A shark will leave the boat
+                alone and come straight for a swimmer — two bites and you go
+                under, costing the crew points. A jellyfish sting shocks your
+                hands open and drops you off the hull.
+              </p>
+              <p>
                 <b>Tangles:</b> crossed lines knot together. R loosens nearby
                 knots; spread out, or Q cuts free.
               </p>
               <p>
-                <b>Rescue:</b> F pulls a nearby friend aboard, or helps you
-                climb in. You can also reel a swimming friend closer. A safety
-                rope returns you after twelve seconds.
+                <b>Rescue:</b> F pulls a nearby friend straight aboard, or
+                reaches for the hull when you are the one swimming. You can also
+                reel a swimming friend closer. A safety rope returns you after
+                twelve seconds.
               </p>
               <p>
                 <b>Junk:</b> tyres steady the boat, magnets widen the bite zone,

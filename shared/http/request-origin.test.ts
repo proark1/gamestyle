@@ -35,3 +35,49 @@ void test('local same-origin and requests without an origin retain their existin
     true,
   );
 });
+
+void test('a comma-separated list lets one deployment serve several domains', () => {
+  const origins =
+    'https://www.jumbleyard.com, https://jumbleyard.up.railway.app';
+  const from = (origin: string) =>
+    new Request('http://internal:8080/api/rooms', { headers: { origin } });
+  assert.equal(
+    isRoomOriginAllowed(from('https://www.jumbleyard.com'), origins),
+    true,
+  );
+  assert.equal(
+    isRoomOriginAllowed(from('https://jumbleyard.up.railway.app'), origins),
+    true,
+  );
+  assert.equal(
+    isRoomOriginAllowed(from('https://attacker.example'), origins),
+    false,
+  );
+  assert.equal(
+    isRoomOriginAllowed(from('https://jumbleyard.com'), origins),
+    false,
+  );
+});
+
+void test('malformed and empty entries never widen the allowed origins', () => {
+  const request = new Request('http://internal:8080/api/rooms', {
+    headers: { origin: 'https://attacker.example' },
+  });
+  assert.equal(
+    isRoomOriginAllowed(request, 'not a url, https://game.example'),
+    false,
+  );
+  assert.equal(isRoomOriginAllowed(request, ',,'), false);
+  assert.equal(isRoomOriginAllowed(request, '   '), false);
+  const trusted = new Request('http://internal:8080/api/rooms', {
+    headers: { origin: 'https://game.example' },
+  });
+  assert.equal(
+    isRoomOriginAllowed(trusted, 'not a url, https://game.example'),
+    true,
+  );
+  assert.equal(
+    isRoomOriginAllowed(trusted, 'https://game.example/lobby?a=1'),
+    true,
+  );
+});

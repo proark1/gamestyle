@@ -13,9 +13,16 @@ import {
 } from './simulation';
 import { createEngine } from './peer';
 import {
+  BITE_COOLDOWN,
   CATCHES,
+  CLIMB_MS,
+  DOWNED_MS,
+  DOWNED_PENALTY,
+  GRAB_REACH,
   NET_REACH,
   ROUND_MS,
+  landingPose,
+  landingScale,
   type CatchKind,
   type ReelWorld,
 } from './types';
@@ -88,6 +95,215 @@ void test('A catch reeled right up to the boat stays in the water, never on the 
     // It must still come within netting reach, or a beaten fish could never land.
     assert.ok(closest < NET_REACH, `${kind} never came alongside`);
   }
+});
+void test('A landed catch arcs out of the lake and finishes in the live well', () => {
+  // Boat-local metres, from models.ts: rail top 1.03, well rim 1.41, water 1.12.
+  const well = { x: 0, y: 1.12, z: 0 };
+  for (const from of [
+    { x: 3.6, y: -0.03, z: 0 }, // alongside, at the water line
+    { x: -3.4, y: 1.05, z: 2.9 }, // off the quarter, mid-surge
+    { x: 0, y: 0, z: -5.2 }, // straight off the bow
+  ]) {
+    const start = landingPose(0, from, well),
+      end = landingPose(1, from, well);
+    assert.deepEqual(start, from, 'starts where the fish was fought');
+    assert.ok(
+      Math.hypot(end.x - well.x, end.z - well.z) < 1e-9,
+      'ends over the well',
+    );
+    assert.ok(
+      end.y < 1.41 && Math.abs(end.y - (well.y - 0.1)) < 1e-9,
+      `ends on the well water line, not above the rim (${end.y})`,
+    );
+    let peak = -Infinity;
+    for (let i = 0; i <= 200; i++)
+      peak = Math.max(peak, landingPose(i / 200, from, well).y);
+    assert.ok(peak > 1.41 + 0.2, `clears the well rim (peak ${peak})`);
+    assert.ok(peak > from.y + 0.5, 'visibly leaves the water');
+  }
+  // Shrinks only at the end, and enough that the biggest catch fits the hatch.
+  const monster = CATCHES.monster.size;
+  assert.equal(landingScale(0, monster), monster);
+  assert.equal(landingScale(0.6, monster), monster);
+  assert.ok(landingScale(1, monster) < monster * 0.5);
+});
+function overboard(count = 1) {
+  const w = game(count),
+    p = w.players[0];
+  w.fish = [];
+  w.wildlife = [];
+  p.swimming = true;
+  p.overboardAt = w.clock;
+  p.x = w.boat.x + 11;
+  p.z = w.boat.z;
+  return { w, p };
+}
+void test('A swimmer catches the hull and needs five held seconds to climb aboard', () => {
+  const { w, p } = overboard();
+  p.input.x = -1;
+  tick(w, 1);
+  assert.equal(p.clinging, false, 'open water offers nothing to hold');
+  tick(w, 2.5);
+  assert.equal(p.clinging, true, 'reaching the hull is enough to catch hold');
+  assert.ok(hullGap(w, p) < GRAB_REACH);
+  // Hanging on costs nothing, and the climb only moves while E is held.
+  p.input.x = 0;
+  tick(w, 1);
+  assert.equal(p.climb, 0);
+  assert.equal(p.swimming, true);
+  p.input.reel = true;
+  tick(w, 3);
+  assert.equal(p.swimming, true, 'three seconds is not a climb');
+  assert.ok(
+    Math.abs(p.climb - 3000 / CLIMB_MS) < 0.05,
+    `partway up the side (${p.climb})`,
+  );
+  tick(w, 2.1);
+  assert.equal(p.swimming, false);
+  assert.equal(p.clinging, false);
+  assert.ok(w.events.some((e) => e.text.includes('climbed back aboard')));
+});
+void test('A shark hunts the swimmer, not the hull, and two bites put them under', () => {
+  const { w, p } = overboard();
+  const shark = freshReel(w.clock).wildlife.find((v) => v.kind === 'shark')!;
+  w.wildlife = [shark];
+  p.clinging = true;
+  p.climb = 0.8;
+  p.x = w.boat.x + 3;
+  shark.activeUntil = w.clock + 30_000;
+  shark.hitAt = 0;
+  shark.x = p.x + 1;
+  shark.z = p.z;
+  tick(w, 0.2);
+  assert.ok(
+    w.events.some((e) => e.kind === 'chomp'),
+    'the bite is announced',
+  );
+  assert.ok(p.health < 1 && p.health > 0, `bitten once (${p.health})`);
+  assert.equal(p.clinging, false, 'the bite tears you off the hull');
+  assert.equal(p.climb, 0, 'and costs every second you had banked');
+  tick(w, BITE_COOLDOWN / 1000 + 0.6);
+  assert.equal(p.health, 0);
+  assert.ok(p.downedUntil > w.clock, 'pulled under until the crew reacts');
+  w.score = 40;
+  tick(w, DOWNED_MS / 1000 + 0.3);
+  assert.equal(p.swimming, false, 'the crew always gets a downed angler out');
+  assert.equal(w.score, 40 - DOWNED_PENALTY, 'and the boat pays for the delay');
+  assert.equal(p.health, 1);
+});
+void test('A bitten angler who swims straight back still beats the shark aboard', () => {
+  // The balance the bite cooldown exists for: react and you make it by a hair,
+  // dawdle and the lake takes you. Retuning either number must keep both true.
+  const attempt = (react: boolean) => {
+    const { w, p } = overboard();
+    const shark = freshReel(w.clock).wildlife.find((v) => v.kind === 'shark')!;
+    w.wildlife = [shark];
+    p.x = w.boat.x + 3.6;
+    shark.activeUntil = w.clock + 40_000;
+    shark.hitAt = 0;
+    shark.x = p.x + 1.2;
+    shark.z = p.z;
+    for (let i = 0; i < 200 && p.swimming; i++) {
+      if (react) {
+        const d = Math.max(0.1, Math.hypot(w.boat.x - p.x, w.boat.z - p.z));
+        p.input.x = (w.boat.x - p.x) / d;
+        p.input.z = (w.boat.z - p.z) / d;
+        p.input.reel = true;
+      }
+      advanceReel(w, w.clock + 50);
+    }
+    return { w, p, seconds: (w.clock - p.overboardAt) / 1000 };
+  };
+  const quick = attempt(true);
+  // The safety rope also ends a swim, so insist on the climb itself.
+  assert.ok(
+    quick.w.events.some((e) => e.text.includes('climbed back aboard')),
+    `got up the side under his own power (${quick.seconds}s)`,
+  );
+  assert.ok(
+    !quick.w.events.some((e) => e.text.includes('went under')),
+    'one bite, not two',
+  );
+  const slow = attempt(false);
+  assert.ok(
+    slow.w.events.some((e) => e.text.includes('went under')),
+    'floating there costs you the second bite',
+  );
+});
+void test('A jellyfish sting shocks a climbing angler off the hull', () => {
+  const { w, p } = overboard();
+  const jelly = freshReel(w.clock).wildlife.find(
+    (v) => v.kind === 'jellyfish',
+  )!;
+  w.wildlife = [jelly];
+  p.clinging = true;
+  p.climb = 0.9;
+  p.x = w.boat.x + 3;
+  jelly.activeUntil = w.clock + 30_000;
+  jelly.hitAt = 0;
+  jelly.x = p.x;
+  jelly.z = p.z;
+  tick(w, 0.1);
+  assert.ok(w.events.some((e) => e.kind === 'sting'));
+  assert.ok(p.health < 1 && p.health > 0.5, 'a sting wears you down, no more');
+  assert.equal(p.clinging, false);
+  assert.equal(p.climb, 0);
+  assert.ok(p.stunUntil > w.clock);
+  // Drift the jellyfish off so this measures the shock, not a second sting.
+  jelly.x = w.boat.x + 25;
+  p.x = w.boat.x + 3;
+  p.input.reel = true;
+  tick(w, 0.5);
+  assert.equal(p.clinging, false, 'shocked hands cannot take hold');
+  tick(w, 1.5);
+  assert.equal(p.clinging, true, 'the shock passes and the hull is there');
+});
+void test('Weather rocks the deck without sweeping a braced angler overboard', () => {
+  const storm = (brace: boolean) => {
+    const w = game();
+    w.fish = [];
+    w.wildlife = [];
+    w.weather.kind = 'storm';
+    w.weather.since = w.clock - 5000;
+    w.weather.until = w.clock + 500_000;
+    w.weather.direction = Math.PI / 2;
+    // A storm without thunder is just wind; the waves are what throw people.
+    w.weather.nextThunderAt = w.clock + 500;
+    w.players[0].recoveredAt = w.clock - 3000;
+    w.players[0].input.brace = brace;
+    tick(w, 60);
+    return w;
+  };
+  const braced = storm(true),
+    loose = storm(false);
+  assert.equal(braced.players[0].splashes, 0, 'bracing answers a whole storm');
+  assert.ok(
+    Math.abs(braced.boat.roll) > 0.05,
+    'the deck still moves under you',
+  );
+  assert.ok(
+    loose.players[0].splashes > 0,
+    'riding out thunder unbraced still costs you',
+  );
+  // A plain gust is weather, not a hazard: it must never clear the deck.
+  const windy = game();
+  windy.fish = [];
+  windy.wildlife = [];
+  windy.weather.kind = 'wind';
+  windy.weather.since = windy.clock - 5000;
+  windy.weather.until = windy.clock + 500_000;
+  windy.weather.direction = Math.PI / 2;
+  windy.players[0].recoveredAt = windy.clock - 3000;
+  tick(windy, 60);
+  assert.equal(
+    windy.players[0].splashes,
+    0,
+    'a gust alone leaves the crew put',
+  );
+  assert.ok(
+    Math.abs(windy.boat.x) > 3,
+    'while still pushing the boat downwind',
+  );
 });
 void test('Crew weight rolls the boat and outriggers reduce the lean', () => {
   const plain = game(4),
@@ -184,6 +400,7 @@ void test('Overboard players always recover and restarting clears progress', () 
 void test('Tournament ends at five minutes with a score-based result and time is frame-rate independent', () => {
   const w = game();
   w.fish = [];
+  w.wildlife = [];
   w.score = w.goal;
   tick(w, ROUND_MS / 1000 - 0.05);
   assert.equal(w.phase, 'playing');
@@ -191,6 +408,7 @@ void test('Tournament ends at five minutes with a score-based result and time is
   assert.equal(w.phase, 'won');
   const loss = game();
   loss.fish = [];
+  loss.wildlife = [];
   tick(loss, ROUND_MS / 1000);
   assert.equal(loss.phase, 'lost');
   const fine = game(),

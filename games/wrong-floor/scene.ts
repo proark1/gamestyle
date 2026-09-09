@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { label } from '../../shared/rendering/primitives';
+import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import {
   STATIONS,
   idleInput,
@@ -439,7 +439,7 @@ export class HotelScene {
   private disposeObject(root: T.Object3D) {
     root.traverse((o) => {
       if (o instanceof T.Mesh || o instanceof T.Sprite) {
-        if ('geometry' in o) o.geometry.dispose();
+        if ('geometry' in o) disposeGeometry(o.geometry);
         for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
           if ('map' in m) (m.map as T.Texture | null)?.dispose();
           m.dispose();

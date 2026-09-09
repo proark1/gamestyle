@@ -2,6 +2,9 @@ import {
   ANGLER_COLORS,
   BOAT_HALF,
   CATCHES,
+  CLIMB_MS,
+  DOWNED_PENALTY,
+  GRAB_REACH,
   HULL_HALF,
   LAKE_RADIUS,
   NET_REACH,
@@ -60,6 +63,23 @@ export function hullGap(w: ReelWorld, point: Vector, margin = 0) {
     ? Math.hypot(Math.max(0, outX), Math.max(0, outZ))
     : Math.max(outX, outZ);
 }
+/** Nearest handhold on the hull's outer edge, in lake metres. */
+function hullPoint(w: ReelWorld, point: Vector, margin: number): Vector {
+  const local = toBoat(w, point),
+    halfX = HULL_HALF.x + margin,
+    halfZ = HULL_HALF.z + margin,
+    outX = Math.abs(local.x) - halfX,
+    outZ = Math.abs(local.z) - halfZ;
+  // Under the boat: surface by the shallowest face, as a hooked catch does.
+  if (outX < 0 && outZ < 0)
+    return outX > outZ
+      ? fromBoat(w, { x: (local.x < 0 ? -1 : 1) * halfX, z: local.z })
+      : fromBoat(w, { x: local.x, z: (local.z < 0 ? -1 : 1) * halfZ });
+  return fromBoat(w, {
+    x: clamp(local.x, -halfX, halfX),
+    z: clamp(local.z, -halfZ, halfZ),
+  });
+}
 /** Big catches need more water than small ones before they touch paint. */
 const hullMargin = (kind: CatchKind) => 0.25 + CATCHES[kind].size * 0.5;
 /** Nearest point outside the hull, or null when the point is already clear. */
@@ -97,6 +117,11 @@ export function newAngler(
     slipX: 0,
     slipZ: 0,
     swimming: false,
+    clinging: false,
+    climb: 0,
+    health: 1,
+    stunUntil: 0,
+    downedUntil: 0,
     overboardAt: 0,
     recoveredAt: now,
     seen: now,
@@ -180,8 +205,13 @@ export function removeAngler(w: ReelWorld, id: string) {
       other.line = null;
   w.players = w.players.filter((p) => p.id !== id);
 }
-function board(w: ReelWorld, p: Angler, assisted: boolean) {
+function board(w: ReelWorld, p: Angler, note: string) {
   p.swimming = false;
+  p.clinging = false;
+  p.climb = 0;
+  p.health = 1;
+  p.stunUntil = 0;
+  p.downedUntil = 0;
   p.x = p.color % 2 ? 0.8 : -0.8;
   p.z = p.color < 2 ? 0.8 : -0.8;
   p.recoveredAt = w.clock;
@@ -189,16 +219,17 @@ function board(w: ReelWorld, p: Angler, assisted: boolean) {
   for (const other of w.players)
     if (other.line?.kind === 'player' && other.line.target === p.id)
       other.line = null;
-  announce(
-    w,
-    'rescue',
-    `${p.name} ${assisted ? 'is back aboard!' : 'caught the safety rope. Back aboard!'}`,
-  );
+  announce(w, 'rescue', note);
 }
 function splash(w: ReelWorld, p: Angler) {
   const point = anglerPosition(w, p);
   cutLine(w, p);
   p.swimming = true;
+  p.clinging = false;
+  p.climb = 0;
+  p.health = 1;
+  p.stunUntil = 0;
+  p.downedUntil = 0;
   p.x = point.x;
   p.z = point.z;
   p.overboardAt = w.clock;
@@ -207,8 +238,56 @@ function splash(w: ReelWorld, p: Angler) {
   announce(
     w,
     'splash',
-    `${p.name} went overboard! Swim close and press F to climb back.`,
+    `${p.name} went overboard! Swim to the hull, then hold E to climb.`,
   );
+}
+/**
+ * A frame in the water: grab the hull when you reach it, shimmy along it, and
+ * haul yourself up over five held seconds. Sharks and jellyfish get their say
+ * in advanceChaos, which is what makes those five seconds worth anything.
+ */
+function swim(w: ReelWorld, p: Angler, dt: number) {
+  if (p.downedUntil) {
+    if (w.clock < p.downedUntil) return;
+    p.downedUntil = 0;
+    w.score = Math.max(0, w.score - DOWNED_PENALTY);
+    board(
+      w,
+      p,
+      `${p.name} was hauled out cold. The boat loses ${DOWNED_PENALTY} points.`,
+    );
+    return;
+  }
+  const input = p.input,
+    norm = Math.max(1, Math.hypot(input.x, input.z));
+  // Shocked hands cannot hold paint, so a sting drops you off the side.
+  if (w.clock < p.stunUntil) p.clinging = false;
+  else if (hullGap(w, p) < GRAB_REACH) p.clinging = true;
+  if (p.clinging) {
+    // Move first, then snap back onto the hull: you shimmy along it rather than
+    // swim away, which is how you get around to the far side from a shark.
+    p.x += (input.x / norm) * dt * 1.6;
+    p.z += (input.z / norm) * dt * 1.6;
+    const hold = hullPoint(w, p, 0.45);
+    p.x = hold.x;
+    p.z = hold.z;
+    // facing is stored boat-local; the renderer adds the yaw back on.
+    p.facing = Math.atan2(w.boat.x - p.x, w.boat.z - p.z) - w.boat.yaw;
+    if (input.reel) {
+      p.climb += (dt * 1000) / CLIMB_MS;
+      if (p.climb >= 1) {
+        board(w, p, `${p.name} climbed back aboard!`);
+        return;
+      }
+    } else p.climb = Math.max(0, p.climb - dt * 0.35);
+  } else {
+    p.climb = 0;
+    const speed = w.clock < p.stunUntil ? 1.2 : 4.4;
+    p.x += (input.x / norm) * dt * speed;
+    p.z += (input.z / norm) * dt * speed;
+  }
+  if (w.clock - p.overboardAt > 12_000)
+    board(w, p, `${p.name} caught the safety rope. Back aboard!`);
 }
 export function reelAction(
   w: ReelWorld,
@@ -244,12 +323,20 @@ export function reelAction(
     return;
   }
   if (a.type === 'rescue') {
-    if (p.swimming && distance(p, w.boat) < 6.3) board(w, p, true);
-    else if (!p.swimming) {
+    // Your own way back is the climb; F only reaches for the hull. A crewmate
+    // still aboard can lean over and pull you straight out.
+    if (p.swimming && !p.downedUntil && hullGap(w, p) < GRAB_REACH * 2) {
+      p.clinging = true;
+      announce(
+        w,
+        'rescue',
+        `${p.name} caught hold of the hull. Hold E to climb!`,
+      );
+    } else if (!p.swimming) {
       const friend = w.players.find(
         (other) => other.swimming && distance(anglerPosition(w, p), other) < 7,
       );
-      if (friend) board(w, friend, true);
+      if (friend) board(w, friend, `${friend.name} is back aboard!`);
       else throw new Error('Get closer to an overboard friend to help.');
     } else throw new Error('Swim closer to the boat, then climb aboard.');
     return;
@@ -381,9 +468,7 @@ function step(w: ReelWorld, dt: number) {
     const input = p.input,
       norm = Math.max(1, Math.hypot(input.x, input.z));
     if (p.swimming) {
-      p.x += (input.x / norm) * dt * 4.4;
-      p.z += (input.z / norm) * dt * 4.4;
-      if (w.clock - p.overboardAt > 12_000) board(w, p, false);
+      swim(w, p, dt);
       continue;
     }
     const speed = input.brace ? 0.8 : 2.5;
@@ -397,11 +482,13 @@ function step(w: ReelWorld, dt: number) {
     const slopeZ = Math.sin(boat.pitch) * Math.cos(boat.roll);
     const slope = Math.hypot(slopeX, slopeZ);
     const protectedFromFall = w.clock - p.recoveredAt < 1800;
-    const grip = (input.brace ? 0.66 : 0.24) - w.weather.rain * 0.1;
+    // Sea legs: a heeling deck should make casting awkward long before it makes
+    // anyone swim, so a plain gust no longer beats an angler's footing.
+    const grip = (input.brace ? 0.7 : 0.34) - w.weather.rain * 0.09;
     const acceleration = protectedFromFall
       ? 0
       : Math.max(0, slope - grip) * 9.8;
-    const drag = Math.exp(-(input.brace ? 5 : 2.1) * dt);
+    const drag = Math.exp(-(input.brace ? 5.5 : 3) * dt);
     p.slipX =
       (p.slipX + (slopeX / Math.max(0.01, slope)) * acceleration * dt) * drag;
     p.slipZ =
@@ -410,7 +497,7 @@ function step(w: ReelWorld, dt: number) {
     p.z += p.slipZ * dt;
     const sliding =
       !protectedFromFall &&
-      slope > (input.brace ? 0.76 : 0.32 - w.weather.rain * 0.05);
+      slope > (input.brace ? 0.82 : 0.46 - w.weather.rain * 0.05);
     if (
       (Math.abs(p.x) > BOAT_HALF.x + 0.2 ||
         Math.abs(p.z) > BOAT_HALF.z + 0.2) &&
@@ -608,7 +695,7 @@ function step(w: ReelWorld, dt: number) {
           friend.x -= dx * pull * dt * 0.14;
           friend.z -= dz * pull * dt * 0.14;
           if (distance(friend, boat) < 5.5 && p.input.reel)
-            board(w, friend, true);
+            board(w, friend, `${friend.name} is back aboard!`);
         } else if (p.input.reel && !friend.input.brace) {
           friend.x -= localX * dt * pull * 0.065;
           friend.z -= localZ * dt * pull * 0.065;

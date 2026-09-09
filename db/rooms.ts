@@ -27,5 +27,12 @@ export function roomStore(): RoomStore {
         .run();
       return result.meta.changes > 0;
     },
+    async purge(before) {
+      const result = await db
+        .prepare('DELETE FROM rooms WHERE updated < ?')
+        .bind(before)
+        .run();
+      return result.meta.changes;
+    },
   };
 }

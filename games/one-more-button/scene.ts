@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { label } from '../../shared/rendering/primitives';
+import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { contestant, hazardModel, stage } from './models';
 import { glovePose, spinnerAngle } from './level';
 import { doorOpen, freshButton, newContestant } from './simulation';
@@ -306,7 +306,7 @@ export class ButtonScene {
   };
   private release(root: T.Object3D) {
     root.traverse((o) => {
-      if (o instanceof T.Mesh) o.geometry.dispose();
+      if (o instanceof T.Mesh) disposeGeometry(o.geometry);
       if (o instanceof T.Sprite) {
         o.material.map?.dispose();
         o.material.dispose();

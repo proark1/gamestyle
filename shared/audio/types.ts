@@ -6,6 +6,7 @@ export type GameId =
   | 'reel-problems'
   | 'one-more-button'
   | 'four-brain-cells'
+  | 'siege-and-desist'
   | 'dont-wake-the-giant'
   | 'load-bearing';
 export type AudioCategory =
@@ -61,6 +62,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'reel-problems': 'Reel Problems',
   'one-more-button': 'One More Button',
   'four-brain-cells': 'Four Brain Cells',
+  'siege-and-desist': 'Siege and Desist',
   'dont-wake-the-giant': 'Tiptoe Thieves',
   'load-bearing': 'Load Bearing',
 };
@@ -72,6 +74,7 @@ export const isGameId = (v: unknown): v is GameId =>
   v === 'reel-problems' ||
   v === 'one-more-button' ||
   v === 'four-brain-cells' ||
+  v === 'siege-and-desist' ||
   v === 'dont-wake-the-giant' ||
   v === 'load-bearing';
 /** Reused clips keep their original immutable storage path. */

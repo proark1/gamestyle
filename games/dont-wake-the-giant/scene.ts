@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { label } from '../../shared/rendering/primitives';
+import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { cottage, itemModel, thief } from './objects';
 import { bodyPoint, FOOT, restingItemPosition, wakePose } from './level';
 import { GiantModel } from './giant-model';
@@ -399,7 +399,7 @@ export class GiantScene {
       const age = (w.clock - ring.userData.at) / 950;
       if (age > 1 || age < 0) {
         ring.removeFromParent();
-        ring.geometry.dispose();
+        disposeGeometry(ring.geometry);
         (ring.material as T.Material).dispose();
         this.rings.delete(id);
       } else {
@@ -455,7 +455,8 @@ export class GiantScene {
   };
   disposeObject(root: T.Object3D) {
     root.traverse((o) => {
-      if (o instanceof T.Mesh || o instanceof T.Line) o.geometry.dispose();
+      if (o instanceof T.Mesh || o instanceof T.Line)
+        disposeGeometry(o.geometry);
       if (o instanceof T.Mesh && o.userData.ownedMaterial) {
         for (const material of Array.isArray(o.material)
           ? o.material

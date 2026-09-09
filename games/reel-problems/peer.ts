@@ -55,6 +55,11 @@ export function createEngine(now: number, checkpoint?: EngineCheckpoint) {
       p.input = idleInput();
       p.slipX ??= 0;
       p.slipZ ??= 0;
+      p.clinging ??= false;
+      p.climb ??= 0;
+      p.health ??= 1;
+      p.stunUntil ??= 0;
+      p.downedUntil ??= 0;
     }
   }
   return engine;

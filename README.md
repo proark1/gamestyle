@@ -1,13 +1,14 @@
 # Jumbleyard
 
-**Jumbleyard** is a collection of eleven matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
+**Jumbleyard** is a collection of twelve matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
 
-## The eleven games
+## The twelve games
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
 | Game | Play at | Game code | Route |
 | --- | --- | --- | --- |
+| Siege and Desist | `/siege-and-desist` | `games/siege-and-desist/` | `app/siege-and-desist/` |
 | Stack or Sink | `/stack-or-sink` | `games/stack-or-sink/` | `app/stack-or-sink/` |
 | Blend Business | `/act-natural` | `games/act-natural/` | `app/act-natural/` |
 | Uphill Delivery | `/uphill-delivery` | `games/uphill-delivery/` | `app/uphill-delivery/` |
@@ -20,7 +21,21 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Reel Problems | `/reel-problems` | `games/reel-problems/` | `app/reel-problems/` |
 | Shelf Control | `/shelf-control` | `games/shelf-control/` | `app/shelf-control/` |
 
-Ten of the eleven have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
+Eleven of the twelve have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
+
+## Siege and Desist
+
+Play at `/siege-and-desist`. One to four players crew a single enormous trebuchet on an Anatolian hillside and have four minutes to bring the keep's banner to the ground. The engine is deliberately too big for one person: someone holds the winch, someone fetches from the supply pile and loads the sling, someone leans on the frame to swing the aim, and someone pulls the release lever.
+
+The counterweight is the only range control. Roughly two fifths of a wind reaches the gate, three quarters reaches the keep behind it, and a full wind sails over everything; the gold ring on the ground shows where the current wind lands. Every extra pair of hands winds faster. Each assault starts with the aim swung off centre, so the crew has to push the frame round before any of it counts as aiming. Defenders answer with clay pots that flatten crew and knock both the wind and the aim back.
+
+Boulders break stone, fire pots burn a course of timber away, the beehive clears the battlements, and the cow is the cow. `C` climbs into the sling, which is a real option and a terrible one — a solo player cannot launch themselves, because somebody else has to be at the lever.
+
+The castle is around a hundred rigid bodies on a Cannon solver rather than a mesh that swaps to a broken version, so no two collapses match. Snapshots carry only masonry that has actually moved and each guest rebuilds the rest locally.
+
+WASD/arrows move, `R` holds the winch, `E` fetches and loads, `Q` swings the aim, `F` looses, `C` rides the sling, `H` hauls up a flattened crewmate, Space jumps, and `V` changes camera; the camera rides the shot by default. Rooms, invitations, crew voice, touch controls, host recovery, and `/siege-and-desist/admin` use the collection's shared infrastructure.
+
+Run `node scripts/test.mjs games/siege-and-desist` for the rules, ballistics, destruction and snapshot tests, and `node scripts/peer-integration.mjs siege-and-desist` for four real WebRTC clients sharing the winch and surviving host loss. See [Siege and Desist design and validation](games/siege-and-desist/docs/design-and-validation.md).
 
 ## Wrong Floor
 
@@ -62,9 +77,9 @@ Run `node scripts/test.mjs games/four-brain-cells` for rules and a complete solo
 
 Play at `/reel-problems`. One to four anglers share a tiny boat in a five-minute fishing tournament. Fish pull the boat, crew position changes its balance, crossed lines tangle, and hooks can catch teammates. Land eight kinds of catches including a giant fish, tyre outriggers, a lucky magnet and an old boot that improve the crew's equipment. The catch target scales with the starting crew size. Solo practice runs the same rules without a database.
 
-Cast onto a friend's fish to pull together: every line adds force and tires the fish, the crew scores a catch once, and all attached anglers receive catch credit. Losing one line leaves the others attached. Steep decks cause real slides and falls overboard; brace and move uphill to keep your balance. Gusts, slippery rain and thunderstorms alternate with calm spells. Sharks occasionally bump the hull, while glowing jellyfish snag nearby hooks. Weather and encounters stay synchronized through host recovery.
+Cast onto a friend's fish to pull together: every line adds force and tires the fish, the crew scores a catch once, and all attached anglers receive catch credit. Losing one line leaves the others attached. Steep decks cause real slides and falls overboard; brace and move uphill to keep your balance. Gusts, slippery rain and thunderstorms alternate with calm spells: wind heels the boat and makes the deck awkward, while thunder waves are what actually throw an unbraced angler over the side. An angler in the water grabs the hull on contact and needs five held seconds to climb aboard, and that is when the lake gets interested — a shark abandons the hull and comes straight for a swimmer, two bites putting them under for the crew to haul out at a cost in points, while a jellyfish sting shocks their hands off the paint. Weather and encounters stay synchronized through host recovery.
 
-WASD/arrows move; click the water to aim and cast, or Space casts near an available catch. Hold E to reel, release when a fish surges or line tension goes red, Shift braces, Q cuts free, R untangles, and F rescues or boards. Overboard anglers can swim back, be reeled in, or return by safety rope after twelve seconds. Touch controls, direct crew voice, host recovery, and the sound workshop at `/reel-problems/admin` use the collection's shared infrastructure. Immediate synthesized cues work before workshop recordings are generated. Rooms are isolated by the `reel-problems` game identifier under the shared peer coordinator.
+WASD/arrows move; click the water to aim and cast, or Space casts near an available catch. Hold E to reel, release when a fish surges or line tension goes red, Shift braces, Q cuts free, R untangles, and F pulls an overboard friend aboard or reaches for the hull when you are the one swimming. Overboard anglers climb the hull with a held E, get reeled in, are pulled out by a crewmate, or return by safety rope after twelve seconds. Touch controls, direct crew voice, host recovery, and the sound workshop at `/reel-problems/admin` use the collection's shared infrastructure. Immediate synthesized cues work before workshop recordings are generated. Rooms are isolated by the `reel-problems` game identifier under the shared peer coordinator.
 
 Run `node scripts/test.mjs games/reel-problems` for rules and checkpoint tests, and `node scripts/peer-integration.mjs reel-problems` for four real local WebRTC clients, voice, and host recovery.
 
@@ -178,6 +193,8 @@ node --import tsx games/stack-or-sink/scripts/physics-integration.mjs
 
 The default local database is `data/stack-or-sink.sqlite`. For a deployed integration test, set `GAME_TEST_URL` to the Railway HTTPS origin. Railway deployment uploads exclude local databases, outputs, dependencies, and environment files.
 
-Redeploy from this linked directory with `npx --yes @railway/cli up --service jumbleyard --environment production --detach`. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
+Redeploy from this linked directory with `npx --yes @railway/cli up --service jumbleyard --environment production --detach`. The service is `jumbleyard`; only the volume still carries the older `stack-or-sink` name. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
 
 The Railway link is registered against the repository root, and the CLI resolves it by walking up from the working directory. Deploying from a git worktree under `.claude/worktrees/` therefore uploads the root checkout instead, and `.railwayignore` excludes `.claude`, so the worktree's own changes are silently left out of a build that still succeeds. Release from the root checkout, or from a clean `git archive` export of the commit with an explicit `--project`, and confirm the intended routes appear in the build log before trusting the deployment.
+
+Several sessions share this service, so a `railway up` from any of them replaces whatever is live. A game only stays deployed once it is merged into `main`.

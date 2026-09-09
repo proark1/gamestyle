@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { makePiece, worker, label, disposePiece } from './objects';
 import { roleAnchor } from './party';
@@ -113,7 +114,7 @@ export class PartyView {
       this.kind = t.kind;
       this.gear.traverse((o) => {
         if (o instanceof T.Mesh) {
-          o.geometry.dispose();
+          disposeGeometry(o.geometry);
           for (const m of Array.isArray(o.material) ? o.material : [o.material])
             m.dispose();
         }
@@ -276,7 +277,7 @@ export class PartyView {
     this.root.removeFromParent();
     this.root.traverse((o) => {
       if (o instanceof T.Mesh) {
-        o.geometry.dispose();
+        disposeGeometry(o.geometry);
         for (const m of Array.isArray(o.material) ? o.material : [o.material])
           m.dispose();
       }

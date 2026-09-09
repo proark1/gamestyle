@@ -12,6 +12,7 @@ for (const game of process.argv[2]
       'one-more-button',
       'four-brain-cells',
       'wrong-floor',
+      'siege-and-desist',
     ]) {
   await new Promise((resolve, reject) => {
     const child = spawn(
