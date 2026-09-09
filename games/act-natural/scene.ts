@@ -1,3 +1,4 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { InstancedProxy } from '../../shared/rendering/instanced-proxy';
 import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
@@ -121,6 +122,21 @@ export class FarmScene {
       bottom: -25,
     });
     sun.shadow.normalBias = 0.05;
+    // The farm barely moves, so most of it merges by material. Only the farmer
+    // and the gate are animated; the wires and the disguise cover just toggle
+    // visibility and recolour a shared material, so they merge within their own
+    // group and keep that group as the handle the render loop still touches.
+    batchScenery(this.farm.group, [
+      this.farm.gate,
+      this.farm.wires,
+      this.farm.panelLight,
+      this.farm.escapeLadder,
+      this.farm.farmer,
+      this.farm.flashlight,
+      this.farm.cover,
+    ]);
+    batchScenery(this.farm.wires);
+    batchScenery(this.farm.cover);
     this.scene.add(sun, this.farm.group);
     this.ring.rotation.x = this.targetRing.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.13;

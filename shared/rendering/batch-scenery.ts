@@ -2,13 +2,18 @@ import { disposeGeometry } from './primitives';
 import * as T from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-/** Static scenery shares draw calls without changing visible geometry or raycasts. */
-export function batchScenery(root: T.Group) {
+/** Static scenery shares draw calls without changing visible geometry or raycasts.
+ *  Anything still animated or toggled at runtime belongs in `keep`: merging it
+ *  would flatten it into the batch and freeze it in place. */
+export function batchScenery(root: T.Group, keep: T.Object3D[] = []) {
   root.updateMatrixWorld(true);
   const inverse = root.matrixWorld.clone().invert();
+  const excluded = new Set<T.Object3D>();
+  for (const node of keep) node.traverse((o) => excluded.add(o));
   const batches = new Map<string, T.Mesh[]>();
   root.traverse((object) => {
     if (!(object instanceof T.Mesh) || Array.isArray(object.material)) return;
+    if (excluded.has(object)) return;
     const key = [
       object.material.uuid,
       object.castShadow,
