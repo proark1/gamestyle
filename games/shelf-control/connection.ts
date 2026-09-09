@@ -1,3 +1,4 @@
+import { MIN_POLL_MS, quantizeAxis } from '../../shared/rooms/input-rate';
 import {
   idleInput,
   type Action,
@@ -59,8 +60,10 @@ export class ShelfConnection {
     private status: (status: 'online' | 'reconnecting' | 'expired') => void,
   ) {}
   move(point: Point) {
-    if (point.x !== this.input.x || point.z !== this.input.z) {
-      this.input = { ...point, seq: this.input.seq + 1 };
+    const x = quantizeAxis(point.x),
+      z = quantizeAxis(point.z);
+    if (x !== this.input.x || z !== this.input.z) {
+      this.input = { ...point, x, z, seq: this.input.seq + 1 };
       if (this.polling) this.wake = true;
       else if (!this.stopped) {
         clearTimeout(this.timer);
@@ -114,7 +117,7 @@ export class ShelfConnection {
         this.failures
           ? Math.min(2500, this.failures * 400)
           : this.wake
-            ? 0
+            ? MIN_POLL_MS
             : Math.max(0, 65 - (performance.now() - sentAt)),
       );
   }

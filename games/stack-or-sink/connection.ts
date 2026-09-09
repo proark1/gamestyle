@@ -1,3 +1,4 @@
+import { MIN_POLL_MS, quantizeAxis } from '../../shared/rooms/input-rate';
 import {
   PeerGameConnection,
   enterPeerRoom,
@@ -105,14 +106,19 @@ export class Connection {
       return;
     }
     const before = this.input;
+    const next = {
+      ...input,
+      x: quantizeAxis(input.x),
+      z: quantizeAxis(input.z),
+    };
     if (
-      before.x === input.x &&
-      before.z === input.z &&
-      before.jump === input.jump &&
-      before.seq === input.seq
+      before.x === next.x &&
+      before.z === next.z &&
+      before.jump === next.jump &&
+      before.seq === next.seq
     )
       return;
-    this.input = { ...input, order: ++this.order };
+    this.input = { ...next, order: ++this.order };
     this.dirty = true;
     if (this.timer) clearTimeout(this.timer);
     if (!this.polling && !this.stopped) void this.poll();
@@ -149,7 +155,7 @@ export class Connection {
         this.failures
           ? Math.min(3000, this.failures * 500)
           : this.dirty
-            ? 0
+            ? MIN_POLL_MS
             : 60,
       );
   }

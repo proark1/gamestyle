@@ -1,3 +1,4 @@
+import { MIN_POLL_MS } from '../../shared/rooms/input-rate';
 import type { Input } from './types';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -32,7 +33,7 @@ void test('input changes transmit immediately and an in-flight request sends the
     connection.setInput({ x: 0, z: 0, jump: false, seq: 0 });
     assert.equal(requests.length, 1, 'only one poll can be in flight');
     requests[0].resolve(Response.json({ ok: true }));
-    await new Promise((resolve) => setTimeout(resolve, 15));
+    await new Promise((resolve) => setTimeout(resolve, MIN_POLL_MS + 15));
     assert.equal(requests.length, 2);
     assert.equal(requests[1].body.input.x, 0);
     assert.ok(requests[1].body.input.order > requests[0].body.input.order);
