@@ -51,3 +51,46 @@ The first attempt, deployment `576ddd9d`, built and reported `SUCCESS` while con
 Because that first attempt uploaded the root checkout's working tree, it also published the uncommitted Reel Problems live-well changes that another session had in progress there. The corrected release replaced it with the committed tree, so production no longer carries that unfinished work.
 
 `https://www.jumbleyard.com` does not serve this deployment. Its DNS resolves to Railway, but the TLS handshake fails with a hostname mismatch and the edge returns 404 even when the certificate is ignored. That is a custom-domain configuration problem which predates this release and is unaffected by it; the `up.railway.app` origin serves everything correctly.
+
+## Quality rework — 2026-09-09
+
+The first release was judged well below the rest of the collection, and it was:
+2,861 lines against Stack or Sink's 7,691, with none of the systems that make
+the others feel alive. This pass takes those systems over rather than
+reinventing them.
+
+- **Snapshot interpolation.** A new `motion.ts` buffers host snapshots on a
+  short timeline and interpolates parts, crew, the piano and the ball, holding
+  still through discrete events such as a part losing its support. The first
+  release rendered raw snapshots, so networked play would have juddered.
+- **Real physics for the crew.** Workers are now character-controller bodies in
+  the same solver as the debris, ported from Stack or Sink, replacing a
+  hand-rolled kinematic controller and bespoke box resolver. Falling parts push
+  people, and rubble can be climbed.
+- **Animation.** The shared worker rig's legs and arms were never driven. They
+  now swing while walking, raise overhead through a hammer blow, and the body
+  bobs and falls flat when a worker is pinned.
+- **The house reads as a house.** Walls are built as frames around punched
+  doorways and windows, the roof carries battens, beams carry edging and columns
+  keep their caps.
+- **The site is dressed.** Full-perimeter hoarding, spoil heaps, cones, pallets,
+  a skip, welfare units, a wagon, a site office, worn ground patches and a
+  distant terrace, laid out from a fixed seed so every client matches.
+- **Feedback on a break.** Destroyed parts throw pooled dust and chips, and
+  collapses shake the camera. Both respect `prefers-reduced-motion`.
+- **NPC crew.** Empty seats can be filled with bots that walk to the nearest
+  sensible part and swing under the same reach and cooldown rules, prefer marked
+  parts, and stay clear of the piano bay. Solo practice can start with a crew.
+
+Validation after the rework: 34 game tests and 796 in the whole suite pass,
+TypeScript, lint and the architecture boundaries pass, and the production build
+succeeds. In the browser the dressed site renders, the NPC crew walk in and
+demolish (log entries and a falling standing count confirm it), dust appears at
+a break, and the wrecking ball still destroys on contact.
+
+Still unverified: the game has never been watched at frame rate, because the
+browser pane here holds `requestAnimationFrame` at zero frames per second while
+hidden and only advances when a screenshot forces a paint. No four-person
+playtest has happened. The audio catalogue is still unrecorded, so a director
+pass was deliberately skipped: with no cue files generated it would change
+nothing audible.

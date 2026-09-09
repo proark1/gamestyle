@@ -10,6 +10,7 @@ import {
   removeWrecker,
   siteAction,
   siteSnapshot,
+  syncNpcs,
 } from './simulation';
 import {
   idleInput,
@@ -20,6 +21,8 @@ import {
 
 const adapter: GameAdapter<LoadWorld, LoadSnapshot> = {
   game: 'load-bearing',
+  autonomous: (p) => !!p.bot,
+  roster: (w, roster) => syncNpcs(w, roster.slots),
   actions: [
     'start',
     'restart',

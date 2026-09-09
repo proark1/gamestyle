@@ -96,6 +96,8 @@ export type Wrecker = {
   lastJump: number;
   lastAction: number;
   hits: number;
+  /** Game-owned crew. Never an authenticated network member. */
+  bot?: boolean;
 };
 export type LoadEvent = {
   id: number;

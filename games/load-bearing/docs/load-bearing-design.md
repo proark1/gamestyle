@@ -12,6 +12,18 @@ Parts connected to the ground through that graph stay static and do not drift or
 
 Falling parts damage what they land on. The piano has integrity and takes damage scaled by impact speed and the mass of what hit it. Players caught underneath are knocked down and revived by a teammate.
 
+## Shared foundations
+
+The game reuses the collection's existing systems rather than reimplementing
+them. Crew, debris, the piano and the wrecking ball share one cannon-es solver,
+and workers are character-controller bodies inside it, as in Stack or Sink, so
+a falling slab genuinely shoves someone instead of passing through them. A
+`motion.ts` buffers host snapshots on a short timeline and interpolates parts,
+crew, the piano and the ball, so a collapse reads smoothly regardless of when
+updates arrive. Rendering uses the shared worker model and its limb rig, the
+shared primitives, touch controls, toolbar and peer voice. NPC crew use the
+shared roster slots, and are game-owned occupancy rather than network members.
+
 ## Play
 
 - Sledgehammer with E. Three hits destroy a wall panel, five a column. Each hit is telegraphed by cracks so the crew can see what is about to give.
@@ -19,6 +31,8 @@ Falling parts damage what they land on. The piano has integrity and takes damage
 - Q marks a part with spray paint so the crew can agree on a plan before swinging.
 - F helps a downed teammate back up. G calls the crew over.
 - Structural stress is visible: a part carrying load that has lost neighbours creaks and shows strain before it goes.
+- Destroyed parts throw a burst of masonry dust and chips, and a collapse shakes the camera. Both are suppressed when the viewer prefers reduced motion.
+- NPC crew can fill empty seats. They walk to the nearest sensible part, obey the same reach and cooldown rules, prefer whatever the crew has marked, and keep clear of the piano bay.
 
 ## Winning and losing
 

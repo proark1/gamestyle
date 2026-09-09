@@ -30,6 +30,7 @@ import {
   siteAction,
   siteSnapshot,
   standingParts,
+  syncNpcs,
 } from './simulation';
 import {
   PIANO_INTEGRITY,
@@ -262,7 +263,7 @@ export default function LoadBearing() {
     }
   }
 
-  function startPractice() {
+  function startPractice(crew = 1) {
     if (!ready || busy) return;
     network.current?.stop();
     network.current = null;
@@ -274,6 +275,16 @@ export default function LoadBearing() {
       world = freshSite(now, 'practice'),
       s = { code: 'PRACTICE', id: 'practice-wrecker', token: '' };
     world.players.push(newWrecker(s.id, name.trim() || 'Wrecker', 0, now));
+    // Practice NPCs use the same roster shape the networked crew does.
+    if (crew > 1)
+      syncNpcs(
+        world,
+        Array.from({ length: crew - 1 }, (_, i) => ({
+          id: `practice-npc-${i + 1}`,
+          name: ['Mika', 'Jo', 'Nora'][i] ?? `Crew ${i + 2}`,
+          color: i + 1,
+        })),
+      );
     siteAction(world, s.id, { type: 'practice' }, s.id);
     localWorld.current = world;
     activeSession.current = s;
@@ -445,9 +456,16 @@ export default function LoadBearing() {
             <button
               className="lb-ghost"
               disabled={!ready || busy}
-              onClick={startPractice}
+              onClick={() => startPractice(1)}
             >
               Practice alone
+            </button>
+            <button
+              className="lb-ghost"
+              disabled={!ready || busy}
+              onClick={() => startPractice(4)}
+            >
+              Practice with a crew
             </button>
           </div>
           {!ready && <p className="lb-loading">Preparing the site&hellip;</p>}

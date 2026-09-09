@@ -8,6 +8,7 @@ import {
   siteAction,
   siteSnapshot,
   standingParts,
+  syncNpcs,
 } from './simulation';
 import { releaseUnsupported } from './structure';
 import { CABLE } from './physics';
@@ -321,4 +322,54 @@ void test('every catalogue cue is uniquely identified and priced', () => {
     assert.ok(cue.duration >= 0.5, `${cue.id} needs a usable duration`);
     assert.ok(cue.prompt.length > 40, `${cue.id} needs a real prompt`);
   }
+});
+
+void test('an NPC crew joins, works and survives a rematch', () => {
+  const w = site(1);
+  syncNpcs(w, [
+    { id: 'npc-1', name: 'Mika', color: 1 },
+    { id: 'npc-2', name: 'Jo', color: 2 },
+  ]);
+  assert.equal(w.players.length, 3);
+  assert.equal(w.players.filter((p) => p.bot).length, 2);
+  siteAction(w, 'p0', { type: 'start' }, 'p0');
+  const before = standingParts(w).length;
+  // Long enough for a bot to cross the yard and land several blows.
+  run(w, 30_000);
+  assert.ok(
+    standingParts(w).length < before,
+    'the NPC crew actually demolished something',
+  );
+  // End the job on the clock, then take the rematch.
+  w.started = w.clock - ROUND_MS - 1;
+  run(w, 100);
+  assert.equal(w.phase, 'lost');
+  siteAction(w, 'p0', { type: 'restart' }, 'p0');
+  assert.equal(w.phase, 'playing');
+  assert.equal(
+    w.players.filter((p) => p.bot).length,
+    2,
+    'the NPC crew is still here after a rematch',
+  );
+});
+
+void test('the NPC crew works away from the piano bay', () => {
+  const w = site(1);
+  syncNpcs(w, [{ id: 'npc-1', name: 'Mika', color: 1 }]);
+  siteAction(w, 'p0', { type: 'start' }, 'p0');
+  run(w, 40_000);
+  assert.ok(w.piano.integrity > 0, 'the piano survived the NPC crew');
+  const bay = w.parts.find((p) => p.id === 'slab-3.33--2')!;
+  assert.ok(alive(bay), 'the bot never cut the bay holding the piano');
+});
+
+void test('removing an NPC from the roster takes them off the site', () => {
+  const w = site(1);
+  syncNpcs(w, [
+    { id: 'npc-1', name: 'Mika', color: 1 },
+    { id: 'npc-2', name: 'Jo', color: 2 },
+  ]);
+  syncNpcs(w, [{ id: 'npc-2', name: 'Jo', color: 2 }]);
+  assert.equal(w.players.filter((p) => p.bot).length, 1);
+  assert.equal(w.players.find((p) => p.bot)!.id, 'npc-2');
 });

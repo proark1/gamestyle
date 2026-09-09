@@ -1,8 +1,11 @@
 import * as T from 'three';
 import { worker } from '../../shared/rendering/worker';
+import { SiteMotion, emptyPose } from './motion';
 import { CABLE } from './physics';
 import {
+  DustBursts,
   JIB_Y,
+  PART_COLORS,
   cable,
   crane,
   partMesh,
@@ -81,6 +84,13 @@ export class LoadBearingScene {
   private craneHeld = 0;
   private pointer = new T.Vector2();
   private caster = new T.Raycaster();
+  private motion = new SiteMotion();
+  private dust = new DustBursts();
+  private pose = emptyPose();
+  private time = 0;
+  private shake = 0;
+  private falling = 0;
+  private reduceMotion = false;
 
   constructor(
     private container: HTMLDivElement,
@@ -122,6 +132,7 @@ export class LoadBearingScene {
       this.ball,
       this.cableLine,
       this.trolleyMesh,
+      this.dust.group,
     );
     this.craneMesh.position.set(0, 0, -12);
 
@@ -134,6 +145,9 @@ export class LoadBearingScene {
     dom.addEventListener('pointermove', this.onPointerMove, { signal });
     addEventListener('pointerup', () => (this.dragging = false), { signal });
     dom.addEventListener('wheel', this.onWheel, { signal, passive: false });
+    this.reduceMotion =
+      typeof matchMedia === 'function' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(container);
     this.resize();
@@ -143,8 +157,10 @@ export class LoadBearingScene {
   setSession(id: string) {
     this.localId = id;
   }
-  setSnapshot(snapshot: LoadSnapshot) {
+  setSnapshot(snapshot: LoadSnapshot | null) {
     this.snapshot = snapshot;
+    if (snapshot) this.motion.push(snapshot, performance.now());
+    else this.motion.clear();
   }
   /** The part under the cursor, so the HUD and actions agree on the target. */
   get target() {
@@ -284,23 +300,20 @@ export class LoadBearingScene {
     const world = this.snapshot?.world;
     if (!world) return;
     const live = new Set<string>();
+    let falling = 0;
     for (const part of world.parts) {
       if (!alive(part)) continue;
       live.add(part.id);
+      if (part.falling) falling++;
       let mesh = this.parts.get(part.id);
       if (!mesh) {
         mesh = partMesh(part);
         this.parts.set(part.id, mesh);
         this.scene.add(mesh);
       }
-      mesh.position.set(part.x, part.y, part.z);
-      if (part.quaternion)
-        mesh.quaternion.set(
-          part.quaternion.x,
-          part.quaternion.y,
-          part.quaternion.z,
-          part.quaternion.w,
-        );
+      const pose = this.motion.part(part, this.pose);
+      mesh.position.set(pose.x, pose.y, pose.z);
+      mesh.quaternion.copy(pose.quaternion);
       const cracks = mesh.userData.cracks as T.Mesh;
       // Cracks read the blows taken; strain shades what is about to give way.
       const damage = 1 - part.hits / PART_HITS[part.kind];
@@ -310,9 +323,22 @@ export class LoadBearingScene {
     }
     for (const [id, mesh] of this.parts)
       if (!live.has(id)) {
+        const kind = mesh.userData.kind as keyof typeof PART_COLORS;
+        this.dust.burst(
+          mesh.position.x,
+          mesh.position.y,
+          mesh.position.z,
+          PART_COLORS[kind] ?? '#b06a4e',
+          1.3,
+        );
         this.scene.remove(mesh);
         this.parts.delete(id);
+        // Something just left the structure: rattle the camera for it.
+        if (!this.reduceMotion) this.shake = Math.min(1, this.shake + 0.55);
       }
+    if (falling > this.falling && !this.reduceMotion)
+      this.shake = Math.min(1, this.shake + (falling - this.falling) * 0.16);
+    this.falling = falling;
   }
 
   private syncPeople() {
@@ -327,12 +353,28 @@ export class LoadBearingScene {
         this.people.set(player.id, mesh);
         this.scene.add(mesh);
       }
-      mesh.position.set(player.x, player.y, player.z);
-      mesh.rotation.y = player.facing;
-      mesh.rotation.z = player.down ? 1.35 : 0;
+      const shown = this.motion.player(player);
+      const moving =
+        Math.hypot(mesh.position.x - shown.x, mesh.position.z - shown.z) > 0.012;
+      mesh.position.set(shown.x, shown.y, shown.z);
+      mesh.rotation.y = shown.facing;
+      const body = mesh.userData.body as T.Group;
+      body.rotation.z = player.down
+        ? Math.PI / 2
+        : this.reduceMotion
+          ? 0
+          : Math.sin(this.time * 2 + player.color) * 0.02;
+      const swing =
+        moving && !player.down ? Math.sin(this.time * 13) * 0.62 : 0;
+      (mesh.userData.legL as T.Group).rotation.x = swing;
+      (mesh.userData.legR as T.Group).rotation.x = -swing;
+      // Both arms come over the head for the downswing of a sledgehammer.
       const swinging = player.swingUntil > world.clock;
-      const body = mesh.userData.body as T.Object3D | undefined;
-      if (body) body.rotation.x = swinging ? -0.7 : 0;
+      const hammer = swinging
+        ? -2.5 + Math.cos((player.swingUntil - world.clock) / 90) * 1.6
+        : null;
+      (mesh.userData.armL as T.Group).rotation.x = hammer ?? -swing * 0.7;
+      (mesh.userData.armR as T.Group).rotation.x = hammer ?? swing * 0.7;
     }
     for (const [id, mesh] of this.people)
       if (!live.has(id)) {
@@ -344,10 +386,11 @@ export class LoadBearingScene {
   private syncMachinery() {
     const world = this.snapshot?.world;
     if (!world) return;
-    this.pianoMesh.position.set(world.piano.x, world.piano.y, world.piano.z);
+    const piano = this.motion.piano(world.piano);
+    this.pianoMesh.position.set(piano.x, piano.y, piano.z);
     this.pianoMesh.visible = world.piano.integrity > 0;
     this.beacon.visible = world.piano.integrity > 0;
-    this.beacon.position.set(world.piano.x, world.piano.y, world.piano.z);
+    this.beacon.position.set(piano.x, piano.y, piano.z);
     const hurt = 1 - world.piano.integrity / PIANO_INTEGRITY;
     this.pianoMesh.rotation.z = hurt * 0.25;
     const owned = !!world.crane.owner;
@@ -355,11 +398,13 @@ export class LoadBearingScene {
     this.cableLine.visible = owned;
     this.trolleyMesh.visible = owned;
     if (owned) {
-      this.ball.position.set(
-        world.crane.ballX,
-        world.crane.ballY,
-        world.crane.ballZ,
-      );
+      const ball = this.motion.ball({
+        x: world.crane.ballX,
+        y: world.crane.ballY,
+        z: world.crane.ballZ,
+      });
+      this.ball.position.set(ball.x, ball.y, ball.z);
+      this.ball.rotation.x = this.time * 0.6;
       this.trolleyMesh.position.set(
         world.crane.x,
         world.crane.y,
@@ -369,11 +414,7 @@ export class LoadBearingScene {
       this.cableLine.geometry.setFromPoints([
         new T.Vector3(world.crane.x, JIB_Y, world.crane.z),
         new T.Vector3(world.crane.x, world.crane.y, world.crane.z),
-        new T.Vector3(
-          world.crane.ballX,
-          world.crane.ballY + CABLE * 0.02,
-          world.crane.ballZ,
-        ),
+        new T.Vector3(ball.x, ball.y + CABLE * 0.02, ball.z),
       ]);
     }
     const jib = this.craneMesh.userData.jib as T.Object3D;
@@ -407,9 +448,10 @@ export class LoadBearingScene {
   private placeCamera(delta: number) {
     const world = this.snapshot?.world;
     const me = world?.players.find((p) => p.id === this.localId);
+    const shown = me ? this.motion.player(me) : null;
     const target =
-      !this.overview && me
-        ? new T.Vector3(me.x, me.y + 1.3, me.z)
+      !this.overview && shown
+        ? new T.Vector3(shown.x, shown.y + 1.3, shown.z)
         : new T.Vector3(0, 3.4, 0);
     const distance = this.overview ? this.orbit.distance : 9.5;
     const wanted = new T.Vector3(
@@ -419,6 +461,14 @@ export class LoadBearingScene {
     );
     this.camera.position.lerp(wanted, Math.min(1, delta * 6));
     this.camera.lookAt(target);
+    // A collapse is felt through the camera as well as heard.
+    if (this.shake > 0.001) {
+      const amount = this.shake * 0.34;
+      this.camera.position.x += Math.sin(this.time * 47) * amount;
+      this.camera.position.y += Math.sin(this.time * 39 + 1.7) * amount;
+      this.camera.position.z += Math.cos(this.time * 43) * amount;
+      this.shake = Math.max(0, this.shake - delta * 1.9);
+    }
   }
 
   private loop = (time: number) => {
@@ -426,6 +476,9 @@ export class LoadBearingScene {
     this.frame = requestAnimationFrame(this.loop);
     const delta = Math.min(0.1, (time - this.last) / 1000) || 0;
     this.last = time;
+    this.time += delta;
+    this.motion.advance(time);
+    this.dust.update(delta);
     try {
       this.cb.tick();
     } catch {

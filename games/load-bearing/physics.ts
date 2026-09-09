@@ -2,10 +2,14 @@ import * as C from 'cannon-es';
 import {
   FLOOR,
   PART_MASS,
+  PLAYER_HEIGHT,
+  PLAYER_RADIUS,
   alive,
+  type LoadInput,
   type LoadWorld,
   type Part,
   type Piano,
+  type Wrecker,
 } from './types';
 
 export const STEP = 1 / 60;
@@ -13,6 +17,8 @@ export const BALL_RADIUS = 0.85;
 export const BALL_MASS = 400;
 /** Cable length from hoist to the centre of the ball. */
 export const CABLE = 4;
+export const WALK_SPEED = 4.6;
+export const JUMP_SPEED = 5.9;
 const PIANO_SIZE = { w: 1.5, h: 1.1, d: 0.7 };
 const vec = (x = 0, y = 0, z = 0) => new C.Vec3(x, y, z);
 
@@ -31,6 +37,7 @@ function quaternionOf(p: Part) {
 export class Collapse {
   engine = new C.World({ gravity: vec(0, -9.81, 0), allowSleep: true });
   bodies = new Map<string, C.Body>();
+  people = new Map<string, C.Body>();
   piano: C.Body | null = null;
   ball: C.Body | null = null;
   hoist: C.Body | null = null;
@@ -78,6 +85,25 @@ export class Collapse {
       }
       e.addBody(body);
       this.bodies.set(p.id, body);
+    }
+
+    for (const p of world.players) {
+      if (p.down) continue;
+      const body = new C.Body({
+        mass: 80,
+        fixedRotation: true,
+        allowSleep: false,
+        linearDamping: 0,
+        material: new C.Material({ friction: 0, restitution: 0 }),
+      });
+      body.addShape(
+        new C.Box(vec(PLAYER_RADIUS, PLAYER_HEIGHT / 2, PLAYER_RADIUS)),
+      );
+      body.position.set(p.x, p.y + PLAYER_HEIGHT / 2, p.z);
+      body.velocity.set(p.vx, p.vy, p.vz);
+      body.updateMassProperties();
+      e.addBody(body);
+      this.people.set(p.id, body);
     }
 
     const piano = new C.Body({
@@ -132,6 +158,45 @@ export class Collapse {
       );
       e.addConstraint(cable);
     }
+  }
+
+  /** Drive a worker as a character controller rather than a shoved crate. */
+  controls(p: Wrecker, input: LoadInput) {
+    const body = this.people.get(p.id);
+    if (!body) return;
+    const onCrane = this.world.crane.owner === p.id;
+    const length = Math.max(1, Math.hypot(input.x, input.z));
+    const x = onCrane ? 0 : input.x / length;
+    const z = onCrane ? 0 : input.z / length;
+    // An idle worker carries no horizontal momentum, so resting on tilted
+    // rubble cannot slide them. Gravity and support stay fully simulated.
+    const moving = Math.hypot(x, z) > 0.001;
+    body.linearFactor.set(moving ? 1 : 0, 1, moving ? 1 : 0);
+    body.velocity.x = moving ? x * WALK_SPEED : 0;
+    body.velocity.z = moving ? z * WALK_SPEED : 0;
+    if (moving) p.facing = Math.atan2(x, z);
+    if (input.jump && input.seq !== p.lastJump && p.grounded) {
+      body.velocity.y = JUMP_SPEED;
+      p.grounded = false;
+      p.lastJump = input.seq;
+    }
+  }
+
+  readPlayer(p: Wrecker) {
+    const body = this.people.get(p.id);
+    if (!body) return;
+    p.x = body.position.x;
+    p.y = body.position.y - PLAYER_HEIGHT / 2;
+    p.z = body.position.z;
+    p.vx = body.velocity.x;
+    p.vy = body.velocity.y;
+    p.vz = body.velocity.z;
+    p.grounded = this.engine.contacts.some(
+      (c) =>
+        c.enabled &&
+        ((c.bi === body && -c.ni.y > 0.55) || (c.bj === body && c.ni.y > 0.55)),
+    );
+    if (p.grounded && Math.abs(p.vy) < 0.08) p.vy = 0;
   }
 
   step(steps: number) {

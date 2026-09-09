@@ -1,4 +1,6 @@
 import { Collapse, STEP } from './physics';
+import { driveBots, reconcileSiteNpcs } from './bots';
+import type { NpcSlot } from '../../shared/rooms/npc-slots';
 import {
   HALF_D,
   HALF_W,
@@ -33,9 +35,6 @@ import {
   type Wrecker,
 } from './types';
 
-const SPEED = 5.4;
-const GRAVITY = 22;
-const JUMP = 7.4;
 const YARD = { x: 13, z: 11 };
 const DOWN_MS = 9000;
 
@@ -131,96 +130,6 @@ function finish(w: LoadWorld, won: boolean, reason: string) {
   emit(w, 'finish', reason);
 }
 
-/**
- * Push the worker out along whichever axis they are least buried in. Resolving
- * the vertical axis too means someone dropping onto rubble lands on top of it
- * rather than being squeezed out sideways on the frame they arrive.
- */
-function collide(w: LoadWorld, p: Wrecker) {
-  for (const part of w.parts) {
-    if (!alive(part) || part.falling) continue;
-    const top = partTop(part);
-    const bottom = partBottom(part);
-    const dx = p.x - part.x;
-    const dz = p.z - part.z;
-    const ox = part.w / 2 + PLAYER_RADIUS - Math.abs(dx);
-    const oz = part.d / 2 + PLAYER_RADIUS - Math.abs(dz);
-    if (ox <= 0 || oz <= 0) continue;
-    const up = top - p.y;
-    const down = p.y + PLAYER_HEIGHT - bottom;
-    if (up <= 0 || down <= 0) continue;
-    const oy = Math.min(up, down);
-    if (oy < ox && oy < oz) {
-      if (up < down) {
-        p.y = top;
-        p.vy = Math.max(0, p.vy);
-        p.grounded = true;
-      } else {
-        p.y = bottom - PLAYER_HEIGHT;
-        p.vy = Math.min(0, p.vy);
-      }
-    } else if (ox < oz) {
-      p.x = part.x + Math.sign(dx || 1) * (part.w / 2 + PLAYER_RADIUS);
-      p.vx = 0;
-    } else {
-      p.z = part.z + Math.sign(dz || 1) * (part.d / 2 + PLAYER_RADIUS);
-      p.vz = 0;
-    }
-  }
-}
-
-/** Highest standing surface under the player, so rubble can be climbed. */
-function groundUnder(w: LoadWorld, p: Wrecker) {
-  let y = FLOOR;
-  for (const part of w.parts) {
-    if (!alive(part)) continue;
-    if (
-      Math.abs(p.x - part.x) < part.w / 2 + PLAYER_RADIUS * 0.6 &&
-      Math.abs(p.z - part.z) < part.d / 2 + PLAYER_RADIUS * 0.6
-    ) {
-      const top = partTop(part);
-      if (top <= p.y + 0.45) y = Math.max(y, top);
-    }
-  }
-  return y;
-}
-
-function movePlayers(w: LoadWorld, dt: number) {
-  for (const p of w.players) {
-    if (p.down) {
-      if (w.clock >= p.downUntil) {
-        p.down = false;
-        emit(w, 'help', `${p.name} got back up.`);
-      }
-      continue;
-    }
-    const input = w.clock - p.seen > 750 ? idleInput() : p.input;
-    const len = Math.hypot(input.x, input.z) || 1;
-    const nx = Math.abs(input.x) > 0.01 ? input.x / len : 0;
-    const nz = Math.abs(input.z) > 0.01 ? input.z / len : 0;
-    p.vx = nx * SPEED;
-    p.vz = nz * SPEED;
-    if (nx || nz) p.facing = Math.atan2(nx, nz);
-    if (input.jump && p.grounded && input.seq !== p.lastJump) {
-      p.vy = JUMP;
-      p.grounded = false;
-      p.lastJump = input.seq;
-    }
-    p.x = clamp(p.x + p.vx * dt, -YARD.x, YARD.x);
-    p.z = clamp(p.z + p.vz * dt, -YARD.z, YARD.z);
-    // Terminal velocity keeps a long drop from stepping straight through rubble.
-    p.vy = Math.max(-26, p.vy - GRAVITY * dt);
-    p.y += p.vy * dt;
-    collide(w, p);
-    const floor = groundUnder(w, p);
-    if (p.y <= floor) {
-      p.y = floor;
-      p.vy = 0;
-      p.grounded = true;
-    } else p.grounded = false;
-  }
-}
-
 /** Anything dropping fast enough knocks a worker off their feet. */
 function crush(w: LoadWorld) {
   for (const p of w.players) {
@@ -260,21 +169,47 @@ function breakPart(w: LoadWorld, part: Part, by: string, ball = false) {
     emit(w, 'collapse', `${released.length} pieces just lost their support.`);
 }
 
+/** Land one blow on a part, shared by the crew's hammers and the NPC crew. */
+export function strike(w: LoadWorld, by: Wrecker, part: Part) {
+  part.hits -= 1;
+  by.hits += 1;
+  if (part.hits <= 0) breakPart(w, part, by.name);
+  else
+    emit(w, 'hit', `${by.name} is working on a ${PART_NAMES[part.kind].toLowerCase()}.`);
+}
+
+export function syncNpcs(w: LoadWorld, slots: NpcSlot[]) {
+  reconcileSiteNpcs(w, slots, newWrecker);
+}
+
 export function advanceSite(w: LoadWorld, now: number) {
   if (now <= w.clock) return;
   const elapsed = Math.min((now - w.clock) / 1000, 0.5);
   w.clock = now;
   if (w.phase !== 'playing') return;
 
-  movePlayers(w, elapsed);
+  driveBots(w, strike);
+
+  for (const p of w.players)
+    if (p.down && w.clock >= p.downUntil) {
+      p.down = false;
+      emit(w, 'help', `${p.name} got back up.`);
+    }
 
   const total = elapsed + w.remainder;
   const steps = Math.floor((total + 1e-9) / STEP);
   w.remainder = total - steps * STEP;
   if (steps) {
     if (!pianoSupport(w)) w.piano.resting = false;
+    // Crew, debris and the ball all share one solver, so a falling slab
+    // genuinely shoves a worker instead of passing through them.
     const collapse = new Collapse(w);
-    collapse.step(steps);
+    for (let step = 0; step < steps; step++) {
+      for (const p of w.players)
+        collapse.controls(p, w.clock - p.seen > 750 ? idleInput() : p.input);
+      collapse.step(1);
+      for (const p of w.players) collapse.readPlayer(p);
+    }
     const { damage, destroyed } = collapse.save();
     if (damage > 0) {
       w.piano.integrity = Math.max(0, w.piano.integrity - damage);
@@ -287,6 +222,10 @@ export function advanceSite(w: LoadWorld, now: number) {
     }
   }
 
+  for (const p of w.players) {
+    p.x = clamp(p.x, -YARD.x, YARD.x);
+    p.z = clamp(p.z, -YARD.z, YARD.z);
+  }
   for (const part of w.parts)
     if (alive(part) && !part.falling) part.strain = strainOf(w.parts, part);
   // Debris that has come to rest on the ground stops being a falling body.
@@ -328,9 +267,11 @@ export function siteAction(
     const next = freshSite(w.clock, mode, w.seed + 1);
     next.phase = 'playing';
     next.started = w.clock;
-    next.players = w.players.map((a) =>
-      newWrecker(a.id, a.name, a.color, w.clock),
-    );
+    next.players = w.players.map((a) => {
+      const fresh = newWrecker(a.id, a.name, a.color, w.clock);
+      if (a.bot) fresh.bot = true;
+      return fresh;
+    });
     Object.assign(w, next);
     w.standing = standingParts(w).length;
     emit(
@@ -353,10 +294,7 @@ export function siteAction(
     p.swingUntil = w.clock + SWING_MS;
     const part = reachable(w, p, action.target);
     if (!part) throw new Error('Get closer to something worth hitting.');
-    part.hits -= 1;
-    p.hits += 1;
-    if (part.hits <= 0) breakPart(w, part, p.name);
-    else emit(w, 'hit', `${p.name} is working on a ${PART_NAMES[part.kind].toLowerCase()}.`);
+    strike(w, p, part);
     return;
   }
   if (action.type === 'mark') {
