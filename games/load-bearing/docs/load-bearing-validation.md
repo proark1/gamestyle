@@ -37,3 +37,17 @@ Generated audio has not been produced. The catalogue and profile are in place an
 The collection card draws its own scene in inline SVG. Every other card uses a painted 1536 × 1024 illustration made with one imagegen request, and this one still needs generating to match; the prompt direction is in `docs/game-illustrations.md`.
 
 `npm run format:check` fails across 646 files on this checkout, including files this change never touched. The repository is checked out with `core.autocrlf=true`, so every file has CRLF endings while `oxfmt` expects LF. That is a pre-existing environment condition, not a property of this change, and reformatting the tree was deliberately avoided.
+
+## Production release — 2026-09-09
+
+Live at [Jumbleyard](https://jumbleyard.up.railway.app/load-bearing). Railway deployment `877befef-0217-4fd7-aed5-0ca10f2fe47d` reached `SUCCESS` on the existing `jumbleyard` service, retaining the persistent `/data` volume.
+
+- All 15 checked routes return 200, including `/load-bearing`, `/load-bearing/admin` and every pre-existing game.
+- The live game loads, starts practice without a database, and draws the whole 32-part house with the piano beacon.
+- The collection page reports 12 games and the new card renders its inline scene: 20 shapes, a 384 × 256 viewBox, correct tag, meta and title.
+
+The first attempt, deployment `576ddd9d`, built and reported `SUCCESS` while containing none of this game. The Railway CLI resolves its project link by walking up from the working directory to the repository root, so running it inside a worktree under `.claude/worktrees/` uploaded the root checkout, where `.railwayignore` excludes `.claude` and therefore the worktree itself. The build succeeded because both the route and its game folder were absent together, so nothing failed to import. The release was redone from a clean `git archive` export of commit `cd3e88a` with an explicit `--project`, and the build log was checked for the new route before the result was trusted. That trap is now recorded in the README.
+
+Because that first attempt uploaded the root checkout's working tree, it also published the uncommitted Reel Problems live-well changes that another session had in progress there. The corrected release replaced it with the committed tree, so production no longer carries that unfinished work.
+
+`https://www.jumbleyard.com` does not serve this deployment. Its DNS resolves to Railway, but the TLS handshake fails with a hostname mismatch and the edge returns 404 even when the certificate is ignored. That is a custom-domain configuration problem which predates this release and is unaffected by it; the `up.railway.app` origin serves everything correctly.

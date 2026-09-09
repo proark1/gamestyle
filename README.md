@@ -178,4 +178,6 @@ node --import tsx games/stack-or-sink/scripts/physics-integration.mjs
 
 The default local database is `data/stack-or-sink.sqlite`. For a deployed integration test, set `GAME_TEST_URL` to the Railway HTTPS origin. Railway deployment uploads exclude local databases, outputs, dependencies, and environment files.
 
-Redeploy from this linked directory with `npx --yes @railway/cli up --service stack-or-sink --environment production --detach`. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
+Redeploy from this linked directory with `npx --yes @railway/cli up --service jumbleyard --environment production --detach`. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
+
+The Railway link is registered against the repository root, and the CLI resolves it by walking up from the working directory. Deploying from a git worktree under `.claude/worktrees/` therefore uploads the root checkout instead, and `.railwayignore` excludes `.claude`, so the worktree's own changes are silently left out of a build that still succeeds. Release from the root checkout, or from a clean `git archive` export of the commit with an explicit `--project`, and confirm the intended routes appear in the build log before trusting the deployment.
