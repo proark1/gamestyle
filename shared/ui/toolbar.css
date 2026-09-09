@@ -164,3 +164,59 @@
     justify-content: flex-end;
   }
 }
+.game-toolbar .game-toolbar-button.is-off {
+  color: #7d8c80;
+  background: #f2efe2;
+  border-style: dashed;
+}
+.game-toolbar .game-toolbar-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.game-toolbar-volume {
+  flex: 0 0 auto;
+  width: 92px;
+  height: 6px;
+  margin: 0 2px;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #e6e3cf;
+  border: 1px solid #c3cfb9;
+  border-radius: 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.game-toolbar-volume::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff8e8;
+  border: 1px solid #b87821;
+  box-shadow: 0 2px 6px #203a2912;
+  cursor: pointer;
+}
+.game-toolbar-volume::-moz-range-thumb {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff8e8;
+  border: 1px solid #b87821;
+  box-shadow: 0 2px 6px #203a2912;
+  cursor: pointer;
+}
+.game-toolbar-volume:focus-visible {
+  outline: 3px solid #b87821;
+  outline-offset: 3px;
+}
+.game-toolbar-volume:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (max-width: 720px) {
+  .game-toolbar-volume {
+    display: none;
+  }
+}
