@@ -1,6 +1,11 @@
 import type { AudioProfile } from './profile';
 import { DEFAULT_SETTINGS, type AudioManifest, type GameId } from './types';
 import { seamlessAmbience } from './loop-buffer';
+import {
+  audioPreferencesSnapshot,
+  registerAudioListener,
+  type AudioPreferences,
+} from './preferences';
 
 type AudioPoint = { x: number; y?: number; z: number };
 type SpatialVoice = {
@@ -33,6 +38,9 @@ export class SiteAudio {
   private timer: ReturnType<typeof setInterval>;
   private disposed = false;
   private muted = false;
+  private level = 1;
+  private musicOn = true;
+  private unregister: () => void;
   private ducked = false;
   private speechCount = 0;
   private speechEpoch = 0;
@@ -46,6 +54,21 @@ export class SiteAudio {
   duck(active: boolean) {
     this.ducked = active;
     this.mixLoops();
+  }
+  /** Site-wide listener preferences; the game's own mute stays separate. */
+  applyPreferences(preferences: AudioPreferences) {
+    this.level = Math.max(0, Math.min(1, preferences.volume));
+    this.musicOn = preferences.music;
+    if (this.master && this.context)
+      this.master.gain.setTargetAtTime(
+        this.masterGain(),
+        this.context.currentTime,
+        0.05,
+      );
+    this.mixLoops();
+  }
+  private masterGain() {
+    return this.muted ? 0 : 0.8 * this.level;
   }
   private mixLoops() {
     if (!this.context) return;
@@ -203,6 +226,8 @@ export class SiteAudio {
   ) {
     this.manifest =
       this.profile.prepareManifest?.(this.manifest) ?? this.manifest;
+    this.applyPreferences(audioPreferencesSnapshot());
+    this.unregister = registerAudioListener(this);
     void this.refresh();
     this.timer = setInterval(() => {
       void this.refresh();
@@ -223,7 +248,7 @@ export class SiteAudio {
     this.muted = !value;
     if (this.master && this.context)
       this.master.gain.setTargetAtTime(
-        value ? 0.8 : 0,
+        this.masterGain(),
         this.context.currentTime,
         0.04,
       );
@@ -234,7 +259,7 @@ export class SiteAudio {
       if (!this.context) {
         this.context = new AudioContext();
         this.master = this.context.createGain();
-        this.master.gain.value = this.muted ? 0 : 0.8;
+        this.master.gain.value = this.masterGain();
         const compressor = this.context.createDynamicsCompressor();
         this.master.connect(compressor);
         compressor.connect(this.context.destination);
@@ -297,7 +322,9 @@ export class SiteAudio {
       cue.volume *
       this.manifest.settings[channel] *
       (channel === 'music'
-        ? (this.profile.musicVolume ?? 1)
+        ? this.musicOn
+          ? (this.profile.musicVolume ?? 1)
+          : 0
         : channel === 'ambience'
           ? (this.profile.ambienceVolume ?? 1)
           : 1)
@@ -607,6 +634,7 @@ export class SiteAudio {
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
+    this.unregister();
     clearInterval(this.timer);
     document.removeEventListener('pointerdown', this.gesture);
     document.removeEventListener('keydown', this.gesture);
