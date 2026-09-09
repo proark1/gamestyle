@@ -128,12 +128,55 @@ right: 0` and centred, the dock with `justify-content`, the banner with `margin`
 
 Layout is verified by measuring every HUD box and reporting any pair that
 actually intersects, plus hit-testing each control's centre through
-`elementFromPoint`. Six viewports pass with zero intersections, nothing
-off-screen, no page scroll and every control reachable: 320x568, 360x640,
-375x812, 768x1024, 812x375 and 1440x900. Landscape needed its own rules — the
-600px minimum height is taller than a handset on its side, which pushed the dock
-below the fold and made the page scroll — and there the dock is held clear of
-the thumb corners with `left: 140px; right: 140px`.
+`elementFromPoint`. Because the dock's height now depends on how many actions
+are available, each viewport is measured with the dock forced to two buttons and
+to four — the widest a real position can offer. Eight viewports pass with zero
+intersections, nothing off-screen, no page scroll and every control reachable:
+320x568, 360x640, 393x660, 375x812, 768x1024, 667x375, 812x375 and 1440x900.
+Landscape needed its own rules — the 600px minimum height is taller than a
+handset on its side, which pushed the dock below the fold and made the page
+scroll — and there the dock is held clear of the thumb corners with
+`left: 134px; right: 104px`.
+
+Two collisions were caught only by measuring the four-button dock: it wrapped
+over the readout in portrait, which is why the readout moved to the top, and it
+covered the event banner in landscape, which is why those buttons lost their
+icons.
+
+Fitting the desktop HUD onto a phone was not enough — everything fitted and the
+game was still unreadable, because six panels and six buttons left about 130px
+of actual playfield. The compact layout is a different layout rather than a
+smaller one, and it starts from the position that on a handset the playfield is
+the interface:
+
+- **Only the actions you can take.** Disabled dock buttons are hidden outright,
+  so standing at the winch offers Wind and Swing aim rather than six buttons
+  with four of them dead. `Haul up` had to learn the reach the simulation
+  already enforced for it — it was permanently enabled and threw an error when
+  pressed, which on a phone would have meant a button that never went away. In
+  open ground, where nothing is available, a single line takes the dock's place
+  rather than leaving it bare.
+- **Every panel is one line.** The scoreboard is the stones still standing and
+  the clock; the stone breakdown, the volley count and both column headings are
+  gone. The trebuchet readout is the counterweight bar, the range it reaches and
+  what is in the sling on one row — the two reference distances and the swing
+  direction are dropped, because the gold ring on the ground shows both.
+- **The wordmark collapses to its tile**, as it does everywhere else in the
+  collection. At full width it pushed the sound button off the right edge of a
+  393px screen, so two of the six toolbar buttons were unreachable.
+- **The readout sits at the top, not above the dock.** Four actions can be
+  available at once — at the winch, within reach of the lever, beside a
+  flattened crewmate — and four wrap onto a second row. A dock that grows
+  upwards would have climbed straight over a readout placed above it.
+
+That is 393x660 with roughly 350px of playfield instead of 130px.
+
+Landscape has only the gap between the two thumbs to put a dock in, so its
+buttons drop their icons to keep four on one row, and the event banner moves
+into the empty band above them where it can grow upwards into the sky. The
+banner is also `pointer-events: none` everywhere: it is never interactive, it
+can pass over the dock on a short screen, and it must not be able to swallow a
+tap meant for a button underneath it.
 
 Beyond layout: held actions listen for `pointercancel` as well as `pointerup`
 and `pointerleave`, since a cancelled touch would otherwise leave a crewmate
