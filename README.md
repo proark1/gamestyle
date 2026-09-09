@@ -6,20 +6,20 @@
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
-| Game | Play at | Game code | Route |
-| --- | --- | --- | --- |
-| Siege and Desist | `/siege-and-desist` | `games/siege-and-desist/` | `app/siege-and-desist/` |
-| Stack or Sink | `/stack-or-sink` | `games/stack-or-sink/` | `app/stack-or-sink/` |
-| Blend Business | `/act-natural` | `games/act-natural/` | `app/act-natural/` |
-| Uphill Delivery | `/uphill-delivery` | `games/uphill-delivery/` | `app/uphill-delivery/` |
-| Tiptoe Thieves | `/dont-wake-the-giant` | `games/dont-wake-the-giant/` | `app/dont-wake-the-giant/` |
-| Permit Pending | `/chaos` | `games/chaos/` | `app/(handwerker)/chaos/` |
-| Brick by Hand | `/first-person` | `games/first-person/` | `app/(handwerker)/first-person/` |
-| Wrong Floor | `/wrong-floor` | `games/wrong-floor/` | `app/wrong-floor/` |
-| One More Button | `/one-more-button` | `games/one-more-button/` | `app/one-more-button/` |
-| Four Brain Cells | `/four-brain-cells` | `games/four-brain-cells/` | `app/four-brain-cells/` |
-| Reel Problems | `/reel-problems` | `games/reel-problems/` | `app/reel-problems/` |
-| Shelf Control | `/shelf-control` | `games/shelf-control/` | `app/shelf-control/` |
+| Game             | Play at                | Game code                    | Route                            |
+| ---------------- | ---------------------- | ---------------------------- | -------------------------------- |
+| Siege and Desist | `/siege-and-desist`    | `games/siege-and-desist/`    | `app/siege-and-desist/`          |
+| Stack or Sink    | `/stack-or-sink`       | `games/stack-or-sink/`       | `app/stack-or-sink/`             |
+| Blend Business   | `/act-natural`         | `games/act-natural/`         | `app/act-natural/`               |
+| Uphill Delivery  | `/uphill-delivery`     | `games/uphill-delivery/`     | `app/uphill-delivery/`           |
+| Tiptoe Thieves   | `/dont-wake-the-giant` | `games/dont-wake-the-giant/` | `app/dont-wake-the-giant/`       |
+| Permit Pending   | `/chaos`               | `games/chaos/`               | `app/(handwerker)/chaos/`        |
+| Brick by Hand    | `/first-person`        | `games/first-person/`        | `app/(handwerker)/first-person/` |
+| Wrong Floor      | `/wrong-floor`         | `games/wrong-floor/`         | `app/wrong-floor/`               |
+| One More Button  | `/one-more-button`     | `games/one-more-button/`     | `app/one-more-button/`           |
+| Four Brain Cells | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
+| Reel Problems    | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
+| Shelf Control    | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
 
 Eleven of the twelve have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
 
@@ -183,4 +183,8 @@ node --import tsx games/stack-or-sink/scripts/physics-integration.mjs
 
 The default local database is `data/stack-or-sink.sqlite`. For a deployed integration test, set `GAME_TEST_URL` to the Railway HTTPS origin. Railway deployment uploads exclude local databases, outputs, dependencies, and environment files.
 
-Redeploy from this linked directory with `npx --yes @railway/cli up --service jumbleyard --environment production --detach`. The service is `jumbleyard`; only the volume still carries the older `stack-or-sink` name. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
+Redeploy with `npm run deploy`. The service is `jumbleyard`; only the volume still carries the older `stack-or-sink` name.
+
+`railway up` uploads the directory it runs from, not a git ref, and this repository normally has a dozen worktrees with sessions working in parallel. Deploying from one that has fallen behind silently reverts whatever landed on `main` since it was cut — the build succeeds, the health check stays green, every page returns 200, and the work is gone. That happened twice on 9 September 2026. `npm run deploy` refuses when the working tree is dirty, when the directory is not in sync with `origin/main`, or when another session already has a deployment in flight, and then runs the same upload. Pass `--force` to skip the checks deliberately.
+
+Prefer a behavioural check over a status code when confirming a deploy: count WebGL draw calls in the browser, or exercise a route whose output you know. HTTP 200 does not distinguish the build you meant from the one you replaced. GitHub automatic deployment is not configured.

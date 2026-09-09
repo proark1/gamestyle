@@ -26,7 +26,8 @@
     "check:architecture": "node scripts/check-architecture.mjs",
     "pretest": "npm run check:architecture",
     "check": "npm run format:check && npm run typecheck && npm run lint && npm test",
-    "format:check": "oxfmt --check app games shared platform db scripts hooks lib vite.config.ts package.json .oxlintrc.json"
+    "format:check": "oxfmt --check app games shared platform db scripts hooks lib vite.config.ts package.json .oxlintrc.json",
+    "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
