@@ -14,6 +14,7 @@ export function sqliteRoomStore(database: DatabaseSync): RoomStore {
   const update = db.prepare(
     'UPDATE rooms SET state = ?, version = ?, updated = ? WHERE code = ? AND version = ?',
   );
+  const purge = db.prepare('DELETE FROM rooms WHERE updated < ?');
   return {
     async get(code) {
       return (read.get(code) as Row | undefined) ?? null;
@@ -32,6 +33,9 @@ export function sqliteRoomStore(database: DatabaseSync): RoomStore {
             .run()
         ).meta.changes > 0
       );
+    },
+    async purge(before) {
+      return (await purge.bind(before).run()).meta.changes;
     },
   };
 }

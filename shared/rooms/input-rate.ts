@@ -14,5 +14,8 @@ export function quantizeAxis(value: number) {
 }
 
 /** Floor for a change-triggered poll. A change can shorten the wait, never
- *  remove it, so one client cannot exceed 40 requests per second. */
-export const MIN_POLL_MS = 25;
+ *  remove it. Held under the server's own per-member budget in
+ *  shared/http/request-budget.ts (30 requests a second) so a moving player
+ *  stays inside it instead of being answered with 429s and bounced into a
+ *  reconnect backoff, which is what the unbounded rate actually caused. */
+export const MIN_POLL_MS = 40;

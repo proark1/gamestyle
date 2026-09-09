@@ -33,6 +33,8 @@ void test('a change can shorten the poll wait but never remove it', () => {
   // Zero here is what let one moving client poll as fast as the network
   // allowed, with every request running a full server tick.
   assert.ok(MIN_POLL_MS > 0);
-  assert.ok(MIN_POLL_MS <= 60, 'must still be faster than the idle cadence');
-  assert.ok(1000 / MIN_POLL_MS <= 40, 'caps one client at 40 requests/second');
+  assert.ok(MIN_POLL_MS < 60, 'must still be faster than the idle cadence');
+  // The server answers a member with 429 above 30 requests a second, so the
+  // client's own floor has to sit under that or it throttles itself offline.
+  assert.ok(1000 / MIN_POLL_MS <= 30, 'stays inside the per-member budget');
 });
