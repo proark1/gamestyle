@@ -594,7 +594,11 @@
   border: 1px solid var(--edge);
   border-radius: 4px;
   backdrop-filter: blur(3px);
+  /* Held actions must not start a text selection or an iOS callout. */
   touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .sad-action span {
   display: flex;
@@ -640,11 +644,16 @@
 }
 .sad-notice,
 .sad-loading {
+  /* Anchored on both edges and centred by margin. Pinned only by left:50% its
+     available width is half the viewport, so on a phone the banner wraps to
+     five lines and grows down over the readout below it. */
   position: absolute;
-  left: 50%;
+  left: 0;
+  right: 0;
   top: 92px;
   z-index: 9;
-  transform: translateX(-50%);
+  width: fit-content;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -718,6 +727,16 @@
   .sad-movement-hint {
     display: none;
   }
+  /* The thumbs own the bottom corners. The shared skin parks the joystick at
+     160px, which is exactly where this game's readout sits, so both controls
+     end up buried under a panel and the game cannot be played at all. */
+  .sad-game .touch-controls {
+    bottom: 16px;
+    z-index: 8;
+  }
+  .sad-action {
+    min-height: 44px;
+  }
 }
 @media (max-width: 1120px) {
   .sad-engine {
@@ -752,40 +771,67 @@
     padding: 0 14px;
     height: 72px;
   }
-}
-@media (max-width: 760px) {
-  .sad-crew {
-    display: none;
-  }
+  /* The dock wraps to two rows from here down, so the readout, the status line
+     and the event banner all have to clear it and each other. */
   .sad-engine {
-    left: 14px;
+    bottom: 278px;
+  }
+  /* Beside the readout rather than under the scoreboard, which is wide here. */
+  .sad-camera {
+    top: auto;
+    bottom: 282px;
     right: 14px;
+    left: auto;
     transform: none;
-    bottom: 186px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  .sad-wind {
-    min-width: 0;
-  }
-  .sad-payload {
-    padding-left: 0;
-    padding-top: 10px;
-    border-left: 0;
-    border-top: 1px solid var(--edge);
-    text-align: left;
   }
   .sad-your-status {
     display: none;
   }
   .sad-action-dock {
-    bottom: 14px;
+    bottom: 126px;
     gap: 6px;
+  }
+  .sad-game.in-session .sad-notice,
+  .sad-game.in-session .sad-loading {
+    top: 236px;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+}
+@media (max-width: 760px) {
+  .sad-crew {
+    display: none;
+  }
+  /* Full width, stacked above the dock, which itself sits above the thumbs. */
+  .sad-engine {
+    left: 14px;
+    right: 14px;
+    transform: none;
+    gap: 12px;
+    padding: 9px 12px;
+  }
+  .sad-wind {
+    min-width: 0;
+    flex: 1;
+  }
+  .sad-wind small {
+    font-size: 11px;
+  }
+  .sad-payload {
+    padding-left: 12px;
+    min-width: 92px;
+  }
+  .sad-payload strong {
+    font-size: 15px;
+  }
+  .sad-payload small {
+    font-size: 11px;
+  }
+  .sad-action-dock {
     padding: 0 8px;
   }
   .sad-action {
-    padding: 8px 11px;
+    padding: 8px 10px;
   }
   .sad-action span {
     font-size: 11px;
@@ -793,12 +839,168 @@
   .sad-action kbd {
     display: none;
   }
+  /* The readout goes full width here, so the camera returns to the top. */
   .sad-camera {
     left: auto;
     right: 14px;
+    top: 186px;
+    bottom: auto;
     transform: none;
   }
 }
+/* Any window shorter than the 600px floor would otherwise scroll rather than
+   fit, which pushes the thumb controls off the bottom of the screen. */
+@media (max-height: 620px) {
+  .sad-game {
+    min-height: 0;
+  }
+}
+
+/* Short portrait handsets. The roomier stack above does not fit between the
+   scoreboard and the thumbs here, so the top block tightens and the readout
+   moves down to meet it. */
+@media (max-width: 760px) and (max-height: 700px) {
+  .sad-scoreboard {
+    padding: 8px 12px;
+    gap: 12px;
+  }
+  .sad-scoreboard strong {
+    font-size: 20px;
+  }
+  .sad-scoreboard small {
+    display: none;
+  }
+  .sad-camera {
+    top: 150px;
+  }
+  .sad-game.in-session .sad-notice,
+  .sad-game.in-session .sad-loading {
+    top: 192px;
+  }
+  .sad-engine {
+    bottom: 230px;
+  }
+  /* The gold ring on the ground already shows which way the aim is swung. */
+  .sad-payload small {
+    display: none;
+  }
+}
+
+/* Landscape phones and short windows. The 600px floor above is taller than a
+   handset on its side, which pushes the dock and the readout below the fold and
+   makes the page scroll instead of fitting. Everything tightens to the edges,
+   and the dock keeps clear of the thumb corners. */
+@media (max-height: 560px) {
+  .sad-game {
+    min-height: 0;
+  }
+  .sad-game:not(.in-session) {
+    overflow-y: auto;
+  }
+  .sad-menu {
+    margin-top: 8px;
+  }
+  .sad-menu h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    margin: 12px 0 10px;
+  }
+  .sad-menu p {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .sad-menu-copy {
+    padding: 20px;
+  }
+  .sad-header {
+    height: 56px;
+  }
+  .sad-scoreboard {
+    top: 64px;
+    padding: 9px 14px;
+    gap: 16px;
+  }
+  .sad-scoreboard strong {
+    font-size: 22px;
+  }
+  .sad-scoreboard small {
+    display: none;
+  }
+  .sad-crew {
+    display: none;
+  }
+  .sad-camera {
+    top: 64px;
+  }
+  /* Wider and shorter: at a narrow width the banner wraps to three lines and
+     grows down into the readout below it. */
+  .sad-game.in-session .sad-notice,
+  .sad-game.in-session .sad-loading {
+    top: 130px;
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+  .sad-your-status {
+    display: none;
+  }
+  /* Sits in the band between the notice and the dock, so it has to be lean. */
+  .sad-engine {
+    bottom: 106px;
+    padding: 6px 12px;
+    gap: 12px;
+  }
+  .sad-wind span,
+  .sad-payload span {
+    margin-bottom: 3px;
+  }
+  .sad-wind-track {
+    height: 9px;
+  }
+  .sad-wind {
+    min-width: 0;
+    flex: 1;
+  }
+  .sad-wind small {
+    font-size: 11px;
+  }
+  .sad-payload {
+    padding-left: 14px;
+    min-width: 92px;
+  }
+  .sad-payload strong {
+    font-size: 15px;
+  }
+  .sad-action-dock {
+    bottom: 14px;
+    left: 140px;
+    right: 140px;
+    padding: 0;
+    gap: 6px;
+  }
+  .sad-action {
+    padding: 8px 10px;
+  }
+  .sad-action span {
+    font-size: 11px;
+  }
+  .sad-action kbd {
+    display: none;
+  }
+  .sad-movement-hint {
+    display: none;
+  }
+  .sad-lobby,
+  .sad-results {
+    padding: 18px 22px;
+    max-height: calc(100dvh - 90px);
+    overflow-y: auto;
+  }
+  .sad-lobby h2,
+  .sad-results h2 {
+    font-size: 24px;
+    margin: 8px 0 12px;
+  }
+}
+
 @media (max-width: 420px) {
   .sad-brand {
     font-size: 16px;

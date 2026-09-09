@@ -699,6 +699,7 @@ export default function SiegeAndDesist() {
                   onPointerDown={() => action({ type: 'wind' })}
                   onPointerUp={() => action({ type: 'stopWind' })}
                   onPointerLeave={() => action({ type: 'stopWind' })}
+                  onPointerCancel={() => action({ type: 'stopWind' })}
                 >
                   <Crosshair size={21} />
                   <span>
@@ -732,6 +733,7 @@ export default function SiegeAndDesist() {
                   onPointerDown={() => action({ type: 'push' })}
                   onPointerUp={() => action({ type: 'stopPush' })}
                   onPointerLeave={() => action({ type: 'stopPush' })}
+                  onPointerCancel={() => action({ type: 'stopPush' })}
                 >
                   <span>
                     Swing aim<kbd>Q · push the frame</kbd>
