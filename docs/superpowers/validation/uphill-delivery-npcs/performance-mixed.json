@@ -1,0 +1,14 @@
+{
+  "revision": "2bb80f92c4cd704adbd239aa0bbba52134ff0fc5152e48273b04ebe713d1819a",
+  "scenario": "scripted human and three NPCs",
+  "humanCarryFrames": 5149,
+  "platform": "win32",
+  "arch": "x64",
+  "cpu": "AMD Ryzen 7 5800H with Radeon Graphics         ",
+  "node": "v24.14.0",
+  "activeFrames": 7200,
+  "p50Ms": 0.4272999999993772,
+  "p95Ms": 0.9678999999996449,
+  "maxMs": 22.638100000000122,
+  "targetP95Ms": 2
+}

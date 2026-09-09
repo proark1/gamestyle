@@ -11,5 +11,9 @@ coverage
 .env*
 .codex
 .agents
+.claude
 *.tsbuildinfo
 *.log
+/.work-npm-cache/
+
+.tmp

@@ -1,0 +1,37 @@
+✔ browser-created farms use private server rooms and sync and actions stay on that authority (42.3885ms)
+✔ movement sends ordered controls, prevents duplicate syncs and ignores older replies (8.525ms)
+✔ NPC slots are host-only, bounded, removable, and available only between human-farmer rounds (7.1063ms)
+✔ solo humans remain farmer and mixed rooms rotate only human players (2.4019ms)
+✔ navigation routes around hay, escapes collision boundaries, and gives sight a real cost (14.2128ms)
+✔ 24 deterministic complete rounds escape without clipping, fence shocks or stuck NPCs (545.6981ms)
+✔ NPCs complete the two-key route when a human teammate holds the ladder (16.0375ms)
+✔ brains survive serialization and never appear in player snapshots (29.2832ms)
+✔ exposed cows flee after recovering; unseen farmer changes do not produce omniscient reactions (2.4326ms)
+✔ room NPC management is atomic, authenticated, replay-safe, and permits human replacement (19.6819ms)
+✔ a leaving farmer never hands the farm to an NPC (0.4946ms)
+✔ Input changes wake an idle connection and coalesce behind an in-flight poll (65.7484ms)
+✔ the host can add, remove and fill NPC seats; the guard rotates through humans and NPCs (5.3333ms)
+✔ active rounds reject NPC changes and bot metadata never marks showroom figures (8.984ms)
+✔ bot plans reset between roles, and the bot guard stays blind and still during hiding (43.2489ms)
+✔ navigation reaches objectives around shelves without cutting through collision rectangles (137.8745ms)
+✔ NPC crews complete both escape routes and do not stay frozen indefinitely (1531.6773ms)
+✔ NPCs reassign security after its worker is caught (27.8625ms)
+✔ guard decisions are identical when only hidden identities, positions and objectives change (0.9211ms)
+✔ guard reacts to witnessed theft after a delay and remembers only the last seen position (0.6698ms)
+✔ the bot guard captures a visible equipment carrier using ordinary inspection rules (6.8004ms)
+✔ a guard does not learn about missing equipment behind a shelf (0.3642ms)
+✔ mannequin memory cannot follow equipment secretly moved outside its view (0.2488ms)
+✔ NPC seat operations are authenticated, host-only and idempotent (12.9292ms)
+✔ friends replace an NPC in a full waiting room, without replacing people (1.6331ms)
+✔ concurrent NPC fills and human joins never exceed four seats (1.1627ms)
+✔ NPCs do not expire, cannot inherit hosting, and disappear when the last human leaves (4.3244ms)
+✔ a human departure passes hosting to another human across NPC seats (1.8664ms)
+✔ older stored rooms acquire bot state without requiring a migration (3.0364ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2100.8131

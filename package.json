@@ -1,11 +1,16 @@
 {
-  "name": "stack-or-sink",
+  "name": "jumbleyard",
   "version": "0.1.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
+    "dev:peer": "node scripts/dev-peer.mjs",
+    "test:peer": "node scripts/peer-integration.mjs",
+    "test:load": "node --import tsx scripts/load-test.mjs",
+    "dev:voice": "node scripts/dev-voice.mjs",
+    "audio:prompts": "node --import tsx scripts/export-audio-prompts.mjs",
     "dev": "vinext dev",
     "build": "vinext build",
     "build:railway": "node scripts/build-node.mjs",
@@ -16,7 +21,12 @@
     "db:generate": "drizzle-kit generate",
     "db:local": "wrangler d1 migrations apply DB --local --config wrangler.local.json",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test game/*.test.ts db/*.test.ts"
+    "test": "node scripts/test.mjs",
+    "test:handwerker": "node scripts/test.mjs games/chaos games/first-person shared/audio/construction db/handwerker-node.test.ts",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "pretest": "npm run check:architecture",
+    "check": "npm run format:check && npm run typecheck && npm run lint && npm test",
+    "format:check": "oxfmt --check app games shared platform db scripts hooks lib vite.config.ts package.json .oxlintrc.json"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
@@ -32,6 +42,8 @@
     "drizzle-orm": "0.45.2",
     "embla-carousel-react": "8.5.2",
     "input-otp": "1.4.2",
+    "livekit-client": "^2.22.2",
+    "livekit-server-sdk": "^2.18.0",
     "lucide-react": "1.31.0",
     "react": "^19.2.8",
     "react-day-picker": "9.8.1",
@@ -47,9 +59,10 @@
     "vinext": "^1.0.0-beta.9"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.37.1",
-    "@cloudflare/workers-types": "4.20260515.1",
+    "@cloudflare/vite-plugin": "1.54.5",
+    "@cloudflare/workers-types": "5.20260908.1",
     "@openai/sites-vite-plugin": "0.2.0",
+    "@roamhq/wrtc": "0.10.0",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
@@ -63,7 +76,12 @@
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vite": "^8.2.2",
-    "wrangler": "4.92.0"
+    "wrangler": "4.129.1"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    }
   },
   "type": "module"
 }

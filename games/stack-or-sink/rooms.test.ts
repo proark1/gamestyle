@@ -1,0 +1,253 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { handleRoom, type StoredRoom } from './rooms';
+import { type RoomStore, type Row } from '../../shared/rooms/types';
+import type { Session } from '../../shared/rooms/session';
+import type { Snapshot } from './types';
+type Reply = { session: Session; snapshot: Snapshot };
+class MemoryStore implements RoomStore {
+  rows = new Map<string, Row>();
+  conflicts = 0;
+  async get(code: string) {
+    const r = this.rows.get(code);
+    return r ? { ...r } : null;
+  }
+  async insert(row: Row) {
+    if (this.rows.has(row.code)) return false;
+    this.rows.set(row.code, { ...row });
+    return true;
+  }
+  async compareAndSwap(row: Row, version: number) {
+    if (this.conflicts > 0) {
+      this.conflicts--;
+      return false;
+    }
+    if (this.rows.get(row.code)?.version !== version) return false;
+    this.rows.set(row.code, { ...row });
+    return true;
+  }
+}
+const NOW = 100000;
+async function create(store: MemoryStore) {
+  return (await handleRoom(
+    store,
+    { op: 'create', name: 'Ada', color: 0 },
+    NOW,
+  )) as Reply;
+}
+void test('create and join share one state without disclosing crew credentials', async () => {
+  const db = new MemoryStore(),
+    a = await create(db),
+    b = (await handleRoom(
+      db,
+      { op: 'join', code: a.session.code, name: 'Bo' },
+      NOW + 10,
+    )) as Reply;
+  assert.equal(b.snapshot.world.players.length, 2);
+  assert.equal(b.snapshot.host, a.session.id);
+  assert.ok(!JSON.stringify(b.snapshot).includes(a.session.token));
+  assert.ok(!JSON.stringify(b.snapshot).includes('members'));
+  assert.notEqual(a.session.token, b.session.token);
+});
+void test('concurrent joins enforce four-player capacity atomically', async () => {
+  const db = new MemoryStore(),
+    a = await create(db);
+  const joins = await Promise.allSettled(
+    Array.from({ length: 5 }, (_, i) =>
+      handleRoom(
+        db,
+        { op: 'join', code: a.session.code, name: `Player ${i}` },
+        NOW + 20,
+      ),
+    ),
+  );
+  assert.equal(joins.filter((r) => r.status === 'fulfilled').length, 3);
+  const room = JSON.parse(db.rows.get(a.session.code)!.state) as StoredRoom;
+  assert.equal(room.world.players.length, 4);
+  assert.equal(new Set(room.world.players.map((p) => p.color)).size, 4);
+});
+void test('invalid token and noncaptain start are rejected', async () => {
+  const db = new MemoryStore(),
+    a = await create(db),
+    b = (await handleRoom(
+      db,
+      { op: 'join', code: a.session.code, name: 'Bo' },
+      NOW + 10,
+    )) as Reply;
+  await assert.rejects(
+    handleRoom(db, { op: 'sync', ...a.session, token: 'fake' }, NOW + 20),
+    /expired/,
+  );
+  await assert.rejects(
+    handleRoom(
+      db,
+      {
+        op: 'action',
+        ...b.session,
+        requestId: 'start',
+        action: { type: 'start' },
+      },
+      NOW + 30,
+    ),
+    /captain/,
+  );
+});
+void test('replayed actions are idempotent and contention retries preserve the action', async () => {
+  const db = new MemoryStore(),
+    a = await create(db);
+  db.conflicts = 3;
+  const body = {
+    op: 'action',
+    ...a.session,
+    requestId: 'same-start',
+    action: { type: 'start' },
+  };
+  await handleRoom(db, body, NOW + 20);
+  const repeat = (await handleRoom(db, body, NOW + 40)) as Reply;
+  assert.equal(repeat.snapshot.world.started, NOW + 20);
+  assert.equal(
+    repeat.snapshot.world.events.filter((e) => e.text.includes('minute'))
+      .length,
+    1,
+  );
+});
+void test('two players racing for the same piece cannot both take it', async () => {
+  const db = new MemoryStore(),
+    a = await create(db),
+    b = (await handleRoom(
+      db,
+      { op: 'join', code: a.session.code, name: 'Bo' },
+      NOW + 10,
+    )) as Reply;
+  const row = db.rows.get(a.session.code)!;
+  const room = JSON.parse(row.state) as StoredRoom;
+  room.world.players.forEach((p) => {
+    p.x = 0;
+    p.z = 0;
+  });
+  room.world.pieces = [
+    {
+      id: 'shared',
+      kind: 'crate',
+      x: 2,
+      y: 0.13,
+      z: 0,
+      rotation: 0,
+      vy: 0,
+      tilt: 0,
+      unstable: 0,
+    },
+  ];
+  row.state = JSON.stringify(room);
+  const replies = await Promise.allSettled(
+    [a, b].map((r, i) =>
+      handleRoom(
+        db,
+        {
+          op: 'action',
+          ...r.session,
+          requestId: `grab${i}`,
+          action: { type: 'grab', target: 'shared' },
+        },
+        NOW + 20,
+      ),
+    ),
+  );
+  assert.equal(replies.filter((r) => r.status === 'fulfilled').length, 1);
+});
+void test('leaving transfers captaincy and releases a held piece', async () => {
+  const db = new MemoryStore(),
+    a = await create(db),
+    b = (await handleRoom(
+      db,
+      { op: 'join', code: a.session.code, name: 'Bo' },
+      NOW + 10,
+    )) as Reply;
+  const row = db.rows.get(a.session.code)!,
+    room = JSON.parse(row.state) as StoredRoom;
+  room.world.pieces[0].heldBy = a.session.id;
+  row.state = JSON.stringify(room);
+  await handleRoom(db, { op: 'leave', ...a.session }, NOW + 20);
+  const next = (await handleRoom(
+    db,
+    { op: 'sync', ...b.session },
+    NOW + 30,
+  )) as Reply;
+  assert.equal(next.snapshot.host, b.session.id);
+  assert.equal(next.snapshot.world.players.length, 1);
+  assert.equal(next.snapshot.world.pieces[0].heldBy, undefined);
+});
+void test('in-progress rounds reject late joining and stale input is stopped', async () => {
+  const db = new MemoryStore(),
+    a = await create(db);
+  await handleRoom(
+    db,
+    {
+      op: 'action',
+      ...a.session,
+      requestId: 'start',
+      action: { type: 'start' },
+    },
+    NOW + 10,
+  );
+  await assert.rejects(
+    handleRoom(
+      db,
+      { op: 'join', code: a.session.code, name: 'late' },
+      NOW + 20,
+    ),
+    /already in a run/,
+  );
+  await assert.rejects(
+    handleRoom(
+      db,
+      {
+        op: 'sync',
+        ...a.session,
+        input: { x: NaN, z: 0, jump: false, seq: 1 },
+      },
+      NOW + 20,
+    ),
+    /Invalid player controls/,
+  );
+});
+void test('a delayed movement request cannot overwrite a newer stop', async () => {
+  const db = new MemoryStore(),
+    a = await create(db);
+  await handleRoom(
+    db,
+    {
+      op: 'sync',
+      ...a.session,
+      input: { x: 1, z: 0, jump: false, seq: 0, order: 1 },
+    },
+    NOW + 10,
+  );
+  await handleRoom(
+    db,
+    {
+      op: 'sync',
+      ...a.session,
+      input: { x: 0, z: 0, jump: false, seq: 0, order: 3 },
+    },
+    NOW + 30,
+  );
+  const stale = (await handleRoom(
+    db,
+    {
+      op: 'sync',
+      ...a.session,
+      input: { x: 1, z: 0, jump: false, seq: 0, order: 2 },
+    },
+    NOW + 50,
+  )) as Reply;
+  assert.equal(stale.snapshot.world.players[0].input.x, 0);
+  assert.equal(stale.snapshot.world.players[0].input.order, 3);
+  const x = stale.snapshot.world.players[0].x;
+  const stopped = (await handleRoom(
+    db,
+    { op: 'sync', ...a.session },
+    NOW + 100,
+  )) as Reply;
+  assert.equal(stopped.snapshot.world.players[0].x, x);
+});

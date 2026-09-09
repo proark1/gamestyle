@@ -1,0 +1,20 @@
+Tool: built-in image_gen__imagegen
+Calls: exactly 1 (no retries or variants)
+Intent: style-transfer
+Reference: C:/Users/assad/Documents/GitHub/gamestyle/public/images/blend-business.png
+Edit target: C:/Users/assad/Documents/GitHub/gamestyle/public/images/shelf-control.png
+Output: C:/Users/assad/.codex/visualizations/2026/09/07/01a07ca3-8f4d-7571-be4f-f9ed5e2995c6/shelf-control-shared-style.png
+Original: C:/Users/assad/.codex/generated_images/01a07f76-39a1-7a02-b0fb-9fdca78694d3/exec-a95e8466-c2d8-4c60-b3d6-9d7a5fdc3060.png
+
+Final prompt:
+Use case: style-transfer.
+Asset type: Shelf Control game collection-card illustration; one finished landscape image, 1536x1024.
+Input images: Image 1 (blend-business.png) is the authoritative STYLE reference: a warm matte low-poly handcrafted toy/clay diorama viewed from an elevated three-quarter overhead angle. Image 2 (shelf-control.png) is the EDIT TARGET and provides only the furniture-showroom subject and sneaking-mannequin concept.
+Primary request: Completely restyle Shelf Control to look like the same artist, miniature materials, charming proportions, and bright warm world as Image 1. Preserve the target's core joke: a central wooden display mannequin sneaks a wooden ladder behind a shelf while a short friendly toy guard looks away. Make the story clearly readable at collection-card size.
+Scene/backdrop: an open-cutaway furniture showroom viewed from an elevated three-quarter overhead isometric-like angle, with warm cream interior, sage-green chunky display shelves, little sofas, lamps, ceramic pots, and several identical honey-wood display mannequins holding ordinary display poses.
+Subjects: the sneaking mannequin hugs a simple wooden ladder while peeking around the shelf; the guard has the reference's short rounded chunky toy-person proportions, simple friendly face, and sage uniform. Other mannequins match the sneaking mannequin's design.
+Style/medium: matte handcrafted low-poly clay and carved-wood miniature diorama, gently faceted surfaces, rounded chunky silhouettes, subtle handmade texture, simple toy geometry. Closely match Image 1's depth, softness, proportions, and playful storybook charm.
+Composition: elevated wide three-quarter overhead view of the entire small room vignette, clearly showing floor and furniture tops; central action prominent and readable, generous coherent spatial layout.
+Lighting/mood: bright soft warm daytime lighting, gentle diffuse shadows, friendly humorous atmosphere.
+Color palette: warm cream, sage, honey wood, muted terracotta and mustard accents.
+Constraints: retain furniture showroom, wooden mannequins, ladder-stealing joke, guard looking away. Transform composition to the overhead diorama perspective and transform ALL materials/characters to the reference style. No realistic glossy furniture, no photographic render, no noir/night scene, no dark navy or blue-orange cinematic palette, no eye-level cinematic camera, no text, labels, logos, watermark, borders, or UI. Produce exactly one image.

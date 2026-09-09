@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Electric fence validation</title>
+    <style>
+      body {
+        margin: 0;
+        font: 16px system-ui;
+        background: #c7d3b6;
+        color: #203d32;
+      }
+      #pasture {
+        position: fixed;
+        inset: 0;
+      }
+      aside {
+        position: fixed;
+        left: 16px;
+        top: 16px;
+        padding: 16px;
+        background: #fff9e5;
+        border-radius: 12px;
+        max-width: 390px;
+      }
+      button {
+        font: inherit;
+        padding: 8px;
+        margin: 3px;
+        cursor: pointer;
+      }
+      output {
+        display: block;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="pasture"></div>
+    <aside>
+      <strong>Electric fence validation</strong><br />
+      <button id="live">Approach live fence</button>
+      <button id="off">Approach powered-off fence</button>
+      <button id="pose">Hold hit pose</button>
+      <button id="motion">Toggle reduced motion</button>
+      <button id="mute">Toggle sound</button>
+      <output id="state"></output><output id="hint"></output>
+    </aside>
+    <script type="module">
+      import { FarmScene } from '/games/act-natural/scene.ts';
+      import {
+        freshFarm,
+        farmPlayer,
+        farmAction,
+        farmSnapshot,
+        advanceFarm,
+      } from '/games/act-natural/simulation.ts';
+      import { cowExposed } from '/games/act-natural/fence.ts';
+      import { Sound } from '/games/act-natural/sound.ts';
+      const state = document.querySelector('#state');
+      const sound = new Sound();
+      const scene = new FarmScene(document.querySelector('#pasture'), {
+        input() {},
+        action() {},
+        hud(value) {
+          document.querySelector('#hint').textContent = value.hint;
+        },
+      });
+      let world,
+        cow,
+        player,
+        held = false;
+      function snapshot() {
+        const next = farmSnapshot(
+          world,
+          'FENCET',
+          'farmer',
+          'cow',
+          world.clock,
+        );
+        scene.setSnapshot(next);
+        if (!held) sound.farmSnapshot(next);
+        const model = scene.cows.get(cow.id);
+        state.textContent = `Power: ${world.powerOff ? 'OFF' : 'ON'} · x: ${cow.x.toFixed(2)} · Exposed: ${cowExposed(cow, world.clock)} · Shocks: ${world.events.filter((e) => e.text.startsWith('ZAP!')).length} · Arcs: ${model.userData.sparks.visible} · Reduced motion: ${scene.reduced} · Sound: ${sound.enabled ? 'ON' : 'OFF'}`;
+      }
+      function reset(off = false) {
+        held = false;
+        sound.reset();
+        world = freshFarm(Date.now());
+        world.players = [
+          farmPlayer('farmer', 'Farmer', world.clock),
+          farmPlayer('cow', 'Cow', world.clock),
+        ];
+        farmAction(world, 'farmer', { type: 'start' }, 'farmer');
+        player = world.players[1];
+        cow = world.cows.find((c) => c.id === player.cowId);
+        Object.assign(cow, { x: 7, z: 0, angle: Math.PI / 2 });
+        world.powerOff = off;
+        snapshot();
+      }
+      function approach(off) {
+        sound.unlock();
+        reset(off);
+        player.input = { x: 1, z: 0, graze: false };
+      }
+      document.querySelector('#live').onclick = () => approach(false);
+      document.querySelector('#off').onclick = () => approach(true);
+      document.querySelector('#pose').onclick = () => {
+        reset();
+        held = true;
+        Object.assign(cow, {
+          x: 8.9,
+          z: 0,
+          grazing: false,
+          shockedAt: world.clock - 180,
+        });
+        snapshot();
+      };
+      document.querySelector('#motion').onclick = () => {
+        scene.reduced = !scene.reduced;
+      };
+      document.querySelector('#mute').onclick = () => {
+        sound.enabled = !sound.enabled;
+      };
+      reset();
+      setInterval(() => {
+        if (!held) {
+          player.seen = Date.now();
+          advanceFarm(world, Date.now());
+          if (cow.shockedAt) player.input = { x: 0, z: 0, graze: false };
+        }
+        snapshot();
+      }, 33);
+      window.addEventListener('pagehide', () => {
+        sound.dispose();
+        scene.dispose();
+      });
+    </script>
+  </body>
+</html>

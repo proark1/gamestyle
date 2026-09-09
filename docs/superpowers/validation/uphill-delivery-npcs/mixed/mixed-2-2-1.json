@@ -1,0 +1,73 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "3be04c25f888f559b1129b0437f8908ca08d6d845670b15d78f4d6f08481f4b5",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 2,
+  "bots": 2,
+  "variant": 1,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 180,
+  "carryingSeconds": 793.7166666666667,
+  "stoppedCarryingSeconds": 3,
+  "ignoredStopFrames": 0,
+  "actions": 157,
+  "stage": 3,
+  "sofa": {
+    "x": -8.071683950960281,
+    "y": 8.203748148882688,
+    "z": 3.8292873924591095,
+    "velocity": {
+      "x": -0.02376652540666578,
+      "y": -0.004653557453575381,
+      "z": -0.0017606894413911556
+    },
+    "angular": {
+      "x": -0.019039373213420103,
+      "y": -0.004034511386084974,
+      "z": -0.10140584072346244
+    },
+    "quaternion": {
+      "x": -0.1022194177908817,
+      "y": 0.8124012015669909,
+      "z": 0.07262894063445775,
+      "w": -0.5694563330943989
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -10.148848896838313,
+      "y": 7.016275104000142,
+      "z": 3.6483276959625477,
+      "grip": 1
+    },
+    {
+      "name": "Pilot 1",
+      "x": -10.008936667534845,
+      "y": 6.99971896799555,
+      "z": 5.007867987942661,
+      "grip": null
+    },
+    {
+      "name": "Nora",
+      "x": -9.783075491540247,
+      "y": 7.005055056055003,
+      "z": 4.3281602979281315,
+      "grip": null,
+      "task": "Finding a corner"
+    },
+    {
+      "name": "Sam",
+      "x": -7.929196962576579,
+      "y": 6.941090704589843,
+      "z": 6.863347540109099,
+      "grip": null,
+      "task": "Finding a corner"
+    }
+  ]
+}

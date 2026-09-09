@@ -1,0 +1,379 @@
+/* The desktop tool board shares the kit's materials; touch keeps its bottom HUD. */
+.handwerker .game-shell.is-playing:not(.compact-ui) {
+  min-height: 0;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .play-bottom {
+  --tool-board-width: 320px;
+  position: absolute;
+  top: 94px;
+  right: 24px;
+  bottom: 20px;
+  left: auto;
+  width: var(--tool-board-width);
+  max-width: none;
+  transform: none;
+  align-items: stretch;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 12;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .play-bottom > * {
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .play-bottom .room-panel {
+  position: static;
+  order: -3;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .room-code-button {
+  width: 100%;
+  padding: 9px 12px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .room-code-button > div {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .room-code-button strong {
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .network-status:not(.offline) {
+  display: none;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .site-tools {
+  order: -2;
+  padding: 6px;
+  background: #30443ff5;
+  color: #dce5ce;
+  border: 1px solid #527e65;
+  border-radius: 14px;
+  box-shadow: 0 5px 18px #30443f26;
+}
+.handwerker .site-tools nav {
+  display: grid;
+  gap: 4px;
+}
+.handwerker .site-modes {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.handwerker .site-actions {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 5px 0;
+}
+.handwerker .site-utilities {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid #dce5ce26;
+  padding-top: 5px;
+}
+.handwerker .site-tools button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font:
+    500 12px 'DM Sans',
+    sans-serif;
+  cursor: pointer;
+}
+.handwerker .site-tools .site-actions button {
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  line-height: 1.15;
+}
+.handwerker .site-tools button:hover:not(:disabled) {
+  background: #dce5ce1a;
+}
+.handwerker .site-tools button.active {
+  background: #ffce4b;
+  color: #30443f;
+}
+.handwerker .site-tools button.danger-tool.active {
+  background: #ebac79;
+}
+.handwerker .site-tools button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.handwerker .site-tools [inert] {
+  opacity: 0.4;
+}
+.handwerker .site-tools button:focus-visible,
+.handwerker .active-build-part button:focus-visible {
+  outline: 3px solid #548dc5;
+  outline-offset: 2px;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .topbar-actions
+  > .icon-button {
+  display: none;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .floor-picker {
+  order: -1;
+  position: static;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 6px 10px;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .floor-picker select {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  font-size: 13px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .floor-picker > span {
+  display: none;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .home-build-kit {
+  width: 100%;
+  min-height: 0;
+  max-height: none;
+  flex-shrink: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #98b09e transparent;
+  padding: 10px 12px 0;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .build-tray-top {
+  display: grid;
+  grid-template-columns: 1fr 32px;
+  gap: 10px;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .build-tray-top
+  > :nth-child(2) {
+  grid-row: 2;
+  grid-column: 1 / -1;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .build-tray-top > button {
+  grid-row: 1;
+  grid-column: 2;
+  min-height: 32px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .category-list {
+  display: flex;
+  width: 100%;
+  height: 34px !important;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .category-list button {
+  flex: 1;
+  font-size: 11px !important;
+  padding: 6px !important;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .home-build-kit
+  .piece-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  overflow: visible;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .home-build-kit
+  .piece-card {
+  width: auto;
+  min-width: 0;
+  min-height: 90px;
+  padding: 4px 3px 7px;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .home-build-kit
+  .piece-card
+  img {
+  width: 70px;
+  height: 56px;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .home-build-kit
+  .piece-card
+  span {
+  font-size: 11px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .finish-row {
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .finish-row label {
+  flex: 1;
+  justify-content: flex-end;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .finish-row select {
+  font-size: 12px;
+  max-width: 155px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .paint-row {
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 12px;
+  gap: 8px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .paint-swatches {
+  gap: 8px;
+  padding: 3px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .paint-swatch {
+  width: 26px;
+  height: 26px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .decorate-actions {
+  flex-direction: column;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .decorate-actions button {
+  min-height: 36px;
+  font-size: 12px;
+}
+.handwerker
+  .game-shell.is-playing:not(.compact-ui)
+  .home-build-kit
+  > .primary-button {
+  width: 100%;
+  margin: 4px 0 8px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .build-hint {
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .context-hint {
+  width: 100%;
+  color: #30443f;
+  text-align: left;
+  line-height: 1.5;
+  font-size: 11px;
+  padding: 2px 8px;
+  pointer-events: none;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .party-voice {
+  right: auto;
+  left: 24px;
+  bottom: 20px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .crane-controls {
+  width: 100%;
+  max-width: none;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  flex-shrink: 1;
+  min-height: 0;
+}
+.handwerker .active-build-part {
+  padding: 10px;
+  border: 1px solid #dce5ce;
+  border-radius: 12px;
+  background: #f8faeff5;
+  color: #30443f;
+}
+.handwerker .active-part-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.handwerker .active-part-choice img {
+  object-fit: contain;
+}
+.handwerker .active-part-choice > span {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.handwerker .active-part-choice strong {
+  font:
+    500 18px 'Fredoka',
+    sans-serif;
+}
+.handwerker .active-part-choice small {
+  font-size: 11px;
+  color: #527e65;
+}
+.handwerker .active-part-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.handwerker .active-part-options button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid #dce5ce;
+  border-radius: 8px;
+  background: #e7efdf;
+  color: inherit;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.handwerker .active-part-feedback {
+  display: block;
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #dce5ce;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.handwerker .active-build-part.blocked {
+  border-left: 4px solid #dd7965;
+}
+.handwerker .active-build-part.blocked .active-part-feedback {
+  color: #a84d3b;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .paint-selection {
+  width: 100%;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+.handwerker .game-shell.is-playing:not(.compact-ui) .paint-selection span {
+  flex: 1 1 100%;
+}
+@media (min-width: 1600px) {
+  .handwerker .game-shell.is-playing:not(.compact-ui) .play-bottom {
+    --tool-board-width: 352px;
+  }
+}
+@media (max-height: 700px) {
+  .handwerker .game-shell.is-playing:not(.compact-ui) .play-bottom {
+    top: 76px;
+    bottom: 12px;
+    gap: 6px;
+  }
+  .handwerker .game-shell.is-playing:not(.compact-ui) .site-tools button {
+    min-height: 34px;
+  }
+  .handwerker .game-shell.is-playing:not(.compact-ui) .context-hint {
+    display: none;
+  }
+}

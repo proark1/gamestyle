@@ -1,0 +1,240 @@
+{
+  "fetchedAt": "2026-09-09T02:59:27.790Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/audio/reel-problems?manifest",
+  "cues": {
+    "event.cast": {
+      "url": "/api/audio/reel-problems/file/8af0e4c6-5934-4941-8a9f-bbf16741d2d5.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.bite": {
+      "url": "/api/audio/reel-problems/file/a3c0f80d-c688-49e5-94c4-44f0de69cb84.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.catch": {
+      "url": "/api/audio/reel-problems/file/8955be1b-844d-445e-80f8-51ac97e9b619.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.splash": {
+      "url": "/api/audio/reel-problems/file/1c55f8c4-45b1-4c9c-8189-d6f19ea1e470.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.tangle": {
+      "url": "/api/audio/reel-problems/file/9a5a3ddf-40f3-4e0f-a4b9-f90ccf973835.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.snap": {
+      "url": "/api/audio/reel-problems/file/4ca27f3e-3a3a-4d98-b0e0-893dca34edfb.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.rescue": {
+      "url": "/api/audio/reel-problems/file/66fdc7d3-71ea-4ccb-aeb4-40ab6e7c2d80.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.start": {
+      "url": "/api/audio/reel-problems/file/ad0da44c-7236-4e19-9aee-9a4c41945e57.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.finish": {
+      "url": "/api/audio/reel-problems/file/30977b6f-44e8-45ac-ac26-8a5b06c014d2.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.weather": {
+      "url": "/api/audio/reel-problems/file/bf293225-b123-44bb-a4cb-1064652e1375.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.thunder": {
+      "url": "/api/audio/reel-problems/file/05c35422-156b-4ad7-9554-0377af4c2941.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.shark": {
+      "url": "/api/audio/reel-problems/file/83752cbb-037f-4951-ab5e-024de3078540.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.jellyfish": {
+      "url": "/api/audio/reel-problems/file/f98ec1c2-1e57-42c3-a2cf-89660d2eee0a.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.ui": {
+      "url": "/api/audio/reel-problems/file/3a9c2871-8993-4853-a4db-71dcad72c54b.mp3",
+      "volume": 0.3,
+      "loop": false,
+      "category": "event"
+    },
+    "event.join": {
+      "url": "/api/audio/reel-problems/file/021b51b4-e1ee-405d-86ec-5dde8c722335.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "event.leave": {
+      "url": "/api/audio/reel-problems/file/d3f9c420-f55d-4895-9f5d-c654d857fea5.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "event.fail": {
+      "url": "/api/audio/reel-problems/file/da42a20e-64ef-4b56-bb76-2075725b3042.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.time-warning": {
+      "url": "/api/audio/reel-problems/file/00743a1a-f649-4580-88d3-40a5801f4ea6.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.untangle": {
+      "url": "/api/audio/reel-problems/file/af27d3f8-6289-423d-a1c9-a9ba682126c1.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.gear": {
+      "url": "/api/audio/reel-problems/file/93da8a6e-dce1-4bca-8a14-9435790e41ef.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.hull": {
+      "url": "/api/audio/reel-problems/file/e0f426bb-c087-42fe-b694-449bd0450ba6.mp3",
+      "volume": 0.48,
+      "loop": false,
+      "category": "event"
+    },
+    "step.deck.1": {
+      "url": "/api/audio/reel-problems/file/55a6f58b-c87b-4c96-a29e-8ba6debc7a14.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "step.deck.2": {
+      "url": "/api/audio/reel-problems/file/319a3e0f-87c1-4e84-9d92-1d173dc21b1e.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "step.deck.3": {
+      "url": "/api/audio/reel-problems/file/6a42611f-8b2d-491f-8b5a-07e8974a364f.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.lake": {
+      "url": "/api/audio/reel-problems/file/57f8d903-5da4-495f-b3ca-c3d5ed9aa42b.mp3",
+      "volume": 0.6,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.wind": {
+      "url": "/api/audio/reel-problems/file/f8a01866-9e0b-4bf5-8545-8584a2ff72f0.mp3",
+      "volume": 0.48,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.rain": {
+      "url": "/api/audio/reel-problems/file/460174ad-5009-4123-86f7-77093e476ecf.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.reel": {
+      "url": "/api/audio/reel-problems/file/50395050-429b-41b6-b449-3c87b49b286d.mp3",
+      "volume": 0.4,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.strain": {
+      "url": "/api/audio/reel-problems/file/36eaa183-1c63-4696-a9c6-33f4ab968f18.mp3",
+      "volume": 0.48,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.wake": {
+      "url": "/api/audio/reel-problems/file/d55ba80b-39cd-4577-9e7c-0d07c84dd25d.mp3",
+      "volume": 0.48,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.swim": {
+      "url": "/api/audio/reel-problems/file/cf8f99e5-6e17-4ebd-84f5-1b2cd4727a22.mp3",
+      "volume": 0.4,
+      "loop": true,
+      "category": "ambience"
+    },
+    "music.menu": {
+      "url": "/api/audio/reel-problems/file/8c1e4285-ffa3-4a50-9b2d-99a27bc99b52.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build": {
+      "url": "/api/audio/reel-problems/file/ce70a291-dc1a-45f2-ab1a-cf7f7a3281a7.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.challenge": {
+      "url": "/api/audio/reel-problems/file/20245944-84ad-4c77-87bf-6c059e6fb784.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/audio/reel-problems/file/067fc6e6-366c-4c56-a077-64037c7e11c4.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/audio/reel-problems/file/503e4e7a-a59d-46c5-80b8-ca8542d953a3.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    },
+    "speech.start": {
+      "url": "/api/audio/reel-problems/file/5dc19d68-1c3c-4228-a1c6-10aec43b84e2.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.win": {
+      "url": "/api/audio/reel-problems/file/5784cd2d-338a-4e41-978c-feafb5832758.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.fail": {
+      "url": "/api/audio/reel-problems/file/12a698de-f8b8-4841-a6a8-b2b6c1b837ee.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    }
+  }
+}

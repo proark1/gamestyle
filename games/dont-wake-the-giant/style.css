@@ -1,0 +1,1297 @@
+.giant-game {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 640px;
+  overflow: hidden;
+  background: #343f39;
+  color: #f6ecd0;
+  font-family: 'DM Sans', sans-serif;
+}
+.giant-canvas {
+  position: absolute;
+  inset: 0;
+}
+.giant-canvas canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  outline: none;
+}
+.giant-game button,
+.giant-game a {
+  touch-action: manipulation;
+}
+.giant-game button:focus-visible,
+.giant-game a:focus-visible,
+.giant-dialog button:focus-visible {
+  outline: 3px solid #eabc65;
+  outline-offset: 4px;
+}
+.giant-topbar {
+  height: 78px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  background: linear-gradient(#28352dd9, #28352d00);
+  z-index: 5;
+  gap: 18px;
+}
+.giant-brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-decoration: none;
+  color: #fff2ce;
+  font:
+    bold 22px 'Fredoka',
+    sans-serif;
+  letter-spacing: 0.8px;
+}
+.giant-brand-dot {
+  color: #e7b758;
+}
+.giant-game-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #f5e8c8;
+  font-size: 15px;
+  font-weight: 600;
+}
+.giant-top-actions {
+  display: flex;
+  gap: 8px;
+}
+.giant-top-actions button {
+  display: grid;
+  place-items: center;
+  border: 1px solid #e9d9ae55;
+  background: #fff0ccdd;
+  color: #4d5e48;
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+.giant-start {
+  position: absolute;
+  top: 112px;
+  left: 5%;
+  width: 380px;
+  max-width: calc(100% - 40px);
+  padding: 25px 28px 22px;
+  border-radius: 22px;
+  background: #304139eb;
+  box-shadow: 0 15px 70px #17292045;
+  border: 1px solid #e4d3a330;
+}
+.giant-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dab66d;
+}
+.giant-eyebrow > span {
+  width: 6px;
+  height: 6px;
+  background: #e2bb66;
+  border-radius: 50%;
+}
+.giant-start h1 {
+  font:
+    500 clamp(44px, 4.6vw, 68px)/0.97 'Fredoka',
+    sans-serif;
+  letter-spacing: -1.9px;
+  margin: 23px 0;
+}
+.giant-start h1 em {
+  font-style: normal;
+  color: #eed39a;
+}
+.giant-start h1 em > span {
+  color: #dda75b;
+}
+.giant-tagline {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.32;
+  margin: 0 0 12px;
+  color: #f4e9ce;
+}
+.giant-intro {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #ced1b8;
+  margin: 0 0 22px;
+}
+.giant-setup {
+  background: #fcf0d8;
+  color: #425443;
+  padding: 18px;
+  border-radius: 14px;
+}
+.giant-setup label,
+.giant-dialog label {
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 7px;
+}
+.giant-setup input,
+.giant-dialog input {
+  width: 100%;
+  background: #f1e7cd;
+  border: 1px solid #c8c6a5;
+  border-radius: 8px;
+  padding: 11px 12px;
+  color: #354d40;
+  font-size: 16px;
+  margin-bottom: 12px;
+  outline-offset: 2px;
+}
+.giant-primary,
+.giant-secondary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 45px;
+  border-radius: 9px;
+  cursor: pointer;
+  padding: 11px 13px;
+  font-size: 15px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+.giant-primary {
+  background: #e7ba65;
+  color: #344b3a;
+  border-color: #d7a651;
+}
+.giant-primary:hover {
+  background: #efc776;
+}
+.giant-secondary {
+  background: #eee8d1;
+  border-color: #c7c8a9;
+  color: #4e624d;
+  margin-top: 9px;
+}
+.giant-secondary:hover {
+  background: #e4e2c7;
+}
+.giant-primary:disabled,
+.giant-secondary:disabled,
+.giant-game button:disabled {
+  opacity: 0.52;
+  cursor: default;
+}
+.giant-text-button {
+  border: 0;
+  background: transparent;
+  color: #567052;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 0 0;
+  width: 100%;
+  cursor: pointer;
+}
+.giant-start-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 17px;
+  font-size: 13px;
+  color: #e2d8ba;
+}
+.giant-start-meta > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.giant-loading {
+  font-size: 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.giant-scene-caption {
+  position: absolute;
+  right: 4%;
+  bottom: 30px;
+  font-size: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-shadow: 0 2px 8px #263528;
+}
+.giant-scene-caption span {
+  color: #f2cf82;
+  font:
+    500 25px 'Fredoka',
+    sans-serif;
+}
+.giant-mission {
+  position: absolute;
+  top: 102px;
+  left: 24px;
+  width: 235px;
+  background: #fbf0d8f0;
+  color: #4a5b45;
+  border-radius: 14px;
+  padding: 20px;
+  border-top: 4px solid #d1a54f;
+  box-shadow: 0 10px 35px #1b2d2926;
+}
+.giant-mission .giant-eyebrow {
+  color: #857443;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.giant-gold {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+.giant-gold strong {
+  font:
+    500 44px 'Fredoka',
+    sans-serif;
+}
+.giant-gold span {
+  font-size: 16px;
+  color: #7c8061;
+}
+.giant-meter {
+  height: 8px;
+  background: #dadcc0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.giant-meter i {
+  display: block;
+  height: 100%;
+  background: #78926a;
+  border-radius: 6px;
+  transition: width 0.15s linear;
+}
+.giant-mission > p {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #7a805f;
+  margin: 10px 0 18px;
+}
+.giant-carried {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #d9d8bb;
+  padding: 14px 0;
+  font-size: 14px;
+}
+.giant-carried span {
+  flex: 1;
+}
+.giant-carried b {
+  color: #997328;
+}
+.giant-clock {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #ece4c9;
+  margin: 0 -20px -20px;
+  padding: 13px 17px;
+  border-radius: 0 0 13px 13px;
+}
+.giant-clock > span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+}
+.giant-clock strong {
+  font:
+    500 25px 'Fredoka',
+    sans-serif;
+  margin-left: auto;
+}
+.giant-sleep {
+  position: absolute;
+  top: 104px;
+  right: 24px;
+  width: 260px;
+  background: #f6eacfee;
+  color: #526048;
+  border-radius: 12px;
+  padding: 17px 19px;
+}
+.giant-sleep > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.giant-sleep > div:first-child > span {
+  margin-left: auto;
+}
+.giant-sleep .giant-meter {
+  margin-top: 12px;
+}
+.giant-noise i {
+  background: linear-gradient(90deg, #a0a36f, #d1a15c, #ce7453);
+}
+.giant-sleep p {
+  font-size: 13px;
+  color: #838367;
+  margin: 9px 0 0;
+}
+.giant-crew {
+  position: absolute;
+  left: 24px;
+  top: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 14px;
+}
+.giant-crew > span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #e4d5ad8c;
+  background: #f8edd9e8;
+  color: #526249;
+  padding: 5px 10px 5px 5px;
+  border-radius: 20px;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.giant-crew i {
+  font-style: normal;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  color: #fff9dd;
+  flex-shrink: 0;
+}
+.giant-crew small {
+  font-size: 11px;
+  color: #8f8c6c;
+}
+.giant-crew > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #f8e9bb;
+  background: #3b4e3dcc;
+  border: 1px solid #ead9a74d;
+  border-radius: 8px;
+  padding: 10px 13px;
+  letter-spacing: 2px;
+  font-size: 14px;
+  margin-top: 5px;
+  cursor: pointer;
+}
+.giant-warning {
+  position: absolute;
+  top: 94px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 350px;
+  max-width: calc(100% - 40px);
+  background: #f8d79e;
+  color: #795236;
+  border: 2px solid #db9861;
+  box-shadow: 0 8px 30px #30302333;
+  border-radius: 14px;
+  padding: 15px 52px 15px 18px;
+  z-index: 8;
+}
+.giant-warning.giant-shout {
+  background: #8b382d;
+  border-color: #d66d4b;
+  color: #fff1da;
+  padding-right: 18px;
+}
+.giant-warning strong {
+  display: block;
+  font:
+    500 25px 'Fredoka',
+    sans-serif;
+}
+.giant-warning span {
+  font-size: 14px;
+  line-height: 1.4;
+  display: block;
+  margin-top: 5px;
+}
+.giant-warning > b {
+  position: absolute;
+  right: 18px;
+  top: 22px;
+  font:
+    500 35px 'Fredoka',
+    sans-serif;
+}
+.giant-lobby {
+  position: absolute;
+  bottom: 45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f8edd9f0;
+  color: #42563f;
+  width: 540px;
+  max-width: calc(100% - 40px);
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+.giant-lobby h2 {
+  font:
+    500 27px 'Fredoka',
+    sans-serif;
+  margin: 10px 0;
+}
+.giant-lobby p {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+.giant-lobby .giant-primary {
+  width: auto;
+  min-width: 160px;
+}
+.giant-lobby .giant-eyebrow {
+  color: #96814e;
+  font-size: 11px;
+}
+.giant-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  width: max-content;
+}
+.giant-hint {
+  background: #fbf0d8ee;
+  color: #5c674d;
+  border-radius: 20px;
+  padding: 8px 15px;
+  font-size: 14px;
+  margin: 0;
+  max-width: 100%;
+  text-align: center;
+}
+.giant-dock {
+  display: flex;
+  gap: 4px;
+  padding: 7px;
+  background: #fff0d5ed;
+  color: #495b44;
+  border: 1px solid #fff6dc;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px #25372a22;
+}
+.giant-dock button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.giant-dock button:hover {
+  background: #e5e4c8;
+}
+.giant-dock .selected {
+  background: #e6ca87;
+}
+.giant-dock .giant-exit-button {
+  background: #d1ddbc;
+}
+.giant-down {
+  transform: rotate(90deg);
+}
+.giant-dock kbd {
+  font-size: 12px;
+}
+.giant-keyboard-note {
+  display: flex;
+  gap: 17px;
+  color: #f5e7c6;
+  font-size: 13px;
+  text-shadow: 0 2px 6px #22382b;
+}
+.giant-event {
+  position: absolute;
+  top: 245px;
+  right: 24px;
+  width: 260px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #f6ecd4;
+  background: #344a3edb;
+  border: 1px solid #d9c38b44;
+  padding: 13px 16px;
+  border-radius: 11px;
+}
+.giant-notice {
+  position: absolute;
+  bottom: 185px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid #e5bf7a;
+  background: #fff0d5;
+  color: #8a5d34;
+  padding: 13px 16px;
+  border-radius: 10px;
+  max-width: calc(100% - 32px);
+  z-index: 20;
+  font-size: 15px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.giant-notice button {
+  border: 0;
+  background: none;
+  font-size: 24px;
+  color: inherit;
+}
+.giant-game:not(.giant-in-game) .giant-notice {
+  bottom: 22px;
+}
+.giant-connection {
+  position: absolute;
+  inset: 40% auto auto 50%;
+  transform: translateX(-50%);
+  background: #f9eed5;
+  color: #5c6346;
+  border-radius: 14px;
+  padding: 24px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 250px;
+}
+.giant-escape .giant-clock {
+  color: #aa4c35;
+  background: #f3d7b0;
+}
+.giant-escape .giant-sleep {
+  border: 2px solid #cf7f55;
+}
+progress.giant-meter {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: 0;
+}
+progress.giant-meter::-webkit-progress-bar {
+  background: #dadcc0;
+  border-radius: 6px;
+}
+progress.giant-meter::-webkit-progress-value {
+  background: #78926a;
+  border-radius: 6px;
+}
+progress.giant-meter::-moz-progress-bar {
+  background: #78926a;
+  border-radius: 6px;
+}
+progress.giant-noise::-webkit-progress-value {
+  background: linear-gradient(90deg, #a0a36f, #d1a15c, #ce7453);
+}
+progress.giant-noise::-moz-progress-bar {
+  background: #c8955f;
+}
+@media (max-width: 700px) {
+}
+.giant-dialog {
+  font-family: 'DM Sans', sans-serif;
+}
+.giant-dialog p {
+  font-size: 15px;
+  line-height: 1.55;
+}
+.giant-help {
+  padding-left: 22px;
+  display: grid;
+  gap: 14px;
+  color: #6f785e;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.giant-help strong {
+  color: #435b42;
+}
+.giant-room-code {
+  font:
+    500 44px 'Fredoka',
+    sans-serif;
+  letter-spacing: 6px;
+  text-align: center;
+  padding: 23px 10px;
+  background: #eee5c7;
+  border: 1px dashed #bcb78b;
+  border-radius: 10px;
+}
+.giant-dialog .giant-code-input {
+  text-align: center;
+  font:
+    500 29px 'Fredoka',
+    sans-serif;
+  letter-spacing: 5px;
+}
+.giant-result {
+  text-align: center;
+  justify-items: center;
+}
+.giant-result > svg {
+  color: #c39b47;
+}
+.giant-result-stats {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  margin: 8px 0 12px;
+  border-block: 1px solid #dedcc0;
+  width: 100%;
+  padding: 18px 0;
+}
+.giant-result-stats > span {
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: #838163;
+}
+.giant-result-stats strong {
+  display: block;
+  font:
+    500 37px 'Fredoka',
+    sans-serif;
+  color: #4d6549;
+}
+@media (max-width: 1100px) {
+  .giant-start {
+    left: 28px;
+    width: 350px;
+    top: 95px;
+  }
+  .giant-start h1 {
+    font-size: 53px;
+  }
+  .giant-warning {
+    top: 260px;
+    width: 320px;
+  }
+  .giant-mission {
+    width: 208px;
+    padding: 16px;
+  }
+  .giant-clock {
+    margin: 0 -16px -16px;
+  }
+  .giant-sleep,
+  .giant-event {
+    width: 230px;
+  }
+  .giant-crew {
+    top: 380px;
+  }
+  .giant-dock kbd {
+    display: none;
+  }
+  .giant-game-name {
+    font-size: 14px;
+  }
+}
+@media (max-width: 700px) {
+  .giant-game {
+    min-height: 620px;
+  }
+  .giant-topbar {
+    padding: 0 14px;
+    height: 66px;
+    gap: 8px;
+  }
+  .giant-game-name {
+    display: none;
+  }
+  .giant-brand {
+    font-size: 19px;
+    gap: 8px;
+  }
+  .giant-top-actions button {
+    width: 36px;
+    height: 36px;
+  }
+  .giant-start {
+    top: 85px;
+    left: 20px;
+    width: 320px;
+    padding: 20px;
+  }
+  .giant-start h1 {
+    font-size: 49px;
+    margin: 18px 0;
+  }
+  .giant-tagline {
+    font-size: 20px;
+  }
+  .giant-intro {
+    margin-bottom: 16px;
+    font-size: 15px;
+  }
+  .giant-scene-caption {
+    display: none;
+  }
+  .giant-mission {
+    top: 80px;
+    left: 12px;
+    width: 172px;
+    padding: 13px;
+  }
+  .giant-mission .giant-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+  .giant-gold {
+    margin: 8px 0;
+  }
+  .giant-gold strong {
+    font-size: 33px;
+  }
+  .giant-gold span {
+    font-size: 14px;
+  }
+  .giant-mission > p {
+    font-size: 12px;
+    margin: 8px 0;
+  }
+  .giant-carried {
+    font-size: 12px;
+    padding: 10px 0;
+  }
+  .giant-clock {
+    margin: 0 -13px -13px;
+    padding: 10px;
+  }
+  .giant-clock > span {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .giant-clock strong {
+    font-size: 22px;
+  }
+  .giant-sleep {
+    top: 80px;
+    right: 12px;
+    width: 165px;
+    padding: 12px;
+  }
+  .giant-sleep > div:first-child {
+    font-size: 10px;
+    gap: 5px;
+  }
+  .giant-sleep > div:first-child > svg {
+    width: 14px;
+  }
+  .giant-sleep p {
+    font-size: 12px;
+  }
+  .giant-sleep .giant-meter {
+    margin-top: 8px;
+  }
+  .giant-crew {
+    top: 285px;
+    left: 12px;
+    font-size: 12px;
+    gap: 4px;
+  }
+  .giant-crew > span {
+    padding: 3px 7px 3px 3px;
+    max-width: 165px;
+  }
+  .giant-crew i {
+    height: 21px;
+    width: 21px;
+  }
+  .giant-crew > button {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+  .giant-warning {
+    top: 173px;
+    left: auto;
+    right: 12px;
+    transform: none;
+    width: 165px;
+    padding: 12px;
+  }
+  .giant-warning strong {
+    font-size: 20px;
+    padding-right: 23px;
+  }
+  .giant-warning span {
+    font-size: 12px;
+  }
+  .giant-warning > b {
+    font-size: 24px;
+    right: 10px;
+    top: 10px;
+  }
+  .giant-event {
+    top: 190px;
+    right: 12px;
+    width: 165px;
+    padding: 12px;
+    font-size: 12px;
+  }
+  .giant-controls {
+    bottom: 15px;
+    gap: 7px;
+    max-width: calc(100% - 20px);
+  }
+  .giant-dock {
+    padding: 5px;
+    gap: 2px;
+  }
+  .giant-dock button {
+    flex-direction: column;
+    padding: 9px 8px;
+    gap: 4px;
+    font-size: 12px;
+  }
+  .giant-hint {
+    font-size: 12px;
+    padding: 8px 10px;
+    max-width: 340px;
+  }
+  .giant-keyboard-note {
+    display: none;
+  }
+  .giant-lobby {
+    bottom: 35px;
+    flex-direction: column;
+    padding: 18px;
+    gap: 15px;
+  }
+  .giant-lobby .giant-primary {
+    width: 100%;
+  }
+  .giant-lobby h2 {
+    font-size: 25px;
+  }
+  .giant-notice {
+    bottom: 155px;
+    font-size: 14px;
+  }
+  .giant-start-meta {
+    font-size: 12px;
+  }
+}
+@media (pointer: coarse) {
+  .giant-game .touch-controls {
+    display: flex;
+    bottom: 160px;
+    left: 20px;
+    right: 20px;
+  }
+  .giant-game .joystick {
+    width: 82px;
+    height: 82px;
+    background: #f7e6ba55;
+    border-color: #ffe3a8bb;
+  }
+  .giant-game .joystick > span {
+    background: #e7cd94cc;
+    color: #4a5d43;
+  }
+  .giant-game .touch-jump {
+    background: #f5dba5cc;
+    color: #4c5e43;
+  }
+  .giant-game .touch-controls[aria-disabled='true'] {
+    opacity: 0.5;
+  }
+  .giant-keyboard-note {
+    display: none;
+  }
+}
+@media (max-height: 760px) and (min-width: 701px) {
+  .giant-start {
+    top: 80px;
+    padding: 18px 24px;
+  }
+  .giant-start h1 {
+    font-size: 48px;
+    margin: 13px 0;
+  }
+  .giant-tagline {
+    font-size: 19px;
+  }
+  .giant-intro {
+    font-size: 14px;
+    margin-bottom: 13px;
+  }
+  .giant-setup {
+    padding: 13px;
+  }
+  .giant-start-meta {
+    margin-top: 12px;
+  }
+  .giant-crew {
+    top: 365px;
+    gap: 4px;
+  }
+  .giant-crew > span {
+    font-size: 12px;
+    padding: 3px 8px 3px 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .giant-meter i {
+    transition: none;
+  }
+}
+
+/* The play area is an app viewport, even on short phones and in landscape.
+   Dialogs are portalled outside it and keep their own scrolling. */
+html.giant-page-playing,
+html.giant-page-playing body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.giant-game.giant-in-game {
+  position: fixed;
+  inset: 0;
+  height: 100%;
+  min-height: 0;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+@media (pointer: coarse), (max-width: 900px) {
+  .giant-game {
+    --giant-left: max(16px, env(safe-area-inset-left));
+    --giant-right: max(16px, env(safe-area-inset-right));
+    --giant-bottom: max(16px, env(safe-area-inset-bottom));
+    --giant-top: env(safe-area-inset-top, 0px);
+  }
+  .giant-game .touch-controls {
+    display: flex;
+    position: absolute;
+    left: var(--giant-left);
+    right: var(--giant-right);
+    bottom: calc(148px + var(--giant-bottom));
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+  .giant-game .joystick {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    border: 2px solid #ffe3a8bb;
+    background: #f7e6ba55;
+    pointer-events: auto;
+  }
+  .giant-game .joystick > span {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #e7cd94e6;
+    color: #4a5d43;
+  }
+  .giant-game .touch-jump {
+    width: 76px;
+    height: 76px;
+    border: 2px solid #fff0bf;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: #f5dba5e6;
+    color: #4c5e43;
+    pointer-events: auto;
+  }
+  .giant-game .touch-jump > span {
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .giant-in-game .giant-controls {
+    bottom: var(--giant-bottom);
+  }
+  .giant-in-game .giant-topbar {
+    height: calc(66px + var(--giant-top));
+    padding: var(--giant-top) var(--giant-right) 0 var(--giant-left);
+  }
+  .giant-in-game .giant-top-actions button {
+    width: 44px;
+    height: 44px;
+  }
+  .giant-in-game .giant-keyboard-note {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .giant-in-game .giant-brand {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .giant-in-game .giant-brand > span {
+    display: none;
+  }
+  .giant-in-game .giant-mission,
+  .giant-in-game .giant-sleep {
+    top: calc(80px + var(--giant-top));
+    width: calc(50% - 18px);
+  }
+  .giant-in-game .giant-sleep > div:first-child {
+    font-size: 9px;
+    gap: 3px;
+  }
+}
+@media (max-width: 900px) and (max-height: 540px) and (orientation: landscape),
+  (pointer: coarse) and (max-height: 540px) and (orientation: landscape) {
+  .giant-in-game .giant-topbar {
+    height: calc(52px + var(--giant-top));
+  }
+  .giant-in-game .giant-game-name {
+    display: none;
+  }
+  .giant-in-game .giant-mission {
+    top: calc(60px + var(--giant-top));
+    left: var(--giant-left);
+    width: 155px;
+    padding: 10px;
+  }
+  .giant-in-game .giant-mission > .giant-eyebrow,
+  .giant-in-game .giant-mission > .giant-meter,
+  .giant-in-game .giant-mission > p,
+  .giant-in-game .giant-sleep p,
+  .giant-in-game .giant-event {
+    display: none;
+  }
+  .giant-in-game .giant-gold {
+    margin: 0 0 4px;
+  }
+  .giant-in-game .giant-gold strong {
+    font-size: 26px;
+  }
+  .giant-in-game .giant-gold span {
+    font-size: 12px;
+  }
+  .giant-in-game .giant-carried {
+    padding: 4px 0 7px;
+    font-size: 10px;
+  }
+  .giant-in-game .giant-clock {
+    margin: 0 -10px -10px;
+    padding: 7px;
+    gap: 4px;
+  }
+  .giant-in-game .giant-clock strong {
+    font-size: 18px;
+  }
+  .giant-in-game .giant-clock > span {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  .giant-in-game .giant-sleep {
+    top: calc(60px + var(--giant-top));
+    right: var(--giant-right);
+    width: 170px;
+    padding: 10px;
+  }
+  .giant-in-game .giant-sleep > div:first-child {
+    font-size: 9px;
+    gap: 4px;
+  }
+  .giant-in-game .giant-crew {
+    top: calc(177px + var(--giant-top));
+    left: var(--giant-left);
+  }
+  .giant-in-game .giant-crew > span {
+    display: none;
+  }
+  .giant-in-game .giant-crew > button {
+    padding: 8px;
+    font-size: 11px;
+    min-height: 44px;
+  }
+  .giant-in-game .giant-controls {
+    width: calc(100% - 272px);
+    max-width: 470px;
+    gap: 5px;
+  }
+  .giant-in-game .giant-dock {
+    width: 100%;
+    padding: 4px;
+    gap: 2px;
+  }
+  .giant-in-game .giant-dock button {
+    flex: 1;
+    min-width: 0;
+    min-height: 48px;
+    flex-direction: column;
+    padding: 6px 3px;
+    font-size: 10px;
+    gap: 3px;
+  }
+  .giant-in-game .giant-dock kbd {
+    display: none;
+  }
+  .giant-in-game .giant-hint {
+    font-size: 10px;
+    padding: 6px 8px;
+  }
+  .giant-in-game .touch-controls {
+    bottom: var(--giant-bottom);
+  }
+  .giant-in-game .joystick {
+    width: 104px;
+    height: 104px;
+  }
+  .giant-in-game .giant-warning {
+    top: calc(60px + var(--giant-top));
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(320px, calc(100% - 360px));
+    min-width: 180px;
+    padding: 10px;
+  }
+  .giant-in-game .giant-warning strong {
+    font-size: 17px;
+  }
+  .giant-in-game .giant-warning span {
+    font-size: 11px;
+  }
+  .giant-in-game .giant-warning > b {
+    font-size: 20px;
+  }
+  .giant-in-game .giant-notice {
+    bottom: 150px;
+    font-size: 12px;
+  }
+  .giant-in-game .giant-lobby {
+    bottom: var(--giant-bottom);
+    flex-direction: row;
+    padding: 12px;
+  }
+  .giant-in-game .giant-lobby p {
+    display: none;
+  }
+}
+@media (max-width: 700px) and (max-height: 660px) and (orientation: portrait) {
+  .giant-in-game .giant-mission {
+    padding: 10px;
+  }
+  .giant-in-game .giant-mission > .giant-eyebrow,
+  .giant-in-game .giant-mission > .giant-meter,
+  .giant-in-game .giant-mission > p,
+  .giant-in-game .giant-sleep p,
+  .giant-in-game .giant-crew > span,
+  .giant-in-game .giant-event {
+    display: none;
+  }
+  .giant-in-game .giant-gold {
+    margin: 0 0 4px;
+  }
+  .giant-in-game .giant-gold strong {
+    font-size: 26px;
+  }
+  .giant-in-game .giant-gold span {
+    font-size: 12px;
+  }
+  .giant-in-game .giant-carried {
+    padding: 4px 0 7px;
+    font-size: 10px;
+  }
+  .giant-in-game .giant-clock {
+    margin: 0 -10px -10px;
+    padding: 7px;
+    gap: 4px;
+  }
+  .giant-in-game .giant-clock strong {
+    font-size: 18px;
+  }
+  .giant-in-game .giant-clock > span {
+    font-size: 8px;
+  }
+  .giant-in-game .giant-crew {
+    top: calc(198px + var(--giant-top));
+  }
+  .giant-in-game .giant-crew > button {
+    min-height: 44px;
+    font-size: 11px;
+  }
+  .giant-in-game .giant-controls {
+    width: calc(100% - 24px);
+    gap: 5px;
+  }
+  .giant-in-game .giant-dock {
+    width: 100%;
+    gap: 2px;
+    padding: 4px;
+  }
+  .giant-in-game .giant-dock button {
+    min-height: 48px;
+    flex: 1;
+    min-width: 0;
+    font-size: 10px;
+    padding: 6px 3px;
+  }
+  .giant-in-game .giant-hint {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+  .giant-in-game .touch-controls {
+    bottom: calc(118px + var(--giant-bottom));
+  }
+  .giant-in-game .giant-warning {
+    top: calc(156px + var(--giant-top));
+  }
+  .giant-in-game .giant-notice {
+    bottom: calc(246px + var(--giant-bottom));
+    font-size: 12px;
+  }
+}

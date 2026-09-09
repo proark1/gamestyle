@@ -1,0 +1,372 @@
+{
+  "fetchedAt": "2026-09-09T02:59:28.461Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/handwerker/audio/first-person?manifest",
+  "cues": {
+    "material.brick.grab": {
+      "url": "/api/handwerker/audio/first-person/file/509708a4-cbab-40a7-859b-15759daea827.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.brick.place": {
+      "url": "/api/handwerker/audio/first-person/file/751f6c71-f38c-41e7-a1cd-6de95a8d8706.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.brick.remove": {
+      "url": "/api/handwerker/audio/first-person/file/affea037-903a-46b0-a53c-cb1b124c5fcd.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.beam.grab": {
+      "url": "/api/handwerker/audio/first-person/file/e83dc2d7-203c-4262-b11f-32e91558fc5f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.beam.place": {
+      "url": "/api/handwerker/audio/first-person/file/2aed4085-d1c7-4f25-9be4-7d89bc69c8ad.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.beam.remove": {
+      "url": "/api/handwerker/audio/first-person/file/c9d761f8-a433-4f24-91ce-6d198a822539.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.grab": {
+      "url": "/api/handwerker/audio/first-person/file/d2931f0b-5fdb-4280-a4ec-1741bea483fe.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.place": {
+      "url": "/api/handwerker/audio/first-person/file/f043a33d-cc08-46ef-b243-99f9617dbf09.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.remove": {
+      "url": "/api/handwerker/audio/first-person/file/9a3ca5ab-7729-470b-997f-84eb04ceadfc.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cement.grab": {
+      "url": "/api/handwerker/audio/first-person/file/82457d10-1ce2-49ab-aaf7-a09c03ea20fd.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cement.drop": {
+      "url": "/api/handwerker/audio/first-person/file/c9a0d6e2-7f48-4c5f-acca-a04649a46835.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cement.pour": {
+      "url": "/api/handwerker/audio/first-person/file/3aa6ccdc-4b73-4b80-bfe3-20bb3fb80aab.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sand.grab": {
+      "url": "/api/handwerker/audio/first-person/file/f5c3105f-a68a-4fa3-8cf2-91070633d04b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sand.drop": {
+      "url": "/api/handwerker/audio/first-person/file/0e041891-c346-4789-b585-7dc066185ac3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sand.pour": {
+      "url": "/api/handwerker/audio/first-person/file/c69e83f5-98c0-4c22-bc51-5aaab25f7274.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.water.grab": {
+      "url": "/api/handwerker/audio/first-person/file/2b8e5db1-f089-4bbf-8a51-69a57683ed4f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.water.drop": {
+      "url": "/api/handwerker/audio/first-person/file/4faacd4b-ac5c-485d-9833-b1e165a94988.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.water.pour": {
+      "url": "/api/handwerker/audio/first-person/file/57802297-de20-4974-b794-d94a1be7a37d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.mortar.grab": {
+      "url": "/api/handwerker/audio/first-person/file/2b59990a-64b7-4267-88d2-99e7385c0580.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.mortar.place": {
+      "url": "/api/handwerker/audio/first-person/file/9afadc3c-d9f1-4267-b98a-adee3298c701.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.brick.wet": {
+      "url": "/api/handwerker/audio/first-person/file/91bb6e76-11af-4180-89c4-988c2b5597b4.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "speech.saying.0": {
+      "url": "/api/handwerker/audio/first-person/file/52c467b1-822a-4a94-b179-4f74f5ca005d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.1": {
+      "url": "/api/handwerker/audio/first-person/file/662c7043-61f6-4661-b3ce-d5e1c7672394.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.2": {
+      "url": "/api/handwerker/audio/first-person/file/a80e2ae1-cd9d-4dda-b834-a8462aec32bc.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.3": {
+      "url": "/api/handwerker/audio/first-person/file/f3b311b6-fada-49a1-9353-5309a55e1be2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.4": {
+      "url": "/api/handwerker/audio/first-person/file/c1efd542-527a-4a80-bcf0-80d28f2f7185.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.5": {
+      "url": "/api/handwerker/audio/first-person/file/6811787e-2580-4c25-bea1-590110caf126.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.6": {
+      "url": "/api/handwerker/audio/first-person/file/04d929ae-e115-4213-b84d-c198fb2ec8c8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.7": {
+      "url": "/api/handwerker/audio/first-person/file/b4e3a6c3-dad7-4f58-a55d-01b301222a8f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.8": {
+      "url": "/api/handwerker/audio/first-person/file/0c7a6e4a-84ce-46a5-a000-b8554f94652b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.9": {
+      "url": "/api/handwerker/audio/first-person/file/2694f57d-9fb5-4ab2-88fe-f1c3ccba3596.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.10": {
+      "url": "/api/handwerker/audio/first-person/file/d71cac39-9bfe-4243-8c68-051984d9eaeb.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.11": {
+      "url": "/api/handwerker/audio/first-person/file/cfe5d6d1-b686-4fdc-a054-7355bd0ce3ad.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.race.start": {
+      "url": "/api/handwerker/audio/first-person/file/fd65d159-fe11-4f4d-b554-1eefa2070723.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.race.win": {
+      "url": "/api/handwerker/audio/first-person/file/1a75a3f6-041f-4c0c-b48f-d66204fb38d7.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.race.fail": {
+      "url": "/api/handwerker/audio/first-person/file/da17539b-0e20-449e-884b-271eadac5c51.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.mixer.jam": {
+      "url": "/api/handwerker/audio/first-person/file/3d627330-20d4-45fe-82c5-00998ce6c96b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.mixer.fixed": {
+      "url": "/api/handwerker/audio/first-person/file/e31afdf8-bd7c-4d3c-8d88-cb4f91bd2dcf.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "ambience.site": {
+      "url": "/api/handwerker/audio/first-person/file/2a6c4f22-4092-4a37-a90a-5c4424767a36.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.trees": {
+      "url": "/api/handwerker/audio/first-person/file/f44bf735-eb90-4be9-9494-d193e11dc8d2.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "ambience"
+    },
+    "step.concrete": {
+      "url": "/api/handwerker/audio/first-person/file/d6e0efdb-0476-410f-8206-20a7157f98a7.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.dirt": {
+      "url": "/api/handwerker/audio/first-person/file/c1a4d016-69c9-4f74-9a23-3fe102d1af51.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood": {
+      "url": "/api/handwerker/audio/first-person/file/6dfb7b13-7680-4f6f-b79c-4166ed086440.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.brick": {
+      "url": "/api/handwerker/audio/first-person/file/00aa0b5c-1e12-4b3f-9916-c9db9f221699.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.roof": {
+      "url": "/api/handwerker/audio/first-person/file/236538fa-8159-4425-a9ad-ff2a9cd6df9f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.jump": {
+      "url": "/api/handwerker/audio/first-person/file/3ef87a5b-b987-43b7-9738-447b11860599.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.land": {
+      "url": "/api/handwerker/audio/first-person/file/2022ca61-2ec4-46ff-85dd-c498eb88f470.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.ui": {
+      "url": "/api/handwerker/audio/first-person/file/df9ab860-188a-4ef6-ae70-67de06152d7f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.error": {
+      "url": "/api/handwerker/audio/first-person/file/a4360e78-688b-470d-8ed3-790fc3bb8050.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.horn": {
+      "url": "/api/handwerker/audio/first-person/file/5d2d67f5-3586-458f-a6a1-5e3e57084c9f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "mixer.start": {
+      "url": "/api/handwerker/audio/first-person/file/d2dfa710-1826-4cfa-9ca0-b0dd20284506.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "mixer.run": {
+      "url": "/api/handwerker/audio/first-person/file/8750b8a8-0329-45e6-9069-b1099e47dc80.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "ambience"
+    },
+    "mixer.stop": {
+      "url": "/api/handwerker/audio/first-person/file/fe3c4731-0f20-42fc-89e6-ea23af759fa0.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "mixer.jam": {
+      "url": "/api/handwerker/audio/first-person/file/ab7db1d8-1855-4354-8218-c2901c2d5588.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "mixer.fix": {
+      "url": "/api/handwerker/audio/first-person/file/10a9b840-8a66-4bbd-8ba6-33df0b8351b9.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "mixer.empty": {
+      "url": "/api/handwerker/audio/first-person/file/7a0e3de4-7411-4bcc-be3c-2cedfa2883e2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "music.menu": {
+      "url": "/api/handwerker/audio/first-person/file/06a7c140-6714-49dc-baf1-1b273d514ecf.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build": {
+      "url": "/api/handwerker/audio/first-person/file/9908b86c-1152-45aa-9792-82845ed7275c.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "music"
+    },
+    "music.challenge": {
+      "url": "/api/handwerker/audio/first-person/file/d8e2a816-afb1-419e-ac13-25efbe7d1968.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/handwerker/audio/first-person/file/839b117f-e410-4115-8f62-a8ae46389ff3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/handwerker/audio/first-person/file/e11ee5c4-66d5-4c98-8045-6937f96389dc.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "music"
+    }
+  }
+}

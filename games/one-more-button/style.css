@@ -1,0 +1,852 @@
+.omb-game {
+  position: relative;
+  height: 100dvh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #bad5ce;
+  color: #285558;
+  font-family: 'DM Sans', sans-serif;
+}
+.omb-game button,
+.omb-dialog button {
+  cursor: pointer;
+}
+.omb-game button:disabled,
+.omb-dialog button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.omb-game :is(button, a, input):focus-visible {
+  outline: 3px solid #eaa43c;
+  outline-offset: 4px;
+}
+.omb-canvas {
+  position: absolute;
+  inset: 0;
+}
+.omb-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.omb-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 86px;
+  padding: 0 30px;
+  background: linear-gradient(#d1e2d8ee, #d1e2d800);
+}
+.omb-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #285558;
+  font:
+    600 22px 'Fredoka',
+    sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.omb-brand > span:first-child {
+  display: flex;
+  background: #eab85c;
+  padding: 10px;
+  border-radius: 14px;
+  transform: rotate(-7deg);
+}
+.omb-dot {
+  color: #d76148;
+  margin-left: -8px;
+}
+.omb-menu {
+  position: relative;
+  z-index: 2;
+  width: min(1280px, 94%);
+  margin: max(12px, calc((100dvh - 790px) / 3)) auto 0;
+  display: grid;
+  grid-template-columns: 0.9fr 1.3fr;
+  align-items: center;
+  gap: 35px;
+}
+.omb-menu-copy {
+  padding: 30px;
+  background: #fff4dcf5;
+  border: 1px solid #fff9e8;
+  box-shadow: 0 16px 55px #2e676425;
+  border-radius: 28px;
+}
+.omb-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+.omb-kicker > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #dc6951;
+}
+.omb-menu h1 {
+  font:
+    600 clamp(44px, 4.6vw, 69px)/0.99 'Fredoka',
+    sans-serif;
+  letter-spacing: -1.8px;
+  margin: 23px 0 18px;
+}
+.omb-menu h1 em {
+  font-style: normal;
+  color: #d45f47;
+}
+.omb-menu p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  color: #638079;
+}
+.omb-meta {
+  display: flex;
+  gap: 17px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.omb-meta > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.omb-name {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.omb-name input {
+  border: 1px solid #c4cdb4;
+  background: #fff9eb;
+  color: #285558;
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-width: 0;
+  font:
+    400 16px 'DM Sans',
+    sans-serif;
+}
+.omb-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  min-height: 52px;
+  padding: 12px 18px;
+  background: #d9654c;
+  color: #fff8e8;
+  border: 1px solid #c75943;
+  border-radius: 13px;
+  box-shadow: 0 4px 0 #a74434;
+  font-size: 16px;
+  font-weight: 700;
+  transition: transform 0.15s;
+}
+.omb-primary:hover:enabled {
+  transform: translateY(-2px);
+}
+.omb-primary > svg:last-child {
+  margin-left: auto;
+}
+.omb-menu-secondary {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+}
+.omb-menu-secondary button {
+  flex: 1;
+  border: 1px solid #c7d0b7;
+  border-radius: 11px;
+  background: #fff8e7;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.omb-menu-note {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: #70847a;
+}
+.omb-menu-art {
+  position: relative;
+  margin: 0;
+  transform: rotate(2deg);
+}
+.omb-menu-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 28px;
+  border: 7px solid #fff0d6;
+  box-shadow: 0 18px 45px #224b4b30;
+}
+.omb-menu-art figcaption {
+  position: absolute;
+  right: 5%;
+  bottom: -22px;
+  background: #fff0d7;
+  border-radius: 12px;
+  padding: 15px 23px;
+  transform: rotate(-5deg);
+  box-shadow: 0 5px 15px #294b4b19;
+}
+.omb-menu-art figcaption span {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.omb-menu-art figcaption strong {
+  display: block;
+  font:
+    600 23px 'Fredoka',
+    sans-serif;
+  margin-top: 5px;
+  color: #b95d42;
+}
+.omb-scoreboard {
+  position: absolute;
+  z-index: 3;
+  top: 94px;
+  left: 24px;
+  display: flex;
+  gap: 22px;
+  border-radius: 18px;
+  padding: 17px 21px;
+  background: #fff5dff2;
+  box-shadow: 0 6px 20px #31636113;
+}
+.omb-scoreboard span,
+.omb-risk > span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.omb-scoreboard strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font:
+    600 34px 'Fredoka',
+    sans-serif;
+  margin: 3px 0;
+}
+.omb-scoreboard small {
+  font-size: 12px;
+  color: #718479;
+}
+.omb-clock {
+  border-left: 1px solid #ccd3bb;
+  padding-left: 22px;
+}
+.omb-clock.urgent {
+  color: #c95640;
+}
+.omb-crew {
+  position: absolute;
+  z-index: 3;
+  top: 94px;
+  right: 24px;
+  width: 252px;
+  background: #fff5dfed;
+  border-radius: 18px;
+  padding: 16px;
+  font-size: 14px;
+}
+.omb-crew-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.omb-crew-title > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.omb-crew-title button {
+  border: 0;
+  background: none;
+  color: #b9503c;
+  font-size: 14px;
+  min-height: 30px;
+}
+.omb-crew-person {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 0;
+}
+.omb-crew-person i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.omb-crew-person > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.omb-crew-person small {
+  margin-left: auto;
+  color: #c4624e;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.omb-banked {
+  border-top: 1px solid #d2d8c1;
+  padding-top: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+.omb-door-status {
+  position: absolute;
+  top: 215px;
+  left: 24px;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #ffe0a6ed;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.omb-door-status.open {
+  background: #ecf3c9f0;
+  color: #326d5d;
+}
+.omb-risk {
+  position: absolute;
+  z-index: 3;
+  bottom: 161px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  background: #fff3dcf2;
+  border-radius: 17px;
+  padding: 16px 20px;
+}
+.omb-risk strong {
+  font:
+    600 34px 'Fredoka',
+    sans-serif;
+  color: #ce5f45;
+}
+.omb-risk small {
+  font-size: 12px;
+  color: #718479;
+}
+.omb-camera {
+  position: absolute;
+  z-index: 3;
+  right: 24px;
+  bottom: 160px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #fff4ddf0;
+  border: 0;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.omb-your-status {
+  position: absolute;
+  z-index: 3;
+  bottom: 126px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 15px;
+  background: #fff4ddf0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  width: max-content;
+  max-width: 90%;
+  text-align: center;
+}
+.omb-action-dock {
+  position: absolute;
+  z-index: 5;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 7px;
+  padding: 8px;
+  border-radius: 20px;
+  background: #fff3deed;
+  box-shadow: 0 8px 25px #28555225;
+}
+.omb-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  min-height: 60px;
+  border: 1px solid #c5ceb6;
+  border-radius: 12px;
+  background: #fff9e9;
+  color: #285758;
+  font-size: 14px;
+  font-weight: 700;
+  user-select: none;
+  touch-action: manipulation;
+}
+.omb-action.press {
+  background: #dc694e;
+  border-color: #c65a44;
+  color: #fff6df;
+}
+.omb-action.exit {
+  background: #467c6a;
+  border-color: #346757;
+  color: #fff6df;
+}
+.omb-action span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  white-space: nowrap;
+}
+.omb-action kbd {
+  font:
+    400 12px 'DM Sans',
+    sans-serif;
+  opacity: 0.8;
+}
+.omb-movement-hint {
+  position: absolute;
+  bottom: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.omb-notice {
+  position: absolute;
+  z-index: 12;
+  top: 272px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(640px, 92%);
+  padding: 11px 17px;
+  background: #fff5dfee;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 4px 16px #305d5020;
+}
+.omb-game:not(.in-session) .omb-notice {
+  top: auto;
+  bottom: 15px;
+}
+.omb-loading {
+  position: absolute;
+  bottom: 20px;
+  right: 24px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  background: #fff5dd;
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+.omb-lobby,
+.omb-results {
+  position: absolute;
+  z-index: 6;
+  top: 49%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(410px, 90%);
+  max-height: 73dvh;
+  overflow-y: auto;
+  padding: 27px;
+  border-radius: 24px;
+  background: #fff4def5;
+  text-align: center;
+  box-shadow: 0 15px 50px #325f5330;
+}
+.omb-lobby .omb-kicker,
+.omb-results .omb-kicker {
+  justify-content: center;
+  margin: 12px 0;
+}
+.omb-lobby h2,
+.omb-results h2 {
+  font:
+    600 44px/1.03 'Fredoka',
+    sans-serif;
+  margin: 15px 0;
+}
+.omb-lobby p,
+.omb-results p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #6d8178;
+  margin: 12px 0 18px;
+}
+.omb-results > svg {
+  margin: auto;
+  color: #d2a040;
+}
+.omb-room-code {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  font:
+    500 36px 'Fredoka',
+    sans-serif;
+  letter-spacing: 4px;
+  padding: 16px 8px;
+  margin: 12px 0;
+  border: 1px dashed #a8bba5;
+  border-radius: 12px;
+  background: #efecd0;
+}
+.omb-result-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid #dedec6;
+  font-size: 14px;
+}
+.omb-text-button {
+  margin-top: 16px;
+  background: none;
+  border: 0;
+  font-size: 14px;
+  text-decoration: underline;
+}
+.omb-dialog {
+  background: #fff4dc;
+  color: #285558;
+  border-radius: 23px;
+  max-height: 88dvh;
+  overflow-y: auto;
+}
+.omb-help p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 12px 0;
+}
+.omb-hazard-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.omb-hazard-list > span {
+  font-size: 12px;
+  background: #e9e7ce;
+  border-radius: 8px;
+  padding: 6px 9px;
+}
+.omb-join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.omb-spin {
+  animation: omb-spin 1s linear infinite;
+}
+@keyframes omb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.omb-game .touch-controls,
+.omb-game .touch-jump {
+  display: none;
+}
+@media (pointer: coarse) {
+  .omb-game .touch-controls {
+    display: block;
+    position: absolute;
+    z-index: 6;
+    bottom: 155px;
+    left: 22px;
+  }
+  .omb-game .touch-controls .joystick {
+    width: 112px;
+    height: 112px;
+    border: 2px solid #fff9e4b0;
+    border-radius: 50%;
+    background: #fff5df66;
+    color: #285758;
+  }
+  .omb-game .joystick > span {
+    width: 38px;
+    height: 38px;
+    border: 2px solid #fff9e9;
+    border-radius: 50%;
+    background: #f2c368db;
+  }
+  .omb-risk {
+    bottom: 290px;
+    padding: 10px 14px;
+  }
+}
+@media (max-width: 900px) {
+  .omb-header {
+    padding: 0 16px;
+  }
+  .omb-brand {
+    font-size: 18px;
+  }
+  .omb-menu {
+    gap: 18px;
+  }
+  .omb-menu-copy {
+    padding: 24px;
+  }
+  .omb-meta {
+    gap: 10px;
+  }
+  .omb-menu-art figcaption {
+    padding: 12px;
+  }
+  .omb-menu-art figcaption strong {
+    font-size: 19px;
+  }
+  .omb-menu-art figcaption span {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+}
+@media (max-width: 700px) {
+  .omb-game {
+    min-height: 580px;
+  }
+  .omb-game:not(.in-session) {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+  }
+  .omb-header {
+    height: 110px;
+    padding: 12px 15px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .omb-game .game-toolbar {
+    margin-left: auto;
+  }
+  .omb-menu {
+    width: calc(100% - 30px);
+    margin: 10px auto 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+  }
+  .omb-menu-copy {
+    width: 100%;
+  }
+  .omb-menu h1 {
+    font-size: clamp(44px, 12vw, 65px);
+  }
+  .omb-title-break {
+    display: none;
+  }
+  .omb-menu-art {
+    width: 95%;
+  }
+  .omb-scoreboard {
+    top: 114px;
+    left: 10px;
+    padding: 12px;
+    gap: 12px;
+  }
+  .omb-scoreboard strong {
+    font-size: 25px;
+  }
+  .omb-scoreboard strong > svg {
+    display: none;
+  }
+  .omb-scoreboard span {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+  .omb-clock {
+    padding-left: 10px;
+  }
+  .omb-crew {
+    top: 114px;
+    right: 10px;
+    width: 144px;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .omb-crew-title {
+    font-size: 12px;
+    gap: 4px;
+  }
+  .omb-crew-title > span > svg,
+  .omb-crew-person small,
+  .omb-banked {
+    display: none;
+  }
+  .omb-crew-title button {
+    font-size: 12px;
+  }
+  .omb-crew-person {
+    padding: 3px 0;
+  }
+  .omb-door-status {
+    top: 220px;
+    left: 10px;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  .omb-notice {
+    top: 267px;
+    font-size: 12px;
+  }
+  .omb-risk {
+    bottom: 214px;
+    left: auto;
+    right: 10px;
+    padding: 10px 12px;
+  }
+  .omb-risk strong {
+    font-size: 25px;
+  }
+  .omb-risk > span {
+    letter-spacing: 0;
+  }
+  .omb-camera {
+    right: 10px;
+    bottom: 154px;
+  }
+  .omb-your-status {
+    bottom: 104px;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  .omb-action-dock {
+    width: calc(100% - 16px);
+    bottom: 16px;
+    padding: 6px;
+    gap: 4px;
+  }
+  .omb-action {
+    flex: 1;
+    padding: 8px 4px;
+    min-width: 0;
+    min-height: 60px;
+    font-size: 12px;
+  }
+  .omb-action > svg {
+    display: none;
+  }
+  .omb-action kbd {
+    font-size: 12px;
+    white-space: normal;
+    max-width: 70px;
+  }
+  .omb-movement-hint {
+    display: none;
+  }
+  .omb-lobby,
+  .omb-results {
+    top: 54%;
+    padding: 22px;
+    max-height: 68dvh;
+  }
+  .omb-game .touch-controls {
+    left: 14px;
+    bottom: 147px;
+  }
+}
+@media (max-width: 390px) {
+  .omb-scoreboard {
+    gap: 7px;
+    padding: 9px;
+  }
+  .omb-scoreboard strong {
+    font-size: 22px;
+  }
+  .omb-crew {
+    width: 129px;
+  }
+}
+@media (max-height: 680px) and (min-width: 701px) {
+  .omb-game {
+    min-height: 480px;
+  }
+  .omb-menu {
+    margin-top: 0;
+    max-width: 1120px;
+  }
+  .omb-menu-copy {
+    padding: 20px 25px;
+  }
+  .omb-menu h1 {
+    font-size: 46px;
+    margin: 15px 0;
+  }
+  .omb-title-break {
+    display: none;
+  }
+  .omb-menu p {
+    margin-bottom: 10px;
+  }
+  .omb-meta {
+    margin-bottom: 12px;
+  }
+  .omb-menu-note {
+    display: none;
+  }
+  .omb-risk {
+    bottom: 145px;
+    padding: 10px 15px;
+  }
+  .omb-notice {
+    top: 263px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .omb-spin {
+    animation: none;
+  }
+  .omb-primary {
+    transition: none;
+  }
+}

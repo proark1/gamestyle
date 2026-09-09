@@ -8,6 +8,20 @@
       "when": 1788663230994,
       "tag": "0000_chief_vargas",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788688422121,
+      "tag": "0001_round_xorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788730457305,
+      "tag": "0002_broken_the_hood",
+      "breakpoints": true
     }
   ]
 }

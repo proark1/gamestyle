@@ -29,7 +29,11 @@
     "build/**",
     "dist/**",
     "coverage/**",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    ".tmp/**",
+    "work/**",
+    "outputs/**",
+    "components/ui/**"
   ],
   "rules": {
     "no-array-constructor": "error",
@@ -52,5 +56,13 @@
     "typescript/no-require-imports": "error",
     "typescript/no-unnecessary-type-constraint": "error",
     "typescript/no-unsafe-function-type": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["app/**/*.tsx", "games/**/*.tsx", "shared/**/*.tsx"],
+      "rules": {
+        "nextjs/no-html-link-for-pages": "off"
+      }
+    }
+  ]
 }

@@ -1,0 +1,77 @@
+{
+  "revision": "2bb80f92c4cd704adbd239aa0bbba52134ff0fc5152e48273b04ebe713d1819a",
+  "goatsEnabled": true,
+  "limitSeconds": 900,
+  "phase": "delivered",
+  "resumed": false,
+  "variant": 0,
+  "bestHeight": 22.704738620044722,
+  "stage": 10,
+  "sofa": {
+    "x": -5.682786555030734,
+    "y": 22.787486903287665,
+    "z": -22.993446112573373
+  },
+  "needsHelp": false,
+  "players": [
+    {
+      "name": "Human",
+      "x": -13,
+      "y": -0.00007848000000010291,
+      "z": 14.7,
+      "grip": null
+    },
+    {
+      "name": "Jo",
+      "x": -3.2523563486318077,
+      "y": 21.99998196327797,
+      "z": -21.90200058901057,
+      "grip": null,
+      "task": "Putting the sofa down"
+    },
+    {
+      "name": "Nora",
+      "x": -8.355822108203615,
+      "y": 21.999921520000004,
+      "z": -24.16201186852683,
+      "grip": null,
+      "task": "Putting the sofa down"
+    },
+    {
+      "name": "Sam",
+      "x": -3.3202226055820256,
+      "y": 21.99998196327797,
+      "z": -23.92437226230605,
+      "grip": null,
+      "task": "Putting the sofa down"
+    }
+  ],
+  "seconds": 278.58333333340164,
+  "workMs": 56096.6653,
+  "events": [
+    {
+      "id": 42,
+      "text": "The goat has right of way. Apparently."
+    },
+    {
+      "id": 43,
+      "text": "The goat has right of way. Apparently."
+    },
+    {
+      "id": 44,
+      "text": "The goat has right of way. Apparently."
+    },
+    {
+      "id": 45,
+      "text": "Oh. The customer’s door opens OUTWARD."
+    },
+    {
+      "id": 46,
+      "text": "Hands off. Gravity has the sofa now."
+    },
+    {
+      "id": 47,
+      "text": "Delivered. Four stars. One very tired sofa."
+    }
+  ]
+}

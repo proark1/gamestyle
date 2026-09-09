@@ -1,0 +1,2084 @@
+@import './mobile.css';
+:where(body:has(.handwerker)) .game-shell {
+  height: 100svh;
+  min-height: 650px;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+:where(body:has(.handwerker)) .world-canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+:where(body:has(.handwerker)) .world-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+:where(body:has(.handwerker)) .world-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(197, 216, 196, 0.6), transparent 50%),
+    linear-gradient(0deg, rgba(169, 193, 172, 0.55), transparent 16%);
+}
+:where(body:has(.handwerker)) .topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 27px 38px;
+  z-index: 10;
+}
+:where(body:has(.handwerker)) .wordmark {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 23px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+}
+:where(body:has(.handwerker)) .logo-icon {
+  background: var(--ink);
+  color: var(--yellow);
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 13px;
+  transform: rotate(-5deg);
+}
+:where(body:has(.handwerker)) .amp {
+  color: #6b8373;
+  font-size: 16px;
+  margin: 0 5px;
+}
+:where(body:has(.handwerker)) .logo-dot {
+  color: #c18629;
+}
+:where(body:has(.handwerker)) .topbar-center {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 1.7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 50px;
+}
+:where(body:has(.handwerker)) .status-dot,
+:where(body:has(.handwerker)) .green-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4d8067;
+  display: inline-block;
+}
+:where(body:has(.handwerker)) .status-dot {
+  box-shadow: 0 0 0 4px #8cab9440;
+}
+:where(body:has(.handwerker)) .topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+:where(body:has(.handwerker)) .alpha-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  opacity: 0.7;
+  margin-right: 14px;
+}
+:where(body:has(.handwerker)) .icon-button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #73978145;
+  background: #e2eddd88;
+  border-radius: 11px;
+  color: var(--ink);
+}
+:where(body:has(.handwerker)) .icon-button:hover {
+  background: #f1f5e8;
+}
+:where(body:has(.handwerker)) .start-panel {
+  position: absolute;
+  top: clamp(111px, 15vh, 172px);
+  left: clamp(25px, 4.5vw, 82px);
+  width: 340px;
+  z-index: 2;
+}
+:where(body:has(.handwerker)) .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: #567363;
+}
+:where(body:has(.handwerker)) .tiny-line {
+  width: 20px;
+  height: 2px;
+  background: #728c74;
+}
+:where(body:has(.handwerker)) .game-shell h1 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 62px;
+  line-height: 0.98;
+  letter-spacing: -2px;
+  font-weight: 600;
+  margin: 20px 0 19px;
+}
+:where(body:has(.handwerker)) .game-shell h1 > span {
+  position: relative;
+  color: #f8faf0;
+  text-shadow: 0 2px 0 #6e8d7250;
+}
+:where(body:has(.handwerker)) .game-shell h1 svg {
+  position: absolute;
+  width: 100%;
+  height: 12px;
+  bottom: -9px;
+  left: 0;
+  fill: none;
+  stroke: #dbac36;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+:where(body:has(.handwerker)) .intro {
+  font-size: 16px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+  color: #4a6455;
+}
+:where(body:has(.handwerker)) .player-pills {
+  display: flex;
+  gap: 13px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 22px;
+}
+:where(body:has(.handwerker)) .player-pills > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+:where(body:has(.handwerker)) .setup-card {
+  background: #f8faf4f5;
+  border: 1px solid #ffffffb0;
+  border-radius: 17px;
+  padding: 20px;
+  box-shadow:
+    0 9px 0 -5px #466d4a20,
+    0 16px 40px #405a4520;
+}
+:where(body:has(.handwerker)) .field-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: #768776;
+  display: block;
+  margin-bottom: 8px;
+}
+:where(body:has(.handwerker)) .name-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #eef2e9;
+  border: 1px solid #dce4d7;
+  border-radius: 9px;
+  padding: 11px 13px;
+}
+:where(body:has(.handwerker)) .name-field > svg {
+  color: #84927e;
+}
+:where(body:has(.handwerker)) .name-field input {
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  width: 100%;
+  font-size: 14px;
+}
+:where(body:has(.handwerker)) .name-field input::placeholder {
+  color: #94a08d;
+}
+:where(body:has(.handwerker)) .color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 13px 0 17px;
+  font-size: 12px;
+  color: #6a7d6b;
+}
+:where(body:has(.handwerker)) .color-options {
+  display: flex;
+  gap: 8px;
+}
+:where(body:has(.handwerker)) .color-dot {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  color: #354d42;
+  display: grid;
+  place-items: center;
+}
+:where(body:has(.handwerker)) .color-dot.selected {
+  outline: 2px solid #506959;
+  outline-offset: 2px;
+}
+:where(body:has(.handwerker)) .mode-tabs {
+  gap: 0 !important;
+}
+:where(body:has(.handwerker)) .mode-list {
+  display: flex !important;
+  width: 100% !important;
+  height: 40px !important;
+  padding: 4px !important;
+  background: #e9eee3 !important;
+  border-radius: 9px !important;
+}
+:where(body:has(.handwerker)) .mode-trigger {
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  gap: 6px !important;
+  padding: 7px 9px !important;
+  font-weight: 700 !important;
+}
+:where(body:has(.handwerker)) .mode-trigger[data-active] {
+  background: #fffef5 !important;
+  box-shadow: 0 2px 4px #45633015 !important;
+}
+:where(body:has(.handwerker)) .mode-description {
+  font-size: 10.5px !important;
+  text-align: center;
+  color: #84917e;
+  padding: 10px 0 12px;
+  line-height: 1.5;
+  min-height: 38px;
+}
+:where(body:has(.handwerker)) .primary-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #e0b039;
+  border-bottom: 4px solid #d1a030;
+  background: var(--yellow);
+  color: #35402f;
+  border-radius: 9px;
+  padding: 13px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 3px 6px #9c831111;
+}
+:where(body:has(.handwerker)) .primary-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px #70602125;
+}
+:where(body:has(.handwerker)) .primary-button:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+:where(body:has(.handwerker)) .join-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  padding: 15px 0 0;
+  color: #637b67;
+}
+:where(body:has(.handwerker)) .join-toggle > svg:last-child {
+  margin-left: 3px;
+}
+:where(body:has(.handwerker)) .join-form {
+  display: flex;
+  gap: 7px;
+  margin-top: 14px;
+}
+:where(body:has(.handwerker)) .join-form input {
+  width: 100%;
+  background: #eef2e9;
+  border: 1px solid #d8e0d2;
+  border-radius: 7px;
+  padding: 10px 12px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  font-size: 14px;
+}
+:where(body:has(.handwerker)) .join-form button {
+  border: 0;
+  border-radius: 7px;
+  padding: 0 12px;
+  background: #d7e5cf;
+  color: #47614b;
+}
+:where(body:has(.handwerker)) .how-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: none;
+  border: 0;
+  width: 100%;
+  padding-top: 18px;
+  font-size: 11px;
+  color: #5f7d64;
+}
+:where(body:has(.handwerker)) .scene-stamp {
+  position: absolute;
+  bottom: 106px;
+  right: 7vw;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: rotate(-3deg);
+  background: #f8f6dc;
+  box-shadow: 2px 4px 0 #435c4020;
+  padding: 15px 20px;
+  border-radius: 3px;
+  border: 1px solid #ffffffa0;
+}
+:where(body:has(.handwerker)) .stamp-icon {
+  width: 41px;
+  height: 41px;
+  border: 1.5px dashed #809173;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #839274;
+}
+:where(body:has(.handwerker)) .scene-stamp strong {
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  display: block;
+}
+:where(body:has(.handwerker)) .scene-stamp span:not(.stamp-icon) {
+  display: block;
+  color: #82907a;
+  font-size: 10px;
+  margin-top: 5px;
+}
+:where(body:has(.handwerker)) .scene-note {
+  position: absolute;
+  right: 6vw;
+  top: 128px;
+  transform: rotate(7deg);
+  background: #f4d97d;
+  color: #72744c;
+  padding: 24px 18px 14px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 18px;
+  line-height: 1.12;
+  box-shadow: 2px 6px 0 #48624312;
+}
+:where(body:has(.handwerker)) .note-small {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  margin-top: 9px;
+}
+:where(body:has(.handwerker)) .note-pin {
+  position: absolute;
+  top: -9px;
+  left: 38%;
+  width: 50px;
+  height: 19px;
+  background: #f8faeb80;
+  transform: rotate(-14deg);
+}
+:where(body:has(.handwerker)) .start-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 22px 38px;
+  color: #56745b;
+  font-size: 10px;
+}
+:where(body:has(.handwerker)) .start-footer > span:nth-child(2) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+:where(body:has(.handwerker)) .footer-divider {
+  opacity: 0.4;
+  margin: 0 7px;
+}
+:where(body:has(.handwerker)) .start-footer button {
+  border: 0;
+  background: none;
+  color: inherit;
+}
+:where(body:has(.handwerker)) .loading-badge {
+  position: absolute;
+  top: 50%;
+  left: 63%;
+  transform: translate(-50%, -50%);
+  background: #f6f9e9f5;
+  box-shadow: 0 8px 40px #5a715626;
+  border-radius: 14px;
+  padding: 18px 25px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  z-index: 9;
+}
+:where(body:has(.handwerker)) .loader {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d2ddc5;
+  border-top-color: #638569;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+:where(body:has(.handwerker)) .form-error {
+  font-size: 12px;
+  line-height: 1.45;
+  background: #f6e7ce;
+  border-radius: 7px;
+  padding: 9px;
+  color: #895f34;
+  margin: 12px 0 0;
+}
+:where(body:has(.handwerker)) .game-dialog {
+  max-width: 440px !important;
+  background: #f8faf2 !important;
+  padding: 30px !important;
+  border-radius: 20px !important;
+  gap: 15px !important;
+  color: var(--ink) !important;
+}
+:where(body:has(.handwerker)) .dialog-heading {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 29px !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+}
+:where(body:has(.handwerker)) .dialog-icon {
+  width: 54px;
+  height: 54px;
+  background: #ffe59a;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 3px;
+}
+:where(body:has(.handwerker)) .instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin: 8px 0 14px;
+}
+:where(body:has(.handwerker)) .instructions p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+:where(body:has(.handwerker)) .instructions kbd {
+  min-width: 66px;
+  text-align: center;
+}
+:where(body:has(.handwerker)) .instructions span {
+  color: #70826e;
+}
+:where(body:has(.handwerker)) kbd {
+  display: inline-block;
+  font-size: 10px;
+  background: #fffdf4;
+  border: 1px solid #d2dbc9;
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  padding: 4px 6px;
+  color: #5e715c;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+}
+:where(body:has(.handwerker)) .settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #dce4d5;
+}
+:where(body:has(.handwerker)) .muted-copy {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #778873;
+}
+:where(body:has(.handwerker)) .secondary-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  border: 1px solid #d0dcc8;
+  background: #edf2e6;
+  padding: 13px 16px;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (min-height: 850px) {
+  :where(body:has(.handwerker)) .start-panel {
+    top: 16vh;
+  }
+  :where(body:has(.handwerker)) .setup-card {
+    padding: 24px;
+  }
+  :where(body:has(.handwerker)) .game-shell h1 {
+    font-size: 70px;
+  }
+  :where(body:has(.handwerker)) .intro {
+    margin-bottom: 24px;
+  }
+  :where(body:has(.handwerker)) .player-pills {
+    margin-bottom: 27px;
+  }
+  :where(body:has(.handwerker)) .name-field {
+    padding: 13px;
+  }
+  :where(body:has(.handwerker)) .mode-list {
+    height: 44px !important;
+  }
+  :where(body:has(.handwerker)) .primary-button {
+    padding: 15px 17px;
+  }
+  :where(body:has(.handwerker)) .how-link {
+    padding-top: 22px;
+  }
+}
+@media (max-width: 1050px) {
+  :where(body:has(.handwerker)) .topbar-center {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .scene-note {
+    right: 28px;
+    top: 120px;
+    font-size: 14px;
+  }
+  :where(body:has(.handwerker)) .scene-stamp {
+    right: 25px;
+    bottom: 85px;
+  }
+  :where(body:has(.handwerker)) .start-panel {
+    left: 28px;
+    width: 318px;
+  }
+  :where(body:has(.handwerker)) .game-shell h1 {
+    font-size: 58px;
+  }
+  :where(body:has(.handwerker)) .topbar {
+    padding: 23px 27px;
+  }
+  :where(body:has(.handwerker)) .start-footer {
+    padding: 19px 26px;
+  }
+  :where(body:has(.handwerker)) .start-footer > span:nth-child(2) {
+    max-width: 280px;
+    font-size: 9px;
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 700px) {
+  :where(body:has(.handwerker)) .game-shell {
+    min-height: 820px;
+    height: 100svh;
+    overflow: auto;
+  }
+  :where(body:has(.handwerker)) .topbar {
+    padding: 19px 20px;
+  }
+  :where(body:has(.handwerker)) .wordmark {
+    font-size: 18px;
+    gap: 8px;
+  }
+  :where(body:has(.handwerker)) .logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+  :where(body:has(.handwerker)) .logo-icon svg {
+    width: 23px;
+  }
+  :where(body:has(.handwerker)) .amp {
+    font-size: 13px;
+    margin: 0 3px;
+  }
+  :where(body:has(.handwerker)) .alpha-label {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .topbar-actions {
+    gap: 6px;
+  }
+  :where(body:has(.handwerker)) .icon-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+  :where(body:has(.handwerker)) .topbar-actions .icon-button:last-child {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .start-panel {
+    top: 98px;
+    left: 22px;
+    width: calc(100% - 44px);
+    max-width: 370px;
+  }
+  :where(body:has(.handwerker)) .eyebrow {
+    font-size: 9px;
+  }
+  :where(body:has(.handwerker)) .game-shell h1 {
+    font-size: 55px;
+    margin-top: 13px;
+  }
+  :where(body:has(.handwerker)) .intro {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  :where(body:has(.handwerker)) .player-pills {
+    margin-bottom: 18px;
+  }
+  :where(body:has(.handwerker)) .setup-card {
+    background: #f8faf4f5;
+    padding: 20px;
+  }
+  :where(body:has(.handwerker)) .scene-note,
+  :where(body:has(.handwerker)) .scene-stamp {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .world-vignette {
+    background:
+      linear-gradient(90deg, #b9cfbdc9, #b9cfbd40),
+      linear-gradient(0deg, #b9cfbd, transparent 50%);
+  }
+  :where(body:has(.handwerker)) .start-footer {
+    padding: 18px 23px;
+    font-size: 9px;
+  }
+  :where(body:has(.handwerker)) .start-footer > span:nth-child(2) {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .loading-badge {
+    left: 50%;
+    top: 75%;
+    width: max-content;
+    max-width: 90%;
+  }
+  :where(body:has(.handwerker)) .mode-description {
+    font-size: 11px !important;
+  }
+  :where(body:has(.handwerker)) .mode-trigger {
+    font-size: 12px !important;
+  }
+  :where(body:has(.handwerker)) .field-label {
+    font-size: 10px;
+  }
+  :where(body:has(.handwerker)) .how-link,
+  :where(body:has(.handwerker)) .join-toggle {
+    font-size: 12px;
+  }
+  :where(body:has(.handwerker)) .color-row {
+    font-size: 13px;
+  }
+  :where(body:has(.handwerker)) .primary-button {
+    padding: 14px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(body:has(.handwerker)) * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+:where(body:has(.handwerker)) .is-playing .world-vignette {
+  background: linear-gradient(0deg, #a3bca658, transparent 27%);
+}
+:where(body:has(.handwerker)) .is-playing .topbar {
+  padding: 18px 27px;
+  background: linear-gradient(180deg, #c8dac5e6, transparent);
+}
+:where(body:has(.handwerker)) .is-playing .wordmark {
+  font-size: 20px;
+}
+:where(body:has(.handwerker)) .is-playing .logo-icon {
+  width: 36px;
+  height: 36px;
+}
+:where(body:has(.handwerker)) .crew-bar {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  background: #f6f9edb8;
+  border: 1px solid #ffffff85;
+  border-radius: 12px;
+  padding: 7px 11px;
+}
+:where(body:has(.handwerker)) .crew-member {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+:where(body:has(.handwerker)) .crew-member > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+}
+:where(body:has(.handwerker)) .crew-member b {
+  font-size: 12px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:where(body:has(.handwerker)) .crew-member small {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: none;
+}
+:where(body:has(.handwerker)) .empty-player {
+  border: 1px dashed #9ab093;
+  background: transparent;
+  color: #799371;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+:where(body:has(.handwerker)) .contract-panel {
+  position: absolute;
+  left: 27px;
+  top: 100px;
+  width: 248px;
+  background: #f9faeff5;
+  border-radius: 4px 15px 15px 15px;
+  box-shadow: 0 7px 30px #46604918;
+  padding: 21px 19px 0;
+  border-top: 5px solid #f3c048;
+}
+:where(body:has(.handwerker)) .contract-panel:before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 90px;
+  width: 55px;
+  height: 15px;
+  background: #5c7163;
+  border-radius: 4px;
+}
+:where(body:has(.handwerker)) .contract-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #81917c;
+  margin-bottom: 14px;
+}
+:where(body:has(.handwerker)) .contract-heading > span:first-child {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+:where(body:has(.handwerker)) .contract-panel h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1.1;
+  margin: 0 0 15px;
+  letter-spacing: -0.3px;
+}
+:where(body:has(.handwerker)) .customer-quote {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+:where(body:has(.handwerker)) .customer-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: #e1e9d7;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: #789473;
+}
+:where(body:has(.handwerker)) .customer-quote strong {
+  font-size: 10px;
+  color: #6b7c64;
+}
+:where(body:has(.handwerker)) .customer-quote p {
+  font-size: 10px;
+  font-style: italic;
+  line-height: 1.5;
+  margin: 3px 0 0;
+  color: #88917d;
+}
+:where(body:has(.handwerker)) .timer-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #edf1df;
+  padding: 11px;
+  border-radius: 8px;
+  color: #6b7e59;
+  font-size: 11px;
+  margin-bottom: 20px;
+}
+:where(body:has(.handwerker)) .timer-bar strong {
+  margin-left: auto;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+:where(body:has(.handwerker)) .timer-bar.urgent {
+  background: #fae1c1;
+  color: #ad6337;
+}
+:where(body:has(.handwerker)) .progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #839076;
+  margin-bottom: 8px;
+}
+:where(body:has(.handwerker)) .progress-label b {
+  color: #607759;
+}
+:where(body:has(.handwerker)) .job-progress {
+  height: 5px !important;
+  background: #e1e7d6 !important;
+  margin-bottom: 13px;
+}
+:where(body:has(.handwerker)) .job-progress [data-slot='progress-indicator'] {
+  background: #87a574 !important;
+}
+:where(body:has(.handwerker)) .job-checklist {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+}
+:where(body:has(.handwerker)) .job-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  padding: 7px 0;
+  font-size: 12px;
+  color: #647459;
+  text-align: left;
+}
+:where(body:has(.handwerker)) .job-item:hover {
+  background: #e9eddf;
+}
+:where(body:has(.handwerker)) .job-item b {
+  margin-left: auto;
+  font-size: 10px;
+  color: #9aa38d;
+  font-weight: 500;
+}
+:where(body:has(.handwerker)) .check-box {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #cbd5bc;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+:where(body:has(.handwerker)) .job-item.done .check-box {
+  background: #82a06f;
+  border-color: #82a06f;
+}
+:where(body:has(.handwerker)) .job-item.done > span:nth-child(2) {
+  text-decoration: line-through;
+  color: #a1aa94;
+}
+:where(body:has(.handwerker)) .contract-tip {
+  font-size: 9px;
+  line-height: 1.6;
+  color: #96a08a;
+  padding-top: 9px;
+  border-top: 1px dashed #d8dfcb;
+  margin: 12px 0 15px;
+}
+:where(body:has(.handwerker)) .contract-footer {
+  border-top: 1px solid #e2e6d6;
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  color: #9da68e;
+}
+:where(body:has(.handwerker)) .sandbox-copy {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #859177;
+}
+:where(body:has(.handwerker)) .sandbox-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: 19px 0;
+  border-top: 1px dashed #d7dfc9;
+  border-bottom: 1px dashed #d7dfc9;
+  margin: 20px 0;
+}
+:where(body:has(.handwerker)) .sandbox-stats span {
+  display: flex;
+  flex-direction: column;
+  font-size: 8px;
+  gap: 5px;
+  color: #8a977d;
+}
+:where(body:has(.handwerker)) .sandbox-stats b {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 23px;
+  color: #56704d;
+}
+:where(body:has(.handwerker)) .sandbox-tips {
+  font-size: 10px;
+  color: #839577;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+:where(body:has(.handwerker)) .sandbox-tips p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+:where(body:has(.handwerker)) .sandbox-tips + .secondary-button {
+  font-size: 10px;
+  padding: 12px;
+  margin-bottom: 18px;
+}
+:where(body:has(.handwerker)) .room-panel {
+  position: absolute;
+  right: 27px;
+  top: 100px;
+}
+:where(body:has(.handwerker)) .room-code-button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #ffffffaa;
+  background: #f7faefd9;
+  border-radius: 12px;
+  padding: 13px 15px;
+  color: #526c4f;
+  text-align: left;
+  box-shadow: 0 5px 18px #51694c15;
+}
+:where(body:has(.handwerker)) .room-code-button > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+:where(body:has(.handwerker)) .room-code-button span:first-child {
+  font-size: 8px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #8b9b7e;
+}
+:where(body:has(.handwerker)) .room-code-button strong {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 21px;
+  letter-spacing: 3px;
+}
+:where(body:has(.handwerker)) .room-count {
+  font-size: 10px;
+  background: #e6eddc;
+  padding: 5px 6px;
+  border-radius: 5px;
+}
+:where(body:has(.handwerker)) .network-status {
+  font-size: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  color: #718a67;
+  margin-top: 9px;
+}
+:where(body:has(.handwerker)) .network-status .green-dot {
+  width: 5px;
+  height: 5px;
+}
+:where(body:has(.handwerker)) .network-status.offline {
+  color: #a5692a;
+  background: #f9e1b8;
+  border-radius: 6px;
+  padding: 7px;
+}
+:where(body:has(.handwerker)) .play-side-tools {
+  position: absolute;
+  right: 29px;
+  top: 225px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+:where(body:has(.handwerker)) .play-side-tools .icon-button {
+  background: #edf5e3bd;
+}
+:where(body:has(.handwerker)) .play-bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 11px;
+  max-width: calc(100% - 40px);
+}
+:where(body:has(.handwerker)) .build-tray {
+  width: 540px;
+  max-width: 100%;
+  background: #f8faeff5;
+  border: 1px solid #ffffffb0;
+  border-radius: 15px;
+  box-shadow: 0 8px 30px #53684b26;
+  padding: 11px 14px 0;
+}
+:where(body:has(.handwerker)) .build-tray-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #e0e6d8;
+  padding-bottom: 10px;
+}
+:where(body:has(.handwerker)) .build-tray-top > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #6b815f;
+}
+:where(body:has(.handwerker)) .build-tray-top small {
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #98a18d;
+}
+:where(body:has(.handwerker)) .build-tray-top > button {
+  background: transparent;
+  border: 0;
+  padding: 2px;
+  color: #8b9980;
+}
+:where(body:has(.handwerker)) .category-list {
+  height: 28px !important;
+  padding: 2px !important;
+  background: #eaf0e1 !important;
+  gap: 2px !important;
+}
+:where(body:has(.handwerker)) .category-list button {
+  font-size: 10px !important;
+  padding: 4px 9px !important;
+  gap: 4px !important;
+}
+:where(body:has(.handwerker)) .category-list button[data-active] {
+  background: #fffff7 !important;
+}
+:where(body:has(.handwerker)) .category-list button > svg {
+  width: 12px;
+}
+:where(body:has(.handwerker)) .piece-cards {
+  display: flex;
+  gap: 7px;
+  padding: 12px 0;
+}
+:where(body:has(.handwerker)) .piece-card {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  border: 1px solid #e0e6d3;
+  border-radius: 9px;
+  background: #edf2e5;
+  padding: 3px 4px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #718064;
+}
+:where(body:has(.handwerker)) .piece-card img {
+  width: 70px;
+  height: 66px;
+  object-fit: contain;
+  pointer-events: none;
+  max-width: 100%;
+}
+:where(body:has(.handwerker)) .piece-card span {
+  font-size: 9px;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: -0.1px;
+}
+:where(body:has(.handwerker)) .piece-card kbd {
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  border: 0;
+  background: transparent;
+  font-size: 8px;
+  padding: 0;
+  opacity: 0.5;
+}
+:where(body:has(.handwerker)) .piece-card.active {
+  background: #fff2c4;
+  border: 1.5px solid #e7b745;
+  box-shadow: 0 2px 0 #dcb04b33;
+  color: #786134;
+}
+:where(body:has(.handwerker)) .piece-card:hover {
+  transform: translateY(-2px);
+}
+:where(body:has(.handwerker)) .build-hint {
+  border-top: 1px solid #e0e6d8;
+  padding: 9px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  font-size: 9px;
+  color: #8f9b81;
+}
+:where(body:has(.handwerker)) .build-hint button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 0;
+  font-size: 9px;
+  white-space: nowrap;
+  color: #7c8b6f;
+}
+:where(body:has(.handwerker)) .build-hint kbd {
+  font-size: 8px;
+  padding: 1px 4px;
+}
+:where(body:has(.handwerker)) .tool-dock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #30443ff5;
+  border-radius: 12px;
+  padding: 6px;
+  border: 1px solid #465e4e;
+  box-shadow: 0 5px 18px #2c3f3540;
+}
+:where(body:has(.handwerker)) .tool-dock > button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  color: #c2d0b7;
+  padding: 10px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+:where(body:has(.handwerker)) .tool-dock > button.active {
+  background: #f5c64e;
+  color: #394830;
+}
+:where(body:has(.handwerker)) .tool-dock kbd {
+  background: #42554a;
+  border-color: #53634e;
+  color: #b9c7ab;
+  border-bottom-width: 2px;
+  font-size: 8px;
+  padding: 2px 4px;
+}
+:where(body:has(.handwerker)) .tool-dock .active kbd {
+  background: #dfb044;
+  border-color: #b6953b;
+  color: #715d2b;
+}
+:where(body:has(.handwerker)) .tool-dock .danger-tool.active {
+  background: #ebac79;
+}
+:where(body:has(.handwerker)) .dock-separator {
+  height: 23px;
+  width: 1px;
+  background: #61755a66;
+  margin: 0 2px;
+}
+:where(body:has(.handwerker)) .context-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 9px;
+  color: #54714f;
+  height: 21px;
+  white-space: nowrap;
+}
+:where(body:has(.handwerker)) .context-hint kbd {
+  font-size: 8px;
+  padding: 2px 5px;
+}
+:where(body:has(.handwerker)) .context-hint .green-dot {
+  width: 5px;
+  height: 5px;
+}
+:where(body:has(.handwerker)) .game-toast {
+  position: absolute;
+  top: 95px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff8dbf5;
+  border: 1px solid #fffdf3;
+  border-bottom: 3px solid #d8bb75;
+  border-radius: 10px;
+  padding: 13px 19px;
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 510px;
+  z-index: 30;
+  box-shadow: 0 7px 23px #455c3c20;
+  animation: toastin 0.22s ease-out;
+}
+:where(body:has(.handwerker)) .game-toast svg {
+  color: #bf9839;
+}
+:where(body:has(.handwerker)) .wind-warning {
+  position: absolute;
+  top: 170px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8d477;
+  padding: 12px 21px;
+  border-radius: 7px;
+  color: #866b32;
+  box-shadow: 0 5px 0 #936f3020;
+}
+:where(body:has(.handwerker)) .wind-warning strong {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 20px;
+  display: block;
+}
+:where(body:has(.handwerker)) .wind-warning span {
+  font-size: 10px;
+}
+:where(body:has(.handwerker)) .invite-code {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 48px;
+  text-align: center;
+  letter-spacing: 8px;
+  padding: 18px;
+  background: #edf1e2;
+  border: 2px dashed #cdd9bb;
+  border-radius: 10px;
+}
+:where(body:has(.handwerker)) .invite-url {
+  font-size: 10px;
+  color: #7b8d6f;
+  border: 1px solid #d8e2cc;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #eff3e8;
+  width: 100%;
+}
+:where(body:has(.handwerker)) .result-stars {
+  font-size: 45px;
+  letter-spacing: 8px;
+  color: #e4b338;
+  text-align: center;
+  text-shadow: 0 3px 0 #bd952735;
+}
+:where(body:has(.handwerker)) .result-dialog {
+  text-align: center;
+}
+:where(body:has(.handwerker)) .result-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 21px 0;
+  background: #ecf2e2;
+  border-radius: 12px;
+}
+:where(body:has(.handwerker)) .result-stats span {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #8a9b79;
+  font-size: 11px;
+}
+:where(body:has(.handwerker)) .result-stats b {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 30px;
+  color: #65805a;
+}
+:where(body:has(.handwerker)) .result-reopen {
+  position: absolute;
+  top: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 12px 18px;
+  border: 1px solid #ddae3a;
+  border-radius: 9px;
+  background: #ffce51;
+  font-size: 12px;
+  font-weight: 700;
+}
+:where(body:has(.handwerker)) .touch-controls {
+  display: none;
+}
+:where(body:has(.handwerker)) .touch-pad {
+  touch-action: none;
+}
+@keyframes toastin {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@media (max-width: 1150px) {
+  :where(body:has(.handwerker)) .contract-panel {
+    width: 215px;
+    left: 19px;
+    padding: 17px 15px 0;
+  }
+  :where(body:has(.handwerker)) .contract-panel h2 {
+    font-size: 23px;
+  }
+  :where(body:has(.handwerker)) .crew-member b {
+    max-width: 67px;
+    font-size: 10px;
+  }
+  :where(body:has(.handwerker)) .is-playing .wordmark {
+    font-size: 16px;
+  }
+  :where(body:has(.handwerker)) .is-playing .topbar {
+    padding: 17px 20px;
+  }
+  :where(body:has(.handwerker)) .is-playing .alpha-label {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .room-panel {
+    right: 20px;
+  }
+  :where(body:has(.handwerker)) .build-tray {
+    width: 490px;
+  }
+  :where(body:has(.handwerker)) .game-toast {
+    max-width: 400px;
+    font-size: 11px;
+  }
+  :where(body:has(.handwerker)) .build-hint > span {
+    font-size: 8px;
+  }
+}
+@media (max-height: 800px) and (min-width: 701px) {
+  :where(body:has(.handwerker)) .contract-panel {
+    top: 87px;
+    padding-top: 15px;
+  }
+  :where(body:has(.handwerker)) .contract-heading {
+    margin-bottom: 10px;
+  }
+  :where(body:has(.handwerker)) .contract-panel h2 {
+    margin-bottom: 10px;
+  }
+  :where(body:has(.handwerker)) .customer-quote {
+    margin-bottom: 12px;
+  }
+  :where(body:has(.handwerker)) .timer-bar {
+    padding: 9px;
+    margin-bottom: 13px;
+  }
+  :where(body:has(.handwerker)) .job-item {
+    padding: 5px 0;
+  }
+  :where(body:has(.handwerker)) .contract-tip {
+    margin: 8px 0 10px;
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .contract-footer {
+    padding: 9px 0;
+  }
+  :where(body:has(.handwerker)) .play-bottom {
+    bottom: 13px;
+    gap: 7px;
+  }
+  :where(body:has(.handwerker)) .piece-card img {
+    height: 53px;
+  }
+  :where(body:has(.handwerker)) .piece-cards {
+    padding: 9px 0;
+  }
+  :where(body:has(.handwerker)) .room-panel {
+    top: 89px;
+  }
+  :where(body:has(.handwerker)) .build-hint {
+    padding: 7px 0;
+  }
+}
+@media (max-width: 850px) {
+  :where(body:has(.handwerker)) .crew-member b {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .contract-panel {
+    width: 190px;
+  }
+  :where(body:has(.handwerker)) .room-code-button {
+    padding: 10px;
+    gap: 9px;
+  }
+  :where(body:has(.handwerker)) .room-code-button strong {
+    font-size: 18px;
+  }
+  :where(body:has(.handwerker)) .room-code-button > svg {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .room-panel {
+    right: 17px;
+  }
+  :where(body:has(.handwerker)) .contract-tip {
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .game-toast {
+    top: 82px;
+    max-width: calc(100% - 36px);
+    width: max-content;
+  }
+  :where(body:has(.handwerker)) .play-bottom {
+    max-width: calc(100% - 30px);
+  }
+  :where(body:has(.handwerker)) .tool-dock > button {
+    padding: 9px 8px;
+    gap: 5px;
+  }
+  :where(body:has(.handwerker)) .tool-dock kbd {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .build-tray {
+    width: 440px;
+  }
+  :where(body:has(.handwerker)) .piece-card img {
+    height: 54px;
+  }
+}
+@media (max-width: 700px) {
+  :where(body:has(.handwerker)) .is-playing.game-shell {
+    min-height: 560px;
+    height: 100svh;
+    overflow: hidden;
+  }
+  :where(body:has(.handwerker)) .is-playing .topbar {
+    padding: 12px 14px;
+  }
+  :where(body:has(.handwerker)) .is-playing .wordmark {
+    font-size: 14px;
+  }
+  :where(body:has(.handwerker)) .is-playing .logo-icon {
+    width: 29px;
+    height: 29px;
+  }
+  :where(body:has(.handwerker)) .is-playing .wordmark .amp {
+    font-size: 10px;
+  }
+  :where(body:has(.handwerker)) .is-playing .wordmark .logo-dot {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .crew-bar {
+    gap: 4px;
+    padding: 4px 5px;
+  }
+  :where(body:has(.handwerker)) .crew-member > span {
+    width: 23px;
+    height: 23px;
+    border-radius: 6px;
+  }
+  :where(body:has(.handwerker)) .crew-member > span svg {
+    width: 14px;
+  }
+  :where(body:has(.handwerker)) .empty-player {
+    width: 21px;
+    height: 23px;
+  }
+  :where(body:has(.handwerker)) .is-playing .topbar-actions {
+    gap: 0;
+  }
+  :where(body:has(.handwerker)) .is-playing .topbar-actions .icon-button {
+    width: 29px;
+    height: 29px;
+  }
+  :where(body:has(.handwerker))
+    .is-playing
+    .topbar-actions
+    .icon-button:last-child {
+    display: grid;
+  }
+  :where(body:has(.handwerker))
+    .is-playing
+    .topbar-actions
+    .icon-button:first-of-type {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .contract-panel {
+    top: 65px;
+    left: 13px;
+    width: 180px;
+    padding: 13px 13px 0;
+    border-top-width: 3px;
+  }
+  :where(body:has(.handwerker)) .contract-panel:before {
+    width: 40px;
+    left: 65px;
+    top: -9px;
+    height: 12px;
+  }
+  :where(body:has(.handwerker)) .contract-heading {
+    font-size: 7px;
+    margin-bottom: 8px;
+  }
+  :where(body:has(.handwerker)) .contract-panel h2 {
+    font-size: 21px;
+    margin-bottom: 9px;
+  }
+  :where(body:has(.handwerker)) .customer-quote {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .timer-bar {
+    padding: 7px 8px;
+    margin-bottom: 10px;
+    font-size: 9px;
+  }
+  :where(body:has(.handwerker)) .timer-bar strong {
+    font-size: 20px;
+  }
+  :where(body:has(.handwerker)) .timer-bar svg {
+    width: 15px;
+  }
+  :where(body:has(.handwerker)) .progress-label {
+    font-size: 8px;
+    margin-bottom: 6px;
+  }
+  :where(body:has(.handwerker)) .job-progress {
+    margin-bottom: 8px;
+  }
+  :where(body:has(.handwerker)) .job-checklist {
+    grid-template-columns: 1fr 1fr;
+    gap: 1px 8px;
+  }
+  :where(body:has(.handwerker)) .job-item {
+    gap: 4px;
+    padding: 4px 0;
+    font-size: 9px;
+  }
+  :where(body:has(.handwerker)) .job-item b {
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .check-box {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+  :where(body:has(.handwerker)) .check-box svg {
+    width: 9px;
+  }
+  :where(body:has(.handwerker)) .contract-tip {
+    font-size: 8px;
+    line-height: 1.4;
+    margin: 8px 0 10px;
+    padding-top: 8px;
+  }
+  :where(body:has(.handwerker)) .contract-footer {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .room-panel {
+    top: 64px;
+    right: 13px;
+  }
+  :where(body:has(.handwerker)) .room-code-button {
+    gap: 7px;
+    padding: 9px;
+  }
+  :where(body:has(.handwerker)) .room-code-button span:first-child {
+    font-size: 6px;
+  }
+  :where(body:has(.handwerker)) .room-code-button strong {
+    font-size: 15px;
+    letter-spacing: 2px;
+  }
+  :where(body:has(.handwerker)) .room-count {
+    font-size: 8px;
+    padding: 4px;
+  }
+  :where(body:has(.handwerker)) .network-status {
+    font-size: 6px;
+    max-width: 120px;
+    margin-top: 6px;
+  }
+  :where(body:has(.handwerker)) .play-side-tools {
+    right: 13px;
+    top: 143px;
+    gap: 6px;
+  }
+  :where(body:has(.handwerker)) .play-side-tools .icon-button {
+    width: 31px;
+    height: 31px;
+  }
+  :where(body:has(.handwerker)) .play-side-tools .icon-button:last-child {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .play-side-tools svg {
+    width: 16px;
+  }
+  :where(body:has(.handwerker)) .play-bottom {
+    bottom: 10px;
+    gap: 7px;
+    max-width: calc(100% - 20px);
+    width: 100%;
+  }
+  :where(body:has(.handwerker)) .build-tray {
+    width: 100%;
+    padding: 9px 10px 0;
+    border-radius: 11px;
+  }
+  :where(body:has(.handwerker)) .build-tray-top {
+    gap: 8px;
+    padding-bottom: 7px;
+  }
+  :where(body:has(.handwerker)) .build-tray-top > span {
+    font-size: 8px;
+    letter-spacing: 0.6px;
+    gap: 5px;
+  }
+  :where(body:has(.handwerker)) .build-tray-top > span > small {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .category-list {
+    height: 26px !important;
+  }
+  :where(body:has(.handwerker)) .category-list button {
+    font-size: 9px !important;
+    padding: 3px 7px !important;
+    gap: 3px !important;
+  }
+  :where(body:has(.handwerker)) .category-list button svg {
+    width: 11px;
+  }
+  :where(body:has(.handwerker)) .piece-cards {
+    padding: 9px 0;
+    gap: 5px;
+  }
+  :where(body:has(.handwerker)) .piece-card {
+    padding: 2px 3px 7px;
+    border-radius: 7px;
+  }
+  :where(body:has(.handwerker)) .piece-card img {
+    height: 47px;
+    width: 55px;
+  }
+  :where(body:has(.handwerker)) .piece-card span {
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .piece-card kbd {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .build-hint {
+    padding: 7px 0;
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .build-hint > span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  :where(body:has(.handwerker)) .build-hint button {
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .build-hint kbd {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .tool-dock {
+    padding: 4px;
+    gap: 2px;
+    width: 100%;
+    justify-content: space-around;
+    border-radius: 10px;
+  }
+  :where(body:has(.handwerker)) .tool-dock > button {
+    font-size: 9px;
+    padding: 9px 6px;
+    gap: 5px;
+  }
+  :where(body:has(.handwerker)) .tool-dock > button svg {
+    width: 16px;
+    height: 16px;
+  }
+  :where(body:has(.handwerker)) .tool-dock > button:last-child {
+    padding: 9px 7px;
+  }
+  :where(body:has(.handwerker)) .dock-separator {
+    margin: 0;
+    height: 20px;
+  }
+  :where(body:has(.handwerker)) .context-hint {
+    font-size: 8px;
+    gap: 4px;
+    max-width: 100%;
+    overflow: hidden;
+    height: 16px;
+  }
+  :where(body:has(.handwerker)) .context-hint kbd {
+    font-size: 7px;
+    padding: 1px 3px;
+  }
+  :where(body:has(.handwerker)) .game-toast {
+    top: 118px;
+    font-size: 10px;
+    padding: 10px 14px;
+    max-width: calc(100% - 45px);
+  }
+  :where(body:has(.handwerker)) .touch-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 275px;
+    pointer-events: none;
+  }
+  :where(body:has(.handwerker)) .touch-pad {
+    width: 90px;
+    height: 90px;
+    background: #f7f9e546;
+    border: 2px solid #fbffe673;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    pointer-events: auto;
+  }
+  :where(body:has(.handwerker)) .touch-pad span {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #f4f8e8b3;
+    color: #78916d;
+    font-size: 30px;
+  }
+  :where(body:has(.handwerker)) .touch-controls > button {
+    pointer-events: auto;
+    background: #f4f8e8a3;
+    border: 1px solid #e0eacaad;
+    color: #6e855c;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 28px;
+  }
+  :where(body:has(.handwerker)) .wind-warning {
+    top: 325px;
+    font-size: 10px;
+    padding: 8px 13px;
+    z-index: 3;
+  }
+  :where(body:has(.handwerker)) .wind-warning strong {
+    font-size: 15px;
+  }
+  :where(body:has(.handwerker)) .wind-warning span {
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .sandbox-stats {
+    padding: 12px 0;
+    margin: 13px 0;
+  }
+  :where(body:has(.handwerker)) .sandbox-copy {
+    font-size: 10px;
+  }
+  :where(body:has(.handwerker)) .sandbox-tips {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .sandbox-tips + .secondary-button {
+    font-size: 9px;
+    padding: 9px;
+    margin-bottom: 13px;
+  }
+  :where(body:has(.handwerker)) .game-dialog {
+    padding: 25px !important;
+    max-width: calc(100% - 30px) !important;
+  }
+  :where(body:has(.handwerker)) .dialog-heading {
+    font-size: 26px !important;
+  }
+}
+@media (max-height: 780px) and (min-width: 701px) {
+  :where(body:has(.handwerker)) .start-panel {
+    top: 99px;
+  }
+  :where(body:has(.handwerker)) .game-shell h1 {
+    font-size: 55px;
+    margin: 16px 0 16px;
+  }
+  :where(body:has(.handwerker)) .intro {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  :where(body:has(.handwerker)) .player-pills {
+    margin-bottom: 17px;
+  }
+  :where(body:has(.handwerker)) .setup-card {
+    padding: 17px;
+  }
+  :where(body:has(.handwerker)) .color-row {
+    margin: 11px 0 13px;
+  }
+  :where(body:has(.handwerker)) .mode-description {
+    padding: 8px 0 10px;
+    min-height: 33px;
+  }
+  :where(body:has(.handwerker)) .primary-button.start-button {
+    padding: 11px 15px;
+  }
+  :where(body:has(.handwerker)) .how-link {
+    padding-top: 12px;
+  }
+  :where(body:has(.handwerker)) .start-footer {
+    padding: 16px 28px;
+  }
+  :where(body:has(.handwerker)) .join-toggle {
+    padding-top: 12px;
+  }
+}
+
+:where(body:has(.handwerker)) .admin-game-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid #ffffff65;
+  border-radius: 9px;
+  color: inherit;
+  background: #ffffffc7;
+  font:
+    700 12px 'DM Sans',
+    sans-serif;
+  text-decoration: none;
+  pointer-events: auto;
+}
+:where(body:has(.handwerker)) .admin-game-link:focus-visible {
+  outline: 3px solid #df9e24;
+  outline-offset: 3px;
+}
+
+/* The crane uses the same compact work surface on mouse and touch. */
+:where(body:has(.handwerker)) .crane-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  max-width: 600px;
+  margin: 0 auto 10px;
+  background: #fff6d9;
+  color: #293c3b;
+  border: 2px solid #d6a43b;
+  border-radius: 18px;
+  box-shadow: 0 5px 0 #29463d18;
+  pointer-events: auto;
+}
+:where(body:has(.handwerker)) .crane-controls > output {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+:where(body:has(.handwerker)) .crane-controls strong {
+  font-size: 16px;
+}
+:where(body:has(.handwerker)) .crane-controls span {
+  font-size: 14px;
+  line-height: 1.4;
+}
+:where(body:has(.handwerker)) .crane-controls button {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+:where(body:has(.handwerker)) .crane-actions {
+  display: flex;
+  gap: 6px;
+}
+:where(body:has(.handwerker)) .crane-tool-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+:where(body:has(.handwerker)) .play-side-tools button:has(.crane-tool-label) {
+  display: flex;
+  flex-direction: column;
+  height: 56px;
+  gap: 2px;
+}
+:where(body:has(.handwerker)) .tool-dock[inert] {
+  display: none;
+}
+@media (max-width: 700px) {
+  :where(body:has(.handwerker)) .crane-controls {
+    flex-wrap: wrap;
+    padding: 10px;
+    gap: 8px;
+  }
+  :where(body:has(.handwerker)) .crane-controls > output {
+    flex-basis: calc(100% - 60px);
+  }
+  :where(body:has(.handwerker)) .crane-actions {
+    order: 2;
+    width: 100%;
+  }
+  :where(body:has(.handwerker)) .crane-actions .primary-button {
+    flex: 1;
+  }
+}
+
+:where(body:has(.handwerker))
+  .compact-ui
+  .play-side-tools
+  .icon-button:nth-child(2) {
+  display: grid;
+}
+
+/* Map choice follows the existing hard-hat palette and compact setup card. */
+:where(body:has(.handwerker)) .map-picker {
+  border: 0;
+  padding: 0;
+  margin: 0.6rem 0 0.85rem;
+  min-width: 0;
+}
+:where(body:has(.handwerker)) .map-picker legend {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.5rem;
+}
+:where(body:has(.handwerker)) .map-picker > div {
+  display: flex;
+  gap: 0.5rem;
+}
+:where(body:has(.handwerker)) .map-picker button {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 0.65rem;
+  border: 1px solid #cbd1c3;
+  border-radius: 0.65rem;
+  background: #f8f8ec;
+  color: #293c3b;
+}
+:where(body:has(.handwerker)) .map-picker button[aria-pressed='true'] {
+  border-color: #b38020;
+  background: #fff0bb;
+  box-shadow: inset 0 0 0 1px #b38020;
+}
+:where(body:has(.handwerker)) .map-picker strong {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+:where(body:has(.handwerker)) .map-picker span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+:where(body:has(.handwerker)) .eye-crosshair {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  font:
+    400 24px Arial,
+    sans-serif;
+  color: white;
+  text-shadow:
+    0 1px 3px #152d29,
+    1px 0 2px #152d29;
+  pointer-events: none;
+  z-index: 3;
+}
+:where(body:has(.handwerker)) .first-person-view .world-vignette {
+  opacity: 0.2;
+}
+:where(body:has(.handwerker))
+  .first-person-view
+  .contract-panel:not(.expanded) {
+  opacity: 0.88;
+}
+:where(body:has(.handwerker)) .play-side-tools button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+:where(body:has(.handwerker)) .play-side-tools button:has(.crane-tool-label) {
+  width: 72px;
+}

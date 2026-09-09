@@ -1,0 +1,740 @@
+{
+  "fetchedAt": "2026-09-09T02:10:01.703Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/audio/stack-or-sink?manifest",
+  "status": 200,
+  "settings": {
+    "effects": 0.75,
+    "speech": 0.85,
+    "ambience": 0.25,
+    "music": 0.18,
+    "voiceId": "lWq1vuMU2TD1usgkFsfi"
+  },
+  "cues": {
+    "event.ui": {
+      "url": "/api/audio/stack-or-sink/file/4bc7f6cb-3729-440d-b8f8-d62bb3b26eae.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "material.crate.grab": {
+      "url": "/api/audio/stack-or-sink/file/96b2ce8b-379a-47f7-8a9a-4939ec1e7ad0.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.crate.place": {
+      "url": "/api/audio/stack-or-sink/file/ead5ca32-355d-440e-8a5f-d75c0814a55e.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.crate.impact": {
+      "url": "/api/audio/stack-or-sink/file/90d34541-c6df-4568-a7c4-139b69e837b3.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.crate.rotate": {
+      "url": "/api/audio/stack-or-sink/file/a1008412-e6a9-4a4f-989e-510ea04574e6.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.crate.splash": {
+      "url": "/api/audio/stack-or-sink/file/dc74cac5-21fd-4800-885a-1f2d3d726a78.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.grab": {
+      "url": "/api/audio/stack-or-sink/file/7e8a8d98-b0d8-4ad4-8730-67cc28910cb1.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.place": {
+      "url": "/api/audio/stack-or-sink/file/73ffce6f-abb9-4c91-bcaf-7ac0019aaf94.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.impact": {
+      "url": "/api/audio/stack-or-sink/file/10e87d97-9169-4343-bacf-130ce9b0d078.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.rotate": {
+      "url": "/api/audio/stack-or-sink/file/211e6590-75f8-4956-883c-a86e36a627d8.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.splash": {
+      "url": "/api/audio/stack-or-sink/file/01ca5b53-cf9c-404c-afcf-92a6f88d6712.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plank.grab": {
+      "url": "/api/audio/stack-or-sink/file/9645cec8-619f-4a30-be3c-5ea8e8666787.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plank.place": {
+      "url": "/api/audio/stack-or-sink/file/0a9d0697-0aad-4d2c-9e1a-c52b4ffb46c6.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plank.impact": {
+      "url": "/api/audio/stack-or-sink/file/671a1cd0-8fb8-485c-b06f-cc00943c4787.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plank.rotate": {
+      "url": "/api/audio/stack-or-sink/file/b86e1fe4-b437-4378-ac5e-b9803127aa7a.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plank.splash": {
+      "url": "/api/audio/stack-or-sink/file/e0d9445d-c378-4800-8c85-e4eb574f96e3.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.grab": {
+      "url": "/api/audio/stack-or-sink/file/e4d76b67-7393-4c4c-bee1-0d119c29661c.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.place": {
+      "url": "/api/audio/stack-or-sink/file/52389d50-37ad-42ab-83a4-a5abaf9489fe.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.impact": {
+      "url": "/api/audio/stack-or-sink/file/ceb1d8a2-f65b-43e3-b72f-aa5eecf300b0.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.rotate": {
+      "url": "/api/audio/stack-or-sink/file/246d9b9c-9efc-44fa-bf29-3639fc127a7c.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.splash": {
+      "url": "/api/audio/stack-or-sink/file/d4776cc3-cff4-4b1d-8be6-e8f0c2139224.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.grab": {
+      "url": "/api/audio/stack-or-sink/file/53ff4d15-20fa-4d54-b9fd-37606d1a5c5b.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.place": {
+      "url": "/api/audio/stack-or-sink/file/53bbf8d2-43ff-4085-9b82-8cf1cc0dca5b.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.impact": {
+      "url": "/api/audio/stack-or-sink/file/c7503209-119f-415f-8264-db1d22686a72.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.rotate": {
+      "url": "/api/audio/stack-or-sink/file/f3dab3f5-d149-482f-8542-fa4a4834ec70.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.splash": {
+      "url": "/api/audio/stack-or-sink/file/c5e893d4-8dd1-480a-9ae3-d3ff8ae75261.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.grab": {
+      "url": "/api/audio/stack-or-sink/file/176f93c1-f563-4932-b2bd-de99c099a452.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.place": {
+      "url": "/api/audio/stack-or-sink/file/881c8329-f17b-4d2c-86a7-a345466c62ab.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.impact": {
+      "url": "/api/audio/stack-or-sink/file/d014a9c8-2828-4b45-9df1-9bf607b68d71.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.rotate": {
+      "url": "/api/audio/stack-or-sink/file/bab4191d-9ea7-4828-9862-a58d819d6b89.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.splash": {
+      "url": "/api/audio/stack-or-sink/file/740f6e8c-a821-41e3-a28a-dcd627e52959.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "step.sand.1": {
+      "url": "/api/audio/stack-or-sink/file/5928665f-e9d2-4d82-a393-7ef2629bb716.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.sand.2": {
+      "url": "/api/audio/stack-or-sink/file/cd595053-9c1b-4e9c-8862-c00752177612.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.sand.3": {
+      "url": "/api/audio/stack-or-sink/file/abf4c2cf-e828-42af-b679-7c55b03485a8.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.1": {
+      "url": "/api/audio/stack-or-sink/file/dd07f3af-28ed-4d6b-aad2-d1904e149a28.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.2": {
+      "url": "/api/audio/stack-or-sink/file/9f4f1d3f-84bf-4eea-bd94-c24acb2a7fae.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.3": {
+      "url": "/api/audio/stack-or-sink/file/9731bb4e-fb91-413f-b464-0f4c48b9936c.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.metal.1": {
+      "url": "/api/audio/stack-or-sink/file/15a76e19-7bd9-4d05-a3dc-7f2b754da985.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.metal.2": {
+      "url": "/api/audio/stack-or-sink/file/dd941bc9-0dae-48f1-91e3-9e13539f09e8.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.metal.3": {
+      "url": "/api/audio/stack-or-sink/file/25512377-1ec0-4933-aa70-8d9d81dd95d9.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.1": {
+      "url": "/api/audio/stack-or-sink/file/60a5ea73-9fb0-4502-ab65-7d0e3462b0eb.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.2": {
+      "url": "/api/audio/stack-or-sink/file/cb72c392-6f49-4584-93bb-cdfd3bb9c0c2.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.3": {
+      "url": "/api/audio/stack-or-sink/file/e0d4d0ce-4333-4749-b016-364130f5fe19.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.water.1": {
+      "url": "/api/audio/stack-or-sink/file/aa683b20-098e-4d7b-a484-1de3ba8c089d.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.water.2": {
+      "url": "/api/audio/stack-or-sink/file/017ffb56-1532-4eb9-a21c-ab3756cc973f.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.water.3": {
+      "url": "/api/audio/stack-or-sink/file/15957920-b61e-451f-8b07-6b7d187cc001.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.site": {
+      "url": "/api/audio/stack-or-sink/file/91c8b3a1-cf4b-46f9-a387-ae4ee20ad48d.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.trees": {
+      "url": "/api/audio/stack-or-sink/file/33c76248-ea23-4232-b3be-99ce2f2cbbeb.mp3",
+      "volume": 0.55,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.flood": {
+      "url": "/api/audio/stack-or-sink/file/4cb1f47c-61d2-45b4-9d5b-161f8aea2cce.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.crane": {
+      "url": "/api/audio/stack-or-sink/file/59532b6f-2902-483e-8bdc-aef1224d9a75.mp3",
+      "volume": 0.6,
+      "loop": true,
+      "category": "ambience"
+    },
+    "event.jump": {
+      "url": "/api/audio/stack-or-sink/file/9e004b2e-bb9d-4b6d-b8b9-da0cd99d6177.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "event.land": {
+      "url": "/api/audio/stack-or-sink/file/72407684-93a2-4edb-a65f-c8b51f8bd520.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.splash": {
+      "url": "/api/audio/stack-or-sink/file/b931ac91-59af-4069-8651-296772eb57e3.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.crane-hook": {
+      "url": "/api/audio/stack-or-sink/file/4777ece9-496c-4578-8ced-4aed6ea08a1d.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.crane-release": {
+      "url": "/api/audio/stack-or-sink/file/8ab473a0-a092-4a17-9c32-3fc3f99e7fbc.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.crane-stop": {
+      "url": "/api/audio/stack-or-sink/file/f3c8e2cd-72f8-457d-8b27-622ad7c920f6.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "event.flood": {
+      "url": "/api/audio/stack-or-sink/file/313f90d4-becc-45ba-bed0-41422f55159a.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "event.rescue": {
+      "url": "/api/audio/stack-or-sink/file/68c650f1-e784-4c21-a75a-8f5c578a7f13.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "speech.start": {
+      "url": "/api/audio/stack-or-sink/file/6208e980-6900-4c9e-9a56-16333d86a681.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.flood": {
+      "url": "/api/audio/stack-or-sink/file/f74d2c62-26f4-4260-a7f3-89cf6540fc19.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.wave": {
+      "url": "/api/audio/stack-or-sink/file/196985bb-2c2c-41f0-84a5-037d4bf5f718.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.rescue": {
+      "url": "/api/audio/stack-or-sink/file/2f6c2ea4-97e3-41b0-88d4-f87a6bd1d15f.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.danger": {
+      "url": "/api/audio/stack-or-sink/file/d3bac161-23c7-400e-88d2-29fd8069e288.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.win": {
+      "url": "/api/audio/stack-or-sink/file/91663391-a1e2-4ad5-80fc-697662e0e9e1.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.fail": {
+      "url": "/api/audio/stack-or-sink/file/5af7da9f-0d5a-43c6-b3fc-c61403ec7411.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "music.menu": {
+      "url": "/api/audio/stack-or-sink/file/e13e5e62-06bd-4e0e-b030-0a5096f54f50.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build": {
+      "url": "/api/audio/stack-or-sink/file/011b0889-e4b7-4350-beab-594e32677927.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.challenge": {
+      "url": "/api/audio/stack-or-sink/file/5b2dee52-26ac-48fc-91e5-3fe0cabd1a42.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/audio/stack-or-sink/file/61a1f0e7-f756-4713-b59f-6368732b8708.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/audio/stack-or-sink/file/199f2aa8-63b3-4ea8-a357-9f50cd59b58d.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    },
+    "coast.gull.1": {
+      "url": "/api/audio/stack-or-sink/file/cfddfa3a-0eeb-4141-864e-1932cccc44db.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "coast.gull.2": {
+      "url": "/api/audio/stack-or-sink/file/872d5c70-738e-4bb8-868f-35f48c50bb0f.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "coast.gull.3": {
+      "url": "/api/audio/stack-or-sink/file/72a0350f-1252-48f1-8ecc-0a515e75a214.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "coast.palm.1": {
+      "url": "/api/audio/stack-or-sink/file/19a76637-a61c-4dfe-8a84-572e592920b3.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "coast.palm.2": {
+      "url": "/api/audio/stack-or-sink/file/d4a65403-199e-44ef-aa92-63a2e6167941.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "coast.palm.3": {
+      "url": "/api/audio/stack-or-sink/file/70d2fece-ad37-4b36-97ef-82e4071d296e.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "water.drip.1": {
+      "url": "/api/audio/stack-or-sink/file/decfa6f4-8df9-484a-a7b6-874279d4669a.mp3",
+      "volume": 0.46,
+      "loop": false,
+      "category": "event"
+    },
+    "water.drip.2": {
+      "url": "/api/audio/stack-or-sink/file/aa901e60-71d2-4c5e-9159-0dcdfe7e94c3.mp3",
+      "volume": 0.46,
+      "loop": false,
+      "category": "event"
+    },
+    "water.drip.3": {
+      "url": "/api/audio/stack-or-sink/file/29ce0463-4ee4-411d-9f18-61c4687e8267.mp3",
+      "volume": 0.46,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.wood.1": {
+      "url": "/api/audio/stack-or-sink/file/989f4c4e-0518-407a-a7af-647f29a86108.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.wood.2": {
+      "url": "/api/audio/stack-or-sink/file/7b8e10b7-8276-40ce-b2d6-aab830172f22.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.wood.3": {
+      "url": "/api/audio/stack-or-sink/file/570c6ee4-4ab9-4fff-a092-94fbb98d4ca0.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.metal.1": {
+      "url": "/api/audio/stack-or-sink/file/bb797c72-8afb-4045-85bd-ece99aa9b985.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.metal.2": {
+      "url": "/api/audio/stack-or-sink/file/fe4230ac-a818-4ab6-b9b1-f7306b0576a9.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.metal.3": {
+      "url": "/api/audio/stack-or-sink/file/56bd940b-3aa7-4b0f-9938-f0297d267ed9.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.fabric.1": {
+      "url": "/api/audio/stack-or-sink/file/c9e314f9-f8e4-4b12-be78-e0d9dd41e2f2.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.fabric.2": {
+      "url": "/api/audio/stack-or-sink/file/e583236a-a8bb-4452-aad9-f7e2c4209109.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "strain.fabric.3": {
+      "url": "/api/audio/stack-or-sink/file/23c3970a-bbfc-44d2-8fee-b2d76f141646.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "crane.cable.1": {
+      "url": "/api/audio/stack-or-sink/file/f7775177-b46d-45a1-88d3-823ee683924f.mp3",
+      "volume": 0.52,
+      "loop": false,
+      "category": "event"
+    },
+    "crane.cable.2": {
+      "url": "/api/audio/stack-or-sink/file/6d0aeb8e-56b4-4bde-82fb-31bc70e0aa25.mp3",
+      "volume": 0.52,
+      "loop": false,
+      "category": "event"
+    },
+    "crane.cable.3": {
+      "url": "/api/audio/stack-or-sink/file/d4da8d23-504d-4957-907a-ca522f072c06.mp3",
+      "volume": 0.52,
+      "loop": false,
+      "category": "event"
+    },
+    "land.sand.1": {
+      "url": "/api/audio/stack-or-sink/file/fd75dca0-e9f9-4e11-a0ca-fe319d232ab1.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.sand.2": {
+      "url": "/api/audio/stack-or-sink/file/9237a0b1-69cb-46fd-afb9-7c63e5525d77.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.sand.3": {
+      "url": "/api/audio/stack-or-sink/file/14fe0f52-6505-450a-bdc4-2810141badb8.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.wood.1": {
+      "url": "/api/audio/stack-or-sink/file/d06ef361-9b51-4929-90ce-982a85893a4f.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.wood.2": {
+      "url": "/api/audio/stack-or-sink/file/d419bc5f-140b-4d16-8386-49da9cf43103.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.wood.3": {
+      "url": "/api/audio/stack-or-sink/file/ecc8a452-2163-464b-8519-d3ce342ec405.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.metal.1": {
+      "url": "/api/audio/stack-or-sink/file/a827ae17-4043-45ec-9a06-194b4a4d0970.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.metal.2": {
+      "url": "/api/audio/stack-or-sink/file/1295899d-eaae-4ecd-ae99-59dc88d670cd.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.metal.3": {
+      "url": "/api/audio/stack-or-sink/file/364aa45a-94da-4a2c-9437-d0c45d3f44a0.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.fabric.1": {
+      "url": "/api/audio/stack-or-sink/file/e15d4ee8-3215-4ff7-b638-01771f05844b.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.fabric.2": {
+      "url": "/api/audio/stack-or-sink/file/3aacb2f6-7714-4033-a5ba-4072bda4a4b6.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.fabric.3": {
+      "url": "/api/audio/stack-or-sink/file/8b9582f3-2baa-458c-ab42-8cdbb52ea79d.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.water.1": {
+      "url": "/api/audio/stack-or-sink/file/7b478365-18e4-4248-ad05-50b21e63b51c.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.water.2": {
+      "url": "/api/audio/stack-or-sink/file/7bb82e09-7b14-4941-aa64-983753d9edbd.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "land.water.3": {
+      "url": "/api/audio/stack-or-sink/file/f06f26ce-2d31-472d-bebf-512551ec5e37.mp3",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "material.crate.impact.2": {
+      "url": "/api/audio/stack-or-sink/file/adf8de82-53d7-478a-b7c9-d50389e44247.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.crate.impact.3": {
+      "url": "/api/audio/stack-or-sink/file/df7582e2-69ea-47f5-a914-8d4b0144966c.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.impact.2": {
+      "url": "/api/audio/stack-or-sink/file/f35aaf11-9f12-4e4c-bb1a-763513d6380d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.impact.3": {
+      "url": "/api/audio/stack-or-sink/file/894c67fa-f573-4322-abcb-dbf285f0fddc.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plank.impact.2": {
+      "url": "/api/audio/stack-or-sink/file/0453d64a-e5f0-4e37-84b2-416a36e5dd24.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plank.impact.3": {
+      "url": "/api/audio/stack-or-sink/file/db1dc0e0-ded6-4773-beec-426423ffc472.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.impact.2": {
+      "url": "/api/audio/stack-or-sink/file/84ae8075-c443-4a0e-a718-140b0bcc6126.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.impact.3": {
+      "url": "/api/audio/stack-or-sink/file/8d76c2d6-ac82-4456-8295-da6d42cc40d7.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.impact.2": {
+      "url": "/api/audio/stack-or-sink/file/889277f1-c375-4bea-9714-e87d6c74abb8.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.impact.3": {
+      "url": "/api/audio/stack-or-sink/file/24d60a5e-5d53-42ca-86d0-8eddef55cabb.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.impact.2": {
+      "url": "/api/audio/stack-or-sink/file/99184c1b-190b-4516-8260-da5e39831476.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.impact.3": {
+      "url": "/api/audio/stack-or-sink/file/cf809d08-ed72-40c5-af67-7b2cd6d1b382.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "music.cinematic.build": {
+      "url": "/api/audio/stack-or-sink/file/cdf2c59d-449c-49a2-957f-0e1a1bd7ff7f.mp3",
+      "volume": 0.82,
+      "loop": true,
+      "category": "music"
+    },
+    "music.cinematic.challenge": {
+      "url": "/api/audio/stack-or-sink/file/4a7cfab1-e2b5-4bdb-a6fe-347480b1202c.mp3",
+      "volume": 0.82,
+      "loop": true,
+      "category": "music"
+    },
+    "music.cinematic.rescue": {
+      "url": "/api/audio/stack-or-sink/file/2d3c68fe-c11e-42cf-9bb2-8ecd41a5ae77.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "music"
+    }
+  }
+}

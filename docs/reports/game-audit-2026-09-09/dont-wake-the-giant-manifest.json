@@ -1,0 +1,434 @@
+{
+  "fetchedAt": "2026-09-09T02:10:01.866Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/audio/dont-wake-the-giant?manifest",
+  "status": 200,
+  "settings": {
+    "effects": 0.75,
+    "speech": 0.85,
+    "ambience": 0.25,
+    "music": 0.18,
+    "voiceId": "lWq1vuMU2TD1usgkFsfi"
+  },
+  "cues": {
+    "event.escape-warning": {
+      "url": "/audio/dont-wake-the-giant/shupia-warning.wav",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.escape-warning": {
+      "url": "/audio/dont-wake-the-giant/hurry.wav",
+      "volume": 0.7,
+      "loop": true,
+      "category": "ambience"
+    },
+    "event.ui": {
+      "url": "/api/audio/dont-wake-the-giant/file/f2a4b9d5-d603-4873-b2b3-47cbc6ca2849.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "event.jump": {
+      "url": "/api/audio/dont-wake-the-giant/file/dade64e2-1297-4ff2-b5b6-8772235bbb7a.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "event.land": {
+      "url": "/api/audio/dont-wake-the-giant/file/03ad42b8-ae9e-4e3e-990f-c451800fd0db.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.1": {
+      "url": "/api/audio/dont-wake-the-giant/file/3166b2c5-413e-44d7-bb30-cf0f90873c81.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.2": {
+      "url": "/api/audio/dont-wake-the-giant/file/60404142-4b26-40a1-b3dd-bd2cd25e5144.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.3": {
+      "url": "/api/audio/dont-wake-the-giant/file/c8711d94-80a8-46c0-b6ce-57640d328fff.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.paper.1": {
+      "url": "/api/audio/dont-wake-the-giant/file/3bc393ff-a2f3-4961-a078-29bcc3e26c54.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.paper.2": {
+      "url": "/api/audio/dont-wake-the-giant/file/c47f4335-b7ab-4363-a424-62d69024e334.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.paper.3": {
+      "url": "/api/audio/dont-wake-the-giant/file/7c497bae-fa09-4a69-8c39-31ba4fedfd53.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.1": {
+      "url": "/api/audio/dont-wake-the-giant/file/0d3fde8d-de13-481c-9ae1-a71f1c330578.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.2": {
+      "url": "/api/audio/dont-wake-the-giant/file/a8c6be78-ebc3-4938-8bfe-277d82abe31d.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.3": {
+      "url": "/api/audio/dont-wake-the-giant/file/cd08bd6e-f1a0-4a9b-b080-dceda0c55d5a.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.skin.1": {
+      "url": "/api/audio/dont-wake-the-giant/file/e43a987f-9dd0-4201-8557-540fe1238f6c.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.skin.2": {
+      "url": "/api/audio/dont-wake-the-giant/file/efda670d-df9a-4db7-8191-e97bbc44a0f2.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.skin.3": {
+      "url": "/api/audio/dont-wake-the-giant/file/d15b2591-303c-4316-b04f-ebe466cd69c9.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.metal.1": {
+      "url": "/api/audio/dont-wake-the-giant/file/456c1df8-881c-46b9-aea6-ba4eecde72c8.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.metal.2": {
+      "url": "/api/audio/dont-wake-the-giant/file/cd0f6c84-b2cb-4a69-afdd-6fdfc4926fa0.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "step.metal.3": {
+      "url": "/api/audio/dont-wake-the-giant/file/ea6fab64-4a17-4764-bfab-1e46befa9d71.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "item.coin.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/726ebca2-1b6a-460e-b6f3-84cb4327636e.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.coin.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/ab1b6408-1d0a-4711-b6ba-4356aff4da6d.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "item.cup.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/49878181-5f49-470d-af46-d03efc48e134.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.cup.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/2583566a-c6bb-43c9-895e-d3d5c01d74b1.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "item.necklace.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/68b074ac-92bc-4339-a786-3ff7c80fdae6.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.necklace.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/9b2ac5f4-7293-401f-aec7-bbc35efbb31e.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "item.gem.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/e2920235-a964-41ba-8b46-9e979092b6eb.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.gem.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/3da4141d-765b-49b6-8aee-6e8baeb8a39e.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "item.pouch.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/012aeb9b-ed01-411d-aab4-1e6c8b742069.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.pouch.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/6e2e8e74-2c64-4da5-84ef-50a3a7cab56b.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "item.crown.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/77f6842b-5285-46cf-97f7-b58ddfa636be.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.crown.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/6cbdb7bf-d210-4e86-8f4f-37a504b25570.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "item.pillow.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/0577a6d2-5f5e-4f5f-832e-be8b5ae4c0bd.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.pillow.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/dbb5a0da-316a-466e-8376-eac85cb02682.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "item.spoon.grab": {
+      "url": "/api/audio/dont-wake-the-giant/file/f734fdf8-3e20-4321-a1ef-4285762413d7.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "item.spoon.place": {
+      "url": "/api/audio/dont-wake-the-giant/file/f1b11de7-db01-4dac-8f3f-e9495ba73417.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "item.spoon.rotate": {
+      "url": "/api/audio/dont-wake-the-giant/file/c930e2a3-56c8-497c-8eb5-63931cf6bc78.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "event.bank": {
+      "url": "/api/audio/dont-wake-the-giant/file/1472f4e0-f2e9-4cc3-b277-3bfae3534e26.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.tickle": {
+      "url": "/api/audio/dont-wake-the-giant/file/a29f4027-c3e0-426e-94fa-8095fdb89b24.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "event.impact": {
+      "url": "/api/audio/dont-wake-the-giant/file/ee0bede8-744d-4b9a-a916-419c9b77f07d.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.dazed": {
+      "url": "/api/audio/dont-wake-the-giant/file/c705c2f7-f47f-4d89-8f4b-657189910d6e.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "event.rescue": {
+      "url": "/api/audio/dont-wake-the-giant/file/2f8295db-6633-4f1a-b268-5ee4ad1944ca.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "event.exit": {
+      "url": "/api/audio/dont-wake-the-giant/file/2ed2e9aa-2a53-4e9b-a80e-06f0795d7593.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "giant.roll": {
+      "url": "/api/audio/dont-wake-the-giant/file/5386fef3-1ff5-4566-a63a-ed2819dedab2.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "giant.sneeze": {
+      "url": "/api/audio/dont-wake-the-giant/file/43221749-26a1-4739-aad2-feef988aed6d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "giant.wake": {
+      "url": "/api/audio/dont-wake-the-giant/file/dd56ac85-2d81-43fb-a75c-dd044a6bcde3.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.cottage": {
+      "url": "/api/audio/dont-wake-the-giant/file/4c017755-8598-4cfb-b1b9-1a770a71d7c5.mp3",
+      "volume": 0.55,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.breathing": {
+      "url": "/api/audio/dont-wake-the-giant/file/a474a32c-13c8-4b73-835f-216bfbede3a4.mp3",
+      "volume": 0.6,
+      "loop": true,
+      "category": "ambience"
+    },
+    "speech.escape-warning": {
+      "url": "/audio/dont-wake-the-giant/shupia-escape-warning.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.giant-wake": {
+      "url": "/audio/dont-wake-the-giant/giant-angry-shout.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.start": {
+      "url": "/api/audio/dont-wake-the-giant/file/8e193ccf-c4c2-497c-8ef4-4c61971c3436.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.treasure": {
+      "url": "/api/audio/dont-wake-the-giant/file/ab87d7b5-cc38-4394-b6cb-b455895e4e94.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.bank": {
+      "url": "/api/audio/dont-wake-the-giant/file/3bce49b9-ef57-47cb-a0a1-dcd14d44dcc9.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.target": {
+      "url": "/api/audio/dont-wake-the-giant/file/65b10c97-7a79-4736-81a2-fd64c8a2da84.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.tickle": {
+      "url": "/api/audio/dont-wake-the-giant/file/6020b25e-e6d7-4349-91dc-5215b5393821.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.roll-warning": {
+      "url": "/api/audio/dont-wake-the-giant/file/f7b5b45e-9e67-4eb5-9088-f388e6078a79.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.sneeze-warning": {
+      "url": "/api/audio/dont-wake-the-giant/file/a9945062-3f34-41d8-836d-8f6806b1bbb5.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.wake-warning": {
+      "url": "/api/audio/dont-wake-the-giant/file/456f8c3e-9491-45d9-9810-535d10b65a0d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.wake": {
+      "url": "/api/audio/dont-wake-the-giant/file/af51aebc-5738-436d-bfab-9ae105339883.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.dazed": {
+      "url": "/api/audio/dont-wake-the-giant/file/3b8cefd9-2694-4400-8b9a-a17230d2583d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.rescue": {
+      "url": "/api/audio/dont-wake-the-giant/file/aa71e4c9-ec66-476b-a114-cfadf1995a02.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.exit": {
+      "url": "/api/audio/dont-wake-the-giant/file/fbc79634-ed34-4727-8e1c-b1dd3a306662.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.win": {
+      "url": "/api/audio/dont-wake-the-giant/file/1846657b-dd17-4ca2-b1f8-0a1664018be7.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.fail": {
+      "url": "/api/audio/dont-wake-the-giant/file/e62d12e0-1b57-4486-87aa-185bd624cfc4.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "music.menu": {
+      "url": "/api/audio/dont-wake-the-giant/file/182e4636-893f-465e-923c-7c8d446d7fda.mp3",
+      "volume": 0.55,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build": {
+      "url": "/api/audio/dont-wake-the-giant/file/e4679838-2f0a-4c6e-b4a9-3d47357537e3.mp3",
+      "volume": 0.55,
+      "loop": true,
+      "category": "music"
+    },
+    "music.challenge": {
+      "url": "/api/audio/dont-wake-the-giant/file/d1da1b19-c38e-4a0b-82b0-350b47fbcf32.mp3",
+      "volume": 0.55,
+      "loop": true,
+      "category": "music"
+    },
+    "music.escape": {
+      "url": "/audio/dont-wake-the-giant/escape.wav",
+      "volume": 0.55,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/audio/dont-wake-the-giant/file/20f7a95a-a44a-48f6-a6cf-554e690cd0f2.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/audio/dont-wake-the-giant/file/29446c8c-5308-4160-a68c-09fa857b61da.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "music"
+    }
+  }
+}

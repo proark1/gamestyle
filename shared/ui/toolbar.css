@@ -1,0 +1,166 @@
+.game-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 7px;
+  position: relative;
+  font:
+    600 14px 'DM Sans',
+    sans-serif;
+}
+.peer-host-notice {
+  position: fixed;
+  top: calc(88px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 46;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid #bfcfba;
+  background: #fff8e8;
+  box-shadow: 0 4px 20px #203a2920;
+  color: #294a43;
+  font:
+    600 14px/1.5 'DM Sans',
+    sans-serif;
+}
+.topbar:has(.game-toolbar),
+.farm-topbar:has(.game-toolbar),
+.delivery-topbar:has(.game-toolbar),
+.giant-topbar:has(.game-toolbar) {
+  height: 80px;
+  padding: 0 24px;
+}
+.game-toolbar .game-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 7px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  color: #294a43;
+  background: #fff8e8;
+  border: 1px solid #c3cfb9;
+  border-radius: 50%;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 2px 6px #203a2912;
+}
+.game-toolbar .game-toolbar-button:hover {
+  background: #ffefc7;
+}
+.game-toolbar .game-toolbar-button:focus-visible {
+  outline: 3px solid #b87821;
+  outline-offset: 3px;
+}
+.game-toolbar .voice-trigger {
+  width: auto;
+  padding: 0 13px;
+  border-radius: 24px;
+}
+.game-toolbar .voice-trigger[data-connected='true'] {
+  border-color: #427b64;
+  background: #e6f1e4;
+}
+.game-toolbar .voice-trigger[data-live='true'] {
+  background: #315e53;
+  border-color: #315e53;
+  color: white;
+}
+.game-toolbar .voice-hold {
+  touch-action: none;
+}
+.voice-trigger-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+@media (max-width: 700px) {
+  .game-toolbar {
+    gap: 4px;
+  }
+  .game-toolbar .voice-trigger {
+    padding: 0 10px;
+    gap: 5px;
+  }
+  .topbar:has(.game-toolbar),
+  .farm-topbar:has(.game-toolbar),
+  .delivery-topbar:has(.game-toolbar),
+  .giant-topbar:has(.game-toolbar) {
+    height: calc(64px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    gap: 8px;
+  }
+  .topbar:has(.game-toolbar) .wordmark,
+  .delivery-topbar:has(.game-toolbar) .delivery-wordmark,
+  .farm-topbar:has(.game-toolbar) .farm-wordmark {
+    font-size: 0;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .topbar:has(.game-toolbar) .wordmark-or,
+  .topbar:has(.game-toolbar) .top-note,
+  .delivery-topbar:has(.game-toolbar) .delivery-dot,
+  .giant-topbar:has(.game-toolbar) .giant-brand > span,
+  .giant-topbar:has(.game-toolbar) .giant-game-name {
+    display: none;
+  }
+  .topbar:has(.game-toolbar) .brand-icon {
+    margin-right: 0;
+  }
+  .farm-topbar:has(.game-toolbar) .farm-wordmark > span {
+    display: none;
+  }
+}
+@media (max-width: 1100px) {
+  .handwerker .topbar:has(.game-toolbar) .topbar-center,
+  .handwerker .topbar:has(.game-toolbar) .wordmark > span:last-child {
+    display: none;
+  }
+  .topbar:has(.game-toolbar) .top-note {
+    display: none;
+  }
+  .topbar:has(.game-toolbar) .crew-member b {
+    max-width: 45px;
+  }
+}
+@media (max-width: 380px) {
+  .game-toolbar {
+    gap: 3px;
+  }
+  .game-toolbar .voice-trigger {
+    width: 76px;
+    padding: 0 8px;
+  }
+  .voice-trigger-dot {
+    display: none;
+  }
+  .topbar:has(.game-toolbar) .wordmark,
+  .farm-topbar:has(.game-toolbar) .farm-wordmark,
+  .delivery-topbar:has(.game-toolbar) .delivery-wordmark,
+  .giant-topbar:has(.game-toolbar) .giant-brand {
+    display: none;
+  }
+  .shelf-header:has(.game-toolbar) .shelf-brand {
+    display: none;
+  }
+  .shelf-header:has(.game-toolbar) {
+    justify-content: flex-end;
+  }
+  .topbar:has(.game-toolbar),
+  .farm-topbar:has(.game-toolbar),
+  .delivery-topbar:has(.game-toolbar),
+  .giant-topbar:has(.game-toolbar) {
+    justify-content: flex-end;
+  }
+}

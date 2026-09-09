@@ -1,0 +1,58 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "7c7a7e4f9341eb879bcb0cc35a05c85b6685c7e0a6f78e8e02a8245003c70363",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 1,
+  "bots": 1,
+  "variant": 1,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 180,
+  "carryingSeconds": 686.6166666666667,
+  "stoppedCarryingSeconds": 0,
+  "ignoredStopFrames": 0,
+  "actions": 79,
+  "stage": 0,
+  "sofa": {
+    "x": -1.6031079528753602,
+    "y": 1.330996459867305,
+    "z": 9.895651024557646,
+    "velocity": {
+      "x": 0.0023488801233642886,
+      "y": 0.0013395906953761272,
+      "z": 0.00035413745352683157
+    },
+    "angular": {
+      "x": -0.0020273166035313095,
+      "y": 0.001557769965782746,
+      "z": 0.000615212966648182
+    },
+    "quaternion": {
+      "x": -0.1519985748722882,
+      "y": -0.8433617017019379,
+      "z": 0.347361382246736,
+      "w": 0.38075916727354325
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -4.0350579411329015,
+      "y": 0.976179735499419,
+      "z": 11.0502273636926,
+      "grip": 1
+    },
+    {
+      "name": "Jo",
+      "x": 1.3068780989109436,
+      "y": -0.6000784800000002,
+      "z": 9.259995717676983,
+      "grip": 2,
+      "task": "Returning to the path"
+    }
+  ]
+}

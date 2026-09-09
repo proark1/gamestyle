@@ -1,0 +1,26 @@
+{
+  "at": "2026-09-09T02:19:44.045Z",
+  "snapshotTime": "2026-09-09T02:10:01.340Z",
+  "fullHeadSweep": "Interrupted after stalled progress; last printed count 450/719; individual results not retained and not claimed as successful.",
+  "followupSample": {
+    "completed": 36,
+    "http200": 6,
+    "timeouts": 30,
+    "complete": false
+  },
+  "subsequentGetProbes": [
+    {
+      "path": "/api/audio/stack-or-sink?manifest",
+      "result": "Timeout at 8 seconds"
+    },
+    {
+      "path": "/audio/one-more-button/event.start.wav",
+      "result": "Timeout at 8 seconds"
+    },
+    {
+      "path": "/four-brain-cells",
+      "result": "Timeout at 8 seconds"
+    }
+  ],
+  "conclusion": "Delivery validation incomplete. Counts reflect captured public manifests; cause of later timeouts unknown."
+}

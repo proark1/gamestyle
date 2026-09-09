@@ -1,0 +1,458 @@
+{
+  "fetchedAt": "2026-09-09T02:10:01.844Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/audio/uphill-delivery?manifest",
+  "status": 200,
+  "settings": {
+    "effects": 0.75,
+    "speech": 0.85,
+    "ambience": 0.25,
+    "music": 0.18,
+    "voiceId": "lWq1vuMU2TD1usgkFsfi"
+  },
+  "cues": {
+    "step.stone.1": {
+      "url": "/api/audio/uphill-delivery/file/d2341314-1869-4f22-9c04-370dd47d1224.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.stone.2": {
+      "url": "/api/audio/uphill-delivery/file/09326f1b-daa0-4068-891e-e70727bec09e.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.stone.3": {
+      "url": "/api/audio/uphill-delivery/file/a353330a-757e-4665-8e1e-21d5920b8a7b.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.ice.1": {
+      "url": "/api/audio/uphill-delivery/file/b030916e-3ea2-4000-80d2-abbbe949898c.mp3",
+      "volume": 0.52,
+      "loop": false,
+      "category": "event"
+    },
+    "step.ice.2": {
+      "url": "/api/audio/uphill-delivery/file/8f89f54f-8ffc-43d9-9789-96ce17cbf438.mp3",
+      "volume": 0.52,
+      "loop": false,
+      "category": "event"
+    },
+    "step.ice.3": {
+      "url": "/api/audio/uphill-delivery/file/e03843a4-28c4-4c86-aa15-faeda117944e.mp3",
+      "volume": 0.52,
+      "loop": false,
+      "category": "event"
+    },
+    "event.jump": {
+      "url": "/api/audio/uphill-delivery/file/acc107fe-b994-43dc-a2ea-e7a02e80ec49.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "event.land": {
+      "url": "/api/audio/uphill-delivery/file/3406e97a-1398-4409-9d77-3803a49aa33d.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.release": {
+      "url": "/api/audio/uphill-delivery/file/d743641a-d417-474e-9578-50dd71428b4c.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.carry.1": {
+      "url": "/api/audio/uphill-delivery/file/9e2a5b72-78de-4ab2-a083-00155d4e2401.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.carry.2": {
+      "url": "/api/audio/uphill-delivery/file/3d86e132-6f9b-4483-81bf-4bce56146e75.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.carry.3": {
+      "url": "/api/audio/uphill-delivery/file/4713495c-7d86-4a5e-98dc-833425b7b8a6.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape.1": {
+      "url": "/api/audio/uphill-delivery/file/52f3f3b0-d1be-4e11-93ca-daa406a26fa6.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape.2": {
+      "url": "/api/audio/uphill-delivery/file/4912a0d4-adb0-48a1-a50c-2b8676717675.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape.3": {
+      "url": "/api/audio/uphill-delivery/file/b3deaea2-1125-456c-815b-a18872b1e208.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-wood.1": {
+      "url": "/api/audio/uphill-delivery/file/1e29f5af-97d2-4f0c-9678-20d38d440189.mp3",
+      "volume": 0.46,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-wood.2": {
+      "url": "/api/audio/uphill-delivery/file/66023d6c-cef4-4c66-b265-53ff6e50009c.mp3",
+      "volume": 0.46,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-wood.3": {
+      "url": "/api/audio/uphill-delivery/file/251a3c31-5a6f-4a8d-a0eb-5063a3be2ab8.mp3",
+      "volume": 0.46,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-ice.1": {
+      "url": "/api/audio/uphill-delivery/file/91891024-9e68-41c7-9afe-1e4b0ffd7a76.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-ice.2": {
+      "url": "/api/audio/uphill-delivery/file/a3f3dfc9-425b-43a4-a2fa-43b0e468af0e.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-ice.3": {
+      "url": "/api/audio/uphill-delivery/file/601a8831-9011-44b1-a716-bfc3f11f970e.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-grass.1": {
+      "url": "/api/audio/uphill-delivery/file/799b9d3e-c6d3-4e5c-8819-57df909738ea.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-grass.2": {
+      "url": "/api/audio/uphill-delivery/file/a5d99221-1db9-4e77-952a-92b3ac1c2451.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "sofa.scrape-grass.3": {
+      "url": "/api/audio/uphill-delivery/file/3420101a-d57f-4a93-888d-c2efca470633.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "bridge.creak.1": {
+      "url": "/api/audio/uphill-delivery/file/fb11ca30-9d7f-413e-a905-da495dbd402a.mp3",
+      "volume": 0.48,
+      "loop": false,
+      "category": "event"
+    },
+    "bridge.creak.2": {
+      "url": "/api/audio/uphill-delivery/file/5157ac96-a29f-4bc7-bec7-ea931c9cd0db.mp3",
+      "volume": 0.48,
+      "loop": false,
+      "category": "event"
+    },
+    "bridge.creak.3": {
+      "url": "/api/audio/uphill-delivery/file/0bbcf4e6-236e-40ee-803a-3ceba64e075c.mp3",
+      "volume": 0.48,
+      "loop": false,
+      "category": "event"
+    },
+    "clothing.move.1": {
+      "url": "/api/audio/uphill-delivery/file/76eefc72-e42b-4141-8db2-6963b9f54930.mp3",
+      "volume": 0.22,
+      "loop": false,
+      "category": "event"
+    },
+    "clothing.move.2": {
+      "url": "/api/audio/uphill-delivery/file/642082c7-7d34-445b-9159-5038deb2424c.mp3",
+      "volume": 0.22,
+      "loop": false,
+      "category": "event"
+    },
+    "clothing.move.3": {
+      "url": "/api/audio/uphill-delivery/file/d6f20fc6-ed48-4f25-9bfa-56def5ce57c6.mp3",
+      "volume": 0.22,
+      "loop": false,
+      "category": "event"
+    },
+    "goat.hoof.1": {
+      "url": "/api/audio/uphill-delivery/file/d11d6ba7-0614-43a7-9bc9-c63840d12fb7.mp3",
+      "volume": 0.38,
+      "loop": false,
+      "category": "event"
+    },
+    "goat.hoof.2": {
+      "url": "/api/audio/uphill-delivery/file/c8375b97-1cfd-4afe-b1dc-d2e0e9586ff0.mp3",
+      "volume": 0.38,
+      "loop": false,
+      "category": "event"
+    },
+    "goat.hoof.3": {
+      "url": "/api/audio/uphill-delivery/file/5fbf37a5-ba16-43c8-84af-5e4aece0a75d.mp3",
+      "volume": 0.38,
+      "loop": false,
+      "category": "event"
+    },
+    "goat.bell.1": {
+      "url": "/api/audio/uphill-delivery/file/50b58b38-8739-4b94-91f4-52ec5e30e201.mp3",
+      "volume": 0.26,
+      "loop": false,
+      "category": "event"
+    },
+    "goat.bell.2": {
+      "url": "/api/audio/uphill-delivery/file/c76ec957-e146-4305-b870-9ad83b77c893.mp3",
+      "volume": 0.26,
+      "loop": false,
+      "category": "event"
+    },
+    "goat.bell.3": {
+      "url": "/api/audio/uphill-delivery/file/ae7fdb67-8ee1-4fee-bd8a-085464468966.mp3",
+      "volume": 0.26,
+      "loop": false,
+      "category": "event"
+    },
+    "bird.call.1": {
+      "url": "/api/audio/uphill-delivery/file/378832b4-9da8-4dee-8d98-604c5f47cada.mp3",
+      "volume": 0.32,
+      "loop": false,
+      "category": "event"
+    },
+    "bird.call.2": {
+      "url": "/api/audio/uphill-delivery/file/d67bc2f5-fe8f-4eb1-9018-a15f4dc17c12.mp3",
+      "volume": 0.32,
+      "loop": false,
+      "category": "event"
+    },
+    "bird.call.3": {
+      "url": "/api/audio/uphill-delivery/file/fa95b985-7757-4bbd-b9df-fc92fe2bcde8.mp3",
+      "volume": 0.32,
+      "loop": false,
+      "category": "event"
+    },
+    "event.latch": {
+      "url": "/api/audio/uphill-delivery/file/10de7599-9718-420f-80ee-0ffe93e6f217.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "event.door-close": {
+      "url": "/api/audio/uphill-delivery/file/2575c474-1320-40aa-bfc4-83050a991d36.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.pines": {
+      "url": "/api/audio/uphill-delivery/file/6c909a1c-a51e-4ca1-801b-913e0b9e1b50.mp3",
+      "volume": 0.5,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.ridge": {
+      "url": "/api/audio/uphill-delivery/file/7682cd47-24d0-464d-b225-557da56180ea.mp3",
+      "volume": 0.52,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.room": {
+      "url": "/api/audio/uphill-delivery/file/d5c9d6b9-fabd-4c78-96e0-793004f456dc.mp3",
+      "volume": 0.35,
+      "loop": true,
+      "category": "ambience"
+    },
+    "event.ui": {
+      "url": "/api/audio/uphill-delivery/file/990ded3d-49ea-4e43-ada9-c7da3432be13.mp3",
+      "volume": 0.35,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.1": {
+      "url": "/api/audio/uphill-delivery/file/c40697f7-11ed-441d-9dc2-3ef258e63a60.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.2": {
+      "url": "/api/audio/uphill-delivery/file/5dd0057a-64ce-46c2-a20b-1df51dc66867.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood.3": {
+      "url": "/api/audio/uphill-delivery/file/cfea592c-6811-402a-9213-8f20fa51e292.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.1": {
+      "url": "/api/audio/uphill-delivery/file/e0e25da7-a5cb-4c72-b3ae-b1b224898ea0.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.2": {
+      "url": "/api/audio/uphill-delivery/file/2604ef6c-cbfd-405b-9af8-e5d8a8fc274f.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.fabric.3": {
+      "url": "/api/audio/uphill-delivery/file/de3e6960-fb10-4254-9c98-ac252b4f1384.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "step.grass.1": {
+      "url": "/api/audio/uphill-delivery/file/8648641c-9ab1-4982-922f-3c20ebc9eba0.mp3",
+      "volume": 0.15,
+      "loop": false,
+      "category": "event"
+    },
+    "step.grass.2": {
+      "url": "/api/audio/uphill-delivery/file/0eb00d6b-163f-471c-817f-55673704e045.mp3",
+      "volume": 0.2,
+      "loop": false,
+      "category": "event"
+    },
+    "step.grass.3": {
+      "url": "/api/audio/uphill-delivery/file/c21a16a4-ae61-4ef6-ae99-5052aed11321.mp3",
+      "volume": 0.19,
+      "loop": false,
+      "category": "event"
+    },
+    "material.sofa.grab": {
+      "url": "/api/audio/uphill-delivery/file/647cca40-9ed7-4dc0-a842-bc334e0cad36.mp3",
+      "volume": 0.36,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.place": {
+      "url": "/api/audio/uphill-delivery/file/07006c09-3a63-46b6-ac75-e780f5c4bd3c.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.impact": {
+      "url": "/api/audio/uphill-delivery/file/ab08adf7-f784-432c-86c7-e3015e20079f.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.rotate": {
+      "url": "/api/audio/uphill-delivery/file/710d3013-b3bf-4d30-a9e4-6e234d030e96.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.splash": {
+      "url": "/api/audio/uphill-delivery/file/a038307b-d565-46de-9c6f-10b12cfd7eae.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "material"
+    },
+    "ambience.mountain": {
+      "url": "/api/audio/uphill-delivery/file/237151ed-ee34-47d5-b703-fb948de1762c.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "ambience"
+    },
+    "event.grab": {
+      "url": "/api/audio/uphill-delivery/file/4cb8858a-12a3-4c0f-8830-93d8f3ac2216.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.drop": {
+      "url": "/api/audio/uphill-delivery/file/b343fd22-cfbd-4070-aef0-0859e2732cce.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.bounce": {
+      "url": "/api/audio/uphill-delivery/file/c3809cdf-8331-4f95-9a68-705ea3f7037c.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.gate": {
+      "url": "/api/audio/uphill-delivery/file/28d59b70-f6c6-4c33-bc96-f7bc2d093d78.mp3",
+      "volume": 0.66,
+      "loop": false,
+      "category": "event"
+    },
+    "event.door": {
+      "url": "/api/audio/uphill-delivery/file/35ec3c64-529e-48be-bc54-bff9220123aa.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "event.goat": {
+      "url": "/api/audio/uphill-delivery/file/abcce820-6719-49eb-bec5-3ca8f95bc134.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "speech.start": {
+      "url": "/api/audio/uphill-delivery/file/04be37c0-ea9f-4dbd-9534-47ba044d5f56.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.door": {
+      "url": "/api/audio/uphill-delivery/file/f858991d-2e95-4562-877e-0bacc0251a9e.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.win": {
+      "url": "/api/audio/uphill-delivery/file/8f65f147-3115-42ff-93a7-8d7aa3e9d2c3.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "music.menu": {
+      "url": "/api/audio/uphill-delivery/file/f816723c-50f7-4496-a2f7-becb513721a2.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build": {
+      "url": "/api/audio/uphill-delivery/file/ce64ea20-d5a7-4eb4-8e2b-63e9fb6e440e.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.challenge": {
+      "url": "/api/audio/uphill-delivery/file/62e6150f-8037-48f4-9bb0-5c8257d78bd5.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/audio/uphill-delivery/file/e66269c9-790a-444d-8fc2-dc8d97a9e2e3.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/audio/uphill-delivery/file/3ac5f80a-927f-4862-ae3f-d91c3ebd3ee3.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    }
+  }
+}

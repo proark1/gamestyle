@@ -1,0 +1,17 @@
+# Motion fix validation — 2026-09-06
+
+The isolated release at `work/motion-release` passes TypeScript, 75 tests and the Railway production build. It includes the collection, both games, mobile controls, the island setting and motion fixes. Audio/voice work still being developed in the shared workspace is excluded from this package; no unfinished audio routes, schema changes or provider configuration are deployed.
+
+Regression coverage includes immediate horizontal stopping on the ground, during a running jump and on tilted salvage; server-side stopping; persistent physics body reuse and rebuild after grabbing a support; idle network reconciliation; rejection of stale movement commands after a newer stop; prompt input transmission; continuous object animation across irregular snapshots; exact placement across ownership changes; and geometry/raycast preservation after scenery batching. Existing collision, long tower stability, multiplayer, authentication, mobile gesture and Blend Business tests remain green.
+
+Production browser checks used 390 × 844 phone-size and 1280 × 720 desktop viewports. Fresh phone initialization recorded 60 FPS, a 16.8 ms 95th-percentile frame interval, 2.9 ms 95th-percentile frame work and 103 draw calls over 600 frames. Desktop multiplayer recorded 60 FPS and approximately 4.1–4.4 ms 95th-percentile frame work. A practice crane lift/drop recorded 60 FPS with no frame intervals above 34 ms over the sampled window. No browser errors were recorded.
+
+Dragging and releasing the joystick visibly moved the character in both practice and a real room. Subsequent samples had exactly zero horizontal change in the displayed avatar and follow-camera. Practice jumping, selecting a bathtub, raising it with the crane and dropping it were exercised. Automated physics tests cover releasing movement during the jump and standing on tilted objects. Browser key taps were too short to establish a held-key walking test, so they are not counted as that verification.
+
+All three HTTP integration scripts pass against the local production server: four-player control/authentication, exact preview placement of a carried bathtub onto a crate observed by another client, and the collection/Blend Business routes and multiplayer behavior.
+
+These frame measurements are from the desktop browser at phone-size and desktop resolutions, not physical iPhone/Android hardware. Slow networks can still exhaust the remote interpolation buffer, and large authoritative corrections remain possible after major desynchronization. Normal horizontal stop behavior is immediate; gravity continues when airborne or when support falls away.
+
+Deployment approval initially rejected an upload because it attributed the shared workspace's unfinished audio type errors to the release. The exact isolated package was checked again, its existing `Sound.cue` verified, and deployment was approved on retry.
+
+Final Railway deployment `e2ac0c53-9790-45ef-af34-903cfb6df12f` reached SUCCESS. All three HTTP integration suites pass against the public site. The live 390 × 844 practice test exercised joystick movement/release and crane lift/drop, recording 60 FPS, 16.8 ms 95th-percentile frame interval, 2.9 ms 95th-percentile frame work, zero frames above 34 ms in the sampled 600 frames, and exactly zero horizontal avatar/camera drift after release. The browser reported no errors. Test rooms were left, the temporary browser tab closed and the local production server stopped.

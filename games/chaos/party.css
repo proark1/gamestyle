@@ -1,0 +1,532 @@
+:where(body:has(.handwerker)) .party-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 35;
+  color: #293c3b;
+  font-family: 'DM Sans', sans-serif;
+}
+:where(body:has(.handwerker)) .party-layer section,
+:where(body:has(.handwerker)) .party-layer aside {
+  pointer-events: auto;
+}
+:where(body:has(.handwerker)) .party-layer button,
+:where(body:has(.handwerker)) .party-layer select {
+  font: inherit;
+}
+:where(body:has(.handwerker)) .party-layer button {
+  border: 1px solid #c7c6b5;
+  border-radius: 9px;
+  background: #fffaf0;
+  color: #293c3b;
+  padding: 10px 13px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: none;
+}
+:where(body:has(.handwerker)) .party-layer button:hover {
+  background: #f8dc8a;
+}
+:where(body:has(.handwerker)) .party-layer button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+:where(body:has(.handwerker)) .party-layer button:focus-visible,
+:where(body:has(.handwerker)) .party-layer select:focus-visible {
+  outline: 3px solid #46a991;
+  outline-offset: 2px;
+}
+:where(body:has(.handwerker)) .party-layer h1 {
+  font-family: Fredoka, sans-serif;
+  font-size: 34px;
+  line-height: 1.1;
+  margin: 10px 0 16px;
+}
+:where(body:has(.handwerker)) .party-layer h2 {
+  font-family: Fredoka, sans-serif;
+  font-size: 23px;
+  margin: 7px 0;
+}
+:where(body:has(.handwerker)) .party-layer p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 9px 0 13px;
+}
+:where(body:has(.handwerker)) .party-layer small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.4;
+}
+:where(body:has(.handwerker)) .party-layer label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0;
+}
+:where(body:has(.handwerker)) .party-layer select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid #c7c6b5;
+  border-radius: 8px;
+  padding: 9px;
+  background: #fffdf7;
+  color: #293c3b;
+}
+:where(body:has(.handwerker)) .party-layer input[type='checkbox'] {
+  margin-right: 7px;
+  accent-color: #287660;
+}
+:where(body:has(.handwerker)) .party-layer input[type='range'] {
+  width: 100%;
+  accent-color: #287660;
+}
+:where(body:has(.handwerker)) .party-layer meter {
+  width: 100%;
+  height: 14px;
+}
+:where(body:has(.handwerker)) .party-layer .party-primary {
+  background: #ffcc4c;
+  border-color: #e3b13f;
+  width: 100%;
+  margin-top: 12px;
+}
+:where(body:has(.handwerker)) .party-eyebrow {
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  font-weight: 900;
+  color: #6b766b;
+}
+:where(body:has(.handwerker)) .party-lobby,
+:where(body:has(.handwerker)) .party-result {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 155px);
+  overflow: auto;
+  padding: 27px;
+  border-radius: 20px;
+  background: #f7f3e7;
+  box-shadow: 0 22px 90px #182c4560;
+  border: 1px solid #fff8;
+}
+:where(body:has(.handwerker)) .party-roster {
+  display: grid;
+  gap: 7px;
+  margin: 20px 0;
+}
+:where(body:has(.handwerker)) .party-roster > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  border-bottom: 1px dashed #d5d3c2;
+  padding: 7px 0;
+}
+:where(body:has(.handwerker)) .party-roster b {
+  font-size: 11px;
+  color: #33785c;
+}
+:where(body:has(.handwerker)) .party-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0;
+}
+:where(body:has(.handwerker)) .party-buttons > button {
+  flex: 1;
+}
+:where(body:has(.handwerker)) .party-muted {
+  color: #65736d;
+}
+:where(body:has(.handwerker)) .party-job {
+  position: absolute;
+  top: 152px;
+  left: 18px;
+  width: 265px;
+  padding: 16px;
+  background: #f8f3e5f5;
+  border: 1px solid #e4dac5;
+  border-radius: 15px;
+  max-height: calc(100dvh - 285px);
+  overflow: auto;
+  box-shadow: 0 6px 24px #16332620;
+}
+:where(body:has(.handwerker)) .party-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  max-width: 200px;
+  margin: 12px auto;
+}
+:where(body:has(.handwerker)) .party-pad button {
+  font-size: 20px;
+  padding: 9px;
+}
+:where(body:has(.handwerker)) .party-load {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+  margin: 9px 0;
+}
+:where(body:has(.handwerker)) .party-load meter {
+  width: 130px;
+}
+:where(body:has(.handwerker)) .party-layer .party-link {
+  font-size: 10px;
+  border: 0;
+  background: transparent;
+  padding: 5px;
+}
+:where(body:has(.handwerker)) .party-secret {
+  background: #eedde7 !important;
+  width: 100%;
+  margin-top: 10px;
+}
+:where(body:has(.handwerker)) .party-card {
+  padding: 12px;
+  background: #f7e8ef;
+  border-radius: 8px;
+  margin-top: 7px;
+}
+:where(body:has(.handwerker)) .party-card b {
+  font-size: 12px;
+}
+:where(body:has(.handwerker)) .party-last-call {
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 92px;
+  transform: translateX(-50%);
+  padding: 13px 23px;
+  border-radius: 12px;
+  background: #f9c44d;
+  box-shadow: 0 3px 20px #221c3233;
+  text-align: center;
+  min-width: 300px;
+}
+:where(body:has(.handwerker)) .party-last-call b {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+:where(body:has(.handwerker)) .party-last-call span {
+  font-size: 12px;
+}
+:where(body:has(.handwerker)) .party-voice {
+  position: absolute;
+  right: 18px;
+  bottom: 24px;
+  width: 250px;
+  padding: 10px 13px;
+  background: #f7f3e7f7;
+  border: 1px solid #d7d0bc;
+  border-radius: 13px;
+  box-shadow: 0 5px 25px #173a3220;
+  max-height: 65dvh;
+  overflow: auto;
+}
+:where(body:has(.handwerker)) .party-voice summary {
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 7px 0;
+}
+:where(body:has(.handwerker)) .party-voice details > button {
+  width: 100%;
+  margin: 5px 0;
+}
+:where(body:has(.handwerker)) .voice-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9faaa3;
+  margin-right: 7px;
+}
+:where(body:has(.handwerker)) .voice-dot.on {
+  background: #36a675;
+}
+:where(body:has(.handwerker)) .party-media-toggle {
+  margin-top: 7px;
+  width: 100%;
+  font-size: 11px !important;
+}
+:where(body:has(.handwerker)) .party-verdict {
+  font-family: Fredoka, sans-serif;
+  font-size: 22px !important;
+  padding: 25px 0;
+}
+:where(body:has(.handwerker)) .party-awards {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+:where(body:has(.handwerker)) .party-awards > div {
+  background: #e9ead9;
+  border-radius: 10px;
+  padding: 12px;
+}
+:where(body:has(.handwerker)) .party-awards b,
+:where(body:has(.handwerker)) .party-awards span {
+  display: block;
+  font-size: 13px;
+}
+:where(body:has(.handwerker)) .party-awards span {
+  margin-top: 5px;
+  font-size: 11px;
+}
+:where(body:has(.handwerker)) .party-result summary {
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+:where(body:has(.handwerker)) .party-media {
+  position: absolute;
+  right: 18px;
+  bottom: 105px;
+  width: 360px;
+  max-height: 70dvh;
+  overflow: auto;
+  background: #f7f3e7;
+  padding: 19px;
+  border-radius: 16px;
+  box-shadow: 0 15px 60px #182c454d;
+  border: 1px solid #d7d0bc;
+  z-index: 5;
+}
+:where(body:has(.handwerker)) .party-media h2 {
+  flex: 1;
+}
+:where(body:has(.handwerker)) .party-media .party-buttons > button[aria-label] {
+  flex: 0;
+}
+:where(body:has(.handwerker)) .party-preview img,
+:where(body:has(.handwerker)) .party-preview video {
+  display: block;
+  width: 100%;
+  max-height: 35dvh;
+  object-fit: contain;
+  background: #20362f;
+  margin-top: 12px;
+}
+:where(body:has(.handwerker)) .party-media > button {
+  margin: 5px;
+}
+:where(body:has(.handwerker)) .party-media hr {
+  border: 0;
+  border-top: 1px solid #d7d0bc;
+  margin: 17px 0;
+}
+:where(body:has(.handwerker)) .party-layer ~ * {
+  --party-panel: 1;
+}
+@media (max-width: 760px) {
+  :where(body:has(.handwerker)) .party-job {
+    top: 114px;
+    left: 10px;
+    width: 210px;
+    padding: 11px;
+    max-height: calc(100dvh - 330px);
+  }
+  :where(body:has(.handwerker)) .party-job h2 {
+    font-size: 19px;
+  }
+  :where(body:has(.handwerker)) .party-job p {
+    font-size: 11px;
+  }
+  :where(body:has(.handwerker)) .party-job .party-buttons {
+    flex-wrap: wrap;
+  }
+  :where(body:has(.handwerker)) .party-job .party-buttons button {
+    font-size: 10px;
+    padding: 7px;
+  }
+  :where(body:has(.handwerker)) .party-pad {
+    max-width: 150px;
+  }
+  :where(body:has(.handwerker)) .party-pad button {
+    padding: 5px;
+  }
+  :where(body:has(.handwerker)) .party-voice {
+    width: 190px;
+    right: 9px;
+    bottom: 145px;
+    padding: 8px;
+    max-height: 45dvh;
+  }
+  :where(body:has(.handwerker)) .party-media {
+    right: 9px;
+    bottom: 155px;
+    width: min(350px, calc(100vw - 18px));
+    max-height: 65dvh;
+  }
+  :where(body:has(.handwerker)) .party-last-call {
+    top: 80px;
+    min-width: 240px;
+    padding: 8px;
+  }
+  :where(body:has(.handwerker)) .party-lobby,
+  :where(body:has(.handwerker)) .party-result {
+    top: 45%;
+    max-height: calc(100dvh - 210px);
+    padding: 21px;
+  }
+  :where(body:has(.handwerker)) .party-layer h1 {
+    font-size: 28px;
+  }
+}
+@media (max-width: 440px) {
+  :where(body:has(.handwerker)) .party-job {
+    width: 172px;
+    max-height: 42dvh;
+  }
+  :where(body:has(.handwerker)) .party-voice {
+    width: 155px;
+  }
+  :where(body:has(.handwerker)) .party-job .party-eyebrow {
+    font-size: 8px;
+  }
+  :where(body:has(.handwerker)) .party-job p {
+    line-height: 1.35;
+  }
+  :where(body:has(.handwerker)) .party-pad {
+    gap: 3px;
+  }
+  :where(body:has(.handwerker)) .party-layer .party-link {
+    font-size: 9px;
+  }
+}
+:where(body:has(.handwerker)) .party-tabs {
+  pointer-events: auto;
+  position: absolute;
+  left: 18px;
+  top: 104px;
+  display: flex;
+  gap: 5px;
+  padding: 4px;
+  border-radius: 11px;
+  background: #f8f3e5;
+  box-shadow: 0 3px 15px #16332620;
+}
+:where(body:has(.handwerker)) .party-tabs button {
+  font-size: 11px;
+  padding: 8px 11px;
+  border: 0;
+  background: transparent;
+}
+:where(body:has(.handwerker)) .party-tabs button[aria-pressed='true'] {
+  background: #ffcc4c;
+}
+:where(body:has(.handwerker))
+  .game-shell:has(.party-layer[data-view='crew'])
+  .contract-panel,
+:where(body:has(.handwerker))
+  .game-shell:has(.party-layer[data-view='crew'])
+  .mobile-contract,
+:where(body:has(.handwerker))
+  .game-shell:has(.party-layer[data-view='finale'])
+  .contract-panel,
+:where(body:has(.handwerker))
+  .game-shell:has(.party-layer[data-view='finale'])
+  .mobile-contract {
+  display: none;
+}
+:where(body:has(.handwerker))
+  .game-shell:has(.party-layer[data-view='finale'])
+  .play-bottom,
+:where(body:has(.handwerker))
+  .game-shell:has(.party-layer[data-view='finale'])
+  .touch-controls {
+  display: none;
+}
+@media (min-width: 761px) {
+  :where(body:has(.handwerker)) .game-shell:has(.party-layer) .contract-panel {
+    top: 155px;
+    max-height: calc(100dvh - 310px);
+    overflow: auto;
+  }
+}
+@media (max-width: 760px) {
+  :where(body:has(.handwerker)) .party-tabs {
+    left: 10px;
+    top: 78px;
+  }
+  :where(body:has(.handwerker)) .party-tabs button {
+    font-size: 9px;
+    padding: 7px;
+  }
+  :where(body:has(.handwerker)) .party-layer .party-job {
+    top: 122px;
+  }
+  :where(body:has(.handwerker)) .game-shell:has(.party-layer) .mobile-contract {
+    top: 122px;
+  }
+  :where(body:has(.handwerker)) .party-last-call {
+    top: auto;
+    bottom: 100px;
+  }
+}
+:where(body:has(.handwerker)) .party-result:has(.party-verdict) {
+  top: auto;
+  bottom: 110px;
+  transform: translateX(-50%);
+  background: #f7f3e7eb;
+}
+:where(body:has(.handwerker)) .party-result:has(.party-verdict) .party-verdict {
+  padding: 8px 0;
+}
+:where(body:has(.handwerker)) .party-result:has(.party-verdict) h1 {
+  font-size: 24px;
+}
+:where(body:has(.handwerker)) .party-result:has(.party-verdict) label {
+  margin: 6px 0;
+}
+
+:where(body:has(.handwerker)) .inspection-brief {
+  border-left: 4px solid #348cb8;
+  padding: 0 0 4px 12px;
+  margin-bottom: 18px;
+}
+:where(body:has(.handwerker)) .inspection-brief > b {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: #26708d;
+}
+:where(body:has(.handwerker)) .inspection-brief .inspection-clock {
+  font-size: 18px;
+  font-weight: 900;
+}
+:where(body:has(.handwerker)) .inspection-brief button {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+:where(body:has(.handwerker)) .party-job {
+  max-height: calc(100dvh - 235px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:where(body:has(.handwerker)) .crew-name-input {
+  display: block;
+  width: 100%;
+  border: 1px solid #c7c6b5;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 6px;
+  font: inherit;
+  background: #fffaf0;
+  color: #293c3b;
+}
+:where(body:has(.handwerker)) .party-highlights button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 8px 0;
+}

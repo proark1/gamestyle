@@ -1,0 +1,182 @@
+{
+  "fetchedAt": "2026-09-09T02:10:01.555Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/audio/one-more-button?manifest",
+  "status": 200,
+  "settings": {
+    "effects": 0.75,
+    "speech": 0.85,
+    "ambience": 0.25,
+    "music": 0.18,
+    "voiceId": ""
+  },
+  "cues": {
+    "event.start": {
+      "url": "/audio/one-more-button/event.start.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.press": {
+      "url": "/audio/one-more-button/event.press.wav",
+      "volume": 0.9,
+      "loop": false,
+      "category": "event"
+    },
+    "event.warning": {
+      "url": "/audio/one-more-button/event.warning.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.punch": {
+      "url": "/audio/one-more-button/event.punch.wav",
+      "volume": 0.9,
+      "loop": false,
+      "category": "event"
+    },
+    "event.hit": {
+      "url": "/audio/one-more-button/event.hit.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.fall": {
+      "url": "/audio/one-more-button/event.fall.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.escape": {
+      "url": "/audio/one-more-button/event.escape.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.stop": {
+      "url": "/audio/one-more-button/event.stop.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.finish": {
+      "url": "/audio/one-more-button/event.finish.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.bust": {
+      "url": "/audio/one-more-button/event.bust.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.glove-windup": {
+      "url": "/audio/one-more-button/event.glove-windup.wav",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "event.glove-fire": {
+      "url": "/audio/one-more-button/event.glove-fire.wav",
+      "volume": 0.85,
+      "loop": false,
+      "category": "event"
+    },
+    "event.hazard": {
+      "url": "/audio/one-more-button/event.hazard.wav",
+      "volume": 0.75,
+      "loop": false,
+      "category": "event"
+    },
+    "event.slip": {
+      "url": "/audio/one-more-button/event.slip.wav",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.jump": {
+      "url": "/audio/one-more-button/event.jump.wav",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "event.land": {
+      "url": "/audio/one-more-button/event.land.wav",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step": {
+      "url": "/audio/one-more-button/event.step.wav",
+      "volume": 0.32,
+      "loop": false,
+      "category": "event"
+    },
+    "event.door-open": {
+      "url": "/audio/one-more-button/event.door-open.wav",
+      "volume": 0.72,
+      "loop": false,
+      "category": "event"
+    },
+    "event.tick": {
+      "url": "/audio/one-more-button/event.tick.wav",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.crowd-cheer": {
+      "url": "/audio/one-more-button/event.crowd-cheer.wav",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.crowd-gasp": {
+      "url": "/audio/one-more-button/event.crowd-gasp.wav",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "event.ui": {
+      "url": "/audio/one-more-button/event.ui.wav",
+      "volume": 0.3,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.conveyor": {
+      "url": "/audio/one-more-button/ambience.conveyor.wav",
+      "volume": 0.5,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.spinner": {
+      "url": "/audio/one-more-button/ambience.spinner.wav",
+      "volume": 0.55,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.soap": {
+      "url": "/audio/one-more-button/ambience.soap.wav",
+      "volume": 0.42,
+      "loop": true,
+      "category": "ambience"
+    },
+    "music.show": {
+      "url": "/audio/one-more-button/music.show.wav",
+      "volume": 0.85,
+      "loop": true,
+      "category": "music"
+    },
+    "music.chaos": {
+      "url": "/audio/one-more-button/music.chaos.wav",
+      "volume": 0.85,
+      "loop": true,
+      "category": "music"
+    },
+    "music.escape": {
+      "url": "/audio/one-more-button/music.escape.wav",
+      "volume": 0.85,
+      "loop": true,
+      "category": "music"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+Asset: exec-5733a4ab-e174-4536-b48c-e465060c7ec8.png
+Created: 2026-09-08
+Method: Built-in image_gen.imagegen tool, one generation, no retries or variations.
+Output: PNG, 1536 x 1024.
+Style reference inspected: C:/Users/assad/Documents/GitHub/gamestyle/public/images/reel-problems.png
+Reference use: Visual inspection only; no reference image was passed to the generation tool. Original composition from text prompt.
+
+Exact prompt:
+Use case: stylized-concept
+Asset type: finished original landscape game-card illustration for the browser co-op horror game Wrong Floor.
+Primary request: Four chunky little toy hotel guests in mustard, teal, coral, and lilac jackets at an open brass elevator doorway in a moody boutique hotel. Exactly one guest is frightened and looking over their shoulder at a tall, comically unsettling shadow figure sprinting down the corridor; the other three guests look unconcerned and have not noticed it. Show the difference in their reactions clearly.
+Scene/backdrop: Petrol-teal paneled hotel walls, deep plum shadows, burgundy carpet, warm brass wall sconces, one framed smiling portrait, and a trail of pale wet footprints on the carpet. The corridor has enough depth for the sprinting figure to read distinctly behind the guests.
+Style/medium: Polished miniature 3D toy diorama illustration, rounded chunky human proportions, simple expressive dot eyes and sculpted mouths, short limbs, faceted low-poly architecture and props, soft matte painted clay and subtly worn wood-like textures. Match the playful handcrafted Jumbleyard game illustration family: charming toy characters, tactile rendered materials, carefully modeled scenery, cinematic depth and rich color. Original composition.
+Composition/framing: 3:2 landscape, 1536 x 1024 pixels. Four small guests grouped around the open elevator in the foreground; a diagonal view along the hotel corridor makes the distant tall sprinting shadow visible. Clear silhouette separation, full-bleed scenic illustration, strong readability at game-card size.
+Lighting/mood: Eerie playful suspense, dramatic warm brass light against cool teal and plum corridor shadow, soft ambient occlusion and cinematic dimensional lighting. The shadow figure is unnervingly tall and awkward with an exaggerated running pose; funny and spooky, not gruesome.
+Constraints: Exactly four toy hotel guests, one in each specified jacket color. Only one guest reacts in fear; three remain unconcerned. One tall shadow figure. No gore, violence, typography, words, lettering, numbers, logos, watermark, borders, UI, interface panels, collage, or photorealistic humans.

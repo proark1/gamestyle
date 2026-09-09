@@ -1,0 +1,74 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "f410b81519475c3330905744561e287a8ac36b4423f95a58f9eef099ee7a714a",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 1,
+  "bots": 3,
+  "variant": 3,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 180,
+  "carryingSeconds": 648.2166666666667,
+  "stoppedCarryingSeconds": 0,
+  "ignoredStopFrames": 0,
+  "actions": 74,
+  "stage": 6,
+  "sofa": {
+    "x": -3.4553260013608336,
+    "y": 11.776137934144172,
+    "z": -1.8001421210154391,
+    "velocity": {
+      "x": -0.00004030464119907837,
+      "y": -0.000098359111060764,
+      "z": -0.00008868285718448624
+    },
+    "angular": {
+      "x": 0.00012032551367404996,
+      "y": 0.000056972844123899803,
+      "z": -0.00005307563576142327
+    },
+    "quaternion": {
+      "x": -0.11318893187079174,
+      "y": -0.5697569755534595,
+      "z": -0.12262710284065817,
+      "w": -0.8046911507895625
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -0.7545963880546492,
+      "y": 9.190674177810816,
+      "z": 1.6251590074490205,
+      "grip": null
+    },
+    {
+      "name": "Jo",
+      "x": -0.11452804041653154,
+      "y": 9.488561417262368,
+      "z": -2.9997589867405274,
+      "grip": null,
+      "task": "Recovering sofa"
+    },
+    {
+      "name": "Nora",
+      "x": -0.10615512940802797,
+      "y": 9.490238176964136,
+      "z": 0.9457823410285948,
+      "grip": null,
+      "task": "Recovering sofa"
+    },
+    {
+      "name": "Sam",
+      "x": -8.759491845408892,
+      "y": 7.615357577246821,
+      "z": 2.3912132981886987,
+      "grip": null,
+      "task": "Recovering sofa"
+    }
+  ]
+}

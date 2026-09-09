@@ -1,0 +1,58 @@
+{
+  "revision": "2bb80f92c4cd704adbd239aa0bbba52134ff0fc5152e48273b04ebe713d1819a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "0072840d32d048d9820134a4c36d99726c73576a37a46a1fc81be26a8c109d79",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 1,
+  "bots": 1,
+  "variant": 0,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 0,
+  "carryingSeconds": 269.3333333333333,
+  "stoppedCarryingSeconds": 0,
+  "ignoredStopFrames": 0,
+  "actions": 43,
+  "stage": 0,
+  "sofa": {
+    "x": -6.175561684619551,
+    "y": 1.3971196637883032,
+    "z": 14.135363965213143,
+    "velocity": {
+      "x": -0.00045727038887319354,
+      "y": -0.000261719388623155,
+      "z": -0.0001321855290785144
+    },
+    "angular": {
+      "x": -0.00014739325001267135,
+      "y": 0.00007619181794978683,
+      "z": 0.0002835733528919583
+    },
+    "quaternion": {
+      "x": -0.03823017395261916,
+      "y": 0.5349179591177066,
+      "z": 0.07172796933182386,
+      "w": 0.8409853323503528
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -6.358791154831779,
+      "y": -0.6000784800000002,
+      "z": 16.96349050147086,
+      "grip": null
+    },
+    {
+      "name": "Jo",
+      "x": -6.3740209892059765,
+      "y": 0.5661113590966977,
+      "z": 11.4906882707585,
+      "grip": null,
+      "task": "Needs a hand: move the sofa"
+    }
+  ]
+}

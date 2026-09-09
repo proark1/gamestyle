@@ -38,3 +38,8 @@ next-env.d.ts
 /work/
 *.tsbuildinfo
 /data/
+
+/.work-npm-cache/
+
+# Local refactor and validation scratch files
+/.tmp/
