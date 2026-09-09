@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { label } from '../../shared/rendering/primitives';
+import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { island, junk } from './objects';
 import { LoadCrane } from './load-crane';
 import { worker } from '../../shared/rendering/worker';
@@ -874,7 +874,7 @@ export class GameScene {
   disposeObject(object: T.Object3D, materials = false) {
     object.traverse((o) => {
       if (o instanceof T.Mesh || o instanceof T.LineSegments)
-        o.geometry.dispose();
+        disposeGeometry(o.geometry);
       if (o instanceof T.Sprite) {
         o.material.map?.dispose();
         o.material.dispose();

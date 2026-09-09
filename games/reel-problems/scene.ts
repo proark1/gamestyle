@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as THREE from 'three';
 import {
   ANGLER_COLORS,
@@ -514,7 +515,7 @@ export class ReelScene {
         o instanceof THREE.Line ||
         o instanceof THREE.Sprite
       ) {
-        if ('geometry' in o) o.geometry.dispose();
+        if ('geometry' in o) disposeGeometry(o.geometry);
         for (const mat of Array.isArray(o.material)
           ? o.material
           : [o.material]) {

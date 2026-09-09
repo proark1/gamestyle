@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { label } from './objects';
 import type { Snapshot } from './model';
@@ -40,7 +41,7 @@ export class SwapView {
     this.root.removeFromParent();
     this.root.traverse((o) => {
       if (o instanceof T.Mesh || o instanceof T.LineLoop) {
-        o.geometry.dispose();
+        disposeGeometry(o.geometry);
         for (const m of Array.isArray(o.material) ? o.material : [o.material])
           m.dispose();
       }

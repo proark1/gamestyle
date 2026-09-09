@@ -1,3 +1,4 @@
+import { MIN_POLL_MS, quantizeAxis } from '../../shared/rooms/input-rate';
 import {
   PeerGameConnection,
   enterPeerRoom,
@@ -105,9 +106,14 @@ export class DeliveryConnection {
       this.input = { ...input, jump: input.jump || this.input.jump };
       return;
     }
+    const next = {
+      ...input,
+      x: quantizeAxis(input.x),
+      z: quantizeAxis(input.z),
+    };
     const changed =
-      input.x !== this.input.x || input.z !== this.input.z || input.jump;
-    this.input = { ...input, jump: input.jump || this.input.jump };
+      next.x !== this.input.x || next.z !== this.input.z || next.jump;
+    this.input = { ...next, jump: next.jump || this.input.jump };
     if (!changed || this.stopped) return;
     this.dirty = true;
     // Preserve reconnect backoff even when a joystick keeps producing events.
@@ -157,7 +163,7 @@ export class DeliveryConnection {
         this.failures
           ? Math.min(3000, this.failures * 500)
           : this.dirty
-            ? 0
+            ? MIN_POLL_MS
             : Math.max(0, 80 - (performance.now() - started)),
       );
   }

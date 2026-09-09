@@ -1,3 +1,6 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
+import { InstancedProxy } from '../../shared/rendering/instanced-proxy';
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { cowModel, farmModel, keyModel, ladder } from './objects';
 import { farmSnapshot, freshFarm } from './simulation';
@@ -39,6 +42,7 @@ export class FarmScene {
   camera = new T.OrthographicCamera();
   farm = farmModel();
   cows = new Map<string, T.Group>();
+  private herd?: InstancedProxy;
   items = new Map<string, T.Group>();
   resize: ResizeObserver;
   abort = new AbortController();
@@ -118,6 +122,21 @@ export class FarmScene {
       bottom: -25,
     });
     sun.shadow.normalBias = 0.05;
+    // The farm barely moves, so most of it merges by material. Only the farmer
+    // and the gate are animated; the wires and the disguise cover just toggle
+    // visibility and recolour a shared material, so they merge within their own
+    // group and keep that group as the handle the render loop still touches.
+    batchScenery(this.farm.group, [
+      this.farm.gate,
+      this.farm.wires,
+      this.farm.panelLight,
+      this.farm.escapeLadder,
+      this.farm.farmer,
+      this.farm.flashlight,
+      this.farm.cover,
+    ]);
+    batchScenery(this.farm.wires);
+    batchScenery(this.farm.cover);
     this.scene.add(sun, this.farm.group);
     this.ring.rotation.x = this.targetRing.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.13;
@@ -142,6 +161,10 @@ export class FarmScene {
       this.cows.set(`cow-${i}`, cow);
       this.scene.add(cow);
     }
+    // The herd is eighteen copies of one model, so it draws as a handful of
+    // instances instead of 432 meshes. The groups stay for animation and picking.
+    this.herd = new InstancedProxy(this.scene);
+    this.herd.adopt([...this.cows.values()]);
     for (const item of this.snapshot.world.items) {
       const model = item.kind === 'ladder' ? ladder() : keyModel();
       this.items.set(item.id, model);
@@ -566,10 +589,12 @@ export class FarmScene {
       });
       this.lastHud = time;
     }
+    this.herd?.update();
     this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame((t) => this.render(t));
   }
   dispose() {
+    this.herd?.dispose();
     cancelAnimationFrame(this.frame);
     this.abort.abort();
     this.resize.disconnect();
@@ -582,7 +607,7 @@ export class FarmScene {
           mats.add(m);
       } else if (o instanceof T.Sprite) mats.add(o.material);
     });
-    geometries.forEach((g) => g.dispose());
+    geometries.forEach((g) => disposeGeometry(g));
     mats.forEach((m) => {
       if ('map' in m && m.map instanceof T.Texture) m.map.dispose();
       m.dispose();

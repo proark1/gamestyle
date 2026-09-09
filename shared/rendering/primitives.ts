@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 const materials = new Map<string, T.MeshStandardMaterial>();
+const boxes = new Map<string, T.BufferGeometry>();
 
 export function material(color: string) {
   if (!materials.has(color))
@@ -11,6 +12,26 @@ export function material(color: string) {
   return materials.get(color)!;
 }
 
+/** Box sizes repeat heavily across a scene, so the buffers are shared by size.
+ *  Callers place meshes by transform and never edit these in place. */
+function boxGeometry(size: number[], rounded: boolean) {
+  const key = `${rounded ? 'r' : 'b'}:${size[0]}:${size[1]}:${size[2]}`;
+  let geometry = boxes.get(key);
+  if (!geometry) {
+    geometry = rounded
+      ? new RoundedBoxGeometry(size[0], size[1], size[2], 2, 0.075)
+      : new T.BoxGeometry(...(size as [number, number, number]));
+    geometry.userData.shared = true;
+    boxes.set(key, geometry);
+  }
+  return geometry;
+}
+
+/** Safe to call on any mesh: shared buffers outlive the meshes that borrow them. */
+export function disposeGeometry(geometry: T.BufferGeometry) {
+  if (!geometry.userData.shared) geometry.dispose();
+}
+
 export function box(
   g: T.Object3D,
   size: number[],
@@ -18,12 +39,7 @@ export function box(
   color: string,
   rounded = false,
 ) {
-  const mesh = new T.Mesh(
-    rounded
-      ? new RoundedBoxGeometry(size[0], size[1], size[2], 2, 0.075)
-      : new T.BoxGeometry(...(size as [number, number, number])),
-    material(color),
-  );
+  const mesh = new T.Mesh(boxGeometry(size, rounded), material(color));
   mesh.position.set(...(pos as [number, number, number]));
   mesh.castShadow = true;
   mesh.receiveShadow = true;

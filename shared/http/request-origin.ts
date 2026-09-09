@@ -1,13 +1,22 @@
-/** Public origins are configured explicitly when HTTPS terminates at a proxy. */
+/**
+ * Public origins are configured explicitly when HTTPS terminates at a proxy.
+ * `publicOrigin` accepts a comma-separated list so one deployment can serve
+ * several domains, such as a custom domain alongside its Railway address.
+ */
 export function isRoomOriginAllowed(
   request: Request,
   publicOrigin?: string,
 ): boolean {
   const origin = request.headers.get('origin');
   if (!origin) return true;
-  try {
-    return origin === new URL(publicOrigin || request.url).origin;
-  } catch {
-    return false;
-  }
+  const configured = publicOrigin?.trim() || request.url;
+  return configured.split(',').some((candidate) => {
+    const allowed = candidate.trim();
+    if (!allowed) return false;
+    try {
+      return origin === new URL(allowed).origin;
+    } catch {
+      return false;
+    }
+  });
 }

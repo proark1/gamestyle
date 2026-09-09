@@ -166,7 +166,9 @@ export function overlaps(
 }
 export const supportHeight = supportSurface;
 export const movePlayer = predictPlayer;
-export function tick(world: World, now: number) {
+/** `cacheKey` lets a caller that re-parses the world each time (the room
+ *  handler) keep one rigid-body world instead of rebuilding it per request. */
+export function tick(world: World, now: number, cacheKey?: object | string) {
   if (now <= world.clock) return world;
   const elapsed = Math.min((now - world.clock) / 1000, 2);
   world.clock = now;
@@ -176,7 +178,7 @@ export function tick(world: World, now: number) {
     count = Math.floor((total + 1e-9) / STEP);
   world.remainder = total - count * STEP;
   if (count) {
-    const physics = simulationPhysics(world);
+    const physics = simulationPhysics(world, cacheKey ?? world);
     for (let step = 0; step < count; step++) {
       for (const p of world.players)
         physics.controls(p, now - p.seen > 750 ? emptyInput() : p.input, STEP);
