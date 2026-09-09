@@ -90,11 +90,16 @@ export class SiegeScene {
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
+    // A hundred rigid bodies plus soft shadows is a lot for a handset GPU, so
+    // touch devices and small screens render leaner rather than dropping frames.
+    const lean =
+      matchMedia('(pointer: coarse)').matches ||
+      Math.min(innerWidth, innerHeight) < 820;
     this.renderer = new T.WebGLRenderer({
-      antialias: true,
+      antialias: !lean,
       powerPreference: 'high-performance',
     });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, lean ? 1.3 : 1.7));
     this.renderer.setClearColor('#d9bb8a');
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
@@ -109,7 +114,7 @@ export class SiegeScene {
     const sun = new T.DirectionalLight('#ffdca8', 2.7);
     sun.position.set(-24, 34, 26);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.mapSize.set(lean ? 1024 : 2048, lean ? 1024 : 2048);
     Object.assign(sun.shadow.camera, {
       left: -38,
       right: 38,
