@@ -1,3 +1,4 @@
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import {
   createKitchen,
@@ -395,7 +396,7 @@ export class BreakfastScene {
           materials.add(m);
       }
     });
-    geometry.forEach((g) => g.dispose());
+    geometry.forEach((g) => disposeGeometry(g));
     materials.forEach((m) => {
       const map = (m as T.MeshStandardMaterial).map;
       map?.dispose();

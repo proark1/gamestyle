@@ -1,3 +1,5 @@
+import { InstancedProxy } from '../../shared/rendering/instanced-proxy';
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { cowModel, farmModel, keyModel, ladder } from './objects';
 import { farmSnapshot, freshFarm } from './simulation';
@@ -39,6 +41,7 @@ export class FarmScene {
   camera = new T.OrthographicCamera();
   farm = farmModel();
   cows = new Map<string, T.Group>();
+  private herd?: InstancedProxy;
   items = new Map<string, T.Group>();
   resize: ResizeObserver;
   abort = new AbortController();
@@ -142,6 +145,10 @@ export class FarmScene {
       this.cows.set(`cow-${i}`, cow);
       this.scene.add(cow);
     }
+    // The herd is eighteen copies of one model, so it draws as a handful of
+    // instances instead of 432 meshes. The groups stay for animation and picking.
+    this.herd = new InstancedProxy(this.scene);
+    this.herd.adopt([...this.cows.values()]);
     for (const item of this.snapshot.world.items) {
       const model = item.kind === 'ladder' ? ladder() : keyModel();
       this.items.set(item.id, model);
@@ -566,10 +573,12 @@ export class FarmScene {
       });
       this.lastHud = time;
     }
+    this.herd?.update();
     this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame((t) => this.render(t));
   }
   dispose() {
+    this.herd?.dispose();
     cancelAnimationFrame(this.frame);
     this.abort.abort();
     this.resize.disconnect();
@@ -582,7 +591,7 @@ export class FarmScene {
           mats.add(m);
       } else if (o instanceof T.Sprite) mats.add(o.material);
     });
-    geometries.forEach((g) => g.dispose());
+    geometries.forEach((g) => disposeGeometry(g));
     mats.forEach((m) => {
       if ('map' in m && m.map instanceof T.Texture) m.map.dispose();
       m.dispose();

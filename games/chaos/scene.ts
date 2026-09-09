@@ -2167,7 +2167,7 @@ export class GameScene {
         );
       }
     });
-    geometries.forEach((g) => g.dispose());
+    geometries.forEach((g) => disposeGeometry(g));
     mats.forEach((m) => m.dispose());
     this.disposeLabel(this.scene);
     this.partyView.dispose();
