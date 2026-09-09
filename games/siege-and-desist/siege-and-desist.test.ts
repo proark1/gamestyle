@@ -513,25 +513,42 @@ void test('the aim cannot be swung past its stops', () => {
   assert.ok(p.pushing !== 0);
 });
 
-void test('the arm rests by the wind and whips through a release', async () => {
+void test('the beam winds down behind the pivot and whips at the castle', async () => {
   const { armAngle } = await import('./scene');
+  // Where the throwing end of the beam actually ends up, rotated about the
+  // pivot the way the model is. Asserting on the raw angle instead let the
+  // engine be built mirrored — winding lifted the sling on the castle side and
+  // the release flung it back over the crew, against the flight of the shot.
+  const throwingEnd = (angle: number) => ({
+    y: 4.6 - 4.2 * Math.sin(angle),
+    z: TREBUCHET.z + 4.2 * Math.cos(angle),
+  });
   const w = game(1);
   w.loosedAt = -100000;
   w.wind = 0;
   const relaxed = armAngle(w, w.clock);
+  const rest = throwingEnd(relaxed);
   w.wind = 1;
-  const wound = armAngle(w, w.clock);
+  const wound = throwingEnd(armAngle(w, w.clock));
   assert.ok(
-    wound < relaxed,
-    'winding drops the throwing end toward the loading spot',
+    wound.y < rest.y,
+    'winding drops the throwing end toward the ground',
+  );
+  assert.ok(
+    wound.z > TREBUCHET.z && Math.abs(wound.z - SLING.z) < 0.4,
+    'onto the loading spot behind the pivot, not the castle side of it',
   );
   // Through a release the arm sweeps past its resting angle and settles back.
   w.loosedAt = w.clock;
-  const sweep = armAngle(w, w.clock + 300);
-  assert.ok(sweep > relaxed, 'the release throws the arm well over the top');
-  const settling = armAngle(w, w.clock + 900);
+  const top = throwingEnd(armAngle(w, w.clock + 300));
+  assert.ok(top.y > rest.y, 'the release throws the arm well over the top');
   assert.ok(
-    settling < sweep && settling > wound,
+    top.z < wound.z - 2,
+    'and carries the sling toward the castle, the way the shot flies',
+  );
+  const settling = throwingEnd(armAngle(w, w.clock + 900));
+  assert.ok(
+    settling.y < top.y && settling.y > wound.y,
     'and it falls back toward rest afterwards',
   );
   w.wind = 0; // the counterweight is spent by the release

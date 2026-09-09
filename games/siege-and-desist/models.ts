@@ -207,8 +207,8 @@ export function trebuchet() {
   // Ground bed and A-frames.
   for (const x of [-2.5, 2.5])
     box(bed, [0.55, 0.4, 9], [x, 0.2, 0], '#6b4a2c', true);
-  box(bed, [5.6, 0.36, 0.7], [0, 0.18, 3.4], '#5c3f26', true);
-  box(bed, [5.6, 0.36, 0.7], [0, 0.18, -2.6], '#5c3f26', true);
+  box(bed, [5.6, 0.36, 0.7], [0, 0.18, -3.4], '#5c3f26', true);
+  box(bed, [5.6, 0.36, 0.7], [0, 0.18, 2.6], '#5c3f26', true);
   for (const x of [-2.5, 2.5]) {
     beam(bed, [x, 0.4, 1.5], [x, 4.6, 0], 0.42, '#7a5533');
     beam(bed, [x, 0.4, -1.5], [x, 4.6, 0], 0.42, '#7a5533');
@@ -220,14 +220,15 @@ export function trebuchet() {
   pivot.position.set(0, 4.6, 0);
   const arm = new T.Group();
   arm.name = 'arm';
-  // Long throwing beam: short weighted end behind, long sling end in front.
-  // The sling end sits over the loading spot when the arm is fully wound.
-  const shaft = box(arm, [0.34, 0.34, 8.6], [0, 0, -0.1], '#8a6238', true);
+  // Long throwing beam: the weighted end reaches out over the castle side, the
+  // sling end back over the crew. Winching the sling end down to the loading
+  // spot is what lifts the weight, and the weight falling is what throws.
+  const shaft = box(arm, [0.34, 0.34, 8.6], [0, 0, 0.1], '#8a6238', true);
   shaft.name = 'shaft';
-  box(arm, [0.5, 0.5, 0.5], [0, 0, 4], '#6b4a2c', true);
+  box(arm, [0.5, 0.5, 0.5], [0, 0, -4], '#6b4a2c', true);
   const weight = new T.Group();
   weight.name = 'counterweight';
-  weight.position.set(0, 0, 4);
+  weight.position.set(0, 0, -4);
   box(weight, [1.9, 1.7, 1.7], [0, -1.35, 0], '#5c452c', true);
   for (const y of [-0.85, -1.85])
     box(weight, [2.02, 0.16, 1.82], [0, y, 0], '#3f2f1e');
@@ -236,7 +237,7 @@ export function trebuchet() {
   arm.add(weight);
   const sling = new T.Group();
   sling.name = 'sling';
-  sling.position.set(0, 0, -4.2);
+  sling.position.set(0, 0, 4.2);
   const pouch = box(sling, [1.15, 0.16, 1.15], [0, -1.55, 0], '#8d6b45', true);
   pouch.name = 'pouch';
   beam(sling, [0, 0, 0], [-0.5, -1.5, 0], 0.05, '#6b563a');

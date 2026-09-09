@@ -78,9 +78,9 @@ export function newCrew(
     color,
     // Every crewmate starts in reach of the winch, so the opening move is
     // obvious and all four can put their shoulder to it immediately.
-    x: TREBUCHET.x + (color % 2 ? 2 : -2),
+    x: CRANK.x + (color % 2 ? 2 : -2),
     y: 0,
-    z: TREBUCHET.z + 3.2 + Math.floor(color / 2) * 1.2,
+    z: CRANK.z - 1 + Math.floor(color / 2) * 1.2,
     vx: 0,
     vy: 0,
     vz: 0,

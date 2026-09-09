@@ -17,9 +17,9 @@ One trebuchet is deliberately too big for one person:
 
 | Station       | Where                  | Key                         |
 | ------------- | ---------------------- | --------------------------- |
-| Winch         | behind the frame       | hold `R`                    |
+| Winch         | the castle side        | hold `R`                    |
 | Supply pile   | behind and to the left | `E`                         |
-| Sling         | front of the frame     | `E` (carrying), `C` to ride |
+| Sling         | behind the frame       | `E` (carrying), `C` to ride |
 | Frame         | either side            | hold `Q`                    |
 | Release lever | right of the frame     | `F`                         |
 
@@ -48,6 +48,34 @@ Stocked in a fixed order, so a crew can plan the cow rather than fish for it.
 - **The cow** — rare, enormous, absurd.
 - **A crewmate** — `C` climbs into the sling. Solo players cannot launch
   themselves: somebody else has to be at the lever, which is the joke.
+
+## The engine was built backwards
+
+The trebuchet threw the right way and animated the wrong way, and it took a
+player noticing to catch it. The counterweight hung behind the pivot on the
+crew's side and the sling reached out toward the castle, so winding *lifted*
+the payload on the target side and the release flung the beam back over the
+crew — while the stone flew forward regardless. Measured through a release, the
+sling end travelled from z 11.27 to z 14.49, directly away from the keep.
+
+A counterweight trebuchet is the other way round. The throwing end is winched
+down *behind* the pivot, which lifts the weight on the target side; the weight
+then falls and the beam whips the sling up and over toward the target. So the
+beam is mirrored, the three arm angles are negated, and the frame moved from
+z 15 to z 7.7 so that the sling end still comes down on the loading spot when
+fully wound. The sling stays at z 11.4 and every range in the game is measured
+from there, so no ballistics changed: the gate is still 20m and the keep 28m.
+
+Mirroring the beam puts the sling and the winch on the same side of the pivot,
+which is where a real windlass lives and is also where four stations become two.
+The winch keeps its place on the frame instead — now the castle-facing end —
+which spreads the crew around the machine and means winding is done underneath
+a raised counterweight.
+
+The test for this used to assert on the raw angle, which is why a mirrored
+engine passed it. It now converts the angle into where the throwing end
+actually is, and asserts that winding brings it down onto the loading spot
+behind the pivot and that a release carries it toward the castle.
 
 ## The castle is real
 
@@ -132,7 +160,7 @@ actually intersects, plus hit-testing each control's centre through
 are available, each viewport is measured with the dock forced to two buttons and
 to four — the widest a real position can offer. Eight viewports pass with zero
 intersections, nothing off-screen, no page scroll and every control reachable:
-320x568, 360x640, 393x660, 375x812, 768x1024, 667x375, 812x375 and 1440x900.
+320x568, 375x812, 393x660, 667x375, 768x1024, 880x700, 1100x720 and 1440x860.
 Landscape needed its own rules — the 600px minimum height is taller than a
 handset on its side, which pushed the dock below the fold and made the page
 scroll — and there the dock is held clear of the thumb corners with
@@ -145,9 +173,14 @@ icons.
 
 Fitting the desktop HUD onto a phone was not enough — everything fitted and the
 game was still unreadable, because six panels and six buttons left about 130px
-of actual playfield. The compact layout is a different layout rather than a
-smaller one, and it starts from the position that on a handset the playfield is
-the interface:
+of actual playfield. Then it turned out the desktop layout had the same disease
+in a roomier house: four stacked bars across the bottom, sitting on top of the
+trebuchet they were describing. Three of the rules below are not really phone
+rules and now apply at every width — only the actions you can take, the readout
+on one line, and nothing on screen that repeats what the scene already shows.
+
+The compact layout is a different layout rather than a smaller one, and it
+starts from the position that on a handset the playfield is the interface:
 
 - **Only the actions you can take.** Disabled dock buttons are hidden outright,
   so standing at the winch offers Wind and Swing aim rather than six buttons
@@ -170,6 +203,14 @@ the interface:
   upwards would have climbed straight over a readout placed above it.
 
 That is 393x660 with roughly 350px of playfield instead of 130px.
+
+On a desktop the same three rules take the bottom of the screen from four
+stacked bars down to two, and two more things stop being permanent: the status
+line now appears only when it has something to say rather than reporting that
+the banner is still flying, and the movement hint retires once the crew has
+actually thrown something. The event banner also moved below the scoreboard,
+having been centred where it collided with it at every width under about
+1400px.
 
 Landscape has only the gap between the two thumbs to put a dock in, so its
 buttons drop their icons to keep four on one row, and the event banner moves

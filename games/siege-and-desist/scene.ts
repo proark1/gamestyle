@@ -22,9 +22,12 @@ import {
   type SiegeWorld,
 } from './types';
 
-const RELAXED = 0.55;
-const WOUND = -0.48;
-const SWEEP = 1.45;
+// Negative angles carry the throwing end toward the castle, positive ones back
+// over the crew. Winding therefore counts up, and the release sweeps down past
+// rest and over the top: the beam whips the way the shot actually flies.
+const RELAXED = -0.55;
+const WOUND = 0.48;
+const SWEEP = -1.45;
 /** Where the arm sits at a given wind, and how it whips through a release. */
 export function armAngle(w: SiegeWorld, clock: number) {
   const since = clock - w.loosedAt;
@@ -131,7 +134,7 @@ export class SiegeScene {
         newCrew(`demo-${i}`, ['Kayi', 'Bahadir', 'Selim'][i], i, 100000),
       );
     this.demo.wind = 0.65;
-    this.camera.position.set(0, 15, 44);
+    this.camera.position.set(0, 15, 37);
     this.camera.lookAt(0, 5, -10);
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(container);
@@ -432,7 +435,7 @@ export class SiegeScene {
       // Behind and above the engine, so the crew, the trebuchet and the keep
       // are all in one frame and the throw reads as an arc rather than a plan.
       look = new T.Vector3(0, 5, -10);
-      target = new T.Vector3(0, 15 * zoom, 44 * zoom);
+      target = new T.Vector3(0, 15 * zoom, 37 * zoom);
     }
     this.camera.position.lerp(target, Math.min(1, dt * (flight ? 6 : 2.6)));
     this.look.lerp(look, Math.min(1, dt * (flight ? 6 : 3)));

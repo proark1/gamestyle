@@ -6,11 +6,18 @@ export const RELIEF_MS = 30_000;
 export const COLORS = ['#c2472f', '#2f7d74', '#d8a13d', '#7c5aa0'];
 export const FIELD = { x: 26, z: 30 };
 export const CASTLE = { x: 0, z: -13.6 };
-export const TREBUCHET = { x: 0, z: 15 };
-export const CRANK = { x: 0, z: 19.2 };
-export const LEVER = { x: 3.1, z: 16.6 };
+/** The frame stands between the sling and the castle, because that is how a
+ *  counterweight trebuchet works: the throwing end is winched down BEHIND the
+ *  pivot, on the crew's side, which lifts the weight on the castle side. The
+ *  weight then falls and the beam whips the sling up and over toward the
+ *  target. Built the other way round the engine throws over its own crew.
+ *  The sling stays at z 11.4 whatever else moves — every range in the game is
+ *  measured from there. */
+export const TREBUCHET = { x: 0, z: 7.7 };
+export const CRANK = { x: 0, z: 3.5 };
+export const LEVER = { x: 3.1, z: 6.1 };
 export const SLING = { x: 0, z: 11.4 };
-export const PILE = { x: -7.4, z: 19 };
+export const PILE = { x: -7.4, z: 13.4 };
 export const MAX_TURN = 0.42;
 export const BANNER_DOWN = 3.2;
 
