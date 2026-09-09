@@ -32,6 +32,16 @@ WASD/arrows move, Shift sprints, E inspects, R shares a finding, 1 votes advance
 
 Run `node scripts/test.mjs games/wrong-floor` for the full solo playthrough, rules and privacy checks, and `node scripts/peer-integration.mjs wrong-floor` for four real WebRTC guests inspecting, reporting, voting, escaping, sharing voice and recovering the host. See [Wrong Floor design and validation](games/wrong-floor/docs/design-and-validation.md).
 
+## Load Bearing
+
+Play at `/load-bearing`. One to four wreckers have three minutes to bring a condemned two-storey house down. The client's upright piano stands on the upper floor and has to survive. Parts hold each other up: cut what a floor rests on and everything above it drops at once, piano included. A beacon marks the piano through the walls so the crew can plan around it.
+
+WASD/arrows move, Space jumps, E swings the sledgehammer at whatever you are aiming at, Q sprays a mark so the crew can agree a plan, F digs out a teammate caught by debris, C takes the shared wrecking ball, and V changes the camera. Walls take three blows and columns five; the ball ignores that and destroys anything it touches. On the crane, WASD swings the hoist, R raises, Z lowers and X parks it. Drag to orbit, scroll to zoom, and touch devices get the shared joystick and action dock.
+
+The crew wins when nothing is left standing and the piano still has integrity. Destroying the piano, or running out the clock with the house up, ends the job. Solo practice runs the same rules without a database and without the timer. Rooms, six-character invitations, direct crew voice, host recovery and the sound workshop at `/load-bearing/admin` use the collection's existing infrastructure.
+
+Run `node scripts/test.mjs games/load-bearing` for the structure, rules and physics tests. See [Load Bearing design](games/load-bearing/docs/load-bearing-design.md) and [validation](games/load-bearing/docs/load-bearing-validation.md).
+
 ## One More Button
 
 Play at `/one-more-button`. One to four contestants share a toy game-show room. Every press adds an increasing prize and a permanent hazard: conveyor floors, giant boxing gloves, soap spills, and spinning sofas. The button recharges for 2.2 seconds and each press locks the exit for five seconds. Sixteen presses reach the $38,000 fictional jackpot. Players have three chances; dazed contestants can be helped by friends.

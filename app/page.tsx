@@ -17,6 +17,7 @@ import {
   CircleDot,
   Bot,
   Shuffle,
+  Hammer,
   WifiOff,
 } from 'lucide-react';
 import { redirect } from 'next/navigation';
@@ -32,6 +33,7 @@ const PINNED = [
   'shelf-control',
 ] as const;
 const SHUFFLED = [
+  'load-bearing',
   'wrong-floor',
   'one-more-button',
   'four-brain-cells',
@@ -274,6 +276,77 @@ const CARDS: Record<string, ReactElement> = {
           <span>“The hallway is empty.” Are you sure?</span>
           <strong>
             Play Wrong Floor <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
+  'load-bearing': (
+    <a
+      key="load-bearing"
+      className="game-card wreck-card"
+      href="/load-bearing"
+      aria-label="Load Bearing: bring a condemned house down without destroying the piano"
+    >
+      <div className="game-card-art wreck-art">
+        <svg viewBox="0 0 384 256" className="wreck-scene" preserveAspectRatio="xMidYMid slice">
+          <title>
+            A condemned house half demolished, a wrecking ball swinging past an
+            upright piano still standing on the exposed upper floor.
+          </title>
+          <rect width="384" height="256" fill="#cfd9c6" />
+          <circle cx="286" cy="58" r="34" fill="#fff1cf" />
+          <rect y="188" width="384" height="68" fill="#b3a892" />
+          <g fill="#cfc6b8">
+            <rect x="70" y="96" width="14" height="92" />
+            <rect x="196" y="96" width="14" height="92" />
+          </g>
+          <rect x="70" y="82" width="140" height="16" fill="#c49a63" />
+          <rect x="70" y="118" width="112" height="70" fill="#b06a4e" />
+          <rect x="70" y="66" width="86" height="18" fill="#c3bcae" />
+          <rect x="70" y="52" width="60" height="16" fill="#8e8577" />
+          <g fill="#4a3327">
+            <rect x="160" y="44" width="38" height="24" rx="3" />
+            <rect x="163" y="56" width="32" height="5" fill="#f4ead6" />
+          </g>
+          <rect x="150" y="68" width="58" height="14" fill="#c3bcae" />
+          <path d="M300 0 L300 96" stroke="#3c3630" strokeWidth="3" />
+          <circle cx="300" cy="112" r="17" fill="#4b4f55" />
+          <g fill="#b06a4e" opacity="0.9">
+            <rect x="222" y="176" width="30" height="12" rx="2" />
+            <rect x="252" y="182" width="22" height="8" rx="2" />
+            <rect x="40" y="180" width="26" height="10" rx="2" />
+          </g>
+        </svg>
+        <span className="game-card-tag">
+          <Hammer size={14} /> MIND THE PIANO
+        </span>
+        <span className="new-game-tag">NEW TO JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 players
+          </span>
+          <span>
+            <Timer size={14} /> 3-minute jobs
+          </span>
+        </div>
+        <h2>
+          Load Bearing<span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Bring a condemned house down in three minutes. The client&rsquo;s
+          piano is on the upper floor and has to survive. Cut the wrong support
+          and the whole storey pancakes onto it.
+        </p>
+        <div className="game-card-bottom">
+          <span>Which wall was holding that up?</span>
+          <strong>
+            Play Load Bearing <ArrowUpRight size={17} />
           </strong>
         </div>
       </div>

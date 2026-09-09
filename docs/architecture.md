@@ -12,6 +12,8 @@ Each game owns its implementation in `games/<id>/`. The folder identifiers match
 | `games/shelf-control`       | Shelf Control   | `/shelf-control`       |
 | `games/uphill-delivery`     | Uphill Delivery | `/uphill-delivery`     |
 | `games/dont-wake-the-giant` | Tiptoe Thieves  | `/dont-wake-the-giant` |
+| `games/one-more-button`     | One More Button | `/one-more-button`     |
+| `games/load-bearing`        | Load Bearing    | `/load-bearing`        |
 | `games/chaos`               | Permit Pending  | `/chaos`               |
 | `games/first-person`        | Brick by Hand   | `/first-person`        |
 

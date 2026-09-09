@@ -7,6 +7,7 @@ import { reelCatalog } from '../../games/reel-problems/audio';
 import { hotelCatalog } from '../../games/wrong-floor/audio';
 import { buttonCatalog } from '../../games/one-more-button/audio';
 import { breakfastCatalog } from '../../games/four-brain-cells/audio';
+import { loadBearingCatalog } from '../../games/load-bearing/audio';
 const catalogs: Record<GameId, Cue[]> = {
   'wrong-floor': hotelCatalog,
   'stack-or-sink': stackCatalog,
@@ -16,6 +17,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'reel-problems': reelCatalog,
   'one-more-button': buttonCatalog,
   'four-brain-cells': breakfastCatalog,
+  'load-bearing': loadBearingCatalog,
 };
 export function getCatalog(game: GameId): Cue[] {
   return catalogs[game];
