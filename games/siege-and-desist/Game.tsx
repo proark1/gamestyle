@@ -405,6 +405,30 @@ export default function SiegeAndDesist() {
     : 0;
   const pulling = w ? winders(w) : 0;
   const riding = !!me && w?.rider === me.id;
+  // Mirrors the reach the simulation enforces for `help`, so the button is lit
+  // only when there is actually somebody to haul up. The compact layout hides
+  // whatever is unavailable, and a permanently lit button would never hide.
+  const canHelp =
+    !!me &&
+    !!w &&
+    w.players.some(
+      (f) =>
+        f.id !== me.id &&
+        f.stunnedUntil > w.clock &&
+        !f.flying &&
+        Math.hypot(me.x - f.x, me.z - f.z) < 2.5,
+    );
+  const idle =
+    disabled ||
+    !(
+      nearCrank ||
+      nearPile ||
+      nearSling ||
+      nearLever ||
+      canPush ||
+      canHelp ||
+      riding
+    );
 
   return (
     <main className={`sad-game${session ? ' in-session' : ''}`}>
@@ -630,7 +654,8 @@ export default function SiegeAndDesist() {
                     <i style={{ width: `${Math.round(w.wind * 100)}%` }} />
                   </div>
                   <small>
-                    Range {Math.round(rangeFor(w.wind))}m · gate 20m · keep 28m
+                    Range {Math.round(rangeFor(w.wind))}m
+                    <span> · gate 20m · keep 28m</span>
                   </small>
                 </div>
                 <div className="sad-payload">
@@ -751,7 +776,7 @@ export default function SiegeAndDesist() {
                 </button>
                 <button
                   className="sad-action"
-                  disabled={disabled}
+                  disabled={disabled || !canHelp}
                   onClick={() => action({ type: 'help' })}
                 >
                   <Hand size={19} />
@@ -777,6 +802,17 @@ export default function SiegeAndDesist() {
                     </kbd>
                   </span>
                 </button>
+                {/* The compact layout shows only the actions you can take, so
+                    standing in open ground would otherwise leave a bare dock. */}
+                {idle && (
+                  <span className="sad-dock-hint">
+                    {me?.flying
+                      ? 'Airborne. Nothing to do but arrive.'
+                      : me && w && me.stunnedUntil > w.clock
+                        ? 'Flattened. A crewmate can haul you up.'
+                        : 'Walk to the winch, the pile or the lever.'}
+                  </span>
+                )}
               </nav>
               <span className="sad-movement-hint">
                 WASD / arrows to move · The gold ring shows where this wind
