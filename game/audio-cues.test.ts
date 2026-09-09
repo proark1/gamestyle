@@ -91,6 +91,21 @@ test('picking salvage up and hooking it to the crane sound different',()=>{
   assert.equal(audio.count('heft'),1,'the crane does not grunt');
 });
 
+test('setting salvage down is heard even though placement snaps it to rest',()=>{
+  const audio=new Recorder(),cues=new AudioCues(audio);
+  // act() resets motion before clearing heldBy, so a placed piece never falls far
+  // enough to trigger an impact on its own.
+  const carried=piece({kind:'bathtub',heldBy:'me'});
+  const placed=piece({kind:'bathtub',x:2,y:1.3,z:1,vy:0});
+  cues.observe(world({pieces:[carried],players:[player()]}),'me',null,VIEW,1000,true);
+  cues.observe(world({pieces:[placed],players:[player()]}),'me',null,VIEW,1200,true);
+  assert.equal(audio.count('impact'),1,'placing is not silent');
+  const set=audio.first('impact')!;
+  assert.equal(set.args[0],'porcelain');
+  assert.ok((set.args[1] as number)<.6,'a set-down is gentler than a drop');
+  assert.equal(audio.count('clank'),0,'a hand is not a crane hook');
+});
+
 test('the round result and the rising water drive the music, not a timer',()=>{
   const audio=new Recorder(),cues=new AudioCues(audio);
   cues.observe(world({phase:'lobby',players:[player()]}),'me',null,VIEW,1000,true);

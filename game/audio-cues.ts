@@ -132,8 +132,12 @@ export class AudioCues {
       const holder=piece.heldBy||'',wasHeld=this.held.get(piece.id)??holder;
       this.held.set(piece.id,holder);
       if(holder!==wasHeld&&!this.first){
+        const heavy=(PIECE_MASS[piece.kind]-12)/53;
         if(holder==='crane'||wasHeld==='crane')this.audio.clank(piece.x,piece.y,piece.z);
-        else if(holder)this.audio.heft(materialOf(piece.kind),(PIECE_MASS[piece.kind]-12)/53,piece.x,piece.y,piece.z);
+        else if(holder)this.audio.heft(materialOf(piece.kind),heavy,piece.x,piece.y,piece.z);
+        // Placing snaps the piece to a resting pose, so it never falls far enough to
+        // register an impact on its own. Sound the set-down, weighted by mass.
+        else if(wasHeld)this.audio.impact(materialOf(piece.kind),.22+heavy*.28,piece.x,piece.y,piece.z);
       }
       const wet=piece.y<world.water,wasWet=this.wet.get(piece.id)??wet;
       this.wet.set(piece.id,wet);

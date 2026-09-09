@@ -78,9 +78,11 @@ export class Audio implements AudioSink {
   private suspendTimer:ReturnType<typeof setTimeout>|undefined;
   private ducked=false;
 
+  /** Runs on every gesture, so it must never undo a mute or a hidden tab. */
   async unlock(){
     if(!this.context){this.context=new AudioContext();this.build();}
     clearTimeout(this.suspendTimer);
+    if(!this.enabled){if(this.context.state==='running')await this.context.suspend();return;}
     if(this.context.state==='suspended')await this.context.resume();
   }
   private build(){
@@ -352,17 +354,18 @@ export class Audio implements AudioSink {
     }
   }
 
-  setVolume(volume:number){this.volume=clamp(volume,0,1);if(this.master&&this.enabled)this.master.gain.setTargetAtTime(this.volume,this.at(),.05);}
+  setVolume(volume:number){this.volume=clamp(volume,0,1);if(this.master&&this.enabled)this.master.gain.setTargetAtTime(this.level(),this.at(),.05);}
+  private level(){return this.volume*(this.ducked?.3:1);}
   setMusic(on:boolean){this.musicEnabled=on;if(this.bus)this.bus.music.gain.setTargetAtTime(on?.5:0,this.at(),.3);}
   setDucked(ducked:boolean){
     this.ducked=ducked;
-    if(this.master&&this.enabled)this.master.gain.setTargetAtTime(this.volume*(ducked?.3:1),this.at(),.12);
+    if(this.master&&this.enabled)this.master.gain.setTargetAtTime(this.level(),this.at(),.12);
   }
   /** Muting releases the audio hardware instead of just skipping cues. */
   setEnabled(enabled:boolean){
     this.enabled=enabled;clearTimeout(this.suspendTimer);
     if(!this.context||!this.master)return;
-    if(enabled){void this.context.resume();this.master.gain.setTargetAtTime(this.volume*(this.ducked?.3:1),this.at(),.08);}
+    if(enabled){void this.context.resume();this.master.gain.setTargetAtTime(this.level(),this.at(),.08);}
     else {this.master.gain.setTargetAtTime(0,this.at(),.05);this.suspendTimer=setTimeout(()=>void this.context?.suspend(),260);}
   }
   dispose(){clearTimeout(this.suspendTimer);void this.context?.close();this.context=null;this.bus=undefined;}
