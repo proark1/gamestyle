@@ -168,4 +168,4 @@ node --import tsx games/stack-or-sink/scripts/physics-integration.mjs
 
 The default local database is `data/stack-or-sink.sqlite`. For a deployed integration test, set `GAME_TEST_URL` to the Railway HTTPS origin. Railway deployment uploads exclude local databases, outputs, dependencies, and environment files.
 
-Redeploy from this linked directory with `npx --yes @railway/cli up --service stack-or-sink --environment production --detach`. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
+Redeploy from this linked directory with `npx --yes @railway/cli up --service jumbleyard --environment production --detach`. The service is `jumbleyard`; only the volume still carries the older `stack-or-sink` name. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
