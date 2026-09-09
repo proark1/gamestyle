@@ -41,6 +41,7 @@ import {
 } from './simulation';
 import {
   AMMO,
+  BANNER_DOWN,
   CRANK,
   LEVER,
   PILE,
@@ -685,31 +686,33 @@ export default function SiegeAndDesist() {
                 <span>View · V</span>
               </button>
 
-              <div className="sad-your-status">
-                {me?.flying ? (
-                  'You are airborne. Nothing to do but arrive.'
-                ) : riding ? (
-                  'You are in the sling. Someone still has to pull the lever.'
-                ) : me && me.stunnedUntil > w.clock ? (
-                  'Flattened. A crewmate can haul you up with H.'
-                ) : me?.carrying ? (
-                  <>
-                    <Package size={16} /> Carrying {AMMO[me.carrying].name} ·
-                    take it to the sling
-                  </>
-                ) : (
-                  <>
-                    <Flame size={16} />{' '}
-                    {flag && flag.y > 3.2
-                      ? 'Banner still flying'
-                      : 'Banner falling!'}{' '}
-                    ·{' '}
-                    {w.beesUntil > w.clock
-                      ? 'defenders scattered'
-                      : 'mind the clay pots'}
-                  </>
-                )}
-              </div>
+              {/* Only when it has something to say. Standing there being told
+                  the banner is still flying is a bar over the playfield for no
+                  reason — the banner is right there on the keep. */}
+              {(me?.flying ||
+                riding ||
+                (me && me.stunnedUntil > w.clock) ||
+                me?.carrying ||
+                (flag && flag.y <= BANNER_DOWN + 1)) && (
+                <div className="sad-your-status">
+                  {me?.flying ? (
+                    'You are airborne. Nothing to do but arrive.'
+                  ) : riding ? (
+                    'You are in the sling. Someone still has to pull the lever.'
+                  ) : me && me.stunnedUntil > w.clock ? (
+                    'Flattened. A crewmate can haul you up with H.'
+                  ) : me?.carrying ? (
+                    <>
+                      <Package size={16} /> Carrying {AMMO[me.carrying].name} ·
+                      take it to the sling
+                    </>
+                  ) : (
+                    <>
+                      <Flame size={16} /> The banner is going down.
+                    </>
+                  )}
+                </div>
+              )}
 
               <TouchControls
                 disabled={disabled}
@@ -814,10 +817,14 @@ export default function SiegeAndDesist() {
                   </span>
                 )}
               </nav>
-              <span className="sad-movement-hint">
-                WASD / arrows to move · The gold ring shows where this wind
-                lands · Fire pots burn timber, the hive clears the walls
-              </span>
+              {/* Instructions until the crew has actually thrown something.
+                  After that they are a permanent banner of things you know. */}
+              {w.volleys === 0 && (
+                <span className="sad-movement-hint">
+                  WASD / arrows to move · The gold ring shows where this wind
+                  lands · Fire pots burn timber, the hive clears the walls
+                </span>
+              )}
             </>
           )}
 
