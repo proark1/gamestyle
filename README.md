@@ -6,20 +6,20 @@
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
-| Game | Play at | Game code | Route |
-| --- | --- | --- | --- |
-| Siege and Desist | `/siege-and-desist` | `games/siege-and-desist/` | `app/siege-and-desist/` |
-| Stack or Sink | `/stack-or-sink` | `games/stack-or-sink/` | `app/stack-or-sink/` |
-| Blend Business | `/act-natural` | `games/act-natural/` | `app/act-natural/` |
-| Uphill Delivery | `/uphill-delivery` | `games/uphill-delivery/` | `app/uphill-delivery/` |
-| Tiptoe Thieves | `/dont-wake-the-giant` | `games/dont-wake-the-giant/` | `app/dont-wake-the-giant/` |
-| Permit Pending | `/chaos` | `games/chaos/` | `app/(handwerker)/chaos/` |
-| Brick by Hand | `/first-person` | `games/first-person/` | `app/(handwerker)/first-person/` |
-| Wrong Floor | `/wrong-floor` | `games/wrong-floor/` | `app/wrong-floor/` |
-| One More Button | `/one-more-button` | `games/one-more-button/` | `app/one-more-button/` |
-| Four Brain Cells | `/four-brain-cells` | `games/four-brain-cells/` | `app/four-brain-cells/` |
-| Reel Problems | `/reel-problems` | `games/reel-problems/` | `app/reel-problems/` |
-| Shelf Control | `/shelf-control` | `games/shelf-control/` | `app/shelf-control/` |
+| Game             | Play at                | Game code                    | Route                            |
+| ---------------- | ---------------------- | ---------------------------- | -------------------------------- |
+| Siege and Desist | `/siege-and-desist`    | `games/siege-and-desist/`    | `app/siege-and-desist/`          |
+| Stack or Sink    | `/stack-or-sink`       | `games/stack-or-sink/`       | `app/stack-or-sink/`             |
+| Blend Business   | `/act-natural`         | `games/act-natural/`         | `app/act-natural/`               |
+| Uphill Delivery  | `/uphill-delivery`     | `games/uphill-delivery/`     | `app/uphill-delivery/`           |
+| Tiptoe Thieves   | `/dont-wake-the-giant` | `games/dont-wake-the-giant/` | `app/dont-wake-the-giant/`       |
+| Permit Pending   | `/chaos`               | `games/chaos/`               | `app/(handwerker)/chaos/`        |
+| Brick by Hand    | `/first-person`        | `games/first-person/`        | `app/(handwerker)/first-person/` |
+| Wrong Floor      | `/wrong-floor`         | `games/wrong-floor/`         | `app/wrong-floor/`               |
+| One More Button  | `/one-more-button`     | `games/one-more-button/`     | `app/one-more-button/`           |
+| Four Brain Cells | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
+| Reel Problems    | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
+| Shelf Control    | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
 
 Eleven of the twelve have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
 
@@ -46,16 +46,6 @@ A wrong call starts a 12-second run to the brass elevator. Only one guest sees t
 WASD/arrows move, Shift sprints, E inspects, R shares a finding, 1 votes advance, 2 votes retreat, and V switches first-person/follow cameras. Drag to look; touch movement and actions are included. Guests sprint automatically during escapes. Room codes, direct voice, host handover, and `/wrong-floor/admin` use the shared infrastructure. Immediate synthesized sounds work before any optional workshop recordings are generated.
 
 Run `node scripts/test.mjs games/wrong-floor` for the full solo playthrough, rules and privacy checks, and `node scripts/peer-integration.mjs wrong-floor` for four real WebRTC guests inspecting, reporting, voting, escaping, sharing voice and recovering the host. See [Wrong Floor design and validation](games/wrong-floor/docs/design-and-validation.md).
-
-## Load Bearing
-
-Play at `/load-bearing`. One to four wreckers have three minutes to bring a condemned two-storey house down. The client's upright piano stands on the upper floor and has to survive. Parts hold each other up: cut what a floor rests on and everything above it drops at once, piano included. A beacon marks the piano through the walls so the crew can plan around it.
-
-WASD/arrows move, Space jumps, E swings the sledgehammer at whatever you are aiming at, Q sprays a mark so the crew can agree a plan, F digs out a teammate caught by debris, C takes the shared wrecking ball, and V changes the camera. Walls take three blows and columns five; the ball ignores that and destroys anything it touches. On the crane, WASD swings the hoist, R raises, Z lowers and X parks it. Drag to orbit, scroll to zoom, and touch devices get the shared joystick and action dock.
-
-The crew wins when nothing is left standing and the piano still has integrity. Destroying the piano, or running out the clock with the house up, ends the job. Solo practice runs the same rules without a database and without the timer. Rooms, six-character invitations, direct crew voice, host recovery and the sound workshop at `/load-bearing/admin` use the collection's existing infrastructure.
-
-Run `node scripts/test.mjs games/load-bearing` for the structure, rules and physics tests. See [Load Bearing design](games/load-bearing/docs/load-bearing-design.md) and [validation](games/load-bearing/docs/load-bearing-validation.md).
 
 ## One More Button
 
@@ -193,8 +183,8 @@ node --import tsx games/stack-or-sink/scripts/physics-integration.mjs
 
 The default local database is `data/stack-or-sink.sqlite`. For a deployed integration test, set `GAME_TEST_URL` to the Railway HTTPS origin. Railway deployment uploads exclude local databases, outputs, dependencies, and environment files.
 
-Redeploy from this linked directory with `npx --yes @railway/cli up --service jumbleyard --environment production --detach`. The service is `jumbleyard`; only the volume still carries the older `stack-or-sink` name. CLI uploads deploy the current source; GitHub automatic deployment is not configured.
+Redeploy with `npm run deploy`. The service is `jumbleyard`; only the volume still carries the older `stack-or-sink` name.
 
-The Railway link is registered against the repository root, and the CLI resolves it by walking up from the working directory. Deploying from a git worktree under `.claude/worktrees/` therefore uploads the root checkout instead, and `.railwayignore` excludes `.claude`, so the worktree's own changes are silently left out of a build that still succeeds. Release from the root checkout, or from a clean `git archive` export of the commit with an explicit `--project`, and confirm the intended routes appear in the build log before trusting the deployment.
+`railway up` uploads the directory it runs from, not a git ref, and this repository normally has a dozen worktrees with sessions working in parallel. Deploying from one that has fallen behind silently reverts whatever landed on `main` since it was cut — the build succeeds, the health check stays green, every page returns 200, and the work is gone. That happened twice on 9 September 2026. `npm run deploy` refuses when the working tree is dirty, when the directory is not in sync with `origin/main`, or when another session already has a deployment in flight, and then runs the same upload. Pass `--force` to skip the checks deliberately.
 
-Several sessions share this service, so a `railway up` from any of them replaces whatever is live. A game only stays deployed once it is merged into `main`.
+Prefer a behavioural check over a status code when confirming a deploy: count WebGL draw calls in the browser, or exercise a route whose output you know. HTTP 200 does not distinguish the build you meant from the one you replaced. GitHub automatic deployment is not configured.
