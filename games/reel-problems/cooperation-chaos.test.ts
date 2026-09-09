@@ -189,7 +189,12 @@ void test('Level rails are safe, rain increases sliding, and rescue grants recov
   p.z = w.boat.z;
   p.slipX = 3;
   reelAction(w, p.id, { type: 'rescue' }, p.id);
+  assert.equal(p.clinging, true);
+  p.input.reel = true;
+  tick(w, 5.2);
+  assert.equal(p.swimming, false);
   assert.equal(p.slipX, 0);
+  p.input.reel = false;
   p.input.x = 1;
   p.x = BOAT_HALF.x;
   for (let i = 0; i < 60; i++) {
@@ -251,7 +256,7 @@ void test('Gusts move and rock the boat; a shark bumps the hull and jellyfish sn
   w.weather.kind = 'wind';
   w.weather.direction = Math.PI / 2;
   w.weather.since -= 3000;
-  tick(w, 2);
+  tick(w, 3);
   assert.ok(w.boat.x > 1);
   assert.ok(Math.abs(w.boat.roll) > 0.08);
   const shark = w.wildlife[0];

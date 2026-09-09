@@ -395,26 +395,37 @@ export class ReelScene {
           object.position.set(p.x, p.swimming ? -0.45 : 0.52, p.z);
         }
       }
-      object.position.lerp(
-        new THREE.Vector3(
-          p.x,
-          p.swimming ? -0.48 + Math.sin(now / 200) * 0.08 : 0.52,
-          p.z,
-        ),
-        smooth,
-      );
-      object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
+      const downed = p.swimming && world.clock < p.downedUntil;
       const falling =
         p.swimming && now - (object.userData.fellAt ?? -1000) < 500;
-      object.rotation.x = falling
-        ? Math.sin(((now - object.userData.fellAt) / 500) * Math.PI) * 0.9
-        : 0;
-      object.rotation.z = falling
-        ? 0.65
-        : p.input.brace
+      // Height alone tells the story: face down, hanging on, or back aboard.
+      const height = downed
+        ? -0.74
+        : p.clinging
+          ? -0.5 + p.climb * 1.02
+          : p.swimming
+            ? -0.48 + Math.sin(now / 200) * 0.08
+            : 0.52;
+      object.position.lerp(new THREE.Vector3(p.x, height, p.z), smooth);
+      object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
+      if (falling) {
+        object.rotation.x =
+          Math.sin(((now - object.userData.fellAt) / 500) * Math.PI) * 0.9;
+        object.rotation.z = 0.65;
+      } else if (downed) {
+        object.rotation.x = 1.45;
+        object.rotation.z = 0.6;
+      } else if (p.clinging) {
+        // Scrambling up the side: the harder you haul, the more you swing.
+        object.rotation.x = -0.35;
+        object.rotation.z = Math.sin(now / 90) * (p.input.reel ? 0.18 : 0.05);
+      } else {
+        object.rotation.x = 0;
+        object.rotation.z = p.input.brace
           ? -0.12
           : Math.sin(now / 110) *
             Math.min(0.06, Math.hypot(p.input.x, p.input.z) * 0.06);
+      }
       const line = this.lines.get(p.id)!,
         bobber = this.bobbers.get(p.id)!;
       line.visible = bobber.visible = !!p.line;

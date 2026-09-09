@@ -54,11 +54,85 @@ const effects = {
     'Shark bump',
     'A large fin slices the water followed by a hollow wooden boat hull thump.',
   ],
+  chomp: [
+    'Shark bite',
+    'A huge jaw snaps shut twice underwater with a heavy wet crunch and a thrashing splash.',
+  ],
   jellyfish: [
     'Jellyfish snag',
     'A wobbly wet squelch with a tiny electric fizz and nylon line squeak.',
   ],
+  sting: [
+    'Jellyfish sting',
+    'A crackling electric zap fizzes over wet skin and rises into a stinging burn.',
+  ],
 } as const;
+/**
+ * Filtered-noise stand-ins used until the workshop generates real clips, so a
+ * shark or a jellyfish is never silent on a fresh deployment.
+ */
+const textures: Partial<
+  Record<
+    ReelEvent['kind'],
+    {
+      duration: number;
+      from: number;
+      to: number;
+      filter: BiquadFilterType;
+      peak: number;
+      hits: number;
+    }
+  >
+> = {
+  thunder: {
+    duration: 2.1,
+    from: 700,
+    to: 90,
+    filter: 'lowpass',
+    peak: 1.2,
+    hits: 1,
+  },
+  weather: {
+    duration: 1.4,
+    from: 450,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.65,
+    hits: 1,
+  },
+  shark: {
+    duration: 0.55,
+    from: 450,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.65,
+    hits: 1,
+  },
+  jellyfish: {
+    duration: 0.55,
+    from: 1800,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.65,
+    hits: 1,
+  },
+  chomp: {
+    duration: 0.9,
+    from: 1500,
+    to: 70,
+    filter: 'lowpass',
+    peak: 1.1,
+    hits: 2,
+  },
+  sting: {
+    duration: 0.7,
+    from: 900,
+    to: 3400,
+    filter: 'bandpass',
+    peak: 0.85,
+    hits: 5,
+  },
+};
 export const reelCatalog: Cue[] = [
   ...Object.entries(effects).map(([id, [name, prompt]]) => ({
     id: `event.${id}`,
@@ -137,17 +211,11 @@ export class ReelSound {
       return;
     const ctx = this.context,
       t = ctx.currentTime;
-    if (
-      kind === 'thunder' ||
-      kind === 'weather' ||
-      kind === 'shark' ||
-      kind === 'jellyfish'
-    ) {
-      const duration =
-        kind === 'thunder' ? 2.1 : kind === 'weather' ? 1.4 : 0.55;
+    const shaped = textures[kind];
+    if (shaped) {
       const buffer = ctx.createBuffer(
         1,
-        Math.ceil(ctx.sampleRate * duration),
+        Math.ceil(ctx.sampleRate * shaped.duration),
         ctx.sampleRate,
       );
       const samples = buffer.getChannelData(0);
@@ -157,23 +225,28 @@ export class ReelSound {
         filter = ctx.createBiquadFilter(),
         envelope = ctx.createGain();
       source.buffer = buffer;
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(
-        kind === 'thunder' ? 700 : kind === 'jellyfish' ? 1800 : 450,
-        t,
+      filter.type = shaped.filter;
+      filter.Q.value = shaped.filter === 'bandpass' ? 6 : 1;
+      filter.frequency.setValueAtTime(shaped.from, t);
+      filter.frequency.exponentialRampToValueAtTime(
+        shaped.to,
+        t + shaped.duration,
       );
-      filter.frequency.exponentialRampToValueAtTime(90, t + duration);
+      // One hump is a rumble; repeats are jaws closing or a current crackling.
+      const beat = shaped.duration / shaped.hits;
       envelope.gain.setValueAtTime(0.001, t);
-      envelope.gain.linearRampToValueAtTime(
-        kind === 'thunder' ? 1.2 : 0.65,
-        t + 0.045,
-      );
-      envelope.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      for (let i = 0; i < shaped.hits; i++) {
+        envelope.gain.linearRampToValueAtTime(
+          shaped.peak * (1 - (i / shaped.hits) * 0.45),
+          t + i * beat + 0.045,
+        );
+        envelope.gain.exponentialRampToValueAtTime(0.001, t + (i + 1) * beat);
+      }
       source.connect(filter);
       filter.connect(envelope);
       envelope.connect(this.gain);
       source.start(t);
-      source.stop(t + duration);
+      source.stop(t + shaped.duration);
       source.onended = () => {
         source.disconnect();
         filter.disconnect();
