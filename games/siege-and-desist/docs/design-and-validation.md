@@ -13,29 +13,40 @@ caps for headings — while the playfield keeps Jumbleyard's chunky toy look.
 
 ## The loop
 
-One trebuchet is deliberately too big for one person:
+Stand at the engine and hold `R`, then press `F`.
 
-| Station       | Where                  | Key                         |
-| ------------- | ---------------------- | --------------------------- |
-| Winch         | the castle side        | hold `R`                    |
-| Supply pile   | behind and to the left | `E`                         |
-| Sling         | behind the frame       | `E` (carrying), `C` to ride |
-| Frame         | either side            | hold `Q`                    |
-| Release lever | right of the frame     | `F`                         |
+| Key      | Does                                     |
+| -------- | ---------------------------------------- |
+| hold `R` | wind the counterweight — this is the aim |
+| `F`      | loose                                    |
+| `Q` `E`  | swing the aim left and right             |
+| `C`      | climb into the sling, at the sling       |
+| `H`      | haul up a flattened crewmate             |
 
-Winding sets the range. Every extra pair of hands on the winch winds faster, so
-a full crew reloads roughly twice as quickly as a lone player. The counterweight
-is the only range control: about two fifths of a wind reaches the gate, three
-quarters reaches the keep behind it, and a full wind sails over everything.
+All of it works from anywhere within six metres of the frame. This is the second
+version of the loop. The first one had four stations — supply pile, sling,
+winch, release lever — and firing a single shot meant walking to the pile,
+pressing `E`, walking to the sling, pressing `E`, walking to the winch, holding
+`R`, walking to the lever and pressing `F`. It read as a nice bit of co-op
+choreography and played as a chore list, so the errands are gone: the sling
+restocks itself from the pile in order, and winding, aiming and loosing are all
+one reach.
 
-The engine never opens pointed at the keep. Each assault starts with the aim
-swung 0.16–0.32 radians off centre, and someone has to lean on the frame to
-bring it round. Pushing from the left swings the throw right, as a shove should.
+What survives is the part that was actually cooperative. Winding is shared, so
+every extra pair of hands winds faster and a full crew reloads roughly twice as
+quickly as a lone player. The counterweight is still the only range control:
+about two fifths of a wind reaches the gate, three quarters reaches the keep
+behind it, and a full wind sails over everything. And the sling still cannot be
+loosed by the person sitting in it.
+
+The engine now opens pointed at the keep. It used to open swung 0.16–0.32
+radians off centre so that somebody had to lean on the frame first, which meant
+the opening move of every siege was undoing a random number.
 
 Defenders on the battlements answer with clay pots roughly every seven seconds.
 A pot near the frame costs both the wind and the aim, so a crew under fire keeps
-having to go back to the winch. A beehive over the battlements clears them for
-twenty-six seconds.
+having to wind back up and straighten out. A beehive over the battlements clears
+them for twenty-six seconds.
 
 ## Ammunition
 
@@ -46,20 +57,21 @@ Stocked in a fixed order, so a crew can plan the cow rather than fish for it.
   outright, dropping whatever they were holding up.
 - **Beehive** — scatters the defenders instead of doing damage.
 - **The cow** — rare, enormous, absurd.
-- **A crewmate** — `C` climbs into the sling. Solo players cannot launch
-  themselves: somebody else has to be at the lever, which is the joke.
+- **A crewmate** — `C` climbs into the sling, displacing whatever it had
+  restocked. Solo players cannot launch themselves: the one thing you still
+  cannot do alone is loose a sling you are sitting in, which is the joke.
 
 ## The engine was built backwards
 
 The trebuchet threw the right way and animated the wrong way, and it took a
 player noticing to catch it. The counterweight hung behind the pivot on the
-crew's side and the sling reached out toward the castle, so winding *lifted*
+crew's side and the sling reached out toward the castle, so winding _lifted_
 the payload on the target side and the release flung the beam back over the
 crew — while the stone flew forward regardless. Measured through a release, the
 sling end travelled from z 11.27 to z 14.49, directly away from the keep.
 
 A counterweight trebuchet is the other way round. The throwing end is winched
-down *behind* the pivot, which lifts the weight on the target side; the weight
+down _behind_ the pivot, which lifts the weight on the target side; the weight
 then falls and the beam whips the sling up and over toward the target. So the
 beam is mirrored, the three arm angles are negated, and the frame moved from
 z 15 to z 7.7 so that the sling end still comes down on the loading spot when
@@ -67,10 +79,10 @@ fully wound. The sling stays at z 11.4 and every range in the game is measured
 from there, so no ballistics changed: the gate is still 20m and the keep 28m.
 
 Mirroring the beam puts the sling and the winch on the same side of the pivot,
-which is where a real windlass lives and is also where four stations become two.
-The winch keeps its place on the frame instead — now the castle-facing end —
-which spreads the crew around the machine and means winding is done underneath
-a raised counterweight.
+which is where a real windlass lives. The winch keeps its place on the frame
+instead — now the castle-facing end — so winding is done underneath a raised
+counterweight. That mattered more when the winch was a station you had to stand
+on; now that the whole engine is one reach it is a piece of staging.
 
 The test for this used to assert on the raw angle, which is why a mirrored
 engine passed it. It now converts the angle into where the throwing end
@@ -113,15 +125,22 @@ not bit-for-bit, which is well inside a block's own size.
 
 ## Validation
 
-- `node scripts/test.mjs games/siege-and-desist` — 28 tests covering the castle
-  layout, station proximity rules, the shared winch, aiming and its stops,
-  ballistics against the aiming ring, boulder and fire damage, the beehive,
-  riding the sling, host authority, both endings, rematches, and the
-  delta-snapshot round trip including burnt blocks.
+- `node scripts/test.mjs games/siege-and-desist` — 29 tests covering the castle
+  layout, the engine's reach, the self-stocking sling, the shared winch, aiming
+  and its stops, ballistics against the aiming ring, boulder and fire damage,
+  the beehive, riding the sling and who may loose it, host authority, both
+  endings, rematches, and the delta-snapshot round trip including burnt blocks.
 - `node scripts/peer-integration.mjs siege-and-desist` — four real local WebRTC
   clients: a shared winch two guests turn together, an aim swung the same way on
-  every client, lever proximity enforced across the mesh, and wind, aim and
-  castle all surviving an abrupt host loss with join-order handover.
+  every client, sling reach enforced across the mesh, and wind, aim and castle
+  all surviving an abrupt host loss with join-order handover.
+
+One long-standing flake was fixed rather than retried: the winding-rate test
+winds fully, which is forty seconds of simulated time, and a clay pot landing on
+the frame in that window knocks the counterweight back 0.22 and flattens the
+winder. It failed about one run in six for reasons that had nothing to do with
+how many hands were on the winch. The defenders now sit that test out.
+
 - `npm run check` — formatting, TypeScript, lint, architecture boundaries and
   the full 791-test suite pass with the game registered.
 - Ran locally and inspected in a browser: menu, HUD, castle, trebuchet, crew

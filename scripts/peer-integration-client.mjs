@@ -373,28 +373,26 @@ async function run(game) {
         ),
       );
       const held = world().wind;
-      // The opening aim is deliberately off-centre; a guest leans it back.
+      // The aim opens centred; a guest swings it and every client must agree
+      // on which way it went, since the direction is the key they held.
       const opening = world().turn;
-      const pusher = world().players.find((p) => p.id === sessions[3].id);
-      const expected = pusher.x < 0 ? 1 : -1;
-      await connections[3].action({ type: 'push' });
+      await connections[3].action({ type: 'push', side: 1 });
       await until(
         () =>
-          sessions.every(
-            (s) =>
-              Math.sign(latest.get(s.id).world.turn - opening) === expected,
-          ),
-        'a shoulder on the frame swings the aim the same way for everyone',
+          sessions.every((s) => latest.get(s.id).world.turn - opening > 0.02),
+        'a swung aim goes the same way on every client',
       );
       await connections[3].action({ type: 'stopPush' });
       siegeRecovery = { wind: held, turn: world().turn };
+      // Everyone spawns at the winch, which is eight metres from the sling, so
+      // the host still rejects a climb-in nobody is standing close enough for.
       await assert.rejects(
-        connections[0].action({ type: 'loose' }),
-        /lever/i,
-        'nobody can loose from across the field',
+        connections[0].action({ type: 'ride' }),
+        /sling/i,
+        'the sling cannot be climbed into from across the field',
       );
       console.log(
-        'siege-and-desist: shared winch, swung aim and lever proximity passed over real WebRTC.',
+        'siege-and-desist: shared winch, swung aim and sling reach passed over real WebRTC.',
       );
     }
     if (game === 'four-brain-cells') {

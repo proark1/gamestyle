@@ -19,6 +19,9 @@ export const LEVER = { x: 3.1, z: 6.1 };
 export const SLING = { x: 0, z: 11.4 };
 export const PILE = { x: -7.4, z: 13.4 };
 export const MAX_TURN = 0.42;
+/** Everything the engine does is done from anywhere inside this reach of the
+ *  frame. The crew used to have to be at four separate spots to fire once. */
+export const ENGINE_REACH = 6;
 export const BANNER_DOWN = 3.2;
 
 /** Siege stones are heavy on purpose: a light one bounces off good masonry. */
@@ -76,7 +79,6 @@ export type Crew = {
   vy: number;
   vz: number;
   facing: number;
-  carrying: AmmoKind | null;
   /** Set while this crew member is riding the sling or flying through the air. */
   flying: boolean;
   winding: boolean;
@@ -196,8 +198,6 @@ export type SiegeAction = {
   type:
     | 'start'
     | 'restart'
-    | 'grab'
-    | 'load'
     | 'wind'
     | 'stopWind'
     | 'push'
@@ -206,6 +206,7 @@ export type SiegeAction = {
     | 'ride'
     | 'jump'
     | 'help';
+  /** Which way `push` swings the aim: 1 to the left, -1 to the right. */
   side?: number;
 };
 

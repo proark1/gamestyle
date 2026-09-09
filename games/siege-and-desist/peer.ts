@@ -23,8 +23,6 @@ const adapter: GameAdapter<SiegeWorld, SiegeSnapshot> = {
   actions: [
     'start',
     'restart',
-    'grab',
-    'load',
     'wind',
     'stopWind',
     'push',
