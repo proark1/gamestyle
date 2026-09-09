@@ -1,0 +1,2104 @@
+{
+  "fetchedAt": "2026-09-09T02:10:01.909Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/handwerker/audio/chaos?manifest",
+  "status": 200,
+  "settings": {
+    "effects": 0.75,
+    "speech": 0.85,
+    "ambience": 0.25,
+    "music": 0.18,
+    "voiceId": "pNInz6obpgDQGcFmaJgB"
+  },
+  "cues": {
+    "material.bookshelf.grab": {
+      "url": "/api/handwerker/audio/chaos/file/07b58071-bbc3-4856-a283-f070d406e507.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bookshelf.place": {
+      "url": "/api/handwerker/audio/chaos/file/77f05c22-b379-4a25-a820-71799fd6e57c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bookshelf.drop": {
+      "url": "/api/handwerker/audio/chaos/file/cf5be6f3-5f99-4b09-ae3f-19d5fa97f0e8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bookshelf.remove": {
+      "url": "/api/handwerker/audio/chaos/file/b77887a4-07cb-41af-96b3-3ef019c826c4.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bookshelf.throw": {
+      "url": "/api/handwerker/audio/chaos/file/52f59f7a-a2b7-4a2a-86ad-ff7901556f47.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bookshelf.impact": {
+      "url": "/api/handwerker/audio/chaos/file/aa5f43fa-9ca9-4926-8e2b-a815d8695540.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wardrobe.grab": {
+      "url": "/api/handwerker/audio/chaos/file/f3b3dbde-8bc7-4c4c-955b-e096a4280ebe.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wardrobe.place": {
+      "url": "/api/handwerker/audio/chaos/file/ab85556a-52a4-476d-8e53-e8c7d5a7e837.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wardrobe.drop": {
+      "url": "/api/handwerker/audio/chaos/file/c3baa857-1ee9-4301-8f59-cef41fbc6f8f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wardrobe.remove": {
+      "url": "/api/handwerker/audio/chaos/file/fe1c27f5-77bf-495e-9541-63eedde1c9e3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wardrobe.throw": {
+      "url": "/api/handwerker/audio/chaos/file/e7fe518b-5b4d-422e-ac67-e01e64fe3928.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wardrobe.impact": {
+      "url": "/api/handwerker/audio/chaos/file/44c33ff6-0869-4dae-945b-761d2bcdc70a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.counter.grab": {
+      "url": "/api/handwerker/audio/chaos/file/bf23c394-7d62-44e4-8188-e0ee3d8b738a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.counter.place": {
+      "url": "/api/handwerker/audio/chaos/file/7b59e879-d4c3-4ebf-b88f-7d69a110ec72.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.counter.drop": {
+      "url": "/api/handwerker/audio/chaos/file/77658134-de69-413b-8e6b-8553a9bc22f8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.counter.remove": {
+      "url": "/api/handwerker/audio/chaos/file/2d1303be-01d4-4c80-9ebb-b2110baefc52.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.counter.throw": {
+      "url": "/api/handwerker/audio/chaos/file/f8c3da06-2349-45f4-9a98-0abcd72b481e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.counter.impact": {
+      "url": "/api/handwerker/audio/chaos/file/d6ef145f-8f2a-46a0-9241-5cdb817a9810.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sink.grab": {
+      "url": "/api/handwerker/audio/chaos/file/8e0c0d41-279e-47a0-95a2-4493838d4699.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sink.place": {
+      "url": "/api/handwerker/audio/chaos/file/0e38249b-dea1-46de-8a95-b9b9ad666988.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sink.drop": {
+      "url": "/api/handwerker/audio/chaos/file/dc088338-a2ad-4132-bcc0-5bc20f49ce9b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sink.remove": {
+      "url": "/api/handwerker/audio/chaos/file/4af92797-a7e2-473b-920e-f928512fed0f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sink.throw": {
+      "url": "/api/handwerker/audio/chaos/file/dc79b503-42f0-4209-b3c7-3f280af53c4d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sink.impact": {
+      "url": "/api/handwerker/audio/chaos/file/95601003-2b19-4c0b-9fc7-5d2ba115945b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stove.grab": {
+      "url": "/api/handwerker/audio/chaos/file/9d3e080d-f329-4f4b-8e10-861ca2c075cb.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stove.place": {
+      "url": "/api/handwerker/audio/chaos/file/7d6b2bb8-800e-4504-9240-3085aca3d48f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stove.drop": {
+      "url": "/api/handwerker/audio/chaos/file/e4dbffa3-1eef-45d8-aa6c-df9be5fe45ce.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stove.remove": {
+      "url": "/api/handwerker/audio/chaos/file/48632e69-ba4a-4923-855b-0f0f2a20de3a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stove.throw": {
+      "url": "/api/handwerker/audio/chaos/file/b9085f33-e3c4-4ebb-bcd7-61bb32a2a1a4.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stove.impact": {
+      "url": "/api/handwerker/audio/chaos/file/c18c5ab8-cf77-40eb-b268-4403292f32e3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.grab": {
+      "url": "/api/handwerker/audio/chaos/file/d9c71955-3432-498e-aee9-8c2d567a6f61.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.place": {
+      "url": "/api/handwerker/audio/chaos/file/4d6060ad-1651-4a5e-a267-e5d11cd753c3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.drop": {
+      "url": "/api/handwerker/audio/chaos/file/394487ef-3db3-4cf1-ab8f-89d584c0733c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.remove": {
+      "url": "/api/handwerker/audio/chaos/file/c2ae57f1-622d-4b57-9a26-34443fd8fc6f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.throw": {
+      "url": "/api/handwerker/audio/chaos/file/32e86dfc-19dd-4553-8d73-f04499eeb00a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bathtub.impact": {
+      "url": "/api/handwerker/audio/chaos/file/0abc60a7-2c2c-42c3-b902-0121309302d1.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.tv.grab": {
+      "url": "/api/handwerker/audio/chaos/file/01ece7a8-9f8c-46fa-8d7c-ed40ae2c3df7.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.tv.place": {
+      "url": "/api/handwerker/audio/chaos/file/6ead31c7-b6a5-411d-991b-85027e8e1fb0.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.tv.drop": {
+      "url": "/api/handwerker/audio/chaos/file/5425faec-f6ba-4267-b3d9-4a55f0c30864.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.tv.remove": {
+      "url": "/api/handwerker/audio/chaos/file/9aefa6f0-f446-4686-923d-0290313c01d6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.tv.throw": {
+      "url": "/api/handwerker/audio/chaos/file/cd6497fc-aac9-42e6-a403-a4b86560633a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.tv.impact": {
+      "url": "/api/handwerker/audio/chaos/file/bd2748b4-67b2-4433-bf67-c3f249ffe004.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.piano.grab": {
+      "url": "/api/handwerker/audio/chaos/file/7601226a-07c7-4896-ba33-1606c71fd6bd.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.piano.place": {
+      "url": "/api/handwerker/audio/chaos/file/c4d9fa2f-1179-4247-8f78-67f861ec18fd.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.piano.drop": {
+      "url": "/api/handwerker/audio/chaos/file/a592d8d4-829d-48b4-bc5c-413575671057.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.piano.remove": {
+      "url": "/api/handwerker/audio/chaos/file/ef82d9b8-6137-43f1-94d7-ec63d2e83fd5.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.piano.throw": {
+      "url": "/api/handwerker/audio/chaos/file/9704aa99-f78c-485c-937f-98dad50b40df.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.piano.impact": {
+      "url": "/api/handwerker/audio/chaos/file/a034afc3-294b-4c95-9e38-bd1a670f548e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bench.grab": {
+      "url": "/api/handwerker/audio/chaos/file/d4061178-0df2-4625-b6ff-9537e2c870ac.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bench.place": {
+      "url": "/api/handwerker/audio/chaos/file/18c0bb82-901c-4cd4-bca1-4dda1283be59.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bench.drop": {
+      "url": "/api/handwerker/audio/chaos/file/2fc1c6e0-3f7b-4c05-bace-9a8a3c225828.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bench.remove": {
+      "url": "/api/handwerker/audio/chaos/file/bca3aa9c-4b91-45f1-b9a8-c5035247d854.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bench.throw": {
+      "url": "/api/handwerker/audio/chaos/file/4a26e5fb-76b4-4ee7-a496-ba7d763bb91f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bench.impact": {
+      "url": "/api/handwerker/audio/chaos/file/a874ee9c-556a-48d6-bce8-5c8915cc5439.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.aquarium.grab": {
+      "url": "/api/handwerker/audio/chaos/file/85515cee-c757-467c-abf7-b16a624730e6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.aquarium.place": {
+      "url": "/api/handwerker/audio/chaos/file/44675dc6-ccde-403b-8f55-a6f259aa4dd0.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.aquarium.drop": {
+      "url": "/api/handwerker/audio/chaos/file/44530ed6-f172-4937-a474-39d62442d285.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.aquarium.remove": {
+      "url": "/api/handwerker/audio/chaos/file/b52f057b-0a4f-48e9-84ae-18c075d97f81.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.aquarium.throw": {
+      "url": "/api/handwerker/audio/chaos/file/88e326e9-ce75-42fa-8921-620b875adf63.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.aquarium.impact": {
+      "url": "/api/handwerker/audio/chaos/file/bbd83069-8109-4877-9f10-c70079a86f56.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.easel.grab": {
+      "url": "/api/handwerker/audio/chaos/file/2d72f162-f0b3-413c-b109-2b4b3e99569f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.easel.place": {
+      "url": "/api/handwerker/audio/chaos/file/28766ec0-8d3b-4b3d-bf0f-385457a0134b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.easel.drop": {
+      "url": "/api/handwerker/audio/chaos/file/97716234-9a9b-4cee-bb0b-5f5a5dc5b873.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.easel.remove": {
+      "url": "/api/handwerker/audio/chaos/file/97befbba-0549-475e-8801-ac83e8e59638.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.easel.throw": {
+      "url": "/api/handwerker/audio/chaos/file/73a252e9-3435-4a68-8818-155cf4999b85.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.easel.impact": {
+      "url": "/api/handwerker/audio/chaos/file/9d0b4570-49dd-4e8a-987a-4b8a0fbf396c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.doghouse.grab": {
+      "url": "/api/handwerker/audio/chaos/file/efc32e4f-04e1-49a2-9c9b-bd5c5aec4d05.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.doghouse.place": {
+      "url": "/api/handwerker/audio/chaos/file/40a5417d-9d40-4d52-984e-9202ba2f8418.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.doghouse.drop": {
+      "url": "/api/handwerker/audio/chaos/file/cf80357e-c0fb-446f-8f38-5f37599f1c4c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.doghouse.remove": {
+      "url": "/api/handwerker/audio/chaos/file/aec57c68-282c-4af1-9f4c-aaf6554bd699.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.doghouse.throw": {
+      "url": "/api/handwerker/audio/chaos/file/1bdf9364-1563-4e11-b52b-5d049bb1ee65.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.doghouse.impact": {
+      "url": "/api/handwerker/audio/chaos/file/7bd0e377-3bd6-4f2d-b6f5-e60bb9d1653b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stairs.grab": {
+      "url": "/api/handwerker/audio/chaos/file/a6347f69-5cc9-479e-9f61-7e277a66f939.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stairs.place": {
+      "url": "/api/handwerker/audio/chaos/file/61b11284-67b9-499a-861f-8e8360ed679b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stairs.drop": {
+      "url": "/api/handwerker/audio/chaos/file/13861652-fba5-4845-9a9a-922a7ec6dc98.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stairs.remove": {
+      "url": "/api/handwerker/audio/chaos/file/0c921d36-7a6c-4d48-9ca4-8ed9d8d4ea5c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stairs.throw": {
+      "url": "/api/handwerker/audio/chaos/file/1364fad2-0889-4778-9617-78ee372c56eb.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.stairs.impact": {
+      "url": "/api/handwerker/audio/chaos/file/ee48847f-04ef-4f3d-b781-2e7f6bf053c9.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.grab": {
+      "url": "/api/handwerker/audio/chaos/file/fdd56634-dff4-4616-b942-9f8f34237769.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.place": {
+      "url": "/api/handwerker/audio/chaos/file/6aea0f77-b6e6-4c75-8725-97aeddba8bbf.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.drop": {
+      "url": "/api/handwerker/audio/chaos/file/56b1be59-b545-4aa6-a47d-70a84ff3c6d7.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.remove": {
+      "url": "/api/handwerker/audio/chaos/file/6ce249c3-e13a-42d8-8834-566b9e950dba.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.throw": {
+      "url": "/api/handwerker/audio/chaos/file/81b330db-495c-4d95-85ff-932aedbcc09d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.fridge.impact": {
+      "url": "/api/handwerker/audio/chaos/file/8d12cdce-4d8d-4aee-bf17-65a6c6cffa7b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.washer.grab": {
+      "url": "/api/handwerker/audio/chaos/file/56df8195-fc19-477f-99fd-5f64f1368e7a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.washer.place": {
+      "url": "/api/handwerker/audio/chaos/file/5bb840ce-7edd-48fa-9c1e-ebf5977360ea.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.washer.drop": {
+      "url": "/api/handwerker/audio/chaos/file/5f9f3ac8-8e85-43cc-9fc7-acc12ab8ed61.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.washer.remove": {
+      "url": "/api/handwerker/audio/chaos/file/a5abd108-d09a-435f-8642-94996606333b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.washer.throw": {
+      "url": "/api/handwerker/audio/chaos/file/eeebe998-da65-41b0-8e49-675d4f425651.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.washer.impact": {
+      "url": "/api/handwerker/audio/chaos/file/3bde25df-64be-4a08-898e-b8d21300583e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.clock.grab": {
+      "url": "/api/handwerker/audio/chaos/file/db463986-a861-4dd8-8016-c3beaf0c2839.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.clock.place": {
+      "url": "/api/handwerker/audio/chaos/file/741dd9de-586d-43ef-8b88-4d806c6f089c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.clock.drop": {
+      "url": "/api/handwerker/audio/chaos/file/ccb20dc2-86ab-4986-94b6-0600d78a230e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.clock.remove": {
+      "url": "/api/handwerker/audio/chaos/file/f72486f3-5622-4d8d-bea3-5bc0965bba14.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.clock.throw": {
+      "url": "/api/handwerker/audio/chaos/file/4a8309af-cc3b-4a6a-a491-d7512d05fa97.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.clock.impact": {
+      "url": "/api/handwerker/audio/chaos/file/673c9ae2-4581-4b4e-908f-f0d0f0720952.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.duck.grab": {
+      "url": "/api/handwerker/audio/chaos/file/0e69ba0c-a95a-490e-950b-3626b5dec7b2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.duck.place": {
+      "url": "/api/handwerker/audio/chaos/file/671c70c5-e739-43eb-8dbd-0bbf83dd0565.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.duck.drop": {
+      "url": "/api/handwerker/audio/chaos/file/429b4a95-80df-481d-82e0-6a7e2ec9a85d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.duck.remove": {
+      "url": "/api/handwerker/audio/chaos/file/b8aea055-c6f5-4839-b8d5-2c4b4c239f45.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.duck.throw": {
+      "url": "/api/handwerker/audio/chaos/file/3f55a1e3-4ab8-4a28-9e0e-ab09557f86c3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.duck.impact": {
+      "url": "/api/handwerker/audio/chaos/file/129f7836-93d1-4367-abc2-cbea84d8d7a6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wall.grab": {
+      "url": "/api/handwerker/audio/chaos/file/3fc83de5-9dca-4a94-946c-dd4192455ab3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wall.place": {
+      "url": "/api/handwerker/audio/chaos/file/c7c96237-9d42-41ab-95f5-897918ce5c78.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wall.drop": {
+      "url": "/api/handwerker/audio/chaos/file/937beee7-e754-4e98-ba8e-7ab661664eff.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wall.remove": {
+      "url": "/api/handwerker/audio/chaos/file/fd49652e-db2f-495e-a20a-59a4b6ba8f9f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wall.throw": {
+      "url": "/api/handwerker/audio/chaos/file/793977dc-fc4f-403b-9498-a13eec8cc66b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.wall.impact": {
+      "url": "/api/handwerker/audio/chaos/file/0d3dca60-1337-4243-ae79-3148b0214955.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.window.grab": {
+      "url": "/api/handwerker/audio/chaos/file/2756f0a0-9830-4651-ad61-dbdb2a12668d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.window.place": {
+      "url": "/api/handwerker/audio/chaos/file/1bc98dba-0142-45b4-83bc-93d37cacf6cc.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.window.drop": {
+      "url": "/api/handwerker/audio/chaos/file/3c63bd84-3caa-4916-b17b-da8007f6ccc7.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.window.remove": {
+      "url": "/api/handwerker/audio/chaos/file/43b2c41a-07e2-43b1-800b-5a9bd48d0a09.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.window.throw": {
+      "url": "/api/handwerker/audio/chaos/file/8c10030c-7c1f-4247-a747-4b8784c6f1b5.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.window.impact": {
+      "url": "/api/handwerker/audio/chaos/file/28dcde2a-5a69-4b54-a9d4-283391f112e9.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.door.grab": {
+      "url": "/api/handwerker/audio/chaos/file/935da770-a4ca-428a-9aa7-1312f4254899.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.door.place": {
+      "url": "/api/handwerker/audio/chaos/file/30fc51e1-ef12-4446-847a-628dfc77a4b8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.door.drop": {
+      "url": "/api/handwerker/audio/chaos/file/789facd4-ce1d-4543-ada8-b6a1d1c8b046.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.door.remove": {
+      "url": "/api/handwerker/audio/chaos/file/bd4352d9-a355-4264-98b3-02cbb352a4e2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.door.throw": {
+      "url": "/api/handwerker/audio/chaos/file/8b7fad3f-b239-4efa-9d87-9780faca6c86.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.door.impact": {
+      "url": "/api/handwerker/audio/chaos/file/1b8e2255-b2d1-4dd2-aad3-124331dc7b00.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.grab": {
+      "url": "/api/handwerker/audio/chaos/file/62660882-3ad2-4318-bf2a-275ccaef52f5.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.place": {
+      "url": "/api/handwerker/audio/chaos/file/7ae71b4c-f75f-487c-9e68-d72a54a5650b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.drop": {
+      "url": "/api/handwerker/audio/chaos/file/ab70263e-f5fd-4baf-8602-95e72100fa1e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.remove": {
+      "url": "/api/handwerker/audio/chaos/file/cd58fbb7-d12c-4b3e-a0d5-2dca8ac800e4.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.throw": {
+      "url": "/api/handwerker/audio/chaos/file/ab25225c-64d8-457e-8966-990604f1672c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.roof.impact": {
+      "url": "/api/handwerker/audio/chaos/file/07530bc6-453f-4f4d-8a71-c3325a8005f7.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.floor.grab": {
+      "url": "/api/handwerker/audio/chaos/file/cd70ac0a-1bd3-47cf-847f-d96d3559c3f2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.floor.place": {
+      "url": "/api/handwerker/audio/chaos/file/e780aca2-9a3d-472c-bb4b-78636ab22fbf.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.floor.drop": {
+      "url": "/api/handwerker/audio/chaos/file/bea91184-6111-4d00-bf3c-87816a0fbf3e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.floor.remove": {
+      "url": "/api/handwerker/audio/chaos/file/e60fcfc6-347d-4f06-99fb-83d093094ee6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.floor.throw": {
+      "url": "/api/handwerker/audio/chaos/file/f18ebc6d-f227-48f2-8738-ad73b6219426.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.floor.impact": {
+      "url": "/api/handwerker/audio/chaos/file/95513f53-7386-496e-9853-1a235f9f3c25.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.grab": {
+      "url": "/api/handwerker/audio/chaos/file/ece47ec5-065b-47c9-bf37-7f9cd482620f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.place": {
+      "url": "/api/handwerker/audio/chaos/file/6368fea8-2e2d-40c4-8a3a-098b21aae866.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.drop": {
+      "url": "/api/handwerker/audio/chaos/file/df1e38d1-00f4-4d10-98be-2f254d0a5adf.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.remove": {
+      "url": "/api/handwerker/audio/chaos/file/26ea6d87-9046-4513-88a8-74b2d09590bd.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.throw": {
+      "url": "/api/handwerker/audio/chaos/file/bf93639d-2bcb-4771-a1a4-2887eb7fa7bc.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.sofa.impact": {
+      "url": "/api/handwerker/audio/chaos/file/a6382bc2-044a-4f26-8c0c-3e971cc686c9.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.table.grab": {
+      "url": "/api/handwerker/audio/chaos/file/0e04f5b7-daf5-4211-80b5-812aede6ddd0.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.table.place": {
+      "url": "/api/handwerker/audio/chaos/file/22cbc334-1423-427b-a0f0-cc0da0d2cd47.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.table.drop": {
+      "url": "/api/handwerker/audio/chaos/file/6ca6b680-2a6d-4b33-bc45-5aa6f3af5b4d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.table.remove": {
+      "url": "/api/handwerker/audio/chaos/file/db206f20-5bfd-4d26-ae9f-69fa138a5989.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.table.throw": {
+      "url": "/api/handwerker/audio/chaos/file/3c28f049-e7d3-4356-a468-62ae357b658d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.table.impact": {
+      "url": "/api/handwerker/audio/chaos/file/2837ce18-5a32-4847-a6b6-b07f032bc796.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.chair.grab": {
+      "url": "/api/handwerker/audio/chaos/file/1bd3fde4-2d81-44f0-8b4e-c568a9999029.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.chair.place": {
+      "url": "/api/handwerker/audio/chaos/file/02a65bc1-1131-48a9-af29-4b6ced56bc98.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.chair.drop": {
+      "url": "/api/handwerker/audio/chaos/file/1f70434e-2bf5-4f8c-b4c7-c28475ba9c44.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.chair.remove": {
+      "url": "/api/handwerker/audio/chaos/file/254219cf-e3ee-4131-a96f-4590ee07ff3e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.chair.throw": {
+      "url": "/api/handwerker/audio/chaos/file/3b5b1303-8144-4af8-b9a2-e726bce83adb.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.chair.impact": {
+      "url": "/api/handwerker/audio/chaos/file/8e709139-9120-4dfd-ab0f-314af53cb061.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bed.grab": {
+      "url": "/api/handwerker/audio/chaos/file/9ccce779-7fe1-46f7-8f71-543bc1339601.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bed.place": {
+      "url": "/api/handwerker/audio/chaos/file/92d53682-b0a2-448f-b464-fb14e8fde709.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bed.drop": {
+      "url": "/api/handwerker/audio/chaos/file/1e9e5245-8651-462b-b3f0-cc7784c9ed76.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bed.remove": {
+      "url": "/api/handwerker/audio/chaos/file/50a73c46-d96e-48e7-b3f2-f1cad291cb48.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bed.throw": {
+      "url": "/api/handwerker/audio/chaos/file/3e305c2b-b1bd-469b-a865-d7d0c3c1546d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bed.impact": {
+      "url": "/api/handwerker/audio/chaos/file/5bd33b43-2bd4-42a9-9c44-f7c3b4f1afd2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plant.grab": {
+      "url": "/api/handwerker/audio/chaos/file/7257ccb5-d00c-4af1-92f4-45f17b529191.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plant.place": {
+      "url": "/api/handwerker/audio/chaos/file/d5c34ecd-ee30-4293-aec8-de33eebef2e6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plant.drop": {
+      "url": "/api/handwerker/audio/chaos/file/a86c7091-9240-4753-b2ba-4acb57d2f769.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plant.remove": {
+      "url": "/api/handwerker/audio/chaos/file/ea38c4b3-623c-4591-82c2-40b270001767.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plant.throw": {
+      "url": "/api/handwerker/audio/chaos/file/ffc27384-6adf-4013-82c9-d97c9a0f84d8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.plant.impact": {
+      "url": "/api/handwerker/audio/chaos/file/c06ff9b5-b6a0-48b6-b08e-a95dd63a42a1.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.lamp.grab": {
+      "url": "/api/handwerker/audio/chaos/file/b9c8c1d1-94e2-4dbb-aa67-d7a2c363eda1.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.lamp.place": {
+      "url": "/api/handwerker/audio/chaos/file/9fd390f9-3ba3-4a92-a429-b44c91aef083.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.lamp.drop": {
+      "url": "/api/handwerker/audio/chaos/file/eb3579d3-0bc8-4950-af8b-242feb11b0be.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.lamp.remove": {
+      "url": "/api/handwerker/audio/chaos/file/d997e591-848d-4263-b344-e0f0665b98b8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.lamp.throw": {
+      "url": "/api/handwerker/audio/chaos/file/79902929-8f66-4407-bf84-352c6a4bcb3c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.lamp.impact": {
+      "url": "/api/handwerker/audio/chaos/file/d45567c0-9952-4900-bf0e-102dfa9e87c8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.toilet.grab": {
+      "url": "/api/handwerker/audio/chaos/file/0b0b8f46-9f32-4c31-97ab-e13775085ab6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.toilet.place": {
+      "url": "/api/handwerker/audio/chaos/file/4a52d0d4-12d3-4ff9-92bd-e74cd89aa76e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.toilet.drop": {
+      "url": "/api/handwerker/audio/chaos/file/ab4da04e-f46e-4ff8-9533-7d6db2dbadfd.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.toilet.remove": {
+      "url": "/api/handwerker/audio/chaos/file/64dadf8c-2372-47da-bee5-06fbba83292c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.toilet.throw": {
+      "url": "/api/handwerker/audio/chaos/file/514c6265-6386-469d-a31c-c521ccc7702e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.toilet.impact": {
+      "url": "/api/handwerker/audio/chaos/file/fda79d81-0660-4669-a9c7-8517dff82676.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.workbench.grab": {
+      "url": "/api/handwerker/audio/chaos/file/ab3ac13b-3f32-486c-9896-bc942299c349.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.workbench.place": {
+      "url": "/api/handwerker/audio/chaos/file/6a8ca213-0792-4f12-bb32-3ec21ba4048b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.workbench.drop": {
+      "url": "/api/handwerker/audio/chaos/file/fd413322-3c9a-4c86-8d9f-59541458f9ea.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.workbench.remove": {
+      "url": "/api/handwerker/audio/chaos/file/913d7578-205b-4576-afbb-458b4a41e0b0.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.workbench.throw": {
+      "url": "/api/handwerker/audio/chaos/file/e0e0e1f6-fd6f-4d7e-97ae-bd76fc02cf0a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.workbench.impact": {
+      "url": "/api/handwerker/audio/chaos/file/961b57d4-d209-49e3-86b4-828167a716a1.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.barrow.grab": {
+      "url": "/api/handwerker/audio/chaos/file/d1a24e15-826d-4e7d-a3aa-96813e64637d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.barrow.place": {
+      "url": "/api/handwerker/audio/chaos/file/c12244ea-3fec-4c37-bf2a-a50f32851216.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.barrow.drop": {
+      "url": "/api/handwerker/audio/chaos/file/2a2c4305-1d0d-4883-bd83-04cda6104363.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.barrow.remove": {
+      "url": "/api/handwerker/audio/chaos/file/af3b9d17-9a40-4136-ba08-980cca82fa08.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.barrow.throw": {
+      "url": "/api/handwerker/audio/chaos/file/64ff5c0a-42fc-4323-9e6c-904d612af99d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.barrow.impact": {
+      "url": "/api/handwerker/audio/chaos/file/ab17fb13-0252-4f18-b64e-187c1661d93c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cone.grab": {
+      "url": "/api/handwerker/audio/chaos/file/7208a164-4723-4954-8384-3034408f2fb6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cone.place": {
+      "url": "/api/handwerker/audio/chaos/file/e802124b-831d-4c90-8d85-cdbf1b57df82.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cone.drop": {
+      "url": "/api/handwerker/audio/chaos/file/71e0144f-8dcf-4711-9296-330052ecbe16.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cone.remove": {
+      "url": "/api/handwerker/audio/chaos/file/04ec2e36-9d31-4e2d-9c15-50b7f219d3ed.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cone.throw": {
+      "url": "/api/handwerker/audio/chaos/file/da63605f-06fc-43e4-a66c-c5ac8ff07c46.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.cone.impact": {
+      "url": "/api/handwerker/audio/chaos/file/755976a6-76c5-4b40-903c-458b201b1bc9.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.grab": {
+      "url": "/api/handwerker/audio/chaos/file/91644934-d6d6-4baf-a49e-617425956915.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.place": {
+      "url": "/api/handwerker/audio/chaos/file/f83a6e43-6e5e-4621-8936-3fcdc07d2e80.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.drop": {
+      "url": "/api/handwerker/audio/chaos/file/fb4b0807-9bff-4608-a34d-429fa6e7c090.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.remove": {
+      "url": "/api/handwerker/audio/chaos/file/ec4a9bc3-2765-40e1-9c24-0b0d6f489b04.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.throw": {
+      "url": "/api/handwerker/audio/chaos/file/17ee35eb-5ca6-432d-8291-bf239695d042.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.pallet.impact": {
+      "url": "/api/handwerker/audio/chaos/file/a2df7f56-253f-4640-9a99-783eb7dc435a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bricks.grab": {
+      "url": "/api/handwerker/audio/chaos/file/e8f2b691-2611-466c-ac9c-ce1820300b84.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bricks.place": {
+      "url": "/api/handwerker/audio/chaos/file/4146bf02-8676-4453-b5e4-4fc9c6e025fa.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bricks.drop": {
+      "url": "/api/handwerker/audio/chaos/file/e82b4e7a-c0f2-476f-b34c-827a8cbe2e37.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bricks.remove": {
+      "url": "/api/handwerker/audio/chaos/file/d9fceb08-c3e9-4902-8abb-a68d370a5bd4.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bricks.throw": {
+      "url": "/api/handwerker/audio/chaos/file/d43c4dbe-0b2e-4797-a6f9-40d39b83ee1f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bricks.impact": {
+      "url": "/api/handwerker/audio/chaos/file/170ee461-b07a-4b57-8880-1086eae46384.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bone.grab": {
+      "url": "/api/handwerker/audio/chaos/file/ffbdfef0-c4bb-41bf-8b58-52ee59398830.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bone.place": {
+      "url": "/api/handwerker/audio/chaos/file/f2e5d95c-5259-4181-be47-012b3a97b07f.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bone.drop": {
+      "url": "/api/handwerker/audio/chaos/file/b879a3b4-043c-4996-b92a-c2821a43d387.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bone.remove": {
+      "url": "/api/handwerker/audio/chaos/file/0296b795-834c-4be2-86c1-3cc6c36eca31.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bone.throw": {
+      "url": "/api/handwerker/audio/chaos/file/5be01f0d-2b6b-45ba-8da9-1bc9b2247377.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "material.bone.impact": {
+      "url": "/api/handwerker/audio/chaos/file/5c563513-6c7b-4583-b8b8-0fd042367200.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material"
+    },
+    "speech.saying.0": {
+      "url": "/api/handwerker/audio/chaos/file/3b1bf769-6ab9-4205-ae88-62d6b2b252c1.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.1": {
+      "url": "/api/handwerker/audio/chaos/file/965506ef-057a-4e6a-b697-7db4f45f8185.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.2": {
+      "url": "/api/handwerker/audio/chaos/file/4a266f78-b201-49ab-8e36-080fe1f3e94b.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.3": {
+      "url": "/api/handwerker/audio/chaos/file/5b7770fe-41fa-4349-a248-4df27f914259.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.4": {
+      "url": "/api/handwerker/audio/chaos/file/005deaed-ba98-45a9-a3ec-196d035cb9fe.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.5": {
+      "url": "/api/handwerker/audio/chaos/file/810eaa74-5b1d-4b24-8b3d-188d2486491c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.6": {
+      "url": "/api/handwerker/audio/chaos/file/db164c31-4763-46a1-ab88-d7694c40d24a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.7": {
+      "url": "/api/handwerker/audio/chaos/file/67ee39da-ed9f-4d2b-a6c0-9e7a16ccd994.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.8": {
+      "url": "/api/handwerker/audio/chaos/file/f870a83e-0872-4a75-b1c9-c44c1bc9f50e.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.9": {
+      "url": "/api/handwerker/audio/chaos/file/2a986c25-c34b-43ea-8c4f-fe4b000862a0.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.10": {
+      "url": "/api/handwerker/audio/chaos/file/6311f55e-744d-4941-8ea9-b26a72e0fa80.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.saying.11": {
+      "url": "/api/handwerker/audio/chaos/file/0133066c-706f-465d-b329-1272cc6c6b02.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.job.0": {
+      "url": "/api/handwerker/audio/chaos/file/bc1e3be9-60eb-4752-90f2-3489eaad2a0c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.job.1": {
+      "url": "/api/handwerker/audio/chaos/file/226a4761-444e-4f69-bff6-36e19bf6f985.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.job.2": {
+      "url": "/api/handwerker/audio/chaos/file/bc850b4a-a1bf-43ac-ac32-bd455a044e89.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.win": {
+      "url": "/api/handwerker/audio/chaos/file/d3c66188-ebbe-4b36-9cb3-e78af488a0f2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.fail": {
+      "url": "/api/handwerker/audio/chaos/file/31fff936-b304-4b2f-b59e-2f8e88a64ee4.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "speech"
+    },
+    "ambience.site": {
+      "url": "/api/handwerker/audio/chaos/file/8e05d5c6-db9b-4028-bdd8-39a0cc2ba449.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.trees": {
+      "url": "/api/handwerker/audio/chaos/file/c18afbf1-7fc5-4e76-8b01-1ecd379f3fa7.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "ambience"
+    },
+    "step.concrete": {
+      "url": "/api/handwerker/audio/chaos/file/0035b586-6e66-427f-b3cb-0cd05443241d.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.dirt": {
+      "url": "/api/handwerker/audio/chaos/file/6c7f2146-a924-4252-a5e7-21f449d6c7e7.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.wood": {
+      "url": "/api/handwerker/audio/chaos/file/cf4f0347-0f22-4076-9ab3-b3b57797f0c3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.brick": {
+      "url": "/api/handwerker/audio/chaos/file/79557657-c407-49a9-9841-5d2e925153ab.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "step.roof": {
+      "url": "/api/handwerker/audio/chaos/file/101601e0-b9df-444e-bb79-97788eae8ffd.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.jump": {
+      "url": "/api/handwerker/audio/chaos/file/37b612d9-1c2a-4029-ad9b-790d9c940218.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.land": {
+      "url": "/api/handwerker/audio/chaos/file/8a20833a-48ea-485b-acd6-040f3a358286.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.ui": {
+      "url": "/api/handwerker/audio/chaos/file/47f277e0-e792-4cbe-8a97-8c1e218b5cf6.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.error": {
+      "url": "/api/handwerker/audio/chaos/file/e506b6db-bfd1-4700-9f13-132bb1ce5c0c.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.wind": {
+      "url": "/api/handwerker/audio/chaos/file/2d76f358-865b-41cf-85fc-7278594a9ee3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.bonk": {
+      "url": "/api/handwerker/audio/chaos/file/9d9f8b96-50a5-4381-8b47-014050c0c405.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.join": {
+      "url": "/api/handwerker/audio/chaos/file/3a088f67-28bf-429c-bac5-2788dc7bf39a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "event.photo": {
+      "url": "/api/handwerker/audio/chaos/file/bf991729-79d5-4152-b764-9f7eeed4db25.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.crane": {
+      "url": "/api/handwerker/audio/chaos/file/7875e6f9-a233-4efa-b9df-f70240d36dba.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "ambience"
+    },
+    "music.menu": {
+      "url": "/api/handwerker/audio/chaos/file/5224336d-dd0d-4f84-b217-062b402eff8b.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build": {
+      "url": "/api/handwerker/audio/chaos/file/957941d0-a1c3-4322-8e2f-f3d48967dad9.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "music"
+    },
+    "music.challenge": {
+      "url": "/api/handwerker/audio/chaos/file/538984fd-abcf-4fbb-ab55-9c61094e9b70.mp3",
+      "volume": 1,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/handwerker/audio/chaos/file/276a998e-c8a9-413c-a74c-cc8d636b3060.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/handwerker/audio/chaos/file/1966945a-4c47-4844-a247-fcfd89d273b3.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "music"
+    },
+    "party.ready": {
+      "url": "/api/handwerker/audio/chaos/file/3ff6b92c-a84b-46db-9391-f4d92f401f9b.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "party.start": {
+      "url": "/api/handwerker/audio/chaos/file/019fab46-f66c-4c50-a8ba-98625842039d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.handle": {
+      "url": "/api/handwerker/audio/chaos/file/203ebeeb-0daa-41fe-b368-4aef177f4633.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "party.lift": {
+      "url": "/api/handwerker/audio/chaos/file/cdf00aa0-9140-4ebf-8d2f-dc315932abb7.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.release": {
+      "url": "/api/handwerker/audio/chaos/file/1c157593-49b3-4c33-bd1b-ef32823234a1.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "party.sofa.move": {
+      "url": "/api/handwerker/audio/chaos/file/7779cee0-21bb-4cb8-9585-18d38a371d73.mp3",
+      "volume": 0.45,
+      "loop": true,
+      "category": "ambience"
+    },
+    "party.glass.move": {
+      "url": "/api/handwerker/audio/chaos/file/f75e8fbd-18fb-452a-977a-7c67551d0d2f.mp3",
+      "volume": 0.4,
+      "loop": true,
+      "category": "ambience"
+    },
+    "party.crane.move": {
+      "url": "/api/handwerker/audio/chaos/file/f13697f9-b250-4ca7-b260-937d4f58bf58.mp3",
+      "volume": 0.5,
+      "loop": true,
+      "category": "ambience"
+    },
+    "party.barrow.move": {
+      "url": "/api/handwerker/audio/chaos/file/f7f0eb8f-7902-416d-a57e-e64193760a84.mp3",
+      "volume": 0.5,
+      "loop": true,
+      "category": "ambience"
+    },
+    "party.ladder.move": {
+      "url": "/api/handwerker/audio/chaos/file/2f295a6c-830e-40d4-b903-9dff263bafb8.mp3",
+      "volume": 0.55,
+      "loop": true,
+      "category": "ambience"
+    },
+    "party.strain": {
+      "url": "/api/handwerker/audio/chaos/file/c69664a7-fdb6-4aee-81bb-c09f090d1abb.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.sofa.spill": {
+      "url": "/api/handwerker/audio/chaos/file/60170f7c-9bfb-4c41-b9f7-9a89e7542aa2.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.glass.crack": {
+      "url": "/api/handwerker/audio/chaos/file/39afc601-e70c-4e61-aa8f-eb523484a2a9.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.glass.break": {
+      "url": "/api/handwerker/audio/chaos/file/f18efa94-210e-479a-8d8a-3b9794658a19.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.barrow.spill": {
+      "url": "/api/handwerker/audio/chaos/file/96b1868d-3551-477e-9f35-5cb09f1ccaea.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.ladder.fall": {
+      "url": "/api/handwerker/audio/chaos/file/9cbb39ca-b646-461f-9033-00d96865be1d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.collect": {
+      "url": "/api/handwerker/audio/chaos/file/0b82d939-c672-4d11-8114-a1561664eb62.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "party.recover": {
+      "url": "/api/handwerker/audio/chaos/file/d5a9bff9-a13f-43f7-9b71-3d8a3b98c92d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.delivered": {
+      "url": "/api/handwerker/audio/chaos/file/5c1bb79f-01b6-475c-a964-3a4fbfa6cc8d.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "party.card.reveal": {
+      "url": "/api/handwerker/audio/chaos/file/fa18c1f0-8941-4e84-b448-c5e90b3f9099.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "party.card.done": {
+      "url": "/api/handwerker/audio/chaos/file/61afc94e-1a3c-4041-90c0-30342f2d1925.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "timer.minute": {
+      "url": "/api/handwerker/audio/chaos/file/96044745-9af1-442e-8395-f7ee17f9a10d.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "timer.lastCall": {
+      "url": "/api/handwerker/audio/chaos/file/4477cf75-1d94-4568-82a9-8d103c11515e.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "timer.ten": {
+      "url": "/api/handwerker/audio/chaos/file/95b2606c-161b-4c59-a15f-9afa4d878c27.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "timer.tick": {
+      "url": "/api/handwerker/audio/chaos/file/42192dc6-3359-46e8-a97f-37e300536d60.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "timer.end": {
+      "url": "/api/handwerker/audio/chaos/file/1ea06317-29c7-4071-9bc6-eb2e47d23377.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "inspection.arrive": {
+      "url": "/api/handwerker/audio/chaos/file/de178d63-f383-4b4c-b5bd-ae663eca5a25.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "inspection.stamp": {
+      "url": "/api/handwerker/audio/chaos/file/6fdf19b2-34af-43f0-a187-2b4f29fca52f.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "inspection.award": {
+      "url": "/api/handwerker/audio/chaos/file/4e7ff8c8-8adb-46d1-ae6b-e5268a7fc7a9.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "voice.join": {
+      "url": "/api/handwerker/audio/chaos/file/2fcbe073-8be0-4435-ab5d-ab81beb601f0.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "voice.leave": {
+      "url": "/api/handwerker/audio/chaos/file/387cf357-a5f6-44fe-b4fc-d3f36afb31c1.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "voice.radio": {
+      "url": "/api/handwerker/audio/chaos/file/f312928f-3648-4928-a24c-90330ea19a55.mp3",
+      "volume": 0.3,
+      "loop": false,
+      "category": "event"
+    },
+    "capture.start": {
+      "url": "/api/handwerker/audio/chaos/file/c2af9806-85d9-4587-a31b-8ebc871f4e6a.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "capture.saved": {
+      "url": "/api/handwerker/audio/chaos/file/608e12b8-b75b-47ef-a8da-ff17e2ef0e9f.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.fridge.use": {
+      "url": "/api/handwerker/audio/chaos/file/f32e06f4-cde4-45ed-9246-b673d8598620.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.washer.use": {
+      "url": "/api/handwerker/audio/chaos/file/1a4c80e9-8f5e-4fe9-aa8b-ad0371e286bd.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.clock.use": {
+      "url": "/api/handwerker/audio/chaos/file/374f0452-194e-4740-a45b-d83d2725fa40.mp3",
+      "volume": 0.7,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.duck.use": {
+      "url": "/api/handwerker/audio/chaos/file/9b632680-35b3-4777-8c24-100094f739bd.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.toilet.use": {
+      "url": "/api/handwerker/audio/chaos/file/bd0095fd-4879-4473-a1b5-91fe757c24bc.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.lamp.use": {
+      "url": "/api/handwerker/audio/chaos/file/79a04a76-f607-4580-9a51-9503ed62285d.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.sink.use": {
+      "url": "/api/handwerker/audio/chaos/file/89e31df6-6b51-478d-ace9-0ea12a956025.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.stove.use": {
+      "url": "/api/handwerker/audio/chaos/file/9e254baa-9384-4274-9c5d-9931dfebf831.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.bathtub.use": {
+      "url": "/api/handwerker/audio/chaos/file/34133f75-067d-4c54-955d-25e54f510512.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.tv.use": {
+      "url": "/api/handwerker/audio/chaos/file/58e01eb5-6d50-4c38-a2d1-2a2fea11389a.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.piano.use": {
+      "url": "/api/handwerker/audio/chaos/file/3bb18fde-5ded-4c4e-8b71-a55d1ff5bbb2.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.aquarium.use": {
+      "url": "/api/handwerker/audio/chaos/file/623e440c-066e-423f-89ed-d9bd446180a2.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "prop.easel.use": {
+      "url": "/api/handwerker/audio/chaos/file/467c96f9-d816-44ec-8a18-4ff47c1ca88a.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event"
+    },
+    "speech.crew.start": {
+      "url": "/api/handwerker/audio/chaos/file/cfb6e9f9-452f-4e6a-a5f0-2ec88e25910c.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.crew.lift": {
+      "url": "/api/handwerker/audio/chaos/file/e96f3a1e-720a-48d4-ba84-ce01af6c721d.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.crew.spill": {
+      "url": "/api/handwerker/audio/chaos/file/3aff93a0-f6bf-4cd3-ae3a-bd96e76c6c12.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.crew.recover": {
+      "url": "/api/handwerker/audio/chaos/file/d31d8e53-5faa-46c7-8106-c23f429010e6.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.crew.delivered": {
+      "url": "/api/handwerker/audio/chaos/file/7d5a0e9c-f042-401e-b0a1-3829536fbd13.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.timer.minute": {
+      "url": "/api/handwerker/audio/chaos/file/4d400dae-4a16-4b4b-b96f-437885526b1a.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.timer.lastCall": {
+      "url": "/api/handwerker/audio/chaos/file/9d506c1e-6379-4422-9417-4a67f43a548c.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.timer.ten": {
+      "url": "/api/handwerker/audio/chaos/file/a53bcf66-1b01-4779-9abb-65365c671be2.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.inspection.arrive": {
+      "url": "/api/handwerker/audio/chaos/file/16fd5c3d-cd32-48ce-9121-2b0be26ce0a7.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.inspection.building.complete": {
+      "url": "/api/handwerker/audio/chaos/file/bc793eec-a0bd-4f1b-9805-8dc54acb5ce0.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.inspection.building.missing": {
+      "url": "/api/handwerker/audio/chaos/file/79ec7cb9-bc22-4950-90d1-fa324aa2877a.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.inspection.delivery.complete": {
+      "url": "/api/handwerker/audio/chaos/file/70805fe1-7556-401a-8806-f2eea0707ef2.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.inspection.delivery.missing": {
+      "url": "/api/handwerker/audio/chaos/file/9906c317-258d-4cda-b971-9d524d3b5a77.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.inspection.spills.none": {
+      "url": "/api/handwerker/audio/chaos/file/c3424dbd-4cd1-4f58-98ee-ae2827b90f7b.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.inspection.spills.some": {
+      "url": "/api/handwerker/audio/chaos/file/bf7750c0-ae5a-48b4-a2b1-db1b66cf99fd.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.award.helpers": {
+      "url": "/api/handwerker/audio/chaos/file/46682eb4-bd24-47fd-bdfc-e674087411a9.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.award.spill": {
+      "url": "/api/handwerker/audio/chaos/file/c8a89ccc-d002-424b-a4e8-779963c0f64e.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.award.rescue": {
+      "url": "/api/handwerker/audio/chaos/file/b40454eb-8642-4bb5-84d3-b57989004f3c.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.award.throw": {
+      "url": "/api/handwerker/audio/chaos/file/afbccebc-3ca5-4c0e-8567-646e75a7ac71.mp3",
+      "volume": 0.85,
+      "loop": false,
+      "category": "speech"
+    },
+    "music.lobby": {
+      "url": "/api/handwerker/audio/chaos/file/db50ed53-c7b0-44a2-be24-4ba4141612af.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music"
+    },
+    "music.lastCall": {
+      "url": "/api/handwerker/audio/chaos/file/29b8aeb1-40d4-441e-8be3-0c02c36affac.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music"
+    },
+    "music.inspection": {
+      "url": "/api/handwerker/audio/chaos/file/b7169938-27c6-44eb-9db8-92f884fc2d6f.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music"
+    },
+    "music.results": {
+      "url": "/api/handwerker/audio/chaos/file/233e91fd-47b3-4c9a-a897-2de5c8f0030a.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/60b68cff-5464-4e3e-856a-97518bbd1520.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music",
+      "variantOf": "music.build"
+    },
+    "music.build.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/916879d6-fcde-4c1a-8039-7e1ec7ce5b1a.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music",
+      "variantOf": "music.build"
+    },
+    "music.challenge.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/8f71bebc-9d13-4d86-9613-bef9c77dfa70.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music",
+      "variantOf": "music.challenge"
+    },
+    "music.challenge.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/79280968-3de7-4dec-8e29-f44a9ca514e4.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music",
+      "variantOf": "music.challenge"
+    },
+    "music.lastCall.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/a5702b35-5943-4e78-82e5-e69e3886b21b.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music",
+      "variantOf": "music.lastCall"
+    },
+    "music.lobby.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/9f64bf40-a94f-45a4-bc24-3d581eceeafd.mp3",
+      "volume": 0.8,
+      "loop": true,
+      "category": "music",
+      "variantOf": "music.lobby"
+    },
+    "material.duck.impact.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/16e61188-5457-433e-961c-67859690ec11.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material",
+      "variantOf": "material.duck.impact"
+    },
+    "material.duck.impact.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/2fec0cd8-ee4b-4e81-b8f9-735d8a9a1f8a.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material",
+      "variantOf": "material.duck.impact"
+    },
+    "material.wall.place.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/91ba21d1-c93c-4b49-9b70-972f6c35a152.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material",
+      "variantOf": "material.wall.place"
+    },
+    "material.wall.place.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/a597e8e7-03d3-4b2b-89e4-94bddd042201.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material",
+      "variantOf": "material.wall.place"
+    },
+    "material.sofa.impact.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/37cdca71-e8a8-49a8-ac24-6cfd7ec42ab2.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material",
+      "variantOf": "material.sofa.impact"
+    },
+    "material.sofa.impact.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/ba9da8e8-f509-4d4a-b2aa-431701004435.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "material",
+      "variantOf": "material.sofa.impact"
+    },
+    "step.concrete.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/688ed59a-3a6d-4905-9e71-f7048222f7be.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event",
+      "variantOf": "step.concrete"
+    },
+    "step.concrete.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/e110f107-e993-4061-bce2-a206927f78bf.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event",
+      "variantOf": "step.concrete"
+    },
+    "step.dirt.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/f95c4dd6-7cf2-4164-b402-6b6295e78e57.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event",
+      "variantOf": "step.dirt"
+    },
+    "step.dirt.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/5937eb56-3aa4-48d0-be21-dbe6500af7c8.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event",
+      "variantOf": "step.dirt"
+    },
+    "event.bonk.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/db884ed2-7791-4545-aafd-083a3e9e8b65.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event",
+      "variantOf": "event.bonk"
+    },
+    "event.bonk.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/2bb24d2f-b774-4c7e-ac3c-07f756e9c9e9.mp3",
+      "volume": 1,
+      "loop": false,
+      "category": "event",
+      "variantOf": "event.bonk"
+    },
+    "party.handle.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/31fafa14-cf8f-4ae0-b130-a09ea7203e61.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event",
+      "variantOf": "party.handle"
+    },
+    "party.handle.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/b83ba59b-ffc6-4fba-bc6f-2431ab85fc19.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event",
+      "variantOf": "party.handle"
+    },
+    "party.glass.crack.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/e3cf72f7-e492-4c27-aa7d-1db7428931b5.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event",
+      "variantOf": "party.glass.crack"
+    },
+    "party.glass.crack.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/c2698caf-a8ef-4361-8a3a-3932fd0fdbd1.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event",
+      "variantOf": "party.glass.crack"
+    },
+    "party.barrow.spill.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/cd30feb2-eabc-41a4-a671-1d089870c34b.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event",
+      "variantOf": "party.barrow.spill"
+    },
+    "party.barrow.spill.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/79858693-ee54-4e35-93b0-c3c40bf17a90.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "event",
+      "variantOf": "party.barrow.spill"
+    },
+    "prop.duck.use.alt1": {
+      "url": "/api/handwerker/audio/chaos/file/9ed7d7c5-a95d-4b67-b8a7-b1b18f26ad8a.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event",
+      "variantOf": "prop.duck.use"
+    },
+    "prop.duck.use.alt2": {
+      "url": "/api/handwerker/audio/chaos/file/bc0d0d02-d9ff-4130-8391-5aece4179af8.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event",
+      "variantOf": "prop.duck.use"
+    }
+  }
+}

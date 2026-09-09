@@ -1,0 +1,1103 @@
+:where(body:not(:has(.handwerker))) .game-shell {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 720px;
+  overflow: hidden;
+  isolation: isolate;
+}
+:where(body:not(:has(.handwerker))) .world-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+:where(body:not(:has(.handwerker))) .world-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+:where(body:not(:has(.handwerker))) .game-shell:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    #e4e8cefa 0%,
+    #e1e5cfd9 23%,
+    #dbe2cd3d 41%,
+    transparent 57%
+  );
+}
+:where(body:not(:has(.handwerker))) .wordmark-or {
+  font-weight: 500;
+  font-size: 16px;
+  margin: 0 1px;
+}
+:where(body:not(:has(.handwerker))) .brand-icon {
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--cream);
+  height: 39px;
+  width: 39px;
+  border-radius: 12px;
+  margin-right: 7px;
+  transform: rotate(-5deg);
+}
+:where(body:not(:has(.handwerker))) .top-note {
+  font-size: 11px;
+  letter-spacing: 1.9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+:where(body:not(:has(.handwerker))) .start-panel {
+  position: absolute;
+  top: 123px;
+  left: 6%;
+  width: 342px;
+}
+:where(body:not(:has(.handwerker))) .title-middle {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font:
+    500 27px/1.1 'Fredoka',
+    sans-serif;
+  margin: 5px 0 4px 63px;
+  letter-spacing: 0;
+}
+:where(body:not(:has(.handwerker))) .title-middle i {
+  height: 2px;
+  width: 40px;
+  background: #90a28b;
+  transform: rotate(-7deg);
+}
+:where(body:not(:has(.handwerker))) .title-middle i:last-child {
+  transform: rotate(7deg);
+}
+:where(body:not(:has(.handwerker))) .sink-title {
+  color: #d38735;
+}
+:where(body:not(:has(.handwerker))) .color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 15px 0 19px;
+  font-size: 12px;
+  color: #687961;
+}
+:where(body:not(:has(.handwerker))) .color-row > div {
+  display: flex;
+  gap: 7px;
+}
+:where(body:not(:has(.handwerker))) .color-choice {
+  border: 2px solid transparent;
+  border-radius: 50%;
+  height: 31px;
+  width: 31px;
+  display: grid;
+  place-items: center;
+  color: #fff4d3;
+  padding: 0;
+}
+:where(body:not(:has(.handwerker))) .color-choice.selected {
+  outline: 2px solid #52644e;
+  outline-offset: 2px;
+}
+@media (min-width: 1600px) {
+  :where(body:not(:has(.handwerker))) .start-panel {
+    left: 8%;
+    top: 16%;
+    width: 365px;
+  }
+}
+@media (max-height: 850px) and (min-width: 801px) {
+  :where(body:not(:has(.handwerker))) .game-shell {
+    min-height: 660px;
+  }
+  :where(body:not(:has(.handwerker))) .start-panel {
+    top: 99px;
+    width: 320px;
+  }
+  :where(body:not(:has(.handwerker))) .title-middle {
+    font-size: 23px;
+  }
+}
+@media (max-width: 800px) {
+  :where(body:not(:has(.handwerker))) .top-note {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .brand-icon {
+    height: 34px;
+    width: 34px;
+  }
+  :where(body:not(:has(.handwerker))) .start-panel {
+    left: 25px;
+    top: 102px;
+    width: 300px;
+  }
+  :where(body:not(:has(.handwerker))) .game-shell:before {
+    background: linear-gradient(
+      90deg,
+      #e4e8ceed 0%,
+      #e1e5cfa1 35%,
+      transparent 83%
+    );
+  }
+}
+@media (max-width: 480px) {
+  :where(body:not(:has(.handwerker))) .game-shell {
+    min-height: 760px;
+  }
+  :where(body:not(:has(.handwerker))) .start-panel {
+    top: 95px;
+    left: 22px;
+    width: min(300px, calc(100% - 44px));
+  }
+  :where(body:not(:has(.handwerker))) .game-shell:before {
+    background: linear-gradient(
+      90deg,
+      #e4e8cef2 0%,
+      #e1e5cf96 55%,
+      transparent
+    );
+  }
+  :where(body:not(:has(.handwerker))) .topbar .brand-icon {
+    height: 30px;
+    width: 30px;
+  }
+}
+:where(body:not(:has(.handwerker))) .is-playing {
+  min-height: 600px;
+}
+:where(body:not(:has(.handwerker))) .is-playing:before {
+  background: linear-gradient(180deg, #cfddcba6, transparent 140px);
+}
+:where(body:not(:has(.handwerker))) .is-playing .topbar {
+  height: 82px;
+  padding: 0 26px;
+  pointer-events: none;
+}
+:where(body:not(:has(.handwerker))) .is-playing .topbar > * {
+  pointer-events: auto;
+}
+:where(body:not(:has(.handwerker))) .is-playing .wordmark {
+  font-size: 21px;
+}
+:where(body:not(:has(.handwerker))) .crew-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+:where(body:not(:has(.handwerker))) .crew-member {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #f7f3d8b8;
+  border: 1px solid #ffffff80;
+  border-radius: 30px;
+  padding: 5px 10px 5px 5px;
+  font-size: 12px;
+  position: relative;
+}
+:where(body:not(:has(.handwerker))) .crew-member > span {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff6d8;
+}
+:where(body:not(:has(.handwerker))) .crew-member small {
+  font-size: 7px;
+  position: absolute;
+  top: 34px;
+  left: 42px;
+  letter-spacing: 1px;
+  color: #58715b;
+}
+:where(body:not(:has(.handwerker))) .crew-member.down {
+  opacity: 0.55;
+}
+:where(body:not(:has(.handwerker))) .crew-empty {
+  border: 1px dashed #5b806c6e;
+  background: #f5f3d054;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #5d7c67;
+}
+:where(body:not(:has(.handwerker))) .mission-panel {
+  position: absolute;
+  top: 112px;
+  left: 27px;
+  width: 224px;
+  padding: 23px 20px 0;
+  background: #fff6ddf0;
+  box-shadow: 0 8px 25px #315d4012;
+  border-radius: 4px 4px 13px 13px;
+  border-top: 5px solid #d4a24d;
+}
+:where(body:not(:has(.handwerker))) .clipboard-clip {
+  position: absolute;
+  top: -14px;
+  left: 83px;
+  width: 58px;
+  height: 19px;
+  background: #b7ba9c;
+  border: 3px solid #9ca889;
+  border-radius: 5px;
+}
+:where(body:not(:has(.handwerker))) .mission-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  color: #798361;
+}
+:where(body:not(:has(.handwerker))) .mission-panel h2 {
+  font:
+    500 27px/1.13 'Fredoka',
+    sans-serif;
+  letter-spacing: -0.5px;
+  margin: 13px 0 10px;
+}
+:where(body:not(:has(.handwerker))) .mission-panel > p {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #738064;
+  margin: 0 0 18px;
+}
+:where(body:not(:has(.handwerker))) .mission-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+:where(body:not(:has(.handwerker))) .mission-progress > span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+}
+:where(body:not(:has(.handwerker))) .mission-progress strong {
+  font:
+    500 25px 'Fredoka',
+    sans-serif;
+}
+:where(body:not(:has(.handwerker))) .mission-progress small {
+  font-size: 13px;
+}
+:where(body:not(:has(.handwerker)))
+  .height-progress
+  [data-slot='progress-track'] {
+  height: 7px;
+  background: #e0e2c8;
+}
+:where(body:not(:has(.handwerker)))
+  .height-progress
+  [data-slot='progress-indicator'] {
+  background: #719d77;
+}
+:where(body:not(:has(.handwerker))) .height-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-top: 9px;
+}
+:where(body:not(:has(.handwerker))) .height-row span {
+  color: #6f8268;
+}
+:where(body:not(:has(.handwerker))) .mission-divider {
+  height: 1px;
+  background: #dce0c7;
+  margin: 17px 0 12px;
+}
+:where(body:not(:has(.handwerker))) .mission-stat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  margin: 11px 0;
+}
+:where(body:not(:has(.handwerker))) .mission-stat svg {
+  color: #829475;
+}
+:where(body:not(:has(.handwerker))) .mission-stat b {
+  margin-left: auto;
+  font-weight: 600;
+}
+:where(body:not(:has(.handwerker))) .mission-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 17px -20px 0;
+  padding: 13px 16px;
+  background: #f1ebd4;
+  border-radius: 0 0 13px 13px;
+  font-size: 10px;
+  color: #778367;
+  line-height: 1.5;
+}
+:where(body:not(:has(.handwerker))) .room-panel {
+  position: absolute;
+  top: 102px;
+  right: 26px;
+}
+:where(body:not(:has(.handwerker))) .network-state {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  margin-top: 9px;
+  color: #496e5e;
+  justify-content: center;
+}
+:where(body:not(:has(.handwerker))) .network-state .live-dot {
+  height: 5px;
+  width: 5px;
+}
+:where(body:not(:has(.handwerker))) .network-state.offline {
+  color: #ad633b;
+}
+:where(body:not(:has(.handwerker))) .network-state.offline .live-dot {
+  background: #c37946;
+}
+:where(body:not(:has(.handwerker))) .water-panel {
+  position: absolute;
+  right: 28px;
+  top: 245px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 125px;
+}
+:where(body:not(:has(.handwerker))) .water-panel > div:first-child {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+:where(body:not(:has(.handwerker))) .water-panel > div:first-child > svg {
+  color: #357b79;
+}
+:where(body:not(:has(.handwerker))) .water-panel > div:first-child > span {
+  font-size: 8px;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+:where(body:not(:has(.handwerker))) .water-panel strong {
+  display: block;
+  font:
+    500 29px 'Fredoka',
+    sans-serif;
+  letter-spacing: 0;
+}
+:where(body:not(:has(.handwerker))) .water-panel small {
+  font-size: 13px;
+}
+:where(body:not(:has(.handwerker))) .water-track {
+  height: 184px;
+  width: 19px;
+  border-radius: 12px;
+  border: 3px solid #f9f3dac7;
+  background:
+    repeating-linear-gradient(
+      to top,
+      #6c998747 0,
+      #6c998747 1px,
+      transparent 1px,
+      transparent 20px
+    ),
+    #ecf0d940;
+  position: relative;
+  box-shadow: 0 0 0 1px #799b821f;
+}
+:where(body:not(:has(.handwerker))) .water-track > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #5b9f9d;
+  border-radius: 0 0 8px 8px;
+  transition: height 0.3s;
+}
+:where(body:not(:has(.handwerker))) .water-track > i {
+  position: absolute;
+  left: 18px;
+  display: grid;
+  place-items: center;
+  background: #f7cc6b;
+  color: #6a714d;
+  border: 2px solid #fff0c0;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  transform: translateY(50%);
+}
+:where(body:not(:has(.handwerker))) .water-caption {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+:where(body:not(:has(.handwerker))) .round-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #537d6a;
+}
+:where(body:not(:has(.handwerker))) .camera-tools {
+  position: absolute;
+  right: 36px;
+  bottom: 178px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+:where(body:not(:has(.handwerker))) .camera-tools > span {
+  font-size: 10px;
+}
+:where(body:not(:has(.handwerker))) .play-bottom {
+  position: absolute;
+  bottom: 21px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 30px);
+}
+:where(body:not(:has(.handwerker))) .interaction-hint {
+  background: #fff7dfde;
+  box-shadow: 0 3px 12px #4665490d;
+  border: 1px solid #fff8e8;
+  border-radius: 20px;
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  max-width: 100%;
+}
+:where(body:not(:has(.handwerker))) .interaction-hint > span:last-child {
+  color: #697e63;
+}
+:where(body:not(:has(.handwerker)))
+  .interaction-hint.invalid
+  > span:last-child {
+  color: #b3643d;
+}
+:where(body:not(:has(.handwerker))) .hint-dot {
+  height: 6px;
+  width: 6px;
+  border-radius: 50%;
+  background: #83a173;
+}
+:where(body:not(:has(.handwerker))) .movement-hint {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  font-size: 10px;
+  color: #476958;
+}
+:where(body:not(:has(.handwerker))) .movement-hint > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+:where(body:not(:has(.handwerker))) .movement-hint kbd {
+  background: #edf2d575;
+}
+:where(body:not(:has(.handwerker))) .lobby-banner {
+  position: absolute;
+  bottom: 173px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 550px);
+  width: 640px;
+  background: #fff6dfef;
+  border: 1px solid #fffbeb;
+  border-radius: 16px;
+  padding: 21px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 8px 24px #3a5d3912;
+}
+:where(body:not(:has(.handwerker))) .lobby-banner h3 {
+  font:
+    500 25px/1.2 'Fredoka',
+    sans-serif;
+  margin: 8px 0;
+}
+:where(body:not(:has(.handwerker))) .lobby-banner p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6e7e62;
+  margin: 0;
+}
+:where(body:not(:has(.handwerker))) .lobby-banner .eyebrow {
+  font-size: 9px;
+}
+:where(body:not(:has(.handwerker))) .lobby-banner > div:last-child {
+  min-width: 162px;
+}
+:where(body:not(:has(.handwerker))) .lobby-banner .secondary-button {
+  margin: 0 0 9px;
+  font-size: 12px;
+}
+:where(body:not(:has(.handwerker))) .lobby-banner .primary-button {
+  font-size: 12px;
+}
+:where(body:not(:has(.handwerker))) .crane-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff1c6;
+  border: 2px solid #daa744;
+  border-radius: 12px;
+  padding: 12px 16px;
+  width: 100%;
+}
+:where(body:not(:has(.handwerker))) .crane-panel > div {
+  flex: 1;
+  min-width: 0;
+}
+:where(body:not(:has(.handwerker))) .crane-panel strong {
+  display: block;
+  font-size: 14px;
+}
+:where(body:not(:has(.handwerker))) .crane-panel span {
+  display: block;
+  font-size: 11px;
+  color: #7b7955;
+  margin-top: 3px;
+}
+:where(body:not(:has(.handwerker))) .crane-panel button {
+  border: 1px solid #d8b969;
+  background: #ffe4a0;
+  border-radius: 7px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+:where(body:not(:has(.handwerker))) .crane-panel .crane-release {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+:where(body:not(:has(.handwerker))) .rescue-banner,
+:where(body:not(:has(.handwerker))) .breath-warning {
+  position: absolute;
+  top: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  border-radius: 12px;
+  background: #fff0d8;
+  border: 2px solid #d69354;
+  color: #985333;
+}
+:where(body:not(:has(.handwerker))) .rescue-banner span {
+  display: block;
+  font-size: 12px;
+  margin-top: 5px;
+}
+:where(body:not(:has(.handwerker))) .breath-warning {
+  font-size: 12px;
+}
+:where(body:not(:has(.handwerker))) .breath-warning [data-slot='progress'] {
+  width: 75px;
+}
+:where(body:not(:has(.handwerker)))
+  .breath-warning
+  [data-slot='progress-indicator'] {
+  background: #ca7955;
+}
+:where(body:not(:has(.handwerker))) .game-notice {
+  position: absolute;
+  bottom: 178px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  background: #fff0d5;
+  border: 1px solid #d8bb7d;
+  border-radius: 10px;
+  padding: 12px 15px;
+  box-shadow: 0 5px 20px #425c3225;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  max-width: calc(100% - 35px);
+  font-size: 13px;
+}
+:where(body:not(:has(.handwerker))) .game-notice button {
+  background: none;
+  border: 0;
+  padding: 3px;
+}
+:where(body:not(:has(.handwerker))) .game-shell:not(.is-playing) .game-notice {
+  bottom: 72px;
+}
+:where(body:not(:has(.handwerker))) .connecting-card {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  width: 330px;
+  max-width: 90%;
+  background: var(--cream);
+  border: 1px solid white;
+  border-radius: 18px;
+  padding: 27px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 15;
+  text-align: center;
+}
+:where(body:not(:has(.handwerker))) .connecting-card p {
+  font-size: 14px;
+  color: #6a7d64;
+  margin: 0;
+}
+:where(body:not(:has(.handwerker))) .help-dialog {
+  max-width: min(555px, calc(100% - 32px)) !important;
+}
+@media (max-width: 1100px) {
+  :where(body:not(:has(.handwerker))) .is-playing .topbar {
+    padding: 0 20px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-member b {
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  :where(body:not(:has(.handwerker))) .crew-bar {
+    gap: 5px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-member small {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel {
+    left: 20px;
+    width: 195px;
+    padding: 20px 15px 0;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel h2 {
+    font-size: 25px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-foot {
+    margin-left: -15px;
+    margin-right: -15px;
+  }
+  :where(body:not(:has(.handwerker))) .clipboard-clip {
+    left: 65px;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner {
+    max-width: calc(100% - 430px);
+    flex-direction: column;
+    gap: 12px;
+    padding: 17px;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner > div:last-child {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner .secondary-button {
+    margin: 0;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner h3 {
+    font-size: 22px;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner p {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner .primary-button,
+  :where(body:not(:has(.handwerker))) .lobby-banner .secondary-button {
+    padding: 10px;
+    white-space: nowrap;
+  }
+  :where(body:not(:has(.handwerker))) .room-panel {
+    right: 20px;
+  }
+  :where(body:not(:has(.handwerker))) .water-panel {
+    right: 20px;
+    width: 108px;
+  }
+}
+@media (max-width: 800px) {
+  :where(body:not(:has(.handwerker))) .is-playing .topbar {
+    height: 66px;
+    padding: 0 14px;
+  }
+  :where(body:not(:has(.handwerker))) .is-playing .wordmark {
+    font-size: 16px;
+  }
+  :where(body:not(:has(.handwerker))) .is-playing .brand-icon {
+    height: 30px;
+    width: 30px;
+    margin-right: 2px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-bar {
+    position: absolute;
+    top: 71px;
+    left: 14px;
+    gap: 5px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-member {
+    font-size: 10px;
+    padding: 3px 7px 3px 3px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-member > span {
+    height: 23px;
+    width: 23px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-empty {
+    height: 28px;
+    width: 28px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-member b {
+    max-width: 60px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel {
+    left: 14px;
+    top: 124px;
+    width: 159px;
+    padding: 16px 12px 0;
+    border-top-width: 3px;
+  }
+  :where(body:not(:has(.handwerker))) .clipboard-clip {
+    left: 56px;
+    width: 42px;
+    height: 14px;
+    top: -10px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-eyebrow {
+    font-size: 8px;
+    gap: 4px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel h2 {
+    font-size: 21px;
+    margin: 9px 0;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel > p {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .mission-progress {
+    margin-top: 14px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-progress > span {
+    font-size: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-progress strong {
+    font-size: 21px;
+  }
+  :where(body:not(:has(.handwerker))) .height-row {
+    font-size: 10px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-divider {
+    margin: 12px 0 10px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-stat {
+    font-size: 9px;
+    gap: 4px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-stat svg {
+    width: 13px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-foot {
+    font-size: 9px;
+    margin: 12px -12px 0;
+    padding: 10px;
+  }
+  :where(body:not(:has(.handwerker))) .room-panel {
+    top: 116px;
+    right: 14px;
+  }
+  :where(body:not(:has(.handwerker))) .network-state {
+    font-size: 8px;
+    max-width: 136px;
+  }
+  :where(body:not(:has(.handwerker))) .water-panel {
+    top: 227px;
+    right: 16px;
+    width: 81px;
+  }
+  :where(body:not(:has(.handwerker))) .water-track {
+    height: 126px;
+    width: 17px;
+  }
+  :where(body:not(:has(.handwerker))) .water-panel > div:first-child > svg {
+    width: 17px;
+  }
+  :where(body:not(:has(.handwerker))) .water-panel > div:first-child > span {
+    font-size: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .water-panel strong {
+    font-size: 23px;
+  }
+  :where(body:not(:has(.handwerker))) .water-caption {
+    font-size: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .round-time {
+    font-size: 10px;
+  }
+  :where(body:not(:has(.handwerker))) .camera-tools {
+    right: 23px;
+    bottom: 214px;
+  }
+  :where(body:not(:has(.handwerker))) .camera-tools > span {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner {
+    max-width: calc(100% - 32px);
+    width: 400px;
+    bottom: 147px;
+    padding: 13px 16px;
+    gap: 10px;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner h3 {
+    font-size: 20px;
+    margin: 5px 0 0;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner > div:first-child {
+    width: 100%;
+    text-align: center;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner .eyebrow {
+    display: block;
+    font-size: 8px;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner > div:last-child {
+    width: 100%;
+  }
+  :where(body:not(:has(.handwerker))) .play-bottom {
+    bottom: 15px;
+    gap: 8px;
+  }
+  :where(body:not(:has(.handwerker))) .movement-hint {
+    font-size: 9px;
+    gap: 9px;
+  }
+  :where(body:not(:has(.handwerker))) .movement-hint > span:last-child {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .interaction-hint {
+    font-size: 10px;
+    padding: 8px 11px;
+    max-width: 95%;
+    gap: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .interaction-hint > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  :where(body:not(:has(.handwerker))) .interaction-hint strong {
+    white-space: nowrap;
+  }
+  :where(body:not(:has(.handwerker))) .game-notice {
+    bottom: 152px;
+    font-size: 12px;
+  }
+  :where(body:not(:has(.handwerker))) .rescue-banner,
+  :where(body:not(:has(.handwerker))) .breath-warning {
+    top: 370px;
+    padding: 12px;
+    max-width: calc(100% - 35px);
+    width: max-content;
+  }
+  :where(body:not(:has(.handwerker))) .rescue-banner strong {
+    font-size: 14px;
+  }
+  :where(body:not(:has(.handwerker))) .rescue-banner span {
+    font-size: 11px;
+  }
+  :where(body:not(:has(.handwerker))) .crane-panel {
+    padding: 9px;
+    gap: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .crane-panel > svg {
+    width: 24px;
+  }
+  :where(body:not(:has(.handwerker))) .crane-panel strong {
+    font-size: 12px;
+  }
+  :where(body:not(:has(.handwerker))) .crane-panel span {
+    font-size: 9px;
+  }
+  :where(body:not(:has(.handwerker))) .crane-panel .crane-release {
+    padding: 9px;
+    font-size: 11px;
+  }
+}
+@media (pointer: coarse) {
+  :where(body:not(:has(.handwerker))) .is-playing {
+    min-height: 600px;
+  }
+  :where(body:not(:has(.handwerker))) .movement-hint {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner {
+    bottom: 273px;
+  }
+  :where(body:not(:has(.handwerker))) .camera-tools {
+    bottom: 248px;
+  }
+  :where(body:not(:has(.handwerker))) .game-notice {
+    bottom: 128px;
+  }
+  :where(body:not(:has(.handwerker))) .play-bottom {
+    bottom: 17px;
+  }
+}
+@media (max-width: 480px) {
+  :where(body:not(:has(.handwerker))) .crew-member b {
+    max-width: 45px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-member {
+    gap: 4px;
+    font-size: 9px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-empty {
+    width: 25px;
+    height: 25px;
+  }
+  :where(body:not(:has(.handwerker))) .is-playing .topbar .icon-button {
+    width: 31px;
+    height: 31px;
+  }
+  :where(body:not(:has(.handwerker))) .is-playing .top-actions {
+    gap: 5px;
+  }
+  :where(body:not(:has(.handwerker))) .is-playing .wordmark {
+    font-size: 16px;
+  }
+  :where(body:not(:has(.handwerker))) .is-playing .wordmark-or {
+    font-size: 12px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel {
+    top: 122px;
+    width: 143px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel h2 {
+    font-size: 19px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-eyebrow {
+    font-size: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-stat {
+    font-size: 8px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-progress > span {
+    max-width: 60px;
+    font-size: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-foot {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel {
+    padding-bottom: 5px;
+  }
+  :where(body:not(:has(.handwerker))) .water-panel {
+    top: 211px;
+  }
+  :where(body:not(:has(.handwerker))) .play-bottom {
+    width: calc(100% - 30px);
+  }
+  :where(body:not(:has(.handwerker))) .interaction-hint {
+    font-size: 9px;
+  }
+  :where(body:not(:has(.handwerker))) .crane-panel > svg {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .crane-panel span {
+    max-width: 150px;
+  }
+  :where(body:not(:has(.handwerker))) .water-track {
+    height: 115px;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner h3 {
+    font-size: 19px;
+  }
+}
+@media (max-height: 620px) and (min-width: 700px) {
+  :where(body:not(:has(.handwerker))) .is-playing {
+    min-height: 440px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel {
+    top: 85px;
+    width: 185px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel h2 {
+    font-size: 21px;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel > p,
+  :where(body:not(:has(.handwerker))) .mission-foot {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .mission-panel {
+    padding-bottom: 8px;
+  }
+  :where(body:not(:has(.handwerker))) .water-panel {
+    top: 178px;
+  }
+  :where(body:not(:has(.handwerker))) .water-track {
+    height: 110px;
+  }
+  :where(body:not(:has(.handwerker))) .room-panel {
+    top: 83px;
+  }
+  :where(body:not(:has(.handwerker))) .lobby-banner {
+    bottom: 136px;
+  }
+  :where(body:not(:has(.handwerker))) .play-bottom {
+    bottom: 10px;
+  }
+  :where(body:not(:has(.handwerker))) .crew-bar {
+    position: static;
+  }
+  :where(body:not(:has(.handwerker))) .camera-tools {
+    bottom: 120px;
+  }
+}
+@media (max-height: 760px) and (min-width: 801px) {
+  :where(body:not(:has(.handwerker))) .start-panel {
+    top: 84px;
+  }
+  :where(body:not(:has(.handwerker))) .start-panel h1 {
+    font-size: 70px;
+    margin: 15px 0;
+  }
+  :where(body:not(:has(.handwerker))) .start-panel .intro {
+    font-size: 16px;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+  :where(body:not(:has(.handwerker))) .start-panel .setup-card {
+    padding: 14px;
+  }
+  :where(body:not(:has(.handwerker))) .start-panel .start-tip {
+    display: none;
+  }
+}

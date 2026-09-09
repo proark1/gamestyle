@@ -1,0 +1,668 @@
+:where(body:not(:has(.handwerker))) .topbar {
+  height: 94px;
+  padding: 0 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+}
+:where(body:not(:has(.handwerker))) .wordmark {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font:
+    600 23px 'Fredoka',
+    sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+:where(body:not(:has(.handwerker))) .live-dot {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  background: #588b69;
+  border-radius: 100%;
+  box-shadow: 0 0 0 4px #63977b18;
+}
+:where(body:not(:has(.handwerker))) .top-actions {
+  display: flex;
+  gap: 9px;
+}
+:where(body:not(:has(.handwerker))) .icon-button {
+  display: grid;
+  place-items: center;
+  width: 41px;
+  height: 41px;
+  border: 1px solid #ffffff8c;
+  border-radius: 50%;
+  background: #f7f8eaa8;
+}
+:where(body:not(:has(.handwerker))) .icon-button:hover {
+  background: #fff6df;
+}
+:where(body:not(:has(.handwerker))) .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+:where(body:not(:has(.handwerker))) .tiny-line {
+  width: 22px;
+  height: 3px;
+  background: var(--orange);
+  border-radius: 2px;
+}
+:where(body:not(:has(.handwerker))) h1 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font:
+    600 104px/0.82 'Fredoka',
+    sans-serif;
+  letter-spacing: -3px;
+  margin: 30px 0 23px;
+  filter: drop-shadow(0 3px 0 #fcf4d375);
+}
+:where(body:not(:has(.handwerker))) .title-dot {
+  color: var(--ink);
+}
+:where(body:not(:has(.handwerker))) .intro {
+  font-size: 19px;
+  line-height: 1.6;
+  margin: 0 0 23px;
+  color: #526e5e;
+}
+:where(body:not(:has(.handwerker))) .setup-card {
+  background: #fff8e7e8;
+  border: 1px solid #fffcf1;
+  border-radius: 18px;
+  padding: 21px;
+  box-shadow: 0 9px 24px #516d4010;
+}
+:where(body:not(:has(.handwerker))) .setup-card label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+:where(body:not(:has(.handwerker))) .setup-card input {
+  width: 100%;
+  background: #f6f2e2;
+  border: 1px solid #dcdcc4;
+  border-radius: 9px;
+  padding: 11px 12px;
+  color: var(--ink);
+  font-size: 15px;
+}
+:where(body:not(:has(.handwerker))) .setup-card input::placeholder {
+  color: #8c9786;
+}
+:where(body:not(:has(.handwerker))) .primary-button,
+:where(body:not(:has(.handwerker))) .secondary-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 13px 15px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+}
+:where(body:not(:has(.handwerker))) .primary-button {
+  background: #f3bf50;
+  border: 1px solid #d8a444;
+  box-shadow: 0 3px 0 #bc8932;
+  color: #344632;
+}
+:where(body:not(:has(.handwerker))) .primary-button:hover {
+  background: #ffd16a;
+}
+:where(body:not(:has(.handwerker))) .primary-button svg {
+  margin-left: auto;
+}
+:where(body:not(:has(.handwerker))) .secondary-button {
+  border: 1px solid #d4d9c2;
+  background: transparent;
+  margin-top: 11px;
+  font-size: 13px;
+}
+:where(body:not(:has(.handwerker))) .secondary-button:hover {
+  background: #ecefdc;
+}
+:where(body:not(:has(.handwerker))) .practice-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  border: 0;
+  background: none;
+  width: 100%;
+  margin-top: 15px;
+  color: #62785f;
+}
+:where(body:not(:has(.handwerker))) .start-tip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #688066;
+  margin-top: 17px;
+}
+:where(body:not(:has(.handwerker))) .scene-caption {
+  position: absolute;
+  bottom: 106px;
+  left: 65%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+:where(body:not(:has(.handwerker))) .map-badge {
+  background: #f7edd3c9;
+  border: 1px solid #fff5e0b3;
+  padding: 9px 15px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  transform: rotate(-3deg);
+}
+:where(body:not(:has(.handwerker))) .scene-caption > span:last-child {
+  font-size: 12px;
+  color: #496e60;
+}
+:where(body:not(:has(.handwerker))) .start-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 38px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  border-top: 1px solid #749b7e1c;
+  color: #5b7966;
+}
+:where(body:not(:has(.handwerker))) .start-footer > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+@media (min-width: 1600px) {
+  :where(body:not(:has(.handwerker))) h1 {
+    font-size: 119px;
+  }
+  :where(body:not(:has(.handwerker))) .intro {
+    font-size: 20px;
+  }
+  :where(body:not(:has(.handwerker))) .setup-card {
+    padding: 23px;
+  }
+  :where(body:not(:has(.handwerker))) .scene-caption {
+    bottom: 120px;
+  }
+}
+@media (max-height: 850px) and (min-width: 801px) {
+  :where(body:not(:has(.handwerker))) h1 {
+    font-size: 84px;
+    margin: 23px 0 18px;
+  }
+  :where(body:not(:has(.handwerker))) .intro {
+    font-size: 17px;
+    margin-bottom: 16px;
+  }
+  :where(body:not(:has(.handwerker))) .setup-card {
+    padding: 17px;
+  }
+  :where(body:not(:has(.handwerker))) .topbar {
+    height: 78px;
+  }
+  :where(body:not(:has(.handwerker))) .start-tip {
+    margin-top: 13px;
+  }
+  :where(body:not(:has(.handwerker))) .scene-caption {
+    bottom: 90px;
+  }
+}
+@media (max-width: 800px) {
+  :where(body:not(:has(.handwerker))) .topbar {
+    height: 78px;
+    padding: 0 20px;
+  }
+  :where(body:not(:has(.handwerker))) .wordmark {
+    font-size: 20px;
+  }
+  :where(body:not(:has(.handwerker))) h1 {
+    font-size: 85px;
+  }
+  :where(body:not(:has(.handwerker))) .scene-caption {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .start-footer {
+    padding: 20px;
+    font-size: 8px;
+  }
+  :where(body:not(:has(.handwerker))) .start-footer > span:last-child {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  :where(body:not(:has(.handwerker))) h1 {
+    font-size: 77px;
+    margin-top: 23px;
+  }
+  :where(body:not(:has(.handwerker))) .intro {
+    font-size: 16px;
+  }
+  :where(body:not(:has(.handwerker))) .top-actions {
+    gap: 5px;
+  }
+  :where(body:not(:has(.handwerker))) .icon-button {
+    width: 35px;
+    height: 35px;
+  }
+  :where(body:not(:has(.handwerker))) .wordmark {
+    font-size: 17px;
+  }
+  :where(body:not(:has(.handwerker))) .topbar {
+    padding: 0 20px;
+  }
+  :where(body:not(:has(.handwerker))) .eyebrow {
+    font-size: 9px;
+  }
+  :where(body:not(:has(.handwerker))) .start-footer {
+    padding: 16px 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(body:not(:has(.handwerker))) * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+:where(body:not(:has(.handwerker))) .start-tip {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+}
+:where(body:not(:has(.handwerker))) .spin {
+  animation: spin 1.2s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+:where(body:not(:has(.handwerker))) .room-code {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  background: #fff8e6d9;
+  border: 1px solid #fff9e4;
+  border-radius: 11px;
+  padding: 12px 17px;
+}
+:where(body:not(:has(.handwerker))) .room-code > span {
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  text-align: left;
+}
+:where(body:not(:has(.handwerker))) .room-code strong {
+  display: block;
+  font:
+    500 23px 'Fredoka',
+    sans-serif;
+  letter-spacing: 3px;
+  margin-top: 2px;
+}
+:where(body:not(:has(.handwerker))) .room-code:disabled {
+  opacity: 1;
+  cursor: default;
+}
+:where(body:not(:has(.handwerker))) .icon-button.active {
+  background: #f1c663;
+}
+:where(body:not(:has(.handwerker))) .tool-dock {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #fff9e7;
+  background: #fff6dfef;
+  padding: 7px;
+  border-radius: 15px;
+  box-shadow: 0 6px 20px #325b4117;
+}
+:where(body:not(:has(.handwerker))) .tool-dock > button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  padding: 13px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+:where(body:not(:has(.handwerker))) .tool-dock > button:hover {
+  background: #e8ead4;
+}
+:where(body:not(:has(.handwerker))) .tool-dock > button.active {
+  background: #f2cd70;
+}
+:where(body:not(:has(.handwerker))) .tool-dock > button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+:where(body:not(:has(.handwerker))) .tool-dock > i {
+  height: 26px;
+  width: 1px;
+  background: #d9dfc6;
+  margin: 0 4px;
+}
+:where(body:not(:has(.handwerker))) kbd {
+  font-family: inherit;
+  font-size: 9px;
+  padding: 2px 4px;
+  border: 1px solid #7d906941;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  color: #6e7e61;
+  background: #ffffec5c;
+}
+:where(body:not(:has(.handwerker))) .tool-dock kbd {
+  margin-left: 4px;
+}
+:where(body:not(:has(.handwerker))) .waiting-label {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #647a63;
+}
+:where(body:not(:has(.handwerker))) .touch-controls {
+  display: none;
+}
+:where(body:not(:has(.handwerker))) .game-dialog {
+  background: #fff6df !important;
+  color: #294a43 !important;
+  border: 1px solid #fffbea !important;
+  box-shadow: 0 18px 70px #294b493d !important;
+  padding: 30px !important;
+  border-radius: 20px !important;
+  gap: 14px !important;
+  max-width: min(430px, calc(100% - 32px)) !important;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+:where(body:not(:has(.handwerker))) .game-dialog [data-slot='dialog-title'] {
+  font:
+    500 31px/1.13 'Fredoka',
+    sans-serif !important;
+  letter-spacing: -0.5px;
+}
+:where(body:not(:has(.handwerker)))
+  .game-dialog
+  [data-slot='dialog-description'] {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #6a7b62;
+}
+:where(body:not(:has(.handwerker))) .dialog-emblem {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  background: #eee5bd;
+  border: 1px solid #e5d9a8;
+  color: #6c7954;
+  border-radius: 18px;
+  transform: rotate(-5deg);
+  margin-bottom: 3px;
+}
+:where(body:not(:has(.handwerker))) .help-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 8px 0;
+}
+:where(body:not(:has(.handwerker))) .help-steps > div {
+  display: flex;
+  gap: 14px;
+}
+:where(body:not(:has(.handwerker))) .help-steps > div > svg {
+  width: 21px;
+  height: 21px;
+  color: #80956e;
+  margin-top: 2px;
+}
+:where(body:not(:has(.handwerker))) .help-steps p {
+  margin: 0;
+  color: #677a61;
+  font-size: 13px;
+  line-height: 1.6;
+}
+:where(body:not(:has(.handwerker))) .help-steps strong {
+  display: block;
+  color: #3e5c48;
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+:where(body:not(:has(.handwerker))) .help-note {
+  font-size: 12px;
+  color: #778569;
+  line-height: 1.6;
+  margin: 0;
+}
+:where(body:not(:has(.handwerker))) .field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+:where(body:not(:has(.handwerker))) .dialog-input {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #f6f0db;
+  border: 1px solid #d9dcc0;
+  border-radius: 9px;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+:where(body:not(:has(.handwerker))) .code-input {
+  font:
+    500 27px 'Fredoka',
+    sans-serif;
+  letter-spacing: 6px;
+  text-align: center;
+}
+:where(body:not(:has(.handwerker))) .invite-code {
+  background: #ede6c9;
+  border: 1px dashed #bbbd8f;
+  font:
+    500 43px 'Fredoka',
+    sans-serif;
+  letter-spacing: 6px;
+  text-align: center;
+  padding: 22px 10px;
+  border-radius: 11px;
+}
+:where(body:not(:has(.handwerker))) .dialog-error {
+  font-size: 13px;
+  color: #a65d3b;
+  line-height: 1.5;
+}
+:where(body:not(:has(.handwerker))) .result-dialog {
+  text-align: center;
+  justify-items: center;
+}
+:where(body:not(:has(.handwerker))) .result-dialog .primary-button,
+:where(body:not(:has(.handwerker))) .result-dialog .secondary-button {
+  width: 100%;
+}
+:where(body:not(:has(.handwerker))) .result-stats {
+  display: flex;
+  justify-content: center;
+  gap: 35px;
+  padding: 17px 0;
+  width: 100%;
+  border-top: 1px solid #dddfc1;
+  border-bottom: 1px solid #dddfc1;
+  margin: 5px 0;
+}
+:where(body:not(:has(.handwerker))) .result-stats span {
+  font-size: 11px;
+  color: #738264;
+}
+:where(body:not(:has(.handwerker))) .result-stats strong {
+  display: block;
+  font:
+    500 29px 'Fredoka',
+    sans-serif;
+  color: #3f654f;
+  margin-bottom: 6px;
+}
+@media (max-width: 1100px) {
+  :where(body:not(:has(.handwerker))) .tool-dock > button {
+    padding: 12px 9px;
+    font-size: 11px;
+    gap: 5px;
+  }
+}
+@media (max-width: 800px) {
+  :where(body:not(:has(.handwerker))) .room-code {
+    padding: 9px 11px;
+    gap: 9px;
+  }
+  :where(body:not(:has(.handwerker))) .room-code strong {
+    font-size: 18px;
+  }
+  :where(body:not(:has(.handwerker))) .room-code > span {
+    font-size: 7px;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock {
+    gap: 2px;
+    padding: 5px;
+    border-radius: 12px;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock > button {
+    padding: 11px 8px;
+    font-size: 10px;
+    gap: 5px;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock > button > svg {
+    width: 17px;
+    height: 17px;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock kbd {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock > i {
+    margin: 0 2px;
+    height: 24px;
+  }
+}
+@media (pointer: coarse) {
+  :where(body:not(:has(.handwerker))) .touch-controls {
+    display: flex;
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: 160px;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+  :where(body:not(:has(.handwerker))) .joystick {
+    height: 96px;
+    width: 96px;
+    border-radius: 50%;
+    background: #eff2d73d;
+    border: 2px solid #ffffe692;
+    display: grid;
+    place-items: center;
+    touch-action: none;
+    pointer-events: auto;
+  }
+  :where(body:not(:has(.handwerker))) .joystick > span {
+    display: grid;
+    place-items: center;
+    height: 49px;
+    width: 49px;
+    border-radius: 50%;
+    background: #f5f3d9ad;
+    color: #638b74;
+  }
+  :where(body:not(:has(.handwerker))) .touch-jump {
+    width: 66px;
+    height: 66px;
+    border: 1px solid #ffffe6ad;
+    background: #fff2cba6;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    touch-action: none;
+    color: #567961;
+  }
+  :where(body:not(:has(.handwerker))) .touch-jump > span {
+    font-size: 9px;
+    font-weight: 700;
+  }
+}
+@media (max-width: 480px) {
+  :where(body:not(:has(.handwerker))) .room-code strong {
+    font-size: 17px;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock > button {
+    flex-direction: column;
+    font-size: 9px;
+    padding: 8px 9px;
+    gap: 4px;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock > button:last-child {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock > i:last-of-type {
+    display: none;
+  }
+  :where(body:not(:has(.handwerker))) .tool-dock {
+    width: 100%;
+    justify-content: space-around;
+  }
+  :where(body:not(:has(.handwerker))) .game-dialog {
+    padding: 24px !important;
+  }
+  :where(body:not(:has(.handwerker))) .game-dialog [data-slot='dialog-title'] {
+    font-size: 28px !important;
+  }
+}
+@media (max-height: 620px) and (min-width: 700px) {
+  :where(body:not(:has(.handwerker))) .touch-controls {
+    bottom: 120px;
+  }
+}
+/* Keep decorative footer text out of the control hit area on short screens. */
+:where(body:not(:has(.handwerker))) .start-footer {
+  pointer-events: none;
+}
+@media (max-height: 760px) and (min-width: 801px) {
+  :where(body:not(:has(.handwerker))) .start-footer {
+    padding: 14px 38px;
+  }
+}

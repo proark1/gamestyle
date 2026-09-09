@@ -1,0 +1,72 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "24fc5ac4a933a6860da8c7c60c6080eaaa99071d07eda1b470717f29f880f67a",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 3,
+  "bots": 1,
+  "variant": 1,
+  "phase": "delivered",
+  "seconds": 332.73333333333335,
+  "stops": 180,
+  "carryingSeconds": 280.93333333333334,
+  "stoppedCarryingSeconds": 3,
+  "ignoredStopFrames": 0,
+  "actions": 77,
+  "stage": 10,
+  "sofa": {
+    "x": -5.675533441858457,
+    "y": 22.78748690940572,
+    "z": -23.5252266800961,
+    "velocity": {
+      "x": -1.340219883053995e-9,
+      "y": -2.578492974691926e-14,
+      "z": 2.2643325694851004e-7
+    },
+    "angular": {
+      "x": -1.0028928641904638e-14,
+      "y": -4.846283848306041e-8,
+      "z": 9.150696624086711e-15
+    },
+    "quaternion": {
+      "x": -4.049520016232873e-8,
+      "y": 0.10094174462978714,
+      "z": -2.509337191960207e-7,
+      "w": -0.9948923379899106
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -6.445782627527905,
+      "y": 21.999921520000004,
+      "z": -22.046191972511878,
+      "grip": null
+    },
+    {
+      "name": "Pilot 1",
+      "x": -0.9978129039742017,
+      "y": 21.999921519999997,
+      "z": -23.175393173534143,
+      "grip": null
+    },
+    {
+      "name": "Pilot 2",
+      "x": -8.2131590003081,
+      "y": 21.999921519999997,
+      "z": -22.455443118506217,
+      "grip": null
+    },
+    {
+      "name": "Sam",
+      "x": -6.839277962620352,
+      "y": 21.999921520000004,
+      "z": -21.36618055562484,
+      "grip": null,
+      "task": "Putting the sofa down"
+    }
+  ]
+}

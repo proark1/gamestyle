@@ -1,0 +1,66 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "75d06bf11e6c8373889e278bb3f9aef05ee850180bf72abcec2fe5edfa2af651",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 1,
+  "bots": 2,
+  "variant": 0,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 0,
+  "carryingSeconds": 755.3166666666667,
+  "stoppedCarryingSeconds": 0,
+  "ignoredStopFrames": 0,
+  "actions": 67,
+  "stage": 4,
+  "sofa": {
+    "x": -4.001200604728293,
+    "y": 9.516172721434332,
+    "z": -1.1379612689222742,
+    "velocity": {
+      "x": -0.0004032903309725347,
+      "y": -0.00008000815216504392,
+      "z": 0.00007872220578210693
+    },
+    "angular": {
+      "x": 0.0000020304598201889568,
+      "y": -0.000010260907392069252,
+      "z": -6.369641172149221e-8
+    },
+    "quaternion": {
+      "x": 0.0061378005207919995,
+      "y": -0.06186744824974006,
+      "z": -0.0967911193751137,
+      "w": -0.993361075068852
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -7.019195058469727,
+      "y": 8.116905141606848,
+      "z": -1.7376795188943701,
+      "grip": 2
+    },
+    {
+      "name": "Jo",
+      "x": -7.116373302710267,
+      "y": 8.097587992032011,
+      "z": -7.796239753433881e-118,
+      "grip": null,
+      "task": "Opening gate"
+    },
+    {
+      "name": "Nora",
+      "x": -8.089999999999998,
+      "y": 7.999981963277974,
+      "z": 0.29357250109276956,
+      "grip": null,
+      "task": "Waiting for the door"
+    }
+  ]
+}

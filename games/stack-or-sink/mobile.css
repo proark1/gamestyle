@@ -1,0 +1,730 @@
+/* Keep the yard full-screen; let the menu and keyboard-open dialogs scroll. */
+.game-shell.is-playing {
+  min-height: 0;
+  height: 100dvh;
+  overscroll-behavior: none;
+}
+.game-shell button,
+.game-shell a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.game-shell button:focus-visible,
+.game-shell a:focus-visible {
+  outline: 3px solid #386e62;
+  outline-offset: 3px;
+}
+.touch-only,
+.touch-goal,
+.touch-guide {
+  display: none;
+}
+.game-dialog {
+  top: calc(var(--sos-dialog-top, 0px) + var(--sos-dialog-height, 100dvh) / 2);
+  max-height: calc(var(--sos-dialog-height, 100dvh) - 24px);
+  overscroll-behavior: contain;
+}
+.game-dialog [data-slot='dialog-close'] {
+  width: 44px;
+  height: 44px;
+}
+.game-dialog input {
+  scroll-margin: 20px;
+}
+.game-dialog [data-slot='dialog-title']:focus {
+  outline: none;
+}
+.invite-crew {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.invite-crew li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.invite-crew li > span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #fff6df;
+  flex-shrink: 0;
+}
+.invite-crew strong {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.invite-crew small {
+  margin-left: auto;
+  color: #6f8268;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  .game-shell {
+    --edge-left: max(12px, env(safe-area-inset-left));
+    --edge-right: max(12px, env(safe-area-inset-right));
+    --edge-bottom: max(12px, env(safe-area-inset-bottom));
+    --edge-top: env(safe-area-inset-top, 0px);
+  }
+  .game-shell:not(.is-playing) {
+    height: auto;
+    min-height: 100svh;
+    overflow: clip;
+  }
+  .game-shell .topbar,
+  .game-shell.is-playing .topbar {
+    height: calc(60px + var(--edge-top));
+    padding: var(--edge-top) var(--edge-right) 0 var(--edge-left);
+    gap: 8px;
+  }
+  .game-shell .wordmark,
+  .game-shell.is-playing .wordmark {
+    font-size: 17px;
+    gap: 4px;
+    min-height: 44px;
+  }
+  .game-shell .wordmark-or {
+    font-size: 12px;
+  }
+  .game-shell .topbar .brand-icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 3px;
+  }
+  .game-shell .top-actions,
+  .game-shell.is-playing .top-actions {
+    gap: 4px;
+  }
+  .game-shell .icon-button,
+  .game-shell.is-playing .topbar .icon-button {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+  .game-shell .top-actions > a,
+  .game-shell .leave-icon,
+  .game-shell .top-note {
+    display: none;
+  }
+  .game-shell .start-panel {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: calc(100% - 32px);
+    max-width: 340px;
+    margin: 22px auto 24px;
+  }
+  .game-shell .start-panel h1 {
+    font-size: clamp(66px, 20vw, 84px);
+    margin: 22px 0 20px;
+  }
+  .game-shell .title-middle {
+    font-size: 23px;
+  }
+  .game-shell .intro {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+  .game-shell .setup-card {
+    padding: 18px;
+  }
+  .game-shell .setup-card input {
+    font-size: 16px;
+    min-height: 48px;
+  }
+  .game-shell .color-row {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0 16px;
+    font-size: 11px;
+  }
+  .game-shell .color-row > div {
+    gap: 8px;
+  }
+  .game-shell .color-choice {
+    width: 44px;
+    height: 44px;
+  }
+  .game-shell .primary-button,
+  .game-shell .secondary-button,
+  .game-dialog .primary-button,
+  .game-dialog .secondary-button {
+    min-height: 48px;
+  }
+  .game-shell .practice-link {
+    min-height: 44px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+  .game-shell .start-tip {
+    min-height: 44px;
+    margin-top: 10px;
+  }
+  .game-shell .start-footer {
+    position: relative;
+    padding: 16px var(--edge-right) max(16px, env(safe-area-inset-bottom))
+      var(--edge-left);
+    font-size: 8px;
+  }
+  .game-shell .start-footer > span:last-child,
+  .game-shell .scene-caption {
+    display: none;
+  }
+  .game-shell:not(.is-playing) .game-notice {
+    position: fixed;
+    bottom: var(--edge-bottom);
+  }
+
+  .game-shell .crew-bar {
+    position: absolute;
+    top: calc(64px + var(--edge-top));
+    left: var(--edge-left);
+    max-width: calc(100% - 152px - var(--edge-left) - var(--edge-right));
+    height: 44px;
+    gap: 4px;
+  }
+  .game-shell .crew-member {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .game-shell .crew-member > span {
+    width: 34px;
+    height: 34px;
+    border: 2px solid #fff5d7;
+    box-shadow: 0 2px 4px #35594a18;
+  }
+  .game-shell .crew-member b,
+  .game-shell .crew-member small {
+    display: none;
+  }
+  .game-shell .crew-empty {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  .game-shell .room-panel {
+    top: calc(64px + var(--edge-top));
+    right: var(--edge-right);
+  }
+  .game-shell .room-code {
+    min-height: 44px;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .game-shell .room-code > span {
+    font-size: 0;
+  }
+  .game-shell .room-code strong {
+    font-size: 18px;
+    letter-spacing: 2px;
+    margin: 0;
+  }
+  .game-shell .room-code svg {
+    width: 17px;
+  }
+  .game-shell .network-state {
+    display: none;
+  }
+  .game-shell .network-state.offline {
+    display: flex;
+    font-size: 10px;
+    background: #fff4da;
+    border-radius: 6px;
+    padding: 5px;
+    max-width: 190px;
+    position: absolute;
+    right: 0;
+    z-index: 5;
+  }
+  .game-shell .mission-panel {
+    top: calc(118px + var(--edge-top));
+    left: var(--edge-left);
+    width: calc(50% - 18px);
+    border: 1px solid #fff8e1;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fff6dfe6;
+    box-shadow: none;
+  }
+  .game-shell .mission-panel > :not(.height-row) {
+    display: none;
+  }
+  .game-shell .height-row {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 10px;
+  }
+  .game-shell .height-row strong {
+    font:
+      500 20px 'Fredoka',
+      sans-serif;
+    white-space: nowrap;
+  }
+  .game-shell .touch-goal {
+    display: inline;
+    font:
+      600 11px 'DM Sans',
+      sans-serif;
+    color: #6f8268;
+  }
+  .game-shell .water-panel {
+    top: calc(118px + var(--edge-top));
+    right: var(--edge-right);
+    width: calc(50% - 18px);
+    min-height: 63px;
+    padding: 8px 10px;
+    border: 1px solid #fff8e1;
+    border-radius: 10px;
+    background: #eff5dde6;
+    gap: 3px;
+    align-items: flex-start;
+  }
+  .game-shell .water-panel > div:first-child {
+    gap: 8px;
+  }
+  .game-shell .water-panel > div:first-child > span {
+    font-size: 8px;
+  }
+  .game-shell .water-panel > div:first-child > svg {
+    width: 20px;
+  }
+  .game-shell .water-panel strong {
+    display: inline;
+    font-size: 19px;
+    margin-left: 8px;
+  }
+  .game-shell .water-track,
+  .game-shell .round-time {
+    display: none;
+  }
+  .game-shell .water-caption {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    margin-left: 28px;
+  }
+  .game-shell .camera-tools {
+    top: calc(192px + var(--edge-top));
+    right: var(--edge-right);
+    bottom: auto;
+    gap: 6px;
+  }
+  .game-shell .camera-tools > span {
+    display: none;
+  }
+  .game-shell .touch-only {
+    display: grid;
+  }
+
+  .game-shell .play-bottom {
+    bottom: var(--edge-bottom);
+    width: calc(100% - var(--edge-left) - var(--edge-right));
+    max-width: 600px;
+    gap: 7px;
+    pointer-events: none;
+  }
+  .game-shell .play-bottom > * {
+    pointer-events: auto;
+  }
+  .game-shell .tool-dock {
+    width: 100%;
+    padding: 5px;
+    gap: 3px;
+    border-radius: 15px;
+    justify-content: space-between;
+  }
+  .game-shell .tool-dock > button,
+  .game-shell .tool-dock > button:last-child {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 54px;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 11px;
+    padding: 6px 3px;
+    gap: 4px;
+    border-radius: 10px;
+  }
+  .game-shell .tool-dock > button:first-child {
+    background: #f3bf50;
+    color: #344632;
+  }
+  .game-shell .tool-dock > button:first-child:disabled {
+    background: #e6d9b6;
+  }
+  .game-shell .tool-dock > button > svg {
+    width: 20px;
+    height: 20px;
+  }
+  .game-shell .tool-dock > i,
+  .game-shell kbd,
+  .game-shell .movement-hint {
+    display: none;
+  }
+  .game-shell .interaction-hint {
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 8px 12px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-height: 36px;
+    gap: 8px;
+  }
+  .game-shell .interaction-hint > span:last-child {
+    white-space: normal;
+    overflow: visible;
+  }
+  .game-shell .interaction-hint strong {
+    flex-shrink: 0;
+  }
+  .game-shell .touch-notice {
+    padding: 3px 8px 3px 12px;
+    background: #fff0d5;
+    border-color: #d8bb7d;
+  }
+  .game-shell .touch-notice > span {
+    flex: 1;
+  }
+  .game-shell .touch-notice button {
+    border: 0;
+    background: transparent;
+    min-width: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+  }
+  .game-shell .touch-guide {
+    display: block;
+    text-align: center;
+    font-size: 9px;
+    color: #395f50;
+    text-shadow: 0 1px #eff6df;
+    pointer-events: none;
+  }
+  .game-shell .touch-controls {
+    display: flex;
+    position: absolute;
+    left: var(--edge-left);
+    right: var(--edge-right);
+    bottom: calc(146px + var(--edge-bottom));
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+  }
+  .game-shell .joystick {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #eaf0d977;
+    border: 2px solid #fffbe1cc;
+    touch-action: none;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .game-shell .joystick > span {
+    display: grid;
+    place-items: center;
+    height: 48px;
+    width: 48px;
+    border-radius: 50%;
+    background: #fff1c8e6;
+    color: #527e64;
+    box-shadow: 0 3px 8px #2c63412b;
+    pointer-events: none;
+  }
+  .game-shell .joystick small {
+    position: absolute;
+    bottom: 8px;
+    font-size: 8px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    pointer-events: none;
+  }
+  .game-shell .touch-jump {
+    width: 72px;
+    height: 72px;
+    border: 2px solid #fff3c9;
+    background: #f5cd77e6;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    touch-action: none;
+    color: #415f43;
+    box-shadow: 0 3px 0 #a3864d66;
+    user-select: none;
+  }
+  .game-shell .touch-jump > span {
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .game-shell .joystick[aria-disabled='true'] {
+    opacity: 0.4;
+  }
+  .game-shell .lobby-banner {
+    bottom: calc(264px + var(--edge-bottom));
+    width: min(400px, calc(100% - 24px));
+    max-width: calc(100% - 24px);
+    padding: 12px;
+    gap: 8px;
+  }
+  .game-shell .lobby-banner h3 {
+    font-size: 18px;
+    margin: 5px 0 0;
+  }
+  .game-shell .lobby-banner p {
+    display: none;
+  }
+  .game-shell .lobby-banner > div:last-child {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .game-shell .lobby-banner .primary-button,
+  .game-shell .lobby-banner .secondary-button {
+    font-size: 12px;
+    padding: 9px;
+    white-space: normal;
+    margin: 0;
+  }
+  .game-shell .rescue-banner,
+  .game-shell .breath-warning {
+    top: calc(192px + var(--edge-top));
+    left: var(--edge-left);
+    right: calc(60px + var(--edge-right));
+    width: auto;
+    max-width: none;
+    transform: none;
+    padding: 10px;
+  }
+  .game-shell .game-notice {
+    bottom: calc(142px + var(--edge-bottom));
+    max-width: calc(100% - 140px);
+    width: max-content;
+    padding: 8px 10px;
+    gap: 5px;
+    font-size: 11px;
+  }
+  .game-shell .game-notice button {
+    min-width: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+  }
+  .game-shell .crane-panel {
+    padding: 8px;
+    gap: 5px;
+  }
+  .game-shell .crane-panel > svg {
+    display: none;
+  }
+  .game-shell .crane-panel strong {
+    font-size: 12px;
+  }
+  .game-shell .crane-panel span {
+    font-size: 10px;
+    max-width: none;
+  }
+  .game-shell .crane-panel button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+  }
+  .game-shell .crane-panel .crane-release {
+    padding: 8px;
+    font-size: 11px;
+  }
+  .game-dialog {
+    padding: 24px !important;
+    max-width: min(555px, calc(100% - 24px)) !important;
+    border-radius: 16px !important;
+  }
+  .game-dialog [data-slot='dialog-title'] {
+    padding-right: 20px;
+  }
+  .game-dialog .dialog-emblem {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 700px) and (orientation: portrait) {
+  .game-shell .start-panel {
+    margin-top: 10px;
+  }
+  .game-shell .start-panel h1 {
+    font-size: 64px;
+    margin: 16px 0;
+  }
+  .game-shell .start-tip {
+    display: none;
+  }
+  .game-shell .intro {
+    margin-bottom: 14px;
+  }
+  .game-shell .lobby-banner > div:first-child {
+    display: none;
+  }
+  .game-shell .lobby-banner {
+    bottom: calc(236px + var(--edge-bottom));
+  }
+  .game-shell .touch-guide {
+    display: none;
+  }
+  .game-shell .touch-controls {
+    bottom: calc(132px + var(--edge-bottom));
+  }
+  .game-shell .camera-tools {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 540px) and (orientation: landscape),
+  (pointer: coarse) and (max-height: 540px) and (orientation: landscape) {
+  .game-shell:not(.is-playing) .start-panel {
+    max-width: 670px;
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    column-gap: 32px;
+    margin: 12px auto 24px;
+  }
+  .game-shell:not(.is-playing) .setup-card {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+  }
+  .game-shell:not(.is-playing) .eyebrow {
+    align-self: end;
+  }
+  .game-shell:not(.is-playing) .start-panel h1 {
+    font-size: 70px;
+    margin: 16px 0;
+  }
+  .game-shell:not(.is-playing) .start-tip {
+    display: none;
+  }
+  .game-shell.is-playing .topbar {
+    height: calc(52px + var(--edge-top));
+  }
+  .game-shell.is-playing .wordmark {
+    font-size: 0;
+    gap: 0;
+  }
+  .game-shell.is-playing .wordmark-or {
+    font-size: 0;
+  }
+  .game-shell.is-playing .brand-icon {
+    margin: 0;
+  }
+  .game-shell .crew-bar {
+    top: calc(4px + var(--edge-top));
+    left: calc(54px + var(--edge-left));
+    max-width: 170px;
+  }
+  .game-shell .room-panel {
+    top: calc(4px + var(--edge-top));
+    right: calc(104px + var(--edge-right));
+  }
+  .game-shell .mission-panel {
+    top: calc(60px + var(--edge-top));
+    width: 140px;
+    padding: 7px 10px;
+  }
+  .game-shell .height-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 8px;
+  }
+  .game-shell .height-row strong {
+    font-size: 17px;
+  }
+  .game-shell .water-panel {
+    top: calc(60px + var(--edge-top));
+    width: 156px;
+    min-height: 46px;
+    padding: 6px 8px;
+  }
+  .game-shell .water-panel strong {
+    font-size: 17px;
+  }
+  .game-shell .camera-tools {
+    top: calc(60px + var(--edge-top));
+    right: calc(176px + var(--edge-right));
+    flex-direction: row;
+    gap: 4px;
+  }
+  .game-shell .camera-tools .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+  .game-shell .play-bottom {
+    width: calc(100% - 260px - var(--edge-left) - var(--edge-right));
+    min-width: 270px;
+    bottom: var(--edge-bottom);
+    gap: 5px;
+  }
+  .game-shell .interaction-hint {
+    font-size: 10px;
+    padding: 6px 9px;
+    min-height: 28px;
+  }
+  .game-shell .tool-dock > button {
+    min-height: 48px;
+    font-size: 10px;
+  }
+  .game-shell .touch-guide {
+    display: none;
+  }
+  .game-shell .touch-controls {
+    bottom: var(--edge-bottom);
+    align-items: flex-end;
+  }
+  .game-shell .joystick {
+    height: 92px;
+    width: 92px;
+  }
+  .game-shell .lobby-banner {
+    bottom: auto;
+    top: calc(116px + var(--edge-top));
+    padding: 8px;
+    width: 340px;
+  }
+  .game-shell .lobby-banner > div:first-child {
+    display: none;
+  }
+  .game-shell .game-notice {
+    bottom: calc(116px + var(--edge-bottom));
+    max-width: 350px;
+  }
+  .game-shell .rescue-banner,
+  .game-shell .breath-warning {
+    top: calc(116px + var(--edge-top));
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    max-width: 380px;
+  }
+  .game-shell .crane-panel span {
+    display: none;
+  }
+}

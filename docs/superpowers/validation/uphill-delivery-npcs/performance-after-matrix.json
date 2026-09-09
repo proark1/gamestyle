@@ -1,0 +1,12 @@
+{
+  "revision": "2d10babdb7b38b3f34ca37f36ee1d40806da26cd5b4a340deb1cab39f974fa4f",
+  "platform": "win32",
+  "arch": "x64",
+  "cpu": "AMD Ryzen 7 5800H with Radeon Graphics         ",
+  "node": "v24.14.0",
+  "activeFrames": 7200,
+  "p50Ms": 0.8355999999998858,
+  "p95Ms": 2.969999999999345,
+  "maxMs": 159.84909999999945,
+  "targetP95Ms": 2
+}

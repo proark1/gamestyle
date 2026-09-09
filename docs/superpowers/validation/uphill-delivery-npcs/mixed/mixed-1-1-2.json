@@ -1,0 +1,58 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "a7d0ff4a34d4c29261bf9b9f4d4125dd1f2eab64f95666bc76bcec35ad61d001",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 1,
+  "bots": 1,
+  "variant": 2,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 180,
+  "carryingSeconds": 678.9833333333333,
+  "stoppedCarryingSeconds": 3,
+  "ignoredStopFrames": 0,
+  "actions": 172,
+  "stage": 4,
+  "sofa": {
+    "x": -8.106689831089547,
+    "y": 8.962224960612744,
+    "z": -0.44396984689740154,
+    "velocity": {
+      "x": 0.0006715620706940109,
+      "y": -0.0019496683202500364,
+      "z": 0.0018615812725901251
+    },
+    "angular": {
+      "x": 0.0007206686106249315,
+      "y": -0.0008266971003729855,
+      "z": -0.0022047993050567263
+    },
+    "quaternion": {
+      "x": 0.07082683271955412,
+      "y": -0.3111580276134562,
+      "z": -0.04266627118011748,
+      "w": -0.9467543667299374
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -9.609674254262778,
+      "y": 7.798551975093841,
+      "z": 2.0058774142902114,
+      "grip": 0
+    },
+    {
+      "name": "Jo",
+      "x": -5.318272424776806,
+      "y": 8.454770061530306,
+      "z": -1.7351532388825595,
+      "grip": null,
+      "task": "Finding a corner"
+    }
+  ]
+}

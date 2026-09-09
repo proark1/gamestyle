@@ -1,0 +1,13 @@
+{
+  "fetchedAt": "2026-09-09T02:10:01.930Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/handwerker/audio/first-person?manifest",
+  "status": 200,
+  "settings": {
+    "effects": 0.75,
+    "speech": 0.85,
+    "ambience": 0.25,
+    "music": 0.18,
+    "voiceId": ""
+  },
+  "cues": {}
+}

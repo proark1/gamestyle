@@ -1,0 +1,100 @@
+:where(body:has(.handwerker)) .saved-build-page {
+  min-height: 100dvh;
+  background: #203b33;
+  color: #fff6dc;
+  font-family: 'DM Sans', sans-serif;
+}
+:where(body:has(.handwerker)) .saved-build-page header {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px 5%;
+  font-weight: 800;
+}
+:where(body:has(.handwerker)) .saved-build-page header a {
+  color: #ffd04f;
+  text-decoration: none;
+}
+:where(body:has(.handwerker)) .saved-build-preview {
+  height: 52dvh;
+  min-height: 280px;
+  position: relative;
+}
+:where(body:has(.handwerker)) .saved-build-preview canvas {
+  width: 100%;
+  height: 100%;
+}
+:where(body:has(.handwerker)) .saved-build-page section {
+  max-width: 950px;
+  margin: auto;
+  padding: 28px 24px 60px;
+}
+:where(body:has(.handwerker)) .saved-build-page h1 {
+  font:
+    600 clamp(32px, 5vw, 60px)/1.05 Fredoka,
+    sans-serif;
+  margin: 12px 0;
+}
+:where(body:has(.handwerker)) .saved-build-page p {
+  font-size: 16px;
+  line-height: 1.6;
+}
+:where(body:has(.handwerker)) .saved-build-page nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+:where(body:has(.handwerker)) .saved-build-page nav a {
+  background: #ffd04f;
+  color: #203b33;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: 800;
+  text-decoration: none;
+}
+:where(body:has(.handwerker)) .saved-build-page a {
+  color: #ffd04f;
+}
+:where(body:has(.handwerker)) .build-shelf {
+  margin: 12px 0;
+}
+:where(body:has(.handwerker)) .build-shelf input {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #abb9ad;
+  border-radius: 6px;
+  margin-top: 6px;
+  font: inherit;
+  background: #fffaf0;
+  color: #203b33;
+}
+:where(body:has(.handwerker)) .build-shelf ul {
+  padding-left: 20px;
+  line-height: 1.8;
+}
+:where(body:has(.handwerker)) .build-shelf a {
+  color: #256678;
+  font-weight: 700;
+}
+:where(body:has(.handwerker)) .disaster-challenge {
+  margin: 14px 0;
+  padding: 16px;
+  border: 2px dashed #917021;
+  border-radius: 10px;
+  background: #fff2be;
+  color: #203b33;
+}
+:where(body:has(.handwerker)) .disaster-challenge p {
+  line-height: 1.5;
+  margin: 10px 0;
+}
+:where(body:has(.handwerker)) .disaster-challenge a {
+  color: #256678;
+  font-weight: 700;
+}
+:where(body:has(.handwerker)) .saved-build-page .disaster-invitation {
+  padding-bottom: 20px;
+}
+:where(body:has(.handwerker)) .disaster-invitation h1 {
+  max-width: 760px;
+}

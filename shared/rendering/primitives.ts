@@ -1,0 +1,70 @@
+import * as T from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+const materials = new Map<string, T.MeshStandardMaterial>();
+
+export function material(color: string) {
+  if (!materials.has(color))
+    materials.set(
+      color,
+      new T.MeshStandardMaterial({ color, roughness: 0.9, flatShading: true }),
+    );
+  return materials.get(color)!;
+}
+
+export function box(
+  g: T.Object3D,
+  size: number[],
+  pos: number[],
+  color: string,
+  rounded = false,
+) {
+  const mesh = new T.Mesh(
+    rounded
+      ? new RoundedBoxGeometry(size[0], size[1], size[2], 2, 0.075)
+      : new T.BoxGeometry(...(size as [number, number, number])),
+    material(color),
+  );
+  mesh.position.set(...(pos as [number, number, number]));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  g.add(mesh);
+  return mesh;
+}
+
+export function beam(
+  g: T.Object3D,
+  a: number[],
+  b: number[],
+  width: number,
+  color: string,
+) {
+  const av = new T.Vector3(...(a as [number, number, number])),
+    bv = new T.Vector3(...(b as [number, number, number]));
+  const m = box(g, [width, av.distanceTo(bv), width], [0, 0, 0], color);
+  m.position.copy(av).add(bv).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(
+    new T.Vector3(0, 1, 0),
+    bv.sub(av).normalize(),
+  );
+  return m;
+}
+
+export function label(text: string, bg = '#fff4d7', fg = '#294a45', width = 3) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 512, 128, 18);
+  ctx.fill();
+  ctx.fillStyle = fg;
+  ctx.font = 'bold 52px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 256, 67, 475);
+  const map = new T.CanvasTexture(canvas);
+  const s = new T.Sprite(new T.SpriteMaterial({ map, depthTest: false }));
+  s.scale.set(width, width / 4, 1);
+  return s;
+}

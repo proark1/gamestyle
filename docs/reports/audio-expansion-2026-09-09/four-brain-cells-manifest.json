@@ -1,0 +1,222 @@
+{
+  "fetchedAt": "2026-09-09T02:59:27.751Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/audio/four-brain-cells?manifest",
+  "cues": {
+    "event.start": {
+      "url": "/api/audio/four-brain-cells/file/a6f0b665-9be3-4614-adef-f1f0b77c52b2.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step": {
+      "url": "/api/audio/four-brain-cells/file/5b2308db-be0c-4b62-b1b8-3ed7d196e038.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.grab": {
+      "url": "/api/audio/four-brain-cells/file/8e26eeae-cfe0-4dce-beeb-7e53ffd22882.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.flip": {
+      "url": "/api/audio/four-brain-cells/file/cddde000-f0c8-41b3-86f7-2bd12459621b.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.pour": {
+      "url": "/api/audio/four-brain-cells/file/fc813778-b007-4c64-8992-621810d4d23d.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.serve": {
+      "url": "/api/audio/four-brain-cells/file/16c106bb-e888-4187-8e69-e2cbd4c3ff7a.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.spill": {
+      "url": "/api/audio/four-brain-cells/file/2d867878-07fc-4239-a0b8-5f4f5efef972.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.kick": {
+      "url": "/api/audio/four-brain-cells/file/42c637a3-6bfc-47d4-a0d8-691e6b6aeec2.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.fan": {
+      "url": "/api/audio/four-brain-cells/file/63ac7741-7ed8-46f7-bf44-830f2e79b268.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.fall": {
+      "url": "/api/audio/four-brain-cells/file/56d68969-4961-4ec6-8219-a5759065b81e.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.finish": {
+      "url": "/api/audio/four-brain-cells/file/7176f51e-1191-4ad9-966c-ac83a0d65f9f.mp3",
+      "volume": 0.6,
+      "loop": false,
+      "category": "event"
+    },
+    "event.ui": {
+      "url": "/api/audio/four-brain-cells/file/4e33f3d0-d1fa-408f-849f-0ae37ce95228.mp3",
+      "volume": 0.3,
+      "loop": false,
+      "category": "event"
+    },
+    "event.join": {
+      "url": "/api/audio/four-brain-cells/file/b0269ed3-20b6-4589-9e35-bb118aea4223.mp3",
+      "volume": 0.45,
+      "loop": false,
+      "category": "event"
+    },
+    "event.leave": {
+      "url": "/api/audio/four-brain-cells/file/dacacff9-d505-49e8-b665-f7cc27958058.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "event.fail": {
+      "url": "/api/audio/four-brain-cells/file/33885237-2ec3-40ed-80f0-60b602b7136e.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.time-warning": {
+      "url": "/api/audio/four-brain-cells/file/f794c42b-e822-4d37-b80b-68f2215ce153.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.pancake-ready": {
+      "url": "/api/audio/four-brain-cells/file/00a567b5-8685-4525-bbae-bf1b029b98e4.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.burnt": {
+      "url": "/api/audio/four-brain-cells/file/872e3274-0c75-4243-9529-1de65d088cdb.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.refill": {
+      "url": "/api/audio/four-brain-cells/file/afaff83c-908d-4c0e-a380-bb9ef139dcb2.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.coffee-refill": {
+      "url": "/api/audio/four-brain-cells/file/b343cf16-c34b-465b-983e-60bfd55a2b3b.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.utensil-land": {
+      "url": "/api/audio/four-brain-cells/file/b23f1e79-cd06-423e-81fb-36aff718ef33.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step.1": {
+      "url": "/api/audio/four-brain-cells/file/1abfaae6-dd5f-4b7a-a178-0b86da4e4d8c.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step.2": {
+      "url": "/api/audio/four-brain-cells/file/f97a7777-5e78-494a-95e8-0a01d409113f.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step.3": {
+      "url": "/api/audio/four-brain-cells/file/6a100974-4cca-4595-a79b-bf02fb993eae.mp3",
+      "volume": 0.4,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.kitchen": {
+      "url": "/api/audio/four-brain-cells/file/9fdb59c8-cff0-4652-8865-f2d11875d8fe.mp3",
+      "volume": 0.42,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.sizzle": {
+      "url": "/api/audio/four-brain-cells/file/0d648b6b-9906-40b2-8a6a-6a823140a97e.mp3",
+      "volume": 0.6,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.brewer": {
+      "url": "/api/audio/four-brain-cells/file/fae0aa5b-fb4d-4947-91e5-613a5789eaa6.mp3",
+      "volume": 0.42,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.servo": {
+      "url": "/api/audio/four-brain-cells/file/6f02f14d-d831-419b-9141-e3eb15d1ae9b.mp3",
+      "volume": 0.28,
+      "loop": true,
+      "category": "ambience"
+    },
+    "music.menu": {
+      "url": "/api/audio/four-brain-cells/file/e7bae2ab-334c-4268-9c0e-8840c8b3db2a.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.build": {
+      "url": "/api/audio/four-brain-cells/file/f8f1b27c-cb95-4bab-8943-e5941cd4d330.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.challenge": {
+      "url": "/api/audio/four-brain-cells/file/3f1a58b5-d0a6-413b-ac1b-f150e7bd3da4.mp3",
+      "volume": 0.65,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/audio/four-brain-cells/file/4d820cf7-c55f-41a5-be0d-51dec4b6854a.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/audio/four-brain-cells/file/d492d280-4858-466c-9c29-36d87cce96fb.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "music"
+    },
+    "speech.start": {
+      "url": "/api/audio/four-brain-cells/file/b9979ed7-9722-4e7d-b19f-9e6bf8e15f8f.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.win": {
+      "url": "/api/audio/four-brain-cells/file/6028e362-b6ab-425e-bb22-977c7455bd03.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    },
+    "speech.fail": {
+      "url": "/api/audio/four-brain-cells/file/3887a567-5a37-4471-8507-93e3420aa017.mp3",
+      "volume": 0.8,
+      "loop": false,
+      "category": "speech"
+    }
+  }
+}

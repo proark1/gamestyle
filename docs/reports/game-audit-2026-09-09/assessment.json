@@ -1,0 +1,109 @@
+{
+  "wrong-floor": {
+    "npc": "Yes — automatic fill, up to 3",
+    "world": "Computer guests and the pursuing apparition",
+    "voice": "Yes; no speaking-to-game-audio ducking hook",
+    "lobby": "Check in → share code/link → host enters elevator; empty seats fill automatically",
+    "verdict": "Functional synthesized coverage; recorded library empty",
+    "detail": "All 26 catalogued effects have layered procedural Foley: carpet/metal/wood steps, knocks, handles, machinery, breathing, pulse and chase events. A procedural room bed supplies atmosphere. This is substantially more complete than a few fallback beeps. Judge positional clues, repeat fatigue and horror timing by listening before deciding how many recordings to add. No catalogued music or narrator is automatically a defect here.",
+    "audio": "games/wrong-floor/audio.ts",
+    "npcSource": "games/wrong-floor/simulation.ts"
+  },
+  "one-more-button": {
+    "npc": "No",
+    "world": "No NPC player or character simulation found; automated hazards and audience sounds",
+    "voice": "Yes; game loops duck for voice",
+    "lobby": "Create a show → invite → host starts; separate solo shortcut",
+    "verdict": "Enough for the current core design",
+    "detail": "22 effects, 3 hazard ambience loops and 3 music cues cover button presses, gloves, movement, warnings, audience reactions, escape and results. All 28 are bundled WAVs; paid generation is not needed for baseline sound. More files are lower priority than checking repetition, cue balance and music transitions. No narrator is required for the current design.",
+    "audio": "games/one-more-button/audio.ts"
+  },
+  "four-brain-cells": {
+    "npc": "Yes — add/remove/fill, up to 3",
+    "world": "NPCs control unfilled robot limbs",
+    "voice": "Implemented for peer rooms; no speaking-to-game-audio ducking hook",
+    "lobby": "Start a kitchen → choose limbs/add NPCs → invite → host starts; practice also opens a lobby",
+    "verdict": "Thin fallback; live audio library unavailable",
+    "detail": "Local code defines 11 event cues for steps, grabbing, cooking, serving, spills, falls and results, with short synthesized tone fallbacks. The public audio API returned HTTP 404 with “Game not found.” This proves the live audio namespace is unavailable, not that private storage has zero files or that the entire game page is missing. Resolve the backend/catalog mismatch, then supply the cooking and robot Foley. Add a quiet kitchen bed and optional music after the essential actions.",
+    "audio": "games/four-brain-cells/audio.ts",
+    "npcSource": "games/four-brain-cells/npcs.ts"
+  },
+  "reel-problems": {
+    "npc": "No",
+    "world": "Fish plus shark and jellyfish hazards",
+    "voice": "Yes; no speaking-to-game-audio ducking hook",
+    "lobby": "Launch a boat → invite → captain starts; separate solo shortcut",
+    "verdict": "Basic fallback; audio needs expansion",
+    "detail": "All 13 recording slots are empty. Basic oscillator cues and filtered-noise weather/wildlife effects still provide feedback. Supply distinct cast, bite, reel/tangle/snap, catch, splash and rescue recordings first. The current catalog has no continuous lake/boat ambience or music; adding water laps, hull creaks, line strain and changing weather beds would improve the world beyond merely filling the 13 slots.",
+    "audio": "games/reel-problems/audio.ts",
+    "npcSource": "games/reel-problems/chaos.ts"
+  },
+  "stack-or-sink": {
+    "npc": "No",
+    "world": "No NPC player or character simulation found",
+    "voice": "Yes; game loops duck for voice",
+    "lobby": "Create crew → invite/explore yard → host starts flood; solo practice available",
+    "verdict": "Broad coverage; enough assets on paper",
+    "detail": "121 of 121 cues are published, spanning materials, movement, crane, water, coastal details, 8 music cues and 7 speech cues. The runtime uses positional attenuation, variations, scene-dependent layers and music transitions. Existing library depth is sufficient; prioritize a full-round mix/loop check over adding more files.",
+    "audio": "games/stack-or-sink/sound.ts"
+  },
+  "act-natural": {
+    "npc": "Yes — add/remove/fill, up to 3 cows",
+    "world": "NPC cow players, background herd and optional computer farmer",
+    "voice": "Yes in supported room modes; game loops duck for voice",
+    "lobby": "Create farm → choose player/computer farmer → invite/NPC cows → host starts",
+    "verdict": "Broad coverage; enough assets on paper",
+    "detail": "77 of 77 cues are published: 76 generated recordings and 1 selected bundled fence fallback. Footsteps, herd sounds, foliage, items, fence, ambience, music and dialogue are represented. Cow-seat NPC controls apply to player-farmer server rooms; old peer rooms do not expose those controls. Sound routing must continue to avoid revealing hidden player identities.",
+    "audio": "games/act-natural/sound.ts",
+    "npcSource": "games/act-natural/bots.ts"
+  },
+  "shelf-control": {
+    "npc": "Yes — add/remove; fill-and-start, up to 3",
+    "world": "NPC guards/mannequins and background mannequins",
+    "voice": "Unavailable; toolbar opens an explanation",
+    "lobby": "Create room → invite/add NPCs → exactly four seats → start; fill-and-start is combined",
+    "verdict": "Core covered, but small and shared",
+    "detail": "15 relevant file paths: 5 showroom files plus 10 borrowed Blend Business cues. The shared cues comprise 9 gameplay interactions and the common UI click. Counting the full 77-cue farm manifest as Shelf Control audio would overstate its usable library. It has one showroom music track and four step takes, but no dedicated ambience or speech. Add showroom/security ambience and round-transition sounds if a fuller identity is wanted. Its workshop edits the farm library, so changes can affect both games.",
+    "audio": "games/shelf-control/audio.ts",
+    "npcSource": "games/shelf-control/bots.ts"
+  },
+  "uphill-delivery": {
+    "npc": "Yes — add/remove/fill, up to 3",
+    "world": "NPC carriers and moving goats",
+    "voice": "Yes; game loops duck for voice",
+    "lobby": "Create crew → invite/add NPCs → host starts delivery; solo shortcut starts immediately",
+    "verdict": "Broad coverage; enough assets on paper",
+    "detail": "74 of 74 cues are published. Coverage includes carried-sofa movement and surfaces, player movement, bridge creaks, goat footsteps/bells, birds, gates/doors, 4 ambience beds, 5 music cues and 3 speech cues. The sound director follows movement and load rather than only button presses. Prioritize audibility while several humans/NPCs carry the sofa.",
+    "audio": "games/uphill-delivery/audio.ts",
+    "npcSource": "games/uphill-delivery/npcs.ts"
+  },
+  "dont-wake-the-giant": {
+    "npc": "No NPC thief teammates",
+    "world": "The giant is a reactive enemy character",
+    "voice": "Yes; game loops duck for voice",
+    "lobby": "Create crew → invite → host starts heist; solo practice available",
+    "verdict": "Broad coverage; enough assets on paper",
+    "detail": "70 of 70 current cues are published: 65 generated plus 5 selected bundled files. This supersedes older documentation listing 65 catalog cues. Giant breathing/waking, surfaces, objects, stealth/escape warnings, 6 music cues and 16 speech cues are represented. Urgent warnings interrupt incidental speech. Listen for warning intelligibility and balance against the sleeping/angry giant.",
+    "audio": "games/dont-wake-the-giant/sound.ts",
+    "npcSource": "games/dont-wake-the-giant/giant-motion.ts"
+  },
+  "chaos": {
+    "npc": "No NPC builder teammates",
+    "world": "Scripted customer/inspector walks and inspects in Crew Jobs",
+    "voice": "Crew Jobs only; separate voice panel and ducking",
+    "lobby": "Mode-dependent; Crew Jobs has its own lobby/readiness flow, building modes differ",
+    "verdict": "Broadest library; enough assets on paper",
+    "detail": "344 of 344 cues are published, including 216 material cues, 69 events, 8 ambience cues, 15 music cues and 36 speech cues. The library includes variations and multiple modes, so its size is not a target for every small game. It already covers join/ready/voice events more fully than the rest. Its published narrator voice selection differs from the four main narrated libraries.",
+    "audio": "games/chaos/audio-director.ts",
+    "npcSource": "games/chaos/party-view.ts"
+  },
+  "first-person": {
+    "npc": "No",
+    "world": "No NPC player or character simulation found",
+    "voice": "Unavailable; toolbar opens an explanation",
+    "lobby": "Open/join saved building site → invite → each player enters the site; no common host-start lobby",
+    "verdict": "Critical audio gap",
+    "detail": "The public manifest is valid but empty: 0 of 61 cues. No bundled files or procedural fallback were found in this game. Its player deliberately stays silent when clips are missing, so construction, footsteps, mixer, warnings, music and narration have no audio source in the inspected live configuration. Start with the 36 material/event cues and 3 ambience cues, then music and the 17 speech cues.",
+    "audio": "games/first-person/Game.tsx"
+  }
+}

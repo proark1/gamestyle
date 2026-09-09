@@ -37,8 +37,43 @@ const localBindingConfig = {
 
 export default defineConfig(async () => {
   if (process.env.GAME_RUNTIME === 'node') {
-    const cloudflareStore = fileURLToPath(new URL('./db/rooms.ts', import.meta.url)).replaceAll('\\', '/');
-    const nodeStore = fileURLToPath(new URL('./db/rooms-node.ts', import.meta.url)).replaceAll('\\', '/');
+    const cloudflareStore = fileURLToPath(
+      new URL('./db/rooms.ts', import.meta.url),
+    ).replaceAll('\\', '/');
+    const nodeStore = fileURLToPath(
+      new URL('./db/rooms-node.ts', import.meta.url),
+    ).replaceAll('\\', '/');
+    const replacements = new Map([
+      [
+        fileURLToPath(new URL('./db/index.ts', import.meta.url)).replaceAll(
+          '\\',
+          '/',
+        ),
+        fileURLToPath(new URL('./db/node.ts', import.meta.url)).replaceAll(
+          '\\',
+          '/',
+        ),
+      ],
+      [
+        fileURLToPath(
+          new URL('./shared/audio/storage.ts', import.meta.url),
+        ).replaceAll('\\', '/'),
+        fileURLToPath(
+          new URL('./shared/audio/storage-node.ts', import.meta.url),
+        ).replaceAll('\\', '/'),
+      ],
+      [
+        fileURLToPath(
+          new URL('./shared/audio/construction/storage.ts', import.meta.url),
+        ).replaceAll('\\', '/'),
+        fileURLToPath(
+          new URL(
+            './shared/audio/construction/storage-node.ts',
+            import.meta.url,
+          ),
+        ).replaceAll('\\', '/'),
+      ],
+    ]);
     return {
       css: { postcss: { plugins: [tailwindcss()] } },
       plugins: [
@@ -46,6 +81,12 @@ export default defineConfig(async () => {
           name: 'stack-or-sink-node-storage',
           enforce: 'pre',
           load(id: string) {
+            const replacement = replacements.get(
+              id.replaceAll('\\', '/').split('?')[0],
+            );
+            if (replacement)
+              return `export * from ${JSON.stringify(replacement)};`;
+
             if (id.replaceAll('\\', '/').split('?')[0] === cloudflareStore) {
               return `export { roomStore } from ${JSON.stringify(nodeStore)};`;
             }

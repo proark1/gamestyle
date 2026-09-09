@@ -1,0 +1,44 @@
+/* Gesture ownership must not depend on a particular game's mobile skin. */
+.touch-controls[data-touch-controls] .joystick,
+.touch-controls[data-touch-controls] .touch-jump {
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.touch-controls[data-touch-controls] .joystick {
+  position: relative;
+  padding: 0;
+}
+.touch-controls[data-touch-controls] .joystick > span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%)
+    translate(var(--stick-x, 0px), var(--stick-y, 0px));
+  will-change: transform;
+}
+.touch-controls[data-touch-controls] .joystick > small {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+.touch-controls[data-touch-controls] .joystick[data-engaged='true'] {
+  border-color: #fff0bc;
+  box-shadow: 0 0 0 5px #f8d58322;
+}
+.touch-controls[data-touch-controls] .joystick[aria-disabled='true'] {
+  opacity: 0.4;
+}
+.touch-controls[data-touch-controls] .joystick:active,
+.touch-controls[data-touch-controls] .touch-jump:active {
+  transform: none;
+  filter: brightness(1.08);
+}

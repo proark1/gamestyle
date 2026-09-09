@@ -1,0 +1,2080 @@
+{
+  "driver": "scripted controls; not a human playtest",
+  "limitSeconds": 900,
+  "passed": 9,
+  "total": 30,
+  "consistentRevision": true,
+  "consistentDriver": true,
+  "results": [
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "855415b1438a51cf0aec60f15349639d842e300e20398815c9cd58ce05729cbb",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 1,
+      "variant": 0,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 0,
+      "carryingSeconds": 525.5166666666667,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 91,
+      "stage": 0,
+      "sofa": {
+        "x": 1.8497309570491143,
+        "y": 0.43761977332259594,
+        "z": -13.620103581058535,
+        "velocity": {
+          "x": 0.8696624572683254,
+          "y": -0.36198268572287295,
+          "z": 0.20770868123473185
+        },
+        "angular": {
+          "x": 0.1842573178932506,
+          "y": 0.2755320894636425,
+          "z": 0.5708585360761725
+        },
+        "quaternion": {
+          "x": 0.6230997452024781,
+          "y": 0.36873030782684235,
+          "z": 0.41405476801800034,
+          "w": -0.5516731973733081
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": 2.319120997661902,
+          "y": -0.6000629059253701,
+          "z": -15.526036363479657,
+          "grip": 2
+        },
+        {
+          "name": "Jo",
+          "x": 3.8730161580125384,
+          "y": -0.6000784800000002,
+          "z": -13.213118117325557,
+          "grip": 1,
+          "task": "Carrying"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "7c7a7e4f9341eb879bcb0cc35a05c85b6685c7e0a6f78e8e02a8245003c70363",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 1,
+      "variant": 1,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 686.6166666666667,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 79,
+      "stage": 0,
+      "sofa": {
+        "x": -1.6031079528753602,
+        "y": 1.330996459867305,
+        "z": 9.895651024557646,
+        "velocity": {
+          "x": 0.0023488801233642886,
+          "y": 0.0013395906953761272,
+          "z": 0.00035413745352683157
+        },
+        "angular": {
+          "x": -0.0020273166035313095,
+          "y": 0.001557769965782746,
+          "z": 0.000615212966648182
+        },
+        "quaternion": {
+          "x": -0.1519985748722882,
+          "y": -0.8433617017019379,
+          "z": 0.347361382246736,
+          "w": 0.38075916727354325
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -4.0350579411329015,
+          "y": 0.976179735499419,
+          "z": 11.0502273636926,
+          "grip": 1
+        },
+        {
+          "name": "Jo",
+          "x": 1.3068780989109436,
+          "y": -0.6000784800000002,
+          "z": 9.259995717676983,
+          "grip": 2,
+          "task": "Returning to the path"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "a7d0ff4a34d4c29261bf9b9f4d4125dd1f2eab64f95666bc76bcec35ad61d001",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 1,
+      "variant": 2,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 678.9833333333333,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 172,
+      "stage": 4,
+      "sofa": {
+        "x": -8.106689831089547,
+        "y": 8.962224960612744,
+        "z": -0.44396984689740154,
+        "velocity": {
+          "x": 0.0006715620706940109,
+          "y": -0.0019496683202500364,
+          "z": 0.0018615812725901251
+        },
+        "angular": {
+          "x": 0.0007206686106249315,
+          "y": -0.0008266971003729855,
+          "z": -0.0022047993050567263
+        },
+        "quaternion": {
+          "x": 0.07082683271955412,
+          "y": -0.3111580276134562,
+          "z": -0.04266627118011748,
+          "w": -0.9467543667299374
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -9.609674254262778,
+          "y": 7.798551975093841,
+          "z": 2.0058774142902114,
+          "grip": 0
+        },
+        {
+          "name": "Jo",
+          "x": -5.318272424776806,
+          "y": 8.454770061530306,
+          "z": -1.7351532388825595,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "46d0d04e8eba6d05f933083c0b2e7122ee871e9c5be1db0b1f687b44698bb318",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 1,
+      "variant": 3,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 679.2,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 159,
+      "stage": 4,
+      "sofa": {
+        "x": -6.147422976156541,
+        "y": 9.575923332887022,
+        "z": -1.0038787201542216,
+        "velocity": {
+          "x": -0.14134864786229104,
+          "y": 0.01441389646771045,
+          "z": 0.1889857296702645
+        },
+        "angular": {
+          "x": -0.3974584799808363,
+          "y": -0.22665141438441688,
+          "z": -0.1403231689530425
+        },
+        "quaternion": {
+          "x": -0.03375517876537017,
+          "y": 0.14319544758175487,
+          "z": 0.004854382213300957,
+          "w": -0.989106711468336
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -3.751642948763975,
+          "y": 8.766063559041871,
+          "z": 0.0813645119813591,
+          "grip": 3
+        },
+        {
+          "name": "Jo",
+          "x": -8.408183224426779,
+          "y": 8.173732694453417,
+          "z": -2.6139569376299705,
+          "grip": 2,
+          "task": "Carrying"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "c9eca6359467abcb865ffae995bf8b7e332c68bd7296f8645649b47df453668d",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 1,
+      "variant": 4,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 727.9166666666666,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 200,
+      "stage": 4,
+      "sofa": {
+        "x": -9.795691604968663,
+        "y": 8.865375300837465,
+        "z": 0.025842061141832292,
+        "velocity": {
+          "x": 0.00006131127256696334,
+          "y": -0.00023899431745501298,
+          "z": -0.00020972340061770674
+        },
+        "angular": {
+          "x": -0.0003078511809428697,
+          "y": -0.00005931357465264022,
+          "z": -0.0000866543976579294
+        },
+        "quaternion": {
+          "x": -0.018043500024426364,
+          "y": 0.1280061840375669,
+          "z": -0.016251692163537473,
+          "w": -0.9914760367537032
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -12.040641919435313,
+          "y": 7.799919634011576,
+          "z": -1.5237080055486019,
+          "grip": 2
+        },
+        {
+          "name": "Jo",
+          "x": -6.600448975150369,
+          "y": 8.199011389143731,
+          "z": -0.27854622262939366,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "75d06bf11e6c8373889e278bb3f9aef05ee850180bf72abcec2fe5edfa2af651",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 2,
+      "variant": 0,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 0,
+      "carryingSeconds": 755.3166666666667,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 67,
+      "stage": 4,
+      "sofa": {
+        "x": -4.001200604728293,
+        "y": 9.516172721434332,
+        "z": -1.1379612689222742,
+        "velocity": {
+          "x": -0.0004032903309725347,
+          "y": -0.00008000815216504392,
+          "z": 0.00007872220578210693
+        },
+        "angular": {
+          "x": 0.0000020304598201889568,
+          "y": -0.000010260907392069252,
+          "z": -6.369641172149221e-8
+        },
+        "quaternion": {
+          "x": 0.0061378005207919995,
+          "y": -0.06186744824974006,
+          "z": -0.0967911193751137,
+          "w": -0.993361075068852
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -7.019195058469727,
+          "y": 8.116905141606848,
+          "z": -1.7376795188943701,
+          "grip": 2
+        },
+        {
+          "name": "Jo",
+          "x": -7.116373302710267,
+          "y": 8.097587992032011,
+          "z": -7.796239753433881e-118,
+          "grip": null,
+          "task": "Opening gate"
+        },
+        {
+          "name": "Nora",
+          "x": -8.089999999999998,
+          "y": 7.999981963277974,
+          "z": 0.29357250109276956,
+          "grip": null,
+          "task": "Waiting for the door"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "3c5864906c031708c440c843de231e939acffccb7491505235e3650f4d11ad7d",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 2,
+      "variant": 1,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 689.3833333333333,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 98,
+      "stage": 4,
+      "sofa": {
+        "x": -3.4331703898526147,
+        "y": 10.674743685197729,
+        "z": -1.1737283149201612,
+        "velocity": {
+          "x": 2.2954532369017024,
+          "y": 0.5967504360953678,
+          "z": -0.6483503294859635
+        },
+        "angular": {
+          "x": -0.16705736395719809,
+          "y": 0.8213874898802438,
+          "z": 0.041464335651357126
+        },
+        "quaternion": {
+          "x": 0.2484405048938642,
+          "y": -0.9667655265589976,
+          "z": 0.019778248703255653,
+          "w": -0.057013621735669734
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -5.8809563064500345,
+          "y": 8.343106197703115,
+          "z": -1.5425938193883917,
+          "grip": 1
+        },
+        {
+          "name": "Jo",
+          "x": -1.0995652433978416,
+          "y": 10.419204786258055,
+          "z": -0.017865372647633448,
+          "grip": 2,
+          "task": "Carrying"
+        },
+        {
+          "name": "Nora",
+          "x": -5.123697199052035,
+          "y": 8.499267291685705,
+          "z": -0.04240528103030933,
+          "grip": 3,
+          "task": "Carrying"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "fb6dcfcddb26b9c2574300c4094ea506b349d84071527743c2d81d2e4833ce0b",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 2,
+      "variant": 2,
+      "phase": "delivered",
+      "seconds": 419.51666666666665,
+      "stops": 180,
+      "carryingSeconds": 240.15,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 34,
+      "stage": 10,
+      "sofa": {
+        "x": -5.608468921411117,
+        "y": 22.787486931307,
+        "z": -22.974337399404643,
+        "velocity": {
+          "x": 1.05046869024233e-7,
+          "y": 5.881406472951767e-14,
+          "z": 3.379368355118126e-7
+        },
+        "angular": {
+          "x": -7.160742995046071e-14,
+          "y": -4.995535639369985e-8,
+          "z": 6.867541880672475e-14
+        },
+        "quaternion": {
+          "x": -3.49710605895801e-8,
+          "y": 0.033323260249524936,
+          "z": -2.590856097567274e-7,
+          "w": -0.9994446259429655
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -8.018862847919237,
+          "y": 21.999921519999997,
+          "z": -23.92936826274929,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -3.1999993158835456,
+          "y": 21.99998196327797,
+          "z": -21.993793213941334,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Nora",
+          "x": -8.312991736818574,
+          "y": 21.999921520000004,
+          "z": -22.15386090058916,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "62db37766e50612e0f87f7507ddb9d2c57345c4e856539f38779e64487a129f7",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 2,
+      "variant": 3,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 234.81666666666666,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 30,
+      "stage": 4,
+      "sofa": {
+        "x": -10.116705816220813,
+        "y": 8.795271101336164,
+        "z": -1.116615687797461,
+        "velocity": {
+          "x": 0.3111465216800186,
+          "y": 0.16840212770824922,
+          "z": -0.03950559082043138
+        },
+        "angular": {
+          "x": -0.054965037587016256,
+          "y": 0.035444285217531867,
+          "z": -0.3127921478233739
+        },
+        "quaternion": {
+          "x": -0.00976641903705579,
+          "y": 0.6341488046687562,
+          "z": -0.018273944310636708,
+          "w": -0.7729333564775893
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -8.879947982204031,
+          "y": 7.9999739736335345,
+          "z": 1.1908962411033719,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -6.685068890365093,
+          "y": 6.789510831453764,
+          "z": 5.283779901603994,
+          "grip": null,
+          "task": "Finding a corner"
+        },
+        {
+          "name": "Nora",
+          "x": -9.614491906966142,
+          "y": -0.6000940172702318,
+          "z": 4.443507515998221,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "2a9cb946bb1ef437705095f6910fd8fd34291953d29030e60d12406f9dbfc0c2",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 2,
+      "variant": 4,
+      "phase": "delivered",
+      "seconds": 524.85,
+      "stops": 180,
+      "carryingSeconds": 380.05,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 55,
+      "stage": 10,
+      "sofa": {
+        "x": -5.5650803342298545,
+        "y": 22.78748693907746,
+        "z": -23.04408476440142,
+        "velocity": {
+          "x": 1.1851510403796757e-7,
+          "y": -6.2450045135165055e-15,
+          "z": 3.695005135804059e-7
+        },
+        "angular": {
+          "x": -2.1765545167991103e-15,
+          "y": -6.396951758933735e-8,
+          "z": 4.432496283459341e-15
+        },
+        "quaternion": {
+          "x": -4.5727250563963745e-8,
+          "y": -0.023634331190263206,
+          "z": -2.5843551620636017e-7,
+          "w": -0.9997206701819864
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -2.949887736801536,
+          "y": 21.999921519999997,
+          "z": -21.963413136253717,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -7.954738797680733,
+          "y": 21.999921519999997,
+          "z": -21.612570177374955,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Nora",
+          "x": -7.228872312245889,
+          "y": 21.999921519999997,
+          "z": -21.509391669892217,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "18ba28a1246f83e5c439cf35a022929ab455ff67686ba621f63f635495da5e0a",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 3,
+      "variant": 0,
+      "phase": "delivered",
+      "seconds": 439.9166666666667,
+      "stops": 0,
+      "carryingSeconds": 203.51666666666668,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 29,
+      "stage": 10,
+      "sofa": {
+        "x": -5.680287287831574,
+        "y": 23.01408573949696,
+        "z": -22.820189525404587,
+        "velocity": {
+          "x": -0.0007065856256645007,
+          "y": -0.0012673781471295165,
+          "z": -0.0021967373368120707
+        },
+        "angular": {
+          "x": -0.0015293319410448038,
+          "y": -0.0004406485554808006,
+          "z": 0.0005458152589487503
+        },
+        "quaternion": {
+          "x": -0.02435873357160547,
+          "y": 0.9746682053005683,
+          "z": 0.07224839227446879,
+          "w": -0.21025867755864755
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -3.205573948256873,
+          "y": 21.999976783701495,
+          "z": -23.610899886651207,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -2.30893716733889,
+          "y": 21.999921520000004,
+          "z": -21.74027661507243,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Nora",
+          "x": -2.5256000150324733,
+          "y": 21.999907214952007,
+          "z": -24.02453678019638,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Sam",
+          "x": -8.330479036999897,
+          "y": 21.999893224511112,
+          "z": -22.707768151732903,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "6de5e22372f408938fea42b8969de3d91acd801786b7f3f1c0ffac850d21b73b",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 3,
+      "variant": 1,
+      "phase": "delivered",
+      "seconds": 668.7,
+      "stops": 180,
+      "carryingSeconds": 464.23333333333335,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 44,
+      "stage": 10,
+      "sofa": {
+        "x": -5.723835198227651,
+        "y": 22.78748692584214,
+        "z": -22.92242992528614,
+        "velocity": {
+          "x": 1.3710385579828595e-7,
+          "y": 2.9226621123257246e-14,
+          "z": 3.724068408684565e-7
+        },
+        "angular": {
+          "x": -6.019239523387516e-14,
+          "y": -5.385383719306158e-8,
+          "z": 1.8596794959191525e-14
+        },
+        "quaternion": {
+          "x": -5.4387704130763625e-8,
+          "y": -0.03230386448505801,
+          "z": -2.577077497243842e-7,
+          "w": -0.9994780939766823
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -5.996130055970172,
+          "y": 21.999921520000004,
+          "z": -20.96191445729865,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -8.286183226228362,
+          "y": 21.999921520000004,
+          "z": -23.302744431933007,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Nora",
+          "x": -3.002750489086155,
+          "y": 21.99998196327798,
+          "z": -22.548707046842402,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Sam",
+          "x": -3.265396124890738,
+          "y": 21.99998196327798,
+          "z": -24.32399521126587,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "3ccde606329fa69ac996dd25ff23b8ff4562001313d09d97dbe8410d8cb78a1b",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 3,
+      "variant": 2,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 354.2,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 38,
+      "stage": 6,
+      "sofa": {
+        "x": -0.3135642160211883,
+        "y": 13.21063390490859,
+        "z": -8.24269147137295,
+        "velocity": {
+          "x": 0.0003935387453674966,
+          "y": 0.00005895203841124741,
+          "z": -0.00006414729786200391
+        },
+        "angular": {
+          "x": 0.00031561001489031405,
+          "y": -0.00022424166106084682,
+          "z": -0.0008013920893618404
+        },
+        "quaternion": {
+          "x": 0.4499785683713192,
+          "y": 0.8888649954529255,
+          "z": 0.038933988627038445,
+          "w": -0.07695747133682622
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -4.937056819896413,
+          "y": 6.243724478846716,
+          "z": 4.999910879238722,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -3.0428902490475145,
+          "y": 14.994585791283015,
+          "z": -9.40384857695713,
+          "grip": null,
+          "task": "Finding my feet"
+        },
+        {
+          "name": "Nora",
+          "x": -2.8084731924692083,
+          "y": 5.766397288272392,
+          "z": 4.9964546975401225,
+          "grip": null,
+          "task": "Finding a corner"
+        },
+        {
+          "name": "Sam",
+          "x": 1.7692933123175971,
+          "y": 1.9947487001222008,
+          "z": 11.000016284563584,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "f410b81519475c3330905744561e287a8ac36b4423f95a58f9eef099ee7a714a",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 3,
+      "variant": 3,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 648.2166666666667,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 74,
+      "stage": 6,
+      "sofa": {
+        "x": -3.4553260013608336,
+        "y": 11.776137934144172,
+        "z": -1.8001421210154391,
+        "velocity": {
+          "x": -0.00004030464119907837,
+          "y": -0.000098359111060764,
+          "z": -0.00008868285718448624
+        },
+        "angular": {
+          "x": 0.00012032551367404996,
+          "y": 0.000056972844123899803,
+          "z": -0.00005307563576142327
+        },
+        "quaternion": {
+          "x": -0.11318893187079174,
+          "y": -0.5697569755534595,
+          "z": -0.12262710284065817,
+          "w": -0.8046911507895625
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -0.7545963880546492,
+          "y": 9.190674177810816,
+          "z": 1.6251590074490205,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -0.11452804041653154,
+          "y": 9.488561417262368,
+          "z": -2.9997589867405274,
+          "grip": null,
+          "task": "Recovering sofa"
+        },
+        {
+          "name": "Nora",
+          "x": -0.10615512940802797,
+          "y": 9.490238176964136,
+          "z": 0.9457823410285948,
+          "grip": null,
+          "task": "Recovering sofa"
+        },
+        {
+          "name": "Sam",
+          "x": -8.759491845408892,
+          "y": 7.615357577246821,
+          "z": 2.3912132981886987,
+          "grip": null,
+          "task": "Recovering sofa"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "5609303163cd94744dd8ad8f32112f813b634db9d9434789537b36ba0b434bbd",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 1,
+      "bots": 3,
+      "variant": 4,
+      "phase": "delivered",
+      "seconds": 236.31666666666666,
+      "stops": 180,
+      "carryingSeconds": 152.21666666666667,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 23,
+      "stage": 10,
+      "sofa": {
+        "x": -5.598866957877334,
+        "y": 22.939939892842695,
+        "z": -23.098719028507126,
+        "velocity": {
+          "x": -0.00028036836618212794,
+          "y": -0.0004019923235876466,
+          "z": 0.0005868686559696561
+        },
+        "angular": {
+          "x": 0.00044570580877395906,
+          "y": 0.00010369920408615421,
+          "z": 0.00016379379486308073
+        },
+        "quaternion": {
+          "x": -0.02985835817792071,
+          "y": 0.9760614842465543,
+          "z": -0.02769907457376441,
+          "w": 0.21364741675267174
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -2.929401863701766,
+          "y": 21.999921519999997,
+          "z": -22.938533349685116,
+          "grip": null
+        },
+        {
+          "name": "Jo",
+          "x": -8.271776853564955,
+          "y": 21.999915026923905,
+          "z": -23.072056696588778,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Nora",
+          "x": 5.6273740634718195,
+          "y": 10.629444403450435,
+          "z": -2.4896541625702513,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Sam",
+          "x": -3.5554013862317095,
+          "y": 21.999973787549067,
+          "z": -21.37660041487716,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "a98856d5b16c7a41d8d282b3187f5fd690f6cca31e88a3f557e20d8fda2aab9b",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 1,
+      "variant": 0,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 0,
+      "carryingSeconds": 769.1,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 157,
+      "stage": 0,
+      "sofa": {
+        "x": -0.5891985422697332,
+        "y": 0.253998485682676,
+        "z": -8.680365550493516,
+        "velocity": {
+          "x": -0.06801990457716162,
+          "y": 0.18322268042269793,
+          "z": 0.04384030134301619
+        },
+        "angular": {
+          "x": -0.09262767336328337,
+          "y": -0.007101637758493779,
+          "z": -0.050287562276997134
+        },
+        "quaternion": {
+          "x": -0.009720982108375284,
+          "y": 0.5102617293073272,
+          "z": -0.016414155518416226,
+          "w": 0.8598075631266348
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -2.835352707523151,
+          "y": -0.6000816049771761,
+          "z": -6.600690808361713,
+          "grip": 2
+        },
+        {
+          "name": "Pilot 1",
+          "x": 2.000212063783342,
+          "y": -0.6000784800000002,
+          "z": 4.083167135688763,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": -1.2783689836168033,
+          "y": 1.4600729405421513,
+          "z": 11.000044878858382,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "c18cd53d34d95a8c50ec313826c0e8b1c1d737ee994933f0340d0b02a04351a8",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 1,
+      "variant": 1,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 398.5833333333333,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 118,
+      "stage": 0,
+      "sofa": {
+        "x": 6.732534467844055,
+        "y": 1.6927163044911422,
+        "z": 9.868259811735028,
+        "velocity": {
+          "x": -0.0001506195612204081,
+          "y": -0.00004034647591199744,
+          "z": -0.00007037303345041809
+        },
+        "angular": {
+          "x": 0.00006564004950196031,
+          "y": 0.00004101711624814042,
+          "z": -0.00010491394592830605
+        },
+        "quaternion": {
+          "x": 0.6597059808671277,
+          "y": -0.7430498790736296,
+          "z": 0.08813710687544887,
+          "w": 0.06997675620112079
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": 6.110608589574676,
+          "y": -0.6000784800000002,
+          "z": 11.99430031145255,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": 7.053601695296665,
+          "y": -0.6000784800000002,
+          "z": 7.854391500833491,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": 7.748045145610918,
+          "y": 2.9999236573651205,
+          "z": 10.683456985498552,
+          "grip": 2,
+          "task": "Needs a hand: move the sofa"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "7c18bac8940c85b2e69cb24dff6e8ce85ebee18073d9675fd17b40225542309b",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 1,
+      "variant": 2,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 826.55,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 102,
+      "stage": 8,
+      "sofa": {
+        "x": 2.3187835226163775,
+        "y": 16.637165631571634,
+        "z": -12.164534675105061,
+        "velocity": {
+          "x": -0.000056990697734562,
+          "y": -0.0000028498008330225897,
+          "z": 0.000002063744992915513
+        },
+        "angular": {
+          "x": -0.000004158205913686909,
+          "y": -9.053242277726062e-8,
+          "z": 2.9084654070484373e-7
+        },
+        "quaternion": {
+          "x": 0.6918808892313497,
+          "y": -0.7053736863581244,
+          "z": -0.11001831778973281,
+          "w": -0.107910923732051
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": 2.2036349168286375,
+          "y": 18.07160310351115,
+          "z": -12.93841751136136,
+          "grip": 0
+        },
+        {
+          "name": "Pilot 1",
+          "x": -1.3250015095950873,
+          "y": 17.41909152208889,
+          "z": -13.811711803661503,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": -1.1328057298288479,
+          "y": 17.47047822972015,
+          "z": -14.490671126723997,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "a22c5e9ec6d1d0f0d9ed684b6d1e07d5d563a35969803761cc54e966c376363a",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 1,
+      "variant": 3,
+      "phase": "delivered",
+      "seconds": 385.6333333333333,
+      "stops": 180,
+      "carryingSeconds": 339.56666666666666,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 80,
+      "stage": 10,
+      "sofa": {
+        "x": -5.65579159280312,
+        "y": 22.937487874183407,
+        "z": -22.46025700156849,
+        "velocity": {
+          "x": -3.6907063644900635e-8,
+          "y": -2.220446049250313e-16,
+          "z": 3.5923566695263887e-9
+        },
+        "angular": {
+          "x": 1.882365600583946e-14,
+          "y": 1.4029806271795752e-8,
+          "z": 2.165082898323115e-14
+        },
+        "quaternion": {
+          "x": 0.7048330109725623,
+          "y": 0.05667261739233889,
+          "z": 0.05667211776573636,
+          "w": -0.7048311231417068
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -8.450930415853264,
+          "y": 21.999921519999997,
+          "z": -22.95511021130434,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": -1.0880936884815826,
+          "y": 21.999921520000004,
+          "z": -25.35519573787704,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": -2.6964871565782875,
+          "y": 21.999921519999997,
+          "z": -23.226277150992942,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "572e2d9ea45a962356d1fa96a15a0e78318af1cb24a05d5d8b99511966cf0e09",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 1,
+      "variant": 4,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 770.25,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 262,
+      "stage": 4,
+      "sofa": {
+        "x": -6.033573752755527,
+        "y": 9.311610284643281,
+        "z": -1.0548115239315077,
+        "velocity": {
+          "x": 0.002741962517247185,
+          "y": -0.021710130587599824,
+          "z": 0.024785682217868338
+        },
+        "angular": {
+          "x": 0.04669419881376106,
+          "y": 0.005009430386540101,
+          "z": 0.02341137373469138
+        },
+        "quaternion": {
+          "x": -0.01889806017040416,
+          "y": 0.13400704935240298,
+          "z": -0.0403104287431102,
+          "w": -0.9899798196833131
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -8.72325393692825,
+          "y": 7.999862251600988,
+          "z": -1.6670535719973163,
+          "grip": 0
+        },
+        {
+          "name": "Pilot 1",
+          "x": -8.165150675197127,
+          "y": 5.909692413663581,
+          "z": -3.8765979069656384,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": -7.8929699344311475,
+          "y": 7.999981963272364,
+          "z": -0.03911891237927451,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "dd6e4fd4b7bec0e276cd77e548f3496cd48be78b363ac03521cf366ae1db8065",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 2,
+      "variant": 0,
+      "phase": "delivered",
+      "seconds": 248.11666666666667,
+      "stops": 0,
+      "carryingSeconds": 200.91666666666666,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 46,
+      "stage": 10,
+      "sofa": {
+        "x": -5.650296054823671,
+        "y": 22.99621101590605,
+        "z": -23.010884509145335,
+        "velocity": {
+          "x": -0.000557535224836506,
+          "y": 0.000794712014356741,
+          "z": -0.001203166096968973
+        },
+        "angular": {
+          "x": -0.002434860965783749,
+          "y": 0.0006216887518186916,
+          "z": 0.0012397385516519088
+        },
+        "quaternion": {
+          "x": 0.052735437500988795,
+          "y": 0.9611881981137337,
+          "z": 0.02799906274872041,
+          "w": -0.26935529310493717
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -3.9394028964178314,
+          "y": 21.99997927669474,
+          "z": -22.34137063417123,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": -7.63180148102461,
+          "y": 21.999921519999997,
+          "z": -20.778814073819426,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": 1.0399999999999996,
+          "y": 21.999976580986477,
+          "z": -24.579823401982505,
+          "grip": null,
+          "task": "Putting the sofa down"
+        },
+        {
+          "name": "Sam",
+          "x": -8.30808615593841,
+          "y": 21.999886115633917,
+          "z": -22.40556363113473,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "3be04c25f888f559b1129b0437f8908ca08d6d845670b15d78f4d6f08481f4b5",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 2,
+      "variant": 1,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 793.7166666666667,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 157,
+      "stage": 3,
+      "sofa": {
+        "x": -8.071683950960281,
+        "y": 8.203748148882688,
+        "z": 3.8292873924591095,
+        "velocity": {
+          "x": -0.02376652540666578,
+          "y": -0.004653557453575381,
+          "z": -0.0017606894413911556
+        },
+        "angular": {
+          "x": -0.019039373213420103,
+          "y": -0.004034511386084974,
+          "z": -0.10140584072346244
+        },
+        "quaternion": {
+          "x": -0.1022194177908817,
+          "y": 0.8124012015669909,
+          "z": 0.07262894063445775,
+          "w": -0.5694563330943989
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -10.148848896838313,
+          "y": 7.016275104000142,
+          "z": 3.6483276959625477,
+          "grip": 1
+        },
+        {
+          "name": "Pilot 1",
+          "x": -10.008936667534845,
+          "y": 6.99971896799555,
+          "z": 5.007867987942661,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": -9.783075491540247,
+          "y": 7.005055056055003,
+          "z": 4.3281602979281315,
+          "grip": null,
+          "task": "Finding a corner"
+        },
+        {
+          "name": "Sam",
+          "x": -7.929196962576579,
+          "y": 6.941090704589843,
+          "z": 6.863347540109099,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "c1e29020fa1dab64387aa1fe092daeec90ae2df7ed2b0c1536adcfe667896001",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 2,
+      "variant": 2,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 738.6166666666667,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 142,
+      "stage": 0,
+      "sofa": {
+        "x": -14.04792304805999,
+        "y": 1.49998608133848,
+        "z": 7.164741371216447,
+        "velocity": {
+          "x": 0.011812717640380305,
+          "y": 0.00004284355183528654,
+          "z": 0.011244568169947095
+        },
+        "angular": {
+          "x": 0.00003612244771629934,
+          "y": -0.0010250648504487214,
+          "z": -0.00005139257195304475
+        },
+        "quaternion": {
+          "x": 0.466046944972268,
+          "y": 0.4660387326398863,
+          "z": 0.5317900357365116,
+          "w": 0.5317964861230132
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -0.8920078444458894,
+          "y": 1.5278606575829075,
+          "z": 11.000013954641267,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": -12.662003233675234,
+          "y": -0.6000784800000002,
+          "z": 7.3904536115546735,
+          "grip": 1
+        },
+        {
+          "name": "Nora",
+          "x": -8.32567602755905,
+          "y": 0.22370295601131307,
+          "z": 11.000000021467255,
+          "grip": null,
+          "task": "Finding a corner"
+        },
+        {
+          "name": "Sam",
+          "x": -5.508412554429053,
+          "y": 0.7178697935465936,
+          "z": 11.000000068462162,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "ed737ffad8e52977c17b2a10a5586368cf0faf6cafec4e19a558c965798b0f68",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 2,
+      "variant": 3,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 767.4166666666666,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 162,
+      "stage": 0,
+      "sofa": {
+        "x": -8.378062977844502,
+        "y": 0.44936211470656334,
+        "z": -10.161656067773714,
+        "velocity": {
+          "x": -0.674152654784576,
+          "y": -0.006600487212842371,
+          "z": 0.30390826829230705
+        },
+        "angular": {
+          "x": -0.003083457827225411,
+          "y": -0.36066744679193163,
+          "z": -0.01584181784617389
+        },
+        "quaternion": {
+          "x": -0.4731795050084281,
+          "y": 0.44030891097102787,
+          "z": -0.30244030522480114,
+          "w": -0.7005419907007826
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": 3.7188034875095575,
+          "y": 2.3367699349199285,
+          "z": 11.002375653519477,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": -9.68432937488076,
+          "y": -0.5401616880840476,
+          "z": -10.26975282516665,
+          "grip": 2
+        },
+        {
+          "name": "Nora",
+          "x": -8.831651326883948,
+          "y": -0.6000838357107243,
+          "z": -7.860466463860758,
+          "grip": 3,
+          "task": "Turning together"
+        },
+        {
+          "name": "Sam",
+          "x": -9.509585489160468,
+          "y": -0.6000848010678662,
+          "z": -8.436187326363788,
+          "grip": 1,
+          "task": "Turning together"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "916256f7f48881f135f932473adb639a54922f2be56f3c2130d8747b8984fae3",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 2,
+      "bots": 2,
+      "variant": 4,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 829.6666666666666,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 60,
+      "stage": 2,
+      "sofa": {
+        "x": 2.3526917295806467,
+        "y": 5.901645392046382,
+        "z": 3.332243005484004,
+        "velocity": {
+          "x": 0.07206709019974633,
+          "y": -0.280520479717914,
+          "z": 0.33630795480641096
+        },
+        "angular": {
+          "x": -0.6765182662013395,
+          "y": 0.4963018978770098,
+          "z": -0.8116304581170651
+        },
+        "quaternion": {
+          "x": -0.3762170884141577,
+          "y": -0.6218442942653347,
+          "z": -0.3633475203195786,
+          "w": 0.5828798808952281
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -7.552503019781448,
+          "y": 1.9310960658830043,
+          "z": 10.964335963135246,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": 3.756608217322868,
+          "y": 4.546148730031971,
+          "z": 5.313029125271558,
+          "grip": null
+        },
+        {
+          "name": "Nora",
+          "x": 3.5904133799634477,
+          "y": 4.5896517384815905,
+          "z": 6.185651425336396,
+          "grip": null,
+          "task": "Finding a corner"
+        },
+        {
+          "name": "Sam",
+          "x": 4.268756276063496,
+          "y": 4.468703016552369,
+          "z": 6.4404616254876546,
+          "grip": 1,
+          "task": "Turning together"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "125c4607ecc9b7325a543e3cbb3ad3f7a88806a3c240246d2d7cfdc8ff6c6d1a",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 3,
+      "bots": 1,
+      "variant": 0,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 0,
+      "carryingSeconds": 809.4833333333333,
+      "stoppedCarryingSeconds": 0,
+      "ignoredStopFrames": 0,
+      "actions": 289,
+      "stage": 0,
+      "sofa": {
+        "x": 5.218892735649403,
+        "y": 4.039611227512339,
+        "z": 13.601228215297688,
+        "velocity": {
+          "x": -0.873268040148059,
+          "y": -0.24525069756665072,
+          "z": 1.0250778402803868
+        },
+        "angular": {
+          "x": -0.24828180552089732,
+          "y": -0.31307389540691105,
+          "z": 0.1043947491087977
+        },
+        "quaternion": {
+          "x": 0.0350225234118248,
+          "y": -0.09866705788579744,
+          "z": -0.025479914425515685,
+          "w": -0.9941775538116406
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": 3.6921218435079077,
+          "y": 2.33204964862668,
+          "z": 11.915665518316914,
+          "grip": 2
+        },
+        {
+          "name": "Pilot 1",
+          "x": 3.8785862251356424,
+          "y": 2.366585549716457,
+          "z": 15.267186792579603,
+          "grip": 0
+        },
+        {
+          "name": "Pilot 2",
+          "x": 9.393023004353475,
+          "y": 2.999981386082027,
+          "z": 11.998411578475915,
+          "grip": null
+        },
+        {
+          "name": "Sam",
+          "x": 7.910039199370602,
+          "y": 2.9999214124571685,
+          "z": 14.52758218847364,
+          "grip": 1,
+          "task": "Carrying"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "24fc5ac4a933a6860da8c7c60c6080eaaa99071d07eda1b470717f29f880f67a",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 3,
+      "bots": 1,
+      "variant": 1,
+      "phase": "delivered",
+      "seconds": 332.73333333333335,
+      "stops": 180,
+      "carryingSeconds": 280.93333333333334,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 77,
+      "stage": 10,
+      "sofa": {
+        "x": -5.675533441858457,
+        "y": 22.78748690940572,
+        "z": -23.5252266800961,
+        "velocity": {
+          "x": -1.340219883053995e-9,
+          "y": -2.578492974691926e-14,
+          "z": 2.2643325694851004e-7
+        },
+        "angular": {
+          "x": -1.0028928641904638e-14,
+          "y": -4.846283848306041e-8,
+          "z": 9.150696624086711e-15
+        },
+        "quaternion": {
+          "x": -4.049520016232873e-8,
+          "y": 0.10094174462978714,
+          "z": -2.509337191960207e-7,
+          "w": -0.9948923379899106
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -6.445782627527905,
+          "y": 21.999921520000004,
+          "z": -22.046191972511878,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": -0.9978129039742017,
+          "y": 21.999921519999997,
+          "z": -23.175393173534143,
+          "grip": null
+        },
+        {
+          "name": "Pilot 2",
+          "x": -8.2131590003081,
+          "y": 21.999921519999997,
+          "z": -22.455443118506217,
+          "grip": null
+        },
+        {
+          "name": "Sam",
+          "x": -6.839277962620352,
+          "y": 21.999921520000004,
+          "z": -21.36618055562484,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "7249746a0805f5c6ee6248d3090459b0d75e178e03eb55963ecca7de873fb5dc",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 3,
+      "bots": 1,
+      "variant": 2,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 816.2666666666667,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 243,
+      "stage": 0,
+      "sofa": {
+        "x": -5.3567503575604185,
+        "y": 0.8231132478407237,
+        "z": -3.6966433042644913,
+        "velocity": {
+          "x": -0.046406120283255345,
+          "y": 0.006649203212452372,
+          "z": 1.4700739856321776
+        },
+        "angular": {
+          "x": -0.0007730214341286571,
+          "y": 0.46264796915476036,
+          "z": 0.008303730315439337
+        },
+        "quaternion": {
+          "x": -0.00011719822234334694,
+          "y": 0.9073995885588272,
+          "z": 0.001601015510295381,
+          "w": 0.4202658797680152
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -8.018931446210747,
+          "y": -0.6000784800000001,
+          "z": -5.81625511270052,
+          "grip": 3
+        },
+        {
+          "name": "Pilot 1",
+          "x": -2.559440086490967,
+          "y": -0.6000784800000002,
+          "z": -2.482129423868774,
+          "grip": 0
+        },
+        {
+          "name": "Pilot 2",
+          "x": -4.060019668843588,
+          "y": -0.6000784800000002,
+          "z": -0.4572463180144905,
+          "grip": 2
+        },
+        {
+          "name": "Sam",
+          "x": -6.246009760624877,
+          "y": -0.600079265482792,
+          "z": -6.245670279207128,
+          "grip": 1,
+          "task": "Turning together"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "582ec5ac8047185b975d202d977174392eae40e8a2b5e57bd3fbba847e925d36",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 3,
+      "bots": 1,
+      "variant": 3,
+      "phase": "playing",
+      "seconds": 900,
+      "stops": 180,
+      "carryingSeconds": 854.0166666666667,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 300,
+      "stage": 6,
+      "sofa": {
+        "x": -1.9740284252370097,
+        "y": 14.980792451710336,
+        "z": -9.248140690803337,
+        "velocity": {
+          "x": -0.7735358653550992,
+          "y": -0.027511813368099824,
+          "z": 0.9946028860050395
+        },
+        "angular": {
+          "x": -0.1491503354525435,
+          "y": -0.8792412169523978,
+          "z": -0.15952512757683118
+        },
+        "quaternion": {
+          "x": -0.2657370045446296,
+          "y": -0.763896494751173,
+          "z": 0.5216752910417377,
+          "w": -0.2714790607745584
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -7.052144356276178,
+          "y": -0.6000784800000002,
+          "z": 1.0521054839339792,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": -1.3611004864489118,
+          "y": 14.519925757151576,
+          "z": -10.148392778306293,
+          "grip": null
+        },
+        {
+          "name": "Pilot 2",
+          "x": -5.301885426399245,
+          "y": 14.564699050688917,
+          "z": -10.112207714760281,
+          "grip": null
+        },
+        {
+          "name": "Sam",
+          "x": 0.9667798630148474,
+          "y": 5.001826258549797,
+          "z": 6.001405378508394,
+          "grip": null,
+          "task": "Finding a corner"
+        }
+      ],
+      "exitCode": 1
+    },
+    {
+      "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+      "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+      "inputHash": "c1d876936733f5a6afb71b14fabbea7ecb7d114edecdacbff821d1c70fa638c8",
+      "goatsEnabled": true,
+      "depotStart": true,
+      "limitSeconds": 900,
+      "driver": "scripted planner controls; not a human playtest",
+      "humans": 3,
+      "bots": 1,
+      "variant": 4,
+      "phase": "delivered",
+      "seconds": 195.8,
+      "stops": 180,
+      "carryingSeconds": 192.36666666666667,
+      "stoppedCarryingSeconds": 3,
+      "ignoredStopFrames": 0,
+      "actions": 44,
+      "stage": 10,
+      "sofa": {
+        "x": -5.432553704275596,
+        "y": 22.78748723106449,
+        "z": -23.13094206251723,
+        "velocity": {
+          "x": 3.6096060370166785e-8,
+          "y": -2.7394753132625738e-14,
+          "z": -2.2704421405756027e-7
+        },
+        "angular": {
+          "x": 2.3308261073957573e-14,
+          "y": 2.883602184100902e-8,
+          "z": 1.9369499664572035e-14
+        },
+        "quaternion": {
+          "x": -1.8599768593065526e-7,
+          "y": 0.9993847132427214,
+          "z": -1.4265699272850366e-7,
+          "w": 0.03507413486757438
+        }
+      },
+      "players": [
+        {
+          "name": "Pilot 0",
+          "x": -2.909580264194916,
+          "y": 21.999921519999997,
+          "z": -23.507835678331634,
+          "grip": null
+        },
+        {
+          "name": "Pilot 1",
+          "x": -8.231069278699554,
+          "y": 21.999921520000004,
+          "z": -24.516636293026295,
+          "grip": null
+        },
+        {
+          "name": "Pilot 2",
+          "x": -2.9417902437565813,
+          "y": 21.999921520000004,
+          "z": -21.915979815632024,
+          "grip": null
+        },
+        {
+          "name": "Sam",
+          "x": -7.942970743888476,
+          "y": 21.999921519999997,
+          "z": -22.25652420741675,
+          "grip": null,
+          "task": "Putting the sofa down"
+        }
+      ],
+      "exitCode": 0
+    }
+  ]
+}

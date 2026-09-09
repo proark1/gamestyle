@@ -1,0 +1,25 @@
+# Jumbleyard collection and Blend Business
+
+## Current multiplayer modes (2026-09-08)
+
+The [player-farmer design](act-natural-player-farmer-design.md) supersedes the original online vision and room transport described below. Players choose Escape the computer (one to four cow players against the AI) or Player farmer (one rotating human farmer and up to three cows). New rooms use the server rather than a player's peer simulation. Player farmer limits visible cows and items by facing, seven-metre range and solid hay cover; a live-fence shock deliberately reveals a cow for five seconds. Keys and sabotage progress remain private to their owner. Short nearby sounds and witnessed interactions provide clues. Each player uses a private screen.
+
+## Original collection design
+
+The collection at `/` presents Stack or Sink and Blend Business with matching illustrated cards, short explanations, player counts and direct game links. `/stack-or-sink` retains the existing game; legacy `/?room=CODE` invites redirect there. `/act-natural` opens the new farm game. Both games offer navigation back to the collection.
+
+The collection preserves Fredoka display lettering, DM Sans controls, cream panels, muted greens, mustard highlights and warm toy-like 3D art. Card illustrations are generated promotional artwork, not screenshots. Prompts and source assets are recorded in `docs/game-illustrations.md`.
+
+Blend Business reuses Three.js and the existing rounded geometry, materials, worker model, audio cues, dialog controls and persistent room-store adapters. Its renderer is loaded only on its game route. Its simulation, connection, room handler and private state projection are isolated under `game/act-natural`. The new API is `/api/act-natural`; persisted room IDs are namespaced with `act:` and require no database migration. Existing Stack or Sink room formats remain valid.
+
+Online rounds support two to four players. The host starts the round, with one player assigned farmer and the remaining players assigned random cows within an 18-cow herd. Farmer duty rotates through the player list on each rematch. The server never sends the farmer a cow-to-player mapping, simulation seed, player inputs or computer suspicion state. Each cow player receives only their own cow ID. Cow bodies and animations share the same model for players and NPCs.
+
+Cows graze, walk and pause independently, using per-cow durations, local destinations and walking speeds. A gentle pull toward the field centre keeps them loosely grouped without shared directions or synchronized switches. The HUD reports visible grazing, moving and resting counts instead of a global cue countdown. Players begin grazing and can blend in with any nearby cows. The private routines persist in room state, are initialized for older records on their next tick, and are excluded from every client snapshot. WASD/arrows move; Space toggles grazing. The farmer selects a cow with a click or inspects the nearest cow using E, within 3.2 metres. Five inspections are available per round, with a cooldown; innocent inspections consume attempts. Caught cows spectate and drop carried items.
+
+Fake cows use E to collect either key and deliver it to the south gate. Both keys unlock that gate. E at the west switch begins four seconds of stationary sabotage; movement cancels it. A slow, visible ladder can instead be carried to the east fence and placed to bypass the locks. Both exits require the power to be off; E at an available exit escapes. Q drops an item. A translucent ground sector makes the farmer's facing direction legible; in online play the farmer can observe the entire pasture.
+
+Rounds last three minutes using server wall time. If at least one cow escapes, the cow team wins once all fake cows are resolved or time expires. Otherwise the farmer wins. Rejoining uses a tab-local session token, tokens are hashed in storage, room updates use compare-and-swap, and action IDs prevent replay. Stale movement stops after 1.2 seconds. Players absent for 30 seconds leave the room; a departing farmer returns the remaining group to the lobby.
+
+Solo practice uses the same objectives and timer with a computer farmer. The computer observes visible behaviour and carried items across all cows equally, without consulting ownership or private routines. Normal walking, standing and grazing near others do not add suspicion. Extended solitary walking is only a weak clue; visible loot and sabotage are stronger evidence. Suspicion fades when the behaviour stops or the cow is out of sight. Touch controls include a movement joystick and action buttons. Network failures stop controls and provide a route back to the menu. Graphics-loading failure leaves navigation and an actionable message available.
+
+Validation includes rules, role privacy, capacity under contention, action replay, authentication, game isolation, original game regressions, type checking, both production build targets, and a four-client HTTP integration check. Browser interaction testing and a real four-person internet playtest remain separate validation work.

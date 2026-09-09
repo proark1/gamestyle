@@ -1,0 +1,31 @@
+Shelf Control image provenance
+
+Generated with the built-in image_gen tool. One successful image generation; one prior request was rejected before generation by five-reference path limit. No variants or image modifications. Source: C:/Users/assad/.codex/generated_images/01a081df-a5fe-7b23-9ab0-cf8cd7e6601f/exec-fb3c625f-77c5-476e-94f7-a8d71f42a2cc.png
+
+Style references: public/images/stack-or-sink.png, blend-business.png, uphill-delivery.png, permit-pending.png, tiptoe-thieves.png from C:/Users/assad/Documents/GitHub/gamestyle. The old shelf-control.png was inspected but not passed to the successful call.
+
+Exact prompt:
+
+Use case: style-transfer.
+Asset type: one finished Shelf Control game collection-card illustration, exactly 1536 x 1024 pixels, landscape 3:2, full bleed.
+Input images: Images 1–5 (stack-or-sink, blend-business, uphill-delivery, permit-pending, tiptoe-thieves) are the actual graphic style references. Match their charming chunky toy proportions, faceted hand-shaped matte clay geometry, simple expressive faces, stylized model scenery, clear silhouettes and playful comedy. Redesign Shelf Control as a furniture-showroom cutaway that fully fits images 1–5.
+Scene: a cozy open-roof furniture showroom cutaway seen from an elevated three-quarter angle. Chunky display shelving, a cream sofa, a mustard armchair, a terracotta sideboard, small display tables, simple lamps and potted plants create a readable toy-diorama room.
+Main action: two short, big-headed wooden toy mannequins comically tiptoe together carrying a long simple ladder horizontally through the showroom behind a short, charming, oblivious guard in a saturated teal uniform. Show the ladder and both carriers clearly, with a careful sneaking pose and readable comedy. The guard looks away. Other wooden toy mannequins hold innocent display poses near the furniture, pretending to be motionless. Mannequins are cute simplified cream-and-honey painted wooden toys with stubby limbs, oversized rounded faceted heads and tiny expressive eyes; chunky peg-like construction, never tall anatomical drawing mannequins. Guard proportions match the short large-headed workers in the supplied references.
+Composition: put the ladder-sneaking gag prominently in the foreground-middle, with surrounding furniture framing it. Keep the main characters large and distinct enough for a collection thumbnail. Simple coherent perspective and uncrowded readable staging.
+Style and color: use the same graphic family as the five style references: sculpted matte toy illustration, broad simple surfaces, softly beveled and visibly faceted forms, hand-crafted clay character, limited subtle tactile texture. Distinct saturated teal shelving and guard uniform, mustard seating, terracotta accents, cream walls and sofa, sage plants and small accents. Preserve strong local color separation; neutral cream illumination with bright soft sunlight and gentle shadows.
+Avoid: realistic wood grain, realistic upholstery weave, elaborate mannequin joints, anatomical mannequins, tall slender bodies, glossy plastic, photographic rendering, excessive micro-detail, brown-and-olive overall coloration, golden sepia cast, murky shadows, scary characters, text, labels, logos, UI, borders and watermarks.
+Create exactly one image.
+
+
+Corrective edit provenance
+
+One built-in imagegen corrective edit replaced the two ladder-carrying workers with honey-wood toy mannequins. The original generated image was the sole image input. Visually verified both carriers are now wooden mannequins with no hardhats or clothing, with the composition, ladder, guard and showroom preserved. No variants. Corrected source: C:/Users/assad/.codex/generated_images/01a081df-a5fe-7b23-9ab0-cf8cd7e6601f/exec-db73e4e0-565f-42bb-bcc2-4161b7a9dc6c.png
+
+Exact edit prompt:
+
+Use case: precise-object-edit.
+Edit target: the supplied Shelf Control illustration.
+Make one surgical correction: replace ONLY the two foreground ladder-carrying workers with short, chunky, honey-wood toy mannequins matching the wooden display mannequins already standing in the background. The worker at the left end of the ladder and the worker at the right end of the ladder must both become wooden mannequins. Keep their exact body poses, positions, head size, hand contact with the ladder, limb placements, forward-facing direction and mischievous tiptoe movement.
+Remove both yellow hard hats entirely. Remove human hair, human skin, rosy cheeks, overalls, shirts and shoes from these two characters. Their entire bare toy heads, bodies, arms, hands, legs and feet must be the same honey-wood material as the background display mannequins. Use oversized faceted round heads and minimal dark dot eyes, with simple blank mannequin faces, stubby limbs and chunky peg-like construction. No clothing or accessories on these two wooden figures. They are furniture-store display mannequins that have secretly come alive to sneak a ladder past the guard.
+Preserve absolutely everything else in the image: the whole composition, dimensions and framing at 1536x1024 landscape 3:2, ladder geometry and position, teal-clad human guard and his face/hat/uniform, all posed background display mannequins, all furniture, shelves, sofa, chairs, windows, walls, plants, landscape, perspective, lighting, shadows, material style and teal/mustard/terracotta/cream/sage colors. Retain the same charming chunky faceted matte-clay toy illustration style. Do not redraw, rearrange or add other content. No text, UI, logo or watermark.
+

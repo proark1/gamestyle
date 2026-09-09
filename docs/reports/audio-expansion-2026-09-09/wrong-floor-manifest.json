@@ -1,0 +1,282 @@
+{
+  "fetchedAt": "2026-09-09T02:59:27.684Z",
+  "endpoint": "https://jumbleyard.up.railway.app/api/audio/wrong-floor?manifest",
+  "cues": {
+    "event.start": {
+      "url": "/api/audio/wrong-floor/file/491d6f75-c575-4168-a5b2-728591043de9.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.report": {
+      "url": "/api/audio/wrong-floor/file/9bc212d6-81f5-4c8c-8076-27caa4fbdef4.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.vote": {
+      "url": "/api/audio/wrong-floor/file/002b9ca2-9a4d-4987-810e-8bb751ae2e7a.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.correct": {
+      "url": "/api/audio/wrong-floor/file/c8d5db6d-840d-4e8e-9c0a-fa8c3db3c14f.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.alarm": {
+      "url": "/api/audio/wrong-floor/file/9f17a9f9-2050-4c46-9ca2-d75a3c886452.mp3",
+      "volume": 0.5,
+      "loop": false,
+      "category": "event"
+    },
+    "event.safe": {
+      "url": "/api/audio/wrong-floor/file/35368202-78fc-4ba4-bd39-70688c5f3018.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.finish": {
+      "url": "/api/audio/wrong-floor/file/e62f34cf-ffd0-4424-98c7-bcfb6e7380f5.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.knock": {
+      "url": "/api/audio/wrong-floor/file/902cd005-e492-4a32-9cfb-439a5631062b.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.door-knock": {
+      "url": "/api/audio/wrong-floor/file/83d49116-2f98-41f6-8d6f-00015b4d74fc.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step": {
+      "url": "/api/audio/wrong-floor/file/4771e16d-825e-4ffa-9b8d-c3fa426a8bbb.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-metal": {
+      "url": "/api/audio/wrong-floor/file/b3ad1e75-7f3e-4a6c-a025-ff2bbc49a413.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-wood": {
+      "url": "/api/audio/wrong-floor/file/3607355d-e14d-4a10-bc0e-9632af0d2ffa.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.wet-step": {
+      "url": "/api/audio/wrong-floor/file/8fb1189b-917a-4023-8927-76da25cd8aef.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.handle": {
+      "url": "/api/audio/wrong-floor/file/c256e4a1-b0e8-4657-8df7-6f5348b340cd.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.clock": {
+      "url": "/api/audio/wrong-floor/file/35b51084-39fe-404d-afa6-aa5b9304d329.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.light": {
+      "url": "/api/audio/wrong-floor/file/b5f11d20-7295-46dc-8b7e-42028b89622a.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.creak": {
+      "url": "/api/audio/wrong-floor/file/43cc2104-8b67-4ac7-8969-c6a0aeefba91.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.breath": {
+      "url": "/api/audio/wrong-floor/file/4f126155-9983-40f5-a571-a6e215782743.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.ghost-step": {
+      "url": "/api/audio/wrong-floor/file/4f1daebe-b3fc-4a48-89f5-90c3f3aad1f4.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.slam": {
+      "url": "/api/audio/wrong-floor/file/70e42420-4245-4c32-a506-0934123943aa.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.doors": {
+      "url": "/api/audio/wrong-floor/file/5e46bf6b-21ec-4477-bf56-df95b2f60618.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.motor": {
+      "url": "/api/audio/wrong-floor/file/5e3661f2-5d0a-4443-808e-bedb11718f19.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.inspect": {
+      "url": "/api/audio/wrong-floor/file/8ec3abe8-3214-4e7a-a7ce-303666999a87.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.heartbeat": {
+      "url": "/api/audio/wrong-floor/file/69868126-1cf0-4556-a435-f9e768efba78.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.caught": {
+      "url": "/api/audio/wrong-floor/file/3abdb8b4-aee3-42db-b1bf-d947b9ed84fc.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.pipe": {
+      "url": "/api/audio/wrong-floor/file/3ea3bfbb-b4ba-4965-ad39-da440e4661c2.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.ui": {
+      "url": "/api/audio/wrong-floor/file/632eb9db-b3f0-447c-a4ef-9247a8898339.mp3",
+      "volume": 0.28,
+      "loop": false,
+      "category": "event"
+    },
+    "event.join": {
+      "url": "/api/audio/wrong-floor/file/ab6790db-8d97-4c12-b13c-7deddc3bc611.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "event"
+    },
+    "event.leave": {
+      "url": "/api/audio/wrong-floor/file/5df85603-6759-4dea-906c-baf0858c8ea4.mp3",
+      "volume": 0.38,
+      "loop": false,
+      "category": "event"
+    },
+    "event.fail": {
+      "url": "/api/audio/wrong-floor/file/064b35f7-5a78-4e4f-bdb0-ed7769e755d2.mp3",
+      "volume": 0.65,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step.1": {
+      "url": "/api/audio/wrong-floor/file/8d9dd667-b44e-4d58-8d09-584e618c0906.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step.2": {
+      "url": "/api/audio/wrong-floor/file/48e7c11f-42c2-46e8-b50a-ee12e38beb8d.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step.3": {
+      "url": "/api/audio/wrong-floor/file/3b38efae-4d59-48cc-85fe-46959814937e.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-metal.1": {
+      "url": "/api/audio/wrong-floor/file/374ae32b-7e68-4ed8-b880-731aaa765c06.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-metal.2": {
+      "url": "/api/audio/wrong-floor/file/bac7455b-86eb-42f5-a80b-2d6c34f8fdbe.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-metal.3": {
+      "url": "/api/audio/wrong-floor/file/3ba24edd-45b5-4d7a-9e9b-6c1c41883f03.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-wood.1": {
+      "url": "/api/audio/wrong-floor/file/188d4922-6765-4060-b2f1-1d816d387229.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-wood.2": {
+      "url": "/api/audio/wrong-floor/file/f32d6cd9-7c99-4806-9fb4-8caebe0468c1.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "event.step-wood.3": {
+      "url": "/api/audio/wrong-floor/file/f2b375bd-e06f-4e67-b335-2e7f02587919.mp3",
+      "volume": 0.55,
+      "loop": false,
+      "category": "event"
+    },
+    "ambience.hotel": {
+      "url": "/api/audio/wrong-floor/file/8573cca7-3ad4-4148-911e-40600ce37529.mp3",
+      "volume": 0.48,
+      "loop": true,
+      "category": "ambience"
+    },
+    "ambience.elevator": {
+      "url": "/api/audio/wrong-floor/file/50f07a18-081d-42c6-bc0d-22f01889ff87.mp3",
+      "volume": 0.5,
+      "loop": true,
+      "category": "ambience"
+    },
+    "music.menu": {
+      "url": "/api/audio/wrong-floor/file/7828b663-e7da-420b-8166-f100fec53bea.mp3",
+      "volume": 0.42,
+      "loop": true,
+      "category": "music"
+    },
+    "music.tension": {
+      "url": "/api/audio/wrong-floor/file/d53cd28d-5ba3-4d57-817e-527d1af2fc16.mp3",
+      "volume": 0.42,
+      "loop": true,
+      "category": "music"
+    },
+    "music.escape": {
+      "url": "/api/audio/wrong-floor/file/42e17f7f-f3a3-4895-9faa-be5522ea69bd.mp3",
+      "volume": 0.42,
+      "loop": true,
+      "category": "music"
+    },
+    "music.win": {
+      "url": "/api/audio/wrong-floor/file/3fa08989-127a-46dd-ad92-6a5f3ba3f74b.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "music"
+    },
+    "music.fail": {
+      "url": "/api/audio/wrong-floor/file/52597cc3-1171-41bf-a24f-638a00e97805.mp3",
+      "volume": 0.42,
+      "loop": false,
+      "category": "music"
+    }
+  }
+}

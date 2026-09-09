@@ -1,0 +1,3957 @@
+[
+  {
+    "file": ".dockerignore",
+    "bytes": 148,
+    "sha256": "235e7967d163aece58d8ffcbb0e03f08680353802e6dbab0bbb9b2185dd92ef3"
+  },
+  {
+    "file": ".railwayignore",
+    "bytes": 148,
+    "sha256": "235e7967d163aece58d8ffcbb0e03f08680353802e6dbab0bbb9b2185dd92ef3"
+  },
+  {
+    "file": ".openai/hosting.json",
+    "bytes": 99,
+    "sha256": "0b369227675f1224ecd8de659fa8619260361f5a6a5d693ef58bb75fa3f6d601"
+  },
+  {
+    "file": "components.json",
+    "bytes": 516,
+    "sha256": "9928283696d86836422959a2c520df83a718d31ffbcab533a14ca8dca2c8d475"
+  },
+  {
+    "file": "Dockerfile",
+    "bytes": 763,
+    "sha256": "b4ca5a6489a2520c5f2788cd4394a7da9cbc1a2ecb45ab8e6fc4f8d7ffd57faf"
+  },
+  {
+    "file": "next-env.d.ts",
+    "bytes": 194,
+    "sha256": "74ecf1a3bc702f296a7363c9ec6fe560278e32bd7f44c1bbac987f81ef7aa6df"
+  },
+  {
+    "file": "next.config.ts",
+    "bytes": 104,
+    "sha256": "d063bebef3a4878ae82f9f9547c2c9675b8b6945ab23702932dcb63a011a9fc9"
+  },
+  {
+    "file": "package.json",
+    "bytes": 2963,
+    "sha256": "bf7627787f40466471144bd6b657222c8bd008d813ce1fbb7f67138ff5ca0b90"
+  },
+  {
+    "file": "package-lock.json",
+    "bytes": 412125,
+    "sha256": "6c6d5d21d8867416d6c1c82e0a4127b3184d86f473450b838909a2416497cf6a"
+  },
+  {
+    "file": "railway.json",
+    "bytes": 313,
+    "sha256": "970fffb47f730229ac11fbab5e76ffc08d3682b5e1083387b940b08b792bca53"
+  },
+  {
+    "file": "tsconfig.json",
+    "bytes": 658,
+    "sha256": "6cf1ff77c76eadaee0496cd92204843f90a22a33ebfeb5d81574be2e8e8c94c5"
+  },
+  {
+    "file": "vite.config.ts",
+    "bytes": 3671,
+    "sha256": "0d3468301a5ed9467469ce5848b4184ab5010084df0e2e7654b4f533911e46c6"
+  },
+  {
+    "file": "wrangler.local.json",
+    "bytes": 235,
+    "sha256": "92cc5d63d56ab63f89b385de047fdd3829c3455dc13c787c14a3b9b14d9b2b3a"
+  },
+  {
+    "file": "app\\collection.css",
+    "bytes": 7878,
+    "sha256": "5f5076c22357d438b65873f3d66ef63aaad81c9b2791edf9748aab7502f848f6"
+  },
+  {
+    "file": "app\\globals.css",
+    "bytes": 1470,
+    "sha256": "ca26d905a1668c1999193e88fa25b67298651ed6e290339d1369de65bc41f664"
+  },
+  {
+    "file": "app\\layout.tsx",
+    "bytes": 955,
+    "sha256": "b9c0050f336db46c399bf462fe54c7e1fcf8105ba21b0430c6995a776952b553"
+  },
+  {
+    "file": "app\\page.tsx",
+    "bytes": 19557,
+    "sha256": "1db85f04d41b76aadee2977a5579343bce9308d08ec5161d6a13354e9d0226ad"
+  },
+  {
+    "file": "app\\(handwerker)\\layout.tsx",
+    "bytes": 205,
+    "sha256": "f0e0cb4ac941ed74df85e0a9d56d3608215343a6c988d9ef9571a0d53ad1e78c"
+  },
+  {
+    "file": "app\\act-natural\\page.tsx",
+    "bytes": 313,
+    "sha256": "cb594d5c1352b49011d41bb3d4e8bfb580734be18ab2c195922a1a82c8915661"
+  },
+  {
+    "file": "app\\dont-wake-the-giant\\page.tsx",
+    "bytes": 370,
+    "sha256": "200cc46369db821f9cfa9624dd86897460aca6df8cf90895f63093795e831245"
+  },
+  {
+    "file": "app\\four-brain-cells\\page.tsx",
+    "bytes": 357,
+    "sha256": "af1a2cf92ec8b02663168c4d03e5c9e50829d5e49d2080eaf52e4372630a3a42"
+  },
+  {
+    "file": "app\\one-more-button\\page.tsx",
+    "bytes": 365,
+    "sha256": "953ea06a28205cc029225641a8d62ae0732d1086963c7ed3e2efe6fdeece5b09"
+  },
+  {
+    "file": "app\\reel-problems\\page.tsx",
+    "bytes": 338,
+    "sha256": "b17f7d82913a77f93dab84fe21bc3db191e98e889d3bfb773142bfc67b9a34d4"
+  },
+  {
+    "file": "app\\shelf-control\\page.tsx",
+    "bytes": 362,
+    "sha256": "54e7d712bc19e47a936b41b793128f8cedea579ed29f6e8b657c8c5e9fd85095"
+  },
+  {
+    "file": "app\\stack-or-sink\\page.tsx",
+    "bytes": 301,
+    "sha256": "6ff2f396395312f0501a5ab13527bec1a33253deb5d39c497c98e8428412e2d0"
+  },
+  {
+    "file": "app\\uphill-delivery\\page.tsx",
+    "bytes": 351,
+    "sha256": "b715b46d8778e845b7ca60b332fbe5d5b188be7f2341a7aa1a8824622c9ac846"
+  },
+  {
+    "file": "app\\wrong-floor\\page.tsx",
+    "bytes": 338,
+    "sha256": "82b3625f3261b5e1c2585ad308d1c9fa9826711bdfe0bb942d0beb2532ae9756"
+  },
+  {
+    "file": "app\\(handwerker)\\chaos\\page.tsx",
+    "bytes": 240,
+    "sha256": "e2404718160738e36b00834f2d8199c9bebd43a413fc40943d30d2bf31000a68"
+  },
+  {
+    "file": "app\\(handwerker)\\first-person\\page.tsx",
+    "bytes": 178,
+    "sha256": "f040408bbdb57366436db84deb4a862e530fd41aaa25464a83f002138de2a1ce"
+  },
+  {
+    "file": "app\\act-natural\\admin\\page.tsx",
+    "bytes": 209,
+    "sha256": "d8c6fee33f3e45d02783e883c7bcc5cc8f99e12cae8bbfede8e1e0911fff18a0"
+  },
+  {
+    "file": "app\\api\\act-natural\\route.ts",
+    "bytes": 51,
+    "sha256": "7d71094d02f30424063519a34463bbe829a81e65dab51df2711343464751f7e1"
+  },
+  {
+    "file": "app\\api\\dont-wake-the-giant\\route.ts",
+    "bytes": 59,
+    "sha256": "c212b1eb7be5e14894804e9a71c2705a4fb2d14bff312934755f32d019ff4dc2"
+  },
+  {
+    "file": "app\\api\\health\\route.ts",
+    "bytes": 339,
+    "sha256": "c24558d667bfa6f008e9dd1c684012b1fb2780f3ff8ee739c16736e7ce9cbb0d"
+  },
+  {
+    "file": "app\\api\\peer\\route.ts",
+    "bytes": 44,
+    "sha256": "33951df56daf0fee4185b456c3c7c33ed52b7c286896a660874ab3bdfbde4faf"
+  },
+  {
+    "file": "app\\api\\rooms\\route.ts",
+    "bytes": 53,
+    "sha256": "7b0ad408fed076b316c7c36806ad1ae4c59255568657da02a73e4cd7c8b79d31"
+  },
+  {
+    "file": "app\\api\\shelf-control\\route.ts",
+    "bytes": 53,
+    "sha256": "af86b997fbf62b00d97afcd5e826ec47ac7e5f974d01591e99c5e5f8a16d3905"
+  },
+  {
+    "file": "app\\api\\uphill-delivery\\route.ts",
+    "bytes": 55,
+    "sha256": "db3e2a80addc9214eff98e0c23c66cf3930c9cfb74e9018203cd07500bfff037"
+  },
+  {
+    "file": "app\\dont-wake-the-giant\\admin\\page.tsx",
+    "bytes": 219,
+    "sha256": "3f9a71019f3991b6cd61a019677372080a5eddab265ab2f3b5df685a4f171584"
+  },
+  {
+    "file": "app\\four-brain-cells\\admin\\page.tsx",
+    "bytes": 219,
+    "sha256": "fd41d245c10d74fab1cfe3ddc5a8e3069ad92d025ca214316e0198586b4eaab5"
+  },
+  {
+    "file": "app\\one-more-button\\admin\\page.tsx",
+    "bytes": 217,
+    "sha256": "59a6c87e2dbead1d89a818f396922d20877d4f7094faa0b9e1bf7dda1eee2cfa"
+  },
+  {
+    "file": "app\\reel-problems\\admin\\page.tsx",
+    "bytes": 210,
+    "sha256": "e54a1e9b38c7f828f0b81676bf3f0d06f2b1f7c879b17dfc72819c47b449d1ac"
+  },
+  {
+    "file": "app\\stack-or-sink\\admin\\page.tsx",
+    "bytes": 210,
+    "sha256": "c9218cc8ef5cf3b91fbff349c622c7221534dc32a947b4f6db69110db862c4b5"
+  },
+  {
+    "file": "app\\uphill-delivery\\admin\\page.tsx",
+    "bytes": 217,
+    "sha256": "60c83cf165143414a6e34a5b1ebf1fc643bf978917f487c5abd918c0d020b5e6"
+  },
+  {
+    "file": "app\\wrong-floor\\admin\\page.tsx",
+    "bytes": 206,
+    "sha256": "6c2a4c6b0c58388bab25e3ab2e2953af4f68e63015d846b4926e4fea94f1cc3f"
+  },
+  {
+    "file": "app\\(handwerker)\\build\\[id]\\page.tsx",
+    "bytes": 1292,
+    "sha256": "0e81e54989b813b7466c313b60fbb7b207b48b4ce5c206403c1b1b33c165a61f"
+  },
+  {
+    "file": "app\\(handwerker)\\chaos\\admin\\page.tsx",
+    "bytes": 309,
+    "sha256": "12179fd0c9ca7dd21a70c8a81bb36b2afaa4364eedd7d5a1eb8b956fcecefd52"
+  },
+  {
+    "file": "app\\(handwerker)\\first-person\\admin\\page.tsx",
+    "bytes": 339,
+    "sha256": "9334017e247ab0cdc5990999eb8e1fccf23dc8a1d52a2287909c2bd72e719d3d"
+  },
+  {
+    "file": "app\\(handwerker)\\first-person\\credits\\page.tsx",
+    "bytes": 1262,
+    "sha256": "061b67c6df2dbe642228e7a1b01223e2d3b41fa4804deb99ec418ad02be6787a"
+  },
+  {
+    "file": "app\\api\\audio\\[game]\\route.ts",
+    "bytes": 52,
+    "sha256": "1291a900c228473e14c5db97df5842284b3259955d6900d0865d137f361919d5"
+  },
+  {
+    "file": "app\\api\\handwerker\\builds\\route.ts",
+    "bytes": 57,
+    "sha256": "5d21e1facb290409b3dc5a96bd08dd5293f20ed4899a1ab7919e5c060b3f6e4e"
+  },
+  {
+    "file": "app\\api\\handwerker\\rooms\\route.ts",
+    "bytes": 51,
+    "sha256": "b012f211264f382c3113ea9b4c8d02723c5502f9c06c39076a014756aad6305c"
+  },
+  {
+    "file": "app\\api\\voice\\token\\route.ts",
+    "bytes": 45,
+    "sha256": "400f1ff4330d0822a1970ed4e9628af4322d768a42e9cdaaf90327b77a7cc0f5"
+  },
+  {
+    "file": "app\\api\\handwerker\\audio\\[game]\\route.ts",
+    "bytes": 65,
+    "sha256": "5cd1f64e1f7e6345c842fea56db29f4de060a07ee1e99d82516d41c6f536679e"
+  },
+  {
+    "file": "app\\api\\handwerker\\first-person\\rooms\\route.ts",
+    "bytes": 58,
+    "sha256": "0908eec434056351f2925f36ab2749b1b24a3901ad958340c99f41dc80b9a3cd"
+  },
+  {
+    "file": "app\\api\\handwerker\\voice\\token\\route.ts",
+    "bytes": 50,
+    "sha256": "a2d470bf509e7d9bffcb8d3985729cfc2edf9f673256961a351714ab9ceb6750"
+  },
+  {
+    "file": "app\\api\\audio\\[game]\\file\\[file]\\route.ts",
+    "bytes": 51,
+    "sha256": "03a87137e4961aef98fb2bd3eb7dcbc3a4b09d7ad6553dd5b388f8a97ebca719"
+  },
+  {
+    "file": "app\\api\\handwerker\\audio\\[game]\\file\\[file]\\route.ts",
+    "bytes": 64,
+    "sha256": "cbe1bee4d918717d39c8b0604b207ea2578c765fb182c7b92f42d27e1dc5d3b2"
+  },
+  {
+    "file": "components\\ui\\accordion.tsx",
+    "bytes": 2664,
+    "sha256": "33e1c60ba503f4eb36f9a8b1f68b236174b11656d8efea6bac65abddda2f9019"
+  },
+  {
+    "file": "components\\ui\\alert-dialog.tsx",
+    "bytes": 5301,
+    "sha256": "ed0f1fc432bca4c72f9dd8741ae2268a00d2d3429ff1149bf463c4271b13d8e9"
+  },
+  {
+    "file": "components\\ui\\alert.tsx",
+    "bytes": 2060,
+    "sha256": "e760c470414c9e617d7292094146d906352fee3b1526b790a611d4a118e79196"
+  },
+  {
+    "file": "components\\ui\\aspect-ratio.tsx",
+    "bytes": 406,
+    "sha256": "b7fb499905e441a0602392ce118828425ad059079060109694d01f9fac00ad20"
+  },
+  {
+    "file": "components\\ui\\attachment.tsx",
+    "bytes": 6132,
+    "sha256": "dcb9e899f1322158f016d75c400fa8cce9b797ea49bec65528bac686cee2ec5c"
+  },
+  {
+    "file": "components\\ui\\avatar.tsx",
+    "bytes": 3056,
+    "sha256": "342f32b683937b826cdff2999d5e3057836d459aa43eadb0c3538b818d195b9a"
+  },
+  {
+    "file": "components\\ui\\badge.tsx",
+    "bytes": 1934,
+    "sha256": "5706189b86e8670499fb33f37147dd6f65c39d59eef5211e34157f2952c35e32"
+  },
+  {
+    "file": "components\\ui\\breadcrumb.tsx",
+    "bytes": 2602,
+    "sha256": "b28b76d6f8d0feafbbeff2220cf83f9a6b03d8c81f0145b3af4c7d19933ab2c0"
+  },
+  {
+    "file": "components\\ui\\bubble.tsx",
+    "bytes": 4828,
+    "sha256": "dfb9f52ae3b89e4a419b336c3893ab6fb658fc324fb402759d878d54e3b2db5a"
+  },
+  {
+    "file": "components\\ui\\button-group.tsx",
+    "bytes": 2494,
+    "sha256": "79ad8fb6644a775cc49131c1aa737ca26cae6a563beec0fa52ef6e8d85202fab"
+  },
+  {
+    "file": "components\\ui\\button.tsx",
+    "bytes": 3247,
+    "sha256": "081d2a1cb4f3aec636a6894d9eff4e90d476d5db85b82d0399c1f4d18517112e"
+  },
+  {
+    "file": "components\\ui\\calendar.tsx",
+    "bytes": 8503,
+    "sha256": "e7bc682eff8f2215e6b0aab40d1afb7ee927c5f5bef348ccff207631b9261658"
+  },
+  {
+    "file": "components\\ui\\card.tsx",
+    "bytes": 2645,
+    "sha256": "625fce5e16577a45108a86d7afcd70b8931cb2032abe0d6a3faf1010f666d672"
+  },
+  {
+    "file": "components\\ui\\carousel.tsx",
+    "bytes": 5727,
+    "sha256": "7444126492d4e0b85b1270f0d83a0955350fa95b3d3fb7b88edc2a5c2b4e5d14"
+  },
+  {
+    "file": "components\\ui\\chart.tsx",
+    "bytes": 10581,
+    "sha256": "56ab0e0b41f0cc7902414e046ea4f710bdbf0b756028672ea8c7e5137a278f2b"
+  },
+  {
+    "file": "components\\ui\\checkbox.tsx",
+    "bytes": 1538,
+    "sha256": "56b2869e5478f38238e6a3d8aefabfbe8af565b38b2ffad06466487b3eacf154"
+  },
+  {
+    "file": "components\\ui\\collapsible.tsx",
+    "bytes": 664,
+    "sha256": "3fdf7ef1ca89c4d85de5ecbb25813d0f572003a53b021baf43c5f3523e48ec97"
+  },
+  {
+    "file": "components\\ui\\combobox.tsx",
+    "bytes": 9135,
+    "sha256": "282041e2e8c52cc12e7bbc717bbd3f8c9c5ba18e7fa75b97053bc79687e1181e"
+  },
+  {
+    "file": "components\\ui\\command.tsx",
+    "bytes": 5029,
+    "sha256": "9c1eae65aa105935a34c6b736f673b71a2ef939dde53dce29d986221edbf1f9f"
+  },
+  {
+    "file": "components\\ui\\context-menu.tsx",
+    "bytes": 8166,
+    "sha256": "05c3646b452f5e3b9eb952eeba3d90657606d2b0875cb77652cdb5eadba0eb5c"
+  },
+  {
+    "file": "components\\ui\\dialog.tsx",
+    "bytes": 4087,
+    "sha256": "8bc85def62538b4e62e8530c6b0ba167a192c38519c05f104bf6e10de73b811f"
+  },
+  {
+    "file": "components\\ui\\direction.tsx",
+    "bytes": 105,
+    "sha256": "2dea8a95accb1723db2454ccc858697d5b1f1454568cf4da5e8fcbd0cf7cc1ee"
+  },
+  {
+    "file": "components\\ui\\drawer.tsx",
+    "bytes": 11396,
+    "sha256": "b7ac53d0e5d1fed25fc3f2ac5f5a36e247ca684c677ac376829fa8a7c039b79e"
+  },
+  {
+    "file": "components\\ui\\dropdown-menu.tsx",
+    "bytes": 8809,
+    "sha256": "efc088f3d79f64cf96e222701ae23dcf385b53947b3cd57ffb7be6f5dadcbfe2"
+  },
+  {
+    "file": "components\\ui\\empty.tsx",
+    "bytes": 2415,
+    "sha256": "bf54bac4881b79f6a53f55e70c18640f58a058add88aed763c71be35c4f64f59"
+  },
+  {
+    "file": "components\\ui\\field.tsx",
+    "bytes": 6303,
+    "sha256": "79023ca89aae39f9cffa83a9483c9c672099b4547cc821486283db61c6ae9327"
+  },
+  {
+    "file": "components\\ui\\hover-card.tsx",
+    "bytes": 1863,
+    "sha256": "d8cb7270c5893213fc00b5f270f9bc461e2d7ce5b81f77b8778253a1aeda6a2c"
+  },
+  {
+    "file": "components\\ui\\input-group.tsx",
+    "bytes": 5289,
+    "sha256": "2e65ddecb4401220be374cc6cfc42344538266cafeb2e590b3c760c7ed6b490a"
+  },
+  {
+    "file": "components\\ui\\input-otp.tsx",
+    "bytes": 2558,
+    "sha256": "867f568259caac95f682d128d72e681b3fe7c31701a396eacc9284401d917a6a"
+  },
+  {
+    "file": "components\\ui\\input.tsx",
+    "bytes": 1046,
+    "sha256": "6763c86c34c1c07826386d376f5da8fe2e41585bff3615716d5da88915e088d8"
+  },
+  {
+    "file": "components\\ui\\item.tsx",
+    "bytes": 4888,
+    "sha256": "9c5e45e6c4aae5b9c4c1304e1f1208d32681ab616a6e0de9de6e0d6b22690592"
+  },
+  {
+    "file": "components\\ui\\kbd.tsx",
+    "bytes": 842,
+    "sha256": "bdfb38a4f7b9b604e196b5cee0d86f12311dae72946f0dbf5928c8ad0638178f"
+  },
+  {
+    "file": "components\\ui\\label.tsx",
+    "bytes": 524,
+    "sha256": "e4a6fb662c44a44c468d16d79d02b3a3e5bf7b77bd50aef1e586c4d9613df0f6"
+  },
+  {
+    "file": "components\\ui\\marker.tsx",
+    "bytes": 1962,
+    "sha256": "cd1e872384cf5001e48b4dc3cc2bb011eba9700561d41c83a89e872b60baf175"
+  },
+  {
+    "file": "components\\ui\\menubar.tsx",
+    "bytes": 8315,
+    "sha256": "a3715f8e8b78261f5784929c532e100759c58e831c91e842438730797bc9a124"
+  },
+  {
+    "file": "components\\ui\\message-scroller.tsx",
+    "bytes": 4070,
+    "sha256": "9512c586d1b0885cf3ae4f1c3dd4281cbdfec7428fe98ff48a66b4ba2a7319f4"
+  },
+  {
+    "file": "components\\ui\\message.tsx",
+    "bytes": 2246,
+    "sha256": "2fedcc64ed8563a44f6697615e77574d96f819fe6e5e2fa8a555e30f8ed6bbd7"
+  },
+  {
+    "file": "components\\ui\\native-select.tsx",
+    "bytes": 2133,
+    "sha256": "3aafb74b98c039dae4eb2c64c47ec6f5d61fdc888c057de47550346f702f434b"
+  },
+  {
+    "file": "components\\ui\\navigation-menu.tsx",
+    "bytes": 7436,
+    "sha256": "c8e64bf5241145b512ae18f1062da8275691edf927736496a3860bec76ad6fa1"
+  },
+  {
+    "file": "components\\ui\\pagination.tsx",
+    "bytes": 2928,
+    "sha256": "1f3c1713e8824cca7c3c0edacf9da7b0114bfda58640771b8fe0bc6179b370ce"
+  },
+  {
+    "file": "components\\ui\\popover.tsx",
+    "bytes": 2586,
+    "sha256": "7376624438588e2d64b6e0c5cdf82cbc5fd4530bbcf1f0235c5f3ee08d12e877"
+  },
+  {
+    "file": "components\\ui\\progress.tsx",
+    "bytes": 1751,
+    "sha256": "0d8ddec9731940e104b851cf3ac67d2fa8589b289824317a9e8f326e090ba65a"
+  },
+  {
+    "file": "components\\ui\\radio-group.tsx",
+    "bytes": 1843,
+    "sha256": "43f2d6c2f5bdd4a26c57d93e6f141be20472f9bb8777d9a0d61cd8a5e281a999"
+  },
+  {
+    "file": "components\\ui\\resizable.tsx",
+    "bytes": 1681,
+    "sha256": "ea7b85817d4dc70866e0bcf15264e7e1bd7e1893eb4404261fbc23a4d6ff9029"
+  },
+  {
+    "file": "components\\ui\\scroll-area.tsx",
+    "bytes": 1632,
+    "sha256": "730c4cc49f8f1b705eb1389cd32c774056a0a2a7a48a9b092cbe44c608be3a0b"
+  },
+  {
+    "file": "components\\ui\\select.tsx",
+    "bytes": 6700,
+    "sha256": "45489c502a21fdd5271481d64ad8f762181c9653d8d26bdc6f75450b78c3c852"
+  },
+  {
+    "file": "components\\ui\\separator.tsx",
+    "bytes": 551,
+    "sha256": "92ad5065f03d7edc98f367e729f3ec84ece1d99ee8cd0d3a8137f266d4ab3d8a"
+  },
+  {
+    "file": "components\\ui\\sheet.tsx",
+    "bytes": 4446,
+    "sha256": "adb432b6f9d7a4733caa45ba8bf510a8a7ff0f6d0dd3aa1f013959fb61268234"
+  },
+  {
+    "file": "components\\ui\\sidebar.tsx",
+    "bytes": 21779,
+    "sha256": "aa3322ca63f098aa1d2abf750f9d097da07362fce25939357f2cefc9b6a03988"
+  },
+  {
+    "file": "components\\ui\\skeleton.tsx",
+    "bytes": 278,
+    "sha256": "4c342102b2bbf5bd8c04fa151fe5c13c42faee2f9587a3586c27322020ca35d1"
+  },
+  {
+    "file": "components\\ui\\slider.tsx",
+    "bytes": 1879,
+    "sha256": "af657e73d672f4dd205f19abf151d21a172cf36abfdca49fd7014a20e12367a9"
+  },
+  {
+    "file": "components\\ui\\spinner.tsx",
+    "bytes": 360,
+    "sha256": "8ddbb330e5564a1f53026da36c2322ed4b027687e91a88f63348ab10f26ae0cb"
+  },
+  {
+    "file": "components\\ui\\switch.tsx",
+    "bytes": 1818,
+    "sha256": "04b085443a1c6a72d408e6eb7dd45df881ca27814415b81b39f614806b52c8fc"
+  },
+  {
+    "file": "components\\ui\\table.tsx",
+    "bytes": 2418,
+    "sha256": "88f2ba7877eea7f34a5da18b7fa096eb2c7bed602677ce54f5494b494c5afc2e"
+  },
+  {
+    "file": "components\\ui\\tabs.tsx",
+    "bytes": 3510,
+    "sha256": "dd914d769bc223b5d5ea56839a7752e534eb475f8d2897d5675606c368bbca1f"
+  },
+  {
+    "file": "components\\ui\\textarea.tsx",
+    "bytes": 847,
+    "sha256": "7ae7f0f5d907be24658652c771fee1685193102bf3200aafbf578d144d379fbf"
+  },
+  {
+    "file": "components\\ui\\toast.tsx",
+    "bytes": 7353,
+    "sha256": "9126b09f47f0b117bf748cf19aaa4987a1f72d0813d10bfc4b4b0128e6439e48"
+  },
+  {
+    "file": "components\\ui\\toggle-group.tsx",
+    "bytes": 3201,
+    "sha256": "9b006523be0fe3230cd75f7adf78a501829d594fd3506c56c55bb38211ff1850"
+  },
+  {
+    "file": "components\\ui\\toggle.tsx",
+    "bytes": 1770,
+    "sha256": "6bf41d6f6ffe602c3e28274a82ac029e6ee1331ba3c670a6d814048e1823cc28"
+  },
+  {
+    "file": "components\\ui\\tooltip.tsx",
+    "bytes": 2855,
+    "sha256": "b86e51969931c3d62e88d0bdacd1cd8219105dc6d6b6a588a80011bf92e987cd"
+  },
+  {
+    "file": "config\\audio.env.example",
+    "bytes": 623,
+    "sha256": "512012a7900b52587b59f1787b94192643941222c0d0f27fc4ea2527ad7cd0f0"
+  },
+  {
+    "file": "config\\livekit.local.yaml",
+    "bytes": 259,
+    "sha256": "aac9bd5a333acad8c18ef54a645ebc4e5d02fefac894c35f9b6eed8b7a692dab"
+  },
+  {
+    "file": "db\\cloudflare.d.ts",
+    "bytes": 160,
+    "sha256": "cba28d378c7a5e6e2b5983f096230b868983bfee5ada3b5d505300ce0fdb5e66"
+  },
+  {
+    "file": "db\\contract.ts",
+    "bytes": 421,
+    "sha256": "0825f331be41f6eb4d1b77440a1e6a0c340b8e0bc9bf9d1cff4c65566097bb48"
+  },
+  {
+    "file": "db\\env.d.ts",
+    "bytes": 268,
+    "sha256": "e6564c88a0b596fe649cd37aeb8e03fb4c7bb2c505d094a61d924df2e683fd5f"
+  },
+  {
+    "file": "db\\handwerker-node.test.ts",
+    "bytes": 10836,
+    "sha256": "b371760c809e2767ae7c46f0223071a3bec27aa40856e60583f392d57128aaa0"
+  },
+  {
+    "file": "db\\index.ts",
+    "bytes": 567,
+    "sha256": "830b04f2ed61362fea7b241839382d06d2f4db6be9272c9b18c6fabde1adeb32"
+  },
+  {
+    "file": "db\\node.ts",
+    "bytes": 4328,
+    "sha256": "cb02346309fc5b0ba08359f85aebc390d5660475eff55412df10b907f50a55bb"
+  },
+  {
+    "file": "db\\rooms-node.test.ts",
+    "bytes": 2999,
+    "sha256": "2627e301e152c104a3706d23e6c8043657f04fb38cc31e9a172a3cf1ef4d258c"
+  },
+  {
+    "file": "db\\rooms-node.ts",
+    "bytes": 1287,
+    "sha256": "97d05a86cd04bfcd301478594677b9c9fd58d74685f9b62a099ac0377ed7d18f"
+  },
+  {
+    "file": "db\\rooms.ts",
+    "bytes": 1009,
+    "sha256": "639e9f0206df4afadf7b425b6233706ec9d276da5dc05e58a243e96d5485a80a"
+  },
+  {
+    "file": "db\\schema.ts",
+    "bytes": 3884,
+    "sha256": "69f99cf10ab59c109f0abcd73daad738c2bd2a9fe45e9f7067d13c5ab485fa99"
+  },
+  {
+    "file": "db\\sqlite.mjs",
+    "bytes": 1716,
+    "sha256": "419cc63e630b0ae28cf53e8a5eb456e4e78db0e2f7c03883679e194783eb0fc2"
+  },
+  {
+    "file": "drizzle\\0000_chief_vargas.sql",
+    "bytes": 233,
+    "sha256": "ab81b94d89dc545cac5505cc5cd63f2ddd38124823df66ce0018504aacf8d560"
+  },
+  {
+    "file": "drizzle\\0001_round_xorn.sql",
+    "bytes": 669,
+    "sha256": "5cb9e06dc2501e695e53c0f43f7d52aac906e4bdf2c5a6db93c6e31d13576c30"
+  },
+  {
+    "file": "drizzle\\0002_broken_the_hood.sql",
+    "bytes": 2043,
+    "sha256": "5a3e2252ad2ce21bf459db6c167c0746a2317469d9f8bde86babb889a19b0248"
+  },
+  {
+    "file": "drizzle\\meta\\0000_snapshot.json",
+    "bytes": 1419,
+    "sha256": "233243436c3b731eee1a84a81f0663233db254bcd872ffa459e8e598a4d103a4"
+  },
+  {
+    "file": "drizzle\\meta\\0001_snapshot.json",
+    "bytes": 5628,
+    "sha256": "2c6f1b98f21871add8c7d50c30bb4a70f3a701b83a31af97ba78841741da5b91"
+  },
+  {
+    "file": "drizzle\\meta\\0002_snapshot.json",
+    "bytes": 15595,
+    "sha256": "7dea615f2493cc96158a25a92b8ba87c3c3248b4c6d09d8188296182448ab1a0"
+  },
+  {
+    "file": "drizzle\\meta\\_journal.json",
+    "bytes": 483,
+    "sha256": "d893ccf310e000396df0ef2901237cb85fb0fc5f28048f44151efb3387353edc"
+  },
+  {
+    "file": "games\\act-natural\\act-natural-connection.test.ts",
+    "bytes": 3895,
+    "sha256": "d98aae969cbce2bb941d24a1615a2304d34b20c0be6cdde4b90818fcdc7323d4"
+  },
+  {
+    "file": "games\\act-natural\\act-natural-fence.test.ts",
+    "bytes": 9114,
+    "sha256": "c7b2c4ea0e63898d8d880e689f9a9b74cab3d177712bf106d60613bd2f3145d4"
+  },
+  {
+    "file": "games\\act-natural\\act-natural-modes.test.ts",
+    "bytes": 11369,
+    "sha256": "f9ccb3623423f448f7576c83c2768564e0db3bfaabbe3a0c25bdaaf61624016d"
+  },
+  {
+    "file": "games\\act-natural\\act-natural.test.ts",
+    "bytes": 14860,
+    "sha256": "1c7f6b8bb48beed8a72df085b0b4e5b198de6b638d126f68c1f4d73111d00a30"
+  },
+  {
+    "file": "games\\act-natural\\audio-events.ts",
+    "bytes": 2583,
+    "sha256": "095ee60fd7e2ef4f50e79fd68342e2aaba323ee44a94bea3a274fa770470b093"
+  },
+  {
+    "file": "games\\act-natural\\audio.ts",
+    "bytes": 7268,
+    "sha256": "f37f84d48012d56d195a9bbc55f1cd303a4e209dffcdf9d6ded39d0172ec01a3"
+  },
+  {
+    "file": "games\\act-natural\\bots.test.ts",
+    "bytes": 9948,
+    "sha256": "548a51cffe7aecc505c73a13f0d14b87ed59a5340642f3cedd997f5026da344d"
+  },
+  {
+    "file": "games\\act-natural\\bots.ts",
+    "bytes": 10564,
+    "sha256": "00a74121426097b61b29da9db17e6e928a31ced0e48fdcf65eafeabd1273edaf"
+  },
+  {
+    "file": "games\\act-natural\\connection.ts",
+    "bytes": 5357,
+    "sha256": "9e6dd4e685818d9d1d23af506bcfe9f511231de4ecf5a75867dbc6a1558d2ba0"
+  },
+  {
+    "file": "games\\act-natural\\farm-audio.test.ts",
+    "bytes": 12233,
+    "sha256": "72f7f96f24854e3f106da62ba4d66ba33db9bdb25f31b44ed53609ab4660f6d0"
+  },
+  {
+    "file": "games\\act-natural\\FarmDetails.tsx",
+    "bytes": 3892,
+    "sha256": "597d5e316d78d8c11e9808cfe8cbcfdd7d18baf01dc42cbaf8c72eb0386e1b9e"
+  },
+  {
+    "file": "games\\act-natural\\fence.ts",
+    "bytes": 1279,
+    "sha256": "7e2d4f326a5454c050fdf64a33ebecd86b86125a3d2bab0d26c53f782d6efea3"
+  },
+  {
+    "file": "games\\act-natural\\flashlight.test.ts",
+    "bytes": 2242,
+    "sha256": "fd5e2a6f576164b12b3ab914fc163f7b51114840f74d2da3cc0f7b90b06c6dbd"
+  },
+  {
+    "file": "games\\act-natural\\flashlight.ts",
+    "bytes": 4521,
+    "sha256": "60eafa1e70ac5285f320fbb7be97004b976de8b54baa751ec0c43481677968ad"
+  },
+  {
+    "file": "games\\act-natural\\Game.tsx",
+    "bytes": 40109,
+    "sha256": "52d41a1cad6eed0c2978353eaa55101b2445505f609f4dc80b14b854243a846a"
+  },
+  {
+    "file": "games\\act-natural\\herd.ts",
+    "bytes": 2884,
+    "sha256": "8ae7bdb0e9ece68d23e302ccb0faa5341c123d2ddbfad768a9df0cd35a9f0961"
+  },
+  {
+    "file": "games\\act-natural\\mobile-hud.test.ts",
+    "bytes": 4177,
+    "sha256": "190c4b836418ad852f7aa4fa2f8fa0f31da39a7e47831a85bac656d55de99952"
+  },
+  {
+    "file": "games\\act-natural\\mobile-hud.ts",
+    "bytes": 3256,
+    "sha256": "1172d7a2a9379b030b3e8ef9676bf27c014f14ab5ca17fdd6aaa1c5a648d5ab4"
+  },
+  {
+    "file": "games\\act-natural\\mobile.css",
+    "bytes": 11981,
+    "sha256": "9e3569ea00bcd7503e68fb15b37cd97919dae8ac985a60e3b6f08e98d4de025c"
+  },
+  {
+    "file": "games\\act-natural\\ModePicker.tsx",
+    "bytes": 1094,
+    "sha256": "f1abc864b395a88ddebf75a73fa752ceb24ec57bed29f515165bca6a6c53dfe2"
+  },
+  {
+    "file": "games\\act-natural\\motion.test.ts",
+    "bytes": 6959,
+    "sha256": "5987c8f23a774312edff2b1df2b73dbbb0134497a589287537a951b092f19978"
+  },
+  {
+    "file": "games\\act-natural\\motion.ts",
+    "bytes": 4969,
+    "sha256": "16fc73e03db91bcc6ef14f7fc5f772c4fe0ca35c3d028c88f2c05b2128bcaa10"
+  },
+  {
+    "file": "games\\act-natural\\movement.ts",
+    "bytes": 1410,
+    "sha256": "141544444a1ea4997237054835a4f52bf994124805ce13be939140b4793c4345"
+  },
+  {
+    "file": "games\\act-natural\\navigation.ts",
+    "bytes": 4448,
+    "sha256": "44b0d038268032a29d55db96c57b03a0d9647842aee4b18cc859846660079f3e"
+  },
+  {
+    "file": "games\\act-natural\\objects.ts",
+    "bytes": 9456,
+    "sha256": "f7d8f1796fd2a73b04ff8edabf86e6299c8d02d7890ec4a2464fd4044ad056c6"
+  },
+  {
+    "file": "games\\act-natural\\peer.ts",
+    "bytes": 1797,
+    "sha256": "c3c465efe2dfce87db7862dfeda5f771bc6d86ce7c3abbf0d8510948f029099a"
+  },
+  {
+    "file": "games\\act-natural\\rooms.ts",
+    "bytes": 7601,
+    "sha256": "593d3d3fcb16561cd1d2489278eeae98fc39db733eb9038ad4911ae072bac463"
+  },
+  {
+    "file": "games\\act-natural\\scene.ts",
+    "bytes": 20406,
+    "sha256": "da349b38c4148878dfcc1aa22c78d34a9471ca7c938db668bf2a0ff2293c227f"
+  },
+  {
+    "file": "games\\act-natural\\server.ts",
+    "bytes": 421,
+    "sha256": "1e09a2254b8f5018098de9f824560a0ea034d4c2a327b50b6d61e5ca95a205c8"
+  },
+  {
+    "file": "games\\act-natural\\simulation.ts",
+    "bytes": 18060,
+    "sha256": "54a1810de8c2f51f905d52312123acc8925adfe30b12cdda0cd07e7b87681fa2"
+  },
+  {
+    "file": "games\\act-natural\\sound.ts",
+    "bytes": 5031,
+    "sha256": "6ebfa7b36ea806b667bb4eda712709d7c8eccdf4eae43c08185099298543480f"
+  },
+  {
+    "file": "games\\act-natural\\style.css",
+    "bytes": 17328,
+    "sha256": "6b3a035aa0de0ff6372774dc47c4b0fb31c20cd536c2fcf147d4e2866fd1fa62"
+  },
+  {
+    "file": "games\\act-natural\\types.ts",
+    "bytes": 3742,
+    "sha256": "1e1194e60d25022825d73646a19e23803c40051466e9ce926e4ecb03fee47b3c"
+  },
+  {
+    "file": "games\\act-natural\\view.ts",
+    "bytes": 2592,
+    "sha256": "91c31fbd0b808bec05d8a2871d41b949db6efe0fcc8db7aeceb251f537e0eed2"
+  },
+  {
+    "file": "games\\act-natural\\visibility.ts",
+    "bytes": 4264,
+    "sha256": "a4750fd0451cea00219f76ed95f2649fc61c32fde8f9409dec0b553fa4cc1abf"
+  },
+  {
+    "file": "games\\chaos\\ActiveBuildPart.tsx",
+    "bytes": 1367,
+    "sha256": "1538945751066bc8f5e04aba5987af10d747f8b7a362cd89a49c366e0516ee44"
+  },
+  {
+    "file": "games\\chaos\\appearance.ts",
+    "bytes": 2154,
+    "sha256": "3ae1f81c43dcd4e2166e2a43b7404197b472e2c47bca89a3df9a56bd4927b985"
+  },
+  {
+    "file": "games\\chaos\\audio-director.ts",
+    "bytes": 5219,
+    "sha256": "6a6e607a30693180a50c9d12a699c94017c682564349092cd0fe3d7b0459eb6a"
+  },
+  {
+    "file": "games\\chaos\\audio-events.ts",
+    "bytes": 447,
+    "sha256": "deb889aa0c990667cd01d21538f7a447c96789866103f1a2f5c9ec6430d4e430"
+  },
+  {
+    "file": "games\\chaos\\build-snapshot.test.ts",
+    "bytes": 1694,
+    "sha256": "c3e69738ff63517b26026800c0085b08009e4caf698064e32c53f36751708f68"
+  },
+  {
+    "file": "games\\chaos\\build-snapshot.ts",
+    "bytes": 3711,
+    "sha256": "bbebaa75966bc0db3991908c24f3dd090a7805d860b817b97998e744b16a88a9"
+  },
+  {
+    "file": "games\\chaos\\build-storage.ts",
+    "bytes": 1088,
+    "sha256": "cbdfd56b9aefd8ba36a3e5c8f7fda40e326ad3bcfe88a2396b404c696a7e962d"
+  },
+  {
+    "file": "games\\chaos\\BuildKit.tsx",
+    "bytes": 5484,
+    "sha256": "b8f120e58a2d8f40cabc64a27a009e93ed5bd35fe358d9422eca92ea99394efb"
+  },
+  {
+    "file": "games\\chaos\\BuildShelf.tsx",
+    "bytes": 4093,
+    "sha256": "d9aed5c09c3e724acb4cb6f746851fbb602c2416719e17737dfb99905d618ba3"
+  },
+  {
+    "file": "games\\chaos\\capture-layout.ts",
+    "bytes": 670,
+    "sha256": "6209b7b9c2d487c7cbd8d85c22241d04d9da31af7dfab1c6948069042311e5ad"
+  },
+  {
+    "file": "games\\chaos\\capture.ts",
+    "bytes": 13439,
+    "sha256": "6a082be49afe0234ac9063ec3d9c4fe1eace8dcbf749bb848504ccde03cd46dc"
+  },
+  {
+    "file": "games\\chaos\\carry-placement.ts",
+    "bytes": 1276,
+    "sha256": "c1a7af019d8d2b9cc8c70ac8b7c4daf59c818ac86de16bf209d72aa4da84faf6"
+  },
+  {
+    "file": "games\\chaos\\catalog.ts",
+    "bytes": 5961,
+    "sha256": "45599a9bf7defbefb69d6a0adda299cc158f902e9dde6aa93951d6d993f00b80"
+  },
+  {
+    "file": "games\\chaos\\colliders.ts",
+    "bytes": 16014,
+    "sha256": "e1176bd622dab63e60794f3a0c29cc3803e8b9a1a0ff1763e4c6e880d75509cd"
+  },
+  {
+    "file": "games\\chaos\\connection.test.ts",
+    "bytes": 1661,
+    "sha256": "66565fb254bd06b95b5410d870b5fc1929bf2eec32ae5bc0e2026aa16be1bb70"
+  },
+  {
+    "file": "games\\chaos\\connection.ts",
+    "bytes": 4445,
+    "sha256": "4db5d471e627d903de9ffce673d02a50e7a613166239a5643c68ed15bbeeb785"
+  },
+  {
+    "file": "games\\chaos\\crane.ts",
+    "bytes": 12321,
+    "sha256": "e46558d1bf2ba7ee94d999c4ac9e7cabcce171bb5080ac6ab33999660a5d41f1"
+  },
+  {
+    "file": "games\\chaos\\CraneControls.tsx",
+    "bytes": 2793,
+    "sha256": "9c1cd4ad5fe5f9bfc317d6952fd159ccabda99d464bdae7813783978e0c099d8"
+  },
+  {
+    "file": "games\\chaos\\CrewScrapbook.tsx",
+    "bytes": 2031,
+    "sha256": "3957a5a59dfd3e137a9e83b51a34683bf93bf2261ccb6b2b61ec2cd04c859d92"
+  },
+  {
+    "file": "games\\chaos\\daily.ts",
+    "bytes": 1697,
+    "sha256": "1f14ff094aa1d1adff67e2041b35afbc6d6598cac0782b6314fb7c78f0b23029"
+  },
+  {
+    "file": "games\\chaos\\disaster-challenge.test.ts",
+    "bytes": 9231,
+    "sha256": "7b8944ced79da290a5e2f2b90cf5948a7cd5603fd707a2269bc210f4f85f10e0"
+  },
+  {
+    "file": "games\\chaos\\disaster-challenge.ts",
+    "bytes": 4351,
+    "sha256": "4416066314f9ab171fea96013adac5e9a6caee1d17427c70e23af4bace21b7a0"
+  },
+  {
+    "file": "games\\chaos\\DisasterChallenge.tsx",
+    "bytes": 4483,
+    "sha256": "88d2dda3bc3c2c7f0ecf2cf9cb6bd4616cd4b85233e9c0a1abd5e27b66a5c015"
+  },
+  {
+    "file": "games\\chaos\\game.css",
+    "bytes": 48192,
+    "sha256": "412b0f855a9bd3e7fe6f0c7bcf1635e2ab22627fb54dcc5d8cbd757a7f0abc71"
+  },
+  {
+    "file": "games\\chaos\\Game.tsx",
+    "bytes": 109611,
+    "sha256": "5ba59a786b1db658699af888fd8a34b94834a0162b66d7d843e499888fdd818d"
+  },
+  {
+    "file": "games\\chaos\\growth.test.ts",
+    "bytes": 7759,
+    "sha256": "d20894e17af4d92b3f63e76882cc2d7e8404cc16ba9b219848962c214d23c6b2"
+  },
+  {
+    "file": "games\\chaos\\HoldControl.tsx",
+    "bytes": 2795,
+    "sha256": "29915c775cab3a8f9b4107411984b6d82f5f9c25b7a29578650fcd428be78f99"
+  },
+  {
+    "file": "games\\chaos\\home-design.css",
+    "bytes": 6988,
+    "sha256": "849d6f14a70d2859438d3469df08560af3a313b0238bc58b7d194783e6bcb15a"
+  },
+  {
+    "file": "games\\chaos\\home-design.test.ts",
+    "bytes": 10516,
+    "sha256": "4540d331ed43b50ee40601b567f9026d7095bee3520437e507b327bbdfe58f16"
+  },
+  {
+    "file": "games\\chaos\\home-models.ts",
+    "bytes": 8395,
+    "sha256": "6b6a7d1394740e6c3ce22395be271a9b348727b57869ef63a42eb5600a29b239"
+  },
+  {
+    "file": "games\\chaos\\home-projects.ts",
+    "bytes": 3258,
+    "sha256": "7f3a5594ba4efc09ecab1324b9cd4737263048130c843263ae95f161fc7ab728"
+  },
+  {
+    "file": "games\\chaos\\HomeProjects.tsx",
+    "bytes": 3164,
+    "sha256": "2b1301e7f7765943754b9a3a73fb18d0eabcdb5dddfe522e39177ed77224c968"
+  },
+  {
+    "file": "games\\chaos\\house-props.ts",
+    "bytes": 1218,
+    "sha256": "cddc1e8824d2bdd630649bd54e6b14abdcf7421e6bfa5286a0472251ec39ccaf"
+  },
+  {
+    "file": "games\\chaos\\inspection-view.ts",
+    "bytes": 3594,
+    "sha256": "4162d0b0d6f42334fb2ec5133def900f3e6471f99f9674d4c8a4ce2f153edda6"
+  },
+  {
+    "file": "games\\chaos\\inspection.test.ts",
+    "bytes": 4958,
+    "sha256": "4c0be2445fa785e843f68207aa2f016f0750d7459694a0a045ff8124c17fa301"
+  },
+  {
+    "file": "games\\chaos\\inspection.ts",
+    "bytes": 6264,
+    "sha256": "5e90c0a5bb8cff1ddc29de41852c5d02dbdf36e2df5a5455f44685afc7742f04"
+  },
+  {
+    "file": "games\\chaos\\InspectionPanel.tsx",
+    "bytes": 3142,
+    "sha256": "b2117f93336663e31fbb7276754b8bcc7c1e8f22cd74eb3775f861e6cc75f34a"
+  },
+  {
+    "file": "games\\chaos\\joystick.test.ts",
+    "bytes": 6068,
+    "sha256": "1a3a73d5e3ffc89e415da7c05fa7684701560c2a8a13c8a03cbef00fe2057f01"
+  },
+  {
+    "file": "games\\chaos\\joystick.ts",
+    "bytes": 531,
+    "sha256": "472899862ddbddcd6c94c952d269000c040e59e8ddac2ceeeb27c1ccfdbc3fc4"
+  },
+  {
+    "file": "games\\chaos\\levels.test.ts",
+    "bytes": 9230,
+    "sha256": "4faa77d5c229818c3c80f7424958fd5b99224873fb5b506d98a87fbf7475e407"
+  },
+  {
+    "file": "games\\chaos\\levels.ts",
+    "bytes": 3362,
+    "sha256": "5b9ad7778ed88ea4fe02ee27cf9d9531bd2de3b1d9b5ce3b3dc58db990a9f357"
+  },
+  {
+    "file": "games\\chaos\\maps.ts",
+    "bytes": 1068,
+    "sha256": "c23eef3bbbc8f2879925a11a62b483ee229a4ba31adcb00be299f38ddb3119b2"
+  },
+  {
+    "file": "games\\chaos\\mobile-actions.test.ts",
+    "bytes": 5292,
+    "sha256": "5995117903a7916b21ace6702efa0c0a81c6becaf9d4146f4911fab46aa267ff"
+  },
+  {
+    "file": "games\\chaos\\mobile-actions.ts",
+    "bytes": 4374,
+    "sha256": "659bb6ed028202520f04fefafdafed2bc7cc778f578b1ce052bb06dd39281a0d"
+  },
+  {
+    "file": "games\\chaos\\mobile-play.css",
+    "bytes": 24741,
+    "sha256": "09b915c92939bb292c8efa239237cc69360be18308ec47f4c3186a8a514e08e9"
+  },
+  {
+    "file": "games\\chaos\\mobile.css",
+    "bytes": 25571,
+    "sha256": "d9c018906297c4d7acac45772cb3b4bdf56f844080bb1f37d3e0401950503dbc"
+  },
+  {
+    "file": "games\\chaos\\MobileActionHud.tsx",
+    "bytes": 2430,
+    "sha256": "28a9dac8e8681cccf0490805e16ed5038e6b7c6955dabf29ad15a5dbcaf6081a"
+  },
+  {
+    "file": "games\\chaos\\model.test.ts",
+    "bytes": 17914,
+    "sha256": "ae9da5097bcf0d6126eaa4484e10624621c250b87038e53e61a19856304ca21c"
+  },
+  {
+    "file": "games\\chaos\\model.ts",
+    "bytes": 23672,
+    "sha256": "945451d000de98e7a0933aea67a3be5179590cdd265a8b07f93de4b4bbc6b163"
+  },
+  {
+    "file": "games\\chaos\\objects.ts",
+    "bytes": 28259,
+    "sha256": "54cbc1b7cef236e8c6591416db4888dbea38b42e07ed2fb8121e44afbd0544d5"
+  },
+  {
+    "file": "games\\chaos\\party-media.test.ts",
+    "bytes": 1420,
+    "sha256": "eca098fff67b7e9ec6c3430d9b16fd90d46531a42e80373f47705c32ebe52e47"
+  },
+  {
+    "file": "games\\chaos\\party-view.ts",
+    "bytes": 9095,
+    "sha256": "6b53a5bce5c08efa1064ffac5cee6d58371c61bb61d0984e947a719b226cc3a8"
+  },
+  {
+    "file": "games\\chaos\\party.css",
+    "bytes": 12684,
+    "sha256": "d1be1708a77c67d8d3d2b51a75dabac3b837479516a14d80e526bb3ad36a77f7"
+  },
+  {
+    "file": "games\\chaos\\party.test.ts",
+    "bytes": 12811,
+    "sha256": "9c8b04c76bef137c5eda728fa1edd4091de9b74115d00429c7e2e7753eb8d0de"
+  },
+  {
+    "file": "games\\chaos\\party.ts",
+    "bytes": 31762,
+    "sha256": "f1f0c458111688fe449835e92ea2a43aad4506cb5cca041218b57153a15f17b5"
+  },
+  {
+    "file": "games\\chaos\\PartyPanel.tsx",
+    "bytes": 57775,
+    "sha256": "86450cef4f32942dcb664e74c4f7b8d8d2ab6344dc2afd2f908d7554d05e1172"
+  },
+  {
+    "file": "games\\chaos\\physics.test.ts",
+    "bytes": 8497,
+    "sha256": "05e744d575c417a78765dc726a058424b9e3e26c35c6e58e0c639c36e99385cd"
+  },
+  {
+    "file": "games\\chaos\\physics.ts",
+    "bytes": 12821,
+    "sha256": "95bf18d0bc4f80bf3dadd9b40197343119de439d8decb3f8fdd3eaf2c65d249b"
+  },
+  {
+    "file": "games\\chaos\\placement.test.ts",
+    "bytes": 4578,
+    "sha256": "7fbdda507a167d28e9f6cefb500e97cb38101163a67dcf45f784d881f7ae9636"
+  },
+  {
+    "file": "games\\chaos\\placement.ts",
+    "bytes": 9295,
+    "sha256": "b8022f0743e11907ce5e71924ab6ea543240d103ae9cf0683a56e0b63df8f22d"
+  },
+  {
+    "file": "games\\chaos\\roof-access.test.ts",
+    "bytes": 7529,
+    "sha256": "db026c181bd517c2bbc31db64d00633234455d87a6759fc8adf5d109592b07d0"
+  },
+  {
+    "file": "games\\chaos\\roof-view.ts",
+    "bytes": 2103,
+    "sha256": "a6c88008552df443f6360046718a539aea431ab1d948acfefb75775f19f607e0"
+  },
+  {
+    "file": "games\\chaos\\room-lock.test.ts",
+    "bytes": 1092,
+    "sha256": "43e99f9214ff286f61865934aa93fe362237b6dfa7050de6091f9c6330972e94"
+  },
+  {
+    "file": "games\\chaos\\room-lock.ts",
+    "bytes": 627,
+    "sha256": "d45eb2397d5b6a2a2104c2996c31f84c1461454786c912c3ec96463c2e9b060b"
+  },
+  {
+    "file": "games\\chaos\\saved-build.css",
+    "bytes": 2358,
+    "sha256": "bd253a94c9d830988e128096253beb3d944f0ce9ded2808feacdd2c95db040a7"
+  },
+  {
+    "file": "games\\chaos\\SavedBuildPage.tsx",
+    "bytes": 4344,
+    "sha256": "aac335530c7f3df8afabb992ec43904d681aa36a1ab88b9743ad73bb81ee7b0b"
+  },
+  {
+    "file": "games\\chaos\\scene.test.ts",
+    "bytes": 35107,
+    "sha256": "0595d2d0922f1ce83a7689cb9e536d256f7bc87281174aea214379707aaa2a19"
+  },
+  {
+    "file": "games\\chaos\\scene.ts",
+    "bytes": 70399,
+    "sha256": "aeb31463fb6689c3e754cd20c52a3d43387600d10b2bd72ab05c1035cd51fe00"
+  },
+  {
+    "file": "games\\chaos\\scrapbook.ts",
+    "bytes": 845,
+    "sha256": "629f51277d67dcfaa1b432f5651fc5f019eef3ed5cdafdd4f9101ee9467c06d5"
+  },
+  {
+    "file": "games\\chaos\\SiteTools.tsx",
+    "bytes": 4671,
+    "sha256": "02bf3b245e317a056eca2b001c152d01119c4c421f3e2e3e48ba26143bd57da5"
+  },
+  {
+    "file": "games\\chaos\\sound.ts",
+    "bytes": 262,
+    "sha256": "732e45362b2b3a4196c00863f9027c89b2df248e87573f84642ad4e282290298"
+  },
+  {
+    "file": "games\\chaos\\start-screen.css",
+    "bytes": 4244,
+    "sha256": "c2f90f13c33f4ca9ad102154f6320f45118868343c4b1526fc7bddfc53686a13"
+  },
+  {
+    "file": "games\\chaos\\storey-view.test.ts",
+    "bytes": 3286,
+    "sha256": "7a62a1ad112a0ccaa59e543f98dbe85ee49ecebd554935a0294a5381d5ff3a35"
+  },
+  {
+    "file": "games\\chaos\\storey-view.ts",
+    "bytes": 2682,
+    "sha256": "e822000087716433bf01ccfc26b4a1aaf10fe078a00e4d146b58e750dc351966"
+  },
+  {
+    "file": "games\\chaos\\structure.ts",
+    "bytes": 6873,
+    "sha256": "cf2ddff6f274fb0c76ace1c95e95082ed138fd63aa7c083422287012f652a375"
+  },
+  {
+    "file": "games\\chaos\\swap-view.ts",
+    "bytes": 1504,
+    "sha256": "ba4fb1deb3fbf6a151c41d3eb8447bcd6310d0bea6b73283bc45d4a164c8b104"
+  },
+  {
+    "file": "games\\chaos\\swap.ts",
+    "bytes": 8050,
+    "sha256": "d461f0f761651fbb647c1b09a86cca6c5adfc153afba88695b2ccd9b196f3cc0"
+  },
+  {
+    "file": "games\\chaos\\SwapPanel.tsx",
+    "bytes": 2471,
+    "sha256": "572f7de96b20a30250b48fb5d554f6d0915cc4e03db88b75e0b91a8276413ef7"
+  },
+  {
+    "file": "games\\chaos\\touch.test.ts",
+    "bytes": 3177,
+    "sha256": "84e29ba17a3d9075625b6908234a0b04a5924733ebed8417035d0f6719b84b3a"
+  },
+  {
+    "file": "games\\chaos\\touch.ts",
+    "bytes": 3565,
+    "sha256": "6029524eb8db7289e7716578f2b5c4a6ebed1f2984718c20de268bdccbe56d8c"
+  },
+  {
+    "file": "games\\chaos\\TouchActionButton.tsx",
+    "bytes": 2589,
+    "sha256": "71a7b6943865fa2e01d87bf3f6e887dafe9f964d051300da2ffe5b3394f873ca"
+  },
+  {
+    "file": "games\\chaos\\TouchControls.tsx",
+    "bytes": 1436,
+    "sha256": "30b747af9ea3a98c772c0ed4a7271c56bef13ac502f9c604351113166ee0ae77"
+  },
+  {
+    "file": "games\\chaos\\wall-edge.test.ts",
+    "bytes": 3481,
+    "sha256": "ddd1459df5d5b03d65449e564349586a4b2334a12330c420cfd884029a784720"
+  },
+  {
+    "file": "games\\chaos\\workspace-ui.css",
+    "bytes": 8789,
+    "sha256": "8e2a1168c14c79cc1b4222096754f69b3d3b963e9ade2a5ef0663b196be1ab06"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\audio-events.ts",
+    "bytes": 4452,
+    "sha256": "3cb9d4acba35571c75016f12a686b75f82d61b6ac232d2ff5b1d580575a072e2"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\connection.ts",
+    "bytes": 4220,
+    "sha256": "17904ddb9f76eb7a165e484cda5b83df516257a1b24f283be95e00e2bf945c47"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\dont-wake-the-giant.test.ts",
+    "bytes": 20655,
+    "sha256": "1ed0988460a3111d543bf77e8e0fed461678664fd1321ef71c598f002cb627a9"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\Game.tsx",
+    "bytes": 31707,
+    "sha256": "e578bbb7600d9cd761ba3818c1f524f7fa29f31ca13baaa9ab5536fa56afc5d2"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\giant-audio.test.ts",
+    "bytes": 11046,
+    "sha256": "020a39215239f82bff3d07ec18331413302e30a81f411b08952de7541d437058"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\giant-chaos.test.ts",
+    "bytes": 8389,
+    "sha256": "65334f7015eb4f2359a6cb91d2fad9100f362ee16a2e3f990b9df955c5bdc0fa"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\giant-model.ts",
+    "bytes": 14471,
+    "sha256": "92a7b838730c0a7617e64e35e7659659c55a3c03c68ab492f8bacdfcb99be820"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\giant-motion.test.ts",
+    "bytes": 4570,
+    "sha256": "6236d03715add87a1072b1d8a892da5facf216d8fe4539e48c697cd7d59e6de2"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\giant-motion.ts",
+    "bytes": 6409,
+    "sha256": "cf5558fa7b7f801847aa7162cc823dad7d0c73e57f751412eeb1715b5c09a1e0"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\handoff.ts",
+    "bytes": 2126,
+    "sha256": "9723f81a9b80342394c6407ee182625496e31368a8b064fceffb62846fc31e43"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\level.ts",
+    "bytes": 8375,
+    "sha256": "194b2d13be2f6dc34bd181102bf2ddb1af4ea7f6b900aa263d3fd9f0fd2237dd"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\noise.ts",
+    "bytes": 1008,
+    "sha256": "0208d7dc42ecf57d6e1645574a1abbcb60c4267cdbda14baaea6dfcaf2bce0e8"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\objects.ts",
+    "bytes": 8052,
+    "sha256": "a798ecfc151300142faaf3da704ca7f80a7405bf247c17655e97bf9ee1e20ba2"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\peer.ts",
+    "bytes": 1481,
+    "sha256": "e0a47f232bd488e122fdeec1dc16481d64029d050d65d2310ca09a14e99afe92"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\rooms.ts",
+    "bytes": 6932,
+    "sha256": "6d1447bc2e68684e2aa2f412166148a16cf4127a562aa0de02a540a6d98be6ff"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\scene.ts",
+    "bytes": 15755,
+    "sha256": "b707e382fdd7ece70501bf1fdc4720ba96e9831c9f63ec1fef6cffa81a6c34fe"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\server.ts",
+    "bytes": 430,
+    "sha256": "d8572a4a25d6ef22f029c27d05f36c0fa939f8c3f83188f6a90c2e12e8a6fd38"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\simulation.ts",
+    "bytes": 23071,
+    "sha256": "dbb73bd4a05e082fec19fdaf2a4f488ac9a8b5dc35a8b1093a105a8772aee4f2"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\sleep-presentation.test.ts",
+    "bytes": 5112,
+    "sha256": "f16b9c9410380c0cec68ce0a3746ad0009ef7f6bfe5e06e5cfc5043a712e2e2b"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\sound.ts",
+    "bytes": 3401,
+    "sha256": "2aa283535dc8ab1fb23ec698133811fcfb6f1581b3a39dc504744c662ef41e5b"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\style.css",
+    "bytes": 24575,
+    "sha256": "2cf27d6fb6264e2a7220f0361cb0295ef7a25a3c689923f73cbcba5dab96510f"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\types.ts",
+    "bytes": 2325,
+    "sha256": "2e34d52947f5124eb5946a0d374b5970820f36930aff88c424af4da9268e956c"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\urgency.ts",
+    "bytes": 637,
+    "sha256": "27703038d6e476a94eebc6a6697def655ba5b325678dd1d48db13bcf5b15924e"
+  },
+  {
+    "file": "games\\first-person\\audio-events.ts",
+    "bytes": 1282,
+    "sha256": "b52a8a46377e6be49ef08ddea3595e0ad4ecafc08cc3d406341cebe30a3ca1a5"
+  },
+  {
+    "file": "games\\first-person\\connection.ts",
+    "bytes": 2631,
+    "sha256": "92f8db7e0e86f64abcd2943c246a48a26b9fecd375737324173c323daf16e0d9"
+  },
+  {
+    "file": "games\\first-person\\detail-geometry.ts",
+    "bytes": 4160,
+    "sha256": "cd62d7054ad83219abfcd3e01488848b7a5f6ae2e96e8a4c99323c997feddb8b"
+  },
+  {
+    "file": "games\\first-person\\detail-materials.ts",
+    "bytes": 5209,
+    "sha256": "a0f3a01cc074b78a79eb71b60da0f037fce46c8f1314e7325e490b8c5a70d9f7"
+  },
+  {
+    "file": "games\\first-person\\detail.test.ts",
+    "bytes": 3618,
+    "sha256": "fc1dc7b1d7ed62f9dd7853ea1e9c1babe3f8e766552d2ea12829f809a53f141a"
+  },
+  {
+    "file": "games\\first-person\\detailed-props.ts",
+    "bytes": 18138,
+    "sha256": "b53938057991432487f65d5f5a77ec7cd9ece36e921b58a840768ddf1d20a988"
+  },
+  {
+    "file": "games\\first-person\\game.module.css",
+    "bytes": 30422,
+    "sha256": "fb5ae3c9f0cd1a60368a0fd3e3881f3065b9c0d1bfc414401585c37427674eea"
+  },
+  {
+    "file": "games\\first-person\\Game.tsx",
+    "bytes": 39338,
+    "sha256": "94f51f411c949354c3df7b8938b89046bc0919c7a08a6702a20ab04290992226"
+  },
+  {
+    "file": "games\\first-person\\joystick.test.ts",
+    "bytes": 6068,
+    "sha256": "1a3a73d5e3ffc89e415da7c05fa7684701560c2a8a13c8a03cbef00fe2057f01"
+  },
+  {
+    "file": "games\\first-person\\joystick.ts",
+    "bytes": 428,
+    "sha256": "7f196278037c6db1c4539a040de324795472d5df6bc6734e71f8da589927bb41"
+  },
+  {
+    "file": "games\\first-person\\model.test.ts",
+    "bytes": 14194,
+    "sha256": "a857828b51b56bf5444bbb7731936bc9077abf82ed637c94180b15f18e1f93a1"
+  },
+  {
+    "file": "games\\first-person\\model.ts",
+    "bytes": 18031,
+    "sha256": "a4d4e14a66f351f473d1c593afbdfc832dd9c8f9b4b896481914eec44e7dc13c"
+  },
+  {
+    "file": "games\\first-person\\placement.ts",
+    "bytes": 1978,
+    "sha256": "3b007b8580df51111490b385b4694e360243afd8c80e2fe48e1a4dd5bd94e61d"
+  },
+  {
+    "file": "games\\first-person\\sayings.ts",
+    "bytes": 582,
+    "sha256": "a1a493b92cb2c0139a580cc727d4a83cf4ecead800271183395f5c25c4bc411e"
+  },
+  {
+    "file": "games\\first-person\\scene.ts",
+    "bytes": 34713,
+    "sha256": "676cc727af82efc2466940134a0d66501bc171176892f9037bce33cb6ba6539f"
+  },
+  {
+    "file": "games\\first-person\\site-layout.ts",
+    "bytes": 908,
+    "sha256": "8111d97301e6b80bd7f4308882a3f4088d14442911ee05bf8bc9f2d5d21b09ff"
+  },
+  {
+    "file": "games\\first-person\\worker-hand.ts",
+    "bytes": 6222,
+    "sha256": "30a94ba4e11b780af050995a526f3de65a5134d9fc80bc77cef3e9a379fede40"
+  },
+  {
+    "file": "games\\first-person\\world-view.ts",
+    "bytes": 20388,
+    "sha256": "8d70f8ad014db7b1a6be9b3186787327173c69bd2516d65de72adc93bf16c7ee"
+  },
+  {
+    "file": "games\\four-brain-cells\\audio.ts",
+    "bytes": 4712,
+    "sha256": "b3b060ce537af6d36ff6ec6e50caab91b8b1f5c43d349c26abae419ee1ee710b"
+  },
+  {
+    "file": "games\\four-brain-cells\\CrewSlots.tsx",
+    "bytes": 2335,
+    "sha256": "d2c408e5c90d76953308d202611835c9f2e678cad9444bae9ccacbd6f28446a0"
+  },
+  {
+    "file": "games\\four-brain-cells\\four-brain-cells.test.ts",
+    "bytes": 9821,
+    "sha256": "5c331dcfae5ee60d750964117e408c5fcc011cb4166afe9a77c3f131a72095cc"
+  },
+  {
+    "file": "games\\four-brain-cells\\Game.tsx",
+    "bytes": 34466,
+    "sha256": "30ddb37227a212a70147d74e02d628e2ec01a232536b2b929a140e1f6acc4bcf"
+  },
+  {
+    "file": "games\\four-brain-cells\\geometry.ts",
+    "bytes": 482,
+    "sha256": "f19fd545acbd427a1d43cbdcb07c251429389d4a8d0a58f2b43aca8ac114d511"
+  },
+  {
+    "file": "games\\four-brain-cells\\models.ts",
+    "bytes": 8504,
+    "sha256": "51d76e248b9e5b7a46952287a392b2c271b21aa9bf0831df68c80d53de561695"
+  },
+  {
+    "file": "games\\four-brain-cells\\npcs.test.ts",
+    "bytes": 12238,
+    "sha256": "b031b8e3d7f156789e5f8abb8665fed8b114ce3d58922736425622e59a0f028b"
+  },
+  {
+    "file": "games\\four-brain-cells\\npcs.ts",
+    "bytes": 3904,
+    "sha256": "90e1ccaf13642458f12f1be6fc4dfcb3bcebed9b4d44d130fef585d0de86e33a"
+  },
+  {
+    "file": "games\\four-brain-cells\\peer.ts",
+    "bytes": 1510,
+    "sha256": "bbe7f7330e3a5066f1f032937ac9c649ff1b69c81579b5e279d2a69292fa3d18"
+  },
+  {
+    "file": "games\\four-brain-cells\\scene.ts",
+    "bytes": 13148,
+    "sha256": "ae235e99140bda7833565eaf24713b75469be085fbe3f1245bea1fd441d37dd5"
+  },
+  {
+    "file": "games\\four-brain-cells\\simulation.ts",
+    "bytes": 18104,
+    "sha256": "013f212b95f5abd6e369a67c106a9b264cf9e87e62ee0d4c1babb7127880a7e9"
+  },
+  {
+    "file": "games\\four-brain-cells\\style.css",
+    "bytes": 20362,
+    "sha256": "e256f736ffc9a1a99f8203b7a7bafdab8bfafb9d89f7143d9843dc23720fe64b"
+  },
+  {
+    "file": "games\\four-brain-cells\\types.ts",
+    "bytes": 2624,
+    "sha256": "3d2330b81d648097ac3c8d93ba6550086e37f3eac4aab749e60e6e6beece6e26"
+  },
+  {
+    "file": "games\\one-more-button\\art-provenance.md",
+    "bytes": 640,
+    "sha256": "a9a46d5587f1526e89242ac381239d6a9fffb95a60f8f72b33892a26eaeb2025"
+  },
+  {
+    "file": "games\\one-more-button\\audio.ts",
+    "bytes": 1195,
+    "sha256": "c9470a560dfd5c77aad0ff269c4dae7cb25a4b2bb51a4509e8406bfc5c059045"
+  },
+  {
+    "file": "games\\one-more-button\\Game.tsx",
+    "bytes": 30446,
+    "sha256": "c9b42f852a43fa92778abf21c32d9f9223375139b4b603eee6146989c21b1514"
+  },
+  {
+    "file": "games\\one-more-button\\level.ts",
+    "bytes": 1615,
+    "sha256": "eceb44fa5936ef5d9139cba5d88ebd7c4aefcd5ceeb2ef6e6e50bdb7d59d95be"
+  },
+  {
+    "file": "games\\one-more-button\\models.ts",
+    "bytes": 6146,
+    "sha256": "7a6965a013d5a073c2923813943b08a0e299058f2d2b98f1dffda6696c507333"
+  },
+  {
+    "file": "games\\one-more-button\\one-more-button.test.ts",
+    "bytes": 9846,
+    "sha256": "bf2dd816320553d2650a8436df4bf2f25574992339b996ba9c4a129711711730"
+  },
+  {
+    "file": "games\\one-more-button\\peer.ts",
+    "bytes": 1115,
+    "sha256": "70c13a77f4fe21d2d995d4c3f9e82ca3370312ea7d2c8c7bbb7ea2a0f6be3251"
+  },
+  {
+    "file": "games\\one-more-button\\scene.ts",
+    "bytes": 10412,
+    "sha256": "60a4fe1a6b3dc01e2a413ada9ab57d079524c1d3e46d92aeb6a7ffe8b57e3878"
+  },
+  {
+    "file": "games\\one-more-button\\simulation.ts",
+    "bytes": 10550,
+    "sha256": "b3a55e0e927d60dd4165e8cff3991525cbcfd43b96d771ba6fa29baa147d26bb"
+  },
+  {
+    "file": "games\\one-more-button\\style.css",
+    "bytes": 14876,
+    "sha256": "7b2046cfe1d6cc7da4e54d515807131b1324249da6d3b867098eeb9fec56baf4"
+  },
+  {
+    "file": "games\\one-more-button\\types.ts",
+    "bytes": 2220,
+    "sha256": "fbb9013827c8da13e08c3590f78eecc46be4163caff52cee623490965ea3157c"
+  },
+  {
+    "file": "games\\one-more-button\\validation.md",
+    "bytes": 3057,
+    "sha256": "e2c834e2258ea4f99744f475e040d6ad305720e708f546a131587e73c5859418"
+  },
+  {
+    "file": "games\\reel-problems\\audio.ts",
+    "bytes": 6709,
+    "sha256": "be1040c8d6a84e6add97bad7b5e1092084ae4c8e10aeb79c6b3397c625ad4b5c"
+  },
+  {
+    "file": "games\\reel-problems\\chaos.ts",
+    "bytes": 6312,
+    "sha256": "c67c1b71db47edf177c1862ec579f7d4d0cd56f6fea2ae73952cb3e892d5cd13"
+  },
+  {
+    "file": "games\\reel-problems\\cooperation-chaos.test.ts",
+    "bytes": 9828,
+    "sha256": "b546893f06a4b3bdb7e292ba37751fd1d375dac448b616d36fcb499406b5d762"
+  },
+  {
+    "file": "games\\reel-problems\\Game.tsx",
+    "bytes": 32771,
+    "sha256": "f0d0b164ce22ecf776c4f20f3b7e5fe5d613d2f6c8228b5cb5f39777f439a50a"
+  },
+  {
+    "file": "games\\reel-problems\\models.ts",
+    "bytes": 9256,
+    "sha256": "909cf1706cbf669e5178e0d7009e9b3fffaf9af69015c97a581fbe498b549f84"
+  },
+  {
+    "file": "games\\reel-problems\\peer.ts",
+    "bytes": 1669,
+    "sha256": "fb882f209c0b059d33819139927d3cdced4d1f66676198f22c3bf3f7945a70b2"
+  },
+  {
+    "file": "games\\reel-problems\\reel-problems.test.ts",
+    "bytes": 7118,
+    "sha256": "1d2e939aaa612e33fb2b85a5153a905edc5a24398c8a9e2be5b3ac4f54b84a60"
+  },
+  {
+    "file": "games\\reel-problems\\scene.ts",
+    "bytes": 15740,
+    "sha256": "60203a9ee322bf291dd5c749a0600ba987e106ea1c8f0ed48b352b38de1b612d"
+  },
+  {
+    "file": "games\\reel-problems\\sea-scene.ts",
+    "bytes": 5516,
+    "sha256": "e08cd0405639d35a726a475cfc46ab6cb5009e2f9fa10ee840d753dfb2c18444"
+  },
+  {
+    "file": "games\\reel-problems\\simulation.ts",
+    "bytes": 20841,
+    "sha256": "22ea1d57683dc59d793234ac682a8c5cd3a600e7f1ef3d0765c05edf174fbf88"
+  },
+  {
+    "file": "games\\reel-problems\\style.css",
+    "bytes": 15326,
+    "sha256": "37a21614693eb3ac800c96890ba47f5fc1b10c2934b998f9d879aea5d8df7973"
+  },
+  {
+    "file": "games\\reel-problems\\types.ts",
+    "bytes": 3938,
+    "sha256": "5f9dd45e566016807628fb769f8beb1d9d37184b2d05136fd63ad62bac69c9ba"
+  },
+  {
+    "file": "games\\shelf-control\\audio-profile.ts",
+    "bytes": 1508,
+    "sha256": "ec803b9d9e89704ccf1387152962f0d21b6348566e2028a3312dba30565396b9"
+  },
+  {
+    "file": "games\\shelf-control\\audio.ts",
+    "bytes": 2870,
+    "sha256": "7626e5ae0ee6611ecdb50af2fb8a74fb6b9cf560e9574ab8228cf70efdf2b639"
+  },
+  {
+    "file": "games\\shelf-control\\bots.ts",
+    "bytes": 14403,
+    "sha256": "bd42b980a78bb8c28997a522c3c388e546e50466e24fa1420351e0bd0adb2fd4"
+  },
+  {
+    "file": "games\\shelf-control\\connection.test.ts",
+    "bytes": 2344,
+    "sha256": "ba5b047faddef761818ebff0bb134345aed30a8bae5896f295fbb94323000009"
+  },
+  {
+    "file": "games\\shelf-control\\connection.ts",
+    "bytes": 4195,
+    "sha256": "0b76b912cd52e248f229d2302c104f2b4df29614d27f7aaa44102e756db005cc"
+  },
+  {
+    "file": "games\\shelf-control\\Game.tsx",
+    "bytes": 31908,
+    "sha256": "2fc1975ba5c2d5e3c030f6501a2ad5c250e6923da4cdccf8e6438f0e0f0f0816"
+  },
+  {
+    "file": "games\\shelf-control\\layout.ts",
+    "bytes": 3308,
+    "sha256": "bb7a990358444177c0987195a84ce88f3c3bfd9ff9d01bbe1d1c4c9807230028"
+  },
+  {
+    "file": "games\\shelf-control\\models.test.ts",
+    "bytes": 2270,
+    "sha256": "e05332b5d60b6cb0dabec8c93e5719023db7d7d46c4713518082686381962eb7"
+  },
+  {
+    "file": "games\\shelf-control\\models.ts",
+    "bytes": 5917,
+    "sha256": "0c68923dd13b1835c4e0f06c8ae930f4fa2be5d20762ef16accfa3dcc2f13a17"
+  },
+  {
+    "file": "games\\shelf-control\\motion.test.ts",
+    "bytes": 6089,
+    "sha256": "cf637e6778ee0d6e4b9ef9d743308a2b603daee46b64909c237b2bc948658914"
+  },
+  {
+    "file": "games\\shelf-control\\motion.ts",
+    "bytes": 8902,
+    "sha256": "795b3cde1e473ec44b694238db6497fff60ff892cc51595c1cc7cad2a1c86aea"
+  },
+  {
+    "file": "games\\shelf-control\\navigation.ts",
+    "bytes": 3602,
+    "sha256": "39bab7ebdc4b7844edada826d44328e20643841ff895d4f28aaa8d2669110608"
+  },
+  {
+    "file": "games\\shelf-control\\rooms.ts",
+    "bytes": 6930,
+    "sha256": "cd2b21ed69482cf2baac128037c93d472f942d103ad379d20cab4332a3cc6fcb"
+  },
+  {
+    "file": "games\\shelf-control\\scene.ts",
+    "bytes": 17231,
+    "sha256": "c556a5ecfe8438fac45d447b1f39f0a934db37047beffb680a51e91f4a99381d"
+  },
+  {
+    "file": "games\\shelf-control\\server.ts",
+    "bytes": 409,
+    "sha256": "0e4413fad432bef6b2773aa29e95bba3f14902ac2704d285ba1fe76ddaafd482"
+  },
+  {
+    "file": "games\\shelf-control\\shelf-audio.test.ts",
+    "bytes": 8451,
+    "sha256": "58ce6f5fe15aafdb064107e71bd7bbfc10f32a2063f4402f1c4fa980513bd881"
+  },
+  {
+    "file": "games\\shelf-control\\shelf-control-bots.test.ts",
+    "bytes": 15321,
+    "sha256": "dd8e22656ce0da3ee3b3afb46b1c1e3941d6532e28d57fa537d2d6d58117c686"
+  },
+  {
+    "file": "games\\shelf-control\\shelf-control.css",
+    "bytes": 16359,
+    "sha256": "ca3ee7567fb8cc7d038cd326a045a2e6cca55c18904984a596cecf0286537743"
+  },
+  {
+    "file": "games\\shelf-control\\shelf-control.test.ts",
+    "bytes": 15138,
+    "sha256": "73b2a81d348c3232d6e640a2f51f195fb7195dfe60ec383ca39dd35291aea969"
+  },
+  {
+    "file": "games\\shelf-control\\simulation.ts",
+    "bytes": 15291,
+    "sha256": "5c07a084a79094d41639694738503da29e65df389f7fc3f9402d8df5c07d385a"
+  },
+  {
+    "file": "games\\shelf-control\\types.ts",
+    "bytes": 3438,
+    "sha256": "b0140a243b41a78b3a2a1301cd156313624fdfd0acacae3922d7f630e044e0a8"
+  },
+  {
+    "file": "games\\stack-or-sink\\coast.test.ts",
+    "bytes": 2204,
+    "sha256": "62d4d361c18b0de95e6b75d47de73ed28ec7fd7d56519580b00898b5e1b14d4a"
+  },
+  {
+    "file": "games\\stack-or-sink\\coast.ts",
+    "bytes": 12845,
+    "sha256": "dae8667cb5bcacefa520637fe7be5ff6eee7550eb045bcc06f3c65865e278e4b"
+  },
+  {
+    "file": "games\\stack-or-sink\\connection.test.ts",
+    "bytes": 1556,
+    "sha256": "de417e39a1ae83e25c0bb00d1c5f800f493c1cb79c21751ebffcc381054c6e37"
+  },
+  {
+    "file": "games\\stack-or-sink\\connection.ts",
+    "bytes": 4713,
+    "sha256": "e926df6919f51b72823dc7caaed60a30ea76c6735bec1c6a6a22e730dcc32fd7"
+  },
+  {
+    "file": "games\\stack-or-sink\\crane-impact.test.ts",
+    "bytes": 5006,
+    "sha256": "f2880c80a543468a159531b1aab49668a1a19e3a430be3206098670391e538d3"
+  },
+  {
+    "file": "games\\stack-or-sink\\Game.tsx",
+    "bytes": 45478,
+    "sha256": "e5433f0ff6af2e44b4e2bd823a1b9ce7088b26d0cca3093b5e20b9e9adcee8f5"
+  },
+  {
+    "file": "games\\stack-or-sink\\geometry.ts",
+    "bytes": 4981,
+    "sha256": "7fdba42dbefc604c03d68076819160e5157a16498cdf5ab34fcd00c3d33536df"
+  },
+  {
+    "file": "games\\stack-or-sink\\load-crane.test.ts",
+    "bytes": 5675,
+    "sha256": "2804791abc58386065c91cf2c4f101b3d9102a9c055cf48cea5479bbc6d936b2"
+  },
+  {
+    "file": "games\\stack-or-sink\\load-crane.ts",
+    "bytes": 3177,
+    "sha256": "eccf2b7610d495f83f84ea72973f45c242b375c6415d87178f9d7a3789a735eb"
+  },
+  {
+    "file": "games\\stack-or-sink\\mobile.css",
+    "bytes": 16230,
+    "sha256": "ec63119b7d7b49155820c85059a8910af1f9783d6c7e25274bbe5372828b6146"
+  },
+  {
+    "file": "games\\stack-or-sink\\motion.test.ts",
+    "bytes": 6999,
+    "sha256": "7859692c17ae8734b951ec3492991e421a7709033d6be6e63f3c5f2f5cce3656"
+  },
+  {
+    "file": "games\\stack-or-sink\\motion.ts",
+    "bytes": 6346,
+    "sha256": "ec441c01688aa53b1ee4d566bc1765b7ab045b207a1729d8a0e719ea6bd17a87"
+  },
+  {
+    "file": "games\\stack-or-sink\\objects.test.ts",
+    "bytes": 3186,
+    "sha256": "f8ff0bd74926cfa919de97cb301f9525e76c92acbcb73d19894ebe347d3dea07"
+  },
+  {
+    "file": "games\\stack-or-sink\\objects.ts",
+    "bytes": 3531,
+    "sha256": "04778e36b421f20ed0067675ba340521d1fc36dec10f9087e3448caf9f39df9a"
+  },
+  {
+    "file": "games\\stack-or-sink\\peer.ts",
+    "bytes": 1471,
+    "sha256": "51f09672dfc00bbe849f322def5c147122bfb7de4d9cfbc48715a0512448cea9"
+  },
+  {
+    "file": "games\\stack-or-sink\\physics.test.ts",
+    "bytes": 8066,
+    "sha256": "249ce5891b5107d2a4b2f7991872696e00495a43d7f359a62ecad95590c4a72e"
+  },
+  {
+    "file": "games\\stack-or-sink\\physics.ts",
+    "bytes": 17530,
+    "sha256": "f7ed2c188915aa8ae2d41be14897327520c08283bc5ed1851fc49a86c50bcbc6"
+  },
+  {
+    "file": "games\\stack-or-sink\\preview.ts",
+    "bytes": 815,
+    "sha256": "0144c12d6fa940e52a24d251dd43fc9d263d9ea762359288acc97b28526bbf63"
+  },
+  {
+    "file": "games\\stack-or-sink\\rescue-platform.test.ts",
+    "bytes": 4356,
+    "sha256": "16e270d49c84fc78ebd9343773f208faea33a1bbcca574bd422cf232ae7ae5cb"
+  },
+  {
+    "file": "games\\stack-or-sink\\rooms.test.ts",
+    "bytes": 6989,
+    "sha256": "60838240e356cf63e422cf0228e8a67e570af404655092adeba0ed930de75984"
+  },
+  {
+    "file": "games\\stack-or-sink\\rooms.ts",
+    "bytes": 7299,
+    "sha256": "4d9c6c811eb0f3279bb812cbc6d955774a210dfc325e56cd8df7fca583f16f2e"
+  },
+  {
+    "file": "games\\stack-or-sink\\scene.ts",
+    "bytes": 28915,
+    "sha256": "027faf2adb297deedf84aea036f9d180b30a9079dc483a85549bbfa8409078b7"
+  },
+  {
+    "file": "games\\stack-or-sink\\server.ts",
+    "bytes": 426,
+    "sha256": "ab8da97b2b920199074fe2d0559fc9e1310705ab4cb7a30ab8da788459563b99"
+  },
+  {
+    "file": "games\\stack-or-sink\\simulation.test.ts",
+    "bytes": 6845,
+    "sha256": "86f96f56dc26c252c362c9972f432a56e1907b70e747e7c05914bfb6ffe15b35"
+  },
+  {
+    "file": "games\\stack-or-sink\\simulation.ts",
+    "bytes": 15448,
+    "sha256": "de1f6c84ee1a1c53f89491b2f3777c59e74f1e95965e04e692102da3e529e6e1"
+  },
+  {
+    "file": "games\\stack-or-sink\\sound.ts",
+    "bytes": 4669,
+    "sha256": "97aca1efb8a55f382c4b1feb85709d233fade6de2c718421527454088357c4e1"
+  },
+  {
+    "file": "games\\stack-or-sink\\stack-audio.test.ts",
+    "bytes": 7264,
+    "sha256": "102bf6b6589c1eed7963676405452d55b15f002362dc889e8c57ce6f897878ad"
+  },
+  {
+    "file": "games\\stack-or-sink\\style.css",
+    "bytes": 26628,
+    "sha256": "2f7488f96486d83da21088279ebb1da6f27b465da1c9c4085c216182a60a1862"
+  },
+  {
+    "file": "games\\stack-or-sink\\types.ts",
+    "bytes": 2556,
+    "sha256": "4ea4326adbef25e224ad5da152d2db5a5d756a9ea78a6ff824894e3fb8d88d38"
+  },
+  {
+    "file": "games\\uphill-delivery\\audio.ts",
+    "bytes": 9902,
+    "sha256": "b67f6ab4b2a725a40530111d20a4101f643bb19a82ddd8c2e5f32819c44d1163"
+  },
+  {
+    "file": "games\\uphill-delivery\\camera.ts",
+    "bytes": 1142,
+    "sha256": "32ff9620c120ac20b996e4f501a99316735008050139120b5c1d22321b6a229f"
+  },
+  {
+    "file": "games\\uphill-delivery\\connection.ts",
+    "bytes": 5307,
+    "sha256": "9e5ac17bdd3d42522daec91217ffbcf9e466e05b370c991401bbc1da3261eaaa"
+  },
+  {
+    "file": "games\\uphill-delivery\\CrewSlots.tsx",
+    "bytes": 2477,
+    "sha256": "796dd4bcc7d9ce281ce5d669dedfb055b2e599118233098d50b6cc6ed284acb0"
+  },
+  {
+    "file": "games\\uphill-delivery\\Game.tsx",
+    "bytes": 31756,
+    "sha256": "58f079b6ec71a4026e77c82cee83e5a1278aa4ba6d7e8c872634cf0f8f095b46"
+  },
+  {
+    "file": "games\\uphill-delivery\\level.ts",
+    "bytes": 5741,
+    "sha256": "1d6f8f6f192e96b17173deef320cb634209b71c02e1aa9ec43cf1f1fd43320eb"
+  },
+  {
+    "file": "games\\uphill-delivery\\motion.ts",
+    "bytes": 4550,
+    "sha256": "521e29018969ad9e67d0bca114aee6b1ca30ec3bc126ec6510cf5e9ca295d722"
+  },
+  {
+    "file": "games\\uphill-delivery\\navigation.ts",
+    "bytes": 9112,
+    "sha256": "98372c3d42fcb6fa220cf7a21dfc0f693b57716dfdb5a45c95a4ff3f66e96c39"
+  },
+  {
+    "file": "games\\uphill-delivery\\npc-behavior.test.ts",
+    "bytes": 26638,
+    "sha256": "df298429f4b1df62c63b0c72327db807817f766f1afa715e151c90aba00a9ffb"
+  },
+  {
+    "file": "games\\uphill-delivery\\npc-carry.ts",
+    "bytes": 1761,
+    "sha256": "1fca380db9c2312f95e7118488e2ec19bfae21ff51b337678f291ca1aa357953"
+  },
+  {
+    "file": "games\\uphill-delivery\\npc-path.ts",
+    "bytes": 6570,
+    "sha256": "8463cad236220897c24fb65e3e67f5761972bdeebcaa29d14c4ea80eeec23667"
+  },
+  {
+    "file": "games\\uphill-delivery\\npc-types.ts",
+    "bytes": 748,
+    "sha256": "6e577736fb3375c41bc9d1e4ad33f90cc5bbd1fbb4d48e065d18ba0b88694454"
+  },
+  {
+    "file": "games\\uphill-delivery\\npcs.ts",
+    "bytes": 24278,
+    "sha256": "84c08f18879c4096ec3c0df517b59431ed4c4494d7a6486d3d3b0e08561422c0"
+  },
+  {
+    "file": "games\\uphill-delivery\\objects.ts",
+    "bytes": 7002,
+    "sha256": "11b405c2b2bba59045667662fdd054b450859c410bd9071171666654afa2144d"
+  },
+  {
+    "file": "games\\uphill-delivery\\peer.ts",
+    "bytes": 1568,
+    "sha256": "fed7e73465cddb53c8a1313e73c2d44a6be4e33db2bba02a53fdab543c72a621"
+  },
+  {
+    "file": "games\\uphill-delivery\\physics.ts",
+    "bytes": 16990,
+    "sha256": "ee84b8f3750f54ee20f15f5715f3af6a4ff77833515336cda0d1210eb037ff2f"
+  },
+  {
+    "file": "games\\uphill-delivery\\rooms.ts",
+    "bytes": 7071,
+    "sha256": "4682b063be0956570c9cf4aec19b794c79de1c217c46af8746a2b3ff4a8789ed"
+  },
+  {
+    "file": "games\\uphill-delivery\\scene.ts",
+    "bytes": 20268,
+    "sha256": "f79b24cabf9f4a6b303ec11d207f0a239164dd7e66fa7481392e80a13abd0c23"
+  },
+  {
+    "file": "games\\uphill-delivery\\server.ts",
+    "bytes": 442,
+    "sha256": "24a2fe4f218ad7b8f43b19df2fb68b7f1d1c9a594325e8bc7858e9f650ed13a3"
+  },
+  {
+    "file": "games\\uphill-delivery\\simulation.ts",
+    "bytes": 7351,
+    "sha256": "663a1288a4e0033b0b243cbb54251980939fb26fe41c6c3d25fb0cec8fe93361"
+  },
+  {
+    "file": "games\\uphill-delivery\\style.css",
+    "bytes": 20399,
+    "sha256": "41461a5060854706f83a1ce8f2962ed0128908db458dd726620dba091f97036f"
+  },
+  {
+    "file": "games\\uphill-delivery\\types.ts",
+    "bytes": 2136,
+    "sha256": "8fb9be4fd3c46dcfda4431b537052ac15abf844b7f07dfdbc1c4fc641e736d5b"
+  },
+  {
+    "file": "games\\uphill-delivery\\uphill-delivery-audio.test.ts",
+    "bytes": 7455,
+    "sha256": "94e7fa686c7ef2515e3ddfe46707869a8db14a5adcd56701d488b469e2e75e3b"
+  },
+  {
+    "file": "games\\uphill-delivery\\uphill-delivery-camera.test.ts",
+    "bytes": 1460,
+    "sha256": "4241c076676e3721b400aaca01321ceebe4b53a9ee8d50a8e7932300cac8c4ab"
+  },
+  {
+    "file": "games\\uphill-delivery\\uphill-delivery-connection.test.ts",
+    "bytes": 2240,
+    "sha256": "d9d064fb98da2c0887dce7db05b558cf857c6e80a5540deb038cf2b69a5dc510"
+  },
+  {
+    "file": "games\\uphill-delivery\\uphill-delivery-motion.test.ts",
+    "bytes": 4223,
+    "sha256": "8a561fc98f0362248c73bc07367bc52be23b4183920e8f031d985709748d2fdf"
+  },
+  {
+    "file": "games\\uphill-delivery\\uphill-delivery-npcs.test.ts",
+    "bytes": 8029,
+    "sha256": "acc4cc8972361574ae3d139d95b96d207f54646750ed400f89a9502a97fa3f97"
+  },
+  {
+    "file": "games\\uphill-delivery\\uphill-delivery.test.ts",
+    "bytes": 11969,
+    "sha256": "d8905e31e33f9e93eeb5eb23ef9fc3c0d21f80e17fce30c97c215e85a49fcabb"
+  },
+  {
+    "file": "games\\wrong-floor\\audio-details.ts",
+    "bytes": 3686,
+    "sha256": "54263e8a37218664b9c6e20a2417b8fc5706d4b0b911465715f3a26143ceadc4"
+  },
+  {
+    "file": "games\\wrong-floor\\audio.test.ts",
+    "bytes": 6082,
+    "sha256": "edbbfdd75552a43d9fe0c0292daaa112cb0125f9d6dfb8d001ad442e5ea99270"
+  },
+  {
+    "file": "games\\wrong-floor\\audio.ts",
+    "bytes": 12378,
+    "sha256": "3bae8e95db346afc98db89ec40beeb338f579d60199fb346a8ce65b306531f86"
+  },
+  {
+    "file": "games\\wrong-floor\\camera.test.ts",
+    "bytes": 3909,
+    "sha256": "6895c208e919d0023c2cc56087b949022bac209502fe8e62a2e21363a552e203"
+  },
+  {
+    "file": "games\\wrong-floor\\camera.ts",
+    "bytes": 2057,
+    "sha256": "d8dd859b2f874cde93669bb9afd1e6294ead8725d4fecd96464aedabd22c5a36"
+  },
+  {
+    "file": "games\\wrong-floor\\foley.ts",
+    "bytes": 10498,
+    "sha256": "c04440b14ee4fbf1bca4f77c3e9ac7cc8e1bd24805d7ccd28d3707321d73a4ce"
+  },
+  {
+    "file": "games\\wrong-floor\\Game.tsx",
+    "bytes": 36350,
+    "sha256": "85aba2ebd7a7aaab5d8607023a9c950554d16ffc13e1c776ed73e61e8f02784c"
+  },
+  {
+    "file": "games\\wrong-floor\\horror.test.ts",
+    "bytes": 4611,
+    "sha256": "627fb99cadd554be3c9b55d5735591ee7e9649c8504ce69a3d34c6fd065b209b"
+  },
+  {
+    "file": "games\\wrong-floor\\horror.ts",
+    "bytes": 5027,
+    "sha256": "cab8239c346806129c755a3bd73ebae0d180ca00970824a89274bd7cb2c661b0"
+  },
+  {
+    "file": "games\\wrong-floor\\models.ts",
+    "bytes": 10019,
+    "sha256": "d65e876bb3d19f9d1726ca4519cea4ee3908a13e2a2361813ed815e681eed25c"
+  },
+  {
+    "file": "games\\wrong-floor\\peer.ts",
+    "bytes": 1410,
+    "sha256": "a996c8220b9955d1e7e0d53bc9f81eeb385c98916ac52eb14c9d32f13a38f861"
+  },
+  {
+    "file": "games\\wrong-floor\\scene.ts",
+    "bytes": 15696,
+    "sha256": "78d39cc5e6d122eb2d6d486e8b6dd17d3ba502aee5d82b8571130bd562e3d0cf"
+  },
+  {
+    "file": "games\\wrong-floor\\simulation.ts",
+    "bytes": 11383,
+    "sha256": "e151dc0e68d937b017494a8752759b51f960e380daa534fb01974b4d7f0835e3"
+  },
+  {
+    "file": "games\\wrong-floor\\style.css",
+    "bytes": 21149,
+    "sha256": "e590b05172d8b575342cf26b05a20ad4e054b399e4947bacba3010a40877154c"
+  },
+  {
+    "file": "games\\wrong-floor\\types.ts",
+    "bytes": 2929,
+    "sha256": "2f7c81e1287629d794293d0cdb5aa3ab9992ab3f64e8dd22d385c9f53510109a"
+  },
+  {
+    "file": "games\\wrong-floor\\wrong-floor.test.ts",
+    "bytes": 11310,
+    "sha256": "bb87aa8b891147416191fe798f7defcc7481f0667d32cf3aac31eac38d525e7d"
+  },
+  {
+    "file": "games\\act-natural\\audio\\catalog.ts",
+    "bytes": 5603,
+    "sha256": "01dad0b46bb139fe9edf396b285626c37b1350a360b109878f7ebba6921dadee"
+  },
+  {
+    "file": "games\\act-natural\\audio\\detail-catalog.ts",
+    "bytes": 6442,
+    "sha256": "83ff4172ddbd3db5e6f6d5aaac406f4a83df41d9f1444a7f4bcaea3623525e18"
+  },
+  {
+    "file": "games\\act-natural\\audio\\fence.ts",
+    "bytes": 705,
+    "sha256": "7ae52b17d5f271b6f30e5be78da96664cc0818250a66cf7956e8131587d5889c"
+  },
+  {
+    "file": "games\\act-natural\\audio\\profile.ts",
+    "bytes": 890,
+    "sha256": "986f572b919b642164cf452c137e9baa99c118f0ebfa4742c012f9a2be7f044a"
+  },
+  {
+    "file": "games\\act-natural\\audio\\recording-levels.ts",
+    "bytes": 832,
+    "sha256": "3e89bbc00d91abfe20c4f63ed72e191cd1aacf1b063327efd8121d3bffb67703"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-audio-design.md",
+    "bytes": 1548,
+    "sha256": "d6b52d776f5f6d54d2cb31a150912bb0ec85b77ed222816971ca298db014d766"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-audio-detail-design.md",
+    "bytes": 2475,
+    "sha256": "bcd8a4dd0369288625da1f6d1fc6ace57eeb003bcce35758faf503d693abc2b9"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-audio-detail-validation.md",
+    "bytes": 5523,
+    "sha256": "19c695af58020f09acc166312c7ae677dba9fdaba1fd173ce69e7b9e76c706d9"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-audio-validation.md",
+    "bytes": 5084,
+    "sha256": "a8e5f7f98fe042835b8e69ffd2f810f5954eb5c61893933f61e1e32c9e947c57"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-design.md",
+    "bytes": 5098,
+    "sha256": "ce6dbb3b583986b26610699ab734232690def20563e7fc963ef790b7cd93132f"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-electric-fence-design.md",
+    "bytes": 2999,
+    "sha256": "aa7960dfb30822b826afcc627b6946ea4023f33f3554bccaf8d449762613b9f6"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-electric-fence-plan.md",
+    "bytes": 1136,
+    "sha256": "1a7c24e9d51851e0cf5ee554963a601872f992853b8b86a0660dc782a0e62dae"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-electric-fence-validation.md",
+    "bytes": 3901,
+    "sha256": "30fb3bbdcebdf2bf938b9cb5a66cbc2a9187efa1603542a0ebcf5a47a3978a8d"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-menu-validation.md",
+    "bytes": 1176,
+    "sha256": "ee29c6f40c43bc5f4bb5ff4502aa2a385a3825f2b9dd22e1aaa85c4414cc6b74"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-player-farmer-design.md",
+    "bytes": 2009,
+    "sha256": "912d215d6bfff53fc2f358b6252604b41afac12a620ef681bfa5b87459810776"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-player-farmer-plan.md",
+    "bytes": 636,
+    "sha256": "e7a80e34e2817c68664eb402e673708c578d0c3ea67f158bc3e6fe0c09a70c31"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-player-farmer-validation.md",
+    "bytes": 3786,
+    "sha256": "d657b4b8181ea98a261afd54b9b22686438d6cf50e188da7db4b13c33f94f8d9"
+  },
+  {
+    "file": "games\\act-natural\\docs\\act-natural-validation.md",
+    "bytes": 3314,
+    "sha256": "70934056b32108bff3deed5e419fe4c1609a0ca338067461e7f33c3af380fb9c"
+  },
+  {
+    "file": "games\\act-natural\\docs\\mobile-ui-design.md",
+    "bytes": 1347,
+    "sha256": "51437849fa5543fa47c64eaf614109ffdc5246de932df6a0b623687526a0dc86"
+  },
+  {
+    "file": "games\\act-natural\\docs\\mobile-ui-validation.md",
+    "bytes": 2071,
+    "sha256": "b85aac78584e7fef8f20b6d5f5e7ed84a2942406b4f07d4852d8f66479552465"
+  },
+  {
+    "file": "games\\act-natural\\docs\\night-hunt-design.md",
+    "bytes": 2535,
+    "sha256": "7f9a62374bcb3a599df0e4585999e485510fb893e0ede2e6f1a592d06a1f452d"
+  },
+  {
+    "file": "games\\act-natural\\docs\\night-hunt-validation.md",
+    "bytes": 4336,
+    "sha256": "7fbb9ed5f148e3630d443e7deeb764a1d83445553c23e55a4f13d97a9e8345c0"
+  },
+  {
+    "file": "games\\act-natural\\docs\\npc-cows-design.md",
+    "bytes": 2516,
+    "sha256": "e774f3614d4c4b1858a7c49db50a87c1c4a82d53a810ef672d6f8bb393d43c0c"
+  },
+  {
+    "file": "games\\act-natural\\docs\\npc-cows-validation.md",
+    "bytes": 4359,
+    "sha256": "068446640b5620077120679627792e2cdde69bdec4fc48e49fc47e4051df4f76"
+  },
+  {
+    "file": "games\\act-natural\\scripts\\act-natural-integration.mjs",
+    "bytes": 5222,
+    "sha256": "9014ac4c8b8f3b5947f33f6361a278c510cb3ee4b30d3cbbf9e2da3639856227"
+  },
+  {
+    "file": "games\\act-natural\\scripts\\farm-audio-generation.mjs",
+    "bytes": 3142,
+    "sha256": "59a38544c3dd9e534fe3a98e4585b258b9ca3fd1724fccf0fd5f34a28318216c"
+  },
+  {
+    "file": "games\\act-natural\\scripts\\fence-preview.html",
+    "bytes": 4257,
+    "sha256": "cc2947930b51f0150e0a9e455a38b1ab66dbdfe6214364d52e314477292842d0"
+  },
+  {
+    "file": "games\\act-natural\\scripts\\fence-preview.mjs",
+    "bytes": 767,
+    "sha256": "3f8ad02a24c393c69aec7fbec9c5933a0ae3cafeb061297ccdddcc99e2fd16c4"
+  },
+  {
+    "file": "games\\act-natural\\scripts\\generate-fence-audio.mjs",
+    "bytes": 2690,
+    "sha256": "282dcddb14a29a5c18683bdc2661befaa333983face89595c28bc3a03e0e7991"
+  },
+  {
+    "file": "games\\act-natural\\scripts\\movement-integration.mjs",
+    "bytes": 2830,
+    "sha256": "43c408032d1ffe6784ebdce1721214ce94d055aa95afa48f811873012124f422"
+  },
+  {
+    "file": "games\\act-natural\\scripts\\npc-integration.mjs",
+    "bytes": 5420,
+    "sha256": "8ff18aad99e39dd2c45b89321a1dfa4eb53f5846a202cf6ad1c48ac5054982e4"
+  },
+  {
+    "file": "games\\chaos\\audio\\catalog.ts",
+    "bytes": 5305,
+    "sha256": "221af8c16b4f511a1775085fc52769717b6e42a52f65885c79c3eef760320a23"
+  },
+  {
+    "file": "games\\chaos\\audio\\countdown.ts",
+    "bytes": 987,
+    "sha256": "6c3d5d5ed42431d3a082254c7505e699e28652527eae6c9105d41fa9e3b1c35f"
+  },
+  {
+    "file": "games\\chaos\\audio\\home-expansion-prompts.ts",
+    "bytes": 4534,
+    "sha256": "e68b53cd7581e1784c2df90255baae7bd1e7a0a073f91ad86bf07979b38555cc"
+  },
+  {
+    "file": "games\\chaos\\audio\\house-prompts.ts",
+    "bytes": 3827,
+    "sha256": "323810715d209f475a53bc0715f120a02e733245ce91ad140d9730fe574359b1"
+  },
+  {
+    "file": "games\\chaos\\audio\\material-prompts.ts",
+    "bytes": 19003,
+    "sha256": "aa17b39126ec9abede43e1f63c55c5156980f0240f6638707c493d3d82f1d61c"
+  },
+  {
+    "file": "games\\chaos\\audio\\party-audio.test.ts",
+    "bytes": 10190,
+    "sha256": "372337ead0d7805ab0098f36719d63427fc2f15d67f9a8ab5cb9e8172e4d0e4b"
+  },
+  {
+    "file": "games\\chaos\\audio\\party-catalog.ts",
+    "bytes": 21485,
+    "sha256": "6856654051d16f0a401134beebe233b91a38896090d79dc6396b22534d8b7d07"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-disaster.mjs",
+    "bytes": 6902,
+    "sha256": "9be31659cca41e684857161ad94001136a222fb58e1be3ffcc23f086ec9221e2"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-growth.mjs",
+    "bytes": 4353,
+    "sha256": "6dab9388c7a2bd5256d89c10a79a12cf6c05b24cfae7e6b7d1dc7b8d014b4fcd"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-home-design.mjs",
+    "bytes": 4087,
+    "sha256": "5c6b106984de4a7602df947c265e76939eec0e8e6c31a3736250cfa2fe60ff9a"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-house-audio.mjs",
+    "bytes": 2372,
+    "sha256": "6f16e86be6167e3dd495a81f28b7597663ee36e2d16ab48af750553207be6903"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-map-play.mjs",
+    "bytes": 3501,
+    "sha256": "7daa904e3a70bed06c5e86d2dd580127aba95475cf8417e55bc55478a5404e61"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-multiplayer.mjs",
+    "bytes": 3152,
+    "sha256": "30fba62c95617b52727f642f67d8ce9645d6f2d270a87f07b05b9ec668fad669"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-party-legacy.mjs",
+    "bytes": 1972,
+    "sha256": "e83c4897d1e51e30956724c8715d8de10f0c15712373b6639115d6e8b6073f99"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-party-load.mjs",
+    "bytes": 6438,
+    "sha256": "d1b7f27566d542e0e0187bcc150e05f148f85d34933ecd94db3ee3005004646d"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-party-voice.mjs",
+    "bytes": 2766,
+    "sha256": "a986b6eae0b339efdf76c1c05c8df274a05e101a00c3bd2c5ab7fddb24bd87b4"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-party.mjs",
+    "bytes": 3918,
+    "sha256": "bee63bceec67c588f2cecca89aa236bd0868fcc7818114c5cc53e4b39801c744"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-physical-play.mjs",
+    "bytes": 2673,
+    "sha256": "a28328a6a0b85aedfcbb5523927fdf287bd628da9bafccbb91ca5c6020a90ce3"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-roof-crane.mjs",
+    "bytes": 3461,
+    "sha256": "b8717336ab464472442d3a158e3fb73f143a536c9fb14a518d3139c5b6cd68f3"
+  },
+  {
+    "file": "games\\chaos\\scripts\\check-storeys.mjs",
+    "bytes": 2830,
+    "sha256": "fc3de034fb922500516f1ab2e43e09664f2d9807d87aa4e454eef3fa5de1a12f"
+  },
+  {
+    "file": "games\\chaos\\scripts\\restore-chaos-audio.mjs",
+    "bytes": 6113,
+    "sha256": "ee0c6ac3a0964e74050b921fe80bb8eaa436858fc912c89f709f5840cb37626a"
+  },
+  {
+    "file": "games\\chaos\\scripts\\room-action-identity.mjs",
+    "bytes": 948,
+    "sha256": "32c65cb1665911a73837dafa4b7f756e0cedc41edef1706333ded6ba1eaffad9"
+  },
+  {
+    "file": "games\\chaos\\server\\builds.ts",
+    "bytes": 5154,
+    "sha256": "50c6ca0cef9c9da370b87fe06453717113a5f4350ab8cb7458fc097f59421ea5"
+  },
+  {
+    "file": "games\\chaos\\server\\rooms.ts",
+    "bytes": 20582,
+    "sha256": "87c16e4e5a2aa267ce11f0e30c949c6cadd68e9240c541b0e4c73981914a6399"
+  },
+  {
+    "file": "games\\chaos\\voice\\client.ts",
+    "bytes": 9818,
+    "sha256": "158625e79a6fbb3a9ebcee3edc03356e262ba8aec9f7cfb1a660f870dce35d2c"
+  },
+  {
+    "file": "games\\chaos\\voice\\route.ts",
+    "bytes": 1055,
+    "sha256": "ac64d7ee32699f6304f9e43c8a4dd3be0f23e945b94a2d4dca034ae3dc7fd8d5"
+  },
+  {
+    "file": "games\\chaos\\voice\\server.ts",
+    "bytes": 4875,
+    "sha256": "63fa72762979e60f9ee7834919074e9ae63905e7ca102390d75d38a6f87660b1"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\audio\\catalog.ts",
+    "bytes": 11166,
+    "sha256": "1e80c582cf31a107dc2390605af851e531ceab7e16c93ca8b1d66e53f5450143"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\audio\\profile.ts",
+    "bytes": 1627,
+    "sha256": "caa26316a20e199d85ffd5fa3b06f945c2d9e7b30152206d80a8c81428c035a5"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\dont-wake-the-giant-audio-design.md",
+    "bytes": 2044,
+    "sha256": "a1271f8c5ed187b5f4c4c429da917d7b18e51f6af19f8f7c311cd974c72f9308"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\dont-wake-the-giant-audio-validation.md",
+    "bytes": 5867,
+    "sha256": "d89d6f693e9ceee3610acaa68f3927470c0f0c872a936c0f6ecc15c75fd232ff"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\dont-wake-the-giant-design.md",
+    "bytes": 4190,
+    "sha256": "8d948d98d9866da858e40df711ab086b5fe754eeab3045237d75d53f941117a5"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\dont-wake-the-giant-validation.md",
+    "bytes": 7584,
+    "sha256": "9557d3c407dace5523a150e786846c045bc4c4d6eb1b2ac71426dd33c109d930"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\giant-chaos-design.md",
+    "bytes": 3654,
+    "sha256": "05156730108c7bee80aee709b9b46401a7fbc41a0e67350e99a93bb074ec3449"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\giant-chaos-validation.md",
+    "bytes": 3051,
+    "sha256": "0fcb991b6ff8d24fbdd088fa50fb4e95db690b4154b44d8d4d72ee9d060b5238"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\giant-motion-design.md",
+    "bytes": 2047,
+    "sha256": "5b5ac7e87f7cdeff2910c7cc274c6e3e527d96ad96f627491e2404711c6e6d21"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\giant-motion-validation.md",
+    "bytes": 4210,
+    "sha256": "f4a1853159af205fa5d9c6cd11e081e484a1fd900eb4fdb2ee2475815e57df6f"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\docs\\giant-sleep-presentation.md",
+    "bytes": 3196,
+    "sha256": "772c29c417960c8afa4877f01262ee2e6af56f446538994a0401b3951e50df4f"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\scripts\\generate-sleep-audio.mjs",
+    "bytes": 3464,
+    "sha256": "781ef867fc72ef6aa84c8e0bc88deb3de61afa5f75528615f2109517bea0d0dd"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\scripts\\giant-audio-integration.mjs",
+    "bytes": 2508,
+    "sha256": "0d2da9815ea60b02ee18d7839129b2aa8ab4ca52687a526ab107a6c9bd513c61"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\scripts\\giant-integration.mjs",
+    "bytes": 6426,
+    "sha256": "349ba0e4cf78e307a5d30d9d924215b752d2d9a8c41d1c7cb9f49a51f1dee485"
+  },
+  {
+    "file": "games\\dont-wake-the-giant\\scripts\\giant-pose-preview.mjs",
+    "bytes": 2934,
+    "sha256": "9bba16fc5ba442f47cbddab0faa168083bf1eef7045ef9877fdbde4da49b68d3"
+  },
+  {
+    "file": "games\\first-person\\audio\\catalog.ts",
+    "bytes": 7207,
+    "sha256": "878ff69a0c12811cd9c97f644fc65eb76a377c7671d0357a544faae1488c73b9"
+  },
+  {
+    "file": "games\\first-person\\audio\\material-prompts.ts",
+    "bytes": 5972,
+    "sha256": "b815871b036001dd7d90f93b497d9cddda73de52dd2e1682d9cf2a9fb582e825"
+  },
+  {
+    "file": "games\\first-person\\scripts\\check-first-person-refinements.mjs",
+    "bytes": 6360,
+    "sha256": "3a2cd461ead3a8431ffd762c3d09f929ca9b6cdb8f87552106fb80955f88f769"
+  },
+  {
+    "file": "games\\first-person\\scripts\\check-first-person.mjs",
+    "bytes": 15897,
+    "sha256": "9f05073ebeb0977933b2a35e768d486d3ea851c9dcf626a63f196a39b511a1cb"
+  },
+  {
+    "file": "games\\first-person\\server\\rooms.ts",
+    "bytes": 10652,
+    "sha256": "78a7c06ee028012967c73beca7bf45f482ddcc49e4ad4cb1ff99de49d5a454ab"
+  },
+  {
+    "file": "games\\four-brain-cells\\audio\\details.ts",
+    "bytes": 4723,
+    "sha256": "d233881dd4f6b23a30fd5f1b337783b0b177580794dfd37c49c07a75fdab0b9c"
+  },
+  {
+    "file": "games\\four-brain-cells\\audio\\director.test.ts",
+    "bytes": 2209,
+    "sha256": "5e0611dc8e65827709a0de5192fa0b062c29a0ee2c9ed4a4f23f28fd6966b7cf"
+  },
+  {
+    "file": "games\\four-brain-cells\\audio\\director.ts",
+    "bytes": 4621,
+    "sha256": "5b0126a0f892245eaf5f2df811ab26406fb64e3f68b3937d586ce868d1815415"
+  },
+  {
+    "file": "games\\four-brain-cells\\docs\\artwork.md",
+    "bytes": 1121,
+    "sha256": "e3ea867d8dc3c17a3a1b0a0e280daf81fafed7a6d322eb095102e9e5d1f81e07"
+  },
+  {
+    "file": "games\\four-brain-cells\\docs\\design.md",
+    "bytes": 4618,
+    "sha256": "3d396a56af3e43c7cd1a533e3cfbb57cc79129b59e67997764d03a80e1f22fcd"
+  },
+  {
+    "file": "games\\four-brain-cells\\docs\\validation.md",
+    "bytes": 5193,
+    "sha256": "19319ee8040942db8238d217f6282a129d1a0d1163bb86b3868a665a3132df22"
+  },
+  {
+    "file": "games\\four-brain-cells\\scripts\\http-integration.mjs",
+    "bytes": 2510,
+    "sha256": "d656c908003c2aad7dae1da7efc079fd4bed03921b02e2ed69b36d16232d27f8"
+  },
+  {
+    "file": "games\\four-brain-cells\\scripts\\npc-integration.mjs",
+    "bytes": 8064,
+    "sha256": "34522c0b2cd5952247caff26a31aaf5dec7b3d69a1e4d32651821573d73d0963"
+  },
+  {
+    "file": "games\\one-more-button\\audio\\audio.test.ts",
+    "bytes": 6776,
+    "sha256": "54d9b9a946cb5bfd4831470ea16603398526deda65610d67a946e5f0506815b6"
+  },
+  {
+    "file": "games\\one-more-button\\audio\\catalog.ts",
+    "bytes": 5237,
+    "sha256": "c335aa7e95d44b6654eeb0c6d86b7bc88e3038468fdb254964706ff6a12ed111"
+  },
+  {
+    "file": "games\\one-more-button\\audio\\director.ts",
+    "bytes": 5503,
+    "sha256": "da8c567c308bb6038f01268e2136b34041761dfc8abf6a9dc5d34f578263bdfb"
+  },
+  {
+    "file": "games\\one-more-button\\audio\\profile.ts",
+    "bytes": 912,
+    "sha256": "aee355e03340b56fa3c3cc7251e84923de5dbd915f0c00a12c9f00e7cfe72526"
+  },
+  {
+    "file": "games\\one-more-button\\audio\\README.md",
+    "bytes": 1905,
+    "sha256": "e69dd3f55702a1a0a4e7beab804debab4137bd543324dd8a474e8f1ddff2f9f8"
+  },
+  {
+    "file": "games\\one-more-button\\audio\\release-validation.md",
+    "bytes": 2031,
+    "sha256": "96ebf525784fdd67aa4591d37f1c6c41c182044ac12381d3651449204ea3b17c"
+  },
+  {
+    "file": "games\\one-more-button\\scripts\\generate-show-audio.mjs",
+    "bytes": 15623,
+    "sha256": "7a4ccbb4e2ca6fef7dcd633f70bfe68a1135de5cc03a71f261c005c51f187cc9"
+  },
+  {
+    "file": "games\\reel-problems\\audio\\details.ts",
+    "bytes": 5031,
+    "sha256": "e8530d5828102ac24154b9808d7bd1969e1e622e3ab98e15c936e224ef925d76"
+  },
+  {
+    "file": "games\\reel-problems\\audio\\director.test.ts",
+    "bytes": 1987,
+    "sha256": "827a981942a515b85c0edffb59bc3db33375c2a69dd1fa801254cfc0d578f955"
+  },
+  {
+    "file": "games\\reel-problems\\audio\\director.ts",
+    "bytes": 5673,
+    "sha256": "a87071524dd1acf6059cf694f8070ab267e732164a9c368fcbb7a106941c2a86"
+  },
+  {
+    "file": "games\\reel-problems\\docs\\cooperation-chaos-validation.md",
+    "bytes": 4345,
+    "sha256": "5dc22c57c948e23848545be89da34f988f814f38b836a67427b6a9edae308629"
+  },
+  {
+    "file": "games\\reel-problems\\docs\\validation.md",
+    "bytes": 2804,
+    "sha256": "f08c827cc0ce722dff6562594ed7de5c7ff8027d04c7fa224424579e5fe459ae"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-audio-intro.md",
+    "bytes": 3026,
+    "sha256": "13e6f9c9c81dca1c0b09f71aa21d7e756aca5af51cebb82958b1fe26863149ef"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-bots-design.md",
+    "bytes": 3313,
+    "sha256": "b8409128769f5effb8dae970e1fd0174ff14062c3e05209eeaf1dbb6e575ded7"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-bots-validation.md",
+    "bytes": 5526,
+    "sha256": "292842d301746928e1ca8e0b2a7f75ea0599ffbd6f77571c149e2f63faf145fe"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-design.md",
+    "bytes": 3383,
+    "sha256": "068704acee4079180bfc350678a850b4a8764536aa4ae2a556275ac2feeb6332"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-lobby-fix.md",
+    "bytes": 1969,
+    "sha256": "39f70af6e77b7f23311734e2dc3a9b273b5498e5e52f4cdbf7702ebda9796bbe"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-model-motion.md",
+    "bytes": 2284,
+    "sha256": "b3191a2a65cf31d116c26554c3050817764c54e8bfb73064765abc97f52e19e0"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-shared-style.md",
+    "bytes": 4004,
+    "sha256": "b0e4279da1cd852883911de051e6046a915385ffbd0f1ba2522441039f675118"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-style-art.txt",
+    "bytes": 3024,
+    "sha256": "543089872f94e677049a438acee179c2108a8499a773adbcf21c6d9167a43268"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-toy-style-art.txt",
+    "bytes": 5533,
+    "sha256": "82736c0b5efc562e8e53d9af442ba0ee82a4376d46d450edab8f527a594ae0f4"
+  },
+  {
+    "file": "games\\shelf-control\\docs\\shelf-control-validation.md",
+    "bytes": 4309,
+    "sha256": "efb3471c1a410421e98c8bd68d041da5e5d6f3be1d44671e100c668e73488879"
+  },
+  {
+    "file": "games\\shelf-control\\scripts\\generate-showroom-audio.mjs",
+    "bytes": 5069,
+    "sha256": "08c4087247f8d95179ec24b526fa02a61fee8cbcc35956847635c75ae1d9a36c"
+  },
+  {
+    "file": "games\\shelf-control\\scripts\\shelf-control-bots-integration.mjs",
+    "bytes": 5085,
+    "sha256": "1f383857a70e27bd86eeb9d594f2cbb2732ad4f82acdd7fed57675c17a88e5bf"
+  },
+  {
+    "file": "games\\shelf-control\\scripts\\shelf-control-integration.mjs",
+    "bytes": 4487,
+    "sha256": "b9d05a57723eaa973c0a41d26d49be63b630ccb86aee4a3dc81b5d1fe4ad4ac2"
+  },
+  {
+    "file": "games\\stack-or-sink\\audio\\ambience.ts",
+    "bytes": 6470,
+    "sha256": "e7a7402718d2535395a72c056b06a5f3aa236dde0e885ae76d0b2ead5df5b837"
+  },
+  {
+    "file": "games\\stack-or-sink\\audio\\catalog.ts",
+    "bytes": 3688,
+    "sha256": "782ab2f1bbe0920d30066fcecacbad4efa48834b8b07132b8439fc5dcaf85788"
+  },
+  {
+    "file": "games\\stack-or-sink\\audio\\detail-catalog.ts",
+    "bytes": 4959,
+    "sha256": "2cd5831eadac42c4b31640d2ed3ad6bd6095ade85cc41312eb9af7ae608dc8f8"
+  },
+  {
+    "file": "games\\stack-or-sink\\audio\\events.ts",
+    "bytes": 2895,
+    "sha256": "86353da69baa69ae3b7c90045321f179bec63388f503751160f525065f1684ed"
+  },
+  {
+    "file": "games\\stack-or-sink\\audio\\player.test.ts",
+    "bytes": 5963,
+    "sha256": "24d30ae2d49c4925880a0506e39aed7c419e39d7672c644a25ea41c3f14d45f2"
+  },
+  {
+    "file": "games\\stack-or-sink\\audio\\profile.ts",
+    "bytes": 683,
+    "sha256": "5f8909e451ea9d74eb548257a49a2158ba0dd5b7e4e47a0dea3997ccd32cf681"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\crane-impact-design.md",
+    "bytes": 1426,
+    "sha256": "d7d404cea168fab168f1e4f2ccf2f4f219d6e6df2ea77ceb4052998d60144766"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\crane-impact-validation.md",
+    "bytes": 3237,
+    "sha256": "4e555305b3fb2dee2a232f15b47cf3d57bf3cdc5c5057925f8d6cb5c19ae6e53"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\crate-platform-validation.md",
+    "bytes": 6394,
+    "sha256": "85a6002decd187398a560dc284892880927e74d45047a4db90b853a357167e53"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\design.md",
+    "bytes": 1464,
+    "sha256": "68cb3f381a6c2112bfcfa27f7c29a76009c680c01a03794e9028c4b53307698a"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\island-design.md",
+    "bytes": 1463,
+    "sha256": "06b2bc0aa221b9ada9883c7afbfb4fc48a85accde0b3a2837035868ae1e6eb55"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\island-validation.md",
+    "bytes": 1526,
+    "sha256": "03712c85d9c75b82597e0d31892c0bcd983c3fe8f4241dbf191ef64001ad1f2d"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\load-crane-design.md",
+    "bytes": 1181,
+    "sha256": "3ee8f929d51b3c6303a976322c7bb8d062e3860fcb5c0b022e209135fac879f6"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\load-crane-validation.md",
+    "bytes": 3280,
+    "sha256": "0532c47ba15d0e7d12b40b7e4ed4938a04eb8e567b56545103a3a597d5d9372a"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\mobile-design.md",
+    "bytes": 1456,
+    "sha256": "c5b1d572c0ad8329c935c525bc1573535d1903d787723aad52637cee6a824f62"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\mobile-validation.md",
+    "bytes": 2403,
+    "sha256": "0d8c2abb2143f0c97ecd81bd262a6adff5b275dfe0bb6c2be30e5719640921b4"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\motion-design.md",
+    "bytes": 1434,
+    "sha256": "3fdfe9cc1e4e7da9b440a7f195a55a2978ecadd84ed72c19c318b89af2f13c4f"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\motion-validation.md",
+    "bytes": 3490,
+    "sha256": "a6cbce93aa8583d65042376b72d65cc55203fe5f6162688d9ac9ee1e5409f8c3"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\physics-fix-design.md",
+    "bytes": 1698,
+    "sha256": "9cb9b98d7aa5c16e704bf9b3d0926193898ae30e699a21fe49edf14d4b8e4f68"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\physics-validation.md",
+    "bytes": 2665,
+    "sha256": "7947031df6830cda649a1070aee1008c8ca6e351390da75acb6af3ed79725dc6"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\stack-cinematic-audio-design.md",
+    "bytes": 2014,
+    "sha256": "5e4ee9dc0f2a8b2eb6af53c3a3f368c9b8517c22ec1bab401822ef57b7c4409b"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\stack-cinematic-audio-validation.md",
+    "bytes": 3882,
+    "sha256": "194d2beb8eade75d20da1fd00dca893ce64509babdc2da34c08daf7c098fab31"
+  },
+  {
+    "file": "games\\stack-or-sink\\docs\\validation.md",
+    "bytes": 2402,
+    "sha256": "bd46680c2c9b5c2854a3ea145e158334701c35f7dcc963008609c15d8a91e255"
+  },
+  {
+    "file": "games\\stack-or-sink\\scripts\\integration.mjs",
+    "bytes": 3133,
+    "sha256": "f2326b0f06758de5dbe8b40794f64c01a60ec427b207408ad058f1f13c4c1042"
+  },
+  {
+    "file": "games\\stack-or-sink\\scripts\\physics-integration.mjs",
+    "bytes": 3311,
+    "sha256": "c1e12ef4bc85d5f5c60ee3f9eecb182ff9a19d3c109f4f4639caa24a81b2d2bf"
+  },
+  {
+    "file": "games\\stack-or-sink\\scripts\\stack-audio-generation.mjs",
+    "bytes": 3300,
+    "sha256": "03bf752356920afe116439a4e16823393413c24945aec458cc3df4ec3f014a92"
+  },
+  {
+    "file": "games\\uphill-delivery\\audio\\catalog.ts",
+    "bytes": 2076,
+    "sha256": "76677c181a21b13be30d6d750aad811baba9a10d43da702dca602925939c1ed2"
+  },
+  {
+    "file": "games\\uphill-delivery\\audio\\detail-catalog.ts",
+    "bytes": 5486,
+    "sha256": "627f8eb6d8642a7cd855388f8728ce5efe53001e040463e6a688724cdb28a7d7"
+  },
+  {
+    "file": "games\\uphill-delivery\\audio\\player.test.ts",
+    "bytes": 4503,
+    "sha256": "c918933856ef81ea66ff56c810d06598194df3f4351aa687b99059791e3810a9"
+  },
+  {
+    "file": "games\\uphill-delivery\\audio\\profile.ts",
+    "bytes": 322,
+    "sha256": "bacd6494a1eec8a261a332a560b19a5e38a6a39ba15976a2eb508e5fe1bc605c"
+  },
+  {
+    "file": "games\\uphill-delivery\\docs\\uphill-delivery-audio-design.md",
+    "bytes": 1477,
+    "sha256": "4022697cdff23a22cbdf2bb24bc0336ad57710ed338ecbc16b6de48b200e52e3"
+  },
+  {
+    "file": "games\\uphill-delivery\\docs\\uphill-delivery-audio-validation.md",
+    "bytes": 4092,
+    "sha256": "cecb54deb86f86d5379e75bac05cfe33de9c9ea43cafef21bdaf0d17eeb8cdf9"
+  },
+  {
+    "file": "games\\uphill-delivery\\docs\\uphill-delivery-design.md",
+    "bytes": 1929,
+    "sha256": "5308bf1f888c500eea1d272f411a0300d542c86789e206fa1b0b8dd02cf9834f"
+  },
+  {
+    "file": "games\\uphill-delivery\\docs\\uphill-delivery-first-person.md",
+    "bytes": 4020,
+    "sha256": "97fea07cc3c607f89d0c14384c863b74dc9dad14f02cfb4b1aa6a5f42c5001c8"
+  },
+  {
+    "file": "games\\uphill-delivery\\docs\\uphill-delivery-performance.md",
+    "bytes": 4525,
+    "sha256": "81854f540fed90d2f547f73e31a36b1204e8deb6e1266c98f1fa8ad6e3e827b5"
+  },
+  {
+    "file": "games\\uphill-delivery\\docs\\uphill-delivery-validation.md",
+    "bytes": 3370,
+    "sha256": "5c57f5df284f3ced39a897afb310b2cec7dc1cbdccf3246abcd3a500bc43e0f4"
+  },
+  {
+    "file": "games\\uphill-delivery\\scripts\\generate-delivery-details.mjs",
+    "bytes": 3236,
+    "sha256": "2ddd8433a59c748e6f9e79367ebd095210e3578da6a4ee78f48ba96db60e988d"
+  },
+  {
+    "file": "games\\uphill-delivery\\scripts\\npc-delivery-check.mjs",
+    "bytes": 3926,
+    "sha256": "b317aca596c4c6860b661102101020e98228b9af70571c08801155239351885d"
+  },
+  {
+    "file": "games\\uphill-delivery\\scripts\\npc-human-pilot.mjs",
+    "bytes": 8263,
+    "sha256": "ca47f8319191a01cf3015e774f035905e60c462e29bc161d5fed3cdff42cbfe7"
+  },
+  {
+    "file": "games\\uphill-delivery\\scripts\\npc-mixed-check.mjs",
+    "bytes": 4023,
+    "sha256": "934db45f650b0a8a69de464c4e586cc313ba815a17a62bfe767c1567a330f3c7"
+  },
+  {
+    "file": "games\\uphill-delivery\\scripts\\npc-mixed-matrix.mjs",
+    "bytes": 3554,
+    "sha256": "f538b85960dcc1cc94aae75bdf2481f91e15138792f5d63940a8b703c14fa2d3"
+  },
+  {
+    "file": "games\\uphill-delivery\\scripts\\npc-performance.mjs",
+    "bytes": 2085,
+    "sha256": "60fbbeb1c0fb7f8e997769cf1cc8338f19b25df260deacba687e83030d7a178e"
+  },
+  {
+    "file": "games\\uphill-delivery\\scripts\\uphill-delivery-integration.mjs",
+    "bytes": 3893,
+    "sha256": "11d41f66da6efacd3cdc24ffe43eb22107ead163615f0ef1ace2ca6063925186"
+  },
+  {
+    "file": "games\\wrong-floor\\docs\\art-provenance.txt",
+    "bytes": 2620,
+    "sha256": "8bfb6c2ff2023ad9ed4b12642bea77ec09b75232527092b02f9496a5a466495a"
+  },
+  {
+    "file": "games\\wrong-floor\\docs\\design-and-validation.md",
+    "bytes": 13062,
+    "sha256": "bb6b8cb21a9915eabd7d094a1c3a0cff6a1120d8e9915c97b8e421d54cca3973"
+  },
+  {
+    "file": "hooks\\use-mobile.ts",
+    "bytes": 201,
+    "sha256": "45af1e966950c3229fa8a2a914471bf71f6a23e9dc6dc46436fc66fe63987d51"
+  },
+  {
+    "file": "lib\\utils.ts",
+    "bytes": 169,
+    "sha256": "9304a861c8673bee09e0f12de31773abbde503b02e59dfd74763ddec2e37cf05"
+  },
+  {
+    "file": "platform\\audio\\catalog.ts",
+    "bytes": 1021,
+    "sha256": "4830a84474d234168d8485636c34bbdad53c841fa77761ebb4a18bdba3dea92c"
+  },
+  {
+    "file": "platform\\audio\\file-route.ts",
+    "bytes": 908,
+    "sha256": "6cafb5eaaba9ad2d1324e01c891c54a7e35ca510a2379ef23a88eafed20c8562"
+  },
+  {
+    "file": "platform\\audio\\narrator.test.ts",
+    "bytes": 6704,
+    "sha256": "5462483c58c6246aa673d358826a094918d581ea99c13e24bca6a4302a920775"
+  },
+  {
+    "file": "platform\\audio\\narrator.ts",
+    "bytes": 9681,
+    "sha256": "84c23fc5c0a7b4129986bfa5bb3d89ee09fb71c7ebe3f921f40c32cbe7c7a775"
+  },
+  {
+    "file": "platform\\audio\\route.ts",
+    "bytes": 518,
+    "sha256": "b1f81c6a3607759c29ff65d472dc5885a6733080dba7179155c0a2956f46fa58"
+  },
+  {
+    "file": "platform\\audio\\service.ts",
+    "bytes": 18944,
+    "sha256": "f73a23bbb760119e9ce51d3c8fcf62cc6a67080274898cac7e0076f6174e4f1e"
+  },
+  {
+    "file": "platform\\peer\\engine.ts",
+    "bytes": 1200,
+    "sha256": "d054d13387977e9b9b3cc6d1bf0c6a73b7220e5f91a905a09d026b17486ec639"
+  },
+  {
+    "file": "platform\\audio\\construction\\catalog.ts",
+    "bytes": 359,
+    "sha256": "35935bf8366e7bd2c0ffbc066af597ebcab9a58c1f9678ac9b013e1e0f16398b"
+  },
+  {
+    "file": "platform\\audio\\construction\\file-route.ts",
+    "bytes": 934,
+    "sha256": "3bb9288b66d2d3874194c16e6a1257e7430775b64ea91a19eb200f58aea76b44"
+  },
+  {
+    "file": "platform\\audio\\construction\\route.ts",
+    "bytes": 544,
+    "sha256": "f0c9bdaeb864667c0ee01a9f1c655dd4fa943723b40d0d00e21628e485bdd0cc"
+  },
+  {
+    "file": "platform\\audio\\construction\\service.ts",
+    "bytes": 15796,
+    "sha256": "99d71aca5211457efe705dc280ac6e7fc716ea934b8c1650c69d69dc601229f5"
+  },
+  {
+    "file": "public\\favicon.svg",
+    "bytes": 346,
+    "sha256": "d718e078778f99310c58003c2ed3f818a022ee99b55f4a29ec120b79d99473fd"
+  },
+  {
+    "file": "public\\fonts\\dm-sans-latin-400-normal.woff2",
+    "bytes": 14200,
+    "sha256": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006"
+  },
+  {
+    "file": "public\\fonts\\dm-sans-latin-500-normal.woff2",
+    "bytes": 14304,
+    "sha256": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d"
+  },
+  {
+    "file": "public\\fonts\\dm-sans-latin-600-normal.woff2",
+    "bytes": 14144,
+    "sha256": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120"
+  },
+  {
+    "file": "public\\fonts\\dm-sans-latin-700-normal.woff2",
+    "bytes": 14348,
+    "sha256": "35c5efa0e5daa52ee5c6500f5be354bf751fb65c4e49e1d6806c6eb5883e8fe9"
+  },
+  {
+    "file": "public\\fonts\\DM-Sans-LICENSE.txt",
+    "bytes": 4502,
+    "sha256": "6fbd040a29c2037a765dfb9f2561e9965b5c95c6dcb5dce516089d63d5f17af7"
+  },
+  {
+    "file": "public\\fonts\\fredoka-latin-600-normal.woff2",
+    "bytes": 16468,
+    "sha256": "b62f2898de150f019961f4884a49f83dcd2ce74375be5e0992c594ebb8f30294"
+  },
+  {
+    "file": "public\\fonts\\fredoka-latin-700-normal.woff2",
+    "bytes": 15900,
+    "sha256": "ee61b48acab42fcfee4e1c398b03bbae7e09d1be8471779c440a97dc85118c16"
+  },
+  {
+    "file": "public\\fonts\\Fredoka-LICENSE.txt",
+    "bytes": 4387,
+    "sha256": "9bbd4f5f107895d5a213579b73821fadd05105241cf4360e86050199fcfd6034"
+  },
+  {
+    "file": "public\\images\\blend-business.png",
+    "bytes": 2327588,
+    "sha256": "5ae00ae52867b8073841f9d68cb9086b717ba045b9e56be9e7d1bd08921242b9"
+  },
+  {
+    "file": "public\\images\\brick-by-hand.png",
+    "bytes": 2481462,
+    "sha256": "d10a7f0dcca7c76a6f08a3342f1795ceabb3edb53802968859c373bc345c62c3"
+  },
+  {
+    "file": "public\\images\\four-brain-cells.png",
+    "bytes": 2264372,
+    "sha256": "d2eb03815f0c8b7df1dc1e0e0ab04124bb207d46934e7b6d4b88de02dea1e3fc"
+  },
+  {
+    "file": "public\\images\\one-more-button.png",
+    "bytes": 2322573,
+    "sha256": "382648e12df28c19a183c7281f99a9c110f1d2a069cf2378f32bbb4a5305ab4f"
+  },
+  {
+    "file": "public\\images\\permit-pending.png",
+    "bytes": 2597904,
+    "sha256": "f660ffed09790711a62e1dd1f5ae043dab8c9279ae332ff22ffd775ee3e38761"
+  },
+  {
+    "file": "public\\images\\reel-problems.png",
+    "bytes": 2618123,
+    "sha256": "f0d0b19c9c148efbaee543d9ebd6928100d077c385f6693c949ff07a4b2cbb19"
+  },
+  {
+    "file": "public\\images\\shelf-control.png",
+    "bytes": 2098892,
+    "sha256": "7ba3e749d6a957fc88131a687f266a16b8b986e76bfeddd10703677eed5437fa"
+  },
+  {
+    "file": "public\\images\\stack-or-sink.png",
+    "bytes": 2490463,
+    "sha256": "33954ff9fbaa8307a64e85179e6f31d4510277ce66c33c284b73839f2853b78f"
+  },
+  {
+    "file": "public\\images\\tiptoe-thieves.png",
+    "bytes": 2568006,
+    "sha256": "30a88994db01132241c01a014d1bee6a7fcb0cb8d1e1d695cdd90ed045184796"
+  },
+  {
+    "file": "public\\images\\uphill-delivery.png",
+    "bytes": 2788476,
+    "sha256": "13d0112434e8ea8ab21d75a50eae9cf917b6cdedafb1cecacb989f049b652357"
+  },
+  {
+    "file": "public\\images\\wrong-floor.png",
+    "bytes": 2290698,
+    "sha256": "90e9af9411768b650bcea401272c635c507171a06b259c25f4217e9cf6eed309"
+  },
+  {
+    "file": "public\\audio\\act-natural\\fence-powered.wav",
+    "bytes": 192044,
+    "sha256": "1ace45461ceaf2b795ea14e25cbfe4f6eec55b20a18b58db7b6d3b5dd0a620c4"
+  },
+  {
+    "file": "public\\audio\\act-natural\\fence-shock.wav",
+    "bytes": 62444,
+    "sha256": "6b2e7819050180f19a4a0cbaf2b9085f1a106dbc75985648f46168792002c6ab"
+  },
+  {
+    "file": "public\\audio\\dont-wake-the-giant\\escape.wav",
+    "bytes": 960044,
+    "sha256": "ca924cd57095de4ca81f8d04692f0d02f3360d9c84d68e0640f1bcf340d8533e"
+  },
+  {
+    "file": "public\\audio\\dont-wake-the-giant\\giant-angry-shout.mp3",
+    "bytes": 86979,
+    "sha256": "8956b6df6cdb2720614a7e230c0cfb487aeaa4e2692e7d23533935ac55718bea"
+  },
+  {
+    "file": "public\\audio\\dont-wake-the-giant\\hurry.wav",
+    "bytes": 96044,
+    "sha256": "5d962f23f1fbaf242f71ca38f5c69c6ec97602800eaa83dd38e3aaf4432ef295"
+  },
+  {
+    "file": "public\\audio\\dont-wake-the-giant\\shupia-escape-warning.mp3",
+    "bytes": 94502,
+    "sha256": "8907e2b3a124aa24192895c89a7f549103ddc7ffb6d58e32d1cd8e129e918999"
+  },
+  {
+    "file": "public\\audio\\dont-wake-the-giant\\shupia-warning.wav",
+    "bytes": 86444,
+    "sha256": "16c15608987c860bda10a98aa8b701d76153643494c245e19ea664078532f1a5"
+  },
+  {
+    "file": "public\\audio\\dont-wake-the-giant\\snoring.wav",
+    "bytes": 542912,
+    "sha256": "53663e3ac8b648783ab89cf46c91fc312d20b8832e67b67fe0f069c533196f31"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\ambience.conveyor.wav",
+    "bytes": 705644,
+    "sha256": "bd73030d079c4ae89b14beba9f94e524c074b0e6f0ce2e00e799225bd2ab383c"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\ambience.soap.wav",
+    "bytes": 705644,
+    "sha256": "c24c866e2796f91670014cf117024576adff313e1589d9b4f726203653c381ec"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\ambience.spinner.wav",
+    "bytes": 705644,
+    "sha256": "df25d73573ff385c69d0693c6c80f82bbf73ffd72d0347dbf1ce0e5a84a4f1a7"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.bust.wav",
+    "bytes": 423404,
+    "sha256": "77bf5d14c8d189c5cf0d6a7c8e4c5bf7c98c7b40991073a9fda6eecb7bf61f58"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.crowd-cheer.wav",
+    "bytes": 441044,
+    "sha256": "69efb387219b45acb2bdf9963ec6e76aec8084cb6b23e2bf77706015f66f0093"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.crowd-gasp.wav",
+    "bytes": 211724,
+    "sha256": "0388d8988fb5d588299ba3a1de06bccd02dc7cc197b391d952f7fa511d248ede"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.door-open.wav",
+    "bytes": 123524,
+    "sha256": "2b362d0a732280bea6159a9f5c635d48b18b192110f41f0c32f316dbcf359510"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.escape.wav",
+    "bytes": 317564,
+    "sha256": "048eddb819331e773992ec683f7dd679963001b05ed9ef8d6749bae2d61582f1"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.fall.wav",
+    "bytes": 247004,
+    "sha256": "cde8e815579159ad6efca1dc880829b08005bcf8b577feb4dcedf92d101f21d1"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.finish.wav",
+    "bytes": 493964,
+    "sha256": "8eca7209fb5ae8172ac34b90f2b5f3a0b4c1a1ce8cde716732cfb02a69b24161"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.glove-fire.wav",
+    "bytes": 123524,
+    "sha256": "05c27c71d6088269f0afe60e54c0a623ebaa1a8bc4bfbb12368ea6fecbd5dd1c"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.glove-windup.wav",
+    "bytes": 194084,
+    "sha256": "dd8b113b438dac193b8da733b7113ebcbd395eec2613d6cf4e0570618702b4b7"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.hazard.wav",
+    "bytes": 220544,
+    "sha256": "6f75c2c8b4fb0d5a2f09b79d965f28ed4651837a2a1907c7b8713b099656602a"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.hit.wav",
+    "bytes": 141164,
+    "sha256": "edf4c9556ea972755b96e62980b659739f3573f4b93600521a937f1a9d0d2a60"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.jump.wav",
+    "bytes": 88244,
+    "sha256": "dca9b5837e5af9fde254da5ab5171e474a7f23a6b423e50b7d2bc457f8813d70"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.land.wav",
+    "bytes": 88244,
+    "sha256": "59ffb03b5d4a8a453d79fb869b93ddd9e5b73f74ae218369aaf1c76d2c5032b3"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.press.wav",
+    "bytes": 238184,
+    "sha256": "6cbd8a1df0e22bc99191d2f0aa0c2c72c4c5e524a548ff3369e026f43ff32658"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.punch.wav",
+    "bytes": 194084,
+    "sha256": "11d5f34721d10b712b623b3dd923534ee25baeabaa2b92a792101c548af13bb4"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.slip.wav",
+    "bytes": 114704,
+    "sha256": "6f5431781a98e3d3e6767f1502e2d6c244a6f4b43d48f3d8e234a8848e754fd3"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.start.wav",
+    "bytes": 370484,
+    "sha256": "3cdd223c807f2ad741cde2e3f5f2e1557d80bcf507097af653b829efe004f99a"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.step.wav",
+    "bytes": 88244,
+    "sha256": "6ac9abe8b6378b34cfd92b562c9c67005f7d2fa267bb265dd7170824ae031766"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.stop.wav",
+    "bytes": 132344,
+    "sha256": "7d4f4ea53f48f4c86c9961d20f313705c8d01b66c6a686983b54699b45ab8432"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.tick.wav",
+    "bytes": 88244,
+    "sha256": "2decf03a060f6ce7975b3ec5facabf70ffc798ef0c2f2a8b621cd697a7d70cc9"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.ui.wav",
+    "bytes": 88244,
+    "sha256": "48281b6f9f318ce7b510d5db85474fc70fab318c3bdf2ac79021310d473084f0"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\event.warning.wav",
+    "bytes": 194084,
+    "sha256": "96bab501a0b8a9e4f48ab9f81d1a5bc561404b7c3e799b8fe2ab3dd04ca1e2e2"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\music.chaos.wav",
+    "bytes": 2352044,
+    "sha256": "579ee2832da38353dd5a1eea418097ea6902ef996a0b35a0cfed3a495c078f3a"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\music.escape.wav",
+    "bytes": 2016044,
+    "sha256": "4025c24ff05dd80d2fe4f797a3c0fbca1360b42f665d9ca376a945735f3903d7"
+  },
+  {
+    "file": "public\\audio\\one-more-button\\music.show.wav",
+    "bytes": 2822444,
+    "sha256": "f4bd4ea676587691167f5c73dd800f99ef0894a5d968d1108b7c2db3876b7b00"
+  },
+  {
+    "file": "public\\audio\\shelf-control\\music.showroom.wav",
+    "bytes": 5120044,
+    "sha256": "5cc0287dba0a6f7bbddb4a243386ef82f39e98724c231c00fb96520e57a32b7a"
+  },
+  {
+    "file": "public\\audio\\shelf-control\\step.floor.1.wav",
+    "bytes": 19244,
+    "sha256": "f4823b74f259afb5ccac0d3ef47e1a229b636232a7a254859be74a7ab7718962"
+  },
+  {
+    "file": "public\\audio\\shelf-control\\step.floor.2.wav",
+    "bytes": 19244,
+    "sha256": "bd12c085d01e5024baff819de68e059f5acc1744caba6d67414f92b3c79af620"
+  },
+  {
+    "file": "public\\audio\\shelf-control\\step.floor.3.wav",
+    "bytes": 19244,
+    "sha256": "9f6102943c465f4a8f2c98a251f3b26c04da5b80218c5e8fd72de3695c49dcf1"
+  },
+  {
+    "file": "public\\audio\\shelf-control\\step.floor.wav",
+    "bytes": 19244,
+    "sha256": "d2546a416b6fd17921fdf5c38e2007ef910af0aa1cbdb302adffd765d5e3ba79"
+  },
+  {
+    "file": "public\\first-person\\textures\\brick.jpg",
+    "bytes": 766044,
+    "sha256": "6dea3a2b5a3185ff48d299d182c405a9f787129d79677792db6de4afd81c47f6"
+  },
+  {
+    "file": "public\\first-person\\textures\\dirt.jpg",
+    "bytes": 730425,
+    "sha256": "6ce6ca7e28ed046f7f93fa60dcb29f8cf42cd5a539adc5676675acccfa34efd3"
+  },
+  {
+    "file": "public\\first-person\\textures\\wood.jpg",
+    "bytes": 567074,
+    "sha256": "abc46d8e3163d911220f4ec3a4043b68d2b0c6d750513f80871211acfefb2a98"
+  },
+  {
+    "file": "scripts\\audio-admin-request.mjs",
+    "bytes": 696,
+    "sha256": "0adb1974fbea04b7fcac4446fa6b4e831eed3c3a9ecc017f27b08b8199848537"
+  },
+  {
+    "file": "scripts\\audio-integration.mjs",
+    "bytes": 4281,
+    "sha256": "c909f74957683e834356255410084799fb44f6a6ece59035d99de2cf82f2ba67"
+  },
+  {
+    "file": "scripts\\build-node.mjs",
+    "bytes": 299,
+    "sha256": "aaf49f104043f2357c6580442e935d83b141236309ffa3b0f6bd427828122307"
+  },
+  {
+    "file": "scripts\\check-architecture.mjs",
+    "bytes": 4451,
+    "sha256": "0805d1620554c579f909f50b1b6a8855b076848be179be9a7cda4ad8cc9a5387"
+  },
+  {
+    "file": "scripts\\check-collection.mjs",
+    "bytes": 4254,
+    "sha256": "bf920143085a35ed98575575fee2d4f60dac90365ad8ff0d3a5453fd2f3d32ed"
+  },
+  {
+    "file": "scripts\\check-construction-audio-edit.mjs",
+    "bytes": 3312,
+    "sha256": "04814aeadafa9278aa70ea3ff314d3adfa4326698ccddbe98546e28edd7e16d8"
+  },
+  {
+    "file": "scripts\\check-construction-audio.mjs",
+    "bytes": 3195,
+    "sha256": "39313cbbd0224f423c45f6bc2a27b6be65ace606a256362f01698bb677a6fd95"
+  },
+  {
+    "file": "scripts\\dev-peer.mjs",
+    "bytes": 890,
+    "sha256": "e3b8658e183ff02d697760165c4570b3d5ba77065b55ff12e2b22da02c51ebe9"
+  },
+  {
+    "file": "scripts\\dev-voice.mjs",
+    "bytes": 1998,
+    "sha256": "0acef39b5792a95d2a613bb752327818792cebafa2a69b759ea29675386d8b35"
+  },
+  {
+    "file": "scripts\\export-audio-prompts.mjs",
+    "bytes": 1048,
+    "sha256": "184cdbc81de61890cc266022c0efe4f2768604277699820c63a41d1c279f3cb8"
+  },
+  {
+    "file": "scripts\\generate-expanded-game-audio.mjs",
+    "bytes": 5034,
+    "sha256": "d0422234caedbbb97bafa94329d8b063341e9a0f6d42c1051f89b49cc9aa3f92"
+  },
+  {
+    "file": "scripts\\load-test.mjs",
+    "bytes": 7344,
+    "sha256": "c3e64e61c41f08997f72871dd8035e3162b682fb6d155485553ba79118159e0b"
+  },
+  {
+    "file": "scripts\\migrate.mjs",
+    "bytes": 216,
+    "sha256": "e23f16f8d71d414a80c21c0ee27b6f036f018f7b8948ff9f524791b711be7355"
+  },
+  {
+    "file": "scripts\\peer-integration-client.mjs",
+    "bytes": 18374,
+    "sha256": "856efc0608d414cc4ebcb3bc760f04731080621ce0691c06df347d2e3ff204fb"
+  },
+  {
+    "file": "scripts\\peer-integration.mjs",
+    "bytes": 982,
+    "sha256": "1b58f2f2f4ac47e22def570bc7fe3baa88a171f6136742aed7f12724a58d8eba"
+  },
+  {
+    "file": "scripts\\setup-voice.ps1",
+    "bytes": 1350,
+    "sha256": "7124494d40196e904d5c3ec6f1bbfa31cc73909bd1c50bf3190d6ed1f8a53774"
+  },
+  {
+    "file": "scripts\\test.mjs",
+    "bytes": 799,
+    "sha256": "d2276916386183e14b01c9ce0ad6b833cb21e8f731e8d3de043dcf8b33bd8fa9"
+  },
+  {
+    "file": "scripts\\voice-integration.mjs",
+    "bytes": 3734,
+    "sha256": "299078f611e0c5d0a824c3827785f9e7a7f51410cd10bf7fda0475f1135e57aa"
+  },
+  {
+    "file": "shared\\audio\\access.test.ts",
+    "bytes": 1124,
+    "sha256": "b35a963d5013d38a81f73cdec737fdcc6e28ee77380b57a972d1035f631fe55e"
+  },
+  {
+    "file": "shared\\audio\\access.ts",
+    "bytes": 1228,
+    "sha256": "db969a12ad9ffab670dc5adc408d2d5dcdfd3ad6e1b05f463cd1958fc04bab58"
+  },
+  {
+    "file": "shared\\audio\\admin.module.css",
+    "bytes": 12563,
+    "sha256": "c058f1c503d759e0732808b291a5e5442b888ae581547a0f6adc4263b2335062"
+  },
+  {
+    "file": "shared\\audio\\Admin.tsx",
+    "bytes": 27475,
+    "sha256": "30c5a4c86ff8c5aa9e9bcc5a4e0ac69ce809dd74ca10285fd8a016861004bef5"
+  },
+  {
+    "file": "shared\\audio\\AdminAccess.tsx",
+    "bytes": 3597,
+    "sha256": "c2b62240647965ff6bca258aaf1fa8c940db67fec18c2c3456c3050ba33ac2d1"
+  },
+  {
+    "file": "shared\\audio\\apply-scene-plan.ts",
+    "bytes": 806,
+    "sha256": "a885d86ce3ac38e828f4e2ef61bfcf9ee8711b155ca7a96315dc46561f5018ba"
+  },
+  {
+    "file": "shared\\audio\\audio.test.ts",
+    "bytes": 20097,
+    "sha256": "bdbcfe99cac11e3419e95c9bb2fed24e198dc02d78553f14054a38ca2bb77139"
+  },
+  {
+    "file": "shared\\audio\\cancellation.ts",
+    "bytes": 1922,
+    "sha256": "522d9314bb6741693539e992fe7efa4dcc192425102f792792ade97604634f04"
+  },
+  {
+    "file": "shared\\audio\\catalog-helpers.ts",
+    "bytes": 5231,
+    "sha256": "93d822d5b01318fd8a9e174d5b82ba5b5640b00cb0376719786e9bd507fa58ca"
+  },
+  {
+    "file": "shared\\audio\\crypto.ts",
+    "bytes": 1297,
+    "sha256": "091e23b23f4764a05af1abef745280121c8a2fb34151d2a5b2755af0eb353e9f"
+  },
+  {
+    "file": "shared\\audio\\errors.ts",
+    "bytes": 133,
+    "sha256": "32ed5f7865e9dd1fd785ff9810ef1060d1f42b8eea4eb19cfe6b8185ecdb604b"
+  },
+  {
+    "file": "shared\\audio\\events.ts",
+    "bytes": 509,
+    "sha256": "3dff2048f8992c9a2e3d73e3e25649ff9bf2cf749bb07778db7f9c95297676c4"
+  },
+  {
+    "file": "shared\\audio\\expansion.test.ts",
+    "bytes": 1118,
+    "sha256": "14961178ad6a3aed3fcbd7d2a5f84566cb5712b6ab4d1d8e344e8c25fb8bb236"
+  },
+  {
+    "file": "shared\\audio\\http.test.ts",
+    "bytes": 2538,
+    "sha256": "69dee05687ce3064c879b6ee4b03ce9aabf8c9ad711a6521f879b054bb8a0c11"
+  },
+  {
+    "file": "shared\\audio\\http.ts",
+    "bytes": 3633,
+    "sha256": "23e9b1a2bb3614606e21e535a2cfb3657043e8475f8a782d1dd101106916206c"
+  },
+  {
+    "file": "shared\\audio\\limits.ts",
+    "bytes": 235,
+    "sha256": "9ec23b8876d93f3826babc59e4f2ac214f0adf0667eedc497d94c3e6f8788912"
+  },
+  {
+    "file": "shared\\audio\\loop-buffer.ts",
+    "bytes": 944,
+    "sha256": "60dfe027f4ed4b47b73f36d31648de5167d7393825cae241c4d7288fa2ca9c38"
+  },
+  {
+    "file": "shared\\audio\\narrator-config.ts",
+    "bytes": 1668,
+    "sha256": "2a94c8fbe618801d6e1ec9b1a9ce84746fb5455ec332464f3cfd2b1ec1160b3a"
+  },
+  {
+    "file": "shared\\audio\\NarratorDesigner.tsx",
+    "bytes": 10866,
+    "sha256": "1c42e040586e5eeee100b55e6ec05de27fed8e21429881abafbc6a9690228f79"
+  },
+  {
+    "file": "shared\\audio\\player.test.ts",
+    "bytes": 10153,
+    "sha256": "7b7971df3150710491537155e1b6fd09e521835a120683ac45b1fa2ffd189d58"
+  },
+  {
+    "file": "shared\\audio\\player.ts",
+    "bytes": 20269,
+    "sha256": "49d96059719d0ba5ed90d74bed6aa9402e89dc19ca7ac5a0fb1438fe9f760ca1"
+  },
+  {
+    "file": "shared\\audio\\profile.ts",
+    "bytes": 842,
+    "sha256": "d3a108699b3656c463c871bedb93d6512394f0998128a27269de5556ae330bc6"
+  },
+  {
+    "file": "shared\\audio\\provider.ts",
+    "bytes": 6815,
+    "sha256": "61fc76f7e64f5af3a34ab159fc42c3963c16cf5027f584cda4156b02ff9e2cc9"
+  },
+  {
+    "file": "shared\\audio\\salvage-prompts.ts",
+    "bytes": 2515,
+    "sha256": "482ae39de377f1f9c6faa6fc77ae17f1761148639f74beb26b8c7d93b1644ff6"
+  },
+  {
+    "file": "shared\\audio\\SavedSound.tsx",
+    "bytes": 2583,
+    "sha256": "bb198bb4a1c940e3b51a7316325e66f84521cb7e7f0f89e2505d647ace3f49b6"
+  },
+  {
+    "file": "shared\\audio\\scene-plan.ts",
+    "bytes": 343,
+    "sha256": "89439ef1b3f6041e289947129485a4faea3c7dd7950a292106d6cdda3d39c9cf"
+  },
+  {
+    "file": "shared\\audio\\storage-node.test.ts",
+    "bytes": 4408,
+    "sha256": "b0d4e7a28a738986a0a33daf81e681df0554fe979a2c5c5ade3dcab94f8dfc7f"
+  },
+  {
+    "file": "shared\\audio\\storage-node.ts",
+    "bytes": 2137,
+    "sha256": "a2601758f940e4429a04011350ca3f9b174ccb8b421bc5c7aa36474c7b4f9622"
+  },
+  {
+    "file": "shared\\audio\\storage.ts",
+    "bytes": 1087,
+    "sha256": "25fea03d5aff64b91f8bb430bd880c485592af6428000156511a1c09686f137e"
+  },
+  {
+    "file": "shared\\audio\\types.ts",
+    "bytes": 2181,
+    "sha256": "7db2f4e9043effb70287646f7bf86a8e9edba1e6669af021a344c10f41ecba5a"
+  },
+  {
+    "file": "shared\\audio\\VoicePicker.tsx",
+    "bytes": 6876,
+    "sha256": "98d73d09995af2e75490c0d00b021778e1aee571b4b63b5cb42a3ed997baae48"
+  },
+  {
+    "file": "shared\\audio\\world.test.ts",
+    "bytes": 3871,
+    "sha256": "ac1df7e52000b0634846fcff8bfa2f8c5bcced7f345af46f81bf8b706f1ae5b1"
+  },
+  {
+    "file": "shared\\audio\\world.ts",
+    "bytes": 2164,
+    "sha256": "e20303d1fc4b1ccdeaa1665b9255f1194153b0f94ac0ef49661ac7cf25012e4a"
+  },
+  {
+    "file": "shared\\browser\\use-media-query.ts",
+    "bytes": 555,
+    "sha256": "a1270927ebd1506e07f3452f398d20e0c23595882f1615045110b149a27391c4"
+  },
+  {
+    "file": "shared\\http\\json-request.ts",
+    "bytes": 1690,
+    "sha256": "bba9b7efa17b7d2b9a19940ef402b2e1eedf3c3b7eaba454d26eb504f923f976"
+  },
+  {
+    "file": "shared\\http\\request-budget.test.ts",
+    "bytes": 912,
+    "sha256": "a248ce3143cef20202396f280b7497724891e4e7f4992e0c9abc93c40af922f4"
+  },
+  {
+    "file": "shared\\http\\request-budget.ts",
+    "bytes": 3307,
+    "sha256": "74bdeb501d3e0d66bff935bbf0794ae6bb9184ab1f14232cca4a8c3a4793f5c1"
+  },
+  {
+    "file": "shared\\http\\request-origin.test.ts",
+    "bytes": 1316,
+    "sha256": "d8894c0a462460fe49d3f35664ea58290c7d3a81c19d9eead58e29287af6c06c"
+  },
+  {
+    "file": "shared\\http\\request-origin.ts",
+    "bytes": 364,
+    "sha256": "50be298512c6e95fce9a07e660de828e1ffc3d284d32486988c96797cb9b0837"
+  },
+  {
+    "file": "shared\\http\\room-handler.test.ts",
+    "bytes": 4052,
+    "sha256": "011265004e72f4bed0bddf324894beb870be7a86becf2e770abcf2a60b82d6ab"
+  },
+  {
+    "file": "shared\\http\\room-handler.ts",
+    "bytes": 1335,
+    "sha256": "57918bd1ba80b5c73f9158788c103629382741b00bf1f48176e88bf915606ad0"
+  },
+  {
+    "file": "shared\\input\\bind-joystick.ts",
+    "bytes": 2905,
+    "sha256": "f01ad797f74cbd776fd539fe25e165a39693dd42fa8e468dfea9cf9d2d664179"
+  },
+  {
+    "file": "shared\\input\\gestures.test.ts",
+    "bytes": 3732,
+    "sha256": "89f995033bfdd5106ae9820cb6785f016237531e44df34d0dd069b2dc9cb2e30"
+  },
+  {
+    "file": "shared\\input\\gestures.ts",
+    "bytes": 3090,
+    "sha256": "6f091fca71f7beb8ccd10b1a42f0c14f00c2de8b56575725772090f61beb3e69"
+  },
+  {
+    "file": "shared\\input\\touch-controls.css",
+    "bytes": 1232,
+    "sha256": "2d42bf2861161416fe63ad5811d031747cb450868b0d417df6eaf5bb60838af3"
+  },
+  {
+    "file": "shared\\input\\TouchControls.tsx",
+    "bytes": 6466,
+    "sha256": "77b24f608f27d2a7fb88f0ef25283163bf5891d38b7930d9df4d1f88c1a932d0"
+  },
+  {
+    "file": "shared\\math\\clamp.ts",
+    "bytes": 93,
+    "sha256": "1fe5b296a318833e78f2a33998fc57b2503175d2e2bbc547fa4f8d7d57d2e925"
+  },
+  {
+    "file": "shared\\math\\quaternion.ts",
+    "bytes": 73,
+    "sha256": "f875ea541dcad1db342907578ea32b95d6be65c64f2e87ab8233727e0fad955b"
+  },
+  {
+    "file": "shared\\peer\\connection.ts",
+    "bytes": 14560,
+    "sha256": "a485ca2bbbceb0eed021a4ef29f8aac81fb783df9b7db599f221ef3af9382aba"
+  },
+  {
+    "file": "shared\\peer\\coordinator.test.ts",
+    "bytes": 10788,
+    "sha256": "eb3eeb72b37b22c3eceba9de6eb1ff9acbb5a119755575b25b8e1e5510ddcdc5"
+  },
+  {
+    "file": "shared\\peer\\coordinator.ts",
+    "bytes": 15631,
+    "sha256": "77b3996d6f328d29a764ba6be312177a1154c3662bd05f6f90e5ddb8ee9ec014"
+  },
+  {
+    "file": "shared\\peer\\crypto.ts",
+    "bytes": 1686,
+    "sha256": "282c1c5b956e1fc3bdf94226b634c63d4ec77d96173e55c920bfd40b9e3d4064"
+  },
+  {
+    "file": "shared\\peer\\engine.test.ts",
+    "bytes": 4994,
+    "sha256": "af151c7e21ab480e24e3eb22a81199aa63edcbe5c92b859866f717177048be8f"
+  },
+  {
+    "file": "shared\\peer\\engine.ts",
+    "bytes": 8560,
+    "sha256": "fa95fcbc6c8a575bcada2e1e15ad68286609a63df51e7d4fe1a4bf561b8879d6"
+  },
+  {
+    "file": "shared\\peer\\HostNotice.tsx",
+    "bytes": 1056,
+    "sha256": "f78ebcff99fdd11ec8318e70fae60979cb0d832fd314c6c4c3858e9e3687e938"
+  },
+  {
+    "file": "shared\\peer\\mesh.ts",
+    "bytes": 14847,
+    "sha256": "2481293fa4865663bea7d00bdb39373759e9b181e5911f296af6257ac654c96a"
+  },
+  {
+    "file": "shared\\peer\\route.ts",
+    "bytes": 1112,
+    "sha256": "1de4e6d99310ddb6ed8dd2b796ed098199cefb42ed9b142144fa516715ffd263"
+  },
+  {
+    "file": "shared\\peer\\types.ts",
+    "bytes": 1515,
+    "sha256": "2bb0a4fa1abf5bb18931092484b4775adaa8f2328914892ed479670932130cd2"
+  },
+  {
+    "file": "shared\\physics\\sofa.ts",
+    "bytes": 1076,
+    "sha256": "af550eb3cec8206ba943af2a492b654ccc24f9dabb1930acf78e599ea1441326"
+  },
+  {
+    "file": "shared\\rendering\\batch-scenery.ts",
+    "bytes": 1576,
+    "sha256": "c47527134f99470aff2fd15a4608e5d7517c8ec326cc32467a65ad6b9b8c69a2"
+  },
+  {
+    "file": "shared\\rendering\\frame-stats.ts",
+    "bytes": 767,
+    "sha256": "4337650492b0b9d253311f0b16e8cc291806ed7323e95e18148e9cb88f8647e7"
+  },
+  {
+    "file": "shared\\rendering\\palette.ts",
+    "bytes": 68,
+    "sha256": "be8c5b8506198ed633e96a9438602ef05fd490b4fc2172e7931c156eb75c4c6d"
+  },
+  {
+    "file": "shared\\rendering\\primitives.ts",
+    "bytes": 1955,
+    "sha256": "e1499066f57d7bfe6a3a4fca9110afd03c789d32391f2d639c4237d25431faba"
+  },
+  {
+    "file": "shared\\rendering\\sofa.ts",
+    "bytes": 342,
+    "sha256": "6e9db6932ef26a24479276a881fbd2a1fa5ac3a6724add9fccfcb562858ff4ff"
+  },
+  {
+    "file": "shared\\rendering\\worker.ts",
+    "bytes": 1553,
+    "sha256": "5894554b00b976b78e585ef41de4ede3a0edac9e02cbb0c8f8a598c1b7513e7a"
+  },
+  {
+    "file": "shared\\rooms\\host-succession.test.ts",
+    "bytes": 8086,
+    "sha256": "a47d737b9e4cda0ee462ace411fd0e02ba6eb6d84f6d7a3add59d4ed0f642cc7"
+  },
+  {
+    "file": "shared\\rooms\\identity.ts",
+    "bytes": 559,
+    "sha256": "e572f9c214591de65a9a85566eebbaecf4200d7f1697d67f377bc66a053fa788"
+  },
+  {
+    "file": "shared\\rooms\\npc-slots.ts",
+    "bytes": 1792,
+    "sha256": "e7ba5f4383c904b4fb90c0483cdf5d8f8ac6cc9523223aaece9f97acb0fbe57b"
+  },
+  {
+    "file": "shared\\rooms\\session.ts",
+    "bytes": 80,
+    "sha256": "23f1e8dc1142d6a2a4bbf8436c2da03e53de637761aa290df861f86a39e75da2"
+  },
+  {
+    "file": "shared\\rooms\\types.ts",
+    "bytes": 400,
+    "sha256": "89a0efe3a5b1dc263e01862689e4090cb13d0bb4a3f4abd935a333aa152b7502"
+  },
+  {
+    "file": "shared\\styles\\construction-theme.css",
+    "bytes": 995,
+    "sha256": "bbae381254339061b23b22b1213af7a12e08befe848b8e6be7f57717f8ad2b82"
+  },
+  {
+    "file": "shared\\styles\\game-ui.css",
+    "bytes": 15870,
+    "sha256": "6918ce88ed7d4d740098c3930e15690e24f87da7f79ae2183ca2dc885d724753"
+  },
+  {
+    "file": "shared\\ui\\GameToolbar.tsx",
+    "bytes": 2609,
+    "sha256": "c871004298f68fea1e7959bc8212112c35060ad90e61094292682e9b2d142392"
+  },
+  {
+    "file": "shared\\ui\\toolbar.css",
+    "bytes": 3977,
+    "sha256": "3b22f7325648615bc1e236a1441ec532d642ed5d16d03a021fcb99c566a297bf"
+  },
+  {
+    "file": "shared\\voice\\client.test.ts",
+    "bytes": 4053,
+    "sha256": "8e1baeb435fa89ebfc50af0ec926254fafe56181d862a34c64926f2735aa5437"
+  },
+  {
+    "file": "shared\\voice\\client.ts",
+    "bytes": 11665,
+    "sha256": "031b80f013bbfeefad496344aa43803307ed8624b38d6147b4b48dac22918c79"
+  },
+  {
+    "file": "shared\\voice\\config.ts",
+    "bytes": 266,
+    "sha256": "bbaa253f132d27cf4482da4272cee2d17291c79461b772706c49c842e6ba8f3e"
+  },
+  {
+    "file": "shared\\voice\\membership.test.ts",
+    "bytes": 2826,
+    "sha256": "8ee9230604a94b5ee12ef1e402510b67a167c1dbfc0b81f65032680e8cd1fd69"
+  },
+  {
+    "file": "shared\\voice\\membership.ts",
+    "bytes": 1917,
+    "sha256": "5574ce6a22cff3638440e623747a68eec147f1e5aafec51c6989e84d27a2901b"
+  },
+  {
+    "file": "shared\\voice\\peer-client.test.ts",
+    "bytes": 3314,
+    "sha256": "cd4aae2eb1b95effa6f81e77bb640806dd7a9c43eb503749b89344041db0fdf7"
+  },
+  {
+    "file": "shared\\voice\\peer-client.ts",
+    "bytes": 10707,
+    "sha256": "057484119ce2cfea72df46687fb748451e7db63538b5288bca19280f3d405236"
+  },
+  {
+    "file": "shared\\voice\\route.ts",
+    "bytes": 1085,
+    "sha256": "e0f8dedab0a7ba5a0fbb1b29d7c712e239c8d6289b261296c359ea219100f75f"
+  },
+  {
+    "file": "shared\\voice\\server.ts",
+    "bytes": 2856,
+    "sha256": "f53f0c89b395f799b9cde5113cd45c352fa9f3556cfd287924a931a443a52aac"
+  },
+  {
+    "file": "shared\\voice\\types.ts",
+    "bytes": 305,
+    "sha256": "ec2f4a895c31cd3c913a0fcbe5da570dab599a45f3d42791c96d07c1d2e6dc1f"
+  },
+  {
+    "file": "shared\\voice\\voice.css",
+    "bytes": 2475,
+    "sha256": "cd9f673db88b68397ffca83511c632f02171b9eb9d02f27809f86d98eefb45d1"
+  },
+  {
+    "file": "shared\\voice\\VoicePanel.tsx",
+    "bytes": 15523,
+    "sha256": "dad27458830ae205a9017f5368be4813a66ac0cb80d04fa08556f716fd1f80e1"
+  },
+  {
+    "file": "shared\\audio\\construction\\admin.module.css",
+    "bytes": 11584,
+    "sha256": "59d3d7869aab168bbe7bb8c72dc8d878a7498a37ebebf18f05988195a46f52ec"
+  },
+  {
+    "file": "shared\\audio\\construction\\Admin.tsx",
+    "bytes": 30654,
+    "sha256": "b1f3bbcd3e6e98ce07e743bf72fc34b7bcb93f8250e3565f1b2ea24cbce99f3f"
+  },
+  {
+    "file": "shared\\audio\\construction\\audio.test.ts",
+    "bytes": 28422,
+    "sha256": "e1ac2b40ff91aef48fcf5a67a4d4fa94cc5ba54d7700a3fa582c322f09f8bb54"
+  },
+  {
+    "file": "shared\\audio\\construction\\catalog-helpers.ts",
+    "bytes": 3102,
+    "sha256": "94f514ec12621e1a940feaee255b77d5d9610c079bbf0aa1fc74e01ea0a1d25a"
+  },
+  {
+    "file": "shared\\audio\\construction\\material-prompts.ts",
+    "bytes": 813,
+    "sha256": "8132ae7d1a6dbf3bcd0a8a5836d269d8cbb0cb503b5b4751d61170088fc5a331"
+  },
+  {
+    "file": "shared\\audio\\construction\\player.test.ts",
+    "bytes": 8622,
+    "sha256": "4ef54696d713b769e87fb936a036b2b58b38e49ddd445c332952c60f78c82016"
+  },
+  {
+    "file": "shared\\audio\\construction\\player.ts",
+    "bytes": 12488,
+    "sha256": "62730316587f2fce13d4ea16a0b702e207151b9faf69bff3fd4ff85c061e27aa"
+  },
+  {
+    "file": "shared\\audio\\construction\\provider.ts",
+    "bytes": 6853,
+    "sha256": "699cbb11b9a176ba83a3d2ee2289ec40177724fa7c1ce953a926a6bc2ca6759e"
+  },
+  {
+    "file": "shared\\audio\\construction\\SavedSound.tsx",
+    "bytes": 2480,
+    "sha256": "679e0ef1a5e152c3079a56216dc0dcc3668724a578e7374e4b0c12584c0dc20b"
+  },
+  {
+    "file": "shared\\audio\\construction\\storage-node.ts",
+    "bytes": 2025,
+    "sha256": "36d5be3782b581e2c146236b59f49a0b21f1c70925b3bf3997c6b54894dee89f"
+  },
+  {
+    "file": "shared\\audio\\construction\\storage.ts",
+    "bytes": 1087,
+    "sha256": "25fea03d5aff64b91f8bb430bd880c485592af6428000156511a1c09686f137e"
+  },
+  {
+    "file": "shared\\audio\\construction\\types.ts",
+    "bytes": 1533,
+    "sha256": "2377a3c45a6045c7c3c13d8deebfc5b912c77d0d95748aa1d5dd8ddd12a635bc"
+  },
+  {
+    "file": "shared\\audio\\construction\\VoicePicker.tsx",
+    "bytes": 6858,
+    "sha256": "a1a7ec7c949cff6a65785755f6cd6398afed621b4b6e1d0a3472715fcad93314"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0000_known_lady_deathstrike.sql",
+    "bytes": 779,
+    "sha256": "4505fa4acce2c98569aeb1d418b628a777ef7b1b17dfe6402d51fc9b0df8e98a"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0001_audio.sql",
+    "bytes": 451,
+    "sha256": "9ad8ce99112637f2f0bef883aa4e0153c08ce426f848f7262c1fe1457d3c5623"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0001_first_person.sql",
+    "bytes": 614,
+    "sha256": "4056efd4e5675f5db0559a35fd599e886002611a1c5136d808dd92bf6f732a40"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0002_english.sql",
+    "bytes": 7453,
+    "sha256": "bc657d259bc0faf4fd2270154f5c0bccd7202a3fd00ef991ad5f2cbae11bd512"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0003_audio_cancellation.sql",
+    "bytes": 193,
+    "sha256": "05d89d2d41273aef9b78d72a58be7ceb8b05092a6dcede6933481cab779add15"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0004_realistic_foley.sql",
+    "bytes": 142978,
+    "sha256": "683ef7bf1c8528037473b5b04df60bf51b185d5b3ecb275874cf129aba783851"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0005_sound_prompt_limit.sql",
+    "bytes": 10510,
+    "sha256": "62cc551ee6f74550198483214f1a33cea741ee3fd1f4ce3e92f8bb597012d8cf"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\0006_saved_builds.sql",
+    "bytes": 332,
+    "sha256": "15d584fcf636131896ad41fb83c7d4a18b5da8572c4a2a18cca0050ce20c7026"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\meta\\0000_snapshot.json",
+    "bytes": 4165,
+    "sha256": "7b3c4c280586829074a75af00d1ef3bfdee922736ef9ad993017d9a6e04c1fcf"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\meta\\0001_snapshot.json",
+    "bytes": 7150,
+    "sha256": "b7d46ce1560f85b981e9343e690f81fcffb7d480d6149074eae1a00188c0372d"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\meta\\0002_snapshot.json",
+    "bytes": 8302,
+    "sha256": "4fe5f186a640f6d34266ebbc58c67c7a87180d12adc26cc2d4eacf7f45925e61"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\meta\\0006_snapshot.json",
+    "bytes": 9962,
+    "sha256": "5ff1e74d2cdfee2e70266f2ec2cb9c91d4a9d306f04003f5c422c64ba52eeda2"
+  },
+  {
+    "file": "shared\\audio\\construction\\fixtures\\upstream-migrations\\meta\\_journal.json",
+    "bytes": 632,
+    "sha256": "1df1c255ca499e9587f72885516b50f47e27079390fbe9aed6a0d3f1d239bf4b"
+  }
+]

@@ -1,0 +1,169 @@
+/* Keep setup in the page flow. Expanded forms and shelves grow the page. */
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 100svh;
+  overflow: clip;
+  padding: 100px 0 52px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .world-canvas,
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .world-vignette {
+  position: fixed;
+  height: 100svh;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .start-panel {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 400px;
+  max-width: calc(100% - 40px);
+  max-height: none;
+  overflow: visible;
+  margin: auto 0 auto clamp(28px, 4.5vw, 82px);
+  padding: 0;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) h1 {
+  font-size: 46px;
+  line-height: 1.04;
+  margin: 12px 0 18px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .intro {
+  max-width: 360px;
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .player-pills {
+  margin-bottom: 16px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .setup-card {
+  padding: 18px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .name-field {
+  padding: 10px 12px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .color-row {
+  margin: 12px 0;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .mode-tabs {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .mode-description {
+  flex: none;
+  min-height: 0;
+  padding: 8px 0;
+  margin: 0;
+  font-size: 12px !important;
+  color: #63745f;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .map-picker {
+  margin: 8px 0 12px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .map-picker button {
+  min-height: 44px;
+  padding: 10px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .map-description {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #63745f;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .start-button {
+  min-height: 46px;
+  padding: 11px 14px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .join-toggle {
+  min-height: 36px;
+  padding: 10px 0 0;
+  font-size: 12px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .start-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 16px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .build-shelf {
+  margin: 0;
+}
+
+:where(body:has(.handwerker))
+  .game-shell:not(.is-playing)
+  .build-shelf:has(> div) {
+  flex-basis: 100%;
+}
+
+:where(body:has(.handwerker))
+  .game-shell:not(.is-playing)
+  .build-shelf
+  > button,
+:where(body:has(.handwerker)) .game-shell:not(.is-playing) .how-link {
+  min-height: 40px;
+  width: auto;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+@media (max-height: 800px) and (min-width: 1025px) {
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) {
+    padding-top: 92px;
+    padding-bottom: 42px;
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) .eyebrow {
+    display: none;
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) h1 {
+    font-size: 38px;
+    margin: 0 0 14px;
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) .player-pills {
+    margin-bottom: 12px;
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) .setup-card {
+    padding: 14px 18px;
+  }
+}
+
+@media (max-width: 1024px), (max-height: 500px), (pointer: coarse) {
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) {
+    padding: 80px 0 12px;
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) .start-panel {
+    margin: 12px auto 20px;
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) h1 {
+    font-size: clamp(32px, 8.5vw, 46px);
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) .start-footer {
+    position: relative;
+    margin-top: auto;
+    padding: 12px 20px;
+  }
+  :where(body:has(.handwerker)) .game-shell:not(.is-playing) .join-toggle {
+    min-height: 44px;
+  }
+}

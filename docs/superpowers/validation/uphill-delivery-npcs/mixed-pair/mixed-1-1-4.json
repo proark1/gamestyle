@@ -1,0 +1,58 @@
+{
+  "revision": "2bb80f92c4cd704adbd239aa0bbba52134ff0fc5152e48273b04ebe713d1819a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "992c8cd338d127d6f00f4d62c8ac11c6b875a275d410f7c5ebdd3242b9a8f46a",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 1,
+  "bots": 1,
+  "variant": 4,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 180,
+  "carryingSeconds": 643.8333333333334,
+  "stoppedCarryingSeconds": 0,
+  "ignoredStopFrames": 0,
+  "actions": 146,
+  "stage": 4,
+  "sofa": {
+    "x": -7.619972187767352,
+    "y": 9.351204429049982,
+    "z": -0.633700118828344,
+    "velocity": {
+      "x": 0.020474337962956585,
+      "y": 0.08027234172979536,
+      "z": 0.0025785749293381482
+    },
+    "angular": {
+      "x": 0.0868303888024278,
+      "y": -0.01723490367080191,
+      "z": -0.18068943418221933
+    },
+    "quaternion": {
+      "x": -0.08391730983940315,
+      "y": -0.24879787030371692,
+      "z": 0.02768910452005698,
+      "w": -0.9645158465948239
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": -4.148381683985192,
+      "y": 9.957967643558625,
+      "z": -2.158440795190999,
+      "grip": 1
+    },
+    {
+      "name": "Jo",
+      "x": -9.65426939051603,
+      "y": 8.991537572378574,
+      "z": 1.0263927085918503,
+      "grip": 2,
+      "task": "Turning together"
+    }
+  ]
+}

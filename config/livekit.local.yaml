@@ -1,0 +1,13 @@
+# Local development only. Never use these public credentials on an internet server.
+port: 18880
+bind_addresses:
+  - 127.0.0.1
+rtc:
+  tcp_port: 18881
+  udp_port: 18882
+  node_ip: 127.0.0.1
+  use_external_ip: false
+keys:
+  devkey: secret
+logging:
+  level: warn

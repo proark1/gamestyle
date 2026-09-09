@@ -11,3 +11,8 @@ export function getDb() {
 
   return drizzle(env.DB, { schema });
 }
+
+export function getBinding(): import('./contract').GameDatabase {
+  if (!env.DB) throw new Error('Database unavailable.');
+  return env.DB;
+}

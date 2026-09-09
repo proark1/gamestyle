@@ -1,0 +1,58 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "855415b1438a51cf0aec60f15349639d842e300e20398815c9cd58ce05729cbb",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 1,
+  "bots": 1,
+  "variant": 0,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 0,
+  "carryingSeconds": 525.5166666666667,
+  "stoppedCarryingSeconds": 0,
+  "ignoredStopFrames": 0,
+  "actions": 91,
+  "stage": 0,
+  "sofa": {
+    "x": 1.8497309570491143,
+    "y": 0.43761977332259594,
+    "z": -13.620103581058535,
+    "velocity": {
+      "x": 0.8696624572683254,
+      "y": -0.36198268572287295,
+      "z": 0.20770868123473185
+    },
+    "angular": {
+      "x": 0.1842573178932506,
+      "y": 0.2755320894636425,
+      "z": 0.5708585360761725
+    },
+    "quaternion": {
+      "x": 0.6230997452024781,
+      "y": 0.36873030782684235,
+      "z": 0.41405476801800034,
+      "w": -0.5516731973733081
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": 2.319120997661902,
+      "y": -0.6000629059253701,
+      "z": -15.526036363479657,
+      "grip": 2
+    },
+    {
+      "name": "Jo",
+      "x": 3.8730161580125384,
+      "y": -0.6000784800000002,
+      "z": -13.213118117325557,
+      "grip": 1,
+      "task": "Carrying"
+    }
+  ]
+}

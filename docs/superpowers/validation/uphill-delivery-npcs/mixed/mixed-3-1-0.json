@@ -1,0 +1,72 @@
+{
+  "revision": "da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a",
+  "driverRevision": "c607f14fad962b10227e5b2c81e582d28c7971524cb8e7817cda01b97764e881",
+  "inputHash": "125c4607ecc9b7325a543e3cbb3ad3f7a88806a3c240246d2d7cfdc8ff6c6d1a",
+  "goatsEnabled": true,
+  "depotStart": true,
+  "limitSeconds": 900,
+  "driver": "scripted planner controls; not a human playtest",
+  "humans": 3,
+  "bots": 1,
+  "variant": 0,
+  "phase": "playing",
+  "seconds": 900,
+  "stops": 0,
+  "carryingSeconds": 809.4833333333333,
+  "stoppedCarryingSeconds": 0,
+  "ignoredStopFrames": 0,
+  "actions": 289,
+  "stage": 0,
+  "sofa": {
+    "x": 5.218892735649403,
+    "y": 4.039611227512339,
+    "z": 13.601228215297688,
+    "velocity": {
+      "x": -0.873268040148059,
+      "y": -0.24525069756665072,
+      "z": 1.0250778402803868
+    },
+    "angular": {
+      "x": -0.24828180552089732,
+      "y": -0.31307389540691105,
+      "z": 0.1043947491087977
+    },
+    "quaternion": {
+      "x": 0.0350225234118248,
+      "y": -0.09866705788579744,
+      "z": -0.025479914425515685,
+      "w": -0.9941775538116406
+    }
+  },
+  "players": [
+    {
+      "name": "Pilot 0",
+      "x": 3.6921218435079077,
+      "y": 2.33204964862668,
+      "z": 11.915665518316914,
+      "grip": 2
+    },
+    {
+      "name": "Pilot 1",
+      "x": 3.8785862251356424,
+      "y": 2.366585549716457,
+      "z": 15.267186792579603,
+      "grip": 0
+    },
+    {
+      "name": "Pilot 2",
+      "x": 9.393023004353475,
+      "y": 2.999981386082027,
+      "z": 11.998411578475915,
+      "grip": null
+    },
+    {
+      "name": "Sam",
+      "x": 7.910039199370602,
+      "y": 2.9999214124571685,
+      "z": 14.52758218847364,
+      "grip": 1,
+      "task": "Carrying"
+    }
+  ]
+}

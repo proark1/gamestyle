@@ -1,0 +1,39 @@
+/* The imported games and their portalled controls retain their own theme. */
+body:has(.handwerker) {
+  --background: #f8faf4;
+  --foreground: #293c3b;
+  --primary: #ffc83d;
+  --primary-foreground: #293c3b;
+  --muted: #eaf0e6;
+  --muted-foreground: #6b7c70;
+  --popover: #f8faf4;
+  --border: #d4dece;
+  --input: #dbe4d7;
+  --ring: #718c75;
+  --yellow: #ffc83d;
+  --ink: #293c3b;
+  --paper: #f8faf4;
+  --green: #628775;
+  color: var(--ink);
+  background: #b9cfbd;
+}
+body:has(.handwerker) button:focus-visible,
+body:has(.handwerker) a:focus-visible,
+body:has(.handwerker) input:focus-visible {
+  outline: 3px solid #496f5f;
+  outline-offset: 4px;
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/fredoka-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/dm-sans-latin-500-normal.woff2') format('woff2');
+}

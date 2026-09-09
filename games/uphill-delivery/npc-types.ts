@@ -1,0 +1,32 @@
+import type { Vec } from './types';
+import type { NpcWaypoint } from './npc-path';
+export type DeliveryBrain = {
+  grip: number | null;
+  actionAt: number;
+  movedAt: number;
+  last: Vec;
+  goal: Vec | null;
+  thinkAt: number;
+  path?: NpcWaypoint[];
+  crossing?: Vec;
+  jumpUntil?: number;
+  pair?: { grip: number; until: number };
+};
+export type DeliveryTeam = {
+  version: 1;
+  gap?: { ready: boolean; grips: Record<string, number> };
+  liftAt?: number;
+  reformUntil?: number;
+  reformCount?: number;
+  needsHelp?: boolean;
+  recoverySide?: number;
+  delivering?: boolean;
+  deliveringAt?: number;
+  stage: number;
+  helper: string | null;
+  panel: 'gate' | 'door' | null;
+  rotateAt: number;
+  goal: Vec;
+  progressAt: number;
+  last: Vec;
+};

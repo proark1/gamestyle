@@ -1,0 +1,296 @@
+:where(body:has(.handwerker)) .game-shell .home-build-kit {
+  width: min(650px, calc(100vw - 32px));
+  padding: 12px 14px 0;
+}
+:where(body:has(.handwerker)) .game-shell .home-build-kit .piece-cards {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #98b09e transparent;
+  overscroll-behavior-x: contain;
+  padding: 10px 0;
+}
+:where(body:has(.handwerker)) .game-shell .home-build-kit .piece-card {
+  flex: 0 0 88px;
+  min-width: 88px;
+  min-height: 92px;
+}
+:where(body:has(.handwerker)) .game-shell .home-build-kit .piece-card span {
+  font-size: 12px;
+  white-space: normal;
+  line-height: 1.15;
+  text-align: center;
+}
+:where(body:has(.handwerker)) .game-shell .home-build-kit .piece-card img {
+  height: 62px;
+  width: 76px;
+}
+:where(body:has(.handwerker)) .finish-row,
+:where(body:has(.handwerker)) .paint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  color: #30443f;
+  font-size: 14px;
+}
+:where(body:has(.handwerker)) .finish-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+:where(body:has(.handwerker)) .finish-row select {
+  border: 1px solid #bcccb4;
+  border-radius: 6px;
+  background: #fffdf3;
+  color: #30443f;
+  padding: 5px 7px;
+  max-width: 170px;
+  font-size: 14px;
+}
+:where(body:has(.handwerker)) .paint-swatches {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+:where(body:has(.handwerker)) .paint-swatch {
+  height: 28px;
+  width: 28px;
+  flex-shrink: 0;
+  border: 2px solid #30443f25;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #172d27;
+}
+:where(body:has(.handwerker)) .paint-swatch.selected {
+  outline: 2px solid #30443f;
+  outline-offset: 2px;
+}
+:where(body:has(.handwerker)) .paint-swatch.selected svg {
+  background: #fffdf3;
+  border-radius: 50%;
+  padding: 1px;
+}
+:where(body:has(.handwerker)) .decorate-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+}
+:where(body:has(.handwerker)) .decorate-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #b9cbb4;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #e7efdf;
+  color: #30443f;
+  font-size: 14px;
+  flex: 1;
+}
+:where(body:has(.handwerker)) .decorate-actions button.active {
+  background: #f5c447;
+  border-color: #be9329;
+}
+:where(body:has(.handwerker)) .whole-house {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding: 7px 0;
+  font-size: 14px;
+  color: #30443f;
+}
+:where(body:has(.handwerker)) .whole-house input {
+  width: 18px;
+  height: 18px;
+  accent-color: #527e65;
+}
+:where(body:has(.handwerker)) .whole-house span {
+  font-size: 12px;
+  color: #5a715e;
+}
+:where(body:has(.handwerker)) .home-build-kit button:focus-visible,
+:where(body:has(.handwerker)) .home-build-kit select:focus-visible,
+:where(body:has(.handwerker)) .home-project button:focus-visible {
+  outline: 3px solid #548dc5;
+  outline-offset: 2px;
+}
+:where(body:has(.handwerker)) .home-projects-dialog {
+  max-width: 760px !important;
+  width: calc(100vw - 28px) !important;
+  max-height: 88dvh;
+  overflow-y: auto;
+}
+:where(body:has(.handwerker)) .home-projects-summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #e5efdc;
+  color: #30443f;
+  font-size: 14px;
+}
+:where(body:has(.handwerker)) .home-projects-summary span {
+  margin-left: auto;
+  font-size: 12px;
+}
+:where(body:has(.handwerker)) .home-projects-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+:where(body:has(.handwerker)) .home-project {
+  border: 1px solid #c4d2bc;
+  border-radius: 12px;
+  padding: 15px;
+  background: #f3f6ea;
+}
+:where(body:has(.handwerker)) .home-project.complete {
+  border-color: #659879;
+  background: #e8f1d8;
+}
+:where(body:has(.handwerker)) .home-project-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+:where(body:has(.handwerker)) .home-project-title h3 {
+  font:
+    500 21px 'Fredoka',
+    sans-serif;
+  margin: 0;
+  color: #30443f;
+}
+:where(body:has(.handwerker)) .home-project-title > span {
+  font-size: 14px;
+  color: #527e65;
+}
+:where(body:has(.handwerker)) .home-project p {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #5a715e;
+  margin: 9px 0 12px;
+}
+:where(body:has(.handwerker)) .home-project-goals {
+  display: grid;
+  gap: 3px;
+}
+:where(body:has(.handwerker)) .home-project-goals button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  padding: 7px 0;
+  font-size: 14px;
+  color: #30443f;
+}
+:where(body:has(.handwerker)) .home-project-goals button:hover {
+  background: #dde9cf;
+}
+:where(body:has(.handwerker)) .home-project-goals b {
+  margin-left: auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+:where(body:has(.handwerker)) .goal-check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1px solid #9cb293;
+  border-radius: 4px;
+}
+:where(body:has(.handwerker)) .goal-check.done {
+  background: #527e65;
+  color: white;
+}
+:where(body:has(.handwerker)) .home-project-reward {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-top: 1px dashed #b7c9aa;
+  margin-top: 12px;
+  padding-top: 10px;
+  font-size: 12px;
+  color: #527e65;
+}
+:where(body:has(.handwerker)) .game-shell .paint-selection {
+  background: #fff1be;
+  border: 1px solid #d4ae46;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #30443f;
+  max-width: 100%;
+}
+:where(body:has(.handwerker)) .paint-selection button {
+  background: #30443f;
+  color: #fffdf3;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 14px;
+}
+@media (max-width: 700px) {
+  :where(body:has(.handwerker)) .home-projects-grid {
+    grid-template-columns: 1fr;
+  }
+  :where(body:has(.handwerker)) .home-projects-summary {
+    flex-wrap: wrap;
+  }
+  :where(body:has(.handwerker)) .home-projects-summary span {
+    margin-left: 0;
+  }
+  :where(body:has(.handwerker))
+    .game-shell.compact-ui.is-playing
+    .home-build-kit {
+    max-height: 48dvh;
+  }
+  :where(body:has(.handwerker))
+    .game-shell.compact-ui.is-playing
+    .home-build-kit
+    .piece-card {
+    flex: 0 0 78px;
+    min-width: 78px;
+  }
+  :where(body:has(.handwerker)) .paint-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  :where(body:has(.handwerker)) .paint-swatches {
+    gap: 7px;
+  }
+  :where(body:has(.handwerker)) .paint-swatch {
+    width: 30px;
+    height: 30px;
+  }
+  :where(body:has(.handwerker)) .decorate-actions button {
+    padding: 10px 6px;
+    font-size: 13px;
+  }
+  :where(body:has(.handwerker)) .finish-row {
+    flex-wrap: wrap;
+  }
+  :where(body:has(.handwerker)) .whole-house {
+    font-size: 13px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(body:has(.handwerker)) .home-build-kit .piece-card:hover {
+    transform: none;
+  }
+}
