@@ -7,12 +7,13 @@ import {
   Camera,
   Castle,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Crosshair,
   Flame,
   Hand,
   LoaderCircle,
-  Package,
   Swords,
   Trophy,
   Users,
@@ -42,9 +43,7 @@ import {
 import {
   AMMO,
   BANNER_DOWN,
-  CRANK,
-  LEVER,
-  PILE,
+  ENGINE_REACH,
   ROUND_MS,
   SLING,
   TREBUCHET,
@@ -393,12 +392,10 @@ export default function SiegeAndDesist() {
 
   const disabled =
     !playing || status !== 'online' || !!modal || !me || me.flying;
-  const nearPile = at(me, PILE, 3);
+  // One reach covers the whole engine. Winding, aiming and loosing all used to
+  // be separate spots you had to walk between to fire a single shot.
+  const atEngine = at(me, TREBUCHET, ENGINE_REACH);
   const nearSling = at(me, SLING, 2.6);
-  const nearCrank = at(me, CRANK, 2.6);
-  const nearLever = at(me, LEVER, 2.6);
-  const canPush =
-    at(me, TREBUCHET, 5.2) && !!me && Math.abs(me.x - TREBUCHET.x) >= 0.7;
   const lastEvent = w?.events.at(-1);
   const flag = w && banner(w);
   const standing = w
@@ -419,17 +416,7 @@ export default function SiegeAndDesist() {
         !f.flying &&
         Math.hypot(me.x - f.x, me.z - f.z) < 2.5,
     );
-  const idle =
-    disabled ||
-    !(
-      nearCrank ||
-      nearPile ||
-      nearSling ||
-      nearLever ||
-      canPush ||
-      canHelp ||
-      riding
-    );
+  const idle = disabled || !(atEngine || nearSling || canHelp || riding);
 
   return (
     <main className={`sad-game${session ? ' in-session' : ''}`}>
@@ -606,8 +593,8 @@ export default function SiegeAndDesist() {
                       ? 'DOWN'
                       : p.winding
                         ? 'WINDING'
-                        : p.carrying
-                          ? AMMO[p.carrying].name
+                        : p.pushing
+                          ? 'AIMING'
                           : '—'}
                 </small>
               </div>
@@ -692,20 +679,14 @@ export default function SiegeAndDesist() {
               {(me?.flying ||
                 riding ||
                 (me && me.stunnedUntil > w.clock) ||
-                me?.carrying ||
                 (flag && flag.y <= BANNER_DOWN + 1)) && (
                 <div className="sad-your-status">
                   {me?.flying ? (
                     'You are airborne. Nothing to do but arrive.'
                   ) : riding ? (
-                    'You are in the sling. Someone still has to pull the lever.'
+                    'You are in the sling. Someone else has to loose it.'
                   ) : me && me.stunnedUntil > w.clock ? (
                     'Flattened. A crewmate can haul you up with H.'
-                  ) : me?.carrying ? (
-                    <>
-                      <Package size={16} /> Carrying {AMMO[me.carrying].name} ·
-                      take it to the sling
-                    </>
                   ) : (
                     <>
                       <Flame size={16} /> The banner is going down.
@@ -723,7 +704,7 @@ export default function SiegeAndDesist() {
               <nav className="sad-action-dock" aria-label="Siege actions">
                 <button
                   className="sad-action wind"
-                  disabled={disabled || !nearCrank}
+                  disabled={disabled || !atEngine}
                   onPointerDown={() => action({ type: 'wind' })}
                   onPointerUp={() => action({ type: 'stopWind' })}
                   onPointerLeave={() => action({ type: 'stopWind' })}
@@ -731,40 +712,53 @@ export default function SiegeAndDesist() {
                 >
                   <Crosshair size={21} />
                   <span>
-                    Wind
-                    <kbd>
-                      R · {nearCrank ? 'hold the winch' : 'go to the winch'}
-                    </kbd>
+                    Wind<kbd>Hold R</kbd>
                   </span>
                 </button>
+                {/* Two nudges rather than a rule about which side of the frame
+                    you are standing on. */}
                 <button
-                  className="sad-action"
-                  disabled={disabled || (!nearPile && !nearSling)}
-                  onClick={() => action({ type: 'grab' })}
-                >
-                  <Package size={20} />
-                  <span>
-                    {me?.carrying && nearSling ? 'Load sling' : 'Fetch'}
-                    <kbd>
-                      E ·{' '}
-                      {me?.carrying
-                        ? nearSling
-                          ? 'into the sling'
-                          : 'carry to sling'
-                        : 'from the pile'}
-                    </kbd>
-                  </span>
-                </button>
-                <button
-                  className="sad-action"
-                  disabled={disabled || !canPush}
-                  onPointerDown={() => action({ type: 'push' })}
+                  className="sad-action nudge"
+                  aria-label="Swing the aim left"
+                  disabled={disabled || !atEngine}
+                  onPointerDown={() => action({ type: 'push', side: 1 })}
                   onPointerUp={() => action({ type: 'stopPush' })}
                   onPointerLeave={() => action({ type: 'stopPush' })}
                   onPointerCancel={() => action({ type: 'stopPush' })}
                 >
+                  <ChevronLeft size={22} />
                   <span>
-                    Swing aim<kbd>Q · push the frame</kbd>
+                    <kbd>Q</kbd>
+                  </span>
+                </button>
+                <button
+                  className="sad-action nudge"
+                  aria-label="Swing the aim right"
+                  disabled={disabled || !atEngine}
+                  onPointerDown={() => action({ type: 'push', side: -1 })}
+                  onPointerUp={() => action({ type: 'stopPush' })}
+                  onPointerLeave={() => action({ type: 'stopPush' })}
+                  onPointerCancel={() => action({ type: 'stopPush' })}
+                >
+                  <ChevronRight size={22} />
+                  <span>
+                    <kbd>E</kbd>
+                  </span>
+                </button>
+                <button
+                  className="sad-action loose"
+                  disabled={
+                    disabled ||
+                    !atEngine ||
+                    riding ||
+                    (!w.loaded && !w.rider) ||
+                    w.wind < 0.12
+                  }
+                  onClick={() => action({ type: 'loose' })}
+                >
+                  <Swords size={21} />
+                  <span>
+                    LOOSE<kbd>F</kbd>
                   </span>
                 </button>
                 <button
@@ -784,25 +778,7 @@ export default function SiegeAndDesist() {
                 >
                   <Hand size={19} />
                   <span>
-                    Haul up<kbd>H · nearby crewmate</kbd>
-                  </span>
-                </button>
-                <button
-                  className="sad-action loose"
-                  disabled={
-                    disabled ||
-                    !nearLever ||
-                    (!w.loaded && !w.rider) ||
-                    w.wind < 0.12
-                  }
-                  onClick={() => action({ type: 'loose' })}
-                >
-                  <Swords size={21} />
-                  <span>
-                    LOOSE
-                    <kbd>
-                      F · {nearLever ? 'pull the pin' : 'reach the lever'}
-                    </kbd>
+                    Haul up<kbd>H</kbd>
                   </span>
                 </button>
                 {/* The compact layout shows only the actions you can take, so
@@ -813,7 +789,7 @@ export default function SiegeAndDesist() {
                       ? 'Airborne. Nothing to do but arrive.'
                       : me && w && me.stunnedUntil > w.clock
                         ? 'Flattened. A crewmate can haul you up.'
-                        : 'Walk to the winch, the pile or the lever.'}
+                        : 'Walk back to the engine.'}
                   </span>
                 )}
               </nav>
@@ -821,8 +797,8 @@ export default function SiegeAndDesist() {
                   After that they are a permanent banner of things you know. */}
               {w.volleys === 0 && (
                 <span className="sad-movement-hint">
-                  WASD / arrows to move · The gold ring shows where this wind
-                  lands · Fire pots burn timber, the hive clears the walls
+                  WASD / arrows to move · Hold R to wind, F to loose, Q and E to
+                  swing the aim · The gold ring is where this wind lands
                 </span>
               )}
             </>

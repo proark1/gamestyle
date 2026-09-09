@@ -58,7 +58,6 @@ export class SiegeScene {
   private blocks = new Map<number, T.Group>();
   private shots = new Map<number, T.Group>();
   private pots = new Map<number, T.Group>();
-  private carried = new Map<string, { kind: AmmoKind; model: T.Group }>();
   private payload: { kind: AmmoKind; model: T.Group } | null = null;
   private snapshot: SiegeSnapshot | null = null;
   private demo = freshSiege(100000);
@@ -108,7 +107,7 @@ export class SiegeScene {
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
     this.renderer.domElement.setAttribute(
       'aria-label',
-      'Siege and Desist field. WASD moves, R winds the winch, E loads, Q swings the aim, F looses, C rides the sling.',
+      'Siege and Desist field. WASD moves, hold R to wind the counterweight, F looses, Q and E swing the aim, C rides the sling.',
     );
     this.renderer.domElement.tabIndex = 0;
     container.appendChild(this.renderer.domElement);
@@ -174,7 +173,8 @@ export class SiegeScene {
   }
   resetInput = () => {
     if (this.keys.has('r')) this.cb.action({ type: 'stopWind' });
-    if (this.keys.has('q')) this.cb.action({ type: 'stopPush' });
+    if (this.keys.has('q') || this.keys.has('e'))
+      this.cb.action({ type: 'stopPush' });
     this.keys.clear();
     this.touch = { x: 0, z: 0 };
     this.cb.input(idleInput());
@@ -220,9 +220,11 @@ export class SiegeScene {
     this.keys.add(key);
     if (e.repeat || held) return;
     if (key === 'r') this.cb.action({ type: 'wind' });
-    if (key === 'q') this.cb.action({ type: 'push' });
+    // Q and E swing the aim. Which way you lean used to depend on which side of
+    // the frame you had walked round to, which nobody ever worked out.
+    if (key === 'q') this.cb.action({ type: 'push', side: 1 });
+    if (key === 'e') this.cb.action({ type: 'push', side: -1 });
     const once = {
-      e: 'grab',
       f: 'loose',
       c: 'ride',
       h: 'help',
@@ -236,7 +238,7 @@ export class SiegeScene {
     if (!this.keys.has(key)) return;
     this.keys.delete(key);
     if (key === 'r') this.cb.action({ type: 'stopWind' });
-    if (key === 'q') this.cb.action({ type: 'stopPush' });
+    if (key === 'q' || key === 'e') this.cb.action({ type: 'stopPush' });
   };
   private resize() {
     const { width, height } = this.container.getBoundingClientRect();
@@ -313,7 +315,6 @@ export class SiegeScene {
         this.scene.remove(model);
         this.release(model);
         this.people.delete(id);
-        this.carried.delete(id);
       }
     for (const p of w.players) {
       let model = this.people.get(p.id);
@@ -338,34 +339,16 @@ export class SiegeScene {
         : stunned
           ? Math.PI / 2.1
           : model.rotation.z * 0.8;
-      // Carried payloads ride in front of the crewmate who fetched them.
-      const slot = model.getObjectByName('carried')!;
-      const held = this.carried.get(p.id);
-      if (held?.kind !== p.carrying) {
-        if (held) {
-          slot.remove(held.model);
-          this.release(held.model);
-          this.carried.delete(p.id);
-        }
-        if (p.carrying) {
-          const item = ammoModel(p.carrying);
-          item.scale.setScalar(p.carrying === 'cow' ? 0.55 : 0.9);
-          slot.add(item);
-          this.carried.set(p.id, { kind: p.carrying, model: item });
-        }
-      }
       const walking = !stunned && !p.flying && Math.hypot(p.vx, p.vz) > 0.4;
       const swing = walking ? Math.sin(now * 0.013) * 0.55 : 0;
       const winding = p.winding || p.pushing !== 0;
       for (let i = 0; i < 2; i++) {
         model.getObjectByName(`leg${i}`)!.rotation.x = swing * (i ? 1 : -1);
-        model.getObjectByName(`arm${i}`)!.rotation.x = p.carrying
-          ? -1.3
-          : winding
-            ? -1.15 + Math.sin(now * 0.009) * 0.35
-            : p.flying
-              ? -2.5
-              : swing * (i ? -1 : 1);
+        model.getObjectByName(`arm${i}`)!.rotation.x = winding
+          ? -1.15 + Math.sin(now * 0.009) * 0.35
+          : p.flying
+            ? -2.5
+            : swing * (i ? -1 : 1);
       }
     }
   }

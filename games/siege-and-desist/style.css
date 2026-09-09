@@ -647,6 +647,15 @@
 .sad-action.ride:not(:disabled) {
   border-color: #6d5c40;
 }
+/* The two aim nudges are narrow: an arrow and its key, no label. They sit
+   beside Wind and Loose without turning the dock back into a wall of text. */
+.sad-action.nudge {
+  gap: 5px;
+  padding: 10px 11px;
+}
+.sad-action.nudge span {
+  gap: 0;
+}
 .sad-movement-hint {
   position: absolute;
   left: 50%;
