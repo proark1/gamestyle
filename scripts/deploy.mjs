@@ -12,12 +12,18 @@ const SERVICE = 'jumbleyard';
 const ENVIRONMENT = 'production';
 const force = process.argv.includes('--force');
 
-/** Which directory actually gets uploaded is not obvious: `railway up` is
- *  documented as deploying "the current directory", but run inside a git
- *  worktree it has been observed uploading the root checkout instead. Rather
- *  than depend on which is true, resolve one directory, check that one, and
- *  hand it to the CLI as an explicit path, so the upload cannot disagree with
- *  what was checked. */
+/** Resolve one directory, check that one, and upload that one, so the upload
+ *  cannot disagree with what was checked.
+ *
+ *  Uploading the right directory is not enough on its own: `railway up` names
+ *  every file in its archive relative to the directory the project was linked
+ *  in, not the directory it uploads. The link lives on the root checkout, so
+ *  from a worktree the whole app arrived nested under
+ *  `./.claude/worktrees/<name>/`; the builder found no Dockerfile or
+ *  railway.json at the top, fell back to railpack, and failed with "could not
+ *  determine how to build the app". --path-as-root roots the archive at this
+ *  directory instead: from the root checkout that changes nothing, and from a
+ *  worktree it lays the files out exactly as a root-checkout deploy would. */
 const DEPLOY_DIR = execFileSync('git', ['rev-parse', '--show-toplevel'], {
   encoding: 'utf8',
 }).trim();
@@ -119,7 +125,9 @@ const up = spawnSync(
     '--environment',
     ENVIRONMENT,
     ...process.argv.slice(2).filter((a) => a !== '--force'),
-    // Explicit path: the checked directory is the uploaded directory.
+    // The checked directory is the uploaded directory, and the root of the
+    // archive. See DEPLOY_DIR.
+    '--path-as-root',
     DEPLOY_DIR,
   ],
   { stdio: 'inherit', shell: process.platform === 'win32' },
