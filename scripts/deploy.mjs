@@ -100,7 +100,12 @@ else {
       'Wait for it. Two sessions deploying at once is how one silently overwrites the other.',
     );
 
-  console.log(`\n  Deploying ${head.slice(0, 7)}, in sync with origin/main.\n`);
+  console.log(
+    `
+  Deploying ${head.slice(0, 7)} from ${DEPLOY_DIR}
+  in sync with origin/main.
+`,
+  );
 }
 
 const up = spawnSync(
