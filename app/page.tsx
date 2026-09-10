@@ -28,13 +28,13 @@ import './collection.css';
 // The shelf opens with a fixed running order, then shuffles everything after it
 // so the rest of the collection gets a turn in the top row.
 const PINNED = [
-  'siege-and-desist',
   'stack-or-sink',
   'uphill-delivery',
   'reel-problems',
   'shelf-control',
 ] as const;
 const SHUFFLED = [
+  'siege-and-desist',
   'load-bearing',
   'wrong-floor',
   'one-more-button',
@@ -67,7 +67,7 @@ const CARDS: Record<string, ReactElement> = {
           alt="Four tiny medieval crew members work one enormous wooden trebuchet on a golden hillside while a boulder sails toward a sandstone keep flying a red banner."
           width="1536"
           height="1024"
-          fetchPriority="high"
+          loading="lazy"
         />
         <span className="game-card-tag">
           <Castle size={14} /> EVERYONE VS. THE KEEP
