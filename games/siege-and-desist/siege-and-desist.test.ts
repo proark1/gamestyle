@@ -513,6 +513,50 @@ void test('the aim cannot be swung past its stops', () => {
   assert.ok(p.pushing !== 0);
 });
 
+void test('the camera can be swung the whole way round the siege', async () => {
+  const { orbitAround } = await import('./scene');
+  const look = { x: 0, y: 5, z: -10 };
+  const REST = 0.209;
+
+  // Resting, it reproduces the framing the camera had before it could be moved.
+  const rest = orbitAround(look, 48, 0, REST);
+  assert.ok(Math.abs(rest.x - 0) < 0.01);
+  assert.ok(Math.abs(rest.y - 15) < 0.2, `resting height ${rest.y}`);
+  assert.ok(Math.abs(rest.z - 37) < 0.2, `resting distance ${rest.z}`);
+
+  // A quarter turn puts it beside the siege, a half turn behind the keep, and
+  // the whole way round returns it to where it started.
+  const quarter = orbitAround(look, 48, Math.PI / 2, REST);
+  assert.ok(quarter.x > 40, 'a quarter turn swings it out to one side');
+  assert.ok(Math.abs(quarter.z - look.z) < 0.1);
+  const half = orbitAround(look, 48, Math.PI, REST);
+  assert.ok(
+    half.z < look.z - 40,
+    'a half turn looks back from behind the keep',
+  );
+  const full = orbitAround(look, 48, Math.PI * 2, REST);
+  assert.ok(Math.hypot(full.x - rest.x, full.z - rest.z) < 0.01);
+
+  // Every angle keeps the same distance, so swinging round never drifts in.
+  for (const yaw of [0.4, 1.7, 3.3, 5.9]) {
+    const at = orbitAround(look, 48, yaw, REST);
+    const out = Math.hypot(at.x - look.x, at.y - look.y, at.z - look.z);
+    assert.ok(Math.abs(out - 48) < 0.01, `yaw ${yaw} sat at ${out}`);
+  }
+
+  // Pitch is clamped at both ends: never underground, never past overhead.
+  const low = orbitAround(look, 48, 0, -9);
+  assert.ok(low.y > 1, `a drag to the floor left the camera at ${low.y}`);
+  const high = orbitAround(look, 48, 0, 9);
+  assert.ok(high.y < look.y + 48, 'and never straight down the well');
+  assert.ok(
+    Math.hypot(high.x - look.x, high.z - look.z) > 1,
+    'a top-down view still keeps some ground offset to look along',
+  );
+  // A look point on the floor cannot push the camera below it either.
+  assert.ok(orbitAround({ x: 0, y: 0, z: 0 }, 20, 0, -9).y >= 1.2);
+});
+
 void test('the beam winds down behind the pivot and whips at the castle', async () => {
   const { armAngle } = await import('./scene');
   // Where the throwing end of the beam actually ends up, rotated about the

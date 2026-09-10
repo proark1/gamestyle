@@ -797,8 +797,8 @@ export default function SiegeAndDesist() {
                   After that they are a permanent banner of things you know. */}
               {w.volleys === 0 && (
                 <span className="sad-movement-hint">
-                  WASD / arrows to move · Hold R to wind, F to loose, Q and E to
-                  swing the aim · The gold ring is where this wind lands
+                  WASD to move · hold R to wind, F to loose, Q and E to aim ·
+                  drag the field to look around, scroll to zoom
                 </span>
               )}
             </>
@@ -891,36 +891,41 @@ export default function SiegeAndDesist() {
           {modal === 'help' && (
             <div className="sad-help">
               <p>
-                <strong>Wind it.</strong> Stand at the winch behind the frame
-                and hold R. Every extra pair of hands winds faster. The
-                counterweight sets your range: about half a wind reaches the
-                gate, three quarters reaches the keep behind it, and a full wind
-                sails clean over.
+                <strong>Wind it.</strong> Stand at the engine and hold R. Every
+                extra pair of hands winds faster. The counterweight sets your
+                range: about half a wind reaches the gate, three quarters
+                reaches the keep behind it, and a full wind sails clean over.
               </p>
               <p>
-                <strong>Load it.</strong> Press E at the supply pile to pick
-                something up, carry it to the sling, and press E again. Boulders
-                break stone. Fire pots set timber alight and burn a course
-                through. The beehive clears the battlements so the defenders
-                stop throwing clay pots. The cow is the cow.
+                <strong>Loose it.</strong> Press F. That is the whole job — the
+                sling restocks itself from the pile, and winding, aiming and
+                loosing all work from anywhere beside the frame. Boulders break
+                stone. Fire pots set timber alight and burn a course through.
+                The beehive clears the battlements so the defenders stop
+                throwing clay pots. The cow is the cow.
               </p>
               <p>
-                <strong>Aim it.</strong> Stand at either side of the frame and
-                hold Q to lean on it. Pushing from the left swings the throw
-                right. The gold ring on the ground shows where the current wind
-                will land.
+                <strong>Aim it.</strong> Q and E swing the frame left and right.
+                The gold ring on the ground shows where the current wind will
+                land. A clay pot on the frame knocks both the wind and the aim,
+                so expect to straighten up under fire.
               </p>
               <p>
-                <strong>Loose it.</strong> Someone has to be at the release
-                lever on the right and press F. That someone is not the person
-                in the sling. Press C to climb into the sling yourself, which is
-                a real option and a terrible one.
+                <strong>Ride it.</strong> Press C at the sling to climb in. The
+                one thing you cannot do alone is loose a sling you are sitting
+                in, so somebody else has to press F. It is a real option and a
+                terrible one.
+              </p>
+              <p>
+                <strong>Look around.</strong> Drag the field to swing the camera
+                round the siege, scroll or pinch to move in and out, and press V
+                to switch between the engine and your own crewmate — which also
+                puts the camera back where it started.
               </p>
               <p>
                 <strong>Stay upright.</strong> Falling masonry and clay pots
-                flatten you; H hauls a crewmate back up. WASD / arrows move,
-                Space jumps, V changes the camera, and the camera rides the shot
-                by default. On touchscreens use the joystick and the action
+                flatten you; H hauls a crewmate back up. WASD / arrows move and
+                Space jumps. On touchscreens use the joystick and the action
                 dock.
               </p>
               <p>
