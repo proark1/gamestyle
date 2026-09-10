@@ -22,6 +22,35 @@ import {
   type SiegeWorld,
 } from './types';
 
+/** The camera's resting angle above the ground, and the limits a drag may take
+ *  it to. The default reproduces the framing it had before it could be moved. */
+const REST_PITCH = 0.209;
+const MIN_PITCH = 0.05;
+const MAX_PITCH = 1.25;
+const MIN_DOLLY = 0.45;
+const MAX_DOLLY = 2.2;
+const clamp = (n: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, n));
+/**
+ * Where the camera sits for a look point, swung round it by a yaw and lifted by
+ * a pitch. Yaw runs the whole way round; pitch is clamped so a drag can neither
+ * bury the camera in the ground nor tip it past straight down.
+ */
+export function orbitAround(
+  look: { x: number; y: number; z: number },
+  distance: number,
+  yaw: number,
+  pitch: number,
+) {
+  const lift = clamp(pitch, MIN_PITCH, MAX_PITCH);
+  const flat = Math.cos(lift) * distance;
+  return {
+    x: look.x + flat * Math.sin(yaw),
+    y: Math.max(1.2, look.y + Math.sin(lift) * distance),
+    z: look.z + flat * Math.cos(yaw),
+  };
+}
+
 // Negative angles carry the throwing end toward the castle, positive ones back
 // over the crew. Winding therefore counts up, and the release sweeps down past
 // rest and over the top: the beam whips the way the shot actually flies.
@@ -71,6 +100,10 @@ export class SiegeScene {
   private seq = 0;
   private localId = '';
   private view: 'shot' | 'follow' = 'shot';
+  /** Where the crew has dragged the camera to, around whatever it is watching. */
+  private orbit = { yaw: 0, pitch: REST_PITCH, dolly: 1 };
+  private pointers = new Map<number, { x: number; y: number }>();
+  private pinch = 0;
   private blocked = false;
   private disposed = false;
   private look = new T.Vector3(0, 1, -2);
@@ -143,6 +176,18 @@ export class SiegeScene {
     window.addEventListener('keyup', this.keyUp, opts);
     window.addEventListener('blur', this.resetInput, opts);
     document.addEventListener('visibilitychange', this.hidden, opts);
+    const canvas = this.renderer.domElement;
+    for (const type of [
+      'pointerdown',
+      'pointermove',
+      'pointerup',
+      'pointercancel',
+    ] as const)
+      canvas.addEventListener(type, this.orbitPointer, opts);
+    canvas.addEventListener('wheel', this.orbitWheel, {
+      ...opts,
+      passive: false,
+    });
     this.renderer.domElement.addEventListener(
       'webglcontextlost',
       (e) => {
@@ -170,6 +215,8 @@ export class SiegeScene {
   }
   changeCamera() {
     this.view = this.view === 'shot' ? 'follow' : 'shot';
+    // Also the way back to a sensible angle once a drag has gone wandering.
+    this.orbit = { yaw: 0, pitch: REST_PITCH, dolly: 1 };
   }
   resetInput = () => {
     if (this.keys.has('r')) this.cb.action({ type: 'stopWind' });
@@ -182,6 +229,68 @@ export class SiegeScene {
   private hidden = () => {
     if (document.hidden) this.resetInput();
   };
+  /** Dragging the field swings the camera round it; two fingers pinch to zoom.
+   *  The HUD sits above the canvas, so a drag on a panel or a thumb control
+   *  never reaches this. */
+  private orbitPointer = (e: PointerEvent) => {
+    const canvas = this.renderer.domElement;
+    if (e.type === 'pointerdown') {
+      this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.pointers.size === 2) this.pinch = this.spread();
+      try {
+        // Keeps the drag alive past the edge of the canvas. Refused for a
+        // pointer the browser no longer owns, which must not kill the drag.
+        canvas.setPointerCapture(e.pointerId);
+      } catch {
+        /* Dragging still works without capture. */
+      }
+      return;
+    }
+    if (e.type !== 'pointermove') {
+      this.pointers.delete(e.pointerId);
+      if (this.pointers.size < 2) this.pinch = 0;
+      return;
+    }
+    const last = this.pointers.get(e.pointerId);
+    if (!last) return;
+    const dx = e.clientX - last.x;
+    const dy = e.clientY - last.y;
+    this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (this.pointers.size > 1) {
+      const gap = this.spread();
+      if (this.pinch > 0 && gap > 0) this.dolly(this.pinch / gap);
+      this.pinch = gap;
+      return;
+    }
+    // The field follows the finger: drag right and the siege swings right.
+    this.orbit.yaw -= dx * 0.006;
+    this.orbit.pitch = clamp(
+      this.orbit.pitch + dy * 0.005,
+      MIN_PITCH,
+      MAX_PITCH,
+    );
+  };
+  private orbitWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    this.dolly(Math.exp(e.deltaY * 0.0012));
+  };
+  private dolly(factor: number) {
+    this.orbit.dolly = clamp(this.orbit.dolly * factor, MIN_DOLLY, MAX_DOLLY);
+  }
+  private spread() {
+    const [a, b] = [...this.pointers.values()];
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+  }
+  /** Camera position for a look point, swung to wherever the crew dragged it. */
+  private orbitPos(look: T.Vector3, distance: number, bias = 0) {
+    const at = orbitAround(
+      look,
+      distance * this.orbit.dolly,
+      this.orbit.yaw,
+      this.orbit.pitch + bias,
+    );
+    return new T.Vector3(at.x, at.y, at.z);
+  }
   private keyDown = (e: KeyboardEvent) => {
     if (
       this.blocked ||
@@ -412,15 +521,18 @@ export class SiegeScene {
         flight.z - flight.vz * 0.55 + 9,
       );
     } else if (me && this.view === 'follow') {
+      // Closer in, and a little steeper, so a crewmate reads against the ground.
       look = new T.Vector3(me.x, 1.4, me.z - 3);
-      target = new T.Vector3(me.x * 0.7, 9 * zoom, me.z + 15 * zoom);
+      target = this.orbitPos(look, 19.5 * zoom, 0.19);
     } else {
       // Behind and above the engine, so the crew, the trebuchet and the keep
       // are all in one frame and the throw reads as an arc rather than a plan.
       look = new T.Vector3(0, 5, -10);
-      target = new T.Vector3(0, 15 * zoom, 37 * zoom);
+      target = this.orbitPos(look, 48 * zoom);
     }
-    this.camera.position.lerp(target, Math.min(1, dt * (flight ? 6 : 2.6)));
+    // A drag has to answer immediately, or the camera feels like it is on a rope.
+    const chase = flight ? 6 : this.pointers.size ? 12 : 2.6;
+    this.camera.position.lerp(target, Math.min(1, dt * chase));
     this.look.lerp(look, Math.min(1, dt * (flight ? 6 : 3)));
     this.camera.lookAt(this.look);
   }

@@ -22,6 +22,9 @@ Stand at the engine and hold `R`, then press `F`.
 | `Q` `E`  | swing the aim left and right             |
 | `C`      | climb into the sling, at the sling       |
 | `H`      | haul up a flattened crewmate             |
+| drag     | swing the camera round the siege         |
+| scroll   | move in and out — pinch on a touchscreen |
+| `V`      | engine or crewmate, and back to a resting camera |
 
 All of it works from anywhere within six metres of the frame. This is the second
 version of the loop. The first one had four stations — supply pile, sling,
@@ -89,6 +92,31 @@ engine passed it. It now converts the angle into where the throwing end
 actually is, and asserts that winding brings it down onto the loading spot
 behind the pivot and that a release carries it toward the castle.
 
+## Looking at it
+
+The camera used to have exactly two vantage points — behind the engine, or over
+your own crewmate's shoulder — and `V` swapped between them. A siege is a thing
+you want to walk around, so dragging the field now swings the camera the whole
+way round whatever it is watching, scroll or pinch moves in and out, and `V`
+both switches subject and puts the camera back at rest.
+
+The resting angle reproduces the old framing exactly, so nothing about the
+default view changed: a look point of (0, 5, -10) at 48m, yaw 0, pitch 0.209
+rad puts the camera at (0, 15, 37), which is where it always sat. Pitch is
+clamped to 0.05–1.25 rad, which is the difference between grazing the grass and
+looking almost straight down; a drag can reach neither underground nor past
+overhead, and the camera is floored at y 1.2 whatever the look point is doing.
+
+Two details worth keeping: the shot camera still overrides the orbit while a
+stone is in the air, because riding the shot is the point of that view and
+fighting a drag mid-flight would be worse than losing the angle for two seconds;
+and the drag lerps four times faster while a pointer is down, since a camera
+that eases toward a drag feels like it is on a rope.
+
+Because the HUD sits above the canvas, a drag on a panel or a thumb control
+never reaches the camera. Every viewport is checked for that: the middle of the
+open playfield resolves to the canvas at all of them.
+
 ## The castle is real
 
 The keep is a stack of ninety-odd rigid bodies on a Cannon solver, not a mesh
@@ -125,8 +153,9 @@ not bit-for-bit, which is well inside a block's own size.
 
 ## Validation
 
-- `node scripts/test.mjs games/siege-and-desist` — 29 tests covering the castle
-  layout, the engine's reach, the self-stocking sling, the shared winch, aiming
+- `node scripts/test.mjs games/siege-and-desist` — 30 tests covering the castle
+  layout, the camera swinging the whole way round with its pitch clamped, the
+  engine's reach, the self-stocking sling, the shared winch, aiming
   and its stops, ballistics against the aiming ring, boulder and fire damage,
   the beehive, riding the sling and who may loose it, host authority, both
   endings, rematches, and the delta-snapshot round trip including burnt blocks.
