@@ -13,29 +13,43 @@ caps for headings — while the playfield keeps Jumbleyard's chunky toy look.
 
 ## The loop
 
-One trebuchet is deliberately too big for one person:
+Stand at the engine and hold `R`, then press `F`.
 
-| Station       | Where                  | Key                         |
-| ------------- | ---------------------- | --------------------------- |
-| Winch         | behind the frame       | hold `R`                    |
-| Supply pile   | behind and to the left | `E`                         |
-| Sling         | front of the frame     | `E` (carrying), `C` to ride |
-| Frame         | either side            | hold `Q`                    |
-| Release lever | right of the frame     | `F`                         |
+| Key      | Does                                     |
+| -------- | ---------------------------------------- |
+| hold `R` | wind the counterweight — this is the aim |
+| `F`      | loose                                    |
+| `Q` `E`  | swing the aim left and right             |
+| `C`      | climb into the sling, at the sling       |
+| `H`      | haul up a flattened crewmate             |
+| drag     | swing the camera round the siege         |
+| scroll   | move in and out — pinch on a touchscreen |
+| `V`      | engine or crewmate, and back to a resting camera |
 
-Winding sets the range. Every extra pair of hands on the winch winds faster, so
-a full crew reloads roughly twice as quickly as a lone player. The counterweight
-is the only range control: about two fifths of a wind reaches the gate, three
-quarters reaches the keep behind it, and a full wind sails over everything.
+All of it works from anywhere within six metres of the frame. This is the second
+version of the loop. The first one had four stations — supply pile, sling,
+winch, release lever — and firing a single shot meant walking to the pile,
+pressing `E`, walking to the sling, pressing `E`, walking to the winch, holding
+`R`, walking to the lever and pressing `F`. It read as a nice bit of co-op
+choreography and played as a chore list, so the errands are gone: the sling
+restocks itself from the pile in order, and winding, aiming and loosing are all
+one reach.
 
-The engine never opens pointed at the keep. Each assault starts with the aim
-swung 0.16–0.32 radians off centre, and someone has to lean on the frame to
-bring it round. Pushing from the left swings the throw right, as a shove should.
+What survives is the part that was actually cooperative. Winding is shared, so
+every extra pair of hands winds faster and a full crew reloads roughly twice as
+quickly as a lone player. The counterweight is still the only range control:
+about two fifths of a wind reaches the gate, three quarters reaches the keep
+behind it, and a full wind sails over everything. And the sling still cannot be
+loosed by the person sitting in it.
+
+The engine now opens pointed at the keep. It used to open swung 0.16–0.32
+radians off centre so that somebody had to lean on the frame first, which meant
+the opening move of every siege was undoing a random number.
 
 Defenders on the battlements answer with clay pots roughly every seven seconds.
 A pot near the frame costs both the wind and the aim, so a crew under fire keeps
-having to go back to the winch. A beehive over the battlements clears them for
-twenty-six seconds.
+having to wind back up and straighten out. A beehive over the battlements clears
+them for twenty-six seconds.
 
 ## Ammunition
 
@@ -46,8 +60,62 @@ Stocked in a fixed order, so a crew can plan the cow rather than fish for it.
   outright, dropping whatever they were holding up.
 - **Beehive** — scatters the defenders instead of doing damage.
 - **The cow** — rare, enormous, absurd.
-- **A crewmate** — `C` climbs into the sling. Solo players cannot launch
-  themselves: somebody else has to be at the lever, which is the joke.
+- **A crewmate** — `C` climbs into the sling, displacing whatever it had
+  restocked. Solo players cannot launch themselves: the one thing you still
+  cannot do alone is loose a sling you are sitting in, which is the joke.
+
+## The engine was built backwards
+
+The trebuchet threw the right way and animated the wrong way, and it took a
+player noticing to catch it. The counterweight hung behind the pivot on the
+crew's side and the sling reached out toward the castle, so winding _lifted_
+the payload on the target side and the release flung the beam back over the
+crew — while the stone flew forward regardless. Measured through a release, the
+sling end travelled from z 11.27 to z 14.49, directly away from the keep.
+
+A counterweight trebuchet is the other way round. The throwing end is winched
+down _behind_ the pivot, which lifts the weight on the target side; the weight
+then falls and the beam whips the sling up and over toward the target. So the
+beam is mirrored, the three arm angles are negated, and the frame moved from
+z 15 to z 7.7 so that the sling end still comes down on the loading spot when
+fully wound. The sling stays at z 11.4 and every range in the game is measured
+from there, so no ballistics changed: the gate is still 20m and the keep 28m.
+
+Mirroring the beam puts the sling and the winch on the same side of the pivot,
+which is where a real windlass lives. The winch keeps its place on the frame
+instead — now the castle-facing end — so winding is done underneath a raised
+counterweight. That mattered more when the winch was a station you had to stand
+on; now that the whole engine is one reach it is a piece of staging.
+
+The test for this used to assert on the raw angle, which is why a mirrored
+engine passed it. It now converts the angle into where the throwing end
+actually is, and asserts that winding brings it down onto the loading spot
+behind the pivot and that a release carries it toward the castle.
+
+## Looking at it
+
+The camera used to have exactly two vantage points — behind the engine, or over
+your own crewmate's shoulder — and `V` swapped between them. A siege is a thing
+you want to walk around, so dragging the field now swings the camera the whole
+way round whatever it is watching, scroll or pinch moves in and out, and `V`
+both switches subject and puts the camera back at rest.
+
+The resting angle reproduces the old framing exactly, so nothing about the
+default view changed: a look point of (0, 5, -10) at 48m, yaw 0, pitch 0.209
+rad puts the camera at (0, 15, 37), which is where it always sat. Pitch is
+clamped to 0.05–1.25 rad, which is the difference between grazing the grass and
+looking almost straight down; a drag can reach neither underground nor past
+overhead, and the camera is floored at y 1.2 whatever the look point is doing.
+
+Two details worth keeping: the shot camera still overrides the orbit while a
+stone is in the air, because riding the shot is the point of that view and
+fighting a drag mid-flight would be worse than losing the angle for two seconds;
+and the drag lerps four times faster while a pointer is down, since a camera
+that eases toward a drag feels like it is on a rope.
+
+Because the HUD sits above the canvas, a drag on a panel or a thumb control
+never reaches the camera. Every viewport is checked for that: the middle of the
+open playfield resolves to the canvas at all of them.
 
 ## The castle is real
 
@@ -85,15 +153,23 @@ not bit-for-bit, which is well inside a block's own size.
 
 ## Validation
 
-- `node scripts/test.mjs games/siege-and-desist` — 28 tests covering the castle
-  layout, station proximity rules, the shared winch, aiming and its stops,
-  ballistics against the aiming ring, boulder and fire damage, the beehive,
-  riding the sling, host authority, both endings, rematches, and the
-  delta-snapshot round trip including burnt blocks.
+- `node scripts/test.mjs games/siege-and-desist` — 30 tests covering the castle
+  layout, the camera swinging the whole way round with its pitch clamped, the
+  engine's reach, the self-stocking sling, the shared winch, aiming
+  and its stops, ballistics against the aiming ring, boulder and fire damage,
+  the beehive, riding the sling and who may loose it, host authority, both
+  endings, rematches, and the delta-snapshot round trip including burnt blocks.
 - `node scripts/peer-integration.mjs siege-and-desist` — four real local WebRTC
   clients: a shared winch two guests turn together, an aim swung the same way on
-  every client, lever proximity enforced across the mesh, and wind, aim and
-  castle all surviving an abrupt host loss with join-order handover.
+  every client, sling reach enforced across the mesh, and wind, aim and castle
+  all surviving an abrupt host loss with join-order handover.
+
+One long-standing flake was fixed rather than retried: the winding-rate test
+winds fully, which is forty seconds of simulated time, and a clay pot landing on
+the frame in that window knocks the counterweight back 0.22 and flattens the
+winder. It failed about one run in six for reasons that had nothing to do with
+how many hands were on the winch. The defenders now sit that test out.
+
 - `npm run check` — formatting, TypeScript, lint, architecture boundaries and
   the full 791-test suite pass with the game registered.
 - Ran locally and inspected in a browser: menu, HUD, castle, trebuchet, crew
@@ -128,12 +204,68 @@ right: 0` and centred, the dock with `justify-content`, the banner with `margin`
 
 Layout is verified by measuring every HUD box and reporting any pair that
 actually intersects, plus hit-testing each control's centre through
-`elementFromPoint`. Six viewports pass with zero intersections, nothing
-off-screen, no page scroll and every control reachable: 320x568, 360x640,
-375x812, 768x1024, 812x375 and 1440x900. Landscape needed its own rules — the
-600px minimum height is taller than a handset on its side, which pushed the dock
-below the fold and made the page scroll — and there the dock is held clear of
-the thumb corners with `left: 140px; right: 140px`.
+`elementFromPoint`. Because the dock's height now depends on how many actions
+are available, each viewport is measured with the dock forced to two buttons and
+to four — the widest a real position can offer. Eight viewports pass with zero
+intersections, nothing off-screen, no page scroll and every control reachable:
+320x568, 375x812, 393x660, 667x375, 768x1024, 880x700, 1100x720 and 1440x860.
+Landscape needed its own rules — the 600px minimum height is taller than a
+handset on its side, which pushed the dock below the fold and made the page
+scroll — and there the dock is held clear of the thumb corners with
+`left: 134px; right: 104px`.
+
+Two collisions were caught only by measuring the four-button dock: it wrapped
+over the readout in portrait, which is why the readout moved to the top, and it
+covered the event banner in landscape, which is why those buttons lost their
+icons.
+
+Fitting the desktop HUD onto a phone was not enough — everything fitted and the
+game was still unreadable, because six panels and six buttons left about 130px
+of actual playfield. Then it turned out the desktop layout had the same disease
+in a roomier house: four stacked bars across the bottom, sitting on top of the
+trebuchet they were describing. Three of the rules below are not really phone
+rules and now apply at every width — only the actions you can take, the readout
+on one line, and nothing on screen that repeats what the scene already shows.
+
+The compact layout is a different layout rather than a smaller one, and it
+starts from the position that on a handset the playfield is the interface:
+
+- **Only the actions you can take.** Disabled dock buttons are hidden outright,
+  so standing at the winch offers Wind and Swing aim rather than six buttons
+  with four of them dead. `Haul up` had to learn the reach the simulation
+  already enforced for it — it was permanently enabled and threw an error when
+  pressed, which on a phone would have meant a button that never went away. In
+  open ground, where nothing is available, a single line takes the dock's place
+  rather than leaving it bare.
+- **Every panel is one line.** The scoreboard is the stones still standing and
+  the clock; the stone breakdown, the volley count and both column headings are
+  gone. The trebuchet readout is the counterweight bar, the range it reaches and
+  what is in the sling on one row — the two reference distances and the swing
+  direction are dropped, because the gold ring on the ground shows both.
+- **The wordmark collapses to its tile**, as it does everywhere else in the
+  collection. At full width it pushed the sound button off the right edge of a
+  393px screen, so two of the six toolbar buttons were unreachable.
+- **The readout sits at the top, not above the dock.** Four actions can be
+  available at once — at the winch, within reach of the lever, beside a
+  flattened crewmate — and four wrap onto a second row. A dock that grows
+  upwards would have climbed straight over a readout placed above it.
+
+That is 393x660 with roughly 350px of playfield instead of 130px.
+
+On a desktop the same three rules take the bottom of the screen from four
+stacked bars down to two, and two more things stop being permanent: the status
+line now appears only when it has something to say rather than reporting that
+the banner is still flying, and the movement hint retires once the crew has
+actually thrown something. The event banner also moved below the scoreboard,
+having been centred where it collided with it at every width under about
+1400px.
+
+Landscape has only the gap between the two thumbs to put a dock in, so its
+buttons drop their icons to keep four on one row, and the event banner moves
+into the empty band above them where it can grow upwards into the sky. The
+banner is also `pointer-events: none` everywhere: it is never interactive, it
+can pass over the dock on a short screen, and it must not be able to swallow a
+tap meant for a button underneath it.
 
 Beyond layout: held actions listen for `pointercancel` as well as `pointerup`
 and `pointerleave`, since a cancelled touch would otherwise leave a crewmate

@@ -17,8 +17,6 @@ import { siegeCatalog } from './audio';
 import {
   BANNER_DOWN,
   CRANK,
-  LEVER,
-  PILE,
   MAX_TURN,
   RELIEF_MS,
   ROUND_MS,
@@ -49,20 +47,21 @@ function put(w: SiegeWorld, id: string, spot: { x: number; z: number }) {
 }
 /** Winds to a target counterweight travel using the real held-action path. */
 function windTo(w: SiegeWorld, target: number, id = '0') {
+  // At the winch rather than the centre of the frame: the defenders aim their
+  // pots at the frame, and a winder standing on the bullseye gets flattened
+  // often enough to make a timing test flaky.
   put(w, id, CRANK);
   siegeAction(w, id, { type: 'wind' }, '0');
   for (let i = 0; i < 800 && w.wind < target; i++) tick(w, 50);
   siegeAction(w, id, { type: 'stopWind' }, '0');
   return w.wind;
 }
+/** The sling stocks itself, so a test that wants a particular payload says so. */
 function fire(w: SiegeWorld, kind: AmmoKind, wind: number, id = '0', turn = 0) {
   windTo(w, wind, id);
-  w.turn = turn; // These tests choose their aim rather than use the opening drift.
-  const p = put(w, id, PILE);
-  p.carrying = kind;
-  put(w, id, SLING);
-  siegeAction(w, id, { type: 'grab' }, '0');
-  put(w, id, LEVER);
+  w.turn = turn;
+  w.loaded = kind;
+  put(w, id, TREBUCHET);
   siegeAction(w, id, { type: 'loose' }, '0');
   return w.shots.at(-1)!;
 }
@@ -90,15 +89,23 @@ void test('a fresh siege starts in the lobby and only the captain calls it', () 
 });
 
 void test('the winch needs hands on it and more hands wind faster', () => {
-  const solo = game(1);
+  // This is about winding rate, so the defenders sit it out. A full wind takes
+  // 40s of simulated time, over which a clay pot on the frame knocks the
+  // counterweight back 0.22 and flattens the winder — which made the test
+  // fail about one run in six for reasons that had nothing to do with hands.
+  const holdFire = (w: SiegeWorld) => {
+    w.nextPot = w.clock + 10_000_000;
+    return w;
+  };
+  const solo = holdFire(game(1));
   const alone = windTo(solo, 1);
   assert.ok(alone > 0.99, 'one crewmate can still fully wind, given time');
 
-  const one = game(1);
+  const one = holdFire(game(1));
   put(one, '0', CRANK);
   siegeAction(one, '0', { type: 'wind' }, '0');
   tick(one, 3000);
-  const pair = game(2);
+  const pair = holdFire(game(2));
   for (const id of ['0', '1']) {
     put(pair, id, CRANK);
     siegeAction(pair, id, { type: 'wind' }, '0');
@@ -111,62 +118,42 @@ void test('the winch needs hands on it and more hands wind faster', () => {
   );
 });
 
-void test('winding only counts while standing at the crank', () => {
+void test('winding counts anywhere at the engine, and nowhere else', () => {
   const w = game(1);
-  const p = put(w, '0', CRANK);
+  // Any spot within reach of the frame works, not one exact pair of handles.
+  const p = put(w, '0', { x: TREBUCHET.x + 4, z: TREBUCHET.z + 4 });
   siegeAction(w, '0', { type: 'wind' }, '0');
   tick(w, 1500);
   const wound = w.wind;
-  assert.ok(wound > 0);
+  assert.ok(wound > 0, 'winding works from anywhere at the frame');
   p.x = TREBUCHET.x + 14;
   p.z = TREBUCHET.z + 14;
   tick(w, 3000);
-  assert.equal(
-    w.wind,
-    wound,
-    'a crewmate who is not at the crank winds nothing',
-  );
-  assert.throws(
-    () => siegeAction(w, '0', { type: 'wind' }, '0'),
-    /winch handles/i,
-  );
+  assert.equal(w.wind, wound, 'and stops once they wander off');
+  assert.throws(() => siegeAction(w, '0', { type: 'wind' }, '0'), /engine/i);
 });
 
-void test('loading requires a fetched payload and the sling', () => {
+void test('the sling stocks itself so nobody spends the round fetching', () => {
   const w = game(1);
-  assert.throws(
-    () => siegeAction(w, '0', { type: 'load' }, '0'),
-    /supply pile/i,
-  );
-  put(w, '0', SLING);
-  assert.throws(
-    () => siegeAction(w, '0', { type: 'grab' }, '0'),
-    /supply pile/i,
-  );
-  put(w, '0', PILE);
-  siegeAction(w, '0', { type: 'grab' }, '0');
-  assert.ok(w.players[0].carrying, 'the pile hands over a payload');
-  put(w, '0', SLING);
-  siegeAction(w, '0', { type: 'grab' }, '0');
-  assert.ok(w.loaded, 'the same key loads the sling when standing at it');
-  assert.equal(w.players[0].carrying, null);
-  assert.equal(w.players[0].loaded, 1);
+  assert.ok(w.loaded, 'the assault opens with the sling already loaded');
+  const first = w.loaded;
+  windTo(w, 0.6);
+  put(w, '0', TREBUCHET);
+  siegeAction(w, '0', { type: 'loose' }, '0');
+  assert.ok(w.loaded, 'and it reloads the moment the last shot is away');
+  assert.notEqual(w.loaded, first, 'in stocked order, not the same one twice');
 });
 
-void test('loosing needs the lever, a payload and a wound counterweight', () => {
+void test('loosing needs the engine and a wound counterweight', () => {
   const w = game(1);
-  put(w, '0', PILE);
-  siegeAction(w, '0', { type: 'grab' }, '0');
-  put(w, '0', SLING);
-  siegeAction(w, '0', { type: 'grab' }, '0');
-  assert.throws(() => siegeAction(w, '0', { type: 'loose' }, '0'), /lever/i);
-  put(w, '0', LEVER);
+  put(w, '0', { x: TREBUCHET.x, z: TREBUCHET.z + 20 });
+  assert.throws(() => siegeAction(w, '0', { type: 'loose' }, '0'), /engine/i);
+  put(w, '0', TREBUCHET);
   assert.throws(() => siegeAction(w, '0', { type: 'loose' }, '0'), /Wind the/i);
   windTo(w, 0.6);
-  put(w, '0', LEVER);
+  put(w, '0', TREBUCHET);
   siegeAction(w, '0', { type: 'loose' }, '0');
   assert.equal(w.shots.length, 1);
-  assert.equal(w.loaded, null);
   assert.equal(w.wind, 0, 'the counterweight is spent');
   assert.equal(w.volleys, 1);
 });
@@ -252,33 +239,51 @@ void test('the hive clears the battlements and stops the clay pots', () => {
   assert.equal(w.pots.length, potted, 'no new pots while the bees are working');
 });
 
-void test('riding is exclusive and the rider cannot also carry', () => {
+void test('riding is exclusive, and displaces whatever the sling had stocked', () => {
   const w = game(2);
-  put(w, '0', PILE);
-  siegeAction(w, '0', { type: 'grab' }, '0');
-  put(w, '0', SLING);
-  assert.throws(() => siegeAction(w, '0', { type: 'ride' }, '0'), /Drop it/i);
+  assert.ok(w.loaded, 'the sling starts loaded');
   put(w, '1', SLING);
   siegeAction(w, '1', { type: 'ride' }, '0');
   assert.equal(w.rider, '1');
-  const other = put(w, '0', SLING);
-  other.carrying = null;
+  assert.equal(w.loaded, null, 'the payload steps aside for the volunteer');
+  put(w, '0', SLING);
   assert.throws(() => siegeAction(w, '0', { type: 'ride' }, '0'), /braver/i);
   siegeAction(w, '1', { type: 'ride' }, '0');
   assert.equal(w.rider, '', 'a second press climbs back out');
+  assert.ok(w.loaded, 'and the sling stocks itself again');
+});
+
+void test('the rider cannot loose their own sling', () => {
+  const w = game(2);
+  put(w, '1', SLING);
+  siegeAction(w, '1', { type: 'ride' }, '0');
+  windTo(w, 0.6, '0');
+  put(w, '1', TREBUCHET);
+  assert.throws(
+    () => siegeAction(w, '1', { type: 'loose' }, '0'),
+    /Someone else/i,
+  );
+  put(w, '0', TREBUCHET);
+  siegeAction(w, '0', { type: 'loose' }, '0');
+  assert.equal(w.shots.length, 1);
 });
 
 void test('a launched crewmate flies, lands and is flattened', () => {
   const w = game(2);
-  windTo(w, 0.8, '0');
+  // The castle's front face is at z -8.6 and falling masonry flattens anyone
+  // within 1.5m of it, so a heavy wind drops the volunteer where they are
+  // knocked down again the moment they stand up. This lands them well short,
+  // with the pot-throwers held off, so the landing is the only thing that hurts.
+  w.nextPot = w.clock + 10_000_000;
+  windTo(w, 0.2, '0');
   put(w, '1', SLING);
   siegeAction(w, '1', { type: 'ride' }, '0');
-  put(w, '0', LEVER);
+  put(w, '0', TREBUCHET);
   siegeAction(w, '0', { type: 'loose' }, '0');
   const rider = w.players.find((p) => p.id === '1')!;
   assert.ok(rider.flying, 'the volunteer is airborne');
   assert.equal(rider.launches, 1);
-  assert.throws(() => siegeAction(w, '1', { type: 'grab' }, '0'), /airborne/i);
+  assert.throws(() => siegeAction(w, '1', { type: 'wind' }, '0'), /airborne/i);
   for (let i = 0; i < 200 && rider.flying; i++) tick(w, 50);
   assert.equal(rider.flying, false, 'the flight ends on its own');
   assert.ok(rider.z < SLING.z - 10, 'they travelled a long way from the sling');
@@ -301,7 +306,7 @@ void test('a flattened crewmate can be hauled up by a friend', () => {
   down.z = TREBUCHET.z;
   put(w, '0', { x: 1, z: TREBUCHET.z });
   assert.throws(
-    () => siegeAction(w, '1', { type: 'grab' }, '0'),
+    () => siegeAction(w, '1', { type: 'wind' }, '0'),
     /flat on your back/i,
   );
   siegeAction(w, '0', { type: 'help' }, '0');
@@ -318,7 +323,7 @@ void test('bringing the banner down wins the siege', () => {
   assert.ok(w.bannerDown);
   assert.ok(w.events.some((e) => e.kind === 'banner'));
   assert.throws(
-    () => siegeAction(w, '0', { type: 'grab' }, '0'),
+    () => siegeAction(w, '0', { type: 'wind' }, '0'),
     /Wait for the captain/i,
   );
 });
@@ -468,39 +473,34 @@ void test('the sound catalog covers every emitted event kind', () => {
   }
 });
 
-void test('the engine never opens pointed at the keep', () => {
-  const swings = new Set<number>();
-  for (let i = 0; i < 12; i++) {
-    const w = game(1);
-    assert.ok(
-      Math.abs(w.turn) >= 0.16 && Math.abs(w.turn) <= MAX_TURN,
-      `opening aim ${w.turn} should be off-centre but correctable`,
-    );
-    swings.add(Math.sign(w.turn));
-  }
-  assert.equal(
-    swings.size,
-    2,
-    'the opening aim drifts to both sides over time',
-  );
+void test('the engine opens pointed at the keep', () => {
+  // It used to open swung 0.16-0.32 rad off centre, so the first job of every
+  // siege was undoing a random aim before anything could be thrown.
+  for (let i = 0; i < 12; i++) assert.equal(game(1).turn, 0);
 });
 
-void test('the crew swings the aim by leaning on the frame', () => {
+void test('the aim swings the way the key says, from anywhere at the engine', () => {
   const w = game(1);
-  const p = put(w, '0', { x: TREBUCHET.x - 3, z: TREBUCHET.z });
-  w.turn = 0;
-  siegeAction(w, '0', { type: 'push' }, '0');
-  assert.equal(p.pushing, 1, 'pushing from the left swings the throw right');
+  // The direction used to depend on which side of the frame you stood, which
+  // meant walking round the machine to correct an aim.
+  const p = put(w, '0', { x: TREBUCHET.x, z: TREBUCHET.z });
+  siegeAction(w, '0', { type: 'push', side: 1 }, '0');
+  assert.equal(p.pushing, 1, 'standing in the middle is fine now');
   tick(w, 1000);
   assert.ok(w.turn > 0, 'the frame actually came round');
   siegeAction(w, '0', { type: 'stopPush' }, '0');
   const held = w.turn;
   tick(w, 1000);
   assert.equal(w.turn, held, 'it stays where the crew left it');
-  p.x = TREBUCHET.x;
-  assert.throws(() => siegeAction(w, '0', { type: 'push' }, '0'), /one side/i);
+  siegeAction(w, '0', { type: 'push', side: -1 }, '0');
+  tick(w, 1000);
+  assert.ok(w.turn < held, 'and the other key brings it back');
+  siegeAction(w, '0', { type: 'stopPush' }, '0');
   put(w, '0', { x: TREBUCHET.x - 20, z: TREBUCHET.z });
-  assert.throws(() => siegeAction(w, '0', { type: 'push' }, '0'), /shoulder/i);
+  assert.throws(
+    () => siegeAction(w, '0', { type: 'push', side: 1 }, '0'),
+    /engine/i,
+  );
 });
 
 void test('the aim cannot be swung past its stops', () => {
@@ -513,25 +513,86 @@ void test('the aim cannot be swung past its stops', () => {
   assert.ok(p.pushing !== 0);
 });
 
-void test('the arm rests by the wind and whips through a release', async () => {
+void test('the camera can be swung the whole way round the siege', async () => {
+  const { orbitAround } = await import('./scene');
+  const look = { x: 0, y: 5, z: -10 };
+  const REST = 0.209;
+
+  // Resting, it reproduces the framing the camera had before it could be moved.
+  const rest = orbitAround(look, 48, 0, REST);
+  assert.ok(Math.abs(rest.x - 0) < 0.01);
+  assert.ok(Math.abs(rest.y - 15) < 0.2, `resting height ${rest.y}`);
+  assert.ok(Math.abs(rest.z - 37) < 0.2, `resting distance ${rest.z}`);
+
+  // A quarter turn puts it beside the siege, a half turn behind the keep, and
+  // the whole way round returns it to where it started.
+  const quarter = orbitAround(look, 48, Math.PI / 2, REST);
+  assert.ok(quarter.x > 40, 'a quarter turn swings it out to one side');
+  assert.ok(Math.abs(quarter.z - look.z) < 0.1);
+  const half = orbitAround(look, 48, Math.PI, REST);
+  assert.ok(
+    half.z < look.z - 40,
+    'a half turn looks back from behind the keep',
+  );
+  const full = orbitAround(look, 48, Math.PI * 2, REST);
+  assert.ok(Math.hypot(full.x - rest.x, full.z - rest.z) < 0.01);
+
+  // Every angle keeps the same distance, so swinging round never drifts in.
+  for (const yaw of [0.4, 1.7, 3.3, 5.9]) {
+    const at = orbitAround(look, 48, yaw, REST);
+    const out = Math.hypot(at.x - look.x, at.y - look.y, at.z - look.z);
+    assert.ok(Math.abs(out - 48) < 0.01, `yaw ${yaw} sat at ${out}`);
+  }
+
+  // Pitch is clamped at both ends: never underground, never past overhead.
+  const low = orbitAround(look, 48, 0, -9);
+  assert.ok(low.y > 1, `a drag to the floor left the camera at ${low.y}`);
+  const high = orbitAround(look, 48, 0, 9);
+  assert.ok(high.y < look.y + 48, 'and never straight down the well');
+  assert.ok(
+    Math.hypot(high.x - look.x, high.z - look.z) > 1,
+    'a top-down view still keeps some ground offset to look along',
+  );
+  // A look point on the floor cannot push the camera below it either.
+  assert.ok(orbitAround({ x: 0, y: 0, z: 0 }, 20, 0, -9).y >= 1.2);
+});
+
+void test('the beam winds down behind the pivot and whips at the castle', async () => {
   const { armAngle } = await import('./scene');
+  // Where the throwing end of the beam actually ends up, rotated about the
+  // pivot the way the model is. Asserting on the raw angle instead let the
+  // engine be built mirrored — winding lifted the sling on the castle side and
+  // the release flung it back over the crew, against the flight of the shot.
+  const throwingEnd = (angle: number) => ({
+    y: 4.6 - 4.2 * Math.sin(angle),
+    z: TREBUCHET.z + 4.2 * Math.cos(angle),
+  });
   const w = game(1);
   w.loosedAt = -100000;
   w.wind = 0;
   const relaxed = armAngle(w, w.clock);
+  const rest = throwingEnd(relaxed);
   w.wind = 1;
-  const wound = armAngle(w, w.clock);
+  const wound = throwingEnd(armAngle(w, w.clock));
   assert.ok(
-    wound < relaxed,
-    'winding drops the throwing end toward the loading spot',
+    wound.y < rest.y,
+    'winding drops the throwing end toward the ground',
+  );
+  assert.ok(
+    wound.z > TREBUCHET.z && Math.abs(wound.z - SLING.z) < 0.4,
+    'onto the loading spot behind the pivot, not the castle side of it',
   );
   // Through a release the arm sweeps past its resting angle and settles back.
   w.loosedAt = w.clock;
-  const sweep = armAngle(w, w.clock + 300);
-  assert.ok(sweep > relaxed, 'the release throws the arm well over the top');
-  const settling = armAngle(w, w.clock + 900);
+  const top = throwingEnd(armAngle(w, w.clock + 300));
+  assert.ok(top.y > rest.y, 'the release throws the arm well over the top');
   assert.ok(
-    settling < sweep && settling > wound,
+    top.z < wound.z - 2,
+    'and carries the sling toward the castle, the way the shot flies',
+  );
+  const settling = throwingEnd(armAngle(w, w.clock + 900));
+  assert.ok(
+    settling.y < top.y && settling.y > wound.y,
     'and it falls back toward rest afterwards',
   );
   w.wind = 0; // the counterweight is spent by the release

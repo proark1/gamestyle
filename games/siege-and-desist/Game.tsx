@@ -7,12 +7,13 @@ import {
   Camera,
   Castle,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Crosshair,
   Flame,
   Hand,
   LoaderCircle,
-  Package,
   Swords,
   Trophy,
   Users,
@@ -41,9 +42,8 @@ import {
 } from './simulation';
 import {
   AMMO,
-  CRANK,
-  LEVER,
-  PILE,
+  BANNER_DOWN,
+  ENGINE_REACH,
   ROUND_MS,
   SLING,
   TREBUCHET,
@@ -392,12 +392,10 @@ export default function SiegeAndDesist() {
 
   const disabled =
     !playing || status !== 'online' || !!modal || !me || me.flying;
-  const nearPile = at(me, PILE, 3);
+  // One reach covers the whole engine. Winding, aiming and loosing all used to
+  // be separate spots you had to walk between to fire a single shot.
+  const atEngine = at(me, TREBUCHET, ENGINE_REACH);
   const nearSling = at(me, SLING, 2.6);
-  const nearCrank = at(me, CRANK, 2.6);
-  const nearLever = at(me, LEVER, 2.6);
-  const canPush =
-    at(me, TREBUCHET, 5.2) && !!me && Math.abs(me.x - TREBUCHET.x) >= 0.7;
   const lastEvent = w?.events.at(-1);
   const flag = w && banner(w);
   const standing = w
@@ -405,6 +403,20 @@ export default function SiegeAndDesist() {
     : 0;
   const pulling = w ? winders(w) : 0;
   const riding = !!me && w?.rider === me.id;
+  // Mirrors the reach the simulation enforces for `help`, so the button is lit
+  // only when there is actually somebody to haul up. The compact layout hides
+  // whatever is unavailable, and a permanently lit button would never hide.
+  const canHelp =
+    !!me &&
+    !!w &&
+    w.players.some(
+      (f) =>
+        f.id !== me.id &&
+        f.stunnedUntil > w.clock &&
+        !f.flying &&
+        Math.hypot(me.x - f.x, me.z - f.z) < 2.5,
+    );
+  const idle = disabled || !(atEngine || nearSling || canHelp || riding);
 
   return (
     <main className={`sad-game${session ? ' in-session' : ''}`}>
@@ -581,8 +593,8 @@ export default function SiegeAndDesist() {
                       ? 'DOWN'
                       : p.winding
                         ? 'WINDING'
-                        : p.carrying
-                          ? AMMO[p.carrying].name
+                        : p.pushing
+                          ? 'AIMING'
                           : '—'}
                 </small>
               </div>
@@ -630,7 +642,8 @@ export default function SiegeAndDesist() {
                     <i style={{ width: `${Math.round(w.wind * 100)}%` }} />
                   </div>
                   <small>
-                    Range {Math.round(rangeFor(w.wind))}m · gate 20m · keep 28m
+                    Range {Math.round(rangeFor(w.wind))}m
+                    <span> · gate 20m · keep 28m</span>
                   </small>
                 </div>
                 <div className="sad-payload">
@@ -660,31 +673,27 @@ export default function SiegeAndDesist() {
                 <span>View · V</span>
               </button>
 
-              <div className="sad-your-status">
-                {me?.flying ? (
-                  'You are airborne. Nothing to do but arrive.'
-                ) : riding ? (
-                  'You are in the sling. Someone still has to pull the lever.'
-                ) : me && me.stunnedUntil > w.clock ? (
-                  'Flattened. A crewmate can haul you up with H.'
-                ) : me?.carrying ? (
-                  <>
-                    <Package size={16} /> Carrying {AMMO[me.carrying].name} ·
-                    take it to the sling
-                  </>
-                ) : (
-                  <>
-                    <Flame size={16} />{' '}
-                    {flag && flag.y > 3.2
-                      ? 'Banner still flying'
-                      : 'Banner falling!'}{' '}
-                    ·{' '}
-                    {w.beesUntil > w.clock
-                      ? 'defenders scattered'
-                      : 'mind the clay pots'}
-                  </>
-                )}
-              </div>
+              {/* Only when it has something to say. Standing there being told
+                  the banner is still flying is a bar over the playfield for no
+                  reason — the banner is right there on the keep. */}
+              {(me?.flying ||
+                riding ||
+                (me && me.stunnedUntil > w.clock) ||
+                (flag && flag.y <= BANNER_DOWN + 1)) && (
+                <div className="sad-your-status">
+                  {me?.flying ? (
+                    'You are airborne. Nothing to do but arrive.'
+                  ) : riding ? (
+                    'You are in the sling. Someone else has to loose it.'
+                  ) : me && me.stunnedUntil > w.clock ? (
+                    'Flattened. A crewmate can haul you up with H.'
+                  ) : (
+                    <>
+                      <Flame size={16} /> The banner is going down.
+                    </>
+                  )}
+                </div>
+              )}
 
               <TouchControls
                 disabled={disabled}
@@ -695,7 +704,7 @@ export default function SiegeAndDesist() {
               <nav className="sad-action-dock" aria-label="Siege actions">
                 <button
                   className="sad-action wind"
-                  disabled={disabled || !nearCrank}
+                  disabled={disabled || !atEngine}
                   onPointerDown={() => action({ type: 'wind' })}
                   onPointerUp={() => action({ type: 'stopWind' })}
                   onPointerLeave={() => action({ type: 'stopWind' })}
@@ -703,40 +712,53 @@ export default function SiegeAndDesist() {
                 >
                   <Crosshair size={21} />
                   <span>
-                    Wind
-                    <kbd>
-                      R · {nearCrank ? 'hold the winch' : 'go to the winch'}
-                    </kbd>
+                    Wind<kbd>Hold R</kbd>
                   </span>
                 </button>
+                {/* Two nudges rather than a rule about which side of the frame
+                    you are standing on. */}
                 <button
-                  className="sad-action"
-                  disabled={disabled || (!nearPile && !nearSling)}
-                  onClick={() => action({ type: 'grab' })}
-                >
-                  <Package size={20} />
-                  <span>
-                    {me?.carrying && nearSling ? 'Load sling' : 'Fetch'}
-                    <kbd>
-                      E ·{' '}
-                      {me?.carrying
-                        ? nearSling
-                          ? 'into the sling'
-                          : 'carry to sling'
-                        : 'from the pile'}
-                    </kbd>
-                  </span>
-                </button>
-                <button
-                  className="sad-action"
-                  disabled={disabled || !canPush}
-                  onPointerDown={() => action({ type: 'push' })}
+                  className="sad-action nudge"
+                  aria-label="Swing the aim left"
+                  disabled={disabled || !atEngine}
+                  onPointerDown={() => action({ type: 'push', side: 1 })}
                   onPointerUp={() => action({ type: 'stopPush' })}
                   onPointerLeave={() => action({ type: 'stopPush' })}
                   onPointerCancel={() => action({ type: 'stopPush' })}
                 >
+                  <ChevronLeft size={22} />
                   <span>
-                    Swing aim<kbd>Q · push the frame</kbd>
+                    <kbd>Q</kbd>
+                  </span>
+                </button>
+                <button
+                  className="sad-action nudge"
+                  aria-label="Swing the aim right"
+                  disabled={disabled || !atEngine}
+                  onPointerDown={() => action({ type: 'push', side: -1 })}
+                  onPointerUp={() => action({ type: 'stopPush' })}
+                  onPointerLeave={() => action({ type: 'stopPush' })}
+                  onPointerCancel={() => action({ type: 'stopPush' })}
+                >
+                  <ChevronRight size={22} />
+                  <span>
+                    <kbd>E</kbd>
+                  </span>
+                </button>
+                <button
+                  className="sad-action loose"
+                  disabled={
+                    disabled ||
+                    !atEngine ||
+                    riding ||
+                    (!w.loaded && !w.rider) ||
+                    w.wind < 0.12
+                  }
+                  onClick={() => action({ type: 'loose' })}
+                >
+                  <Swords size={21} />
+                  <span>
+                    LOOSE<kbd>F</kbd>
                   </span>
                 </button>
                 <button
@@ -751,37 +773,34 @@ export default function SiegeAndDesist() {
                 </button>
                 <button
                   className="sad-action"
-                  disabled={disabled}
+                  disabled={disabled || !canHelp}
                   onClick={() => action({ type: 'help' })}
                 >
                   <Hand size={19} />
                   <span>
-                    Haul up<kbd>H · nearby crewmate</kbd>
+                    Haul up<kbd>H</kbd>
                   </span>
                 </button>
-                <button
-                  className="sad-action loose"
-                  disabled={
-                    disabled ||
-                    !nearLever ||
-                    (!w.loaded && !w.rider) ||
-                    w.wind < 0.12
-                  }
-                  onClick={() => action({ type: 'loose' })}
-                >
-                  <Swords size={21} />
-                  <span>
-                    LOOSE
-                    <kbd>
-                      F · {nearLever ? 'pull the pin' : 'reach the lever'}
-                    </kbd>
+                {/* The compact layout shows only the actions you can take, so
+                    standing in open ground would otherwise leave a bare dock. */}
+                {idle && (
+                  <span className="sad-dock-hint">
+                    {me?.flying
+                      ? 'Airborne. Nothing to do but arrive.'
+                      : me && w && me.stunnedUntil > w.clock
+                        ? 'Flattened. A crewmate can haul you up.'
+                        : 'Walk back to the engine.'}
                   </span>
-                </button>
+                )}
               </nav>
-              <span className="sad-movement-hint">
-                WASD / arrows to move · The gold ring shows where this wind
-                lands · Fire pots burn timber, the hive clears the walls
-              </span>
+              {/* Instructions until the crew has actually thrown something.
+                  After that they are a permanent banner of things you know. */}
+              {w.volleys === 0 && (
+                <span className="sad-movement-hint">
+                  WASD to move · hold R to wind, F to loose, Q and E to aim ·
+                  drag the field to look around, scroll to zoom
+                </span>
+              )}
             </>
           )}
 
@@ -872,36 +891,41 @@ export default function SiegeAndDesist() {
           {modal === 'help' && (
             <div className="sad-help">
               <p>
-                <strong>Wind it.</strong> Stand at the winch behind the frame
-                and hold R. Every extra pair of hands winds faster. The
-                counterweight sets your range: about half a wind reaches the
-                gate, three quarters reaches the keep behind it, and a full wind
-                sails clean over.
+                <strong>Wind it.</strong> Stand at the engine and hold R. Every
+                extra pair of hands winds faster. The counterweight sets your
+                range: about half a wind reaches the gate, three quarters
+                reaches the keep behind it, and a full wind sails clean over.
               </p>
               <p>
-                <strong>Load it.</strong> Press E at the supply pile to pick
-                something up, carry it to the sling, and press E again. Boulders
-                break stone. Fire pots set timber alight and burn a course
-                through. The beehive clears the battlements so the defenders
-                stop throwing clay pots. The cow is the cow.
+                <strong>Loose it.</strong> Press F. That is the whole job — the
+                sling restocks itself from the pile, and winding, aiming and
+                loosing all work from anywhere beside the frame. Boulders break
+                stone. Fire pots set timber alight and burn a course through.
+                The beehive clears the battlements so the defenders stop
+                throwing clay pots. The cow is the cow.
               </p>
               <p>
-                <strong>Aim it.</strong> Stand at either side of the frame and
-                hold Q to lean on it. Pushing from the left swings the throw
-                right. The gold ring on the ground shows where the current wind
-                will land.
+                <strong>Aim it.</strong> Q and E swing the frame left and right.
+                The gold ring on the ground shows where the current wind will
+                land. A clay pot on the frame knocks both the wind and the aim,
+                so expect to straighten up under fire.
               </p>
               <p>
-                <strong>Loose it.</strong> Someone has to be at the release
-                lever on the right and press F. That someone is not the person
-                in the sling. Press C to climb into the sling yourself, which is
-                a real option and a terrible one.
+                <strong>Ride it.</strong> Press C at the sling to climb in. The
+                one thing you cannot do alone is loose a sling you are sitting
+                in, so somebody else has to press F. It is a real option and a
+                terrible one.
+              </p>
+              <p>
+                <strong>Look around.</strong> Drag the field to swing the camera
+                round the siege, scroll or pinch to move in and out, and press V
+                to switch between the engine and your own crewmate — which also
+                puts the camera back where it started.
               </p>
               <p>
                 <strong>Stay upright.</strong> Falling masonry and clay pots
-                flatten you; H hauls a crewmate back up. WASD / arrows move,
-                Space jumps, V changes the camera, and the camera rides the shot
-                by default. On touchscreens use the joystick and the action
+                flatten you; H hauls a crewmate back up. WASD / arrows move and
+                Space jumps. On touchscreens use the joystick and the action
                 dock.
               </p>
               <p>

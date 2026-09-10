@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Local refactor and validation scratch files
 /.tmp/
+
+# Claude Code local session state, including the worktrees themselves
+/.claude/

@@ -22,9 +22,41 @@ import {
   type SiegeWorld,
 } from './types';
 
-const RELAXED = 0.55;
-const WOUND = -0.48;
-const SWEEP = 1.45;
+/** The camera's resting angle above the ground, and the limits a drag may take
+ *  it to. The default reproduces the framing it had before it could be moved. */
+const REST_PITCH = 0.209;
+const MIN_PITCH = 0.05;
+const MAX_PITCH = 1.25;
+const MIN_DOLLY = 0.45;
+const MAX_DOLLY = 2.2;
+const clamp = (n: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, n));
+/**
+ * Where the camera sits for a look point, swung round it by a yaw and lifted by
+ * a pitch. Yaw runs the whole way round; pitch is clamped so a drag can neither
+ * bury the camera in the ground nor tip it past straight down.
+ */
+export function orbitAround(
+  look: { x: number; y: number; z: number },
+  distance: number,
+  yaw: number,
+  pitch: number,
+) {
+  const lift = clamp(pitch, MIN_PITCH, MAX_PITCH);
+  const flat = Math.cos(lift) * distance;
+  return {
+    x: look.x + flat * Math.sin(yaw),
+    y: Math.max(1.2, look.y + Math.sin(lift) * distance),
+    z: look.z + flat * Math.cos(yaw),
+  };
+}
+
+// Negative angles carry the throwing end toward the castle, positive ones back
+// over the crew. Winding therefore counts up, and the release sweeps down past
+// rest and over the top: the beam whips the way the shot actually flies.
+const RELAXED = -0.55;
+const WOUND = 0.48;
+const SWEEP = -1.45;
 /** Where the arm sits at a given wind, and how it whips through a release. */
 export function armAngle(w: SiegeWorld, clock: number) {
   const since = clock - w.loosedAt;
@@ -55,7 +87,6 @@ export class SiegeScene {
   private blocks = new Map<number, T.Group>();
   private shots = new Map<number, T.Group>();
   private pots = new Map<number, T.Group>();
-  private carried = new Map<string, { kind: AmmoKind; model: T.Group }>();
   private payload: { kind: AmmoKind; model: T.Group } | null = null;
   private snapshot: SiegeSnapshot | null = null;
   private demo = freshSiege(100000);
@@ -69,6 +100,10 @@ export class SiegeScene {
   private seq = 0;
   private localId = '';
   private view: 'shot' | 'follow' = 'shot';
+  /** Where the crew has dragged the camera to, around whatever it is watching. */
+  private orbit = { yaw: 0, pitch: REST_PITCH, dolly: 1 };
+  private pointers = new Map<number, { x: number; y: number }>();
+  private pinch = 0;
   private blocked = false;
   private disposed = false;
   private look = new T.Vector3(0, 1, -2);
@@ -105,7 +140,7 @@ export class SiegeScene {
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
     this.renderer.domElement.setAttribute(
       'aria-label',
-      'Siege and Desist field. WASD moves, R winds the winch, E loads, Q swings the aim, F looses, C rides the sling.',
+      'Siege and Desist field. WASD moves, hold R to wind the counterweight, F looses, Q and E swing the aim, C rides the sling.',
     );
     this.renderer.domElement.tabIndex = 0;
     container.appendChild(this.renderer.domElement);
@@ -131,7 +166,7 @@ export class SiegeScene {
         newCrew(`demo-${i}`, ['Kayi', 'Bahadir', 'Selim'][i], i, 100000),
       );
     this.demo.wind = 0.65;
-    this.camera.position.set(0, 15, 44);
+    this.camera.position.set(0, 15, 37);
     this.camera.lookAt(0, 5, -10);
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(container);
@@ -141,6 +176,18 @@ export class SiegeScene {
     window.addEventListener('keyup', this.keyUp, opts);
     window.addEventListener('blur', this.resetInput, opts);
     document.addEventListener('visibilitychange', this.hidden, opts);
+    const canvas = this.renderer.domElement;
+    for (const type of [
+      'pointerdown',
+      'pointermove',
+      'pointerup',
+      'pointercancel',
+    ] as const)
+      canvas.addEventListener(type, this.orbitPointer, opts);
+    canvas.addEventListener('wheel', this.orbitWheel, {
+      ...opts,
+      passive: false,
+    });
     this.renderer.domElement.addEventListener(
       'webglcontextlost',
       (e) => {
@@ -168,10 +215,13 @@ export class SiegeScene {
   }
   changeCamera() {
     this.view = this.view === 'shot' ? 'follow' : 'shot';
+    // Also the way back to a sensible angle once a drag has gone wandering.
+    this.orbit = { yaw: 0, pitch: REST_PITCH, dolly: 1 };
   }
   resetInput = () => {
     if (this.keys.has('r')) this.cb.action({ type: 'stopWind' });
-    if (this.keys.has('q')) this.cb.action({ type: 'stopPush' });
+    if (this.keys.has('q') || this.keys.has('e'))
+      this.cb.action({ type: 'stopPush' });
     this.keys.clear();
     this.touch = { x: 0, z: 0 };
     this.cb.input(idleInput());
@@ -179,6 +229,68 @@ export class SiegeScene {
   private hidden = () => {
     if (document.hidden) this.resetInput();
   };
+  /** Dragging the field swings the camera round it; two fingers pinch to zoom.
+   *  The HUD sits above the canvas, so a drag on a panel or a thumb control
+   *  never reaches this. */
+  private orbitPointer = (e: PointerEvent) => {
+    const canvas = this.renderer.domElement;
+    if (e.type === 'pointerdown') {
+      this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.pointers.size === 2) this.pinch = this.spread();
+      try {
+        // Keeps the drag alive past the edge of the canvas. Refused for a
+        // pointer the browser no longer owns, which must not kill the drag.
+        canvas.setPointerCapture(e.pointerId);
+      } catch {
+        /* Dragging still works without capture. */
+      }
+      return;
+    }
+    if (e.type !== 'pointermove') {
+      this.pointers.delete(e.pointerId);
+      if (this.pointers.size < 2) this.pinch = 0;
+      return;
+    }
+    const last = this.pointers.get(e.pointerId);
+    if (!last) return;
+    const dx = e.clientX - last.x;
+    const dy = e.clientY - last.y;
+    this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (this.pointers.size > 1) {
+      const gap = this.spread();
+      if (this.pinch > 0 && gap > 0) this.dolly(this.pinch / gap);
+      this.pinch = gap;
+      return;
+    }
+    // The field follows the finger: drag right and the siege swings right.
+    this.orbit.yaw -= dx * 0.006;
+    this.orbit.pitch = clamp(
+      this.orbit.pitch + dy * 0.005,
+      MIN_PITCH,
+      MAX_PITCH,
+    );
+  };
+  private orbitWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    this.dolly(Math.exp(e.deltaY * 0.0012));
+  };
+  private dolly(factor: number) {
+    this.orbit.dolly = clamp(this.orbit.dolly * factor, MIN_DOLLY, MAX_DOLLY);
+  }
+  private spread() {
+    const [a, b] = [...this.pointers.values()];
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+  }
+  /** Camera position for a look point, swung to wherever the crew dragged it. */
+  private orbitPos(look: T.Vector3, distance: number, bias = 0) {
+    const at = orbitAround(
+      look,
+      distance * this.orbit.dolly,
+      this.orbit.yaw,
+      this.orbit.pitch + bias,
+    );
+    return new T.Vector3(at.x, at.y, at.z);
+  }
   private keyDown = (e: KeyboardEvent) => {
     if (
       this.blocked ||
@@ -217,9 +329,11 @@ export class SiegeScene {
     this.keys.add(key);
     if (e.repeat || held) return;
     if (key === 'r') this.cb.action({ type: 'wind' });
-    if (key === 'q') this.cb.action({ type: 'push' });
+    // Q and E swing the aim. Which way you lean used to depend on which side of
+    // the frame you had walked round to, which nobody ever worked out.
+    if (key === 'q') this.cb.action({ type: 'push', side: 1 });
+    if (key === 'e') this.cb.action({ type: 'push', side: -1 });
     const once = {
-      e: 'grab',
       f: 'loose',
       c: 'ride',
       h: 'help',
@@ -233,7 +347,7 @@ export class SiegeScene {
     if (!this.keys.has(key)) return;
     this.keys.delete(key);
     if (key === 'r') this.cb.action({ type: 'stopWind' });
-    if (key === 'q') this.cb.action({ type: 'stopPush' });
+    if (key === 'q' || key === 'e') this.cb.action({ type: 'stopPush' });
   };
   private resize() {
     const { width, height } = this.container.getBoundingClientRect();
@@ -310,7 +424,6 @@ export class SiegeScene {
         this.scene.remove(model);
         this.release(model);
         this.people.delete(id);
-        this.carried.delete(id);
       }
     for (const p of w.players) {
       let model = this.people.get(p.id);
@@ -335,34 +448,16 @@ export class SiegeScene {
         : stunned
           ? Math.PI / 2.1
           : model.rotation.z * 0.8;
-      // Carried payloads ride in front of the crewmate who fetched them.
-      const slot = model.getObjectByName('carried')!;
-      const held = this.carried.get(p.id);
-      if (held?.kind !== p.carrying) {
-        if (held) {
-          slot.remove(held.model);
-          this.release(held.model);
-          this.carried.delete(p.id);
-        }
-        if (p.carrying) {
-          const item = ammoModel(p.carrying);
-          item.scale.setScalar(p.carrying === 'cow' ? 0.55 : 0.9);
-          slot.add(item);
-          this.carried.set(p.id, { kind: p.carrying, model: item });
-        }
-      }
       const walking = !stunned && !p.flying && Math.hypot(p.vx, p.vz) > 0.4;
       const swing = walking ? Math.sin(now * 0.013) * 0.55 : 0;
       const winding = p.winding || p.pushing !== 0;
       for (let i = 0; i < 2; i++) {
         model.getObjectByName(`leg${i}`)!.rotation.x = swing * (i ? 1 : -1);
-        model.getObjectByName(`arm${i}`)!.rotation.x = p.carrying
-          ? -1.3
-          : winding
-            ? -1.15 + Math.sin(now * 0.009) * 0.35
-            : p.flying
-              ? -2.5
-              : swing * (i ? -1 : 1);
+        model.getObjectByName(`arm${i}`)!.rotation.x = winding
+          ? -1.15 + Math.sin(now * 0.009) * 0.35
+          : p.flying
+            ? -2.5
+            : swing * (i ? -1 : 1);
       }
     }
   }
@@ -426,15 +521,18 @@ export class SiegeScene {
         flight.z - flight.vz * 0.55 + 9,
       );
     } else if (me && this.view === 'follow') {
+      // Closer in, and a little steeper, so a crewmate reads against the ground.
       look = new T.Vector3(me.x, 1.4, me.z - 3);
-      target = new T.Vector3(me.x * 0.7, 9 * zoom, me.z + 15 * zoom);
+      target = this.orbitPos(look, 19.5 * zoom, 0.19);
     } else {
       // Behind and above the engine, so the crew, the trebuchet and the keep
       // are all in one frame and the throw reads as an arc rather than a plan.
       look = new T.Vector3(0, 5, -10);
-      target = new T.Vector3(0, 15 * zoom, 44 * zoom);
+      target = this.orbitPos(look, 48 * zoom);
     }
-    this.camera.position.lerp(target, Math.min(1, dt * (flight ? 6 : 2.6)));
+    // A drag has to answer immediately, or the camera feels like it is on a rope.
+    const chase = flight ? 6 : this.pointers.size ? 12 : 2.6;
+    this.camera.position.lerp(target, Math.min(1, dt * chase));
     this.look.lerp(look, Math.min(1, dt * (flight ? 6 : 3)));
     this.camera.lookAt(this.look);
   }

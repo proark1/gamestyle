@@ -5,10 +5,9 @@ import {
   AMMO_ORDER,
   BANNER_DOWN,
   CRANK,
+  ENGINE_REACH,
   FIELD,
-  LEVER,
   MAX_TURN,
-  PILE,
   RELIEF_MS,
   ROUND_MS,
   ELEVATION,
@@ -78,14 +77,13 @@ export function newCrew(
     color,
     // Every crewmate starts in reach of the winch, so the opening move is
     // obvious and all four can put their shoulder to it immediately.
-    x: TREBUCHET.x + (color % 2 ? 2 : -2),
+    x: CRANK.x + (color % 2 ? 2 : -2),
     y: 0,
-    z: TREBUCHET.z + 3.2 + Math.floor(color / 2) * 1.2,
+    z: CRANK.z - 1 + Math.floor(color / 2) * 1.2,
     vx: 0,
     vy: 0,
     vz: 0,
     facing: Math.PI,
-    carrying: null,
     flying: false,
     winding: false,
     pushing: 0,
@@ -116,8 +114,9 @@ const upright = (p: Crew, w: SiegeWorld) =>
 export const banner = (w: SiegeWorld) =>
   w.blocks.find((b) => b.part === 'banner');
 export const winders = (w: SiegeWorld) =>
-  w.players.filter((p) => p.winding && upright(p, w) && near(p, CRANK, 2.6))
-    .length;
+  w.players.filter(
+    (p) => p.winding && upright(p, w) && near(p, TREBUCHET, ENGINE_REACH),
+  ).length;
 
 function finish(w: SiegeWorld, won: boolean) {
   w.phase = won ? 'won' : 'lost';
@@ -149,17 +148,6 @@ function drawAmmo(w: SiegeWorld): AmmoKind {
   return w.supply.shift()!;
 }
 
-function loadSling(w: SiegeWorld, p: Crew) {
-  w.loaded = p.carrying;
-  p.carrying = null;
-  p.loaded++;
-  emit(
-    w,
-    'load',
-    `${p.name} loaded the ${AMMO[w.loaded!].name.toLowerCase()}.`,
-  );
-}
-
 export function siegeAction(
   w: SiegeWorld,
   id: string,
@@ -184,16 +172,14 @@ export function siegeAction(
       started: w.clock,
       crewSize: players.length,
       nextPot: w.clock + POT_INTERVAL,
-      // The engine is never left pointing at the keep. Somebody has to get a
-      // shoulder against the frame before any of this counts as aiming.
-      turn: (Math.random() < 0.5 ? -1 : 1) * (0.16 + Math.random() * 0.16),
+      // Pointed at the keep from the off. The opening swing used to be random,
+      // which meant the first job of every siege was undoing it.
+      turn: 0,
       eventId,
     });
-    emit(
-      w,
-      'start',
-      'Wind the counterweight, load the sling, and bring that banner down.',
-    );
+    // The pile loads itself, in order, so nobody spends the round fetching.
+    w.loaded = drawAmmo(w);
+    emit(w, 'start', 'Hold the winch to wind it, then loose. That is the job.');
     return;
   }
   if (w.phase !== 'playing' && w.phase !== 'relief')
@@ -230,54 +216,32 @@ export function siegeAction(
     return;
   }
   if (action.type === 'wind') {
-    if (!near(p, CRANK, 2.6))
-      throw new Error('Get on the winch handles behind the frame.');
-    if (p.carrying)
-      throw new Error('Both hands, please. Drop what you are holding.');
+    if (!near(p, TREBUCHET, ENGINE_REACH))
+      throw new Error('Get to the engine first.');
     p.winding = true;
     return;
   }
   if (action.type === 'push') {
-    if (!near(p, TREBUCHET, 5.2))
-      throw new Error('Get a shoulder against the frame to swing the aim.');
-    if (Math.abs(p.x - TREBUCHET.x) < 0.7)
-      throw new Error('Push from one side of the frame, not the middle.');
-    // Pushing from the left swings the throw to the right, as a shove should.
-    p.pushing = p.x < TREBUCHET.x ? 1 : -1;
-    return;
-  }
-  // One key covers the whole fetch-and-load loop, so a crewmate never has to
-  // remember which half of the job they are standing next to.
-  if (action.type === 'grab') {
-    if (p.carrying && near(p, SLING, 2.6) && !w.loaded && !w.rider)
-      return loadSling(w, p);
-    if (p.carrying) {
-      emit(
-        w,
-        'load',
-        `${p.name} put the ${AMMO[p.carrying].name.toLowerCase()} down.`,
-      );
-      p.carrying = null;
-      return;
-    }
-    if (!near(p, PILE, 3))
-      throw new Error('The supply pile is behind the frame, to the left.');
-    p.carrying = drawAmmo(w);
-    p.winding = false;
+    if (!near(p, TREBUCHET, ENGINE_REACH))
+      throw new Error('Get to the engine first.');
+    // Which way you lean is the key you hold, not the side you happen to be
+    // standing on. Working that out was a puzzle nobody asked for.
+    p.pushing = action.side === -1 ? -1 : 1;
     return;
   }
   if (action.type === 'ride') {
-    if (p.carrying)
-      throw new Error('You cannot ride and carry. Drop it first.');
     if (!near(p, SLING, 2.4))
-      throw new Error('Climb into the sling at the front of the frame.');
-    if (w.loaded) throw new Error('The sling already has a payload.');
+      throw new Error('Climb into the sling at the back of the frame.');
     if (w.rider === p.id) {
       w.rider = '';
+      w.loaded = drawAmmo(w);
       emit(w, 'load', `${p.name} thought better of it and climbed out.`);
       return;
     }
     if (w.rider) throw new Error('Someone braver is already in the sling.');
+    // Whatever the sling had reloaded goes back on the pile to make room.
+    if (w.loaded) w.supply.unshift(w.loaded);
+    w.loaded = null;
     w.rider = p.id;
     emit(
       w,
@@ -286,18 +250,12 @@ export function siegeAction(
     );
     return;
   }
-  if (action.type === 'load') {
-    if (!p.carrying)
-      throw new Error('Fetch something from the supply pile first.');
-    if (!near(p, SLING, 2.6))
-      throw new Error('Load it into the sling at the front.');
-    if (w.loaded) throw new Error('The sling is already loaded.');
-    if (w.rider) throw new Error('There is a person in the sling. Somehow.');
-    return loadSling(w, p);
-  }
   if (action.type !== 'loose') throw new Error('Unknown siege action.');
-  if (!near(p, LEVER, 2.6))
-    throw new Error('The release lever is on the right of the frame.');
+  if (!near(p, TREBUCHET, ENGINE_REACH))
+    throw new Error('Get to the engine first.');
+  // The one job you still cannot do alone, which is the whole joke.
+  if (w.rider === p.id)
+    throw new Error('You are in the sling. Someone else pulls the pin.');
   if (!w.loaded && !w.rider) throw new Error('Nothing is loaded.');
   if (w.wind < 0.12) throw new Error('Wind the counterweight first.');
   loose(w, p.name);
@@ -342,7 +300,8 @@ function loose(w: SiegeWorld, by: string) {
     }
   }
   w.volleys++;
-  w.loaded = null;
+  // The next payload is already in the sling by the time the arm settles.
+  w.loaded = drawAmmo(w);
   w.rider = '';
   w.wind = 0;
   w.loosedAt = w.clock;
@@ -519,7 +478,7 @@ function step(w: SiegeWorld, dt: number) {
     const ix = stunned || anchored ? 0 : p.input.x / length;
     const iz = stunned || anchored ? 0 : p.input.z / length;
     const grounded = p.y <= 0.04;
-    const speed = p.carrying ? (AMMO[p.carrying].mass > 10 ? 2.6 : 3.9) : 4.7;
+    const speed = 4.7;
     const grip = grounded ? 11 : 0.6;
     p.vx += (ix * speed - p.vx) * Math.min(1, grip * dt);
     p.vz += (iz * speed - p.vz) * Math.min(1, grip * dt);
