@@ -12,7 +12,15 @@ const SERVICE = 'jumbleyard';
 const ENVIRONMENT = 'production';
 const force = process.argv.includes('--force');
 
-const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+/** Which directory actually gets uploaded is not obvious: `railway up` is
+ *  documented as deploying "the current directory", but run inside a git
+ *  worktree it has been observed uploading the root checkout instead. Rather
+ *  than depend on which is true, resolve one directory, check that one, and
+ *  hand it to the CLI as an explicit path, so the upload cannot disagree with
+ *  what was checked. */
+const DEPLOY_DIR = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+  encoding: 'utf8',
+}).trim();
 
 function fail(problem, remedy) {
   console.error(`\n  Refusing to deploy: ${problem}\n  ${remedy}\n`);
@@ -22,7 +30,13 @@ function fail(problem, remedy) {
 
 if (force) console.warn('\n  --force: skipping deploy safety checks.\n');
 else {
-  const dirty = git('status', '--porcelain');
+  const dirty = execFileSync(
+    'git',
+    ['-C', DEPLOY_DIR, 'status', '--porcelain'],
+    {
+      encoding: 'utf8',
+    },
+  ).trim();
   if (dirty)
     fail(
       `the working tree has ${dirty.split('\n').length} uncommitted change(s)`,
@@ -30,9 +44,13 @@ else {
     );
 
   try {
-    execFileSync('git', ['fetch', 'origin', 'main', '--quiet'], {
-      stdio: 'ignore',
-    });
+    execFileSync(
+      'git',
+      ['-C', DEPLOY_DIR, 'fetch', 'origin', 'main', '--quiet'],
+      {
+        stdio: 'ignore',
+      },
+    );
   } catch {
     fail(
       'could not reach origin to compare against main',
@@ -40,11 +58,15 @@ else {
     );
   }
 
-  const head = git('rev-parse', 'HEAD');
-  const origin = git('rev-parse', 'origin/main');
+  const inDir = (...args) =>
+    execFileSync('git', ['-C', DEPLOY_DIR, ...args], {
+      encoding: 'utf8',
+    }).trim();
+  const head = inDir('rev-parse', 'HEAD');
+  const origin = inDir('rev-parse', 'origin/main');
   if (head !== origin) {
-    const behind = git('rev-list', '--count', 'HEAD..origin/main');
-    const ahead = git('rev-list', '--count', 'origin/main..HEAD');
+    const behind = inDir('rev-list', '--count', 'HEAD..origin/main');
+    const ahead = inDir('rev-list', '--count', 'origin/main..HEAD');
     fail(
       `this directory is ${behind} commit(s) behind and ${ahead} ahead of origin/main`,
       behind > 0
@@ -92,6 +114,8 @@ const up = spawnSync(
     '--environment',
     ENVIRONMENT,
     ...process.argv.slice(2).filter((a) => a !== '--force'),
+    // Explicit path: the checked directory is the uploaded directory.
+    DEPLOY_DIR,
   ],
   { stdio: 'inherit', shell: process.platform === 'win32' },
 );
