@@ -11,7 +11,7 @@ import {
   syncNpcs,
 } from './simulation';
 import { releaseUnsupported } from './structure';
-import { CABLE } from './physics';
+import { CABLE, WALK_SPEED } from './physics';
 import { createEngine } from './peer';
 import { loadBearingCatalog } from './audio';
 import {
@@ -34,7 +34,12 @@ function site(count = 1, mode: LoadWorld['mode'] = 'normal') {
 }
 function begin(count = 1, mode: LoadWorld['mode'] = 'normal') {
   const w = site(count, mode);
-  siteAction(w, 'p0', { type: mode === 'practice' ? 'practice' : 'start' }, 'p0');
+  siteAction(
+    w,
+    'p0',
+    { type: mode === 'practice' ? 'practice' : 'start' },
+    'p0',
+  );
   return w;
 }
 /** Run the world forward in realistic frames. */
@@ -284,7 +289,14 @@ void test('rubble on the ground can be stood on', () => {
 void test('the peer engine drives the same rules and recovers from a checkpoint', () => {
   const engine = createEngine(START);
   engine.reconcile([
-    { id: 'p0', name: 'Foreman', color: 0, order: 0, instance: 'a', seen: START },
+    {
+      id: 'p0',
+      name: 'Foreman',
+      color: 0,
+      order: 0,
+      instance: 'a',
+      seen: START,
+    },
     { id: 'p1', name: 'Mate', color: 1, order: 1, instance: 'b', seen: START },
   ]);
   assert.equal(engine.world.players.length, 2);
@@ -372,4 +384,41 @@ void test('removing an NPC from the roster takes them off the site', () => {
   syncNpcs(w, [{ id: 'npc-2', name: 'Jo', color: 2 }]);
   assert.equal(w.players.filter((p) => p.bot).length, 1);
   assert.equal(w.players.find((p) => p.bot)!.id, 'npc-2');
+});
+
+void test('a wrecker walks at the collection pace, not a crawl', () => {
+  const w = begin(1);
+  const me = w.players[0];
+  // cannon-es only honours a body's friction material when the body it touches
+  // has one too. Without that the ground pinned the crew at a tenth of this.
+  const x0 = me.x;
+  const z0 = me.z;
+  for (let frame = 0; frame < 62; frame++) {
+    me.seen = w.clock + 16;
+    me.input = { x: 1, z: 0, jump: false, seq: 0 };
+    advanceSite(w, w.clock + 16);
+  }
+  const speed = Math.hypot(me.x - x0, me.z - z0);
+  assert.ok(
+    speed > WALK_SPEED * 0.9,
+    `walked ${speed.toFixed(2)} u/s, expected about ${WALK_SPEED}`,
+  );
+  assert.ok(speed <= WALK_SPEED, 'never faster than the walk speed');
+});
+
+void test('walking diagonally is no faster than walking straight', () => {
+  const straight = (x: number, z: number) => {
+    const w = begin(1);
+    const me = w.players[0];
+    const x0 = me.x;
+    const z0 = me.z;
+    for (let frame = 0; frame < 62; frame++) {
+      me.seen = w.clock + 16;
+      me.input = { x, z, jump: false, seq: 0 };
+      advanceSite(w, w.clock + 16);
+    }
+    return Math.hypot(me.x - x0, me.z - z0);
+  };
+  const diagonal = straight(Math.SQRT1_2, Math.SQRT1_2);
+  assert.ok(diagonal <= straight(1, 0) + 1e-6, 'no diagonal speed bonus');
 });

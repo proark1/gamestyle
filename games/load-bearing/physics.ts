@@ -17,9 +17,17 @@ export const BALL_RADIUS = 0.85;
 export const BALL_MASS = 400;
 /** Cable length from hoist to the centre of the ball. */
 export const CABLE = 4;
-export const WALK_SPEED = 4.6;
+export const WALK_SPEED = 4.4;
 export const JUMP_SPEED = 5.9;
 const PIANO_SIZE = { w: 1.5, h: 1.1, d: 0.7 };
+/**
+ * cannon-es multiplies the two bodies' friction, and only consults them when
+ * BOTH carry a material -- otherwise the pair silently falls back to the world
+ * default. Everything on site except the crew therefore needs one, or the
+ * crew's own zero-friction material never applies and the ground drags them to
+ * a crawl. 0.74 squares to the 0.55 the collapse was tuned against.
+ */
+const SITE_FRICTION = 0.74;
 const vec = (x = 0, y = 0, z = 0) => new C.Vec3(x, y, z);
 
 function quaternionOf(p: Part) {
@@ -55,7 +63,11 @@ export class Collapse {
     e.defaultContactMaterial.contactEquationStiffness = 1e8;
     e.defaultContactMaterial.contactEquationRelaxation = 4;
 
-    const ground = new C.Body({ mass: 0 });
+    const site = new C.Material({
+      friction: SITE_FRICTION,
+      restitution: 0.03,
+    });
+    const ground = new C.Body({ mass: 0, material: site });
     ground.addShape(new C.Plane());
     ground.quaternion.setFromAxisAngle(vec(1, 0, 0), -Math.PI / 2);
     ground.position.set(0, FLOOR, 0);
@@ -70,6 +82,7 @@ export class Collapse {
         sleepTimeLimit: 0.6,
         linearDamping: 0.03,
         angularDamping: 0.08,
+        material: site,
       });
       body.addShape(new C.Box(vec(p.w / 2, p.h / 2, p.d / 2)));
       body.position.set(p.x, p.y, p.z);
@@ -113,16 +126,20 @@ export class Collapse {
       sleepTimeLimit: 0.6,
       linearDamping: 0.05,
       angularDamping: 0.2,
+      material: site,
     });
     piano.addShape(
       new C.Box(vec(PIANO_SIZE.w / 2, PIANO_SIZE.h / 2, PIANO_SIZE.d / 2)),
     );
     piano.position.set(world.piano.x, world.piano.y, world.piano.z);
     if (!world.piano.resting) piano.velocity.set(0, world.piano.vy, 0);
-    piano.addEventListener('collide', (event: { contact: C.ContactEquation }) => {
-      const speed = Math.abs(event.contact.getImpactVelocityAlongNormal());
-      if (speed > 2.4) this.pianoDamage += (speed - 2.4) * 5.5;
-    });
+    piano.addEventListener(
+      'collide',
+      (event: { contact: C.ContactEquation }) => {
+        const speed = Math.abs(event.contact.getImpactVelocityAlongNormal());
+        if (speed > 2.4) this.pianoDamage += (speed - 2.4) * 5.5;
+      },
+    );
     e.addBody(piano);
     this.piano = piano;
 
@@ -132,9 +149,14 @@ export class Collapse {
         linearDamping: 0.12,
         angularDamping: 0.4,
         allowSleep: false,
+        material: site,
       });
       ball.addShape(new C.Sphere(BALL_RADIUS));
-      ball.position.set(world.crane.ballX, world.crane.ballY, world.crane.ballZ);
+      ball.position.set(
+        world.crane.ballX,
+        world.crane.ballY,
+        world.crane.ballZ,
+      );
       ball.velocity.set(world.crane.vx, world.crane.vy, world.crane.vz);
       // A real cable, so the ball swings behind the hoist instead of chasing it.
       const hoist = new C.Body({ mass: 0 });
