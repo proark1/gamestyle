@@ -48,6 +48,11 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { siteAnalytics, sitePlayState } from './analytics';
 
 const SESSION_KEY = 'steinwerk-session-v1';
 const TOOLS = [
@@ -58,7 +63,10 @@ const TOOLS = [
   { id: 'remove' as const, label: 'Remove', icon: RotateCw },
 ];
 const MATERIAL = { cement: 'Cement', sand: 'Sand', water: 'Water' };
+const tracker = new GameTracker(siteAnalytics);
+
 export default function Game() {
+  useGameTracker(tracker);
   const mount = useRef<HTMLDivElement>(null),
     scene = useRef<FirstPersonScene | null>(null),
     connection = useRef<Connection | null>(null);
@@ -113,6 +121,7 @@ export default function Game() {
   };
   const heardAudio = useRef(new Set<string>());
   const act = async (action: Action) => {
+    tracker.action(action.type);
     await connection.current?.act(action);
   };
   const accept = (s: Snapshot) => {
@@ -502,6 +511,30 @@ export default function Game() {
     if (sound.current) sound.current.enabled = !muted;
   }, [muted, ready]);
   const raceExpired = !!race && !race.completed && serverNow >= race.deadline;
+  useEffect(() => {
+    tracker.observe(
+      session && snapshot
+        ? sitePlayState(snapshot, session, playing, {
+            step,
+            bricks: built,
+            posts,
+            roofs,
+            racing: race?.started !== undefined,
+            raceWon: !!race?.completed,
+          })
+        : { stage: 'menu' },
+    );
+  }, [
+    session,
+    snapshot,
+    playing,
+    step,
+    built,
+    posts,
+    roofs,
+    race?.started,
+    race?.completed,
+  ]);
   useEffect(() => {
     sound.current?.atmosphere(
       !playing

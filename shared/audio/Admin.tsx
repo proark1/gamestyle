@@ -39,7 +39,14 @@ const categories: { id: AudioCategory | 'all'; name: string }[] = [
   { id: 'music', name: 'Music' },
   { id: 'event', name: 'Actions' },
 ];
-function AudioEditor({ game }: { game: GameId }) {
+export function SoundWorkshop({
+  game,
+  embedded = false,
+}: {
+  game: GameId;
+  /** Inside the admin page, which supplies sign-in and navigation. */
+  embedded?: boolean;
+}) {
   const fetchAudio = useAudioRequest();
   const [data, setData] = useState<AudioLibrary | null>(null),
     [error, setError] = useState(''),
@@ -260,19 +267,27 @@ function AudioEditor({ game }: { game: GameId }) {
       }
     }
   }
+  const Root = embedded ? 'section' : 'main';
+  const Heading = embedded ? 'h2' : 'h1';
   return (
-    <main className={styles.page} data-game={game}>
-      <header className={styles.header}>
-        <Link href={`/${game}`} className={styles.back}>
-          <ArrowLeft size={18} /> Back to game
-        </Link>
-        <span className={styles.game}>{GAME_NAMES[game]}</span>
-        <span className={styles.open}>Sound workshop</span>
-      </header>
+    <Root
+      className={styles.page}
+      data-game={game}
+      data-embedded={embedded || undefined}
+    >
+      {!embedded && (
+        <header className={styles.header}>
+          <Link href={`/${game}`} className={styles.back}>
+            <ArrowLeft size={18} /> Back to game
+          </Link>
+          <span className={styles.game}>{GAME_NAMES[game]}</span>
+          <span className={styles.open}>Sound workshop</span>
+        </header>
+      )}
       <section className={styles.title}>
         <div>
           <p className={styles.eyebrow}>THE SOUND WORKSHOP</p>
-          <h1>Make every moment sound real.</h1>
+          <Heading>Make every moment sound real.</Heading>
           <p>
             Every material. Every action. With realistic sounds from ElevenLabs.
           </p>
@@ -770,14 +785,14 @@ function AudioEditor({ game }: { game: GameId }) {
           </div>
         </div>
       </section>
-    </main>
+    </Root>
   );
 }
 
 export default function AudioAdmin(props: { game: GameId }) {
   return (
     <AdminAccess endpoint={`/api/audio/${props.game}`}>
-      <AudioEditor {...props} />
+      <SoundWorkshop {...props} />
     </AdminAccess>
   );
 }

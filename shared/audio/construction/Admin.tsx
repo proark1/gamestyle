@@ -38,7 +38,16 @@ const categories: { id: AudioCategory | 'all'; name: string }[] = [
   { id: 'music', name: 'Music' },
   { id: 'event', name: 'Actions' },
 ];
-function AudioEditor({ game, catalog }: { game: GameId; catalog: Cue[] }) {
+export function ConstructionSoundWorkshop({
+  game,
+  catalog,
+  embedded = false,
+}: {
+  game: GameId;
+  catalog: Cue[];
+  /** Inside the admin page, which supplies sign-in and navigation. */
+  embedded?: boolean;
+}) {
   const fetchAudio = useAudioRequest();
   const [data, setData] = useState<AudioLibrary | null>(null),
     [error, setError] = useState(''),
@@ -272,19 +281,27 @@ function AudioEditor({ game, catalog }: { game: GameId; catalog: Cue[] }) {
       }
     }
   }
+  const Root = embedded ? 'section' : 'main';
+  const Heading = embedded ? 'h2' : 'h1';
   return (
-    <main className={styles.page} data-game={game}>
-      <header className={styles.header}>
-        <a href={`/${game}`} className={styles.back}>
-          <ArrowLeft size={18} /> Back to game
-        </a>
-        <span className={styles.game}>{GAME_NAMES[game]}</span>
-        <span className={styles.open}>Admin · public access</span>
-      </header>
+    <Root
+      className={styles.page}
+      data-game={game}
+      data-embedded={embedded || undefined}
+    >
+      {!embedded && (
+        <header className={styles.header}>
+          <a href={`/${game}`} className={styles.back}>
+            <ArrowLeft size={18} /> Back to game
+          </a>
+          <span className={styles.game}>{GAME_NAMES[game]}</span>
+          <span className={styles.open}>Sound workshop</span>
+        </header>
+      )}
       <section className={styles.title}>
         <div>
           <p className={styles.eyebrow}>THE SOUND WORKSHOP</p>
-          <h1>Bring your building site to life.</h1>
+          <Heading>Bring your building site to life.</Heading>
           <p>
             Object Foley, comic voices, music and countdowns. Edit a prompt,
             generate a take, then set its in-game volume.
@@ -371,9 +388,8 @@ function AudioEditor({ game, catalog }: { game: GameId; catalog: Cue[] }) {
             </button>
           </div>
           <p className={styles.notice}>
-            This admin page is public. Any visitor can change settings and
-            generate audio using the saved key. ElevenLabs charges according to
-            your plan.
+            Changes reach every player straight away. Generation uses your
+            ElevenLabs credits.
           </p>
         </div>
         <div className={styles.mixPanel}>
@@ -841,14 +857,14 @@ function AudioEditor({ game, catalog }: { game: GameId; catalog: Cue[] }) {
           </div>
         </div>
       </section>
-    </main>
+    </Root>
   );
 }
 
 export default function AudioAdmin(props: { game: GameId; catalog: Cue[] }) {
   return (
     <AdminAccess endpoint={`/api/handwerker/audio/${props.game}`}>
-      <AudioEditor {...props} />
+      <ConstructionSoundWorkshop {...props} />
     </AdminAccess>
   );
 }

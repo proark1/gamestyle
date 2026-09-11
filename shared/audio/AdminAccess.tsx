@@ -13,6 +13,25 @@ import styles from './admin.module.css';
 const AudioRequest = createContext<typeof fetch>(fetch);
 export const useAudioRequest = () => useContext(AudioRequest);
 
+/** Signs workshop requests with a credential the server has already accepted. */
+export function AudioRequestProvider({
+  credential,
+  children,
+}: {
+  credential: string;
+  children: ReactNode;
+}) {
+  const fetchAudio = useCallback<typeof fetch>(
+    (input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set('x-audio-admin', credential);
+      return fetch(input, { ...init, headers });
+    },
+    [credential],
+  );
+  return <AudioRequest value={fetchAudio}>{children}</AudioRequest>;
+}
+
 export default function AdminAccess({
   endpoint,
   children,
@@ -42,16 +61,12 @@ export default function AdminAccess({
       });
     return () => controller.abort();
   }, [endpoint]);
-  const fetchAudio = useCallback<typeof fetch>(
-    (input, init) => {
-      const headers = new Headers(init?.headers);
-      headers.set('x-audio-admin', credential);
-      return fetch(input, { ...init, headers });
-    },
-    [credential],
-  );
   if (credential)
-    return <AudioRequest value={fetchAudio}>{children}</AudioRequest>;
+    return (
+      <AudioRequestProvider credential={credential}>
+        {children}
+      </AudioRequestProvider>
+    );
   return (
     <main className={styles.page}>
       <h1>Sound workshop</h1>

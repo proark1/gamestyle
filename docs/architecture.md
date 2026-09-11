@@ -24,12 +24,14 @@ Each game owns its implementation in `games/<id>/`. The folder identifiers match
 app/                  Framework routes, collection page, site layout
 games/<id>/           Game rules, UI, scene, models, connection, styles
   audio/              Game catalogs, prompts, playback policies
+  analytics.ts        Milestones, result reasons, counted actions, snapshot mapping
   peer.ts             Adapter for games supporting peer simulation
   server.ts or server/ HTTP composition and game-specific server behavior
   *.test.ts           Tests alongside the behavior they verify
   scripts/            Integration checks and production tools for this game
   docs/               Game designs, plans, and validation history
 shared/               Reusable code independent of game implementations
+  analytics/          Session tracker, report protocol and validation
   audio/              Playback, sound workshop UI, provider and storage adapters
     construction/     Shared construction-game audio contract and playback
   browser/            Browser subscriptions
@@ -75,6 +77,7 @@ Public assets retain their existing URLs. Game assets already have directories s
 3. Extract a helper to `shared/` when multiple callers actually need the same behavior. Pass differing policies as explicit parameters; preserve each game's rules.
 4. For peer play, implement the local adapter contract in `shared/peer/engine.ts` and pass a lazy loader to the shared connection. Hidden-role games should retain server authority when a player host would reveal secrets.
 5. For generated audio, keep the catalog and profile inside the game and register the catalog in the appropriate platform registry.
+6. For play analytics, add `games/<id>/analytics.ts` with the game's milestones, result reasons, counted actions and snapshot mapping, report through a module-level `GameTracker`, and register the definition in `platform/analytics/catalog.ts`. See [play analytics](analytics.md).
 6. Run `npm run check` and the relevant production build. Tests are discovered recursively, so new game tests do not need another glob in `package.json`.
 
 ```sh

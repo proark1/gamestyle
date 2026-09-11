@@ -56,6 +56,11 @@ import {
 import type { FarmHud, FarmScene } from './scene';
 import './style.css';
 import './mobile.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { farmAnalytics, farmPlayState } from './analytics';
 const SESSION_KEY = 'act-natural-session-v1';
 const clock = (seconds: number) => {
   const whole = Math.ceil(Math.max(0, seconds));
@@ -67,7 +72,10 @@ const initialHud: FarmHud = {
   watched: false,
   grazing: false,
 };
+const tracker = new GameTracker(farmAnalytics);
+
 export default function ActNatural() {
+  useGameTracker(tracker);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<FarmScene | null>(null),
     network = useRef<FarmConnection | null>(null),
@@ -106,6 +114,7 @@ export default function ActNatural() {
     spectating = !!me && (me.captured || me.escaped);
   function accept(next: FarmSnapshot) {
     if (!sessionRef.current) return;
+    tracker.observe(farmPlayState(next, sessionRef.current));
     sound.current?.farmSnapshot(next);
     setState(next);
     scene.current?.setSnapshot(next);
@@ -243,6 +252,7 @@ export default function ActNatural() {
     return () => clearTimeout(timer);
   }, [notice, w?.phase, modal]);
   async function action(a: FarmAction) {
+    tracker.action(a.type);
     try {
       setNotice('');
       if (local.current && sessionRef.current) {
@@ -328,6 +338,7 @@ export default function ActNatural() {
     } catch {}
   }
   function leave() {
+    tracker.observe({ stage: 'menu' });
     void network.current?.leave();
     network.current = null;
     local.current = null;

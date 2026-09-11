@@ -94,6 +94,11 @@ import GameToolbar from '../../shared/ui/GameToolbar';
 import './mobile-play.css';
 export type MobilePanel = 'crew' | 'social' | 'camera' | 'tools' | null;
 import { parseChallenge, CREW_JOBS } from './party';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { chaosAnalytics, chaosPlayState } from './analytics';
 
 const preview: Snapshot = {
   world: freshWorld('sandbox', 0),
@@ -123,8 +128,11 @@ const preview: Snapshot = {
   ],
 };
 
+const tracker = new GameTracker(chaosAnalytics);
+
 export default function Game() {
   'use no memo'; // This component bridges an imperative WebGL simulation.
+  useGameTracker(tracker);
   const mount = useRef<HTMLDivElement>(null);
   const scene = useRef<GameScene | null>(null);
   const [ready, setReady] = useState(false);
@@ -225,6 +233,17 @@ export default function Game() {
     toastTimer.current = setTimeout(() => setToast(''), 3600);
   }
   function accept(next: Snapshot) {
+    const visitor = connection.current?.session;
+    if (visitor)
+      tracker.observe(
+        chaosPlayState(next, visitor, {
+          checklist:
+            next.world.mode === 'job' ? jobProgress(next.world).ratio : 0,
+          projectDone:
+            next.world.mode === 'sandbox' &&
+            homeProgress(next.world).some((project) => project.complete),
+        }),
+      );
     if (
       stateRef.current?.world.party?.roundId !== next.world.party?.roundId ||
       stateRef.current?.world.party?.phase !== next.world.party?.phase
@@ -332,6 +351,7 @@ export default function Game() {
       connectionStatus !== 'online'
     )
       return false;
+    tracker.action(action.type);
     actionBusy.current = true;
     setActionPending(true);
     setActionFeedback('');
@@ -360,6 +380,7 @@ export default function Game() {
   }
   async function leave() {
     void connection.current?.leave();
+    tracker.observe({ stage: 'menu' });
     connection.current = null;
     setCraneMode(false);
     setFirstPerson(false);
