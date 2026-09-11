@@ -31,10 +31,14 @@ void test('mouse and touch look turn naturally, clamp pitch and wrap endless rot
   assert.ok(Math.abs(look.yaw) <= Math.PI);
   look.turn(-1_000_000, -1_000_000);
   assert.equal(look.pitch, 1.25);
-  assert.deepEqual(DELIVERY_CAMERAS, [
+});
+
+void test('a delivery starts outside, following you, and V still reaches first person', () => {
+  assert.equal(DELIVERY_CAMERAS[0], 'follow');
+  assert.deepEqual([...DELIVERY_CAMERAS].sort(), [
     'first-person',
     'follow',
-    'sofa',
     'overview',
+    'sofa',
   ]);
 });

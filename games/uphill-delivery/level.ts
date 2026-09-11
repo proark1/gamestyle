@@ -126,20 +126,17 @@ for (let i = 0; i < ROUTE.length - 1; i++) {
     );
     LEVEL.push(ramp('gap-end', roadPoint(a, b, 1 - edge), b));
   } else if (i === 8) {
-    for (let j = 0; j < 20; j++) {
-      const p = roadPoint(a, b, (j + 0.5) / 20);
-      LEVEL.push({
-        ...block(
-          `ice-${j}`,
-          [1.03, 0.5, 4.3],
-          p.x,
-          p.y - 0.175,
-          p.z,
-          '#b6d3cd',
-        ),
+    // One smooth ramp laid like the roads: no flat tread to park the sofa on.
+    const edge = 2.45 / Math.hypot(b.x - a.x, b.z - a.z),
+      ice = (id: string, from: Vec, to: Vec): LevelBox => ({
+        ...ramp(id, from, to, 4.6, '#b6d3cd'),
         ice: true,
       });
-    }
+    LEVEL.push(
+      ice('ice-start', a, roadPoint(a, b, edge)),
+      ice('ice-ramp', roadPoint(a, b, edge), roadPoint(a, b, 1 - edge)),
+      ice('ice-end', roadPoint(a, b, 1 - edge), b),
+    );
   } else {
     const edge = 2.45 / Math.hypot(b.x - a.x, b.z - a.z);
     LEVEL.push(ramp(`road-${i}-start`, a, roadPoint(a, b, edge)));
@@ -163,6 +160,70 @@ LEVEL.push(
   block('alley-left', [6.5, 2.8, 1.25], -4.5, 10.1, -3.15, '#c5b291'),
   block('alley-right', [6.5, 2.8, 1.25], -4.5, 10.1, 1.15, '#adbd9c'),
 );
+/** Village cottages are scenery, never collided. Roofs sit on this wall box. */
+export const COTTAGE_WALLS = [3.1, 2.6, 2.6];
+export const COTTAGES = [
+  { x: -14, y: 7.5, z: -1, color: '#c3c69e' },
+  { x: 15, y: 10.8, z: -3, color: '#d5c8a4' },
+  { x: -15, y: 14.5, z: -12, color: '#bac9aa' },
+  { x: 15, y: 18, z: -18, color: '#d4bc9e' },
+];
+/** Scenery stone rising from the mountain bottom, sunk in like the piers. */
+function foundation(
+  id: string,
+  x: number,
+  z: number,
+  width: number,
+  depth: number,
+  top: number,
+  color: string,
+) {
+  return block(id, [width, top + 1, depth], x, (top - 1) / 2, z, color);
+}
+/** No house stands on air: every cottage and the customer's floor has stone below. */
+export const FOUNDATIONS: LevelBox[] = [
+  ...COTTAGES.map((c, i) =>
+    foundation(
+      `cottage-${i}-foundation`,
+      c.x,
+      c.z,
+      COTTAGE_WALLS[0] + 0.2,
+      COTTAGE_WALLS[2] + 0.2,
+      c.y,
+      i % 2 ? '#aab092' : '#9ea58a',
+    ),
+  ),
+  // Exactly the floors' footprints, so no ledge beside them looks walkable.
+  ...LEVEL.filter(
+    (box) => box.id === 'customer-floor' || box.id === 'porch',
+  ).map((floor) =>
+    foundation(
+      `${floor.id}-foundation`,
+      floor.position.x,
+      floor.position.z,
+      floor.size[0],
+      floor.size[2],
+      floor.position.y - floor.size[1] / 2,
+      '#aab092',
+    ),
+  ),
+];
+/** Valley pines, nudged outward wherever a canopy would grow into a foundation. */
+export const PINES = Array.from({ length: 24 }, (_, i) => {
+  const side = i % 2 ? -1 : 1,
+    size = 0.8 + (i % 4) * 0.22,
+    z = 20 - i * 2.1,
+    // The widest cone, plus a little air.
+    reach = 1.15 * size + 0.2;
+  let x = side * (16.5 + Math.sin(i * 4.2) * 3);
+  for (const f of FOUNDATIONS) {
+    const dz = Math.abs(z - f.position.z) - f.size[2] / 2;
+    if (dz >= reach) continue;
+    const clear = f.size[0] / 2 + Math.sqrt(reach ** 2 - Math.max(0, dz) ** 2);
+    if (Math.abs(x - f.position.x) < clear) x = f.position.x + side * clear;
+  }
+  return { x, z, size };
+});
 export function bridgePose(box: LevelBox, clock: number) {
   const index = Number(box.id.slice(7));
   const envelope = Math.sin((Math.PI * (index + 0.5)) / 25);
@@ -191,6 +252,6 @@ export function routeStage(height: number) {
   if (height < 7.5) return 'Rope bridge · mind the wobble';
   if (height < 11.5) return 'Village alley · someone get the gate';
   if (height < 15.5) return 'Broken path · the sofa is your bridge';
-  if (height < 20) return 'Icy stairs · small steps';
+  if (height < 20) return 'Icy ramp · don’t let go';
   return 'No. 4 · the door opens outward';
 }

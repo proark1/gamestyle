@@ -88,7 +88,7 @@ export class DeliveryScene {
     this.look.yaw = value;
   }
   zoom = 1;
-  mode: DeliveryCameraMode = 'first-person';
+  mode: DeliveryCameraMode = DELIVERY_CAMERAS[0];
   get firstPerson() {
     return (
       this.active &&
@@ -129,7 +129,7 @@ export class DeliveryScene {
     this.renderer.domElement.tabIndex = 0;
     this.renderer.domElement.setAttribute(
       'aria-label',
-      'Uphill Delivery mountain. WASD moves, Space jumps, E grabs or releases, F opens gates, R turns the sofa, V changes camera. First person: click for mouse look, Escape releases the mouse, or drag to look. IJKL also looks around.',
+      'Uphill Delivery mountain. WASD moves, Space jumps, E grabs or releases, F opens gates, R turns the sofa, V changes camera. Drag to orbit and scroll to zoom. In first person, click for mouse look, Escape releases the mouse, or drag or use IJKL to look.',
     );
     host.appendChild(this.renderer.domElement);
     this.scene.background = new T.Color('#c7d3b6');

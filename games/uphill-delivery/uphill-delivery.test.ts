@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Quaternion, Vec3 } from 'cannon-es';
+import { Quaternion, RaycastResult, Vec3 } from 'cannon-es';
 import {
   advanceDelivery,
   deliveryAction,
@@ -9,7 +9,15 @@ import {
   sofaInside,
 } from './simulation';
 import { deliveryPhysics, gripPosition } from './physics';
-import { GATE, LEVEL, ROUTE } from './level';
+import {
+  COTTAGE_WALLS,
+  COTTAGES,
+  FOUNDATIONS,
+  GATE,
+  LEVEL,
+  PINES,
+  ROUTE,
+} from './level';
 import {
   SOFA_CENTER,
   type DeliverySession,
@@ -226,7 +234,8 @@ void test('ice preserves more cargo momentum than the stone road', () => {
   const rough = round(),
     icy = round();
   sofaAt(rough, -13, 0.05, 13);
-  sofaAt(icy, 7, 19.1, -15);
+  // Mid-ramp: the landings at either end also touch the stone road.
+  sofaAt(icy, 2, 18.45, -15);
   advance(rough, 1);
   advance(icy, 1);
   const a = deliveryPhysics(rough).sofa,
@@ -239,7 +248,7 @@ void test('ice preserves more cargo momentum than the stone road', () => {
     `ice ${icy.sofa.velocity.z}, road ${rough.sofa.velocity.z}`,
   );
 });
-void test('all unbroken road sections, bridge landings and icy stairs can be walked uphill', () => {
+void test('all unbroken road sections, bridge landings and the icy ramp can be walked uphill', () => {
   for (const index of [0, 1, 2, 3, 4, 5, 7, 8, 9, 10]) {
     const w = round(),
       a = ROUTE[index],
@@ -259,6 +268,83 @@ void test('all unbroken road sections, bridge landings and icy stairs can be wal
       `section ${index} stops at ${p.x}, ${p.y}, ${p.z}`,
     );
   }
+});
+void test('the ice is one smooth ramp with no stair riser along its length', () => {
+  const physics = deliveryPhysics(round()),
+    a = ROUTE[8],
+    b = ROUTE[9];
+  let previous = a.y;
+  for (let x = a.x; x <= b.x; x += 0.05) {
+    const hit = new RaycastResult();
+    physics.engine.raycastClosest(
+      new Vec3(x, 30, a.z),
+      new Vec3(x, 10, a.z),
+      { skipBackfaces: true },
+      hit,
+    );
+    const y = hit.hitPointWorld.y;
+    // Road pieces meet with lips of about 2 cm; a stair riser is ten times that.
+    assert.ok(
+      hit.hasHit && Math.abs(y - previous) < 0.03,
+      `the surface jumps from ${previous} to ${y} at x ${x}`,
+    );
+    previous = y;
+  }
+  assert.ok(Math.abs(previous - b.y) < 0.05, `the ice tops out at ${previous}`);
+});
+void test('cargo released on the icy ramp slides back down it', () => {
+  const w = round();
+  sofaAt(w, 0, 18.1, -15);
+  advance(w, 0.5);
+  const start = w.sofa.x;
+  advance(w, 1.5);
+  assert.ok(w.sofaSurface?.startsWith('ice-'), `on ${w.sofaSurface}`);
+  assert.ok(w.sofa.x < start - 1, `sofa held at ${w.sofa.x} from ${start}`);
+});
+void test('every house stands on a foundation from the mountain bottom, clear of the pines', () => {
+  const bottom = LEVEL.find((b) => b.id === 'bottom')!,
+    ground = bottom.position.y + bottom.size[1] / 2;
+  const houses = [
+    ...COTTAGES.map((c) => ({
+      x: c.x,
+      z: c.z,
+      base: c.y,
+      width: COTTAGE_WALLS[0],
+      depth: COTTAGE_WALLS[2],
+    })),
+    ...LEVEL.filter((b) => b.id === 'customer-floor' || b.id === 'porch').map(
+      (floor) => ({
+        x: floor.position.x,
+        z: floor.position.z,
+        base: floor.position.y - floor.size[1] / 2,
+        width: floor.size[0],
+        depth: floor.size[2],
+      }),
+    ),
+  ];
+  assert.equal(houses.length, 6);
+  for (const house of houses)
+    assert.ok(
+      FOUNDATIONS.some(
+        ({ position: p, size }) =>
+          Math.abs(p.y + size[1] / 2 - house.base) < 1e-6 &&
+          p.y - size[1] / 2 < ground &&
+          Math.abs(p.x - house.x) + house.width / 2 <= size[0] / 2 + 1e-6 &&
+          Math.abs(p.z - house.z) + house.depth / 2 <= size[2] / 2 + 1e-6,
+      ),
+      `the house at ${house.x}, ${house.base}, ${house.z} stands on air`,
+    );
+  for (const pine of PINES)
+    for (const { id, position: p, size } of FOUNDATIONS)
+      assert.ok(
+        // 1.15 × size is the widest cone of a pine.
+        Math.hypot(
+          Math.max(0, Math.abs(pine.x - p.x) - size[0] / 2),
+          Math.max(0, Math.abs(pine.z - p.z) - size[2] / 2),
+        ) >=
+          1.15 * pine.size,
+        `the pine at ${pine.x}, ${pine.z} grows into ${id}`,
+      );
 });
 void test('solo assistance carries the sofa uphill through turns, bridge, alley and ice without resetting cargo', () => {
   for (const index of [1, 2, 3, 4, 5, 7, 8, 9, 10]) {

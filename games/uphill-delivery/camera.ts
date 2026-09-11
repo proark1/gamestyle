@@ -1,8 +1,9 @@
+/** V cycles in this order; a delivery starts on the first, from outside. */
 export const DELIVERY_CAMERAS = [
-  'first-person',
   'follow',
   'sofa',
   'overview',
+  'first-person',
 ] as const;
 export type DeliveryCameraMode = (typeof DELIVERY_CAMERAS)[number];
 export const CAMERA_NAMES: Record<DeliveryCameraMode, string> = {
