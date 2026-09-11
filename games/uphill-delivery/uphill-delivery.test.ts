@@ -103,6 +103,40 @@ void test('four distinct physical corners can be grabbed; the gate needs a free 
   assert.ok(w.gateTarget > 1.5);
   assert.equal(w.players.filter((p) => p.grip !== null).length, 3);
 });
+function jumpHeight(w: DeliveryWorld) {
+  const p = w.players[0],
+    start = p.y;
+  p.seen = w.clock;
+  p.input = { x: 0, z: 0, jump: true, seq: p.input.seq + 1 };
+  advanceDelivery(w, w.clock + 1000 / 60);
+  let peak = 0;
+  for (let i = 0; i < 60; i++) {
+    advance(w, 1 / 60);
+    peak = Math.max(peak, p.y - start);
+  }
+  return peak;
+}
+void test('workers jump from beside the gate and never hang from its top edge', () => {
+  for (const side of [-1, 1]) {
+    const w = round(),
+      p = w.players[0];
+    Object.assign(p, { x: GATE.x + side * 2.5, y: GATE.y + 0.8, z: GATE.z });
+    advance(w, 1.5, { x: -side, z: 0 });
+    assert.ok(Math.abs(p.x - GATE.x) < 0.5, `worker stopped at ${p.x}`);
+    advance(w, 0.5, { x: 0, z: 0 });
+    const height = jumpHeight(w);
+    assert.ok(height > 1.4, `jumped ${height} beside the gate`);
+  }
+  for (const side of [-1, 1]) {
+    const w = round(),
+      p = w.players[0];
+    Object.assign(p, { x: GATE.x + side * 0.45, y: GATE.y + 1.81, z: GATE.z });
+    advance(w, 1);
+    assert.ok(p.grounded, `worker hangs from the gate at ${p.x}, ${p.y}`);
+    const height = jumpHeight(w);
+    assert.ok(height > 1.4, `jumped ${height} after slipping off the gate`);
+  }
+});
 void test('a solo worker can pull the actual sofa uphill and release without teleporting it', () => {
   const w = round();
   Object.assign(w.players[0], { x: -8.5, y: 0.15, z: 13.8 });
