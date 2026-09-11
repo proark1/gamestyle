@@ -82,7 +82,7 @@ void test('first snapshot, room changes, restart and reconnect do not replay old
 void test('all crew footsteps use their supporting materials, with real jump and landing IDs', () => {
   const s = snapshot(),
     director = new DeliveryAudioDirector(() => 0.5);
-  s.world.players[0].support = 'ice-3';
+  s.world.players[0].support = 'ice-ramp';
   s.world.players[0].input.x = 1;
   s.world.players[1].support = 'sofa';
   director.update(s);

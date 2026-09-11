@@ -173,7 +173,7 @@ void test('persistent blockage leads to a visible request for help and human inp
   assert.equal(w.npcTeam?.needsHelp, false);
 });
 
-void test('slow analog movement climbs the ice steps instead of probing inside the boots', () => {
+void test('slow analog movement climbs the icy ramp against its downhill pull', () => {
   const w = crew(1, 0),
     p = w.players[0];
   Object.assign(p, { x: -8, y: 16.1, z: -15 });

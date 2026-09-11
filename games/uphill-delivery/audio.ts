@@ -1,18 +1,14 @@
 import { audioProfile as deliveryAudioProfile } from './audio/profile';
 import { Footsteps, type AudioEvent } from '../../shared/audio/world';
 import { SiteAudio } from '../../shared/audio/player';
-import { DOOR, GATE, GOATS, goatPose } from './level';
+import { DOOR, GATE, GOATS, goatPose, PINES } from './level';
 import type { DeliverySnapshot, Vec } from './types';
 
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 const distance = (a: Vec, b: Vec) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
-// Same planted pines as the mountain scenery; canopy height gives birds a real source.
-const pines = Array.from({ length: 24 }, (_, i) => ({
-  x: (i % 2 ? -1 : 1) * (16.5 + Math.sin(i * 4.2) * 3),
-  y: 2,
-  z: 20 - i * 2.1,
-}));
+// The planted pines of the mountain scenery; canopy height gives birds a real source.
+const pines = PINES.map(({ x, z }) => ({ x, y: 2, z }));
 
 export function deliverySurface(support?: string | null) {
   if (support === 'sofa') return 'fabric';

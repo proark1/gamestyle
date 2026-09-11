@@ -3,7 +3,16 @@ import { box, beam, label, material } from '../../shared/rendering/primitives';
 import { sofa as createSofa } from '../../shared/rendering/sofa';
 import { worker } from '../../shared/rendering/worker';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { LEVEL, DOOR, GATE, ROUTE } from './level';
+import {
+  COTTAGE_WALLS,
+  COTTAGES,
+  DOOR,
+  FOUNDATIONS,
+  GATE,
+  LEVEL,
+  PINES,
+  ROUTE,
+} from './level';
 import { SOFA_CENTER, SOFA_SCALE } from './types';
 
 function pine(group: T.Group, x: number, y: number, z: number, size = 1) {
@@ -25,7 +34,7 @@ function cottage(
   z: number,
   color: string,
 ) {
-  box(group, [3.1, 2.6, 2.6], [x, y + 1.3, z], color, true);
+  box(group, COTTAGE_WALLS, [x, y + 1.3, z], color, true);
   for (const side of [-1, 1]) {
     const roof = box(
       group,
@@ -142,6 +151,14 @@ export function villageModel() {
       true,
     );
   }
+  for (const f of FOUNDATIONS)
+    box(
+      scenery,
+      f.size,
+      [f.position.x, f.position.y, f.position.z],
+      f.color,
+      true,
+    );
   for (const side of [-1, 1]) {
     for (let j = 0; j <= 25; j++) {
       const t = j / 25,
@@ -170,18 +187,8 @@ export function villageModel() {
       }
     }
   }
-  cottage(scenery, -14, 7.5, -1, '#c3c69e');
-  cottage(scenery, 15, 10.8, -3, '#d5c8a4');
-  cottage(scenery, -15, 14.5, -12, '#bac9aa');
-  cottage(scenery, 15, 18, -18, '#d4bc9e');
-  for (let i = 0; i < 24; i++)
-    pine(
-      scenery,
-      (i % 2 ? -1 : 1) * (16.5 + Math.sin(i * 4.2) * 3),
-      -0.6,
-      20 - i * 2.1,
-      0.8 + (i % 4) * 0.22,
-    );
+  for (const c of COTTAGES) cottage(scenery, c.x, c.y, c.z, c.color);
+  for (const p of PINES) pine(scenery, p.x, -0.6, p.z, p.size);
   // Distant mountain silhouettes frame the miniature village.
   for (let i = 0; i < 6; i++) {
     const m = new T.Mesh(
