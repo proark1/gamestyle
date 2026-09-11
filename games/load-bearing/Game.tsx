@@ -46,6 +46,11 @@ import {
 import { LoadBearingSound } from './audio';
 import type { LoadBearingScene } from './scene';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { loadBearingAnalytics, loadBearingPlayState } from './analytics';
 
 const SESSION_KEY = 'load-bearing-session-v1';
 const PREFS_KEY = 'load-bearing-prefs-v1';
@@ -54,7 +59,10 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
+const tracker = new GameTracker(loadBearingAnalytics);
+
 export default function LoadBearing() {
+  useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<LoadBearingScene | null>(null),
     sound = useRef<LoadBearingSound | null>(null),
@@ -91,6 +99,7 @@ export default function LoadBearing() {
 
   function accept(next: LoadSnapshot) {
     if (!activeSession.current) return;
+    tracker.observe(loadBearingPlayState(next, activeSession.current));
     const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
@@ -303,6 +312,7 @@ export default function LoadBearing() {
 
   function action(a: LoadAction) {
     if (modal || !activeSession.current || status !== 'online') return;
+    tracker.action(a.type);
     sound.current?.unlock();
     setNotice('');
     try {
@@ -338,6 +348,7 @@ export default function LoadBearing() {
   }, [modal, status, ready]);
 
   async function leave() {
+    tracker.observe({ stage: 'menu' });
     setBusy(true);
     try {
       await network.current?.leave();

@@ -2,7 +2,14 @@ import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { InstancedProxy } from '../../shared/rendering/instanced-proxy';
 import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
-import { cowModel, farmModel, keyModel, ladder } from './objects';
+import {
+  cowModel,
+  farmModel,
+  keyModel,
+  ladder,
+  poseFarmer,
+  walkCow,
+} from './objects';
 import { farmSnapshot, freshFarm } from './simulation';
 import {
   cowExposed,
@@ -416,14 +423,8 @@ export class FarmScene {
         Math.min(1, dt * 8),
       );
       head.position.y = c.grazing ? 0.9 : 1.15;
+      walkCow(model, time, c.moving && !this.reduced);
       const legs = model.userData.legs as T.Group[];
-      legs.forEach(
-        (leg, i) =>
-          (leg.rotation.x =
-            c.moving && !this.reduced
-              ? Math.sin(time * 0.011 + (i % 2) * Math.PI) * 0.32
-              : 0),
-      );
       const body = model.userData.body as T.Group;
       body.position.y =
         !this.reduced && c.grazing
@@ -459,22 +460,15 @@ export class FarmScene {
     this.walkDistance += Math.min(walked, 0.3);
     this.farm.farmer.position.set(pose.x, 0, pose.z);
     this.farm.farmer.rotation.y = pose.angle;
-    const stride =
-      !this.reduced && walked > 0.001
-        ? Math.sin(this.walkDistance * 7) * 0.42
-        : 0;
-    const limbs = this.farm.farmer.userData;
-    for (const [name, angle] of [
-      ['legL', stride],
-      ['legR', -stride],
-      ['armL', -stride * 0.7],
-      ['armR', night ? -1.2 : stride * 0.7],
-    ] as const)
-      (limbs[name] as T.Group).rotation.x = T.MathUtils.lerp(
-        (limbs[name] as T.Group).rotation.x,
-        angle,
-        1 - Math.exp(-dt * 20),
-      );
+    poseFarmer(
+      this.farm.farmer,
+      {
+        distance: this.walkDistance,
+        walking: !this.reduced && walked > 0.001,
+        night,
+      },
+      1 - Math.exp(-dt * 20),
+    );
     this.sight.visible = this.active && w.phase === 'playing';
     if (
       this.sight.visible &&

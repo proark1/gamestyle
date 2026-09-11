@@ -52,6 +52,11 @@ import {
 } from './camera';
 import { CrewSlots } from './CrewSlots';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { deliveryAnalytics, deliveryPlayState } from './analytics';
 
 const SESSION_KEY = 'uphill-delivery-session-v1';
 type ModelContext = {
@@ -70,7 +75,10 @@ const duration = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
+const tracker = new GameTracker(deliveryAnalytics);
+
 export default function UphillDelivery() {
+  useGameTracker(tracker);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<DeliveryScene | null>(null),
     connection = useRef<DeliveryConnection | null>(null),
@@ -108,6 +116,7 @@ export default function UphillDelivery() {
     hands = w?.players.filter((p) => p.grip !== null).length ?? 0;
   function accept(next: DeliverySnapshot) {
     if (!sessionRef.current) return;
+    tracker.observe(deliveryPlayState(next, sessionRef.current));
     const prior = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
@@ -284,6 +293,7 @@ export default function UphillDelivery() {
     scene.current?.setPaused(!!modal || status !== 'online' || !!done);
   }, [modal, status, done]);
   async function action(a: DeliveryAction) {
+    tracker.action(a.type);
     try {
       setNotice('');
       audio.current?.unlock();
@@ -365,6 +375,7 @@ export default function UphillDelivery() {
     }
   }
   async function leave(destination = '/uphill-delivery') {
+    tracker.observe({ stage: 'menu' });
     await connection.current?.leave();
     connection.current = null;
     local.current = null;

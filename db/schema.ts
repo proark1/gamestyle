@@ -109,6 +109,58 @@ export const handwerkerFirstPersonPlayers = sqliteTable(
     uniqueIndex('handwerker_fp_players_room_slot').on(table.room, table.slot),
   ],
 );
+/** One page visit to one game, replaced by each newer cumulative report. */
+export const analyticsSessions = sqliteTable(
+  'analytics_sessions',
+  {
+    id: text('id').primaryKey(),
+    game: text('game').notNull(),
+    started: integer('started').notNull(),
+    updated: integer('updated').notNull(),
+    delivery: integer('delivery').notNull().default(0),
+    device: text('device').notNull().default('pointer'),
+    entry: text('entry').notNull().default('direct'),
+    mode: text('mode').notNull().default(''),
+    room: text('room').notNull().default(''),
+    reached: text('reached').notNull().default('[]'),
+    furthest: text('furthest').notNull().default('opened'),
+    furthestRank: integer('furthest_rank').notNull().default(0),
+    lastStep: text('last_step').notNull().default('opened'),
+    rounds: integer('rounds').notNull().default(0),
+    wins: integer('wins').notNull().default(0),
+    losses: integer('losses').notNull().default(0),
+    humans: integer('humans').notNull().default(0),
+    npcs: integer('npcs').notNull().default(0),
+    elapsed: integer('elapsed').notNull().default(0),
+    active: integer('active').notNull().default(0),
+    menuMs: integer('menu_ms').notNull().default(0),
+    lobbyMs: integer('lobby_ms').notNull().default(0),
+    playingMs: integer('playing_ms').notNull().default(0),
+    finishedMs: integer('finished_ms').notNull().default(0),
+    actions: text('actions').notNull().default('{}'),
+    results: text('results').notNull().default('{}'),
+    exit: text('exit').notNull().default(''),
+  },
+  (table) => [
+    index('analytics_sessions_started_idx').on(table.started),
+    index('analytics_sessions_game_started_idx').on(table.game, table.started),
+    index('analytics_sessions_updated_idx').on(table.updated),
+  ],
+);
+export const analyticsEvents = sqliteTable(
+  'analytics_events',
+  {
+    session: text('session')
+      .notNull()
+      .references(() => analyticsSessions.id, { onDelete: 'cascade' }),
+    seq: integer('seq').notNull(),
+    at: integer('at').notNull(),
+    type: text('type').notNull(),
+    data: text('data').notNull().default('{}'),
+  },
+  (table) => [primaryKey({ columns: [table.session, table.seq] })],
+);
+
 export const handwerkerSavedBuilds = sqliteTable(
   'handwerker_saved_builds',
   {

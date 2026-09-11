@@ -27,6 +27,7 @@ import {
   createSite,
   makeBuilder,
   makePart,
+  stepBuilder,
 } from './world-view';
 import { placementAtSurface, previewShape } from './placement';
 import { blocksWalker, insideSolid } from './site-layout';
@@ -966,10 +967,7 @@ export class FirstPersonScene {
         Math.min(1, dt * 12),
       );
       avatar.group.rotation.y = p.yaw;
-      avatar.legs.forEach((leg, i) => {
-        leg.rotation.x =
-          distance > 0.02 ? Math.sin(time * 0.012 + i * Math.PI) * 0.3 : 0;
-      });
+      stepBuilder(avatar.legs, time, distance > 0.02);
       avatar.tag.quaternion.copy(this.camera.quaternion);
       avatar.tag.rotateY(-p.yaw);
     }

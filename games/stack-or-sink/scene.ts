@@ -3,6 +3,7 @@ import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { island, junk } from './objects';
 import { LoadCrane } from './load-crane';
 import { worker } from '../../shared/rendering/worker';
+import { poseStacker } from './avatar';
 import { previewPieces } from './preview';
 import { emptyInput, movePlayer, nearestPiece, placement } from './simulation';
 import { orientation, topOf } from './physics';
@@ -793,18 +794,13 @@ export class GameScene {
               0.015;
         m.position.set(shown.x, shown.y, shown.z);
         m.rotation.y = shown.angle;
-        const body = m.userData.body as T.Group;
-        body.rotation.z = p.down
-          ? Math.PI / 2
-          : this.reduceMotion
-            ? 0
-            : Math.sin(this.time * 2 + p.color) * 0.02;
-        const swing = move && !p.down ? Math.sin(this.time * 13) * 0.65 : 0;
-        m.userData.legL.rotation.x = swing;
-        m.userData.legR.rotation.x = -swing;
-        const carrying = world.pieces.some((j) => j.heldBy === p.id);
-        m.userData.armL.rotation.x = carrying ? -2.65 : -swing * 0.7;
-        m.userData.armR.rotation.x = carrying ? -2.65 : swing * 0.7;
+        poseStacker(m, this.time, {
+          moving: move,
+          down: p.down,
+          carrying: world.pieces.some((j) => j.heldBy === p.id),
+          color: p.color,
+          still: this.reduceMotion,
+        });
       }
       this.updateCamera(dt);
       if (now - this.lastGhost > 45) {

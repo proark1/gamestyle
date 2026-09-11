@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { label, disposeGeometry } from '../../shared/rendering/primitives';
-import { cottage, itemModel, thief } from './objects';
+import { cottage, itemModel, poseThief, thief } from './objects';
 import { bodyPoint, FOOT, restingItemPosition, wakePose } from './level';
 import { GiantModel } from './giant-model';
 import { freshGiant, giantSnapshot } from './simulation';
@@ -319,19 +319,12 @@ export class GiantScene {
           Math.sin(p.angle - model.rotation.y),
           Math.cos(p.angle - model.rotation.y),
         ) * mix;
-      const carrying = w.items.some((i) => i.heldBy === p.id);
-      const walking = Math.hypot(p.velocity.x, p.velocity.z) > 0.15;
-      const stride =
-        !this.reduced && walking
-          ? Math.sin(now / (p.input.crouch ? 150 : 95)) * 0.5
-          : 0;
-      model.userData.legL.rotation.x = stride;
-      model.userData.legR.rotation.x = -stride;
-      model.userData.armL.rotation.x = carrying ? -1.2 : -stride * 0.6;
-      model.userData.armR.rotation.x = carrying ? -1.2 : stride * 0.6;
-      model.userData.body.rotation.x =
-        p.downUntil > w.clock ? 1.15 : p.input.crouch ? 0.22 : 0;
-      model.userData.body.scale.y = p.input.crouch ? 0.83 : 1;
+      poseThief(model, now, {
+        walking: !this.reduced && Math.hypot(p.velocity.x, p.velocity.z) > 0.15,
+        crouch: p.input.crouch,
+        carrying: w.items.some((i) => i.heldBy === p.id),
+        down: p.downUntil > w.clock,
+      });
     }
     for (const [id, model] of this.items) {
       if (!w.items.some((item) => item.id === id)) {

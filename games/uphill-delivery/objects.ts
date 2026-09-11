@@ -81,6 +81,26 @@ export function deliveryWorker(color: number) {
   limbs.forEach((limb) => body.add(limb));
   return g;
 }
+/** Walks a mover, arms out to grip the sofa; `now` is in milliseconds. */
+export function poseDeliveryWorker(
+  model: T.Object3D,
+  now: number,
+  pose: {
+    moving: boolean;
+    gripping: boolean;
+    stumbling: boolean;
+    color: number;
+  },
+) {
+  const stride = pose.moving ? Math.sin(now / 95 + pose.color) * 0.5 : 0;
+  model.userData.legL.rotation.x = stride;
+  model.userData.legR.rotation.x = -stride;
+  model.userData.armL.rotation.x = pose.gripping ? -1.15 : -stride * 0.7;
+  model.userData.armR.rotation.x = pose.gripping ? -1.15 : stride * 0.7;
+  model.userData.body.rotation.z = pose.stumbling
+    ? Math.sin(now / 65) * 0.15
+    : 0;
+}
 export function goatModel() {
   const g = new T.Group();
   box(g, [0.75, 0.66, 1.18], [0, 0.76, 0], '#eee6cf', true);

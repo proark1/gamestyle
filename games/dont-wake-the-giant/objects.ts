@@ -147,6 +147,22 @@ export function thief(color: number) {
     box(body, [0.07, 0.065, 0.025], [x, 1.46, 0.29], '#f8edd0');
   return g;
 }
+/** Walks a thief, hunched when crouching; `now` is in milliseconds. */
+export function poseThief(
+  model: T.Object3D,
+  now: number,
+  pose: { walking: boolean; crouch: boolean; carrying: boolean; down: boolean },
+) {
+  const stride = pose.walking
+    ? Math.sin(now / (pose.crouch ? 150 : 95)) * 0.5
+    : 0;
+  model.userData.legL.rotation.x = stride;
+  model.userData.legR.rotation.x = -stride;
+  model.userData.armL.rotation.x = pose.carrying ? -1.2 : -stride * 0.6;
+  model.userData.armR.rotation.x = pose.carrying ? -1.2 : stride * 0.6;
+  model.userData.body.rotation.x = pose.down ? 1.15 : pose.crouch ? 0.22 : 0;
+  model.userData.body.scale.y = pose.crouch ? 0.83 : 1;
+}
 export function itemModel(kind: ItemKind) {
   const g = new T.Group();
   if (kind === 'pillow')

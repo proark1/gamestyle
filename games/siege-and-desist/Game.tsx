@@ -57,6 +57,11 @@ import {
 import { SiegeSound } from './audio';
 import type { SiegeScene } from './scene';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { siegeAnalytics, siegePlayState } from './analytics';
 
 const SESSION_KEY = 'siege-and-desist-session-v1';
 const PREFS_KEY = 'siege-and-desist-prefs-v1';
@@ -70,7 +75,10 @@ const at = (
   r: number,
 ) => !!p && Math.hypot(p.x - spot.x, p.z - spot.z) <= r;
 
+const tracker = new GameTracker(siegeAnalytics);
+
 export default function SiegeAndDesist() {
+  useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<SiegeScene | null>(null),
     sound = useRef<SiegeSound | null>(null),
@@ -106,6 +114,7 @@ export default function SiegeAndDesist() {
   function accept(next: SiegeSnapshot) {
     if (!activeSession.current) return;
     hydrateSiege(next.world);
+    tracker.observe(siegePlayState(next, activeSession.current));
     const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
@@ -306,6 +315,7 @@ export default function SiegeAndDesist() {
 
   function action(a: SiegeAction) {
     if (modal || !activeSession.current || status !== 'online') return;
+    tracker.action(a.type);
     sound.current?.unlock();
     // Holds release constantly; a stale hold must never spam the notice line.
     const quiet = a.type === 'stopWind' || a.type === 'stopPush';
@@ -345,6 +355,7 @@ export default function SiegeAndDesist() {
   }, [modal, status, ready]);
 
   async function leave() {
+    tracker.observe({ stage: 'menu' });
     setBusy(true);
     try {
       await network.current?.leave();

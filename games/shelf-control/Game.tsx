@@ -35,6 +35,11 @@ import {
 import type { ShelfScene } from './scene';
 import type { ShelfAudio } from './audio';
 import './shelf-control.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { shelfAnalytics, shelfStateReader } from './analytics';
 
 const SESSION_KEY = 'jumbleyard:shelf-control';
 const prettyTime = (ms: number) =>
@@ -116,7 +121,11 @@ function Joystick({ move }: { move: (p: Point) => void }) {
     </div>
   );
 }
+const tracker = new GameTracker(shelfAnalytics);
+
 export default function ShelfControl() {
+  useGameTracker(tracker);
+  const [readShelfState] = useState(() => shelfStateReader());
   const [name, setName] = useState(''),
     [code, setCode] = useState(''),
     [session, setSession] = useState<Session | null>(null),
@@ -201,6 +210,7 @@ export default function ShelfControl() {
       if (settings.current.paused) return;
       const client = connection.current;
       if (!client) return;
+      tracker.action(action.type);
       const seatAction = [
         'start',
         'restart',
@@ -228,6 +238,13 @@ export default function ShelfControl() {
     [report],
   );
   const active = snapshot?.phase === 'hiding' || snapshot?.phase === 'playing';
+  useEffect(() => {
+    tracker.observe(
+      snapshot && session
+        ? readShelfState(snapshot, session)
+        : { stage: 'menu' },
+    );
+  }, [readShelfState, snapshot, session]);
   useEffect(() => {
     let cancelled = false;
     void import('./audio')

@@ -55,13 +55,21 @@ import { HotelSound } from './audio';
 import type { HotelScene } from './scene';
 import type { HotelCameraMode } from './camera';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { hotelAnalytics, hotelPlayState } from './analytics';
 
 const SESSION_KEY = 'wrong-floor-session-v1';
 const PREFS_KEY = 'wrong-floor-prefs-v1';
 const countdown = (ms: number) =>
   `${Math.floor(Math.max(0, Math.ceil(ms / 1000)) / 60)}:${String(Math.max(0, Math.ceil(ms / 1000)) % 60).padStart(2, '0')}`;
 
+const tracker = new GameTracker(hotelAnalytics);
+
 export default function WrongFloor() {
+  useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<HotelScene | null>(null),
     sound = useRef<HotelSound | null>(null);
@@ -108,6 +116,7 @@ export default function WrongFloor() {
   const disabled = !!modal || status !== 'online';
   function accept(next: HotelSnapshot) {
     if (!active.current) return;
+    tracker.observe(hotelPlayState(next, active.current));
     const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
@@ -322,6 +331,7 @@ export default function WrongFloor() {
   }
   function action(a: HotelAction) {
     if (modal || !active.current || status !== 'online') return;
+    tracker.action(a.type);
     setNotice('');
     sound.current?.unlock();
     try {
@@ -351,6 +361,7 @@ export default function WrongFloor() {
     scene.current?.setGentle(gentle);
   }, [gentle, ready]);
   async function leave() {
+    tracker.observe({ stage: 'menu' });
     setBusy(true);
     try {
       await network.current?.leave();

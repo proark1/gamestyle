@@ -60,6 +60,11 @@ import { TouchControls } from '../../shared/input/TouchControls';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
 import './style.css';
 import './mobile.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { stackAnalytics, stackPlayState } from './analytics';
 
 const INITIAL_HUD: Hud = {
   target: '',
@@ -82,8 +87,11 @@ type ModelContext = {
     options: { signal: AbortSignal },
   ) => void | Promise<void>;
 };
+const tracker = new GameTracker(stackAnalytics);
+
 export default function Game() {
   'use no memo'; // This component bridges an imperative WebGL simulation.
+  useGameTracker(tracker);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<GameScene | null>(null),
     network = useRef<Connection | null>(null),
@@ -125,6 +133,7 @@ export default function Game() {
     help || join || invite || exitDialog || status !== 'online' || !!ended;
   const notify = (message: string) => setNotice(message);
   function accept(next: Snapshot, s: Session, render = true) {
+    tracker.observe(stackPlayState(next, s));
     sound.current?.stackSnapshot(next, s.id);
     current.current = next;
     setState(next);
@@ -311,6 +320,7 @@ export default function Game() {
     if (join && notice) joinError.current?.scrollIntoView({ block: 'nearest' });
   }, [join, notice]);
   async function action(a: Action) {
+    tracker.action(a.type);
     try {
       setNotice('');
       if (local.current && sessionRef.current) {
@@ -399,6 +409,7 @@ export default function Game() {
   }
   async function leave() {
     void network.current?.leave();
+    tracker.observe({ stage: 'menu' });
     network.current = null;
     local.current = null;
     sessionRef.current = null;
