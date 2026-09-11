@@ -50,6 +50,11 @@ import { ReelSound } from './audio';
 import { WEATHER_LABELS } from './chaos';
 import type { ReelScene } from './scene';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { reelAnalytics, reelPlayState } from './analytics';
 
 const SESSION_KEY = 'reel-problems-session-v1';
 const time = (ms: number) => {
@@ -104,7 +109,10 @@ function HoldButton({
     </button>
   );
 }
+const tracker = new GameTracker(reelAnalytics);
+
 export default function ReelProblems() {
+  useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<ReelScene | null>(null),
     sound = useRef<ReelSound | null>(null),
@@ -138,6 +146,7 @@ export default function ReelProblems() {
     practice = session?.code === 'PRACTICE';
   function accept(next: ReelSnapshot) {
     if (!activeSession.current) return;
+    tracker.observe(reelPlayState(next, activeSession.current));
     const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
@@ -337,6 +346,7 @@ export default function ReelProblems() {
   }
   function action(a: ReelAction) {
     if (modal || !activeSession.current) return;
+    tracker.action(a.type);
     sound.current?.unlock();
     setNotice('');
     try {
@@ -371,6 +381,7 @@ export default function ReelProblems() {
     if (modal) scene.current?.resetInput();
   }, [modal]);
   async function leave() {
+    tracker.observe({ stage: 'menu' });
     setBusy(true);
     try {
       await network.current?.leave();

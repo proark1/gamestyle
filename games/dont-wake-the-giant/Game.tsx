@@ -51,13 +51,21 @@ import { GiantSound } from './sound';
 import { escapeWarning, GIANT_SHOUT, untilGiantWakes } from './urgency';
 import { wakePose } from './giant-motion';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { giantAnalytics, giantPlayState } from './analytics';
 
 const SESSION_KEY = 'dont-wake-the-giant-session-v1';
 const duration = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
+const tracker = new GameTracker(giantAnalytics);
+
 export default function GiantGame() {
+  useGameTracker(tracker);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<GiantScene | null>(null),
     connection = useRef<GiantConnection | null>(null);
@@ -92,6 +100,7 @@ export default function GiantGame() {
   const inRoom = !!session;
   function accept(next: GiantSnapshot) {
     if (!sessionRef.current) return;
+    tracker.observe(giantPlayState(next, sessionRef.current));
     latest.current = next;
     setSnapshot(next);
     scene.current?.setSnapshot(next);
@@ -221,6 +230,7 @@ export default function GiantGame() {
   }, [notice]);
   async function action(a: GiantAction) {
     if (busy) return;
+    tracker.action(a.type);
     try {
       setNotice('');
       sound.current?.unlock();
@@ -295,6 +305,7 @@ export default function GiantGame() {
   }
   function leave() {
     const previous = connection.current;
+    tracker.observe({ stage: 'menu' });
     connection.current = null;
     void previous?.leave();
     local.current = null;

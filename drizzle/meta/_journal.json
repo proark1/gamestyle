@@ -22,6 +22,13 @@
       "when": 1788730457305,
       "tag": "0002_broken_the_hood",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789134106123,
+      "tag": "0003_analytics",
+      "breakpoints": true
     }
   ]
 }

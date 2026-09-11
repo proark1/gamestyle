@@ -23,6 +23,8 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 
 Eleven of the twelve have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
 
+The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, and all of the sound workshops. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
+
 ## Siege and Desist
 
 Play at `/siege-and-desist`. One to four players crew a single enormous trebuchet on an Anatolian hillside and have four minutes to bring the keep's banner to the ground. The engine is deliberately too big for one person: someone holds the winch, someone fetches from the supply pile and loads the sling, someone leans on the frame to swing the aim, and someone pulls the release lever.
@@ -170,7 +172,7 @@ Railway reads both `.railway/railway.ts` and `railway.json`. The first is Infras
 
 Set `PUBLIC_GAME_ORIGIN` to the game's public HTTPS origin so same-origin room requests work behind Railway's proxy. The server listens on Railway's injected `PORT` (8080 for this deployment); the domain must target that port.
 
-Sound editing and paid generation require `AUDIO_ADMIN_PASSWORD` (16–256 characters); playback stays public. See [sound setup](docs/audio-setup.md) and the [security and performance audit](docs/security-performance.md) for runtime limits, validation, and the local load-test command.
+Sound editing and paid generation require `AUDIO_ADMIN_PASSWORD` (16–256 characters); playback stays public. The same password opens the admin page at `/admin`. See [sound setup](docs/audio-setup.md) and the [security and performance audit](docs/security-performance.md) for runtime limits, validation, and the local load-test command.
 
 For a local production check:
 

@@ -54,6 +54,11 @@ import type { BreakfastScene } from './scene';
 import { isNpcAction, type NpcAction } from '../../shared/rooms/npc-slots';
 import { CrewSlots } from './CrewSlots';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { breakfastAnalytics, breakfastPlayState } from './analytics';
 
 const SESSION_KEY = 'four-brain-cells-session-v1';
 const PREFS_KEY = 'four-brain-cells-prefs-v1';
@@ -104,7 +109,10 @@ function Hold({
     </button>
   );
 }
+const tracker = new GameTracker(breakfastAnalytics);
+
 export default function FourBrainCells() {
+  useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<BreakfastScene | null>(null),
     sound = useRef<BreakfastSound | null>(null),
@@ -139,6 +147,7 @@ export default function FourBrainCells() {
     captain = !!session && snapshot?.host === session.id;
   function accept(next: BrainSnapshot) {
     if (!active.current) return;
+    tracker.observe(breakfastPlayState(next, active.current));
     const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
@@ -339,6 +348,7 @@ export default function FourBrainCells() {
   }
   function action(a: BrainAction) {
     if (modal || !active.current || npcBusy) return;
+    tracker.action(a.type);
     scene.current?.focus();
     sound.current?.unlock();
     setNotice('');
@@ -373,6 +383,7 @@ export default function FourBrainCells() {
     scene.current?.setBlocked(!!modal || status !== 'online');
   }, [modal, status, ready]);
   async function leave(allGames = false) {
+    tracker.observe({ stage: 'menu' });
     setBusy(true);
     try {
       await network.current?.leave();

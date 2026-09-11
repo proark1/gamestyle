@@ -53,12 +53,20 @@ import {
 import { ButtonSound } from './audio';
 import type { ButtonScene } from './scene';
 import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { buttonAnalytics, buttonPlayState } from './analytics';
 const SESSION_KEY = 'one-more-button-session-v1';
 const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
+const tracker = new GameTracker(buttonAnalytics);
+
 export default function OneMoreButton() {
+  useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<ButtonScene | null>(null),
     sound = useRef<ButtonSound | null>(null),
@@ -92,6 +100,7 @@ export default function OneMoreButton() {
     practice = session?.code === 'PRACTICE';
   function accept(next: ButtonSnapshot) {
     if (!activeSession.current) return;
+    tracker.observe(buttonPlayState(next, activeSession.current));
     const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
@@ -291,6 +300,7 @@ export default function OneMoreButton() {
   }
   function action(a: ButtonAction) {
     if (modal || !activeSession.current || status !== 'online') return;
+    tracker.action(a.type);
     sound.current?.unlock();
     setNotice('');
     try {
@@ -325,6 +335,7 @@ export default function OneMoreButton() {
     scene.current?.setBlocked(!!modal || status !== 'online');
   }, [modal, status, ready]);
   async function leave() {
+    tracker.observe({ stage: 'menu' });
     setBusy(true);
     try {
       await network.current?.leave();
