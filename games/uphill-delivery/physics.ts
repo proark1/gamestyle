@@ -69,7 +69,8 @@ export class DeliveryPhysics {
     const cargoMaterial = new C.Material('cargo'),
       groundMaterial = new C.Material('road'),
       ice = new C.Material('ice'),
-      person = new C.Material('worker');
+      person = new C.Material('worker'),
+      barrier = new C.Material('barrier');
     e.addContactMaterial(
       new C.ContactMaterial(cargoMaterial, groundMaterial, {
         friction: 0.45,
@@ -97,6 +98,12 @@ export class DeliveryPhysics {
         friction: 0.15,
         restitution: 0,
       }),
+    );
+    // cannon-es caps each step's friction impulse at mu*g*m, unscaled by the
+    // step, so default friction cancels 5 m/s a step: a worker touching the gate
+    // hung on it and lost the jump. Cargo has no pair and keeps its grip.
+    e.addContactMaterial(
+      new C.ContactMaterial(person, barrier, { friction: 0, restitution: 0 }),
     );
     for (const box of LEVEL) {
       const b = new C.Body({
@@ -131,6 +138,7 @@ export class DeliveryPhysics {
     ]) {
       const b = new C.Body({
         mass: 0,
+        material: barrier,
         shape: new C.Box(new C.Vec3(sx / 2, 25, sz / 2)),
         position: new C.Vec3(x, 24, z),
       });
@@ -188,8 +196,8 @@ export class DeliveryPhysics {
       this.players.set(p.id, b);
       e.addBody(b);
     }
-    this.gate = this.panel(GATE.x, GATE.y, GATE.z - 2.3, 4.6, 1.8);
-    this.door = this.panel(DOOR.x, DOOR.y, DOOR.z, 3.7, 3);
+    this.gate = this.panel(GATE.x, GATE.y, GATE.z - 2.3, 4.6, 1.8, barrier);
+    this.door = this.panel(DOOR.x, DOOR.y, DOOR.z, 3.7, 3, barrier);
     this.surfaces.set(this.gate.id, 'gate');
     this.surfaces.set(this.door.id, 'door');
     this.sofa.addEventListener(
@@ -226,10 +234,18 @@ export class DeliveryPhysics {
       e.addBody(b);
     }
   }
-  panel(x: number, y: number, z: number, width: number, height: number) {
+  panel(
+    x: number,
+    y: number,
+    z: number,
+    width: number,
+    height: number,
+    material: C.Material,
+  ) {
     const b = new C.Body({
       type: C.Body.KINEMATIC,
       mass: 0,
+      material,
       position: new C.Vec3(x, y, z),
     });
     b.addShape(
