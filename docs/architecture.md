@@ -25,6 +25,7 @@ app/                  Framework routes, collection page, site layout
 games/<id>/           Game rules, UI, scene, models, connection, styles
   audio/              Game catalogs, prompts, playback policies
   analytics.ts        Milestones, result reasons, counted actions, snapshot mapping
+  avatar.ts           Player avatar looks for the admin lineup
   peer.ts             Adapter for games supporting peer simulation
   server.ts or server/ HTTP composition and game-specific server behavior
   *.test.ts           Tests alongside the behavior they verify
@@ -78,7 +79,8 @@ Public assets retain their existing URLs. Game assets already have directories s
 4. For peer play, implement the local adapter contract in `shared/peer/engine.ts` and pass a lazy loader to the shared connection. Hidden-role games should retain server authority when a player host would reveal secrets.
 5. For generated audio, keep the catalog and profile inside the game and register the catalog in the appropriate platform registry.
 6. For play analytics, add `games/<id>/analytics.ts` with the game's milestones, result reasons, counted actions and snapshot mapping, report through a module-level `GameTracker`, and register the definition in `platform/analytics/catalog.ts`. See [play analytics](analytics.md).
-6. Run `npm run check` and the relevant production build. Tests are discovered recursively, so new game tests do not need another glob in `package.json`.
+7. For the admin avatar lineup, add `games/<id>/avatar.ts` exporting the player's looks as `AvatarLook`s from `shared/rendering/avatar-preview.ts`. Pose them with the same functions the scene calls, so the lineup cannot drift from the game, and register them in `platform/admin/avatars/catalog.ts`; a catalog test fails for any game left out.
+8. Run `npm run check` and the relevant production build. Tests are discovered recursively, so new game tests do not need another glob in `package.json`.
 
 ```sh
 npm run check

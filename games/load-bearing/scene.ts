@@ -1,5 +1,6 @@
 import * as T from 'three';
 import { worker } from '../../shared/rendering/worker';
+import { poseWrecker } from './avatar';
 import { SiteMotion, emptyPose } from './motion';
 import { CABLE } from './physics';
 import { PIANO_BAY, buildHouse } from './structure';
@@ -376,23 +377,16 @@ export class LoadBearingScene {
         0.012;
       mesh.position.set(shown.x, shown.y, shown.z);
       mesh.rotation.y = shown.facing;
-      const body = mesh.userData.body as T.Group;
-      body.rotation.z = player.down
-        ? Math.PI / 2
-        : this.reduceMotion
-          ? 0
-          : Math.sin(this.time * 2 + player.color) * 0.02;
-      const swing =
-        moving && !player.down ? Math.sin(this.time * 13) * 0.62 : 0;
-      (mesh.userData.legL as T.Group).rotation.x = swing;
-      (mesh.userData.legR as T.Group).rotation.x = -swing;
-      // Both arms come over the head for the downswing of a sledgehammer.
-      const swinging = player.swingUntil > world.clock;
-      const hammer = swinging
-        ? -2.5 + Math.cos((player.swingUntil - world.clock) / 90) * 1.6
-        : null;
-      (mesh.userData.armL as T.Group).rotation.x = hammer ?? -swing * 0.7;
-      (mesh.userData.armR as T.Group).rotation.x = hammer ?? swing * 0.7;
+      poseWrecker(mesh, this.time, {
+        moving,
+        down: player.down,
+        color: player.color,
+        still: this.reduceMotion,
+        hammer:
+          player.swingUntil > world.clock
+            ? -2.5 + Math.cos((player.swingUntil - world.clock) / 90) * 1.6
+            : null,
+      });
     }
     for (const [id, mesh] of this.people)
       if (!live.has(id)) {

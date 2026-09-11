@@ -1,0 +1,111 @@
+/* The 3D canvas is fixed over the page and paints only inside each .stage. */
+.canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  gap: 14px;
+}
+.card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(41, 74, 67, 0.15);
+  border-radius: 16px;
+  background: #fffefa;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.head h3 {
+  margin: 0;
+  font:
+    600 17px Fredoka,
+    'DM Sans',
+    sans-serif;
+}
+.badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #1f63c7;
+  color: #fffefa;
+  font-size: 11px;
+  font-weight: 700;
+}
+.looks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.looks button {
+  padding: 4px 10px;
+  border: 1px solid rgba(41, 74, 67, 0.15);
+  border-radius: 999px;
+  background: transparent;
+  color: #46605a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.looks button[aria-pressed='true'] {
+  border-color: #294a43;
+  background: #294a43;
+  color: #fffefa;
+}
+.stage {
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  background: linear-gradient(#f7f8f0, #eceee2);
+  cursor: grab;
+  touch-action: pan-y;
+}
+.stage:active {
+  cursor: grabbing;
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+.facts dt {
+  font-size: 11px;
+  color: #56655f;
+}
+.facts dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.facts small {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1f63c7;
+}
+.note {
+  margin: 0;
+  font-size: 12px;
+  color: #56655f;
+}

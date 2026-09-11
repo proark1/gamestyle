@@ -136,6 +136,54 @@ export function cowModel(index: number) {
   g.userData.sparkMaterial = sparkMaterial;
   return g;
 }
+/** Swings a cow's front legs against its back legs; `time` in milliseconds. */
+export function walkCow(cow: T.Object3D, time: number, moving: boolean) {
+  const legs = cow.userData.legs as T.Group[];
+  for (let i = 0; i < legs.length; i++)
+    legs[i].rotation.x = moving
+      ? Math.sin(time * 0.011 + (i % 2) * Math.PI) * 0.32
+      : 0;
+}
+/** The farmer: the shared worker with a torch that shows only at night. */
+export function farmerModel() {
+  const farmer = worker(0);
+  const flashlight = new T.Group();
+  flashlight.position.set(0.46, 1.03, 0.42);
+  const barrel = new T.Mesh(
+    new T.CylinderGeometry(0.12, 0.085, 0.36, 10),
+    material('#354350'),
+  );
+  barrel.rotation.x = Math.PI / 2;
+  const lens = new T.Mesh(
+    new T.CircleGeometry(0.105, 16),
+    new T.MeshBasicMaterial({ color: '#ffdf9b', toneMapped: false }),
+  );
+  lens.position.z = 0.185;
+  flashlight.add(barrel, lens);
+  flashlight.visible = false;
+  farmer.add(flashlight);
+  return { farmer, flashlight };
+}
+/**
+ * Eases the farmer's limbs toward a stride over `distance` walked, torch arm
+ * raised at night. A `blend` of 1 snaps straight to the pose.
+ */
+export function poseFarmer(
+  farmer: T.Object3D,
+  pose: { distance: number; walking: boolean; night: boolean },
+  blend = 1,
+) {
+  const stride = pose.walking ? Math.sin(pose.distance * 7) * 0.42 : 0;
+  for (const [name, angle] of [
+    ['legL', stride],
+    ['legR', -stride],
+    ['armL', -stride * 0.7],
+    ['armR', pose.night ? -1.2 : stride * 0.7],
+  ] as const) {
+    const limb = farmer.userData[name] as T.Group;
+    limb.rotation.x = T.MathUtils.lerp(limb.rotation.x, angle, blend);
+  }
+}
 function tree(g: T.Group, x: number, z: number, size = 1) {
   box(g, [0.35, 2, 0.35], [x, 0.8, z], '#8f825d');
   const leaves = new T.Mesh(
@@ -284,22 +332,7 @@ export function farmModel() {
   escapeLadder.rotation.y = Math.PI / 2;
   escapeLadder.visible = false;
   g.add(escapeLadder);
-  const farmer = worker(0);
-  const flashlight = new T.Group();
-  flashlight.position.set(0.46, 1.03, 0.42);
-  const barrel = new T.Mesh(
-    new T.CylinderGeometry(0.12, 0.085, 0.36, 10),
-    material('#354350'),
-  );
-  barrel.rotation.x = Math.PI / 2;
-  const lens = new T.Mesh(
-    new T.CircleGeometry(0.105, 16),
-    new T.MeshBasicMaterial({ color: '#ffdf9b', toneMapped: false }),
-  );
-  lens.position.z = 0.185;
-  flashlight.add(barrel, lens);
-  flashlight.visible = false;
-  farmer.add(flashlight);
+  const { farmer, flashlight } = farmerModel();
   g.add(farmer);
   return {
     group: g,

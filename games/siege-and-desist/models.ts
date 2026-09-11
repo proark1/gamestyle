@@ -98,6 +98,23 @@ export function crewMember(color: string) {
   return g;
 }
 
+/** Swings a crew member's arms and legs; `now` is in milliseconds. */
+export function poseCrew(
+  model: T.Object3D,
+  now: number,
+  pose: { walking: boolean; winding: boolean; flying: boolean },
+) {
+  const swing = pose.walking ? Math.sin(now * 0.013) * 0.55 : 0;
+  for (let i = 0; i < 2; i++) {
+    model.getObjectByName(`leg${i}`)!.rotation.x = swing * (i ? 1 : -1);
+    model.getObjectByName(`arm${i}`)!.rotation.x = pose.winding
+      ? -1.15 + Math.sin(now * 0.009) * 0.35
+      : pose.flying
+        ? -2.5
+        : swing * (i ? -1 : 1);
+  }
+}
+
 export function ammoModel(kind: AmmoKind) {
   const g = new T.Group();
   const spec = AMMO[kind];

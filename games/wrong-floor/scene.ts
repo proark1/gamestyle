@@ -7,7 +7,7 @@ import {
   type HotelAction,
   type HotelSnapshot,
 } from './types';
-import { buildHotel, guest } from './models';
+import { animateGuest, buildHotel, guest, strideAdvance } from './models';
 import { hotelHorror } from './horror';
 import {
   DEFAULT_CAMERA,
@@ -247,13 +247,6 @@ export class HotelScene {
     this.camera.aspect = width / Math.max(height, 1);
     this.camera.updateProjectionMatrix();
   };
-  private animateGuest(model: T.Group, now: number, moving: boolean) {
-    const step = moving ? Math.sin(now / 95) * 0.5 : 0;
-    model.userData.legR.rotation.x = step;
-    model.userData.legL.rotation.x = -step;
-    model.userData.armR.rotation.x = -step;
-    model.userData.armL.rotation.x = step;
-  }
   private render = (now: number) => {
     if (this.stopped) return;
     this.frame = requestAnimationFrame(this.render);
@@ -348,11 +341,8 @@ export class HotelScene {
       );
       model.userData.stride =
         (model.userData.stride ?? 0) +
-        (this.snapCamera
-          ? 0
-          : (distance * Math.PI) /
-            (distance / Math.max(dt, 0.001) > 4.6 ? 1.65 : 1.45));
-      this.animateGuest(model, model.userData.stride * 95, moving);
+        (this.snapCamera ? 0 : strideAdvance(distance, dt));
+      animateGuest(model, model.userData.stride * 95, moving);
     }
     const anomaly = snapshot?.you.anomaly,
       station = snapshot?.you.station;
@@ -397,7 +387,7 @@ export class HotelScene {
           me.x - this.ghost.position.x,
           me.z - this.ghost.position.z,
         );
-      this.animateGuest(
+      animateGuest(
         this.ghost,
         ((w.clock - w.escapeAt) / 470) * Math.PI * 95,
         escaping && w.clock - w.escapeAt > 1800,

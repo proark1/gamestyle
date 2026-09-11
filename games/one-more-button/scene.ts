@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { label, disposeGeometry } from '../../shared/rendering/primitives';
-import { contestant, hazardModel, stage } from './models';
+import { animateContestant, contestant, hazardModel, stage } from './models';
 import { glovePose, spinnerAngle } from './level';
 import { doorOpen, freshButton, newContestant } from './simulation';
 import {
@@ -235,13 +235,7 @@ export class ButtonScene {
         p.y > 0.5 && p.stunnedUntil > w.clock ? Math.sin(now * 0.014) * 1.2 : 0;
       model.visible = p.hearts > 0 && !p.escaped;
       model.getObjectByName('stop')!.visible = p.shoutUntil > w.clock;
-      const walk =
-        Math.hypot(p.vx, p.vz) > 0.5 ? Math.sin(now * 0.014) * 0.5 : 0;
-      for (let i = 0; i < 2; i++) {
-        model.getObjectByName(`leg${i}`)!.rotation.x = walk * (i ? 1 : -1);
-        model.getObjectByName(`arm${i}`)!.rotation.x =
-          p.y > 0.5 ? -2.4 : walk * (i ? -1 : 1);
-      }
+      animateContestant(model, p, now);
     }
     const hazardIds = new Set(w.hazards.map((h) => h.id));
     for (const [id, model] of this.hazards)

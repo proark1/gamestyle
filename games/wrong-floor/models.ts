@@ -86,6 +86,21 @@ function hotelGuest(color: number) {
   return g;
 }
 
+/** Swings a guest's arms and legs to a stride clock `now`, in milliseconds. */
+export function animateGuest(model: T.Object3D, now: number, moving: boolean) {
+  const step = moving ? Math.sin(now / 95) * 0.5 : 0;
+  model.userData.legR.rotation.x = step;
+  model.userData.legL.rotation.x = -step;
+  model.userData.armR.rotation.x = -step;
+  model.userData.armL.rotation.x = step;
+}
+
+/** How far a stride turns over `distance` metres covered in `dt` seconds. */
+export function strideAdvance(distance: number, dt: number) {
+  const running = distance / Math.max(dt, 0.001) > 4.6;
+  return (distance * Math.PI) / (running ? 1.65 : 1.45);
+}
+
 export function buildHotel() {
   const root = new T.Group(),
     staticGroup = new T.Group();

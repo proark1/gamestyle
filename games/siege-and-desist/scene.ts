@@ -5,6 +5,7 @@ import {
   blockModel,
   crewMember,
   defenders,
+  poseCrew,
   potModel,
   siegeField,
   trebuchet,
@@ -448,17 +449,11 @@ export class SiegeScene {
         : stunned
           ? Math.PI / 2.1
           : model.rotation.z * 0.8;
-      const walking = !stunned && !p.flying && Math.hypot(p.vx, p.vz) > 0.4;
-      const swing = walking ? Math.sin(now * 0.013) * 0.55 : 0;
-      const winding = p.winding || p.pushing !== 0;
-      for (let i = 0; i < 2; i++) {
-        model.getObjectByName(`leg${i}`)!.rotation.x = swing * (i ? 1 : -1);
-        model.getObjectByName(`arm${i}`)!.rotation.x = winding
-          ? -1.15 + Math.sin(now * 0.009) * 0.35
-          : p.flying
-            ? -2.5
-            : swing * (i ? -1 : 1);
-      }
+      poseCrew(model, now, {
+        walking: !stunned && !p.flying && Math.hypot(p.vx, p.vz) > 0.4,
+        winding: p.winding || p.pushing !== 0,
+        flying: p.flying,
+      });
     }
   }
 

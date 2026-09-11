@@ -207,6 +207,36 @@ export function worker(color = 0) {
   g.userData.arms = arms;
   return g;
 }
+/**
+ * Swings a worker's limbs. `time` is in seconds; `lag` is how far the model
+ * trails the player it follows, which sets the stride; `bonked` runs from 0
+ * to 1 through a knock on the head.
+ */
+export function animateWorker(
+  model: T.Object3D,
+  time: number,
+  pose: {
+    lag: number;
+    bonked: number | null;
+    holding: boolean;
+    hammering: boolean;
+  },
+) {
+  const sway = Math.sin(time * 10) * Math.min(pose.lag, 0.15);
+  (model.userData.body as T.Group).rotation.z =
+    pose.bonked === null ? sway : Math.sin(pose.bonked * Math.PI) * 1.3;
+  const legs = model.userData.legs as T.Group[],
+    arms = model.userData.arms as T.Group[];
+  for (let i = 0; i < 2; i++) {
+    const swing = Math.sin(time * 11 + i * Math.PI);
+    legs[i].rotation.x = swing * Math.min(pose.lag * 5, 0.6);
+    arms[i].rotation.x = pose.holding
+      ? -2.4
+      : pose.hammering
+        ? -1.2 + Math.sin(time * 28) * 0.8
+        : swing * Math.min(pose.lag * 3, 0.4);
+  }
+}
 export function makePiece(kind: ItemKind, appearance: Appearance = {}) {
   const g = new T.Group();
   const paint = paintHex(appearance);
