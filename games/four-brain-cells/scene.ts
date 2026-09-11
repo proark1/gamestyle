@@ -5,6 +5,7 @@ import {
   createRobot,
   createTable,
   createUtensil,
+  poseRobot,
 } from './models';
 import { freshBreakfast, handPosition } from './simulation';
 import {
@@ -51,8 +52,6 @@ export class BreakfastScene {
   private current = idleInput();
   private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   private v1 = new T.Vector3();
-  private v2 = new T.Vector3();
-  private axis = new T.Vector3(0, 1, 0);
   constructor(
     private container: HTMLDivElement,
     private cb: Callbacks,
@@ -230,16 +229,6 @@ export class BreakfastScene {
     this.camera.bottom = -view;
     this.camera.updateProjectionMatrix();
   }
-  private segment(m: T.Mesh, a: number[], b: number[]) {
-    this.v1.set(a[0], a[1], a[2]);
-    this.v2.set(b[0], b[1], b[2]);
-    m.position.copy(this.v1).add(this.v2).multiplyScalar(0.5);
-    m.scale.y = this.v1.distanceTo(this.v2);
-    m.quaternion.setFromUnitVectors(
-      this.axis,
-      this.v2.sub(this.v1).normalize(),
-    );
-  }
   private render = (now: number) => {
     if (this.stopped) return;
     this.frame = requestAnimationFrame(this.render);
@@ -277,45 +266,8 @@ export class BreakfastScene {
     }
     this.cb.tick();
     const w = this.snapshot?.world ?? this.demo,
-      r = w.robot,
-      fallen = r.fallenUntil > w.clock;
-    this.robot.body.position.set(
-      r.x,
-      fallen ? -0.9 : Math.sin(now * 0.004) * 0.015,
-      r.z,
-    );
-    this.robot.body.rotation.z = fallen ? 1.1 : r.lean;
-    for (let i = 0; i < 4; i++) {
-      const part = this.robot.limbs[i],
-        l = w.limbs[i],
-        h = handPosition(w, i),
-        arm = i < 2;
-      if (!arm)
-        h.y =
-          0.22 +
-          Math.max(
-            0,
-            Math.sin(Math.min(1, (w.clock - l.stepAt) / 380) * Math.PI),
-          ) *
-            0.45;
-      const root = [
-        r.x + (i % 2 ? 0.53 : -0.53),
-        (arm ? 2.4 : 1.45) - (fallen ? 0.7 : 0),
-        r.z,
-      ];
-      const elbow = [
-        (root[0] + h.x) / 2 + (i % 2 ? 0.3 : -0.3),
-        (root[1] + h.y) / 2 - (arm ? 0.3 : 0),
-        (root[2] + h.z) / 2 + (arm ? 0.22 : -0.28),
-      ];
-      this.segment(part.segments[0], root, elbow);
-      this.segment(part.segments[1], elbow, [h.x, h.y, h.z]);
-      part.joint.position.set(elbow[0], elbow[1], elbow[2]);
-      part.tip.position.set(h.x, h.y, h.z);
-      part.tip.rotation.x = !arm && w.clock - l.kickAt < 400 ? -0.9 : 0;
-      part.tag.position.set(h.x, h.y + 0.55, h.z);
-      part.tag.visible = !!this.snapshot;
-    }
+      r = w.robot;
+    poseRobot(this.robot, w, now, !!this.snapshot);
     this.table.group.position.set(w.table.x, 0, w.table.z);
     this.table.group.rotation.z = Math.sin(now * 0.03) * w.table.jolt * 0.09;
     this.table.cakes.children.forEach((c, i) => {

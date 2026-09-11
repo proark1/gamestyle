@@ -19,6 +19,7 @@ import {
   createAngler,
   createBoat,
   createCatch,
+  deckSway,
   material,
   nameLabel,
 } from './models';
@@ -421,10 +422,7 @@ export class ReelScene {
         object.rotation.z = Math.sin(now / 90) * (p.input.reel ? 0.18 : 0.05);
       } else {
         object.rotation.x = 0;
-        object.rotation.z = p.input.brace
-          ? -0.12
-          : Math.sin(now / 110) *
-            Math.min(0.06, Math.hypot(p.input.x, p.input.z) * 0.06);
+        object.rotation.z = deckSway(now, p.input);
       }
       const line = this.lines.get(p.id)!,
         bobber = this.bobbers.get(p.id)!;

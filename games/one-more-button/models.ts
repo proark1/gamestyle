@@ -54,6 +54,19 @@ export function contestant(color: string) {
   box(g, [0.28, 0.23, 0.06], [0.13, 1.16, 0.3], '#fff3ce', true);
   return g;
 }
+/** Walks a contestant, arms up while airborne; `now` is in milliseconds. */
+export function animateContestant(
+  model: T.Object3D,
+  p: { vx: number; vz: number; y: number },
+  now: number,
+) {
+  const walk = Math.hypot(p.vx, p.vz) > 0.5 ? Math.sin(now * 0.014) * 0.5 : 0;
+  for (let i = 0; i < 2; i++) {
+    model.getObjectByName(`leg${i}`)!.rotation.x = walk * (i ? 1 : -1);
+    model.getObjectByName(`arm${i}`)!.rotation.x =
+      p.y > 0.5 ? -2.4 : walk * (i ? -1 : 1);
+  }
+}
 export function stage() {
   const g = new T.Group();
   box(g, [25, 1.5, 21], [0, -0.8, 0], '#355d60', true);

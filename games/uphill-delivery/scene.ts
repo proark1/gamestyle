@@ -6,6 +6,7 @@ import {
   deliverySofa,
   deliveryWorker,
   goatModel,
+  poseDeliveryWorker,
   villageModel,
 } from './objects';
 import { DeliveryMotion, DeliveryQuality } from './motion';
@@ -486,15 +487,12 @@ export class DeliveryScene {
           Math.sin(angle - model.rotation.y),
           Math.cos(angle - model.rotation.y),
         ) * mix;
-      const moving = Math.hypot(p.velocity.x, p.velocity.z) > 0.2;
-      const stride =
-        !this.reduced && moving ? Math.sin(now / 95 + p.color) * 0.5 : 0;
-      model.userData.legL.rotation.x = stride;
-      model.userData.legR.rotation.x = -stride;
-      model.userData.armL.rotation.x = p.grip !== null ? -1.15 : -stride * 0.7;
-      model.userData.armR.rotation.x = p.grip !== null ? -1.15 : stride * 0.7;
-      model.userData.body.rotation.z =
-        p.stumble > w.clock && !this.reduced ? Math.sin(now / 65) * 0.15 : 0;
+      poseDeliveryWorker(model, now, {
+        moving: !this.reduced && Math.hypot(p.velocity.x, p.velocity.z) > 0.2,
+        gripping: p.grip !== null,
+        stumbling: p.stumble > w.clock && !this.reduced,
+        color: p.color,
+      });
       model.visible = !(this.firstPerson && p.id === this.snapshot.you);
     }
     for (let i = 0; i < GRIPS.length; i++) {

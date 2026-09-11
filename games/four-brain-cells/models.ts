@@ -1,7 +1,8 @@
 import * as T from 'three';
 import { box, material, label } from '../../shared/rendering/primitives';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { BREWER, FAN, LIMBS, STOVE } from './types';
+import { handPosition } from './geometry';
+import { BREWER, FAN, LIMBS, STOVE, type BrainWorld } from './types';
 
 export function cylinder(
   g: T.Object3D,
@@ -182,6 +183,68 @@ export function createRobot() {
     return { group, segments, joint, tip, tag };
   });
   return { body, limbs };
+}
+export type Robot = ReturnType<typeof createRobot>;
+const limbStart = new T.Vector3(),
+  limbEnd = new T.Vector3(),
+  limbAxis = new T.Vector3(0, 1, 0);
+/** Stretches a unit-long limb segment between two points. */
+function stretch(m: T.Mesh, a: number[], b: number[]) {
+  limbStart.set(a[0], a[1], a[2]);
+  limbEnd.set(b[0], b[1], b[2]);
+  m.position.copy(limbStart).add(limbEnd).multiplyScalar(0.5);
+  m.scale.y = limbStart.distanceTo(limbEnd);
+  m.quaternion.setFromUnitVectors(limbAxis, limbEnd.sub(limbStart).normalize());
+}
+/**
+ * Sets the robot's body and bends each limb out to its hand or foot in the
+ * world; `now` is in milliseconds.
+ */
+export function poseRobot(
+  robot: Robot,
+  w: BrainWorld,
+  now: number,
+  tags: boolean,
+) {
+  const r = w.robot,
+    fallen = r.fallenUntil > w.clock;
+  robot.body.position.set(
+    r.x,
+    fallen ? -0.9 : Math.sin(now * 0.004) * 0.015,
+    r.z,
+  );
+  robot.body.rotation.z = fallen ? 1.1 : r.lean;
+  for (let i = 0; i < 4; i++) {
+    const part = robot.limbs[i],
+      l = w.limbs[i],
+      h = handPosition(w, i),
+      arm = i < 2;
+    if (!arm)
+      h.y =
+        0.22 +
+        Math.max(
+          0,
+          Math.sin(Math.min(1, (w.clock - l.stepAt) / 380) * Math.PI),
+        ) *
+          0.45;
+    const root = [
+      r.x + (i % 2 ? 0.53 : -0.53),
+      (arm ? 2.4 : 1.45) - (fallen ? 0.7 : 0),
+      r.z,
+    ];
+    const elbow = [
+      (root[0] + h.x) / 2 + (i % 2 ? 0.3 : -0.3),
+      (root[1] + h.y) / 2 - (arm ? 0.3 : 0),
+      (root[2] + h.z) / 2 + (arm ? 0.22 : -0.28),
+    ];
+    stretch(part.segments[0], root, elbow);
+    stretch(part.segments[1], elbow, [h.x, h.y, h.z]);
+    part.joint.position.set(elbow[0], elbow[1], elbow[2]);
+    part.tip.position.set(h.x, h.y, h.z);
+    part.tip.rotation.x = !arm && w.clock - l.kickAt < 400 ? -0.9 : 0;
+    part.tag.position.set(h.x, h.y + 0.55, h.z);
+    part.tag.visible = tags;
+  }
 }
 export function createTable() {
   const g = new T.Group();

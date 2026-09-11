@@ -13,6 +13,23 @@ import {
 } from './detailed-props';
 
 export const COLORS = [0xe7a12e, 0x53968a, 0xc25d48, 0x7298bd];
+/** Untextured paints, enough to dress a builder away from the site. */
+export function paintMaterials() {
+  return {
+    metal: new T.MeshStandardMaterial({
+      color: 0x434a48,
+      roughness: 0.55,
+      metalness: 0.65,
+    }),
+    orange: new T.MeshStandardMaterial({
+      color: 0xe99331,
+      roughness: 0.45,
+      metalness: 0.3,
+    }),
+    pale: new T.MeshStandardMaterial({ color: 0xf0e4bc, roughness: 0.9 }),
+    rubber: new T.MeshStandardMaterial({ color: 0x262b29, roughness: 0.9 }),
+  };
+}
 export function createMaterials() {
   const loader = new T.TextureLoader();
   const texture = (name: string, repeat: number) => {
@@ -32,6 +49,7 @@ export function createMaterials() {
   const details = createDetailMaterials();
   return {
     ...details,
+    ...paintMaterials(),
     dirt: new T.MeshStandardMaterial({
       map: dirt,
       color: 0xc1b08b,
@@ -56,23 +74,11 @@ export function createMaterials() {
       bumpMap: details.cement.map,
       bumpScale: 0.008,
     }),
-    metal: new T.MeshStandardMaterial({
-      color: 0x434a48,
-      roughness: 0.55,
-      metalness: 0.65,
-    }),
-    orange: new T.MeshStandardMaterial({
-      color: 0xe99331,
-      roughness: 0.45,
-      metalness: 0.3,
-    }),
-    pale: new T.MeshStandardMaterial({ color: 0xf0e4bc, roughness: 0.9 }),
     roof: new T.MeshStandardMaterial({
       color: 0x53645d,
       roughness: 0.68,
       metalness: 0.2,
     }),
-    rubber: new T.MeshStandardMaterial({ color: 0x262b29, roughness: 0.9 }),
     water: new T.MeshStandardMaterial({
       color: 0x729ead,
       roughness: 0.22,
@@ -593,7 +599,16 @@ export function createSite(scene: T.Scene, mats: Materials) {
   }
   return { targets, solids, drum, stationGroups };
 }
-export function makeBuilder(name: string, color: number, mats: Materials) {
+/** What a builder is made of: cloth and skin details plus the plain paints. */
+export type BuilderMaterials = Pick<
+  Materials,
+  'sleeve' | 'skin' | 'steel' | 'metal' | 'orange' | 'pale' | 'rubber'
+>;
+export function makeBuilder(
+  name: string,
+  color: number,
+  mats: BuilderMaterials,
+) {
   const g = new T.Group(),
     shirt = new T.MeshStandardMaterial({
       color: COLORS[color % COLORS.length],
@@ -632,4 +647,10 @@ export function makeBuilder(name: string, color: number, mats: Materials) {
     Math.max(0.9, name.length * 0.09),
   );
   return { group: g, legs, tag };
+}
+/** Scissors a builder's legs; `time` is in milliseconds. */
+export function stepBuilder(legs: T.Mesh[], time: number, moving: boolean) {
+  legs.forEach((leg, i) => {
+    leg.rotation.x = moving ? Math.sin(time * 0.012 + i * Math.PI) * 0.3 : 0;
+  });
 }

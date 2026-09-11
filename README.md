@@ -23,7 +23,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 
 Eleven of the twelve have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
 
-The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, and all of the sound workshops. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
+The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, all of the sound workshops, and every game's player avatar walking side by side against a chosen template. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
 
 ## Siege and Desist
 

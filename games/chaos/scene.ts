@@ -34,7 +34,14 @@ import { SwapView } from './swap-view';
 import { InspectionView } from './inspection-view';
 import { roleAnchor } from './party';
 import { PROP_USES } from './house-props';
-import { disposePiece, environment, label, makePiece, worker } from './objects';
+import {
+  animateWorker,
+  disposePiece,
+  environment,
+  label,
+  makePiece,
+  worker,
+} from './objects';
 import { appearanceKey, type Appearance } from './appearance';
 import { animateHomeModel } from './home-models';
 import {
@@ -1791,29 +1798,14 @@ export class GameScene {
               serverNow >= e.at &&
               serverNow - e.at < 1100,
           );
-        const body = obj.userData.body as T.Group;
-        body.rotation.z = bonk
-          ? Math.sin(clamp((serverNow - bonk.at) / 1000, 0, 1) * Math.PI) * 1.3
-          : Math.sin(this.time * 10) * Math.min(delta, 0.15);
-        const legs = obj.userData.legs as T.Group[];
-        legs.forEach(
-          (leg, i) =>
-            (leg.rotation.x =
-              Math.sin(this.time * 11 + i * Math.PI) *
-              Math.min(delta * 5, 0.6)),
-        );
-        const held =
-          displayRole >= 0 ||
-          this.snapshot.world.pieces.some((piece) => piece.heldBy === p.id);
-        (obj.userData.arms as T.Group[]).forEach(
-          (arm, i) =>
-            (arm.rotation.x = held
-              ? -2.4
-              : p.id === this.local?.id && now - this.toolAt < 650
-                ? -1.2 + Math.sin(this.time * 28) * 0.8
-                : Math.sin(this.time * 11 + i * Math.PI) *
-                  Math.min(delta * 3, 0.4)),
-        );
+        animateWorker(obj, this.time, {
+          lag: delta,
+          bonked: bonk ? clamp((serverNow - bonk.at) / 1000, 0, 1) : null,
+          holding:
+            displayRole >= 0 ||
+            this.snapshot.world.pieces.some((piece) => piece.heldBy === p.id),
+          hammering: p.id === this.local?.id && now - this.toolAt < 650,
+        });
       }
       for (const p of this.snapshot.world.pieces) {
         const obj = this.pieces.get(p.id)!;

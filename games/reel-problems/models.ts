@@ -131,6 +131,15 @@ export function createAngler(color: string) {
   box(g, [0.65, 0.37, 0.15], [0, 1.04, 0.3], vest);
   return g;
 }
+/** How far an angler rocks on deck; `now` is in milliseconds. */
+export function deckSway(
+  now: number,
+  input: { x: number; z: number; brace: boolean },
+) {
+  return input.brace
+    ? -0.12
+    : Math.sin(now / 110) * Math.min(0.06, Math.hypot(input.x, input.z) * 0.06);
+}
 export function createCatch(kind: CatchKind) {
   const g = new THREE.Group(),
     spec = CATCHES[kind],

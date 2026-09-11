@@ -8,9 +8,11 @@ import {
   LayoutDashboard,
   ListTree,
   LogOut,
+  PersonStanding,
   RefreshCw,
 } from 'lucide-react';
 import { GAMES } from '../analytics/catalog';
+import AvatarsPanel from './AvatarsPanel';
 import GamePanel from './GamePanel';
 import OverviewPanel from './OverviewPanel';
 import SessionsPanel, { type SessionFilter } from './SessionsPanel';
@@ -18,12 +20,13 @@ import SoundPanel from './SoundPanel';
 import type { Scope } from './request';
 import styles from './admin.module.css';
 
-type Tab = 'overview' | 'games' | 'sessions' | 'sound';
+type Tab = 'overview' | 'games' | 'sessions' | 'sound' | 'avatars';
 const TABS = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
   { id: 'games', label: 'Games', Icon: Gamepad2 },
   { id: 'sessions', label: 'Sessions', Icon: ListTree },
   { id: 'sound', label: 'Sound', Icon: AudioLines },
+  { id: 'avatars', label: 'Avatars', Icon: PersonStanding },
 ] as const;
 const PERIODS = [
   { id: 'today', label: 'Today' },
@@ -140,6 +143,7 @@ function Dashboard({
   const [filter, setFilter] = useState<SessionFilter>({});
   const [soundGame, setSoundGame] = useState<string | null>(null);
   const scope: Scope = { credential, from, tz, revision, signOut };
+  const reports = tab === 'overview' || tab === 'games' || tab === 'sessions';
 
   const choosePeriod = (next: Period) => {
     setPeriod(next);
@@ -182,7 +186,7 @@ function Dashboard({
             <LogOut size={14} aria-hidden="true" /> Sign out
           </button>
         </header>
-        {tab !== 'sound' && (
+        {reports && (
           <div className={styles.filters}>
             <fieldset className={styles.segmented}>
               <legend className={styles.srOnly}>Period</legend>
@@ -261,6 +265,7 @@ function Dashboard({
               signOut={signOut}
             />
           )}
+          {tab === 'avatars' && <AvatarsPanel />}
         </main>
       </div>
     </div>
