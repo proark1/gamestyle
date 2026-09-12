@@ -959,7 +959,7 @@ export class GameScene {
           p.id === id ? '#fff5cf' : '#ffffff',
           2,
         );
-        tag.position.y = 2.73;
+        tag.position.y = 2.57;
         obj.add(tag);
         obj.userData.tag = tag;
         this.workers.set(p.id, obj);
@@ -1765,7 +1765,7 @@ export class GameScene {
             new T.SphereGeometry(0.07, 8, 6),
             new T.MeshBasicMaterial({ color: '#534034' }),
           );
-          mouth.position.set(0, 1.59, 0.29);
+          mouth.position.set(0, 1.27, 0.26);
           obj.userData.body.add(mouth);
           obj.userData.voiceMouth = mouth;
         }

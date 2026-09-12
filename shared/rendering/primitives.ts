@@ -2,6 +2,8 @@ import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 const materials = new Map<string, T.MeshStandardMaterial>();
 const boxes = new Map<string, T.BufferGeometry>();
+const spheres = new Map<number, T.BufferGeometry>();
+const tapers = new Map<string, T.BufferGeometry>();
 
 export function material(color: string) {
   if (!materials.has(color))
@@ -40,6 +42,54 @@ export function box(
   rounded = false,
 ) {
   const mesh = new T.Mesh(boxGeometry(size, rounded), material(color));
+  mesh.position.set(...(pos as [number, number, number]));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  g.add(mesh);
+  return mesh;
+}
+
+/** A faceted ellipsoid: one shared unit sphere per detail level, scaled per mesh. */
+export function ball(
+  g: T.Object3D,
+  size: number[],
+  pos: number[],
+  color: string,
+  detail = 12,
+) {
+  let geometry = spheres.get(detail);
+  if (!geometry) {
+    geometry = new T.SphereGeometry(1, detail, Math.ceil((detail * 2) / 3));
+    geometry.userData.shared = true;
+    spheres.set(detail, geometry);
+  }
+  const mesh = new T.Mesh(geometry, material(color));
+  mesh.scale.set(...(size as [number, number, number]));
+  mesh.position.set(...(pos as [number, number, number]));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  g.add(mesh);
+  return mesh;
+}
+
+/** A cone or tapered cylinder along Y; a zero radius makes that end a point. */
+export function taper(
+  g: T.Object3D,
+  top: number,
+  bottom: number,
+  height: number,
+  pos: number[],
+  color: string,
+  sides = 8,
+) {
+  const key = `${top}:${bottom}:${height}:${sides}`;
+  let geometry = tapers.get(key);
+  if (!geometry) {
+    geometry = new T.CylinderGeometry(top, bottom, height, sides);
+    geometry.userData.shared = true;
+    tapers.set(key, geometry);
+  }
+  const mesh = new T.Mesh(geometry, material(color));
   mesh.position.set(...(pos as [number, number, number]));
   mesh.castShadow = true;
   mesh.receiveShadow = true;

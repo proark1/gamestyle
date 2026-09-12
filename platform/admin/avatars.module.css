@@ -49,6 +49,31 @@
   font-size: 11px;
   font-weight: 700;
 }
+.section {
+  display: grid;
+  gap: 10px;
+}
+.section > h2 {
+  margin: 0;
+  font:
+    600 19px Fredoka,
+    'DM Sans',
+    sans-serif;
+}
+.section > p {
+  margin: -8px 0 2px;
+}
+.tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: 1px solid rgba(41, 74, 67, 0.2);
+  border-radius: 999px;
+  color: #46605a;
+  font:
+    700 11px 'DM Sans',
+    sans-serif;
+  vertical-align: 2px;
+}
 .looks {
   display: flex;
   flex-wrap: wrap;

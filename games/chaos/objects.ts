@@ -2,6 +2,10 @@ import { mapConfig, type MapId } from './maps';
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import {
+  WORKER_HEAD_TOP,
+  worker as sharedWorker,
+} from '../../shared/rendering/worker';
 import { PLAYER_COLORS, type ItemKind } from './model';
 import { paintHex, type Appearance } from './appearance';
 import { makeHomeModel } from './home-models';
@@ -165,46 +169,24 @@ export function label(
   sprite.renderOrder = 3;
   return sprite;
 }
+/**
+ * A site worker: the collection's shared worker in site overalls, a tool belt
+ * and a striped hard hat in the player's colour.
+ */
 export function worker(color = 0) {
-  const g = new T.Group(),
-    body = new T.Group();
-  g.add(body);
-  g.userData.body = body;
   const c = PLAYER_COLORS[color % 4];
-  box(body, 0.76, 0.68, 0.48, c, 0, 0.92, 0, true);
-  box(body, 0.62, 0.28, 0.49, '#355565', 0, 0.62, 0, true);
-  box(body, 0.39, 0.44, 0.05, '#355565', 0, 0.85, 0.25, true);
-  box(body, 0.11, 0.52, 0.05, '#355565', -0.24, 1.03, 0.25);
-  box(body, 0.11, 0.52, 0.05, '#355565', 0.24, 1.03, 0.25);
-  box(body, 0.78, 0.13, 0.53, '#91623f', 0, 0.66, 0);
-  box(body, 0.23, 0.22, 0.16, '#bc854f', 0.33, 0.57, 0.29, true);
-  const leftLeg = new T.Group(),
-    rightLeg = new T.Group();
-  leftLeg.position.set(-0.21, 0.55, 0);
-  rightLeg.position.set(0.21, 0.55, 0);
-  [leftLeg, rightLeg].forEach((leg) => {
-    box(leg, 0.29, 0.36, 0.32, '#355565', 0, -0.13, 0, true);
-    box(leg, 0.34, 0.22, 0.48, '#384440', 0, -0.4, 0.08, true);
-    body.add(leg);
+  const g = sharedWorker(color, {
+    shirt: c,
+    overalls: '#355565',
+    boots: '#384440',
+    cap: false,
   });
-  const arms = [-1, 1].map((side) => {
-    const arm = new T.Group();
-    arm.position.set(side * 0.48, 1.13, 0);
-    box(arm, 0.26, 0.4, 0.29, c, 0, -0.15, 0, true);
-    box(arm, 0.26, 0.23, 0.29, '#eac29d', 0, -0.41, 0, true);
-    body.add(arm);
-    return arm;
-  });
-  box(body, 0.65, 0.58, 0.59, '#f2cb9f', 0, 1.55, 0.015, true);
-  box(body, 0.11, 0.15, 0.08, '#344842', -0.16, 1.56, 0.316, true);
-  box(body, 0.11, 0.15, 0.08, '#344842', 0.16, 1.56, 0.316, true);
-  box(body, 0.12, 0.11, 0.11, '#dfae7f', 0, 1.43, 0.35, true);
-  box(body, 0.2, 0.035, 0.025, '#956349', 0, 1.35, 0.32);
-  box(body, 0.78, 0.15, 0.83, c, 0, 1.85, 0.08, true);
-  box(body, 0.71, 0.34, 0.65, c, 0, 2.03, 0, true);
-  box(body, 0.11, 0.39, 0.66, '#ffe6a0', 0, 2.06, 0, true);
-  g.userData.legs = [leftLeg, rightLeg];
-  g.userData.arms = arms;
+  const body = g.userData.body as T.Group;
+  box(body, 0.74, 0.1, 0.72, c, 0, WORKER_HEAD_TOP + 0.02, 0.04, true);
+  box(body, 0.6, 0.28, 0.56, c, 0, WORKER_HEAD_TOP + 0.18, 0, true);
+  box(body, 0.1, 0.32, 0.58, '#ffe6a0', 0, WORKER_HEAD_TOP + 0.2, 0, true);
+  box(body, 0.7, 0.1, 0.52, '#91623f', 0, 0.68, 0.035);
+  box(body, 0.2, 0.2, 0.14, '#bc854f', 0.3, 0.58, 0.3, true);
   return g;
 }
 /**

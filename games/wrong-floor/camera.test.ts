@@ -104,3 +104,20 @@ void test('a shut elevator door and low ceiling also block the follow camera', (
     mesh.material.dispose();
   }
 });
+void test('sign labels are sprites: they neither block nor break the follow camera', () => {
+  const boom = new HotelCameraBoom(),
+    target = new T.Vector3(),
+    environment = new T.Group();
+  const door = wall([3.4, 3.4, 0.12], [0, 1.7, 1.02]);
+  const sign = new T.Sprite(new T.SpriteMaterial());
+  sign.position.set(0, 2.1, 0.7);
+  environment.add(door, sign);
+  environment.updateMatrixWorld(true);
+  assert.doesNotThrow(() =>
+    boom.position(new T.Vector3(0, EYE_HEIGHT, 0.4), 0, environment, target),
+  );
+  assert.ok(target.z < 0.9, 'the door behind the sign still stops the camera');
+  door.geometry.dispose();
+  door.material.dispose();
+  sign.material.dispose();
+});

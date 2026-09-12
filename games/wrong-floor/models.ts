@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { box, label, material } from '../../shared/rendering/primitives';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
+import { WORKER_HEAD_TOP, worker } from '../../shared/rendering/worker';
 import { COLORS } from './types';
 
 function ball(
@@ -50,39 +51,22 @@ export function guest(color: number, monster = false) {
   return g;
 }
 
+/**
+ * A hotel guest: the collection's shared worker in the player's colour, with
+ * brown shoes and a knitted beanie.
+ */
 function hotelGuest(color: number) {
-  const g = new T.Group(),
-    coat = COLORS[color % COLORS.length],
-    skin = '#f2d1a1',
-    trousers = '#35585b';
-  // Same round, faceted heads and pear-shaped bodies as the fishing/game-show crew.
-  ball(g, [0.43, 0.56, 0.32], [0, 1, 0], coat);
-  ball(g, [0.36, 0.36, 0.34], [0, 1.75, 0], skin);
-  ball(g, [0.37, 0.16, 0.34], [0, 2, -0.025], '#73543d');
-  for (const side of [-1, 1]) {
-    ball(g, [0.075, 0.1, 0.085], [side * 0.35, 1.73, 0], skin);
-    ball(g, [0.034, 0.05, 0.027], [side * 0.12, 1.8, 0.315], '#29474b');
-    ball(g, [0.065, 0.038, 0.022], [side * 0.2, 1.68, 0.29], '#da9478');
-    const leg = new T.Group();
-    leg.position.set(side * 0.21, 0.52, 0);
-    box(leg, [0.25, 0.43, 0.28], [0, -0.16, 0], trousers, true);
-    ball(leg, [0.19, 0.12, 0.28], [0, -0.39, 0.075], '#665445');
-    g.add(leg);
-    g.userData[side === 1 ? 'legR' : 'legL'] = leg;
-    const arm = new T.Group();
-    arm.position.set(side * 0.43, 1.24, 0);
-    ball(arm, [0.16, 0.32, 0.16], [side * 0.03, -0.17, 0], coat);
-    ball(arm, [0.13, 0.14, 0.13], [side * 0.04, -0.43, 0.02], skin);
-    g.add(arm);
-    g.userData[side === 1 ? 'armR' : 'armL'] = arm;
-  }
-  ball(g, [0.065, 0.065, 0.07], [0, 1.7, 0.345], skin);
-  box(g, [0.13, 0.035, 0.025], [0, 1.58, 0.305], '#805e4c', true);
-  box(g, [0.07, 0.77, 0.04], [0, 1, 0.315], '#f4d8a1', true);
-  box(g, [0.21, 0.23, 0.06], [0.2, 0.88, 0.29], coat, true);
-  box(g, [0.2, 0.13, 0.055], [0.19, 1.22, 0.29], '#fff0cd', true);
-  const pack = ball(g, [0.29, 0.34, 0.15], [0, 1.06, -0.36], '#aa8058');
-  box(pack, [0.6, 0.2, 0.35], [0, 0, -0.65], '#7a6048', true);
+  const coat = COLORS[color % COLORS.length];
+  const g = worker(color, {
+    shirt: coat,
+    overalls: '#35585b',
+    boots: '#665445',
+    cap: false,
+  });
+  const body = g.userData.body as T.Group;
+  box(body, [0.56, 0.2, 0.54], [0, WORKER_HEAD_TOP + 0.06, 0], coat, true);
+  box(body, [0.58, 0.08, 0.56], [0, WORKER_HEAD_TOP - 0.02, 0], '#f4d8a1');
+  ball(body, [0.07, 0.07, 0.07], [0, WORKER_HEAD_TOP + 0.2, 0], '#f4d8a1');
   return g;
 }
 

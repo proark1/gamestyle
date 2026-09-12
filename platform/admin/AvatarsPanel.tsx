@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { RotateCcw, RotateCw } from 'lucide-react';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import type { AvatarGame } from './avatars/catalog';
+import type { AvatarCard } from './avatars/catalog';
 import type { AvatarStage, Measure, ScaleMode } from './avatars/stage';
 import styles from './avatars.module.css';
 import admin from './admin.module.css';
 
 const metres = (value: number) => `${value.toFixed(2)} m`;
+const lookKey = (card: AvatarCard, look: AvatarLook) =>
+  `${card.id}:${look.key}`;
 
 function difference(value: number, reference: number) {
   if (!reference) return '—';
@@ -20,7 +22,8 @@ function difference(value: number, reference: number) {
 export default function AvatarsPanel() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [stage, setStage] = useState<AvatarStage | null>(null);
-  const [games, setGames] = useState<readonly AvatarGame[]>([]);
+  const [potential, setPotential] = useState<readonly AvatarCard[]>([]);
+  const [games, setGames] = useState<readonly AvatarCard[]>([]);
   const [failure, setFailure] = useState('');
   const [chosen, setChosen] = useState<Record<string, string>>({});
   const [templateKey, setTemplateKey] = useState('');
@@ -34,13 +37,14 @@ export default function AvatarsPanel() {
     let created: AvatarStage | undefined;
     // three.js and every game's models load only once this tab is open.
     Promise.all([import('./avatars/stage'), import('./avatars/catalog')])
-      .then(([{ AvatarStage }, { AVATAR_GAMES, DEFAULT_TEMPLATE }]) => {
+      .then(([{ AvatarStage }, catalog]) => {
         if (cancelled || !canvas.current) return;
         created = new AvatarStage(canvas.current, (key, measure) =>
           setMeasures((previous) => ({ ...previous, [key]: measure })),
         );
-        setGames(AVATAR_GAMES);
-        setTemplateKey((current) => current || DEFAULT_TEMPLATE);
+        setPotential(catalog.POTENTIAL_AVATARS);
+        setGames(catalog.AVATAR_GAMES);
+        setTemplateKey((current) => current || catalog.DEFAULT_TEMPLATE);
         setStage(created);
       })
       .catch(() => {
@@ -55,14 +59,23 @@ export default function AvatarsPanel() {
     };
   }, []);
 
-  const options = games.flatMap((game) =>
-    game.looks.map((look) => ({
-      key: `${game.id}:${look.key}`,
-      label: game.looks.length > 1 ? `${game.name} · ${look.label}` : game.name,
-      look,
-    })),
-  );
-  const template = options.find((option) => option.key === templateKey);
+  const groups = [
+    { label: 'Potential avatars', cards: potential },
+    { label: 'Game avatars', cards: games },
+  ].map((group) => ({
+    label: group.label,
+    options: group.cards.flatMap((card) =>
+      card.looks.map((look) => ({
+        key: lookKey(card, look),
+        label:
+          card.looks.length > 1 ? `${card.name} · ${look.label}` : card.name,
+        look,
+      })),
+    ),
+  }));
+  const template = groups
+    .flatMap((group) => group.options)
+    .find((option) => option.key === templateKey);
   const templateLook = template?.look;
   const templateMeasure = template ? measures[template.key] : undefined;
 
@@ -78,6 +91,27 @@ export default function AvatarsPanel() {
   useEffect(() => {
     stage?.setScaleMode(scale);
   }, [stage, scale]);
+
+  const renderCard = (card: AvatarCard) => {
+    const look =
+      card.looks.find((item) => item.key === chosen[card.id]) ?? card.looks[0];
+    const isTemplate = templateLook === look;
+    return (
+      <AvatarCardView
+        key={card.id}
+        card={card}
+        look={look}
+        stage={stage}
+        measure={measures[lookKey(card, look)]}
+        templateMeasure={templateMeasure}
+        isTemplate={isTemplate}
+        onLook={(key) =>
+          setChosen((previous) => ({ ...previous, [card.id]: key }))
+        }
+        onTemplate={() => setTemplateKey(isTemplate ? '' : lookKey(card, look))}
+      />
+    );
+  };
 
   return (
     <div className={admin.panel}>
@@ -99,11 +133,18 @@ export default function AvatarsPanel() {
               onChange={(event) => setTemplateKey(event.target.value)}
             >
               <option value="">No template</option>
-              {options.map((option) => (
-                <option key={option.key} value={option.key}>
-                  Template: {option.label}
-                </option>
-              ))}
+              {groups.map(
+                (group) =>
+                  group.options.length > 0 && (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.options.map((option) => (
+                        <option key={option.key} value={option.key}>
+                          Template: {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ),
+              )}
             </select>
           </label>
           <fieldset className={admin.segmented}>
@@ -175,84 +216,104 @@ export default function AvatarsPanel() {
           <p className={admin.empty}>Loading every game&rsquo;s models…</p>
         )}
       </section>
-      <div className={styles.grid}>
-        {games.map((game) => {
-          const look =
-            game.looks.find((item) => item.key === chosen[game.id]) ??
-            game.looks[0];
-          const key = `${game.id}:${look.key}`;
-          const measure = measures[key];
-          const isTemplate = template?.look === look;
-          return (
-            <article key={game.id} className={styles.card}>
-              <header className={styles.head}>
-                <h3>{game.name}</h3>
-                {isTemplate && <span className={styles.badge}>Template</span>}
-              </header>
-              {game.looks.length > 1 && (
-                <fieldset className={styles.looks}>
-                  <legend className={admin.srOnly}>{game.name} looks</legend>
-                  {game.looks.map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      aria-pressed={item === look}
-                      onClick={() =>
-                        setChosen((previous) => ({
-                          ...previous,
-                          [game.id]: item.key,
-                        }))
-                      }
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </fieldset>
-              )}
-              <StageBox stage={stage} slotKey={key} look={look} />
-              <dl className={styles.facts}>
-                <div>
-                  <dt>Height</dt>
-                  <dd>
-                    {measure ? metres(measure.height) : '—'}
-                    {templateMeasure && measure && !isTemplate && (
-                      <small>
-                        {' '}
-                        {difference(measure.height, templateMeasure.height)}
-                      </small>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Width</dt>
-                  <dd>
-                    {measure ? metres(measure.width) : '—'}
-                    {templateMeasure && measure && !isTemplate && (
-                      <small>
-                        {' '}
-                        {difference(measure.width, templateMeasure.width)}
-                      </small>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Meshes</dt>
-                  <dd>{measure?.meshes ?? '—'}</dd>
-                </div>
-              </dl>
-              {game.note && <p className={styles.note}>{game.note}</p>}
-              <button
-                type="button"
-                className={admin.quiet}
-                onClick={() => setTemplateKey(isTemplate ? '' : key)}
-              >
-                {isTemplate ? 'Stop using as template' : 'Use as template'}
-              </button>
-            </article>
-          );
-        })}
-      </div>
+      {potential.length > 0 && (
+        <section className={styles.section} aria-labelledby="potential-avatars">
+          <h2 id="potential-avatars">Potential avatars</h2>
+          <p className={admin.cardNote}>
+            New characters to choose from for other games: one funny, one cute
+            and one scary. Each is rigged like the shared worker, so a
+            game&rsquo;s existing walk code can drive it, and each takes the
+            player colour.
+          </p>
+          <div className={styles.grid}>{potential.map(renderCard)}</div>
+        </section>
+      )}
+      {games.length > 0 && (
+        <section className={styles.section} aria-labelledby="game-avatars">
+          <h2 id="game-avatars">Game avatars</h2>
+          <div className={styles.grid}>{games.map(renderCard)}</div>
+        </section>
+      )}
     </div>
+  );
+}
+
+function AvatarCardView({
+  card,
+  look,
+  stage,
+  measure,
+  templateMeasure,
+  isTemplate,
+  onLook,
+  onTemplate,
+}: {
+  card: AvatarCard;
+  look: AvatarLook;
+  stage: AvatarStage | null;
+  measure: Measure | undefined;
+  templateMeasure: Measure | undefined;
+  isTemplate: boolean;
+  onLook: (key: string) => void;
+  onTemplate: () => void;
+}) {
+  return (
+    <article className={styles.card}>
+      <header className={styles.head}>
+        <h3>
+          {card.name}
+          {card.tag && <span className={styles.tag}>{card.tag}</span>}
+        </h3>
+        {isTemplate && <span className={styles.badge}>Template</span>}
+      </header>
+      {card.looks.length > 1 && (
+        <fieldset className={styles.looks}>
+          <legend className={admin.srOnly}>{card.name} looks</legend>
+          {card.looks.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              aria-pressed={item === look}
+              onClick={() => onLook(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </fieldset>
+      )}
+      <StageBox stage={stage} slotKey={lookKey(card, look)} look={look} />
+      <dl className={styles.facts}>
+        <div>
+          <dt>Height</dt>
+          <dd>
+            {measure ? metres(measure.height) : '—'}
+            {templateMeasure && measure && !isTemplate && (
+              <small>
+                {' '}
+                {difference(measure.height, templateMeasure.height)}
+              </small>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>Width</dt>
+          <dd>
+            {measure ? metres(measure.width) : '—'}
+            {templateMeasure && measure && !isTemplate && (
+              <small> {difference(measure.width, templateMeasure.width)}</small>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>Meshes</dt>
+          <dd>{measure?.meshes ?? '—'}</dd>
+        </div>
+      </dl>
+      {card.note && <p className={styles.note}>{card.note}</p>}
+      <button type="button" className={admin.quiet} onClick={onTemplate}>
+        {isTemplate ? 'Stop using as template' : 'Use as template'}
+      </button>
+    </article>
   );
 }
 

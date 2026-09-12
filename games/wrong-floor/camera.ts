@@ -44,6 +44,7 @@ export class HotelCameraBoom {
   private ray = new T.Raycaster();
   private direction = new T.Vector3();
   private hits: T.Intersection[] = [];
+  private surfaces: T.Object3D[] = [];
   position(
     eye: T.Vector3,
     yaw: number,
@@ -56,9 +57,15 @@ export class HotelCameraBoom {
     this.ray.set(eye, this.direction);
     this.ray.near = 0;
     this.ray.far = distance + 0.24;
+    // Only meshes stop the boom. The hotel's sign labels are sprites, which
+    // cannot be raycast without a camera and would throw every frame.
+    this.surfaces.length = 0;
+    environment.traverse((object) => {
+      if ((object as T.Mesh).isMesh) this.surfaces.push(object);
+    });
     this.hits.length = 0;
-    this.ray.intersectObject(environment, true, this.hits);
-    const wall = this.hits.find((hit) => hit.object instanceof T.Mesh);
+    this.ray.intersectObjects(this.surfaces, false, this.hits);
+    const wall = this.hits[0];
     return target
       .copy(eye)
       .addScaledVector(
