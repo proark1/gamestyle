@@ -22,6 +22,7 @@ import {
   deckSway,
   material,
   nameLabel,
+  poseAngler,
 } from './models';
 import { SeaScene } from './sea-scene';
 
@@ -424,12 +425,19 @@ export class ReelScene {
         object.rotation.x = 0;
         object.rotation.z = deckSway(now, p.input);
       }
+      poseAngler(
+        object,
+        now,
+        !p.swimming && Math.hypot(p.input.x, p.input.z) > 0.1,
+      );
       const line = this.lines.get(p.id)!,
         bobber = this.bobbers.get(p.id)!;
       line.visible = bobber.visible = !!p.line;
       if (p.line) {
         this.yaw.updateMatrixWorld(true);
-        const start = object.localToWorld(new THREE.Vector3(0.4, 2.5, 1.85));
+        const start = object.localToWorld(
+          (object.userData.rodTip as THREE.Vector3).clone(),
+        );
         const positions = line.geometry.getAttribute(
           'position',
         ) as THREE.BufferAttribute;

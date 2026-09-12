@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { box, material, label } from '../../shared/rendering/primitives';
+import { WORKER_HEAD_TOP, worker } from '../../shared/rendering/worker';
 import type { Hazard } from './types';
 
 function ball(g: T.Object3D, size: number[], pos: number[], color: string) {
@@ -28,30 +29,27 @@ function cylinder(
   g.add(m);
   return m;
 }
+/**
+ * A game-show contestant: the collection's shared worker in the player's
+ * colour, with white sneakers, a sweatband and a contestant card.
+ */
 export function contestant(color: string) {
-  const g = new T.Group();
-  ball(g, [0.43, 0.57, 0.3], [0, 1.03, 0], color);
-  ball(g, [0.36, 0.37, 0.33], [0, 1.81, 0], '#f2d1a1');
-  ball(g, [0.37, 0.15, 0.33], [0, 2.08, -0.03], '#73543d');
-  for (const x of [-0.12, 0.12])
-    ball(g, [0.035, 0.055, 0.025], [x, 1.84, 0.315], '#29474b');
-  box(g, [0.25, 0.12, 0.035], [0, 1.66, 0.318], '#fff4dd', true);
-  for (let i = 0; i < 2; i++) {
-    const side = i ? 1 : -1;
-    const leg = box(
-      g,
-      [0.25, 0.56, 0.27],
-      [side * 0.22, 0.34, 0],
-      '#35585b',
-      true,
-    );
-    leg.name = `leg${i}`;
-    box(leg, [0.29, 0.16, 0.42], [0, -0.22, 0.08], '#fff0d0', true);
-    const arm = box(g, [0.23, 0.62, 0.23], [side * 0.49, 1.06, 0], color, true);
-    arm.name = `arm${i}`;
-    ball(arm, [0.13, 0.14, 0.13], [0, -0.29, 0], '#f2d1a1');
-  }
-  box(g, [0.28, 0.23, 0.06], [0.13, 1.16, 0.3], '#fff3ce', true);
+  const g = worker(0, {
+    shirt: color,
+    overalls: '#35585b',
+    boots: '#fff0d0',
+    cap: false,
+  });
+  const body = g.userData.body as T.Group;
+  box(
+    body,
+    [0.55, 0.12, 0.53],
+    [0, WORKER_HEAD_TOP + 0.04, 0],
+    '#73543d',
+    true,
+  );
+  box(body, [0.56, 0.07, 0.54], [0, WORKER_HEAD_TOP - 0.06, 0], '#fff4dd');
+  box(body, [0.22, 0.14, 0.02], [0, 0.9, 0.29], '#fff3ce');
   return g;
 }
 /** Walks a contestant, arms up while airborne; `now` is in milliseconds. */
@@ -61,11 +59,11 @@ export function animateContestant(
   now: number,
 ) {
   const walk = Math.hypot(p.vx, p.vz) > 0.5 ? Math.sin(now * 0.014) * 0.5 : 0;
-  for (let i = 0; i < 2; i++) {
-    model.getObjectByName(`leg${i}`)!.rotation.x = walk * (i ? 1 : -1);
-    model.getObjectByName(`arm${i}`)!.rotation.x =
-      p.y > 0.5 ? -2.4 : walk * (i ? -1 : 1);
-  }
+  const airborne = p.y > 0.5;
+  model.userData.legL.rotation.x = -walk;
+  model.userData.legR.rotation.x = walk;
+  model.userData.armL.rotation.x = airborne ? -2.4 : walk;
+  model.userData.armR.rotation.x = airborne ? -2.4 : -walk;
 }
 export function stage() {
   const g = new T.Group();

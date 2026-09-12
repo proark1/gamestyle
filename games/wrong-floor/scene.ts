@@ -323,10 +323,13 @@ export class HotelScene {
         name.position.y = 2.35;
         name.material.depthTest = true;
         model.add(name);
+        model.userData.tag = name;
         this.people.set(p.id, model);
         this.scene.add(model);
       }
       model.visible = !p.caught && !(p.id === this.id && firstPerson);
+      // Your own name would hang right in front of the follow camera.
+      (model.userData.tag as T.Sprite).visible = p.id !== this.id;
       const moving =
         Math.hypot(model.position.x - p.x, model.position.z - p.z) > 0.025;
       const oldX = model.position.x,

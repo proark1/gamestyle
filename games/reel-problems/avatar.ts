@@ -1,5 +1,5 @@
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { createAngler, deckSway } from './models';
+import { createAngler, deckSway, poseAngler } from './models';
 import { ANGLER_COLORS } from './types';
 
 export const reelAvatars: readonly AvatarLook[] = [
@@ -10,13 +10,14 @@ export const reelAvatars: readonly AvatarLook[] = [
       const root = createAngler(ANGLER_COLORS[0]);
       return {
         root,
-        // Anglers have no swinging limbs: walking rocks the whole body.
+        // Anglers rock on the deck as they step, holding the rod steady.
         pose: (time, walking) => {
           root.rotation.z = deckSway(time * 1000, {
             x: walking ? 1 : 0,
             z: 0,
             brace: false,
           });
+          poseAngler(root, time * 1000, walking);
         },
       };
     },

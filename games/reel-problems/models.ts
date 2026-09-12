@@ -1,4 +1,5 @@
 import { batchScenery } from '../../shared/rendering/batch-scenery';
+import { WORKER_HEAD_TOP, worker } from '../../shared/rendering/worker';
 import * as THREE from 'three';
 import { CATCHES, HULL_HALF, WELL_SURFACE, type CatchKind } from './types';
 
@@ -105,31 +106,59 @@ export function createBoat() {
   group.add(gear);
   return group;
 }
+/** How far forward the rod hand is raised. */
+const ROD_ARM = -0.9;
+const ROD_TILT = 0.85;
+const ROD_LENGTH = 2.25;
+
+/**
+ * An angler: the collection's shared worker in the player's colour, with
+ * waders, a life vest, a bucket hat and a rod held out in the right hand.
+ * `userData.rodTip` is where the line leaves the rod, in the angler's space.
+ */
 export function createAngler(color: string) {
-  const g = new THREE.Group(),
-    coat = material(color),
-    skin = material('#f5d8ad'),
-    dark = material('#344d4d'),
-    gold = material('#d2ab73');
-  ball(g, [0.42, 0.57, 0.3], [0, 0.95, 0], coat);
-  for (const x of [-0.23, 0.23]) {
-    box(g, [0.23, 0.5, 0.24], [x, 0.34, 0], dark);
-    ball(g, [0.2, 0.12, 0.29], [x, 0.12, 0.08], dark);
-  }
-  ball(g, [0.35, 0.35, 0.33], [0, 1.65, 0], skin);
-  cylinder(g, 0.49, 0.08, [0, 1.91, 0], coat);
-  cylinder(g, 0.34, 0.24, [0, 2.01, 0], coat);
-  for (const x of [-0.12, 0.12])
-    ball(g, [0.035, 0.05, 0.025], [x, 1.69, 0.31], dark);
-  for (const x of [-0.43, 0.43]) {
-    ball(g, [0.16, 0.34, 0.15], [x, 1.07, 0.15], coat);
-    ball(g, [0.12, 0.13, 0.12], [x, 0.95, 0.35], skin);
-  }
-  const rod = cylinder(g, 0.028, 2.25, [0.4, 1.76, 0.99], gold);
-  rod.rotation.x = 0.85;
-  const vest = material('#ffb75f');
-  box(g, [0.65, 0.37, 0.15], [0, 1.04, 0.3], vest);
+  const g = worker(0, {
+    shirt: color,
+    overalls: '#344d4d',
+    boots: '#2b3b3b',
+    cap: false,
+  });
+  const body = g.userData.body as THREE.Group;
+  const hat = material(color);
+  box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material('#ffb75f'));
+  cylinder(body, 0.46, 0.06, [0, WORKER_HEAD_TOP + 0.02, 0], hat);
+  cylinder(body, 0.3, 0.24, [0, WORKER_HEAD_TOP + 0.16, 0], hat);
+  // The rod leaves the right hand, raised to hold it out over the water.
+  const arm = g.userData.armR as THREE.Group;
+  arm.rotation.x = ROD_ARM;
+  g.updateMatrixWorld(true);
+  const grip = arm
+    .getObjectByName('worker-hand')!
+    .getWorldPosition(new THREE.Vector3());
+  const along = new THREE.Vector3(0, Math.cos(ROD_TILT), Math.sin(ROD_TILT));
+  const middle = grip.clone().addScaledVector(along, ROD_LENGTH / 2);
+  const rod = cylinder(
+    g,
+    0.028,
+    ROD_LENGTH,
+    middle.toArray(),
+    material('#d2ab73'),
+  );
+  rod.rotation.x = ROD_TILT;
+  g.userData.rodTip = grip.addScaledVector(along, ROD_LENGTH);
   return g;
+}
+/** Steps an angler across the deck, rod held steady; `now` is in milliseconds. */
+export function poseAngler(
+  model: THREE.Object3D,
+  now: number,
+  moving: boolean,
+) {
+  const stride = moving ? Math.sin(now / 95) * 0.45 : 0;
+  model.userData.legL.rotation.x = stride;
+  model.userData.legR.rotation.x = -stride;
+  model.userData.armL.rotation.x = -stride * 0.7;
+  model.userData.armR.rotation.x = ROD_ARM;
 }
 /** How far an angler rocks on deck; `now` is in milliseconds. */
 export function deckSway(

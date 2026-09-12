@@ -218,11 +218,11 @@ export class ButtonScene {
       if (!model) {
         model = contestant(COLORS[p.color % 4]);
         const name = label(p.name, '#fff3d8', '#31575a', 2.1);
-        name.position.y = 2.8;
+        name.position.y = 2.45;
         model.add(name);
         const stop = label('STOP!', '#e55e47', '#fff7db', 2.1);
         stop.name = 'stop';
-        stop.position.y = 3.5;
+        stop.position.y = 3.15;
         model.add(stop);
         model.position.set(p.x, p.y, p.z);
         this.people.set(p.id, model);
