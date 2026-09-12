@@ -32,6 +32,8 @@ export default defineRailway(() => {
       AUDIO_ADMIN_PASSWORD: preserve(),
       AUTH_SECRET: preserve(),
       EMAIL_FROM: preserve(),
+      GOOGLE_CLIENT_ID: preserve(),
+      GOOGLE_CLIENT_SECRET: preserve(),
       PUBLIC_GAME_ORIGIN: preserve(),
       RESEND_API_KEY: preserve(),
     },

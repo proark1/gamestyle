@@ -202,6 +202,65 @@ void test('a code that could not be sent is removed again', async () => {
   }
 });
 
+void test('simultaneous requests cannot slip past an address limit', async () => {
+  const { native, db } = database();
+  try {
+    const { codes, send } = mailbox();
+    const results = await Promise.allSettled(
+      Array.from({ length: 8 }, async (_, i) =>
+        sendCode(
+          { db, secret: SECRET, now: NOW },
+          EMAIL,
+          await sha256(`browser-${i}`),
+          send,
+        ),
+      ),
+    );
+    assert.equal(
+      results.filter((result) => result.status === 'fulfilled').length,
+      3,
+    );
+    assert.equal(codes.length, 3);
+    for (const result of results)
+      if (result.status === 'rejected') {
+        assert.ok(result.reason instanceof AccountError);
+        assert.equal(result.reason.status, 429);
+      }
+  } finally {
+    native.close();
+  }
+});
+
+void test('a replacement that could not be sent leaves the earlier code working', async () => {
+  const { native, db } = database();
+  try {
+    const flow = await sha256('browser');
+    const { codes, send } = mailbox();
+    await sendCode({ db, secret: SECRET, now: NOW }, EMAIL, flow, send);
+    await assert.rejects(
+      sendCode(
+        { db, secret: SECRET, now: NOW + MINUTE },
+        EMAIL,
+        flow,
+        async () => {
+          throw new Error('offline');
+        },
+      ),
+      /offline/,
+    );
+    assert.ok(
+      await confirmCode(
+        { db, secret: SECRET, now: NOW + 2 * MINUTE },
+        EMAIL,
+        codes[0],
+        flow,
+      ),
+    );
+  } finally {
+    native.close();
+  }
+});
+
 void test('Resend gets one idempotent message per code', async () => {
   const calls: { url: string; init?: RequestInit }[] = [];
   const send = resendSender(

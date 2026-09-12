@@ -14,9 +14,13 @@ type Env = Record<string, string | undefined>;
 
 export function accountConfig(env: Env = process.env): AccountConfig {
   const publicOrigin = env.PUBLIC_GAME_ORIGIN?.trim() || undefined;
-  const https = !!publicOrigin
-    ?.split(',')
-    .some((entry) => entry.trim().startsWith('https:'));
+  const https = !!publicOrigin?.split(',').some((entry) => {
+    try {
+      return new URL(entry.trim()).protocol === 'https:';
+    } catch {
+      return false;
+    }
+  });
   return {
     secret:
       env.AUTH_SECRET && env.AUTH_SECRET.length >= 32

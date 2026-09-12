@@ -36,6 +36,8 @@ const LANDING_NOTICES: Record<string, string> = {
 let state = INITIAL;
 let loading: Promise<void> | undefined;
 let channel: BroadcastChannel | undefined;
+let retries = 0;
+let retryTimer: ReturnType<typeof setTimeout> | undefined;
 const subscribers = new Set<() => void>();
 const messageListeners = new Set<(message: AccountMessage) => void>();
 
@@ -92,13 +94,26 @@ function takeLandingNotice() {
   return LANDING_NOTICES[result];
 }
 
-/** Never rejects: a failed check leaves the player signed out. */
+/** A failed first check must not hide the account button for good. */
+function retryLater() {
+  if (retryTimer || !subscribers.size) return;
+  retryTimer = setTimeout(
+    () => {
+      retryTimer = undefined;
+      void refreshAccount();
+    },
+    Math.min(60_000, 2_000 * 2 ** retries++),
+  );
+}
+
+/** Never rejects. Until the first check succeeds, the store stays unknown and tries again. */
 async function loadAccount(first: boolean) {
   try {
     const response = await fetch('/api/account/session', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Session answered ${response.status}`);
     const reply = (await response.json()) as SessionReply;
     const notice = first ? takeLandingNotice() : undefined;
+    retries = 0;
     publish({
       status: 'ready',
       account: reply.account,
@@ -110,7 +125,7 @@ async function loadAccount(first: boolean) {
           : state.dialog,
     });
   } catch {
-    publish({ status: 'ready' });
+    if (state.status === 'unknown') retryLater();
   }
 }
 
@@ -206,9 +221,10 @@ export async function deleteAccount() {
 
 /**
  * Starts Google sign-in. Inside a game a popup keeps the room alive; if the
- * browser blocks it, the page itself goes to Google and comes back.
+ * browser blocks it, the page itself goes to Google and comes back. `onReturn`
+ * runs once the player is back on this page, whether or not they signed in.
  */
-export function signInWithGoogle(popup: boolean) {
+export function signInWithGoogle(popup: boolean, onReturn?: () => void) {
   const start = `/api/account/google/start?return=${encodeURIComponent(
     `${location.pathname}${location.search}`,
   )}`;
@@ -224,10 +240,13 @@ export function signInWithGoogle(popup: boolean) {
       `popup,width=${width},height=${height},left=${left},top=${top}`,
     );
     if (opened) {
-      // If the window cannot report back, check again when the player returns.
-      window.addEventListener('focus', () => void refreshAccount(true), {
-        once: true,
-      });
+      // The window reports back over the channel. If the player closes it by
+      // hand instead, check again when they return so they can try again.
+      window.addEventListener(
+        'focus',
+        () => void refreshAccount(true).then(() => onReturn?.()),
+        { once: true },
+      );
       return;
     }
   }

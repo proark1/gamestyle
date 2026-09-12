@@ -30,6 +30,7 @@ function harness(
   migrateSqlite(native);
   const db = sqliteAdapter(native);
   const codes: string[] = [];
+  const logged: string[] = [];
   const clock = { now: START };
   let idToken: Record<string, unknown> = {};
   const config = configure({
@@ -42,7 +43,10 @@ function harness(
     db: () => db,
     config: () => config,
     now: () => clock.now,
-    log: (line) => codes.push(line.slice(-6)),
+    log: (line) => {
+      logged.push(line);
+      codes.push(line.slice(-6));
+    },
     fetch: async () =>
       Response.json({
         id_token: `${encode({ alg: 'RS256' })}.${encode(idToken)}.signature`,
@@ -116,6 +120,7 @@ function harness(
     native,
     clock,
     codes,
+    logged,
     jar,
     request,
     get,
@@ -204,6 +209,24 @@ void test('email sign-in sets a secure session and stores neither the token nor 
     ).toLowerCase();
     assert.ok(!stored.includes(token.toLowerCase()));
     assert.ok(!stored.includes('player@example.com'));
+  } finally {
+    h.close();
+  }
+});
+
+void test('a code only ever goes to the lowercased address it signs in to', async () => {
+  const h = harness();
+  try {
+    await h.signInByEmail('player@example.com');
+    h.jar.clear();
+    await h.signInByEmail('Player@Example.COM');
+    // The code for a differently cased address still goes to the lowercased
+    // mailbox, so only whoever reads that mailbox can sign in to its account.
+    assert.equal(
+      h.logged.at(-1),
+      `[accounts] Sign-in code for player@example.com: ${h.codes.at(-1)}`,
+    );
+    assert.equal(h.count('accounts'), 1);
   } finally {
     h.close();
   }
@@ -458,6 +481,55 @@ void test('a popup sign-in lands on the relay page, cancelled or failed', async 
       failed.headers.get('location'),
       '/account/signed-in?result=failed',
     );
+  } finally {
+    h.close();
+  }
+});
+
+void test('a forged answer cannot end a Google sign-in in progress', async () => {
+  const h = harness();
+  try {
+    const start = await h.get(
+      h.routes.googleStart,
+      '/api/account/google/start?return=%2Fchaos',
+    );
+    const google = new URL(start.headers.get('location')!);
+    for (const query of [
+      'error=access_denied',
+      'error=access_denied&state=forged',
+      'code=abc&state=forged',
+    ]) {
+      const forged = await h.routes.googleCallback(
+        h.request(`/api/account/google/callback?${query}`),
+      );
+      assert.equal(
+        forged.headers.get('location'),
+        '/chaos#sign-in-failed',
+        query,
+      );
+      assert.deepEqual(
+        forged.headers.getSetCookie(),
+        [],
+        `${query} leaves the sign-in in progress alone`,
+      );
+    }
+    h.setIdToken({
+      iss: 'https://accounts.google.com',
+      aud: 'client-1',
+      sub: 'google-2',
+      email: 'second@gmail.com',
+      email_verified: true,
+      nonce: google.searchParams.get('nonce'),
+      iat: START / 1000,
+      exp: START / 1000 + 3600,
+    });
+    const state = google.searchParams.get('state')!;
+    const real = await h.get(
+      h.routes.googleCallback,
+      `/api/account/google/callback?code=abc&state=${state}`,
+    );
+    assert.equal(real.headers.get('location'), '/chaos');
+    assert.ok(await h.account());
   } finally {
     h.close();
   }

@@ -2,13 +2,13 @@ import type { GameDatabase } from '../../../db/contract';
 import { hmac, randomId, sameText, sixDigitCode } from './crypto';
 import { AccountError } from './errors';
 import {
-  codesSince,
+  activateCode,
   consumeCode,
   createAccount,
   dropCode,
   findIdentity,
   latestCode,
-  replaceCode,
+  reserveCode,
   spendAttempt,
   touchIdentity,
   type Identity,
@@ -29,7 +29,12 @@ const LOCAL =
 const DOMAIN =
   /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]*[a-z][a-z0-9-]*$/;
 
-/** Lowercased, with an internationalized domain in its punycode form. */
+/**
+ * Lowercased, with an internationalized domain in its punycode form. The local
+ * part is lowercased too: codes only ever go to this form, so a differently
+ * cased mailbox never receives one, and a phone that capitalises the first
+ * letter doesn't split the account.
+ */
 export function normalizeEmail(value: unknown) {
   if (typeof value !== 'string') return null;
   const email = value.trim().toLowerCase();
@@ -96,7 +101,11 @@ export function resendSender(
 
 type CodeContext = { db: GameDatabase; secret: string; now: number };
 
-/** Stores a fresh code for this browser and sends it. */
+/**
+ * Sends a fresh code for this browser. The code reserves its place under the
+ * address's limits in one statement, and replaces the browser's earlier code
+ * only once the email has gone out.
+ */
 export async function sendCode(
   { db, secret, now }: CodeContext,
   email: string,
@@ -104,28 +113,40 @@ export async function sendCode(
   send: SendCode,
 ) {
   const emailHash = await emailSubject(secret, email);
-  for (const limit of CODE_LIMITS)
-    if ((await codesSince(db, emailHash, now - limit.window)) >= limit.count)
-      throw new AccountError(
-        'Too many codes for this address. Try again later.',
-        429,
-      );
   const id = randomId(),
     code = sixDigitCode();
-  await replaceCode(db, {
-    id,
-    emailHash,
-    flowHash,
-    codeHash: await hmac(secret, `${id}:${code}`),
-    created: now,
-    expires: now + CODE_TTL_MS,
-  });
+  const reserved = await reserveCode(
+    db,
+    {
+      id,
+      emailHash,
+      flowHash,
+      codeHash: await hmac(secret, `${id}:${code}`),
+      created: now,
+    },
+    CODE_LIMITS.map((limit) => ({
+      since: now - limit.window,
+      count: limit.count,
+    })),
+  );
+  if (!reserved)
+    throw new AccountError(
+      'Too many codes for this address. Try again later.',
+      429,
+    );
   try {
     await send(email, code, id);
   } catch (error) {
     await dropCode(db, id);
     throw error;
   }
+  await activateCode(db, {
+    id,
+    emailHash,
+    flowHash,
+    now,
+    expires: now + CODE_TTL_MS,
+  });
 }
 
 /** Checks a code from this browser and returns the address's identity subject. */

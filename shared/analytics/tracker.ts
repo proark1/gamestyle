@@ -110,7 +110,7 @@ export function browserEnvironment(
         window.removeEventListener('pageshow', show);
       };
     },
-    async send(body, final) {
+    async send(body) {
       try {
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -125,9 +125,9 @@ export function browserEnvironment(
           ![408, 429, 500, 502, 503, 504].includes(response.status)
         );
       } catch {
-        return final && typeof navigator.sendBeacon === 'function'
-          ? navigator.sendBeacon(endpoint, body)
-          : false;
+        // No sendBeacon fallback: a beacon always carries cookies, and reports
+        // must never travel with a player's sign-in cookie.
+        return false;
       }
     },
   };

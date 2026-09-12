@@ -124,7 +124,7 @@ export default function SignInDialog({
                   onClick={() => {
                     setError(undefined);
                     if (popup) setWaiting(true);
-                    signInWithGoogle(popup);
+                    signInWithGoogle(popup, () => setWaiting(false));
                   }}
                 >
                   <GoogleMark />

@@ -65,8 +65,9 @@ export async function linkIdentity(
 }
 
 /**
- * Creates an account holding these identities. If another sign-in claimed the
- * first identity at the same moment, that account wins and this one is removed.
+ * Creates an account holding these identities. If a simultaneous sign-in
+ * claimed any of them first, that account wins: this new one hands over the
+ * identities it did claim and is removed.
  */
 export async function createAccount(
   db: GameDatabase,
@@ -82,13 +83,17 @@ export async function createAccount(
       .bind(id, now, now),
     ...identities.map((identity) => insertIdentity(db, id, identity, now)),
   ]);
-  const owner = await findIdentity(
-    db,
-    identities[0].provider,
-    identities[0].subject,
-  );
-  if (owner && owner.account_id !== id) {
-    await db.prepare('DELETE FROM accounts WHERE id = ?').bind(id).run();
+  for (const identity of identities) {
+    const owner = await findIdentity(db, identity.provider, identity.subject);
+    if (!owner || owner.account_id === id) continue;
+    await db.batch([
+      db
+        .prepare(
+          'UPDATE account_identities SET account_id = ? WHERE account_id = ?',
+        )
+        .bind(owner.account_id, id),
+      db.prepare('DELETE FROM accounts WHERE id = ?').bind(id),
+    ]);
     return owner.account_id;
   }
   return id;
@@ -181,22 +186,12 @@ export async function deleteAccountSessions(
     .run();
 }
 
-export async function codesSince(
-  db: GameDatabase,
-  emailHash: string,
-  since: number,
-) {
-  const row = await db
-    .prepare(
-      'SELECT COUNT(*) AS count FROM account_email_codes WHERE email_hash = ? AND created > ?',
-    )
-    .bind(emailHash, since)
-    .first<{ count: number }>();
-  return row?.count ?? 0;
-}
-
-/** A new code replaces any code this browser still holds for the address. */
-export async function replaceCode(
+/**
+ * Adds a code that cannot be used yet (`expires` 0), but only while the
+ * address is under every limit. The count and the insert are one statement,
+ * so simultaneous requests cannot all slip under a limit.
+ */
+export async function reserveCode(
   db: GameDatabase,
   code: {
     id: string;
@@ -204,27 +199,52 @@ export async function replaceCode(
     flowHash: string;
     codeHash: string;
     created: number;
+  },
+  limits: { since: number; count: number }[],
+) {
+  const under =
+    limits
+      .map(
+        () =>
+          '(SELECT COUNT(*) FROM account_email_codes WHERE email_hash = ? AND created > ?) < ?',
+      )
+      .join(' AND ') || '1';
+  const result = await db
+    .prepare(
+      `INSERT INTO account_email_codes (id, email_hash, flow_hash, code_hash, attempts, created, expires) SELECT ?, ?, ?, ?, 0, ?, 0 WHERE ${under}`,
+    )
+    .bind(
+      code.id,
+      code.emailHash,
+      code.flowHash,
+      code.codeHash,
+      code.created,
+      ...limits.flatMap((limit) => [code.emailHash, limit.since, limit.count]),
+    )
+    .run();
+  return result.meta.changes > 0;
+}
+
+/** Makes a sent code usable, and retires older codes this browser held for the address. */
+export async function activateCode(
+  db: GameDatabase,
+  code: {
+    id: string;
+    emailHash: string;
+    flowHash: string;
+    now: number;
     expires: number;
   },
 ) {
   await db.batch([
     db
       .prepare(
-        'UPDATE account_email_codes SET used = ? WHERE email_hash = ? AND flow_hash = ? AND used IS NULL',
+        'UPDATE account_email_codes SET used = ? WHERE email_hash = ? AND flow_hash = ? AND used IS NULL AND id != ?',
       )
-      .bind(code.created, code.emailHash, code.flowHash),
+      .bind(code.now, code.emailHash, code.flowHash, code.id),
     db
-      .prepare(
-        'INSERT INTO account_email_codes (id, email_hash, flow_hash, code_hash, attempts, created, expires) VALUES (?, ?, ?, ?, 0, ?, ?)',
-      )
-      .bind(
-        code.id,
-        code.emailHash,
-        code.flowHash,
-        code.codeHash,
-        code.created,
-        code.expires,
-      ),
+      .prepare('UPDATE account_email_codes SET expires = ? WHERE id = ?')
+      .bind(code.expires, code.id),
   ]);
 }
 

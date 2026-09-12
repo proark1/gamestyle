@@ -233,23 +233,23 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
         await unseal(config.secret, 'google', readCookie(request, flowCookie)),
         now,
       );
-      const finish = (result: Landing) =>
+      const finish = (result: Landing, cookies = [cleared]) =>
         respond(
           303,
           undefined,
-          [cleared],
+          cookies,
           landing(flow?.returnTo ?? '/', flow?.popup ?? false, result),
         );
       const params = new URL(request.url).searchParams;
       if (!flow) return finish('failed');
+      // Only Google's answer to this browser carries the flow's state. Anything
+      // else, errors included, is turned away without ending the sign-in that
+      // is in progress.
+      if (!sameText(params.get('state') ?? '', flow.state))
+        return finish('failed', []);
       if (params.get('error')) return finish('cancelled');
       const code = params.get('code') ?? '';
-      if (
-        !sameText(params.get('state') ?? '', flow.state) ||
-        !code ||
-        code.length > 2048
-      )
-        return finish('failed');
+      if (!code || code.length > 2048) return finish('failed');
       let claims: GoogleClaims | null = null;
       try {
         const token = await exchangeCode(

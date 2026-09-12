@@ -296,4 +296,23 @@
   .account-header-button span {
     display: none;
   }
+  /* One more toolbar button must still fit a 360px top bar: with the account
+     button present, the voice control shows only its icon and every toolbar
+     button shrinks to 40px. */
+  .game-toolbar:has(.account-toolbar-button) {
+    gap: 3px;
+  }
+  .game-toolbar:has(.account-toolbar-button) .game-toolbar-button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+  }
+  .game-toolbar:has(.account-toolbar-button) .voice-trigger {
+    width: 40px;
+    padding: 0;
+    gap: 0;
+  }
+  .game-toolbar:has(.account-toolbar-button) .voice-trigger > span {
+    display: none;
+  }
 }

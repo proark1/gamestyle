@@ -52,7 +52,7 @@ Set these on the Railway service. Sign-in stays off until `AUTH_SECRET` and at l
 | `RESEND_API_KEY`, `EMAIL_FROM` | Email codes, for example `EMAIL_FROM="Jumbleyard <sign-in@jumbleyard.com>"`. |
 | `PUBLIC_GAME_ORIGIN` | Already set; it must include `https://www.jumbleyard.com`. |
 
-After adding them in Railway, run `railway config pull` so `.railway/railway.ts` lists them as `preserve()`.
+`.railway/railway.ts` lists each of these as `preserve()`, so `railway config apply` keeps the values set in Railway. Applying the config deletes any variable the file doesn't list, so add a new one there too.
 
 ### Google Cloud
 
