@@ -144,6 +144,7 @@ export async function sendCode(
     id,
     emailHash,
     flowHash,
+    created: now,
     now,
     expires: now + CODE_TTL_MS,
   });

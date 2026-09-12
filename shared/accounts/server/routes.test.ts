@@ -581,6 +581,27 @@ void test('plain-HTTP development drops the __Host- prefix and the Secure flag',
   }
 });
 
+void test('the session check clears expired sessions and old codes without another sign-in', async () => {
+  const config: AccountConfig = {};
+  const h = harness((defaults) => Object.assign(config, defaults));
+  try {
+    await h.signInByEmail();
+    assert.equal(h.count('account_sessions'), 1);
+    assert.equal(h.count('account_email_codes'), 1);
+    h.clock.now += 61 * DAY;
+    // Sign-in has been switched off since, and nobody signs in again.
+    delete config.secret;
+    const response = await h.get(h.routes.session, '/api/account/session', {
+      cookies: '',
+    });
+    assert.equal(response.status, 200);
+    assert.equal(h.count('account_sessions'), 0);
+    assert.equal(h.count('account_email_codes'), 0);
+  } finally {
+    h.close();
+  }
+});
+
 void test('a leftover signed-in hint is cleared for guests', async () => {
   const h = harness();
   try {

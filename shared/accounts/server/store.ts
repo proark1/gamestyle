@@ -225,13 +225,19 @@ export async function reserveCode(
   return result.meta.changes > 0;
 }
 
-/** Makes a sent code usable, and retires older codes this browser held for the address. */
+/**
+ * Makes a sent code usable, and retires the codes this browser was given for
+ * the address before it. Deliveries can finish out of order, so a code only
+ * retires older ones, and a code that was replaced while its email was still
+ * on the way stays retired.
+ */
 export async function activateCode(
   db: GameDatabase,
   code: {
     id: string;
     emailHash: string;
     flowHash: string;
+    created: number;
     now: number;
     expires: number;
   },
@@ -239,11 +245,20 @@ export async function activateCode(
   await db.batch([
     db
       .prepare(
-        'UPDATE account_email_codes SET used = ? WHERE email_hash = ? AND flow_hash = ? AND used IS NULL AND id != ?',
+        'UPDATE account_email_codes SET used = ? WHERE email_hash = ? AND flow_hash = ? AND used IS NULL AND (created < ? OR (created = ? AND id < ?))',
       )
-      .bind(code.now, code.emailHash, code.flowHash, code.id),
+      .bind(
+        code.now,
+        code.emailHash,
+        code.flowHash,
+        code.created,
+        code.created,
+        code.id,
+      ),
     db
-      .prepare('UPDATE account_email_codes SET expires = ? WHERE id = ?')
+      .prepare(
+        'UPDATE account_email_codes SET expires = ? WHERE id = ? AND used IS NULL',
+      )
       .bind(code.expires, code.id),
   ]);
 }

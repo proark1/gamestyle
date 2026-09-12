@@ -56,6 +56,14 @@
   align-items: center;
   gap: 18px;
 }
+/* The brand, "Pick a game" and the account button need 368px side by side, so
+   below about a 410px screen the link wraps and the button is clipped. The
+   shelf starts just below the intro, so the link is the one to go. */
+@media (max-width: 409px) {
+  .collection-header-actions:has(.account-header-button) .collection-nav {
+    display: none;
+  }
+}
 .collection-intro {
   max-width: 1280px;
   margin: 60px auto 45px;

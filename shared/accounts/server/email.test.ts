@@ -261,6 +261,63 @@ void test('a replacement that could not be sent leaves the earlier code working'
   }
 });
 
+void test('overlapping codes end with the newer one working, whichever email lands first', async () => {
+  for (const newerLandsFirst of [true, false]) {
+    const { native, db } = database();
+    try {
+      const flow = await sha256('browser');
+      const sent: { code: string; deliver: () => void }[] = [];
+      const send: SendCode = (_email, code) =>
+        new Promise<void>((deliver) => {
+          sent.push({ code, deliver: () => deliver() });
+        });
+      const until = async (count: number) => {
+        while (sent.length < count)
+          await new Promise<void>((resolve) => {
+            setImmediate(resolve);
+          });
+      };
+      const older = sendCode(
+        { db, secret: SECRET, now: NOW },
+        EMAIL,
+        flow,
+        send,
+      );
+      await until(1);
+      const newer = sendCode(
+        { db, secret: SECRET, now: NOW + 1 },
+        EMAIL,
+        flow,
+        send,
+      );
+      await until(2);
+      const landings: [number, Promise<void>][] = newerLandsFirst
+        ? [
+            [1, newer],
+            [0, older],
+          ]
+        : [
+            [0, older],
+            [1, newer],
+          ];
+      for (const [index, request] of landings) {
+        sent[index].deliver();
+        await request;
+      }
+      const context = { db, secret: SECRET, now: NOW + 2 };
+      if (sent[0].code !== sent[1].code)
+        await refused(confirmCode(context, EMAIL, sent[0].code, flow), 400);
+      assert.equal(
+        await confirmCode(context, EMAIL, sent[1].code, flow),
+        await emailSubject(SECRET, EMAIL),
+        `the newer code works when the ${newerLandsFirst ? 'newer' : 'older'} email lands first`,
+      );
+    } finally {
+      native.close();
+    }
+  }
+});
+
 void test('Resend gets one idempotent message per code', async () => {
   const calls: { url: string; init?: RequestInit }[] = [];
   const send = resendSender(

@@ -30,6 +30,8 @@ Players can sign in with Google or with a 6-digit code sent by email. Guests sti
 - `account_sessions`: the SHA-256 of each session token. A session ends 60 days after its last renewal.
 - `account_email_codes`: the HMAC of each code, bound to the browser that asked for it. Codes work for 10 minutes and 5 tries, and are deleted after a day.
 
+Expired sessions and codes older than a day are deleted at most once an hour by the session check every page makes, so the cleanup runs without anyone signing in again, and with sign-in switched off.
+
 Every table with an `account_id` column must reference `accounts(id)` with `ON DELETE CASCADE`, so deleting an account removes everything saved with it. `db/accounts-node.test.ts` fails for any table that does not.
 
 ## Security

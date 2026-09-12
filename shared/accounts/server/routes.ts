@@ -147,7 +147,12 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
     return value && FLOW_TOKEN.test(value) ? value : undefined;
   };
 
-  /** Clears expired sessions and old codes, at most hourly, during sign-ins. */
+  /**
+   * Clears expired sessions and day-old codes, at most hourly. The session check
+   * every page makes runs it, so cleanup never waits for another sign-in and
+   * carries on with sign-in switched off. It is opportunistic, like the room
+   * sweep, because the Workers target has no background timers.
+   */
   const tidy = async (db: GameDatabase, now: number) => {
     if (now - purgedAt < 3_600_000) return;
     purgedAt = now;
@@ -165,6 +170,7 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
       budget.take('account:session', 600, 100);
       const methods = signInMethods(config);
       const db = deps.db();
+      await tidy(db, now);
       const session = await readSession(request, { db, config, now });
       if (!session) {
         // A leftover hint would keep browser code asking; clear it.
