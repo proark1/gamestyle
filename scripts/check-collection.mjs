@@ -57,12 +57,17 @@ for (const path of [
       toolbar.matchAll(/aria-label="([^"]+)"/g),
       (match) => match[1],
     );
+    // Server HTML always carries the default audio preferences (music on), and
+    // the account button renders only after the browser's session check, so
+    // neither 'Turn music on' nor 'Sign in' / 'Your account' belongs here.
     assert.deepEqual(
       labels,
       [
         'Game controls',
         'Voice chat',
         'Mute game sound',
+        'Sound volume',
+        'Turn music off',
         'How to play',
         'All games',
         'Sound workshop',
