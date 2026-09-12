@@ -28,7 +28,13 @@ export default defineRailway(() => {
     domains: ["www.jumbleyard.com"],
     networking: { privateNetworkEndpoint: "stack-or-sink" },
     volumeMounts: { "/data": stackOrSinkVolume },
-    env: { AUDIO_ADMIN_PASSWORD: preserve(), PUBLIC_GAME_ORIGIN: preserve() },
+    env: {
+      AUDIO_ADMIN_PASSWORD: preserve(),
+      AUTH_SECRET: preserve(),
+      EMAIL_FROM: preserve(),
+      PUBLIC_GAME_ORIGIN: preserve(),
+      RESEND_API_KEY: preserve(),
+    },
     healthcheck: "/api/health",
     healthcheckTimeout: 120,
   });
