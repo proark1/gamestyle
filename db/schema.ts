@@ -179,3 +179,66 @@ export const handwerkerSavedBuilds = sqliteTable(
     ),
   ],
 );
+
+/** A player's account. It holds no address, name or photo from a provider. */
+export const accounts = sqliteTable('accounts', {
+  id: text('id').primaryKey(),
+  displayName: text('display_name'),
+  created: integer('created').notNull(),
+  updated: integer('updated').notNull(),
+});
+/** A way into an account: Google's subject id, or a keyed hash of an email. */
+export const accountIdentities = sqliteTable(
+  'account_identities',
+  {
+    provider: text('provider').notNull(),
+    subject: text('subject').notNull(),
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    emailHint: text('email_hint').notNull().default(''),
+    created: integer('created').notNull(),
+    lastUsed: integer('last_used').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.provider, table.subject] }),
+    index('account_identities_account_idx').on(table.accountId),
+  ],
+);
+export const accountSessions = sqliteTable(
+  'account_sessions',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    created: integer('created').notNull(),
+    renewed: integer('renewed').notNull(),
+    expires: integer('expires').notNull(),
+  },
+  (table) => [
+    index('account_sessions_account_idx').on(table.accountId),
+    index('account_sessions_expires_idx').on(table.expires),
+  ],
+);
+/** Email sign-in codes, kept only as keyed hashes and deleted after a day. */
+export const accountEmailCodes = sqliteTable(
+  'account_email_codes',
+  {
+    id: text('id').primaryKey(),
+    emailHash: text('email_hash').notNull(),
+    flowHash: text('flow_hash').notNull(),
+    codeHash: text('code_hash').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    created: integer('created').notNull(),
+    expires: integer('expires').notNull(),
+    used: integer('used'),
+  },
+  (table) => [
+    index('account_email_codes_email_created_idx').on(
+      table.emailHash,
+      table.created,
+    ),
+    index('account_email_codes_created_idx').on(table.created),
+  ],
+);
