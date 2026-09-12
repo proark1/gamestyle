@@ -201,7 +201,7 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
           [],
           landing(returnTo, popup, 'unavailable'),
         );
-      budget.take('account:google', 120, 2);
+      budget.take('account:google:start', 120, 2);
       const origin = publicOriginFor(request, config.publicOrigin),
         secure = isSecureOrigin(origin);
       const start = await beginGoogle(
@@ -234,7 +234,6 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
           [cleared],
           landing('/', false, 'unavailable'),
         );
-      budget.take('account:google', 120, 2);
       const flow = parseFlow(
         await unseal(config.secret, 'google', readCookie(request, flowCookie)),
         now,
@@ -253,6 +252,16 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
       // is in progress.
       if (!sameText(params.get('state') ?? '', flow.state))
         return finish('failed', []);
+      // Each flow is answered once: a repeat lands as failed without any work.
+      // Answers have a budget of their own, refilling faster than starts can
+      // mint flows, so a flood of starts cannot turn away players coming back
+      // from Google.
+      try {
+        budget.take(`account:google:flow:${flow.state}`, 1, 1 / 600);
+      } catch {
+        return finish('failed');
+      }
+      budget.take('account:google:callback', 240, 4);
       if (params.get('error')) return finish('cancelled');
       const code = params.get('code') ?? '';
       if (!code || code.length > 2048) return finish('failed');

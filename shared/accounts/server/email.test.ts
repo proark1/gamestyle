@@ -284,8 +284,10 @@ void test('overlapping codes end with the newer one working, whichever email lan
         send,
       );
       await until(1);
+      // Both requests share one millisecond, so only the order they were
+      // reserved in tells the newer code apart.
       const newer = sendCode(
-        { db, secret: SECRET, now: NOW + 1 },
+        { db, secret: SECRET, now: NOW },
         EMAIL,
         flow,
         send,

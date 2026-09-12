@@ -9,8 +9,10 @@ import {
 import { emailSubject, maskEmail, normalizeEmail } from './email';
 import {
   createAccount,
+  deleteAccountSessions,
   findIdentity,
   linkIdentity,
+  retireEmailIdentities,
   touchIdentity,
   type Identity,
 } from './store';
@@ -179,6 +181,12 @@ export function googleOwnsEmail({ email, emailVerified, hd }: GoogleClaims) {
  * identity joins the account with the same email address only when Google
  * hosts that address; otherwise it gets its own account. Existing accounts
  * are never merged.
+ *
+ * An account holds at most one email identity: the address Google hosted when
+ * the two identities met. When Google later hosts a different address for the
+ * same person, as after a Workspace rename, the old address may be handed to
+ * someone else. Its email identity is removed and the account's other
+ * sessions end; the new address joins unless another account holds it.
  */
 export async function signInWithGoogle(
   db: GameDatabase,
@@ -192,20 +200,28 @@ export async function signInWithGoogle(
     subject: claims.sub,
     hint: email ? maskEmail(email) : 'Google account',
   };
+  const hosted: Identity | null =
+    email && googleOwnsEmail(claims)
+      ? {
+          provider: 'email',
+          subject: await emailSubject(secret, email),
+          hint: google.hint,
+        }
+      : null;
   const existing = await findIdentity(db, 'google', claims.sub);
   if (existing) {
     await touchIdentity(db, google, now);
+    if (hosted) {
+      const accountId = existing.account_id;
+      if (await retireEmailIdentities(db, accountId, hosted.subject))
+        await deleteAccountSessions(db, accountId);
+      await linkIdentity(db, accountId, hosted, now);
+    }
     return existing.account_id;
   }
-  if (!email || !googleOwnsEmail(claims))
-    return createAccount(db, [google], now);
-  const byEmail: Identity = {
-    provider: 'email',
-    subject: await emailSubject(secret, email),
-    hint: google.hint,
-  };
-  const owner = await findIdentity(db, 'email', byEmail.subject);
-  if (!owner) return createAccount(db, [google, byEmail], now);
+  if (!hosted) return createAccount(db, [google], now);
+  const owner = await findIdentity(db, 'email', hosted.subject);
+  if (!owner) return createAccount(db, [google, hosted], now);
   await linkIdentity(db, owner.account_id, google, now);
   return owner.account_id;
 }

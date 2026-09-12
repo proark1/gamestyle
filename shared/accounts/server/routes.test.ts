@@ -455,6 +455,53 @@ void test('Google sign-in checks the signed flow and lands where the player star
   }
 });
 
+void test('a flood of Google sign-in starts cannot turn away a player coming back from Google', async () => {
+  const h = harness();
+  try {
+    const start = await h.get(
+      h.routes.googleStart,
+      '/api/account/google/start?return=%2Fchaos',
+    );
+    const google = new URL(start.headers.get('location')!);
+    const flowCookie = `__Host-jy_google_flow=${h.jar.get('__Host-jy_google_flow')}`;
+    h.setIdToken({
+      iss: 'https://accounts.google.com',
+      aud: 'client-1',
+      sub: 'google-1',
+      email: 'player@gmail.com',
+      email_verified: true,
+      nonce: google.searchParams.get('nonce'),
+      iat: START / 1000,
+      exp: START / 1000 + 3600,
+    });
+    let status = 0;
+    for (let i = 0; i < 200 && status !== 429; i++)
+      status = (
+        await h.routes.googleStart(
+          h.request('/api/account/google/start', 'GET', { cookies: '' }),
+        )
+      ).status;
+    assert.equal(status, 429, 'starts are still limited');
+    const answer = `/api/account/google/callback?code=abc&state=${google.searchParams.get('state')}`;
+    const callback = await h.get(h.routes.googleCallback, answer);
+    assert.equal(callback.status, 303);
+    assert.equal(callback.headers.get('location'), '/chaos');
+    assert.ok(await h.account());
+    // A flow is answered once, so every answer needs a start of its own.
+    const replay = await h.routes.googleCallback(
+      h.request(answer, 'GET', { cookies: flowCookie }),
+    );
+    assert.equal(replay.headers.get('location'), '/chaos#sign-in-failed');
+    assert.ok(
+      !replay.headers
+        .getSetCookie()
+        .some((line) => line.includes('jy_session=')),
+    );
+  } finally {
+    h.close();
+  }
+});
+
 void test('a popup sign-in lands on the relay page, cancelled or failed', async () => {
   const h = harness();
   try {
@@ -473,9 +520,17 @@ void test('a popup sign-in lands on the relay page, cancelled or failed', async 
       cancelled.headers.get('location'),
       '/account/signed-in?result=cancelled',
     );
+    // A cancelled answer ends its flow, so the failure needs a new start.
+    const retry = await h.get(
+      h.routes.googleStart,
+      '/api/account/google/start?return=%2F&popup=1',
+    );
+    const retryState = new URL(retry.headers.get('location')!).searchParams.get(
+      'state',
+    )!;
     h.setIdToken({ iss: 'https://evil.example', aud: 'client-1', sub: 'x' });
     const failed = await h.routes.googleCallback(
-      h.request(`/api/account/google/callback?code=abc&state=${state}`),
+      h.request(`/api/account/google/callback?code=abc&state=${retryState}`),
     );
     assert.equal(
       failed.headers.get('location'),

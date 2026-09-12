@@ -64,6 +64,21 @@ export async function linkIdentity(
   await insertIdentity(db, accountId, identity, now).run();
 }
 
+/** Removes the account's email identities other than `keep`, and says how many went. */
+export async function retireEmailIdentities(
+  db: GameDatabase,
+  accountId: string,
+  keep: string,
+) {
+  const result = await db
+    .prepare(
+      "DELETE FROM account_identities WHERE account_id = ? AND provider = 'email' AND subject != ?",
+    )
+    .bind(accountId, keep)
+    .run();
+  return result.meta.changes;
+}
+
 /**
  * Creates an account holding these identities. If a simultaneous sign-in
  * claimed any of them first, that account wins: this new one hands over the
@@ -228,8 +243,9 @@ export async function reserveCode(
 /**
  * Makes a sent code usable, and retires the codes this browser was given for
  * the address before it. Deliveries can finish out of order, so a code only
- * retires older ones, and a code that was replaced while its email was still
- * on the way stays retired.
+ * retires codes reserved before it, and a code that was replaced while its
+ * email was still on the way stays retired. Reservation order is the rowid:
+ * timestamps tie within a millisecond, and ids are random.
  */
 export async function activateCode(
   db: GameDatabase,
@@ -237,7 +253,6 @@ export async function activateCode(
     id: string;
     emailHash: string;
     flowHash: string;
-    created: number;
     now: number;
     expires: number;
   },
@@ -245,16 +260,9 @@ export async function activateCode(
   await db.batch([
     db
       .prepare(
-        'UPDATE account_email_codes SET used = ? WHERE email_hash = ? AND flow_hash = ? AND used IS NULL AND (created < ? OR (created = ? AND id < ?))',
+        'UPDATE account_email_codes SET used = ? WHERE email_hash = ? AND flow_hash = ? AND used IS NULL AND rowid < (SELECT rowid FROM account_email_codes WHERE id = ?)',
       )
-      .bind(
-        code.now,
-        code.emailHash,
-        code.flowHash,
-        code.created,
-        code.created,
-        code.id,
-      ),
+      .bind(code.now, code.emailHash, code.flowHash, code.id),
     db
       .prepare(
         'UPDATE account_email_codes SET expires = ? WHERE id = ? AND used IS NULL',

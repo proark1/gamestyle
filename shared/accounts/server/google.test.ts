@@ -201,3 +201,73 @@ void test('Google joins an email account only for an address Google hosts', asyn
     native.close();
   }
 });
+
+void test('a new address hosted by Google retires the old one and signs out other devices', async () => {
+  const native = openSqlite(':memory:');
+  try {
+    migrateSqlite(native);
+    const db = sqliteAdapter(native);
+    const subject = (email: string) => emailSubject(SECRET, email);
+    const google = (email: string) =>
+      signInWithGoogle(
+        db,
+        SECRET,
+        { sub: 'g-work', email, emailVerified: true, hd: 'corp.example' },
+        NOW,
+      );
+    const owner = async (email: string) =>
+      (
+        native
+          .prepare(
+            "SELECT account_id FROM account_identities WHERE provider = 'email' AND subject = ?",
+          )
+          .get(await subject(email)) as { account_id: string } | undefined
+      )?.account_id;
+    const sessions = (accountId: string) =>
+      (
+        native
+          .prepare(
+            'SELECT COUNT(*) AS count FROM account_sessions WHERE account_id = ?',
+          )
+          .get(accountId) as { count: number }
+      ).count;
+
+    const account = await google('sam@corp.example');
+    assert.equal(await owner('sam@corp.example'), account);
+    native
+      .prepare(
+        'INSERT INTO account_sessions (token_hash, account_id, created, renewed, expires) VALUES (?, ?, ?, ?, ?)',
+      )
+      .run('other-device', account, NOW, NOW, NOW + 86_400_000);
+
+    // The same address again changes nothing.
+    assert.equal(await google('sam@corp.example'), account);
+    assert.equal(sessions(account), 1);
+
+    // An administrator renames Sam, then hands the old address to a newcomer.
+    assert.equal(await google('sam.lee@corp.example'), account);
+    assert.equal(await owner('sam@corp.example'), undefined);
+    assert.equal(await owner('sam.lee@corp.example'), account);
+    assert.equal(sessions(account), 0);
+    const newcomer = await signInWithEmail(
+      db,
+      await subject('sam@corp.example'),
+      'hint',
+      NOW,
+    );
+    assert.notEqual(newcomer, account);
+
+    // An address that another account already holds is never taken over.
+    const other = await signInWithEmail(
+      db,
+      await subject('lee@corp.example'),
+      'hint',
+      NOW,
+    );
+    assert.equal(await google('lee@corp.example'), account);
+    assert.equal(await owner('lee@corp.example'), other);
+    assert.equal(await owner('sam.lee@corp.example'), undefined);
+  } finally {
+    native.close();
+  }
+});
