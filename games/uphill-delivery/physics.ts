@@ -77,7 +77,7 @@ export class DeliveryPhysics {
         restitution: 0.05,
       }),
     );
-    // A compound sofa makes several simultaneous contacts across stair treads.
+    // Ice barely grips cargo, so a sofa let go on the ramp slides back down.
     e.addContactMaterial(
       new C.ContactMaterial(cargoMaterial, ice, {
         friction: 0.0003,
@@ -176,7 +176,7 @@ export class DeliveryPhysics {
         fixedRotation: true,
         linearDamping: 0,
       });
-      // A rounded foot slides over the shallow stair risers without invisible ramps.
+      // A rounded foot glides over the small lips where road pieces meet.
       b.addShape(
         new C.Sphere(PLAYER_RADIUS),
         new C.Vec3(0, -PLAYER_HEIGHT / 2 + PLAYER_RADIUS, 0),
@@ -295,32 +295,6 @@ export class DeliveryPhysics {
       -maxChange,
       Math.min(maxChange, vz - b.velocity.z),
     );
-    // Boots step over the visible shallow ice risers; taller ledges still need a jump.
-    if (icy && p.grounded && Math.hypot(input.x, input.z) > 0.05) {
-      const directionLength = Math.hypot(input.x, input.z);
-      const dx = (input.x / directionLength) * 0.55,
-        dz = (input.z / directionLength) * 0.55;
-      const hit = new C.RaycastResult();
-      this.engine.raycastClosest(
-        new C.Vec3(p.x + dx, p.y + 0.3, p.z + dz),
-        new C.Vec3(p.x + dx, p.y + 0.035, p.z + dz),
-        { skipBackfaces: true },
-        hit,
-      );
-      if (
-        hit.hasHit &&
-        hit.body?.type === C.Body.STATIC &&
-        hit.hitNormalWorld.y > 0.8
-      ) {
-        b.position.y += Math.max(0, hit.hitPointWorld.y - p.y) + 0.008;
-        // A riser contact can push a slow-moving boot backward. Complete the
-        // step at the requested walking speed, then resume normal ice traction.
-        b.velocity.x = vx;
-        b.velocity.z = vz;
-        b.velocity.y = Math.max(0, b.velocity.y);
-        b.aabbNeedsUpdate = true;
-      }
-    }
     if (Math.hypot(input.x, input.z) > 0.02)
       p.angle = Math.atan2(input.x, input.z);
     const contact = this.support(b),

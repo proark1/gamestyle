@@ -45,7 +45,11 @@ import {
 } from './types';
 import { routeStage } from './level';
 import type { DeliveryScene } from './scene';
-import { CAMERA_NAMES, type DeliveryCameraMode } from './camera';
+import {
+  CAMERA_NAMES,
+  DELIVERY_CAMERAS,
+  type DeliveryCameraMode,
+} from './camera';
 import { CrewSlots } from './CrewSlots';
 import './style.css';
 import {
@@ -101,7 +105,7 @@ export default function UphillDelivery() {
   const [modal, setModal] = useState<
       'help' | 'join' | 'invite' | 'restart' | 'leave' | null
     >(null),
-    [camera, setCamera] = useState<DeliveryCameraMode>('first-person');
+    [camera, setCamera] = useState<DeliveryCameraMode>(DELIVERY_CAMERAS[0]);
   const w = snapshot?.world,
     me = w?.players.find((p) => p.id === session?.id),
     practice = session?.code === 'PRACTICE',
@@ -763,12 +767,13 @@ export default function UphillDelivery() {
                   jumps. Touch has a joystick and jump button.
                 </li>
                 <li>
-                  <b>See it through your eyes.</b> First person starts at eye
-                  level. Click the mountain for mouse look, or drag to look
-                  around. Escape frees the mouse. IJKL also looks around; on
-                  touch, use the left joystick and drag the scenery with your
-                  other thumb. V cycles first person, follow you, follow sofa
-                  and whole mountain.
+                  <b>Pick your view.</b> You start outside, with the camera
+                  following you. Drag to orbit and scroll to zoom. V cycles
+                  follow you, follow sofa, whole mountain and first person. In
+                  first person, click the mountain for mouse look or drag to
+                  look around; Escape frees the mouse and IJKL also looks
+                  around. On touch, use the left joystick and drag the scenery
+                  with your other thumb.
                 </li>
                 <li>
                   <b>Share the weight.</b> E grabs a free corner or releases it.

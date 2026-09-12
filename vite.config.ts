@@ -1,8 +1,10 @@
 import { sites } from '@openai/sites-vite-plugin';
 import tailwindcss from '@tailwindcss/postcss';
+import { getPluginApi } from '@vitejs/plugin-rsc';
 import vinext from 'vinext';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import hostingConfig from './.openai/hosting.json';
+import { basename } from 'node:path/posix';
 import { fileURLToPath } from 'node:url';
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
@@ -34,6 +36,38 @@ const localBindingConfig = {
       ]
     : [],
 };
+
+// @vitejs/plugin-rsc lists client components' JS chunks for preloading before
+// Vite deletes chunks that held only CSS, so a stylesheet shared by two routes
+// (games/chaos/saved-build.css) left /chaos preloading a saved-build-*.js that
+// was never written. The stylesheet itself is listed separately.
+function dropUnwrittenRscPreloads(): Plugin {
+  return {
+    name: 'drop-unwritten-rsc-preloads',
+    generateBundle: {
+      order: 'post',
+      handler(_options, bundle) {
+        const manifest = getPluginApi(this.environment.config)?.manager
+          .buildAssetsManifest;
+        if (this.environment.name !== 'client' || !manifest) return;
+        const written = new Set(
+          Object.values(bundle).flatMap((output) =>
+            output.type === 'chunk' ? [basename(output.fileName)] : [],
+          ),
+        );
+        for (const deps of [
+          manifest.clientEntryDeps,
+          ...Object.values(manifest.clientReferenceDeps),
+        ]) {
+          if (!deps) continue;
+          deps.js = deps.js.filter(
+            (href) => typeof href !== 'string' || written.has(basename(href)),
+          );
+        }
+      },
+    },
+  };
+}
 
 export default defineConfig(async () => {
   if (process.env.GAME_RUNTIME === 'node') {
@@ -93,6 +127,7 @@ export default defineConfig(async () => {
           },
         },
         vinext(),
+        dropUnwrittenRscPreloads(),
       ],
     };
   }
@@ -112,6 +147,7 @@ export default defineConfig(async () => {
       : undefined,
     plugins: [
       vinext(),
+      dropUnwrittenRscPreloads(),
       sites(),
       cloudflare({
         viteEnvironment: { name: 'rsc', childEnvironments: ['ssr'] },
