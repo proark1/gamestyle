@@ -1,6 +1,6 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 
 /** Walks a stacker, arms overhead while carrying; `time` is in seconds. */
 export function poseStacker(
@@ -34,8 +34,9 @@ export const stackAvatars: readonly AvatarLook[] = [
   {
     key: 'stacker',
     label: 'Stacker',
-    create() {
-      const root = worker(0);
+    dressable: true,
+    create(look) {
+      const root = dressedWorker(0, {}, look).model;
       return {
         root,
         pose: (time, walking) =>

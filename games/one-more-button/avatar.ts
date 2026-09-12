@@ -6,8 +6,9 @@ export const buttonAvatars: readonly AvatarLook[] = [
   {
     key: 'contestant',
     label: 'Contestant',
-    create() {
-      const root = contestant(COLORS[0]);
+    dressable: true,
+    create(look) {
+      const root = contestant(COLORS[0], look);
       return {
         root,
         pose: (time, walking) =>

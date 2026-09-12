@@ -1,4 +1,5 @@
 import type * as T from 'three';
+import type { Look } from '../wardrobe/look';
 
 /** One player avatar built outside its game, for side-by-side previews. */
 export type AvatarPreview = {
@@ -12,5 +13,8 @@ export type AvatarPreview = {
 export type AvatarLook = {
   key: string;
   label: string;
-  create(): AvatarPreview;
+  /** Builds the avatar. One on the shared worker wears `look` when given. */
+  create(look?: Look): AvatarPreview;
+  /** True when `create` puts a player's wardrobe items on the avatar. */
+  dressable?: boolean;
 };

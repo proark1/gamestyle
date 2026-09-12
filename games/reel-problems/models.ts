@@ -1,5 +1,7 @@
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { WORKER_HEAD_TOP, worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import type { Look } from '../../shared/wardrobe/look';
 import * as THREE from 'three';
 import { CATCHES, HULL_HALF, WELL_SURFACE, type CatchKind } from './types';
 
@@ -113,21 +115,24 @@ const ROD_LENGTH = 2.25;
 
 /**
  * An angler: the collection's shared worker in the player's colour, with
- * waders, a life vest, a bucket hat and a rod held out in the right hand.
+ * waders, a life vest, a bucket hat and a rod held out in the right hand. A
+ * player's own hat and top replace the bucket hat and vest; the rod stays.
  * `userData.rodTip` is where the line leaves the rod, in the angler's space.
  */
-export function createAngler(color: string) {
-  const g = worker(0, {
-    shirt: color,
-    overalls: '#344d4d',
-    boots: '#2b3b3b',
-    cap: false,
-  });
+export function createAngler(color: string, look?: Look) {
+  const { model: g, worn } = dressedWorker(
+    0,
+    { shirt: color, overalls: '#344d4d', boots: '#2b3b3b', cap: false },
+    look,
+  );
   const body = g.userData.body as THREE.Group;
-  const hat = material(color);
-  box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material('#ffb75f'));
-  cylinder(body, 0.46, 0.06, [0, WORKER_HEAD_TOP + 0.02, 0], hat);
-  cylinder(body, 0.3, 0.24, [0, WORKER_HEAD_TOP + 0.16, 0], hat);
+  if (!worn.top)
+    box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material('#ffb75f'));
+  if (!worn.hat) {
+    const hat = material(color);
+    cylinder(body, 0.46, 0.06, [0, WORKER_HEAD_TOP + 0.02, 0], hat);
+    cylinder(body, 0.3, 0.24, [0, WORKER_HEAD_TOP + 0.16, 0], hat);
+  }
   // The rod leaves the right hand, raised to hold it out over the water.
   const arm = g.userData.armR as THREE.Group;
   arm.rotation.x = ROD_ARM;

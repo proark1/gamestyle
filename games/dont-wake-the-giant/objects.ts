@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { beam, box, label, material } from '../../shared/rendering/primitives';
-import { worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import type { Look } from '../../shared/wardrobe/look';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { CHANDELIER, EXIT, SLIPPER, STATIC } from './level';
 import type { ItemKind } from './types';
@@ -138,9 +139,14 @@ export function cottage() {
   batchScenery(group);
   return group;
 }
-export function thief(color: number) {
-  const g = worker(color);
+/**
+ * A thief: the shared worker at half size with an eye band. A player's own
+ * face item replaces the band.
+ */
+export function thief(color: number, look?: Look) {
+  const { model: g, worn } = dressedWorker(color, {}, look);
   g.scale.setScalar(0.52);
+  if (worn.face) return g;
   const body = g.userData.body as T.Group;
   box(body, [0.53, 0.18, 0.03], [0, 1.46, 0.27], '#334743', true);
   for (const x of [-0.12, 0.12])

@@ -5,8 +5,9 @@ export const giantAvatars: readonly AvatarLook[] = [
   {
     key: 'thief',
     label: 'Thief',
-    create() {
-      const root = thief(0);
+    dressable: true,
+    create(look) {
+      const root = thief(0, look);
       return {
         root,
         pose: (time, walking) =>

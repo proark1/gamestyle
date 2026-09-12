@@ -8,8 +8,9 @@ export const hotelAvatars: readonly AvatarLook[] = [
   {
     key: 'guest',
     label: 'Hotel guest',
-    create() {
-      const root = guest(0);
+    dressable: true,
+    create(look) {
+      const root = guest(0, false, look);
       return {
         root,
         pose: (time, walking) =>

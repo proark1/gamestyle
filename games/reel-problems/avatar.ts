@@ -6,8 +6,9 @@ export const reelAvatars: readonly AvatarLook[] = [
   {
     key: 'angler',
     label: 'Angler',
-    create() {
-      const root = createAngler(ANGLER_COLORS[0]);
+    dressable: true,
+    create(look) {
+      const root = createAngler(ANGLER_COLORS[0], look);
       return {
         root,
         // Anglers rock on the deck as they step, holding the rod steady.

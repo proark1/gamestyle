@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RotateCcw, RotateCw } from 'lucide-react';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
+import { ITEMS, SLOTS, type Slot } from '../../shared/wardrobe/catalog';
+import type { Look } from '../../shared/wardrobe/look';
 import type { AvatarCard } from './avatars/catalog';
 import type { AvatarStage, Measure, ScaleMode } from './avatars/stage';
 import styles from './avatars.module.css';
@@ -9,6 +11,14 @@ import admin from './admin.module.css';
 const metres = (value: number) => `${value.toFixed(2)} m`;
 const lookKey = (card: AvatarCard, look: AvatarLook) =>
   `${card.id}:${look.key}`;
+const SLOT_NAMES: Record<Slot, string> = {
+  hat: 'Hat',
+  top: 'Top',
+  legs: 'Legs',
+  shoes: 'Shoes',
+  face: 'Face',
+};
+const wearsSomething = (look: Look) => Object.values(look).some(Boolean);
 
 function difference(value: number, reference: number) {
   if (!reference) return '—';
@@ -31,6 +41,7 @@ export default function AvatarsPanel() {
   const [spinning, setSpinning] = useState(true);
   const [scale, setScale] = useState<ScaleMode>('game');
   const [measures, setMeasures] = useState<Record<string, Measure>>({});
+  const [wearing, setWearing] = useState<Look>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +116,7 @@ export default function AvatarsPanel() {
         measure={measures[lookKey(card, look)]}
         templateMeasure={templateMeasure}
         isTemplate={isTemplate}
+        wearing={wearing}
         onLook={(key) =>
           setChosen((previous) => ({ ...previous, [card.id]: key }))
         }
@@ -207,6 +219,41 @@ export default function AvatarsPanel() {
             Face front
           </button>
         </div>
+        <fieldset className={styles.wardrobe}>
+          <legend>Try on wardrobe items</legend>
+          {SLOTS.map((slot) => (
+            <label key={slot}>
+              <span>{SLOT_NAMES[slot]}</span>
+              <select
+                className={admin.select}
+                value={wearing[slot] ?? ''}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  setWearing((current) => ({
+                    ...current,
+                    [slot]: id || undefined,
+                  }));
+                }}
+              >
+                <option value="">Game&rsquo;s own</option>
+                {ITEMS.filter((item) => item.slot === slot).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+          {wearsSomething(wearing) && (
+            <button
+              type="button"
+              className={admin.quiet}
+              onClick={() => setWearing({})}
+            >
+              Take it all off
+            </button>
+          )}
+        </fieldset>
         {failure && (
           <p role="alert" className={admin.error}>
             {failure}
@@ -245,6 +292,7 @@ function AvatarCardView({
   measure,
   templateMeasure,
   isTemplate,
+  wearing,
   onLook,
   onTemplate,
 }: {
@@ -254,9 +302,16 @@ function AvatarCardView({
   measure: Measure | undefined;
   templateMeasure: Measure | undefined;
   isTemplate: boolean;
+  wearing: Look;
   onLook: (key: string) => void;
   onTemplate: () => void;
 }) {
+  // The template keeps the game's own look so its outline stays comparable.
+  const dressing = !!look.dressable && !isTemplate && wearsSomething(wearing);
+  const shown = useMemo<AvatarLook>(
+    () => (dressing ? { ...look, create: () => look.create(wearing) } : look),
+    [dressing, look, wearing],
+  );
   return (
     <article className={styles.card}>
       <header className={styles.head}>
@@ -281,7 +336,7 @@ function AvatarCardView({
           ))}
         </fieldset>
       )}
-      <StageBox stage={stage} slotKey={lookKey(card, look)} look={look} />
+      <StageBox stage={stage} slotKey={lookKey(card, look)} look={shown} />
       <dl className={styles.facts}>
         <div>
           <dt>Height</dt>
@@ -310,6 +365,12 @@ function AvatarCardView({
         </div>
       </dl>
       {card.note && <p className={styles.note}>{card.note}</p>}
+      {wearsSomething(wearing) && !look.dressable && (
+        <p className={styles.note}>
+          Wardrobe items don&rsquo;t show here: this avatar isn&rsquo;t built on
+          the shared worker.
+        </p>
+      )}
       <button type="button" className={admin.quiet} onClick={onTemplate}>
         {isTemplate ? 'Stop using as template' : 'Use as template'}
       </button>
