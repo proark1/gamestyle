@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
+import AccountButton from '@/shared/accounts/AccountButton';
 import './collection.css';
 
 // The shelf opens with a fixed running order, then shuffles everything after it
@@ -702,9 +703,12 @@ export default async function Page({
         <span className="collection-header-note">
           GOOD COMPANY. QUESTIONABLE PLANS.
         </span>
-        <a className="collection-nav" href="#games">
-          Pick a game <ArrowDown size={15} />
-        </a>
+        <div className="collection-header-actions">
+          <a className="collection-nav" href="#games">
+            Pick a game <ArrowDown size={15} />
+          </a>
+          <AccountButton variant="header" />
+        </div>
       </header>
       <section className="collection-intro">
         <div className="collection-kicker">
@@ -731,7 +735,7 @@ export default async function Page({
             <Timer size={14} /> 3–6 minute rounds
           </li>
           <li>
-            <WifiOff size={14} /> No download, no account
+            <WifiOff size={14} /> No download, no account needed
           </li>
         </ul>
       </section>

@@ -20,3 +20,14 @@ export function isRoomOriginAllowed(
     }
   });
 }
+
+/**
+ * For requests that change something a cookie or password protects. Browsers
+ * send `Origin` with every POST, so a request without one is refused.
+ */
+export function hasAllowedOrigin(request: Request, publicOrigin?: string) {
+  return (
+    !!request.headers.get('origin') &&
+    isRoomOriginAllowed(request, publicOrigin)
+  );
+}

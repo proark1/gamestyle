@@ -1,4 +1,4 @@
-import { isRoomOriginAllowed } from '../http/request-origin';
+import { hasAllowedOrigin } from '../http/request-origin';
 
 export async function audioAccess(
   request: Request,
@@ -33,8 +33,5 @@ export function canEditAudio(
   request: Request,
   publicOrigin = process.env.PUBLIC_GAME_ORIGIN,
 ) {
-  return (
-    !!request.headers.get('origin') &&
-    isRoomOriginAllowed(request, publicOrigin)
-  );
+  return hasAllowedOrigin(request, publicOrigin);
 }
