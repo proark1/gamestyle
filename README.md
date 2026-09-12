@@ -174,6 +174,8 @@ Set `PUBLIC_GAME_ORIGIN` to the game's public HTTPS origin so same-origin room r
 
 Sound editing and paid generation require `AUDIO_ADMIN_PASSWORD` (16–256 characters); playback stays public. The same password opens the admin page at `/admin`. See [sound setup](docs/audio-setup.md) and the [security and performance audit](docs/security-performance.md) for runtime limits, validation, and the local load-test command.
 
+Player accounts (Google or email-code sign-in) stay hidden until `AUTH_SECRET` and a sign-in method are configured. See [accounts](docs/accounts.md) for the variables and the Google and Resend setup.
+
 For a local production check:
 
 ```sh

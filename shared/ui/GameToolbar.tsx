@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import VoicePanel from '../voice/VoicePanel';
 import HostNotice from '../peer/HostNotice';
+import AccountButton from '../accounts/AccountButton';
 import type { VoiceSession, VoiceSnapshot } from '../voice/types';
 import {
   applyAudioPreferences,
@@ -116,6 +117,7 @@ export default function GameToolbar({
       >
         <AudioLines size={19} />
       </button>
+      <AccountButton variant="toolbar" />
       <button
         className="game-toolbar-button"
         onClick={onHelp}

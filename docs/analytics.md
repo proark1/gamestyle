@@ -14,7 +14,7 @@ Every report follows the period and game filters at the top of the page.
 
 ## What is collected
 
-A session is one visit to one game page. The browser keeps a random identifier in memory only: no cookies, nothing written to the device, no names or chat, and no IP addresses. Room codes are stored only as a 10-character hash, which is enough to group the visits to one room.
+A session is one visit to one game page. The browser keeps a random identifier in memory only: no cookies, nothing written to the device, no names or chat, and no IP addresses. Room codes are stored only as a 10-character hash, which is enough to group the visits to one room. [Accounts](accounts.md) are kept apart: reports are sent without cookies, and analytics code may not import the account module.
 
 A session records its device class (touch or mouse), how it arrived (invite link, the game shelf, another game, another site, a reload), how it entered a room (solo, hosting or joining), the steps and milestones it reached, the largest crew it saw in people and NPC seats, its rounds with their results and reasons, counts of the game's declared actions, the time spent in each stage, the time the page was visible, and how the visit ended.
 

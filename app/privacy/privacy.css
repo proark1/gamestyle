@@ -1,0 +1,62 @@
+.privacy {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 24px 72px;
+  color: #294a43;
+  font:
+    400 16px/1.7 'DM Sans',
+    sans-serif;
+}
+.privacy h1 {
+  margin: 24px 0 4px;
+  font:
+    600 44px/1.1 'Fredoka',
+    sans-serif;
+}
+.privacy h2 {
+  margin: 36px 0 10px;
+  font:
+    600 24px/1.2 'Fredoka',
+    sans-serif;
+}
+.privacy p,
+.privacy li {
+  color: #3c5a50;
+}
+.privacy ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+.privacy a {
+  color: #3f6b5e;
+}
+.privacy-back {
+  font-weight: 700;
+  text-decoration: none;
+}
+.privacy-updated {
+  margin-top: 0;
+  font-size: 14px;
+}
+.privacy-table {
+  overflow-x: auto;
+}
+.privacy table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.privacy th,
+.privacy td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #dddfc1;
+  text-align: left;
+  vertical-align: top;
+}
+.privacy code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: #f6f0db;
+  font-size: 13px;
+}

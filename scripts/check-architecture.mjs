@@ -97,6 +97,13 @@ for (const file of files) {
             violations.push(
               `${file}: implementation imports a route (${target})`,
             );
+          if (
+            /^(shared|platform)\/analytics\//.test(file) &&
+            target.startsWith('shared/accounts/')
+          )
+            violations.push(
+              `${file}: analytics stay anonymous and must not use accounts (${target})`,
+            );
         }
       }
     }

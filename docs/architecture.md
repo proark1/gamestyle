@@ -32,6 +32,7 @@ games/<id>/           Game rules, UI, scene, models, connection, styles
   scripts/            Integration checks and production tools for this game
   docs/               Game designs, plans, and validation history
 shared/               Reusable code independent of game implementations
+  accounts/           Sign-in, sessions, the account button and dialogs
   analytics/          Session tracker, report protocol and validation
   audio/              Playback, sound workshop UI, provider and storage adapters
     construction/     Shared construction-game audio contract and playback
@@ -56,7 +57,7 @@ scripts/              Repository-wide development, tests, and build tools
 public/               Stable public asset URLs
 ```
 
-Games may import `shared/`, database contracts, and existing UI primitives. A game must not import another game's implementation. Shared code must not import `games/`, `platform/`, or `app/`. Only routes and `platform/` compose multiple games. Integration tests may cross these boundaries to verify isolation and compatibility.
+Games may import `shared/`, database contracts, and existing UI primitives. A game must not import another game's implementation. Shared code must not import `games/`, `platform/`, or `app/`. Analytics code must not import `shared/accounts/`, so play statistics stay anonymous. Only routes and `platform/` compose multiple games. Integration tests may cross these boundaries to verify isolation and compatibility.
 
 Use direct imports. Avoid a barrel exporting every game, renderer, simulation, and server handler: it obscures dependencies and can pull unrelated worlds into the browser bundle. Keep heavy Three.js scenes behind the existing dynamic imports. Full navigation between games is intentional so each WebGL/audio lifecycle is disposed with its page.
 
