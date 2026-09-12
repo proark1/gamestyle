@@ -38,12 +38,20 @@ let loading: Promise<void> | undefined;
 let channel: BroadcastChannel | undefined;
 let retries = 0;
 let retryTimer: ReturnType<typeof setTimeout> | undefined;
+/** Rises with every session check and every change made here. */
+let generation = 0;
 const subscribers = new Set<() => void>();
 const messageListeners = new Set<(message: AccountMessage) => void>();
 
 function publish(next: Partial<AccountState>) {
   state = { ...state, ...next };
   for (const notify of subscribers) notify();
+}
+
+/** Account state newer than any session answer still on its way. */
+function publishNewer(next: Partial<AccountState>) {
+  generation++;
+  publish(next);
 }
 
 /** Stable between changes, so useSyncExternalStore does not loop. */
@@ -106,12 +114,18 @@ function retryLater() {
   );
 }
 
-/** Never rejects. Until the first check succeeds, the store stays unknown and tries again. */
+/**
+ * Never rejects. Until the first check succeeds, the store stays unknown and
+ * tries again. Overlapping checks can answer in any order, so an answer counts
+ * only if no newer check or change happened since it was asked for.
+ */
 async function loadAccount(first: boolean) {
+  const asked = ++generation;
   try {
     const response = await fetch('/api/account/session', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Session answered ${response.status}`);
     const reply = (await response.json()) as SessionReply;
+    if (asked !== generation) return;
     const notice = first ? takeLandingNotice() : undefined;
     retries = 0;
     publish({
@@ -125,7 +139,7 @@ async function loadAccount(first: boolean) {
           : state.dialog,
     });
   } catch {
-    if (state.status === 'unknown') retryLater();
+    if (asked === generation && state.status === 'unknown') retryLater();
   }
 }
 
@@ -194,7 +208,7 @@ export async function verifyEmailCode(email: string, code: string) {
     '/api/account/email/verify',
     { email, code },
   );
-  publish({ account, dialog: null });
+  publishNewer({ account, dialog: null });
   announce('signed-in');
 }
 
@@ -203,19 +217,19 @@ export async function saveDisplayName(displayName: string) {
     '/api/account/profile',
     { displayName },
   );
-  publish({ account });
+  publishNewer({ account });
   announce('signed-in');
 }
 
 export async function signOut(everywhere = false) {
   await send('/api/account/sign-out', { everywhere });
-  publish({ account: null, dialog: null });
+  publishNewer({ account: null, dialog: null });
   announce('signed-out');
 }
 
 export async function deleteAccount() {
   await send('/api/account/delete', { confirm: 'delete' });
-  publish({ account: null, dialog: null });
+  publishNewer({ account: null, dialog: null });
   announce('signed-out');
 }
 

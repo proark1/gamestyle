@@ -1,3 +1,4 @@
+import { OPERATOR, type Operator } from '../operator';
 import type { SignInMethods } from '../types';
 
 export type AccountConfig = {
@@ -12,7 +13,15 @@ export type AccountConfig = {
 
 type Env = Record<string, string | undefined>;
 
-export function accountConfig(env: Env = process.env): AccountConfig {
+/**
+ * A sign-in method opens once its keys are set and, over HTTPS, once the
+ * privacy page names the operator that account holders can turn to. Plain-HTTP
+ * development origins need no operator.
+ */
+export function accountConfig(
+  env: Env = process.env,
+  operator: Operator | null = OPERATOR,
+): AccountConfig {
   const publicOrigin = env.PUBLIC_GAME_ORIGIN?.trim() || undefined;
   const https = !!publicOrigin?.split(',').some((entry) => {
     try {
@@ -21,20 +30,22 @@ export function accountConfig(env: Env = process.env): AccountConfig {
       return false;
     }
   });
+  const open = !!operator || !https;
   return {
     secret:
       env.AUTH_SECRET && env.AUTH_SECRET.length >= 32
         ? env.AUTH_SECRET
         : undefined,
     google:
-      env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      open && env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
         ? {
             clientId: env.GOOGLE_CLIENT_ID,
             clientSecret: env.GOOGLE_CLIENT_SECRET,
           }
         : undefined,
-    email:
-      env.RESEND_API_KEY && env.EMAIL_FROM
+    email: !open
+      ? undefined
+      : env.RESEND_API_KEY && env.EMAIL_FROM
         ? { apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }
         : env.ACCOUNT_EMAIL_DEV_LOG === '1' && !https
           ? 'log'

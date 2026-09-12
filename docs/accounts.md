@@ -45,7 +45,7 @@ Every table with an `account_id` column must reference `accounts(id)` with `ON D
 
 ## Configuration
 
-Set these on the Railway service. Sign-in stays off until `AUTH_SECRET` and at least one method are set.
+Set these on the Railway service. Sign-in stays off until `AUTH_SECRET` and at least one method are set and, over HTTPS, until `OPERATOR` in `shared/accounts/operator.ts` names who runs the site, because the privacy page sends account holders there for access and export requests.
 
 | Variable | Purpose |
 | --- | --- |
@@ -85,4 +85,4 @@ node scripts/test.mjs shared/accounts db/accounts-node.test.ts
 
 ## Privacy page
 
-`/privacy` describes what the site stores. Before sign-in goes live, fill in the operator's name, address and contact email in `OPERATOR` at the top of `app/privacy/page.tsx`.
+`/privacy` describes what the site stores. Before sign-in goes live, fill in the operator's name, address and contact email in `OPERATOR` in `shared/accounts/operator.ts`; over HTTPS no sign-in method opens until then.

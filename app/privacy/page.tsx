@@ -1,14 +1,12 @@
 /* eslint-disable next/no-html-link-for-pages -- Links leave for full pages, like the rest of the site. */
 import type { Metadata } from 'next';
+import { OPERATOR } from '@/shared/accounts/operator';
 import './privacy.css';
 
 export const metadata: Metadata = {
   title: 'Privacy — Jumbleyard',
   description: 'What Jumbleyard stores, why, and for how long.',
 };
-
-/** Fill in before sign-in goes live: who runs Jumbleyard and how to reach them. */
-const OPERATOR: { name: string; address: string; email: string } | null = null;
 
 const COOKIES = [
   ['__Host-jy_session', 'Keeps you signed in', '60 days after your last visit'],
