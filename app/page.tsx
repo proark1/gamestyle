@@ -24,6 +24,7 @@ import {
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import AccountButton from '@/shared/accounts/AccountButton';
+import WardrobeButton from '@/shared/wardrobe/WardrobeButton';
 import './collection.css';
 
 // The shelf opens with a fixed running order, then shuffles everything after it
@@ -707,6 +708,7 @@ export default async function Page({
           <a className="collection-nav" href="#games">
             Pick a game <ArrowDown size={15} />
           </a>
+          <WardrobeButton variant="header" />
           <AccountButton variant="header" />
         </div>
       </header>

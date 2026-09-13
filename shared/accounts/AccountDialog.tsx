@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
-import { X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
+import WardrobeDialog from '../wardrobe/WardrobeDialog';
 import {
   AccountRequestError,
   closeAccountDialog,
@@ -25,6 +26,7 @@ export default function AccountDialog({
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [wardrobeOpen, setWardrobeOpen] = useState(false);
 
   const attempt = async (work: () => Promise<void>) => {
     setBusy(true);
@@ -100,6 +102,14 @@ export default function AccountDialog({
             <button
               type="button"
               className="account-secondary"
+              onClick={() => setWardrobeOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', borderColor: '#d0b370', background: '#fdf7e8' }}
+            >
+              <Sparkles size={16} color="#8c5b08" /> Wardrobe & Perks
+            </button>
+            <button
+              type="button"
+              className="account-secondary"
               disabled={busy}
               onClick={() => void attempt(() => signOut(false))}
             >
@@ -114,6 +124,9 @@ export default function AccountDialog({
               Sign out everywhere
             </button>
           </div>
+          {wardrobeOpen && (
+            <WardrobeDialog open={wardrobeOpen} onClose={() => setWardrobeOpen(false)} />
+          )}
           <div className="account-danger-zone">
             {confirming ? (
               <form

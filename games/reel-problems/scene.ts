@@ -25,6 +25,7 @@ import {
   poseAngler,
 } from './models';
 import { SeaScene } from './sea-scene';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 
 type Callbacks = {
   input: (input: ReelInput) => void;
@@ -361,7 +362,10 @@ export class ReelScene {
     for (const p of world.players) {
       let object = this.anglers.get(p.id);
       if (!object) {
-        object = createAngler(ANGLER_COLORS[p.color]);
+        object = createAngler(
+          ANGLER_COLORS[p.color],
+          p.id === this.localId ? getEquippedLook() : undefined,
+        );
         object.add(
           nameLabel(
             p.id === this.localId ? `${p.name} · YOU` : p.name,

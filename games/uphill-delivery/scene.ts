@@ -9,6 +9,7 @@ import {
   poseDeliveryWorker,
   villageModel,
 } from './objects';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { DeliveryMotion, DeliveryQuality } from './motion';
 import {
   DELIVERY_CAMERAS,
@@ -464,7 +465,10 @@ export class DeliveryScene {
     for (const p of w.players) {
       let model = this.workers.get(p.id);
       if (!model) {
-        model = deliveryWorker(p.color);
+        model = deliveryWorker(
+          p.color,
+          this.snapshot.you === p.id ? getEquippedLook() : undefined,
+        );
         model.position.set(p.x, p.y, p.z);
         if (p.name) {
           const tag = label(p.name, '#fff4d7', '#294a45', 1.9);

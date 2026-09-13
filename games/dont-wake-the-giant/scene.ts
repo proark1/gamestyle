@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { cottage, itemModel, poseThief, thief } from './objects';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { bodyPoint, FOOT, restingItemPosition, wakePose } from './level';
 import { GiantModel } from './giant-model';
 import { freshGiant, giantSnapshot } from './simulation';
@@ -305,7 +306,10 @@ export class GiantScene {
     for (const p of w.players) {
       let model = this.players.get(p.id);
       if (!model) {
-        model = thief(p.color);
+        model = thief(
+          p.color,
+          this.snapshot.you === p.id ? getEquippedLook() : undefined,
+        );
         const tag = label(p.name, '#fff1ca', '#435b4e', 3);
         tag.position.y = 2.8;
         model.add(tag);

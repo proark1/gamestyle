@@ -44,6 +44,7 @@ import {
 } from './objects';
 import { appearanceKey, type Appearance } from './appearance';
 import { animateHomeModel } from './home-models';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   clamp,
   distance,
@@ -951,7 +952,10 @@ export class GameScene {
       }
     for (const p of state.players)
       if (!this.workers.has(p.id)) {
-        const obj = worker(p.color);
+        const obj = worker(
+          p.color,
+          p.id === id ? getEquippedLook() : undefined,
+        );
         obj.position.set(p.x, 0.43, p.z);
         const tag = label(
           p.id === id ? `${p.name} · YOU` : p.name,

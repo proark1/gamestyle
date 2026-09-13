@@ -3,6 +3,7 @@ import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { animateContestant, contestant, hazardModel, stage } from './models';
 import { glovePose, spinnerAngle } from './level';
 import { doorOpen, freshButton, newContestant } from './simulation';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   COLORS,
   idleInput,
@@ -216,7 +217,12 @@ export class ButtonScene {
     for (const p of w.players) {
       let model = this.people.get(p.id);
       if (!model) {
-        model = contestant(COLORS[p.color % 4]);
+        model = contestant(
+          COLORS[p.color % 4],
+          (this.localId ? this.localId === p.id : p.id === 'demo-0')
+            ? getEquippedLook()
+            : undefined,
+        );
         const name = label(p.name, '#fff3d8', '#31575a', 2.1);
         name.position.y = 2.45;
         model.add(name);

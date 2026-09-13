@@ -5,4 +5,8 @@
  */
 export type Operator = { name: string; address: string; email: string };
 
-export const OPERATOR: Operator | null = null;
+export const OPERATOR: Operator | null = {
+  name: 'Jumbleyard',
+  address: 'Jumbleyard Operations',
+  email: 'info@jumbleyard.com',
+};

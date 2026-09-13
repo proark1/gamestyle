@@ -8,6 +8,7 @@ import {
   type HotelSnapshot,
 } from './types';
 import { animateGuest, buildHotel, guest, strideAdvance } from './models';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { hotelHorror } from './horror';
 import {
   DEFAULT_CAMERA,
@@ -312,7 +313,11 @@ export class HotelScene {
     for (const p of w?.players ?? []) {
       let model = this.people.get(p.id);
       if (!model) {
-        model = guest(p.color);
+        model = guest(
+          p.color,
+          false,
+          this.id === p.id ? getEquippedLook() : undefined,
+        );
         model.position.set(p.x, 0.035, p.z);
         const name = label(
           `${p.name}${p.bot ? ' / NPC' : ''}`,
