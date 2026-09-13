@@ -2,10 +2,9 @@ import { mapConfig, type MapId } from './maps';
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import {
-  WORKER_HEAD_TOP,
-  worker as sharedWorker,
-} from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import type { Look } from '../../shared/wardrobe/look';
 import { PLAYER_COLORS, type ItemKind } from './model';
 import { paintHex, type Appearance } from './appearance';
 import { makeHomeModel } from './home-models';
@@ -171,20 +170,22 @@ export function label(
 }
 /**
  * A site worker: the collection's shared worker in site overalls, a tool belt
- * and a striped hard hat in the player's colour.
+ * and a striped hard hat in the player's colour. A player's own hat replaces
+ * the hard hat; the tool belt always stays.
  */
-export function worker(color = 0) {
+export function worker(color = 0, look?: Look) {
   const c = PLAYER_COLORS[color % 4];
-  const g = sharedWorker(color, {
-    shirt: c,
-    overalls: '#355565',
-    boots: '#384440',
-    cap: false,
-  });
+  const { model: g, worn } = dressedWorker(
+    color,
+    { shirt: c, overalls: '#355565', boots: '#384440', cap: false },
+    look,
+  );
   const body = g.userData.body as T.Group;
-  box(body, 0.74, 0.1, 0.72, c, 0, WORKER_HEAD_TOP + 0.02, 0.04, true);
-  box(body, 0.6, 0.28, 0.56, c, 0, WORKER_HEAD_TOP + 0.18, 0, true);
-  box(body, 0.1, 0.32, 0.58, '#ffe6a0', 0, WORKER_HEAD_TOP + 0.2, 0, true);
+  if (!worn.hat) {
+    box(body, 0.74, 0.1, 0.72, c, 0, WORKER_HEAD_TOP + 0.02, 0.04, true);
+    box(body, 0.6, 0.28, 0.56, c, 0, WORKER_HEAD_TOP + 0.18, 0, true);
+    box(body, 0.1, 0.32, 0.58, '#ffe6a0', 0, WORKER_HEAD_TOP + 0.2, 0, true);
+  }
   box(body, 0.7, 0.1, 0.52, '#91623f', 0, 0.68, 0.035);
   box(body, 0.2, 0.2, 0.14, '#bc854f', 0.3, 0.58, 0.3, true);
   return g;

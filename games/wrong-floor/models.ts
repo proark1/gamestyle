@@ -1,7 +1,9 @@
 import * as T from 'three';
 import { box, label, material } from '../../shared/rendering/primitives';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { WORKER_HEAD_TOP, worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import type { Look } from '../../shared/wardrobe/look';
 import { COLORS } from './types';
 
 function ball(
@@ -19,8 +21,8 @@ function ball(
   return mesh;
 }
 
-export function guest(color: number, monster = false) {
-  if (!monster) return hotelGuest(color);
+export function guest(color: number, monster = false, look?: Look) {
+  if (!monster) return hotelGuest(color, look);
   const g = new T.Group(),
     coat = '#182532';
   box(g, [0.64, 0.7, 0.4], [0, 0.9, 0], coat, true);
@@ -53,16 +55,16 @@ export function guest(color: number, monster = false) {
 
 /**
  * A hotel guest: the collection's shared worker in the player's colour, with
- * brown shoes and a knitted beanie.
+ * brown shoes and a knitted beanie. A player's own hat replaces the beanie.
  */
-function hotelGuest(color: number) {
+function hotelGuest(color: number, look?: Look) {
   const coat = COLORS[color % COLORS.length];
-  const g = worker(color, {
-    shirt: coat,
-    overalls: '#35585b',
-    boots: '#665445',
-    cap: false,
-  });
+  const { model: g, worn } = dressedWorker(
+    color,
+    { shirt: coat, overalls: '#35585b', boots: '#665445', cap: false },
+    look,
+  );
+  if (worn.hat) return g;
   const body = g.userData.body as T.Group;
   box(body, [0.56, 0.2, 0.54], [0, WORKER_HEAD_TOP + 0.06, 0], coat, true);
   box(body, [0.58, 0.08, 0.56], [0, WORKER_HEAD_TOP - 0.02, 0], '#f4d8a1');

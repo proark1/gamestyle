@@ -1,7 +1,8 @@
 import * as T from 'three';
 import { box, beam, label, material } from '../../shared/rendering/primitives';
 import { sofa as createSofa } from '../../shared/rendering/sofa';
-import { worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import type { Look } from '../../shared/wardrobe/look';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import {
   COTTAGE_WALLS,
@@ -69,8 +70,9 @@ export function deliverySofa() {
   batchScenery(g);
   return g;
 }
-export function deliveryWorker(color: number) {
-  const g = worker(color),
+/** A mover: the shared worker in a player's look, with its torso merged. */
+export function deliveryWorker(color: number, look?: Look) {
+  const g = dressedWorker(color, {}, look).model,
     body = g.userData.body as T.Group;
   const limbs = ['legL', 'legR', 'armL', 'armR'].map(
     (key) => g.userData[key] as T.Group,

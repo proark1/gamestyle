@@ -44,10 +44,12 @@ shared/               Reusable code independent of game implementations
   physics/            Geometry reused by multiple games
   rendering/          Primitive meshes, common models, rendering instrumentation
     avatars/          Potential player avatars on the shared worker rig
+    cosmetics/        Wardrobe item models, dressing the shared worker
   rooms/              Persistence contracts, sessions, token hashing
   styles/             Shared game UI and construction theme
   ui/                 Common toolbar
   voice/              Shared voice clients and membership authorization
+  wardrobe/           Item catalog, unlock goals, player looks
 platform/             Composition that explicitly knows about multiple games
 db/                   Database contracts, Node and Worker adapters, schema
 drizzle/              Application migrations, kept in their original order
@@ -81,7 +83,7 @@ Public assets retain their existing URLs. Game assets already have directories s
 4. For peer play, implement the local adapter contract in `shared/peer/engine.ts` and pass a lazy loader to the shared connection. Hidden-role games should retain server authority when a player host would reveal secrets.
 5. For generated audio, keep the catalog and profile inside the game and register the catalog in the appropriate platform registry.
 6. For play analytics, add `games/<id>/analytics.ts` with the game's milestones, result reasons, counted actions and snapshot mapping, report through a module-level `GameTracker`, and register the definition in `platform/analytics/catalog.ts`. See [play analytics](analytics.md).
-7. Build player characters from the shared worker in `shared/rendering/worker.ts` and change only their clothes and hat through `WorkerOutfit`, so players look alike across the collection. For the admin avatar lineup, add `games/<id>/avatar.ts` exporting the player's looks as `AvatarLook`s from `shared/rendering/avatar-preview.ts`. Pose them with the same functions the scene calls, so the lineup cannot drift from the game, and register them in `platform/admin/avatars/catalog.ts`; a catalog test fails for any game left out.
+7. Build player characters from the shared worker with `dressedWorker` from `shared/rendering/cosmetics/dress.ts`, and change only their clothes and hat through `WorkerOutfit`, so players look alike across the collection. The same call puts on a player's wardrobe items from `shared/wardrobe/`: leave off the game's own hat, vest or mask for any slot the look fills, and mark the avatar `dressable`. For the admin avatar lineup, add `games/<id>/avatar.ts` exporting the player's looks as `AvatarLook`s from `shared/rendering/avatar-preview.ts`. Pose them with the same functions the scene calls, so the lineup cannot drift from the game, and register them in `platform/admin/avatars/catalog.ts`; a catalog test fails for any game left out.
 8. Run `npm run check` and the relevant production build. Tests are discovered recursively, so new game tests do not need another glob in `package.json`.
 
 ```sh

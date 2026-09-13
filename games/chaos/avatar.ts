@@ -8,8 +8,9 @@ export const chaosAvatars: readonly AvatarLook[] = [
   {
     key: 'worker',
     label: 'Site worker',
-    create() {
-      const root = worker(0);
+    dressable: true,
+    create(look) {
+      const root = worker(0, look);
       return {
         root,
         pose: (time, walking) =>

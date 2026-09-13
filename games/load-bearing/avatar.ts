@@ -1,6 +1,6 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 
 /**
  * Walks a wrecker; `time` is in seconds. `hammer` is the arm angle while a
@@ -38,8 +38,9 @@ export const loadBearingAvatars: readonly AvatarLook[] = [
   {
     key: 'wrecker',
     label: 'Wrecker',
-    create() {
-      const root = worker(0);
+    dressable: true,
+    create(look) {
+      const root = dressedWorker(0, {}, look).model;
       return {
         root,
         pose: (time, walking) =>

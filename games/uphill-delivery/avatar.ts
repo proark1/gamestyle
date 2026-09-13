@@ -5,8 +5,9 @@ export const deliveryAvatars: readonly AvatarLook[] = [
   {
     key: 'mover',
     label: 'Mover',
-    create() {
-      const root = deliveryWorker(0);
+    dressable: true,
+    create(look) {
+      const root = deliveryWorker(0, look);
       return {
         root,
         pose: (time, walking) =>
