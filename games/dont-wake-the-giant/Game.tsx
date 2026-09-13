@@ -10,6 +10,7 @@ import {
   Copy,
   DoorOpen,
   Feather,
+  Gamepad2,
   Hand,
   LoaderCircle,
   Moon,
@@ -347,8 +348,8 @@ export default function GiantGame() {
     >
       <div className="giant-canvas" ref={canvas} />
       <header className="giant-topbar">
-        <a href="/" className="giant-brand" aria-label="Back to all games">
-          <ArrowLeft size={17} />
+        <a href="/" className="giant-brand" aria-label="Jumbleyard">
+          <Gamepad2 size={17} />
           <span>
             JUMBLEYARD<span className="giant-brand-dot">.</span>
           </span>

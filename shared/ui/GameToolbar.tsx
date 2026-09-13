@@ -1,13 +1,10 @@
 'use client';
-/* eslint-disable next/no-html-link-for-pages -- Game navigation releases the current game and its media resources. */
 
 import { useSyncExternalStore } from 'react';
 import {
-  ArrowLeft,
   AudioLines,
   CircleHelp,
   Radio,
-  Music2,
   Volume2,
   VolumeX,
 } from 'lucide-react';
@@ -31,8 +28,8 @@ export default function GameToolbar({
   muted,
   onToggleSound,
   onHelp,
-  onLeave,
-  workshop,
+  onLeave: _onLeave,
+  workshop: _workshop,
 }: {
   voice?: {
     session: VoiceSession;
@@ -45,7 +42,7 @@ export default function GameToolbar({
   onToggleSound: () => void;
   onHelp: () => void;
   onLeave?: () => void;
-  workshop: string;
+  workshop?: string;
 }) {
   // Stored preferences are external state: the server and the hydrating client
   // both see the defaults, then React re-reads once hydration finishes.
@@ -126,28 +123,6 @@ export default function GameToolbar({
       >
         <CircleHelp size={19} />
       </button>
-      <a
-        className="game-toolbar-button"
-        href="/"
-        aria-label="All games"
-        title="All games"
-        onClick={(event) => {
-          if (onLeave) {
-            event.preventDefault();
-            onLeave();
-          }
-        }}
-      >
-        <ArrowLeft size={19} />
-      </a>
-      <a
-        className="game-toolbar-button"
-        href={workshop}
-        aria-label="Sound workshop"
-        title="Sound workshop"
-      >
-        <Music2 size={19} />
-      </a>
     </nav>
   );
 }
