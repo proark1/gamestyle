@@ -523,8 +523,8 @@ function loose(w: SiegeWorld, by: string, team: TeamId = 'red') {
   // Red shoots towards North (-z), Blue shoots towards South (+z)
   const dirZ = isBlue ? 1 : -1;
   const vx = isBlue
-    ? -Math.sin(engine.turn) * horizontal
-    : Math.sin(engine.turn) * horizontal;
+    ? Math.sin(engine.turn) * horizontal
+    : -Math.sin(engine.turn) * horizontal;
   const vz = dirZ * Math.cos(engine.turn) * horizontal;
   const vy = v * Math.sin(ELEVATION);
   const slingPos = isBlue
@@ -538,7 +538,9 @@ function loose(w: SiegeWorld, by: string, team: TeamId = 'red') {
     kind,
     rider: engine.rider,
     team,
-    x: slingPos.x - Math.sin(engine.turn) * 1.4,
+    x: isBlue
+      ? slingPos.x + Math.sin(engine.turn) * 1.4
+      : slingPos.x - Math.sin(engine.turn) * 1.4,
     y: LAUNCH_Y,
     z: isBlue
       ? slingPos.z + Math.cos(engine.turn) * 1.4
@@ -730,8 +732,70 @@ function stepBots(w: SiegeWorld, dt: number) {
       continue;
     }
 
-    // 2. Wind engine if under threshold
-    if (engine.wind < 0.72) {
+    // 2. Check if there is a human player on this team
+    const hasHumanAlly = w.players.some((p) => !p.bot && p.team === bot.team);
+
+    if (hasHumanAlly) {
+      // When a human player is on the team, aiming and shooting MUST be done by the human!
+      // The NPC teammate acts strictly as a loyal helper: winds the counterweight and stays out of the way.
+      if (engine.wind < 1.0) {
+        const distToCrank = Math.hypot(bot.x - crank.x, bot.z - crank.z);
+        if (distToCrank > 1.6) {
+          const dx = crank.x - bot.x;
+          const dz = crank.z - bot.z;
+          const dist = Math.hypot(dx, dz);
+          bot.input = { x: dx / dist, z: dz / dist, seq: bot.input.seq + 1 };
+          bot.winding = false;
+        } else {
+          bot.input = idleInput();
+          bot.winding = true;
+        }
+      } else {
+        // Counterweight is wound! Stop winding and stay nearby without aiming or firing.
+        bot.winding = false;
+        const distToTreb = Math.hypot(bot.x - treb.x, bot.z - treb.z);
+        if (distToTreb > 4.2) {
+          const dx = treb.x - bot.x;
+          const dz = treb.z - bot.z;
+          const dist = Math.hypot(dx, dz);
+          bot.input = { x: dx / dist, z: dz / dist, seq: bot.input.seq + 1 };
+        } else {
+          bot.input = idleInput();
+        }
+      }
+      continue;
+    }
+
+    // 3. Pure NPC team (e.g. opposing Blue bots, or bot vs bot):
+    // Realistic play: aim accurately at remaining enemy towers, wind to proper distance, and loose!
+    let targetWind = is2v2 ? 0.94 : 0.72;
+    let targetTurn = 0;
+
+    if (is2v2 && w.towers) {
+      const oppTeam = isBlue ? 'red' : 'blue';
+      const towers = w.towers[oppTeam];
+      // Target standing towers: Tower 0 (Left, x = -8.5), Tower 1 (Center, x = 0), Tower 2 (Right, x = +8.5)
+      let targetX = 0;
+      if (towers[0]) {
+        targetX = -8.5;
+        targetWind = 0.96;
+      } else if (towers[2]) {
+        targetX = 8.5;
+        targetWind = 0.96;
+      } else if (towers[1]) {
+        targetX = 0;
+        targetWind = 0.94;
+      }
+      targetTurn = isBlue
+        ? Math.atan2(targetX, 33.3)
+        : Math.atan2(-targetX, 33.3);
+    }
+
+    const teamBots = bots.filter((b) => b.team === bot.team);
+    const isGunner = teamBots[0]?.id === bot.id;
+
+    // Both bots wind together until target wind is achieved
+    if (engine.wind < targetWind) {
       const distToCrank = Math.hypot(bot.x - crank.x, bot.z - crank.z);
       if (distToCrank > 1.6) {
         const dx = crank.x - bot.x;
@@ -746,23 +810,24 @@ function stepBots(w: SiegeWorld, dt: number) {
       continue;
     }
 
-    // 3. Engine is wound! Aim and loose
+    // Engine is wound! Stop winding
     bot.winding = false;
-    let targetTurn = 0;
-    if (is2v2 && w.towers) {
-      const oppTeam = isBlue ? 'red' : 'blue';
-      const towers = w.towers[oppTeam];
-      // Tower 0 (Left, x = -8.5), Tower 1 (Center, x = 0), Tower 2 (Right, x = +8.5)
-      if (towers[0]) targetTurn = isBlue ? -0.26 : 0.26;
-      else if (towers[2]) targetTurn = isBlue ? 0.26 : -0.26;
-      else targetTurn = 0;
-    }
 
-    if (Math.abs(engine.turn - targetTurn) > 0.04) {
-      engine.turn += Math.sign(targetTurn - engine.turn) * 0.22 * dt;
+    // Assistant bot stays ready near the crank for the next reload
+    if (!isGunner) {
+      bot.input = idleInput();
       continue;
     }
 
+    // Gunner bot: align aim smoothly towards the target tower
+    if (Math.abs(engine.turn - targetTurn) > 0.03) {
+      const turnStep = Math.min(Math.abs(targetTurn - engine.turn), 0.22 * dt);
+      engine.turn += Math.sign(targetTurn - engine.turn) * turnStep;
+      engine.turn = Math.max(-MAX_TURN, Math.min(MAX_TURN, engine.turn));
+      continue;
+    }
+
+    // Gunner bot: move to release pin and loose
     const distToTreb = Math.hypot(bot.x - treb.x, bot.z - treb.z);
     if (distToTreb > ENGINE_REACH - 1.5) {
       const dx = treb.x - bot.x;
@@ -771,15 +836,21 @@ function stepBots(w: SiegeWorld, dt: number) {
       bot.input = { x: dx / dist, z: dz / dist, seq: bot.input.seq + 1 };
     } else {
       bot.input = idleInput();
+      // Rare comedy: volunteer into sling during long battle
       if (
         !engine.rider &&
-        Math.random() < 0.04 &&
-        w.clock - bot.lastAction > 20000
+        Math.random() < 0.02 &&
+        w.clock - bot.lastAction > 30000
       ) {
         bot.lastAction = w.clock;
         engine.rider = bot.id;
         emit(w, 'load', `${bot.name} climbed into the sling! For glory!`);
-      } else if (engine.wind >= 0.2 && (engine.loaded || engine.rider)) {
+      } else if (
+        engine.wind >= 0.5 &&
+        (engine.loaded || engine.rider) &&
+        w.clock - engine.loosedAt > 2000
+      ) {
+        bot.lastAction = w.clock;
         loose(w, bot.name, isBlue ? 'blue' : 'red');
       }
     }

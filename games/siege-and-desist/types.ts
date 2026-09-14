@@ -30,12 +30,12 @@ export type TeamId = 'red' | 'blue';
 export const TREBUCHET_RED = { x: 0, z: 9.5 };
 export const CRANK_RED = { x: 0, z: 5.3 };
 export const SLING_RED = { x: 0, z: 13.2 };
-export const CASTLE_RED = { x: 0, z: 23.5 };
+export const CASTLE_RED = { x: 0, z: 21.5 };
 
 export const TREBUCHET_BLUE = { x: 0, z: -9.5 };
 export const CRANK_BLUE = { x: 0, z: -5.3 };
 export const SLING_BLUE = { x: 0, z: -13.2 };
-export const CASTLE_BLUE = { x: 0, z: -23.5 };
+export const CASTLE_BLUE = { x: 0, z: -21.5 };
 
 /** Siege stones are heavy on purpose: a light one bounces off good masonry. */
 export const AMMO = {

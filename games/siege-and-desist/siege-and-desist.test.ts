@@ -916,3 +916,104 @@ void test('toppling all three enemy towers awards victory in 2v2', () => {
   assert.equal(w.phase, 'won', 'game transitions to won');
   assert.equal(w.winner, 'red', 'red team wins by toppling all 3 blue towers');
 });
+
+void test('bot teammate never aims or looses when human is on team', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(
+    newCrew('human-1', 'Captain', 0, w.clock, 'red', false, 'clash2v2'),
+  );
+  reconcileClashBots(w);
+
+  const redBot = w.players.find((p) => p.bot && p.team === 'red');
+  assert.ok(redBot, 'red bot exists');
+
+  siegeAction(w, 'human-1', { type: 'start', mode: 'clash2v2' }, 'human-1');
+  assert.equal(w.phase, 'playing');
+
+  // Run simulation for several seconds
+  const initialTurn = w.turn;
+  for (let i = 0; i < 160; i++) {
+    advanceSiege(w, w.clock + 50);
+  }
+
+  // Red bot should help wind, but NEVER loose and NEVER modify w.turn
+  assert.ok(w.wind > 0.5, 'bot helped wind the counterweight');
+  assert.equal(w.turn, initialTurn, 'bot never adjusted engine turn');
+  const redShots = w.shots.filter((s) => s.team === 'red');
+  assert.equal(
+    redShots.length,
+    0,
+    'bot never fired the trebuchet for the human',
+  );
+
+  // Human player has exclusive authority to aim and loose
+  w.turn = 0.2;
+  const human = w.players.find((p) => p.id === 'human-1')!;
+  human.x = TREBUCHET_RED.x;
+  human.z = TREBUCHET_RED.z;
+  siegeAction(w, 'human-1', { type: 'loose' }, 'human-1');
+  assert.equal(
+    w.shots.filter((s) => s.team === 'red').length,
+    1,
+    'human player fired',
+  );
+});
+
+void test('pure bot team winds, aims accurately at enemy tower, and fires', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(
+    newCrew('human-1', 'Captain', 0, w.clock, 'red', false, 'clash2v2'),
+  );
+  reconcileClashBots(w);
+  siegeAction(w, 'human-1', { type: 'start', mode: 'clash2v2' }, 'human-1');
+
+  // Blue team is 100% bots
+  const blueBots = w.players.filter((p) => p.bot && p.team === 'blue');
+  assert.equal(blueBots.length, 2, 'blue team is pure bot team');
+
+  let blueFired = false;
+  for (let i = 0; i < 400 && !blueFired; i++) {
+    advanceSiege(w, w.clock + 50);
+    if (w.shots.some((s) => s.team === 'blue')) {
+      blueFired = true;
+    }
+  }
+
+  assert.ok(blueFired, 'blue bot team wound, aimed, and fired');
+  const blueShot = w.shots.find((s) => s.team === 'blue')!;
+  assert.ok(blueShot, 'blue shot exists');
+  assert.ok(
+    blueShot.vx < 0,
+    `shot vx < 0 towards left tower (vx = ${blueShot.vx})`,
+  );
+  assert.ok(blueShot.vz > 0, 'shot flies south towards red castle');
+});
+
+void test('accurate shot at enemy tower strikes masonry', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(
+    newCrew('human-1', 'Captain', 0, w.clock, 'red', false, 'clash2v2'),
+  );
+  siegeAction(w, 'human-1', { type: 'start', mode: 'clash2v2' }, 'human-1');
+
+  // Fire a calibrated shot from Blue at Red Tower 0 (x = -8.5)
+  w.engineBlue!.wind = 0.96;
+  w.engineBlue!.turn = Math.atan2(-8.5, 33.3);
+  w.engineBlue!.loaded = 'boulder';
+
+  const blueGunner = w.players.find((p) => p.team === 'blue')!;
+  blueGunner.x = TREBUCHET_BLUE.x;
+  blueGunner.z = TREBUCHET_BLUE.z;
+  siegeAction(w, blueGunner.id, { type: 'loose' }, 'human-1');
+
+  const shot = w.shots.find((s) => s.team === 'blue')!;
+  assert.ok(shot, 'shot created');
+
+  let struck = false;
+  for (let i = 0; i < 140 && !struck; i++) {
+    advanceSiege(w, w.clock + 50);
+    if (shot.struck) struck = true;
+  }
+
+  assert.ok(struck, 'accurately aimed shot struck enemy castle masonry');
+});
