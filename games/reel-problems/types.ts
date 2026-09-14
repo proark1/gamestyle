@@ -248,6 +248,18 @@ export type Angler = {
   trophyKind?: CatchKind;
   /** Hat knocked off into the water on a spill or shark hit. */
   lostHat: boolean;
+  /** Shocked by lightning conducting through rod. */
+  shockedUntil: number;
+  /** Round statistics for hilarious superlative awards */
+  stats: {
+    slapsTaken: number;
+    friendsHooked: number;
+    snapsCount: number;
+    swimTimeMs: number;
+    fishSlipped: number;
+    scoreContributed: number;
+    leaksRepaired: number;
+  };
 };
 export type Fish = Vector & {
   id: string;
@@ -348,6 +360,12 @@ export type ReelEvent = {
     | 'slap'
     | 'trophy'
     | 'bump'
+    | 'slip'
+    | 'shock'
+    | 'boss'
+    | 'oof'
+    | 'waaah'
+    | 'timber'
     | 'start'
     | 'finish';
 };
@@ -378,6 +396,14 @@ export type SeaVisitor = Vector & {
   /** A gull making off with a stolen catch. */
   carry?: CatchKind;
 };
+export type DeckFish = {
+  id: string;
+  kind: CatchKind;
+  x: number;
+  z: number;
+  angle: number;
+  until: number;
+};
 export type ReelWorld = {
   clock: number;
   started: number;
@@ -407,6 +433,7 @@ export type ReelWorld = {
   pending: PendingCatch | null;
   flyingFish?: FlyingFish | null;
   nextFlyingFishAt?: number;
+  deckFish: DeckFish[];
 };
 export type FlyingFish = {
   id: string;

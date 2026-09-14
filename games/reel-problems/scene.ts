@@ -25,6 +25,7 @@ import {
   createPaddle,
   createFloatingHat,
   createFloatingScore,
+  createLakeManagerShadow,
   deckSway,
   material,
   nameLabel,
@@ -113,6 +114,15 @@ export class ReelScene {
     maxLife: number;
   }[] = [];
   private splashPoints!: THREE.Points;
+  private sparkParticles: {
+    pos: THREE.Vector3;
+    vel: THREE.Vector3;
+    life: number;
+    maxLife: number;
+  }[] = [];
+  private sparkPoints!: THREE.Points;
+  private lakeManagerShadow = createLakeManagerShadow();
+  private deckFishMeshes = new Map<string, THREE.Group>();
   private boatWake!: THREE.Mesh;
   private flyingFishMesh = createCatch('salmon');
   constructor(
@@ -202,6 +212,28 @@ export class ReelScene {
     );
     this.splashPoints.frustumCulled = false;
     this.scene.add(this.splashPoints);
+
+    const sparkGeom = new THREE.BufferGeometry();
+    const sparkPositions = new Float32Array(80 * 3);
+    sparkGeom.setAttribute(
+      'position',
+      new THREE.BufferAttribute(sparkPositions, 3),
+    );
+    this.sparkPoints = new THREE.Points(
+      sparkGeom,
+      new THREE.PointsMaterial({
+        color: '#ffcc00',
+        size: 0.28,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+      }),
+    );
+    this.sparkPoints.frustumCulled = false;
+    this.scene.add(this.sparkPoints);
+
+    this.lakeManagerShadow.visible = false;
+    this.scene.add(this.lakeManagerShadow);
 
     this.flyingFishMesh.visible = false;
     this.flyingFishMesh.scale.setScalar(0.75);
@@ -597,6 +629,15 @@ export class ReelScene {
         !p.swimming &&
         !tumbling &&
         (Math.abs(p.slipX) > 0.08 || Math.abs(p.slipZ) > 0.08);
+      const hookedByTeammate =
+        !p.swimming &&
+        world.players.some(
+          (other) =>
+            other.id !== p.id &&
+            other.line?.kind === 'player' &&
+            other.line.target === p.id,
+        );
+      const isShocked = world.clock < (p.shockedUntil ?? 0);
 
       if (falling) {
         // A jump goes in head first; a slip tumbles in sideways.
@@ -614,6 +655,9 @@ export class ReelScene {
         } else if (tumbling) {
           targetRotX = 1.4;
           targetRotZ = Math.sin(now / 100) * 0.2;
+        } else if (hookedByTeammate) {
+          targetRotX = -0.55;
+          targetRotZ = Math.sin(now / 45) * 0.25;
         } else if (trophy) {
           targetRotX = -0.05;
           targetRotZ = 0;
@@ -636,6 +680,10 @@ export class ReelScene {
         object.rotation.x += (targetRotX - object.rotation.x) * smooth;
         object.rotation.z += (targetRotZ - object.rotation.z) * smooth;
       }
+      if (isShocked) {
+        object.position.x += (Math.random() - 0.5) * 0.14;
+        object.position.z += (Math.random() - 0.5) * 0.14;
+      }
       poseAngler(
         object,
         now,
@@ -648,11 +696,15 @@ export class ReelScene {
         tumbling,
         trophy,
         sliding,
+        hookedByTeammate,
+        isShocked,
       );
       // Rod is stowed while swimming, paddling, tumbling, or holding trophy
       const paddling = !p.swimming && !!p.paddle;
       const rod = object.getObjectByName('rod');
-      if (rod) rod.visible = !paddling && !p.swimming && !tumbling && !trophy;
+      if (rod)
+        rod.visible =
+          !paddling && !p.swimming && !tumbling && !trophy && !hookedByTeammate;
 
       const hookedFish =
         p.line?.kind === 'fish'
@@ -699,15 +751,19 @@ export class ReelScene {
         alertBubble.visible =
           !downed &&
           !tumbling &&
-          ((p.line?.tension ?? 0) > 0.85 || p.line?.tangled === true);
+          (hookedByTeammate ||
+            isShocked ||
+            (p.line?.tension ?? 0) > 0.85 ||
+            p.line?.tangled === true);
       if (sweatBubble)
         sweatBubble.visible =
           !downed &&
           !tumbling &&
+          !hookedByTeammate &&
           (p.clinging ||
             sliding ||
             ((p.line?.tension ?? 0) > 0.65 && (p.line?.tension ?? 0) <= 0.85));
-      if (dizzyBubble) dizzyBubble.visible = downed || tumbling;
+      if (dizzyBubble) dizzyBubble.visible = downed || tumbling || isShocked;
       const label = object.getObjectByName('label');
       if (label) {
         const targetY = p.swimming ? (moving ? 1.8 : 2.2) : 2.65;
@@ -888,6 +944,88 @@ export class ReelScene {
       this.crab.rotation.z += dt * 14;
       if (t >= 1) this.crab.visible = false;
     }
+
+    // Flopping fish on boat deck
+    const activeDeckFish = new Set<string>();
+    for (const df of world.deckFish ?? []) {
+      activeDeckFish.add(df.id);
+      let m = this.deckFishMeshes.get(df.id);
+      if (!m) {
+        m = createCatch(df.kind);
+        m.scale.setScalar(0.46);
+        this.boat.add(m);
+        this.deckFishMeshes.set(df.id, m);
+      }
+      m.visible = true;
+      const flop = Math.abs(Math.sin(now / 70 + df.x * 12));
+      m.position.set(df.x, 0.52 + flop * 0.18, df.z);
+      m.rotation.set(
+        Math.PI / 2 + Math.sin(now / 55) * 0.4,
+        df.angle + Math.sin(now / 80) * 0.5,
+        Math.sin(now / 60) * 0.35,
+      );
+    }
+    for (const [id, m] of this.deckFishMeshes) {
+      if (!activeDeckFish.has(id)) {
+        this.boat.remove(m);
+        this.disposeObject(m);
+        this.deckFishMeshes.delete(id);
+      }
+    }
+
+    // "The Lake Manager" boss shadow beneath the boat
+    const monster = world.fish.find((f) => f.kind === 'monster');
+    const monsterHooked =
+      monster &&
+      world.players.some(
+        (p) => p.line?.kind === 'fish' && p.line.target === monster.id,
+      );
+    if (monster && !monster.respawnAt) {
+      this.lakeManagerShadow.visible = true;
+      const shadowY = monsterHooked
+        ? -0.65 + Math.sin(now / 350) * 0.12
+        : -2.1 + Math.sin(now / 600) * 0.15;
+      this.lakeManagerShadow.position.set(monster.x, shadowY, monster.z);
+      this.lakeManagerShadow.rotation.y = monster.angle;
+      const shadowScale = monsterHooked
+        ? 1.05 + Math.sin(now / 200) * 0.05
+        : 0.95;
+      this.lakeManagerShadow.scale.set(shadowScale, 1, shadowScale);
+    } else {
+      this.lakeManagerShadow.visible = false;
+    }
+
+    // Sparks when 2 or more players team-pull the monster boss
+    const reelingMonsterPlayers = world.players.filter(
+      (p) =>
+        p.input.reel &&
+        p.line?.kind === 'fish' &&
+        monster &&
+        p.line.target === monster.id,
+    );
+    if (reelingMonsterPlayers.length >= 2) {
+      for (const p of reelingMonsterPlayers) {
+        const obj = this.anglers.get(p.id);
+        if (obj && Math.random() < 0.4) {
+          const worldTip = obj.localToWorld(
+            (obj.userData.rodTip as THREE.Vector3).clone(),
+          );
+          for (let s = 0; s < 2; s++) {
+            this.sparkParticles.push({
+              pos: worldTip.clone(),
+              vel: new THREE.Vector3(
+                (Math.random() - 0.5) * 4,
+                Math.random() * 3 + 1,
+                (Math.random() - 0.5) * 4,
+              ),
+              life: 0,
+              maxLife: 0.25 + Math.random() * 0.2,
+            });
+          }
+        }
+      }
+    }
+
     const me = world.players.find((p) => p.id === this.localId);
     this.dockBeacon.visible = !!b.sunk;
     if (b.sunk) {
@@ -940,13 +1078,16 @@ export class ReelScene {
           if (
             ev.kind === 'thunder' ||
             ev.kind === 'shark' ||
-            ev.kind === 'ram'
+            ev.kind === 'ram' ||
+            ev.kind === 'boss'
           ) {
             this.trauma = Math.min(1, this.trauma + 0.65);
           } else if (
             ev.kind === 'snap' ||
             ev.kind === 'slap' ||
-            ev.kind === 'bump'
+            ev.kind === 'bump' ||
+            ev.kind === 'slip' ||
+            ev.kind === 'shock'
           ) {
             this.trauma = Math.min(1, this.trauma + 0.35);
           } else if (ev.kind === 'sink') {
@@ -1043,6 +1184,33 @@ export class ReelScene {
     }
     splashPos.needsUpdate = true;
 
+    // Sparks particles update
+    const sparkPos = this.sparkPoints.geometry.getAttribute(
+      'position',
+    ) as THREE.BufferAttribute;
+    let activeSparks = 0;
+    for (let i = this.sparkParticles.length - 1; i >= 0; i--) {
+      const sp = this.sparkParticles[i];
+      sp.life += dt;
+      if (sp.life >= sp.maxLife) {
+        this.sparkParticles.splice(i, 1);
+        continue;
+      }
+      sp.vel.y -= 9.8 * dt * 0.8;
+      sp.pos.addScaledVector(sp.vel, dt);
+      sparkPos.setXYZ(
+        activeSparks,
+        sp.pos.x,
+        Math.max(0.01, sp.pos.y),
+        sp.pos.z,
+      );
+      activeSparks++;
+    }
+    for (let i = activeSparks; i < 80; i++) {
+      sparkPos.setXYZ(i, 0, -999, 0);
+    }
+    sparkPos.needsUpdate = true;
+
     // Floating scores update
     for (let i = this.floatingScores.length - 1; i >= 0; i--) {
       const item = this.floatingScores[i];
@@ -1101,6 +1269,14 @@ export class ReelScene {
       this.disposeObject(hat);
     }
     this.floatingHats.clear();
+    for (const m of this.deckFishMeshes.values()) {
+      this.boat.remove(m);
+      this.disposeObject(m);
+    }
+    this.deckFishMeshes.clear();
+    this.sparkParticles.length = 0;
+    this.disposeObject(this.sparkPoints);
+    this.disposeObject(this.lakeManagerShadow);
     this.disposeObject(this.scene);
     this.renderer.dispose();
     this.renderer.domElement.remove();

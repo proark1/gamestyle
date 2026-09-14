@@ -119,6 +119,27 @@ const effects = {
     'Angler bump',
     'Two fishermen bump into each other on a wet boat deck with a cartoon thud.',
   ],
+  slip: [
+    'Fish slip',
+    'A slapstick cartoon whoosh, squeak and wet flop onto wooden deck planks.',
+  ],
+  shock: [
+    'Electric shock',
+    'A buzzy cartoon electric zap and vibrating comic zizzle.',
+  ],
+  boss: [
+    'The Lake Manager',
+    'A deep reverberant underwater leviathan boom and ominous aquatic hum.',
+  ],
+  oof: ['Angler groan', 'A quick comical slapstick grunt or oof on impact.'],
+  waaah: [
+    'Overboard panic',
+    'A comical vocal gasp and waaaah as an angler tumbles into the lake.',
+  ],
+  timber: [
+    'Creaking timber',
+    'Heavy wooden boat hull planks creaking and groaning under stress.',
+  ],
 } as const;
 /**
  * Filtered-noise stand-ins used until the workshop generates real clips, so a
@@ -241,6 +262,38 @@ const textures: Partial<
     peak: 0.7,
     hits: 1,
   },
+  slip: {
+    duration: 0.45,
+    from: 1400,
+    to: 120,
+    filter: 'lowpass',
+    peak: 0.9,
+    hits: 2,
+  },
+  shock: {
+    duration: 0.45,
+    from: 2600,
+    to: 450,
+    filter: 'bandpass',
+    peak: 0.95,
+    hits: 6,
+  },
+  boss: {
+    duration: 2.2,
+    from: 220,
+    to: 45,
+    filter: 'lowpass',
+    peak: 1.2,
+    hits: 1,
+  },
+  timber: {
+    duration: 0.8,
+    from: 350,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.7,
+    hits: 3,
+  },
 };
 export const reelCatalog: Cue[] = [
   ...Object.entries(effects).map(([id, [name, prompt]]) => ({
@@ -261,6 +314,7 @@ export class ReelSound {
   private available = new Set<string>();
   private context: AudioContext | null = null;
   private gain: GainNode | null = null;
+  private underwaterFilter: BiquadFilterNode | null = null;
   private enabledValue = true;
   private director = new ReelAudioDirector();
   constructor() {
@@ -298,7 +352,11 @@ export class ReelSound {
         this.context = new AudioContext();
         this.gain = this.context.createGain();
         this.gain.gain.value = this.enabledValue ? 0.12 : 0;
-        this.gain.connect(this.context.destination);
+        this.underwaterFilter = this.context.createBiquadFilter();
+        this.underwaterFilter.type = 'lowpass';
+        this.underwaterFilter.frequency.value = 20000;
+        this.gain.connect(this.underwaterFilter);
+        this.underwaterFilter.connect(this.context.destination);
       }
       void this.context.resume().catch(() => {});
     } catch {
@@ -306,6 +364,16 @@ export class ReelSound {
     }
   }
   update(world: ReelWorld | null, localId?: string) {
+    const me = world?.players.find((p) => p.id === localId);
+    const isSwimming = !!me?.swimming && world?.phase === 'playing';
+    if (this.underwaterFilter && this.context) {
+      const targetFreq = isSwimming ? 450 : 20000;
+      this.underwaterFilter.frequency.setTargetAtTime(
+        targetFreq,
+        this.context.currentTime,
+        0.05,
+      );
+    }
     applyScenePlan(
       this.clips,
       this.director.update(world, localId),
@@ -382,6 +450,45 @@ export class ReelSound {
           env.disconnect();
         };
       });
+      return;
+    }
+    if (kind === 'oof') {
+      const osc = ctx.createOscillator(),
+        env = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(280, t);
+      osc.frequency.exponentialRampToValueAtTime(75, t + 0.16);
+      env.gain.setValueAtTime(0.001, t);
+      env.gain.linearRampToValueAtTime(0.65, t + 0.015);
+      env.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.connect(env);
+      env.connect(this.gain!);
+      osc.start(t);
+      osc.stop(t + 0.22);
+      osc.onended = () => {
+        osc.disconnect();
+        env.disconnect();
+      };
+      return;
+    }
+    if (kind === 'waaah') {
+      const osc = ctx.createOscillator(),
+        env = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, t);
+      osc.frequency.linearRampToValueAtTime(480, t + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(140, t + 0.35);
+      env.gain.setValueAtTime(0.001, t);
+      env.gain.linearRampToValueAtTime(0.6, t + 0.03);
+      env.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+      osc.connect(env);
+      env.connect(this.gain!);
+      osc.start(t);
+      osc.stop(t + 0.4);
+      osc.onended = () => {
+        osc.disconnect();
+        env.disconnect();
+      };
       return;
     }
     const frequency =

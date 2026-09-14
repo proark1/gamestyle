@@ -143,6 +143,15 @@ export class ReelAudioDirector {
           hit('event.untangle', 0.75, w.boat);
         else {
           hit(`event.${e.kind}`, 0.85, w.boat);
+          if (e.kind === 'slip' || e.kind === 'slap') {
+            hit('event.oof', 0.8, w.boat);
+          } else if (e.kind === 'shock') {
+            hit('event.oof', 0.85, w.boat);
+          } else if (e.kind === 'splash') {
+            hit('event.waaah', 0.85, w.boat);
+          } else if (e.kind === 'boss') {
+            hit('event.boss', 1.1, w.boat);
+          }
           if (e.kind === 'start') hit('speech.start');
         }
       }
@@ -175,6 +184,7 @@ export class ReelAudioDirector {
           w.clock - this.hullAt > 3500
         ) {
           hit('event.hull', 0.6, w.boat);
+          hit('event.timber', 0.5, w.boat);
           this.hullAt = w.clock;
         }
         for (const p of w.players) {

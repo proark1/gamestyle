@@ -44,6 +44,7 @@ import {
   CATCHES,
   ROUND_MS,
   idleInput,
+  type Angler,
   type ReelAction,
   type ReelSession,
   type ReelSnapshot,
@@ -66,6 +67,116 @@ const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
+
+type Award = {
+  icon: string;
+  title: string;
+  player: string;
+  color: string;
+  desc: string;
+};
+
+function getAwards(players: Angler[]): Award[] {
+  if (!players || players.length === 0) return [];
+  const awards: Award[] = [];
+
+  // 1. Lake Legend (highest score contribution)
+  const topScorer = [...players].sort(
+    (a, b) =>
+      (b.stats?.scoreContributed ?? b.catches * 25) -
+      (a.stats?.scoreContributed ?? a.catches * 25),
+  )[0];
+  if (
+    topScorer &&
+    ((topScorer.stats?.scoreContributed ?? 0) > 0 || topScorer.catches > 0)
+  ) {
+    awards.push({
+      icon: '🏆',
+      title: 'Lake Legend',
+      player: topScorer.name,
+      color: ANGLER_COLORS[topScorer.color],
+      desc: `${topScorer.stats?.scoreContributed ?? topScorer.catches * 25} pts landed`,
+    });
+  }
+
+  // 2. Salmon Magnet (slapped most by flying fish)
+  const topSlapped = [...players].sort(
+    (a, b) => (b.stats?.slapsTaken ?? 0) - (a.stats?.slapsTaken ?? 0),
+  )[0];
+  if (topSlapped && (topSlapped.stats?.slapsTaken ?? 0) > 0) {
+    awards.push({
+      icon: '🐟',
+      title: 'Salmon Magnet',
+      player: topSlapped.name,
+      color: ANGLER_COLORS[topSlapped.color],
+      desc: `${topSlapped.stats.slapsTaken} fish to the face`,
+    });
+  }
+
+  // 3. Sea-Floor Inspector (spent the most time swimming)
+  const topSwimmer = [...players].sort(
+    (a, b) =>
+      (b.stats?.swimTimeMs ?? b.splashes * 5000) -
+      (a.stats?.swimTimeMs ?? a.splashes * 5000),
+  )[0];
+  const swimSec = Math.round(
+    ((topSwimmer?.stats?.swimTimeMs ?? topSwimmer?.splashes * 5000) || 0) /
+      1000,
+  );
+  if (topSwimmer && (swimSec >= 3 || topSwimmer.splashes > 0)) {
+    awards.push({
+      icon: '🤿',
+      title: 'Sea-Floor Inspector',
+      player: topSwimmer.name,
+      color: ANGLER_COLORS[topSwimmer.color],
+      desc: `${swimSec}s inspecting the bottom`,
+    });
+  }
+
+  // 4. The Human Anchor (hooked teammates)
+  const topHooker = [...players].sort(
+    (a, b) => (b.stats?.friendsHooked ?? 0) - (a.stats?.friendsHooked ?? 0),
+  )[0];
+  if (topHooker && (topHooker.stats?.friendsHooked ?? 0) > 0) {
+    awards.push({
+      icon: '🪝',
+      title: 'The Human Anchor',
+      player: topHooker.name,
+      color: ANGLER_COLORS[topHooker.color],
+      desc: `Hooked crew ${topHooker.stats.friendsHooked} times`,
+    });
+  }
+
+  // 5. Deck-Slider (slipped on fish)
+  const topSlider = [...players].sort(
+    (a, b) => (b.stats?.fishSlipped ?? 0) - (a.stats?.fishSlipped ?? 0),
+  )[0];
+  if (topSlider && (topSlider.stats?.fishSlipped ?? 0) > 0) {
+    awards.push({
+      icon: '🍌',
+      title: 'Deck-Slider',
+      player: topSlider.name,
+      color: ANGLER_COLORS[topSlider.color],
+      desc: `${topSlider.stats.fishSlipped} banana-peel slips`,
+    });
+  }
+
+  // 6. Master Patcher (leak repairs)
+  const topPatcher = [...players].sort(
+    (a, b) => (b.stats?.leaksRepaired ?? 0) - (a.stats?.leaksRepaired ?? 0),
+  )[0];
+  if (topPatcher && (topPatcher.stats?.leaksRepaired ?? 0) >= 1) {
+    awards.push({
+      icon: '🔨',
+      title: 'Master Patcher',
+      player: topPatcher.name,
+      color: ANGLER_COLORS[topPatcher.color],
+      desc: `${Math.round(topPatcher.stats.leaksRepaired)}s repairing hull leaks`,
+    });
+  }
+
+  return awards;
+}
 function HoldButton({
   children,
   label,
@@ -487,6 +598,14 @@ export default function ReelProblems() {
   const seaLife =
     w?.wildlife?.filter((visitor) => visitor.activeUntil > w.clock) ?? [];
   const lastEvent = w?.events.at(-1);
+  const monsterFish = w?.fish.find((f) => f.kind === 'monster');
+  const monsterHooked = !!(
+    monsterFish &&
+    !monsterFish.respawnAt &&
+    w?.players.some(
+      (p) => p.line?.kind === 'fish' && p.line.target === monsterFish.id,
+    )
+  );
   const uiDisabled = !playing || status !== 'online' || !!modal;
   return (
     <main className={`reel-game${session ? ' in-session' : ''}`}>
@@ -499,6 +618,29 @@ export default function ReelProblems() {
           }}
         />
       )}
+      {playing && monsterHooked && monsterFish && (
+        <output className="reel-boss-hud" aria-label="Boss showdown">
+          <div className="reel-boss-badge">⚠️ BOSS SHOWDOWN</div>
+          <div className="reel-boss-title">
+            <strong>THE LAKE MANAGER</strong>
+            <span>HE WOULD LIKE A WORD</span>
+          </div>
+          <div className="reel-boss-stamina">
+            <progress
+              max={CATCHES.monster.stamina}
+              value={monsterFish.stamina}
+              aria-label="Lake Manager stamina"
+            />
+            <span>
+              {monsterFish.stamina <= 0
+                ? '💀 EXHAUSTED - PULL TOGETHER!'
+                : monsterFish.surge
+                  ? '⚡ THRASHING!'
+                  : `${Math.round((monsterFish.stamina / CATCHES.monster.stamina) * 100)}%`}
+            </span>
+          </div>
+        </output>
+      )}
       {playing && w?.players.some((p) => (p.trophyUntil ?? 0) > w.clock) && (
         <output className="reel-trophy-banner">
           <Trophy size={28} className="reel-trophy-banner-icon" />
@@ -508,9 +650,18 @@ export default function ReelProblems() {
           </div>
         </output>
       )}
+      {playing && me && (me.shockedUntil ?? 0) > (w?.clock ?? 0) && (
+        <div className="reel-shock-alert">
+          <span>⚡ ZAPPED! ROD CONDUCTED LIGHTNING! ⚡</span>
+        </div>
+      )}
       {playing && me && (me.tumbleUntil ?? 0) > (w?.clock ?? 0) && (
         <div className="reel-slap-alert">
-          <span>💫 SMACKED FLAT ON DECK!</span>
+          <span>
+            {lastEvent?.kind === 'slip'
+              ? '🍌 SLIPPED ON A FLOPPING FISH!'
+              : '💫 SMACKED FLAT ON DECK!'}
+          </span>
         </div>
       )}
       <header className="reel-header">
@@ -1043,6 +1194,31 @@ export default function ReelProblems() {
                   </span>
                 ))}
               </div>
+              {w && (
+                <div
+                  className="reel-awards"
+                  aria-label="Tournament Superlatives"
+                >
+                  <h3>🏆 Hall of Fame & Shame</h3>
+                  <div className="reel-awards-grid">
+                    {getAwards(w.players).map((award) => (
+                      <div className="reel-award-card" key={award.title}>
+                        <span className="reel-award-icon">{award.icon}</span>
+                        <div className="reel-award-info">
+                          <strong>{award.title}</strong>
+                          <span
+                            className="reel-award-winner"
+                            style={{ color: award.color }}
+                          >
+                            {award.player}
+                          </span>
+                          <small>{award.desc}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {!practice && w && (
                 <CrewSlots
                   players={w.players}

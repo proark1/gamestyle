@@ -104,6 +104,9 @@ export function advanceHull(w: ReelWorld, dt: number, emit: Emit) {
     return false;
   }
   const patchers = holding.filter((p) => handsOnHull(w, p) === 'patch');
+  for (const p of patchers) {
+    p.stats.leaksRepaired += dt;
+  }
   // Friends on the same crack finish it faster; walking off lets it gape again, slowly.
   leak.patch = patchers.length
     ? leak.patch +

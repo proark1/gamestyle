@@ -399,6 +399,8 @@ export function poseAngler(
   tumble = false,
   trophy = false,
   slipping = false,
+  hooked = false,
+  shocked = false,
 ) {
   const body = model.userData.body as THREE.Group | undefined;
   const legL = model.userData.legL as THREE.Group | undefined;
@@ -406,6 +408,29 @@ export function poseAngler(
   const armL = model.userData.armL as THREE.Group | undefined;
   const armR = model.userData.armR as THREE.Group | undefined;
   if (!legL || !legR || !armL || !armR) return;
+
+  if (shocked) {
+    // Tom & Jerry electric shock gag: frantic rapid jitter and rigid splayed limbs
+    const jx = () => (Math.random() - 0.5) * 0.4;
+    const jy = () => (Math.random() - 0.5) * 0.4;
+    if (body) body.rotation.set(jx() * 0.5, jy() * 0.5, jx() * 0.5);
+    legL.rotation.set(0.5 + jx(), 0, 0.4 + jy());
+    legR.rotation.set(-0.5 + jx(), 0, -0.4 + jy());
+    armL.rotation.set(-1.8 + jx(), 0, 0.9 + jy());
+    armR.rotation.set(-1.8 + jx(), 0, -0.9 + jy());
+    return;
+  }
+
+  if (hooked) {
+    // Hooked by teammate: body yanked backward, frantic arm flailing & panicked scissor kicks
+    if (body) body.rotation.set(-0.6, 0, Math.sin(now / 45) * 0.2);
+    const flail = now / 40;
+    armL.rotation.set(-2.3 + Math.sin(flail) * 0.7, 0, 0.4);
+    armR.rotation.set(-2.3 - Math.sin(flail) * 0.7, 0, -0.4);
+    legL.rotation.set(Math.sin(flail * 0.8) * 0.85, 0, 0.2);
+    legR.rotation.set(-Math.sin(flail * 0.8) * 0.85, 0, -0.2);
+    return;
+  }
 
   if (downed) {
     if (body) body.rotation.set(0, 0, 0);
@@ -782,5 +807,56 @@ export function createGull() {
     wing.position.set(x * 0.12, 0.05, 0);
     g.add(wing);
   }
+  return g;
+}
+
+/** Giant underwater shadow silhouette of the legendary "Lake Manager" monster fish. */
+export function createLakeManagerShadow() {
+  const g = new THREE.Group();
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: '#07181a',
+    transparent: true,
+    opacity: 0.82,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  // Massive silhouette body: elongated ellipsoid
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), shadowMat);
+  body.scale.set(1.9, 0.28, 4.6);
+  body.name = 'shadow-body';
+  g.add(body);
+
+  // Dorsal fin silhouette
+  const fin = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.2, 4), shadowMat);
+  fin.rotation.x = Math.PI / 2;
+  fin.rotation.z = Math.PI / 2;
+  fin.scale.set(0.18, 1, 1.2);
+  fin.position.set(0, 0.12, -1.8);
+  g.add(fin);
+
+  // Tail flukes
+  const fluke = new THREE.Mesh(new THREE.ConeGeometry(1.3, 1.8, 3), shadowMat);
+  fluke.rotation.x = -Math.PI / 2;
+  fluke.scale.set(1.6, 0.1, 0.8);
+  fluke.position.set(0, 0, -4.6);
+  g.add(fluke);
+
+  // Ominous glowing yellow eyes beneath the deep water
+  const eyeMat = new THREE.MeshBasicMaterial({
+    color: '#ffd026',
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+  });
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), eyeMat);
+  eyeL.position.set(0.75, 0.12, 3.2);
+  eyeL.name = 'eye-l';
+  g.add(eyeL);
+
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), eyeMat);
+  eyeR.position.set(-0.75, 0.12, 3.2);
+  eyeR.name = 'eye-r';
+  g.add(eyeR);
+
   return g;
 }

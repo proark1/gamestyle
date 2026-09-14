@@ -180,3 +180,153 @@ void test('Audio Director triggers dread loop when shark stalks swimming player 
     '15s time warning hit should be emitted near round end',
   );
 });
+
+void test('Deck fish causes banana-peel slip when an angler steps near it', () => {
+  const w = freshReel(100_000);
+  w.phase = 'playing';
+  w.started = w.clock;
+
+  const p = newAngler('p1', 'Slipper', 0, w.clock);
+  p.x = 0;
+  p.z = 0;
+  w.players.push(p);
+
+  // Spawn a flopping fish on deck at (0.2, 0.1) - within 0.58m reach
+  w.deckFish.push({
+    id: 'df-1',
+    kind: 'salmon',
+    x: 0.2,
+    z: 0.1,
+    angle: 0,
+    until: w.clock + 8000,
+  });
+
+  step(w, 0.1);
+
+  assert.ok(
+    p.tumbleUntil > w.clock,
+    'Player should tumble after slipping on fish',
+  );
+  assert.equal(p.stats.fishSlipped, 1, 'Player stats should record fish slip');
+  assert.ok(
+    Math.hypot(p.slipX, p.slipZ) > 0,
+    'Player should experience slip velocity',
+  );
+  assert.ok(
+    w.events.some((e) => e.kind === 'slip'),
+    'Slip event should be announced',
+  );
+});
+
+void test('Lightning strike conducts through active fishing rod and shocks angler', () => {
+  const w = freshReel(100_000);
+  w.phase = 'playing';
+  w.started = w.clock;
+
+  const p = newAngler('p1', 'RodHolder', 0, w.clock);
+  p.x = 0;
+  p.z = 0;
+  p.line = {
+    kind: 'fish',
+    target: 'fish-0',
+    x: 0,
+    z: 20,
+    length: 20,
+    tension: 0.5,
+    strain: 0.4,
+    tangled: false,
+    crossing: 0,
+    castAt: w.clock - 1000,
+    clearUntil: 0,
+  };
+  w.players.push(p);
+
+  // Force a thunder flash
+  w.weather.kind = 'storm';
+  w.weather.flashUntil = w.clock + 200;
+  w.weather.nextThunderAt = w.clock + 99999;
+
+  step(w, 0.05);
+
+  assert.ok(
+    p.shockedUntil > w.clock,
+    'Angler holding rod should be shocked by thunder flash',
+  );
+  assert.ok(
+    w.events.some((e) => e.kind === 'shock'),
+    'Shock event should be announced in the world',
+  );
+});
+
+void test('Hooking The Lake Manager monster announces a boss event', () => {
+  const w = freshReel(100_000);
+  w.phase = 'playing';
+  w.started = w.clock;
+
+  const monster = w.fish.find((f) => f.kind === 'monster');
+  assert.ok(monster, 'Monster fish must exist in world');
+
+  const p = newAngler('p1', 'BossChallenger', 0, w.clock);
+  p.x = 0;
+  p.z = 0;
+  p.line = {
+    kind: 'fish',
+    target: monster.id,
+    x: monster.x,
+    z: monster.z,
+    length: 15,
+    tension: 0.6,
+    strain: 0.5,
+    tangled: false,
+    crossing: 0,
+    castAt: w.clock - 500,
+    clearUntil: 0,
+  };
+  w.players.push(p);
+
+  step(w, 0.1);
+
+  assert.ok(
+    w.events.some((e) => e.kind === 'boss'),
+    'Boss showdown event should be announced when monster is hooked',
+  );
+});
+
+void test('Audio Director triggers vocal oof and waaah on slap, slip, and splash', () => {
+  const director = new ReelAudioDirector();
+  const w = freshReel(100_000);
+  w.phase = 'playing';
+  w.started = w.clock;
+
+  director.update(w, 'p1');
+
+  // Push a slip event
+  w.events.push({
+    id: ++w.eventId,
+    kind: 'slip',
+    text: 'Slipped on a fish!',
+  });
+
+  const slipPlan = director.update(w, 'p1');
+  assert.ok(
+    slipPlan.hits.some((h) => h.id === 'event.slip'),
+    'Should trigger event.slip audio hit',
+  );
+  assert.ok(
+    slipPlan.hits.some((h) => h.id === 'event.oof'),
+    'Should trigger comic event.oof vocal grunt on slip',
+  );
+
+  // Push a splash event
+  w.events.push({
+    id: ++w.eventId,
+    kind: 'splash',
+    text: 'Splash!',
+  });
+
+  const splashPlan = director.update(w, 'p1');
+  assert.ok(
+    splashPlan.hits.some((h) => h.id === 'event.waaah'),
+    'Should trigger comic event.waaah panic vocal on splash',
+  );
+});

@@ -173,6 +173,16 @@ export function newAngler(
     trophyUntil: 0,
     trophyKind: undefined,
     lostHat: false,
+    shockedUntil: 0,
+    stats: {
+      slapsTaken: 0,
+      friendsHooked: 0,
+      snapsCount: 0,
+      swimTimeMs: 0,
+      fishSlipped: 0,
+      scoreContributed: 0,
+      leaksRepaired: 0,
+    },
   };
 }
 export function freshReel(now: number): ReelWorld {
@@ -218,6 +228,7 @@ export function freshReel(now: number): ReelWorld {
     pending: null,
     flyingFish: null,
     nextFlyingFishAt: now + 32_000,
+    deckFish: [],
   };
   const kinds: CatchKind[] = [
     'perch',
@@ -391,6 +402,7 @@ function dive(w: ReelWorld, p: Angler) {
  * in advanceChaos, which is what makes those five seconds worth anything.
  */
 function swim(w: ReelWorld, p: Angler, dt: number) {
+  p.stats.swimTimeMs += dt * 1000;
   const sunk = w.boat.sunk;
   if (p.downedUntil) {
     // With the boat on the lake bed there is nobody to haul you out yet.
@@ -609,6 +621,9 @@ export function reelAction(
     (other) =>
       other.id !== id && distance(anglerPosition(w, other), target) < 1.2,
   );
+  if (friend) {
+    p.stats.friendsHooked++;
+  }
   p.line = {
     kind: friend ? 'player' : 'waiting',
     target: friend?.id ?? '',
@@ -686,10 +701,21 @@ export function bank(
     angler.catches++;
     angler.trophyUntil = w.clock + 1800;
     angler.trophyKind = kind;
+    angler.stats.scoreContributed += spec.value;
   }
   w.haul[kind] = (w.haul[kind] ?? 0) + 1;
   const junk = kind === 'tire' || kind === 'magnet' || kind === 'boot';
   if (junk) w.gear[kind] = true;
+  if (!junk && random(w) < 0.28) {
+    w.deckFish.push({
+      id: `df-${w.clock}-${w.deckFish.length}`,
+      kind,
+      x: (random(w) * 2 - 1) * (BOAT_HALF.x - 0.4),
+      z: (random(w) * 2 - 1) * (BOAT_HALF.z - 0.5),
+      angle: random(w) * Math.PI * 2,
+      until: w.clock + 3500,
+    });
+  }
   const bonus =
     kind === 'tire'
       ? ' Tyre fitted: a steadier boat.'
@@ -809,6 +835,7 @@ function advanceFlyingFish(w: ReelWorld) {
         if (!p.input.brace) {
           p.tumbleUntil = w.clock + 750;
           p.lostHat = true;
+          p.stats.slapsTaken++;
           const shoveDir = Math.sign(ff.toX - ff.fromX);
           p.slipX += shoveDir * 2.5;
           announce(
@@ -992,6 +1019,68 @@ export function step(w: ReelWorld, dt: number) {
       }
     }
   }
+  // Advance flopping fish on deck & check for banana-peel slips
+  for (let i = w.deckFish.length - 1; i >= 0; i--) {
+    const df = w.deckFish[i];
+    if (w.clock >= df.until) {
+      w.deckFish.splice(i, 1);
+      continue;
+    }
+    df.angle += Math.sin(w.clock / 60 + i) * dt * 7;
+    df.x = clamp(
+      df.x + Math.sin(df.angle) * dt * 0.35,
+      -BOAT_HALF.x + 0.3,
+      BOAT_HALF.x - 0.3,
+    );
+    df.z = clamp(
+      df.z + Math.cos(df.angle) * dt * 0.35,
+      -BOAT_HALF.z + 0.3,
+      BOAT_HALF.z - 0.3,
+    );
+
+    for (const p of w.players) {
+      if (p.swimming || p.tumbleUntil > w.clock || p.y > 0.25) continue;
+      const d = Math.hypot(p.x - df.x, p.z - df.z);
+      if (d < 0.58) {
+        p.tumbleUntil = w.clock + 1100;
+        const shoveX = Math.sign(p.x - df.x || 1);
+        const shoveZ = Math.sign(p.z - df.z || 1);
+        p.slipX += shoveX * 3.4;
+        p.slipZ += shoveZ * 3.4;
+        p.stats.fishSlipped++;
+        announce(
+          w,
+          'slip',
+          `${p.name} slipped on a flopping ${CATCHES[df.kind].name}! Watch your step!`,
+        );
+        df.x = clamp(
+          df.x - shoveX * 0.6,
+          -BOAT_HALF.x + 0.3,
+          BOAT_HALF.x - 0.3,
+        );
+        df.z = clamp(
+          df.z - shoveZ * 0.6,
+          -BOAT_HALF.z + 0.3,
+          BOAT_HALF.z - 0.3,
+        );
+        break;
+      }
+    }
+  }
+
+  // Thunder flash shock through rod
+  if (w.weather.flashUntil > w.clock) {
+    for (const p of w.players) {
+      if (!p.swimming && p.line && p.shockedUntil <= w.clock) {
+        p.shockedUntil = w.clock + 600;
+        announce(
+          w,
+          'shock',
+          `⚡ ZZZT! A lightning strike conducted through ${p.name}'s rod!`,
+        );
+      }
+    }
+  }
   for (const f of w.fish) {
     const spec = CATCHES[f.kind];
     if (f.respawnAt) {
@@ -1013,6 +1102,16 @@ export function step(w: ReelWorld, dt: number) {
       Math.sin(w.clock / 1050 + Number(f.id.slice(5)) * 1.7) > 0.45 &&
       f.stamina > 0;
     if (crew.length) {
+      if (
+        f.kind === 'monster' &&
+        !w.events.some((e) => e.kind === 'boss' && w.clock - e.id < 20_000)
+      ) {
+        announce(
+          w,
+          'boss',
+          '⚠️ THE LAKE MANAGER HAS RISEN! PULL TOGETHER, CREW!',
+        );
+      }
       const from = crew.reduce(
           (point, p) => {
             const position = anglerPosition(w, p);
@@ -1160,6 +1259,7 @@ export function step(w: ReelWorld, dt: number) {
         `${p.name} snapped a line! Ease off E when the tension turns red.`,
       );
       p.tumbleUntil = w.clock + 900;
+      p.stats.snapsCount++;
       p.slipX -= dx * 2.8;
       p.slipZ -= dz * 2.8;
       cutLine(w, p);
