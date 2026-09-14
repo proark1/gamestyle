@@ -1070,15 +1070,16 @@ void test('siege crew avatar uses the shared worker rig, stands on ground, and f
 
 void test('siege crew has a conical helmet by default and replaces it with wardrobe hats', () => {
   const bare = crewMember(0);
-  assert.ok(
-    bare.getObjectByName('helmet'),
+  assert.equal(
+    bare.getObjectByName('helmet') != null,
+    true,
     'default crew wears conical helmet',
   );
 
-  const dressed = crewMember(0, { hat: 'beanie' });
+  const dressed = crewMember(0, { hat: 'bobble-beanie' });
   assert.equal(
-    dressed.getObjectByName('helmet'),
-    undefined,
+    dressed.getObjectByName('helmet') == null,
+    true,
     'wardrobe hat replaces helmet',
   );
 });
@@ -1092,8 +1093,8 @@ void test('poseCrew swings limbs on walking, lifts arms on winding and raises ov
 
   // Idle
   poseCrew(model, 1000, { walking: false, winding: false, flying: false });
-  assert.equal(legL.rotation.x, 0);
-  assert.equal(legR.rotation.x, 0);
+  assert.equal(Math.abs(legL.rotation.x), 0);
+  assert.equal(Math.abs(legR.rotation.x), 0);
 
   // Walking
   poseCrew(model, 1000, { walking: true, winding: false, flying: false });
@@ -1123,11 +1124,11 @@ void test('siegeAvatars is dressable and builds an animated preview', () => {
   assert.equal(crew.key, 'crew');
   assert.equal(crew.dressable, true, 'marked dressable');
 
-  const preview = crew.create({ hat: 'beanie' });
+  const preview = crew.create({ hat: 'bobble-beanie' });
   assert.ok(preview.root instanceof T.Object3D);
   assert.equal(
-    preview.root.getObjectByName('helmet'),
-    undefined,
+    preview.root.getObjectByName('helmet') == null,
+    true,
     'honors wardrobe look in preview',
   );
   assert.ok(typeof preview.pose === 'function');

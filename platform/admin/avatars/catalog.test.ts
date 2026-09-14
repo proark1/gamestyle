@@ -110,6 +110,7 @@ void test('the games on the shared worker build its exact body and change only c
   const reference = workerShape(worker(0));
   const shared = [
     ['stack-or-sink', 'stacker'],
+    ['siege-and-desist', 'crew'],
     ['load-bearing', 'wrecker'],
     ['uphill-delivery', 'mover'],
     ['dont-wake-the-giant', 'thief'],
@@ -133,7 +134,7 @@ void test('the games on the shared worker build its exact body and change only c
   }
 });
 
-void test('eight games dress the shared worker in wardrobe items over their own clothes', () => {
+void test('nine games dress the shared worker in wardrobe items over their own clothes', () => {
   const dressable = AVATAR_GAMES.flatMap((card) =>
     card.looks
       .filter((look) => look.dressable)
@@ -145,6 +146,7 @@ void test('eight games dress the shared worker in wardrobe items over their own 
     'load-bearing:wrecker',
     'one-more-button:contestant',
     'reel-problems:angler',
+    'siege-and-desist:crew',
     'stack-or-sink:stacker',
     'uphill-delivery:mover',
     'wrong-floor:guest',

@@ -89,18 +89,29 @@ export function crewMember(color: string | number, look?: Look) {
 
   // Conical helmet with a nasal bar; replaced if a player wears their own wardrobe hat
   if (!worn.hat) {
-    const helmet = new T.Group();
-    helmet.name = 'helmet';
-    cone(helmet, 0.34, 0.42, [0, WORKER_HEAD_TOP + 0.21, 0], '#b9a06a');
-    box(
-      helmet,
+    const helmetCone = cone(
+      body,
+      0.34,
+      0.42,
+      [0, WORKER_HEAD_TOP + 0.21, 0],
+      '#b9a06a',
+    );
+    helmetCone.name = 'helmet';
+    const nasalBar = box(
+      body,
       [0.05, 0.24, 0.05],
       [0, WORKER_HEAD_TOP - 0.12, 0.27],
       '#b9a06a',
       true,
     );
-    ball(helmet, [0.06, 0.08, 0.06], [0, WORKER_HEAD_TOP + 0.44, 0], '#d8c48a');
-    body.add(helmet);
+    nasalBar.name = 'helmet';
+    const finial = ball(
+      body,
+      [0.06, 0.08, 0.06],
+      [0, WORKER_HEAD_TOP + 0.44, 0],
+      '#d8c48a',
+    );
+    finial.name = 'helmet';
     g.userData.hatTop = WORKER_HEAD_TOP + 0.46;
   }
 
