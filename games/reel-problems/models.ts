@@ -221,21 +221,97 @@ export function createAngler(color: string, look?: Look) {
   return g;
 }
 /**
- * Steps an angler across the deck, rod held steady, or tucks them up in a jump;
- * `now` is in milliseconds.
+ * Steps an angler across the deck, tucks them up in a jump, or animates them
+ * swimming, clinging to the hull, or treading water; `now` is in milliseconds.
  */
 export function poseAngler(
   model: THREE.Object3D,
   now: number,
   moving: boolean,
   airborne = false,
+  swimming = false,
+  clinging = false,
+  climbing = false,
+  downed = false,
 ) {
+  const body = model.userData.body as THREE.Group | undefined;
+  const legL = model.userData.legL as THREE.Group | undefined;
+  const legR = model.userData.legR as THREE.Group | undefined;
+  const armL = model.userData.armL as THREE.Group | undefined;
+  const armR = model.userData.armR as THREE.Group | undefined;
+  if (!legL || !legR || !armL || !armR) return;
+
+  if (downed) {
+    if (body) body.rotation.set(0, 0, 0);
+    legL.rotation.set(0.2, 0, 0.1);
+    legR.rotation.set(0.15, 0, -0.1);
+    armL.rotation.set(0.4, 0, 0.3);
+    armR.rotation.set(0.4, 0, -0.3);
+    return;
+  }
+
+  if (clinging) {
+    if (body) body.rotation.set(0, 0, 0);
+    if (climbing) {
+      const cycle = now / 110;
+      armL.rotation.set(-2.1 + Math.sin(cycle) * 0.45, 0, -0.2);
+      armR.rotation.set(-2.1 - Math.sin(cycle) * 0.45, 0, 0.2);
+      legL.rotation.set(Math.sin(cycle) * 0.4, 0, 0.1);
+      legR.rotation.set(-Math.sin(cycle) * 0.4, 0, -0.1);
+    } else {
+      armL.rotation.set(-2.2, 0, -0.2);
+      armR.rotation.set(-2.2, 0, 0.2);
+      legL.rotation.set(Math.sin(now / 300) * 0.15, 0, 0.1);
+      legR.rotation.set(-Math.sin(now / 300) * 0.15, 0, -0.1);
+    }
+    return;
+  }
+
+  if (swimming) {
+    if (moving) {
+      // Head lifted slightly forward to breathe while body is prone
+      if (body) body.rotation.set(-0.35, 0, 0);
+      const stroke = now / 160;
+      armL.rotation.set(
+        -Math.sin(stroke) * 1.5 - 0.7,
+        Math.cos(stroke) * 0.25,
+        Math.cos(stroke) * 0.4 + 0.3,
+      );
+      armR.rotation.set(
+        -Math.sin(stroke + Math.PI) * 1.5 - 0.7,
+        -Math.cos(stroke + Math.PI) * 0.25,
+        -Math.cos(stroke + Math.PI) * 0.4 - 0.3,
+      );
+      const kick = now / 80;
+      legL.rotation.set(Math.sin(kick) * 0.45, 0, 0.08);
+      legR.rotation.set(-Math.sin(kick) * 0.45, 0, -0.08);
+    } else {
+      // Treading water: gentle circular sculling and scissor kick
+      if (body) body.rotation.set(-0.15, 0, 0);
+      const scull = now / 230;
+      armL.rotation.set(
+        -0.7 + Math.sin(scull) * 0.3,
+        Math.sin(scull) * 0.25,
+        0.65 + Math.cos(scull) * 0.25,
+      );
+      armR.rotation.set(
+        -0.7 + Math.sin(scull) * 0.3,
+        -Math.sin(scull) * 0.25,
+        -0.65 - Math.cos(scull) * 0.25,
+      );
+      legL.rotation.set(Math.sin(scull) * 0.35, 0, 0.15);
+      legR.rotation.set(-Math.sin(scull) * 0.35, 0, -0.15);
+    }
+    return;
+  }
+
+  if (body) body.rotation.set(0, 0, 0);
   const stride = moving && !airborne ? Math.sin(now / 95) * 0.45 : 0;
   // In the air: knees up and the free arm thrown out for balance.
-  model.userData.legL.rotation.x = airborne ? -0.6 : stride;
-  model.userData.legR.rotation.x = airborne ? -0.35 : -stride;
-  model.userData.armL.rotation.x = airborne ? -1.8 : -stride * 0.7;
-  model.userData.armR.rotation.x = ROD_ARM;
+  legL.rotation.set(airborne ? -0.6 : stride, 0, 0);
+  legR.rotation.set(airborne ? -0.35 : -stride, 0, 0);
+  armL.rotation.set(airborne ? -1.8 : -stride * 0.7, 0, 0);
+  armR.rotation.set(ROD_ARM, 0, 0);
 }
 /** How far an angler rocks on deck; `now` is in milliseconds. */
 export function deckSway(

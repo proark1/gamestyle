@@ -380,6 +380,8 @@ function swim(w: ReelWorld, p: Angler, dt: number) {
     const speed = w.clock < p.stunUntil ? 1.2 : 4.4;
     p.x += (input.x / norm) * dt * speed;
     p.z += (input.z / norm) * dt * speed;
+    if (input.x || input.z)
+      p.facing = Math.atan2(input.x, input.z) - w.boat.yaw;
     keepInLake(p);
     if (dockGap(p) < DOCK_REACH) {
       launchBoat(w);
@@ -419,6 +421,8 @@ function swim(w: ReelWorld, p: Angler, dt: number) {
     const speed = w.clock < p.stunUntil ? 1.2 : 4.4;
     p.x += (input.x / norm) * dt * speed;
     p.z += (input.z / norm) * dt * speed;
+    if (input.x || input.z)
+      p.facing = Math.atan2(input.x, input.z) - w.boat.yaw;
   }
   keepInLake(p);
   if (w.clock - p.overboardAt > 12_000)

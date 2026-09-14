@@ -12,6 +12,8 @@ import {
   hullGap,
 } from './simulation';
 import { createEngine } from './peer';
+import { createAngler, poseAngler } from './models';
+import * as THREE from 'three';
 import {
   BITE_COOLDOWN,
   BOAT_HALF,
@@ -566,4 +568,70 @@ void test('Only a jump from near the rail, heading out, clears the gunwale', () 
   tick(run.w, 1.5);
   assert.equal(run.p.swimming, false, 'a run from mid-deck lands short');
   assert.equal(run.p.splashes, 0);
+});
+void test('Swimmer faces the direction of travel while moving in the water', () => {
+  const { w, p } = onDeck();
+  p.x = BOAT_HALF.x;
+  p.input.x = 1;
+  p.input.z = 0;
+  reelAction(w, p.id, { type: 'jump' }, p.id);
+  tick(w, 0.6);
+  assert.equal(p.swimming, true);
+
+  // Swim along +X
+  p.input.x = 1;
+  p.input.z = 0;
+  tick(w, 0.2);
+  const expectedFacingX = Math.atan2(1, 0) - w.boat.yaw;
+  assert.ok(
+    Math.abs(p.facing - expectedFacingX) < 1e-4,
+    `facing +X: expected ${expectedFacingX}, got ${p.facing}`,
+  );
+
+  // Swim along -Z
+  p.input.x = 0;
+  p.input.z = -1;
+  tick(w, 0.2);
+  const expectedFacingZ = Math.atan2(0, -1) - w.boat.yaw;
+  assert.ok(
+    Math.abs(p.facing - expectedFacingZ) < 1e-4,
+    `facing -Z: expected ${expectedFacingZ}, got ${p.facing}`,
+  );
+
+  // Idle: maintains previous facing
+  p.input.x = 0;
+  p.input.z = 0;
+  tick(w, 0.2);
+  assert.ok(
+    Math.abs(p.facing - expectedFacingZ) < 1e-4,
+    `idle keeps facing: expected ${expectedFacingZ}, got ${p.facing}`,
+  );
+});
+void test('poseAngler poses swimmer, water-treading, clinging and downed postures', () => {
+  const angler = createAngler('#e05a47');
+  const body = angler.userData.body as THREE.Group;
+  const armL = angler.userData.armL as THREE.Group;
+  const legL = angler.userData.legL as THREE.Group;
+
+  // Crawl stroke when moving
+  poseAngler(angler, 1000, true, false, true, false, false, false);
+  assert.ok(
+    body.rotation.x < 0,
+    'head tilts back slightly while prone to breathe',
+  );
+  assert.notEqual(armL.rotation.x, 0, 'arms stroke through water');
+  assert.notEqual(legL.rotation.x, 0, 'flutter kicks');
+
+  // Treading water when idle
+  poseAngler(angler, 1000, false, false, true, false, false, false);
+  assert.equal(body.rotation.x, -0.15, 'slight body tilt while sculling');
+
+  // Clinging and climbing
+  poseAngler(angler, 1000, false, false, false, true, true, false);
+  assert.ok(armL.rotation.x < -1.5, 'arms reached up hauling gunwale');
+
+  // Downed floating
+  poseAngler(angler, 1000, false, false, false, false, false, true);
+  assert.equal(body.rotation.x, 0);
+  assert.equal(armL.rotation.x, 0.4, 'limp arms');
 });

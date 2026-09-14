@@ -77,6 +77,7 @@ export class ReelScene {
     new THREE.TorusGeometry(1.6, 0.12, 6, 28),
     new THREE.MeshBasicMaterial({ color: '#ffd24a', transparent: true }),
   );
+  private swimRipples = new Map<string, THREE.Mesh>();
   private observer: ResizeObserver;
   private resizePending = true;
   private viewportWidth = 0;
@@ -427,6 +428,12 @@ export class ReelScene {
           this.disposeObject(bobber);
           this.bobbers.delete(id);
         }
+        const ripple = this.swimRipples.get(id);
+        if (ripple) {
+          this.scene.remove(ripple);
+          this.disposeObject(ripple);
+          this.swimRipples.delete(id);
+        }
       }
     for (const p of world.players) {
       let object = this.anglers.get(p.id);
@@ -435,12 +442,12 @@ export class ReelScene {
           ANGLER_COLORS[p.color],
           p.id === this.localId ? getEquippedLook() : undefined,
         );
-        object.add(
-          nameLabel(
-            p.id === this.localId ? `${p.name} · YOU` : p.name,
-            ANGLER_COLORS[p.color],
-          ),
+        const label = nameLabel(
+          p.id === this.localId ? `${p.name} · YOU` : p.name,
+          ANGLER_COLORS[p.color],
         );
+        label.name = 'label';
+        object.add(label);
         this.anglers.set(p.id, object);
         const points = new Float32Array(18 * 3),
           geometry = new THREE.BufferGeometry();
@@ -478,13 +485,16 @@ export class ReelScene {
       const downed = p.swimming && world.clock < p.downedUntil;
       const falling =
         p.swimming && now - (object.userData.fellAt ?? -1000) < 500;
+      const moving = Math.hypot(p.input.x, p.input.z) > 0.1;
       // Height alone tells the story: face down, hanging on, or back aboard.
       const height = downed
         ? -0.74
         : p.clinging
           ? -0.5 + p.climb * 1.02
           : p.swimming
-            ? -0.48 + Math.sin(now / 200) * 0.08
+            ? moving
+              ? -0.56 + Math.sin(now / 160) * 0.04
+              : -0.5 + Math.sin(now / 220) * 0.05
             : 0.52 + lift;
       object.position.lerp(new THREE.Vector3(p.x, height, p.z), smooth);
       object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
@@ -495,26 +505,84 @@ export class ReelScene {
           Math.sin(((now - object.userData.fellAt) / 500) * Math.PI) *
           (dove ? 1.4 : 0.9);
         object.rotation.z = dove ? 0 : 0.65;
-      } else if (downed) {
-        object.rotation.x = 1.45;
-        object.rotation.z = 0.6;
-      } else if (p.clinging) {
-        // Scrambling up the side: the harder you haul, the more you swing.
-        object.rotation.x = -0.35;
-        object.rotation.z = Math.sin(now / 90) * (p.input.reel ? 0.18 : 0.05);
       } else {
-        object.rotation.x = 0;
-        object.rotation.z = deckSway(now, p.input);
+        let targetRotX = 0;
+        let targetRotZ = 0;
+        if (downed) {
+          targetRotX = 1.45;
+          targetRotZ = 0.6;
+        } else if (p.clinging) {
+          // Scrambling up the side: the harder you haul, the more you swing.
+          targetRotX = -0.35;
+          targetRotZ = Math.sin(now / 90) * (p.input.reel ? 0.18 : 0.05);
+        } else if (p.swimming) {
+          if (moving) {
+            targetRotX = 1.25;
+            targetRotZ = Math.sin(now / 160) * 0.16;
+          } else {
+            targetRotX = 0.32;
+            targetRotZ = Math.sin(now / 220) * 0.05;
+          }
+        } else {
+          targetRotX = 0;
+          targetRotZ = deckSway(now, p.input);
+        }
+        object.rotation.x += (targetRotX - object.rotation.x) * smooth;
+        object.rotation.z += (targetRotZ - object.rotation.z) * smooth;
       }
       poseAngler(
         object,
         now,
-        !p.swimming && Math.hypot(p.input.x, p.input.z) > 0.1,
+        moving,
         lift > 0,
+        p.swimming && !downed && !falling,
+        p.clinging,
+        p.clinging && p.input.reel,
+        downed,
       );
-      // A paddle in hand replaces the rod, and strokes swing it through the water.
+      // Rod is stowed while swimming or paddling
       const paddling = !p.swimming && !!p.paddle;
-      object.getObjectByName('rod')!.visible = !paddling;
+      object.getObjectByName('rod')!.visible = !paddling && !p.swimming;
+      const label = object.getObjectByName('label');
+      if (label) {
+        const targetY = p.swimming ? (moving ? 1.8 : 2.2) : 2.65;
+        const targetZ = p.swimming ? (moving ? 0.7 : 0.2) : 0;
+        const cosX = Math.cos(object.rotation.x);
+        const sinX = Math.sin(object.rotation.x);
+        label.position.set(
+          0,
+          targetY * cosX + targetZ * sinX,
+          -targetY * sinX + targetZ * cosX,
+        );
+      }
+      let ripple = this.swimRipples.get(p.id);
+      const showRipple = p.swimming && !downed && !falling;
+      if (showRipple) {
+        if (!ripple) {
+          const geom = new THREE.RingGeometry(0.35, 0.72, 20);
+          const mat = new THREE.MeshBasicMaterial({
+            color: '#dff6f7',
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          ripple = new THREE.Mesh(geom, mat);
+          ripple.rotation.x = -Math.PI / 2;
+          this.scene.add(ripple);
+          this.swimRipples.set(p.id, ripple);
+        }
+        ripple.visible = true;
+        const pulse = moving ? Math.sin(now / 160) : Math.sin(now / 300);
+        const s = moving ? 1 + pulse * 0.25 : 0.85 + pulse * 0.12;
+        ripple.scale.set(s, s, s);
+        (ripple.material as THREE.MeshBasicMaterial).opacity = moving
+          ? 0.45 + pulse * 0.2
+          : 0.3 + pulse * 0.1;
+        ripple.position.set(p.x, 0.02, p.z);
+      } else if (ripple) {
+        ripple.visible = false;
+      }
       let paddle = object.userData.paddle as THREE.Group | undefined;
       if (paddling && !paddle) {
         paddle = createPaddle();
