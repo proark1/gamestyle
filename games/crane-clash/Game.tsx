@@ -174,6 +174,9 @@ export default function CraneClash() {
   const world = snapshot?.world;
   const isPlaying = world?.phase === 'playing';
   const isEnded = world?.phase === 'ended';
+  const humansOnMyTeam =
+    world?.players.filter((p) => !p.bot && p.team === team).length ?? 1;
+  const isSolo = humansOnMyTeam <= 1;
 
   const orangeScore = world?.scores.orange.height ?? 0;
   const tealScore = world?.scores.teal.height ?? 0;
@@ -274,11 +277,13 @@ export default function CraneClash() {
                 fontSize: 11,
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                color: '#777',
+                color: isSolo ? '#e58e38' : '#777',
                 marginTop: 4,
               }}
             >
-              Deine Rolle
+              {isSolo
+                ? 'Solo-Modus: Du steuerst Kran & Seil gleichzeitig!'
+                : 'Deine Rolle'}
             </span>
             <div className="cc-role-row">
               <button
@@ -286,14 +291,14 @@ export default function CraneClash() {
                 className={`cc-btn ${role === 'swinger' ? 'active' : ''}`}
                 onClick={() => handleRoleChange('swinger')}
               >
-                Seil-Akrobat (Hängt)
+                {isSolo ? 'Kamera: Seil-Akrobat' : 'Seil-Akrobat (Hängt)'}
               </button>
               <button
                 type="button"
                 className={`cc-btn ${role === 'operator' ? 'active' : ''}`}
                 onClick={() => handleRoleChange('operator')}
               >
-                Kranführer (Kabine)
+                {isSolo ? 'Kamera: Kranführer' : 'Kranführer (Kabine)'}
               </button>
             </div>
           </div>
@@ -334,33 +339,51 @@ export default function CraneClash() {
 
       {/* Controls Bar at bottom */}
       <div className="cc-hint-bar">
-        {role === 'swinger' ? (
+        {isSolo ? (
           <>
             <span>
-              <span className="cc-hint-key">WASD</span> Schaukeln & Schwung
-              aufbauen
+              <span className="cc-hint-key">WASD</span> Schaukeln
             </span>
             <span>
-              <span className="cc-hint-key">E</span> /{' '}
-              <span className="cc-hint-key">Space</span> Kiste Greifen / Werfen
+              <span className="cc-hint-key">Pfeiltasten</span> Kran drehen &
+              Katze
             </span>
             <span>
-              <span className="cc-hint-key">V</span> Kamera wechseln
+              <span className="cc-hint-key">Q</span> /{' '}
+              <span className="cc-hint-key">Z</span> Winde
+            </span>
+            <span>
+              <span className="cc-hint-key">Space</span> /{' '}
+              <span className="cc-hint-key">E</span> Greifen / Werfen
+            </span>
+            <span>
+              <span className="cc-hint-key">Tab</span> Tasten tauschen
+            </span>
+            <span>
+              <span className="cc-hint-key">V</span> Kamera
+            </span>
+          </>
+        ) : role === 'swinger' ? (
+          <>
+            <span>
+              <span className="cc-hint-key">WASD / Pfeile</span> Schaukeln &
+              Schwung
+            </span>
+            <span>
+              <span className="cc-hint-key">Space / E</span> Kiste Greifen /
+              Werfen
+            </span>
+            <span>
+              <span className="cc-hint-key">V</span> Kamera
             </span>
           </>
         ) : (
           <>
             <span>
-              <span className="cc-hint-key">A</span>/
-              <span className="cc-hint-key">D</span> Drehen
+              <span className="cc-hint-key">WASD / Pfeile</span> Kran steuern
             </span>
             <span>
-              <span className="cc-hint-key">W</span>/
-              <span className="cc-hint-key">S</span> Laufkatze
-            </span>
-            <span>
-              <span className="cc-hint-key">Q</span>/
-              <span className="cc-hint-key">Z</span> Heben/Senken
+              <span className="cc-hint-key">Q / Z</span> Seilwinde
             </span>
             <span>
               <span className="cc-hint-key">V</span> Kamera

@@ -157,11 +157,14 @@ export type CraneState = {
 };
 
 export type PlayerInput = {
-  x: number; // Operator: rotation/trolley; Swinger: swing lean X
-  z: number; // Operator: trolley; Swinger: swing lean Z
+  x: number; // Swinger: swing lean X; Operator (when dedicated): slew
+  z: number; // Swinger: swing lean Z; Operator (when dedicated): trolley
   y?: number; // Operator: hoist up/down (+1 / -1)
   grab?: boolean; // Swinger: press grab / release
   tuck?: boolean; // Swinger: tuck body
+  craneX?: number; // Dual-control crane slew (-1 left, +1 right)
+  craneZ?: number; // Dual-control crane trolley (-1 in, +1 out)
+  craneY?: number; // Dual-control crane hoist (+1 up, -1 down)
   seq: number;
 };
 
@@ -169,6 +172,9 @@ export const idleInput = (): PlayerInput => ({
   x: 0,
   z: 0,
   y: 0,
+  craneX: 0,
+  craneZ: 0,
+  craneY: 0,
   grab: false,
   tuck: false,
   seq: 0,

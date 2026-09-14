@@ -304,7 +304,7 @@ export class CraneClashPhysics {
     return null;
   }
 
-  releaseCrate(swingerPlayer: Player): string | null {
+  releaseCrate(swingerPlayer: Player, gentle = false): string | null {
     if (!swingerPlayer.holdingCrateId) return null;
     const crateId = swingerPlayer.holdingCrateId;
     const crate = this.state.crates.find((c) => c.id === crateId);
@@ -320,12 +320,24 @@ export class CraneClashPhysics {
       body.mass = config.mass;
       body.updateMassProperties();
       body.wakeUp();
-      // Impart tangential throw velocity with slight upward pop
-      body.velocity.set(
-        swinger.velocity.x * 1.15,
-        swinger.velocity.y + 0.6,
-        swinger.velocity.z * 1.15,
-      );
+      if (gentle) {
+        // Controlled drop straight onto pad or tower
+        body.velocity.set(
+          swinger.velocity.x * 0.2,
+          -0.5,
+          swinger.velocity.z * 0.2,
+        );
+      } else {
+        // Dynamic tangential throw velocity with slight upward pop
+        body.velocity.set(
+          swinger.velocity.x * 1.15,
+          swinger.velocity.y + 0.6,
+          swinger.velocity.z * 1.15,
+        );
+      }
+      crate.vx = body.velocity.x;
+      crate.vy = body.velocity.y;
+      crate.vz = body.velocity.z;
     }
     return crateId;
   }

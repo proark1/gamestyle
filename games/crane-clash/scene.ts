@@ -23,21 +23,6 @@ export type SceneCallbacks = {
   action: (action: CraneClashAction) => void;
 };
 
-const KEY_MAPPINGS: Record<string, { x?: number; z?: number; y?: number }> = {
-  KeyW: { z: -1 },
-  KeyS: { z: 1 },
-  KeyA: { x: -1 },
-  KeyD: { x: 1 },
-  ArrowUp: { z: -1 },
-  ArrowDown: { z: 1 },
-  ArrowLeft: { x: -1 },
-  ArrowRight: { x: 1 },
-  KeyR: { y: 1 },
-  KeyF: { y: -1 },
-  KeyQ: { y: 1 },
-  KeyZ: { y: -1 },
-};
-
 export class CraneClashScene {
   private renderer: T.WebGLRenderer;
   private scene = new T.Scene();
@@ -62,10 +47,21 @@ export class CraneClashScene {
   private localId = '';
   private localTeam: TeamId = 'orange';
   private localRole: Role = 'swinger';
+  private isSoloTeam = true;
+  private swappedControls = false;
   private inputSeq = 0;
   private rafId = 0;
   private lastInputSend = 0;
   private destroyed = false;
+
+  public isControlsSwapped(): boolean {
+    return this.swappedControls;
+  }
+
+  public toggleControlsSwap(): boolean {
+    this.swappedControls = !this.swappedControls;
+    return this.swappedControls;
+  }
 
   constructor(
     private container: HTMLElement,
@@ -234,6 +230,11 @@ export class CraneClashScene {
     }
 
     // Update Player Avatars
+    const humansOnMyTeam = world.players.filter(
+      (p) => !p.bot && p.team === this.localTeam,
+    );
+    this.isSoloTeam = humansOnMyTeam.length <= 1;
+
     const activePlayerIds = new Set(world.players.map((p) => p.id));
     for (const [id, mesh] of this.playerMeshes) {
       if (!activePlayerIds.has(id)) {
@@ -281,37 +282,78 @@ export class CraneClashScene {
     const now = performance.now();
     if (now - this.lastInputSend < 30) return; // 33Hz input rate
 
-    let ix = 0;
-    let iz = 0;
-    let iy = 0;
+    // Gather WASD inputs
+    let wasdX = 0;
+    let wasdZ = 0;
+    if (this.keys.has('KeyA')) wasdX -= 1;
+    if (this.keys.has('KeyD')) wasdX += 1;
+    if (this.keys.has('KeyW')) wasdZ -= 1;
+    if (this.keys.has('KeyS')) wasdZ += 1;
 
-    for (const code of this.keys) {
-      const mapping = KEY_MAPPINGS[code];
-      if (mapping) {
-        if (mapping.x) ix += mapping.x;
-        if (mapping.z) iz += mapping.z;
-        if (mapping.y) iy += mapping.y;
+    // Gather Arrow inputs
+    let arrowX = 0;
+    let arrowZ = 0;
+    if (this.keys.has('ArrowLeft')) arrowX -= 1;
+    if (this.keys.has('ArrowRight')) arrowX += 1;
+    if (this.keys.has('ArrowUp')) arrowZ += 1; // Trolley OUT
+    if (this.keys.has('ArrowDown')) arrowZ -= 1; // Trolley IN
+
+    // Gather Hoist inputs
+    let hoistY = 0;
+    if (this.keys.has('KeyQ') || this.keys.has('KeyR')) hoistY += 1; // Up
+    if (this.keys.has('KeyZ') || this.keys.has('KeyF')) hoistY -= 1; // Down
+
+    let swingRawX = 0;
+    let swingRawZ = 0;
+    let craneX = 0;
+    let craneZ = 0;
+    const craneY = hoistY;
+
+    if (this.isSoloTeam) {
+      // Solo player on team: Simultaneous Dual Control!
+      if (!this.swappedControls) {
+        // Standard: WASD = Swinger, Arrow keys = Crane
+        swingRawX = wasdX;
+        swingRawZ = wasdZ;
+        craneX = arrowX;
+        craneZ = arrowZ;
+      } else {
+        // Swapped (Tab): WASD = Crane, Arrow keys = Swinger
+        swingRawX = arrowX;
+        swingRawZ = -arrowZ;
+        craneX = wasdX;
+        craneZ = -wasdZ;
+      }
+    } else {
+      // 2 players on team: Split Roles!
+      if (this.localRole === 'operator') {
+        // Operator can use WASD or Arrows to drive crane
+        craneX = wasdX !== 0 ? wasdX : arrowX;
+        craneZ = wasdZ !== 0 ? -wasdZ : arrowZ;
+      } else {
+        // Swinger can use WASD or Arrows to swing
+        swingRawX = wasdX !== 0 ? wasdX : arrowX;
+        swingRawZ = wasdZ !== 0 ? wasdZ : -arrowZ;
       }
     }
 
-    if (this.localRole === 'swinger') {
-      // Rotate swing input relative to camera azimuth
-      const camAngle = this.orbit.angle;
-      const cos = Math.cos(camAngle);
-      const sin = Math.sin(camAngle);
-      const worldX = ix * cos - iz * sin;
-      const worldZ = ix * sin + iz * cos;
-      ix = worldX;
-      iz = worldZ;
-    }
+    // Rotate swing input relative to camera azimuth
+    const camAngle = this.orbit.angle;
+    const cos = Math.cos(camAngle);
+    const sin = Math.sin(camAngle);
+    const worldSwingX = swingRawX * cos - swingRawZ * sin;
+    const worldSwingZ = swingRawX * sin + swingRawZ * cos;
 
     this.inputSeq = (this.inputSeq + 1) % 10000;
     this.lastInputSend = now;
 
     this.cb.input({
-      x: clamp(ix, -1, 1),
-      z: clamp(iz, -1, 1),
-      y: clamp(iy, -1, 1),
+      x: clamp(worldSwingX, -1, 1),
+      z: clamp(worldSwingZ, -1, 1),
+      y: clamp(craneY, -1, 1),
+      craneX: clamp(craneX, -1, 1),
+      craneZ: clamp(craneZ, -1, 1),
+      craneY: clamp(craneY, -1, 1),
       grab: false,
       seq: this.inputSeq,
     });
@@ -351,10 +393,12 @@ export class CraneClashScene {
 
     if (e.code === 'KeyV') {
       this.cameraMode = this.cameraMode === 'overview' ? 'follow' : 'overview';
+    } else if (e.code === 'Tab') {
+      e.preventDefault();
+      this.swappedControls = !this.swappedControls;
     } else if (e.code === 'KeyE' || e.code === 'Space') {
       e.preventDefault();
       this.cb.action({ type: 'grab' });
-      this.cb.action({ type: 'release' });
     }
   };
 

@@ -244,24 +244,64 @@ export function advanceCraneClash(w: CraneClashWorld, now: number) {
     for (let step = 0; step < steps; step++) {
       // Apply operator controls
       for (const team of TEAMS) {
-        const op = w.players.find(
-          (p) => p.team === team && p.role === 'operator',
-        );
-        if (op) {
-          const inp = w.clock - op.seen > 1200 ? idleInput() : op.input;
-          physics.driveOperator(team, inp, STEP);
+        const humans = w.players.filter((p) => !p.bot && p.team === team);
+        if (humans.length === 1) {
+          // Solo player on this team: dual control of crane and swinger
+          const human = humans[0];
+          const inp = w.clock - human.seen > 1200 ? idleInput() : human.input;
+          const cx =
+            inp.craneX !== undefined
+              ? inp.craneX
+              : human.role === 'operator'
+                ? inp.x
+                : 0;
+          const cz =
+            inp.craneZ !== undefined
+              ? inp.craneZ
+              : human.role === 'operator'
+                ? inp.z
+                : 0;
+          const cy =
+            inp.craneY !== undefined
+              ? inp.craneY
+              : human.role === 'operator'
+                ? inp.y || 0
+                : 0;
+          physics.driveOperator(
+            team,
+            { x: cx, z: cz, y: cy, seq: inp.seq },
+            STEP,
+          );
+        } else {
+          const op = w.players.find(
+            (p) => p.team === team && p.role === 'operator',
+          );
+          if (op) {
+            const inp = w.clock - op.seen > 1200 ? idleInput() : op.input;
+            physics.driveOperator(team, inp, STEP);
+          }
         }
       }
 
       // Apply swinger controls
       for (const team of TEAMS) {
-        const sw = w.players.find(
-          (p) => p.team === team && p.role === 'swinger',
-        );
-        if (sw) {
-          const inp = w.clock - sw.seen > 1200 ? idleInput() : sw.input;
-          if (!sw.dazedUntil || w.clock >= sw.dazedUntil) {
-            physics.driveSwinger(team, inp);
+        const humans = w.players.filter((p) => !p.bot && p.team === team);
+        if (humans.length === 1) {
+          // Solo player controls swinger momentum
+          const human = humans[0];
+          const inp = w.clock - human.seen > 1200 ? idleInput() : human.input;
+          if (!human.dazedUntil || w.clock >= human.dazedUntil) {
+            physics.driveSwinger(team, { x: inp.x, z: inp.z, seq: inp.seq });
+          }
+        } else {
+          const sw = w.players.find(
+            (p) => p.team === team && p.role === 'swinger',
+          );
+          if (sw) {
+            const inp = w.clock - sw.seen > 1200 ? idleInput() : sw.input;
+            if (!sw.dazedUntil || w.clock >= sw.dazedUntil) {
+              physics.driveSwinger(team, inp);
+            }
           }
         }
       }
@@ -383,31 +423,33 @@ export function craneClashAction(
     return;
   }
 
-  if (action.type === 'grab' && player.role === 'swinger') {
-    const physics = new CraneClashPhysics(w);
-    const grabbedId = physics.grabCrate(player);
-    if (grabbedId) {
-      const crate = w.crates.find((c) => c.id === grabbedId);
-      emitEvent(
-        w,
-        'grab',
-        `${player.name} hat eine ${crate?.kind || 'Kiste'} gepackt!`,
-        player.team,
-      );
-    }
-    return;
-  }
+  if (action.type === 'grab' || action.type === 'release') {
+    const swinger =
+      w.players.find((p) => p.team === player.team && p.role === 'swinger') ||
+      player;
 
-  if (action.type === 'release' && player.role === 'swinger') {
     const physics = new CraneClashPhysics(w);
-    const releasedId = physics.releaseCrate(player);
-    if (releasedId) {
-      emitEvent(
-        w,
-        'place',
-        `${player.name} hat die Kiste abgeworfen!`,
-        player.team,
-      );
+    if (swinger.holdingCrateId) {
+      const releasedId = physics.releaseCrate(swinger);
+      if (releasedId) {
+        emitEvent(
+          w,
+          'place',
+          `${player.name} hat die Kiste abgeworfen!`,
+          player.team,
+        );
+      }
+    } else {
+      const grabbedId = physics.grabCrate(swinger);
+      if (grabbedId) {
+        const crate = w.crates.find((c) => c.id === grabbedId);
+        emitEvent(
+          w,
+          'grab',
+          `${player.name} hat eine ${crate?.kind || 'Kiste'} gepackt!`,
+          player.team,
+        );
+      }
     }
     return;
   }
