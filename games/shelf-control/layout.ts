@@ -6,6 +6,11 @@ export const OFFICE = { x: 0, z: 9 };
 export const DOOR = { x: 0, z: -10 };
 export const SWITCH = { x: -12.1, z: -7.5 };
 export const HATCH = { x: 12.1, z: 8.5 };
+export const INTERCOM = { x: 0, z: -2.8 };
+export const CARTS_SPAWN = [
+  { id: 'cart-1', x: -4.2, z: 1.5, angle: 0 },
+  { id: 'cart-2', x: 4.2, z: -1.5, angle: Math.PI },
+];
 export const EQUIPMENT = [
   { id: 'key-lighting', kind: 'key' as const, x: -11, z: -3 },
   { id: 'key-living', kind: 'key' as const, x: 10.5, z: 1 },

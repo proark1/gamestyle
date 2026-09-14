@@ -26,10 +26,15 @@ function sample(clock = 0, x = 0, z = 9): Snapshot {
       task: 0,
       input: { x: 1, z: 0, seq: 1 },
       stunnedFor: 0,
+      ridingCartId: null,
+      flinching: false,
     },
     guard: body,
     figures: [],
     items: [],
+    projectiles: [],
+    carts: [],
+    hazards: [],
     events: [],
     mistakes: 5,
     escaped: 0,
@@ -37,6 +42,10 @@ function sample(clock = 0, x = 0, z = 9): Snapshot {
     message: '',
     objectives: null,
     inspectCooldown: 0,
+    guardWhistleCooldown: 0,
+    guardCoffeeReady: true,
+    intercomActive: false,
+    emergencyLighting: false,
   };
 }
 

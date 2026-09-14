@@ -280,9 +280,107 @@
 .shelf-active {
   min-height: 0;
   height: 100dvh;
+  background: #060b13;
 }
 .shelf-active .shelf-canvas {
-  background: #c7d3b6;
+  background: #060b13;
+}
+.shelf-active .shelf-header {
+  background: #060b13b3;
+  border-bottom: 1px solid #1a2736;
+  backdrop-filter: blur(8px);
+}
+.shelf-active .shelf-brand {
+  color: #edf3f7;
+}
+.shelf-active .shelf-room-label {
+  color: #9cb1c5;
+}
+.shelf-active .shelf-room-label b {
+  color: #f7c978;
+}
+.shelf-active .shelf-role,
+.shelf-active .shelf-progress,
+.shelf-active .shelf-clock {
+  background: #0d1522dd;
+  color: #edf3f7;
+  border: 1px solid #223247;
+  box-shadow: 0 4px 20px #00000077;
+}
+.shelf-active .shelf-role h2 {
+  color: #edf3f7;
+}
+.shelf-active .shelf-role p {
+  color: #9cb1c5;
+}
+.shelf-active .shelf-role .shelf-eyebrow,
+.shelf-active .shelf-progress .shelf-eyebrow {
+  color: #69839c;
+}
+.shelf-active .shelf-clock strong {
+  color: #f7c978;
+}
+.shelf-active .shelf-clock small {
+  color: #9cb1c5;
+}
+.shelf-active .shelf-progress strong {
+  color: #f7c978;
+}
+.shelf-active .shelf-progress small,
+.shelf-active .shelf-progress > span:not(.shelf-eyebrow) {
+  color: #9cb1c5;
+}
+.shelf-active .shelf-progress .done {
+  color: #55b78c;
+}
+.shelf-active .shelf-instruction {
+  background: #0d1522ee;
+  color: #edf3f7;
+  border: 1px solid #223247;
+  box-shadow: 0 6px 24px #00000088;
+}
+.shelf-active .shelf-controls .shelf-keyboard {
+  background: #0d1522cf;
+  border: 1px solid #223247;
+  color: #9cb1c5;
+}
+.shelf-active .shelf-keyboard kbd {
+  background: #172436;
+  border: 1px solid #2c4159;
+  color: #edf3f7;
+}
+.shelf-active .shelf-actions {
+  background: #0d1522cf;
+  border: 1px solid #223247;
+}
+.shelf-active .shelf-actions button {
+  background: #101c2bdd;
+  border: 1px solid #233448;
+  color: #edf3f7;
+}
+.shelf-active .shelf-actions button:hover:not(:disabled) {
+  background: #18283d;
+  border-color: #37506d;
+}
+.shelf-active .shelf-actions .shelf-action-main {
+  background: #b87821;
+  border-color: #d79235;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #7e4d0d;
+}
+.shelf-active .shelf-actions .shelf-action-main:hover:not(:disabled) {
+  background: #c88325;
+}
+.shelf-active .shelf-stick {
+  background: #0d1522aa;
+  border: 2px solid #223247;
+}
+.shelf-active .shelf-stick > div {
+  background: #23374ecc;
+  border: 1px solid #385170;
+}
+.shelf-active .shelf-stick small {
+  color: #728ca6;
 }
 .shelf-hud {
   position: absolute;
@@ -371,6 +469,34 @@
 }
 .shelf-progress .done {
   color: #347458;
+}
+.shelf-intercom-banner {
+  position: absolute;
+  top: 175px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f58b39;
+  color: #fff;
+  padding: 7px 18px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 14px #f58b3955;
+  animation: shelf-intercom-pulse 1.4s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes shelf-intercom-pulse {
+  0%,
+  100% {
+    opacity: 0.95;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.03);
+  }
 }
 .shelf-instruction {
   position: absolute;

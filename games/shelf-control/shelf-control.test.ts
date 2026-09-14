@@ -464,3 +464,145 @@ void test('stale players expire and a returning player never inherits somebody e
     /expired/,
   );
 });
+void test('mannequin can throw carried item to create a noise distraction and projectile', () => {
+  const w = freshShop(NOW);
+  w.players = [
+    shelfPlayer('guard', 'Guard', NOW),
+    shelfPlayer('hider1', 'Hider', NOW),
+    shelfPlayer('hider2', 'Hider 2', NOW),
+    shelfPlayer('hider3', 'Hider 3', NOW),
+  ];
+  shelfAction(w, 'guard', { type: 'start' }, 'guard');
+  w.phase = 'playing';
+  w.clock = w.huntAt;
+  const hider = w.players[1];
+  const figure = w.figures.find((f) => f.id === hider.figureId)!;
+  const prop = w.items.find((i) => i.kind === 'prop')!;
+  prop.holder = figure.id;
+  figure.carrying = prop.id;
+  figure.angle = 0;
+  shelfAction(w, hider.id, { type: 'throw' }, 'guard');
+  assert.equal(figure.carrying, null);
+  assert.equal(w.projectiles.length, 1);
+  assert.equal(w.projectiles[0].kind, 'prop');
+  assert.ok(w.events.some((e) => e.kind === 'throw'));
+});
+void test('thrown prop bonking guard stuns the guard and drops item', () => {
+  const w = freshShop(NOW);
+  w.players = [
+    shelfPlayer('guard', 'Guard', NOW),
+    shelfPlayer('hider1', 'Hider', NOW),
+    shelfPlayer('hider2', 'Hider 2', NOW),
+    shelfPlayer('hider3', 'Hider 3', NOW),
+  ];
+  shelfAction(w, 'guard', { type: 'start' }, 'guard');
+  w.phase = 'playing';
+  w.clock = w.huntAt;
+  w.guard.x = 0;
+  w.guard.z = 0;
+  w.projectiles.push({
+    id: 99,
+    x: 0,
+    z: -0.5,
+    vx: 0,
+    vz: 5,
+    kind: 'prop',
+    at: w.clock,
+  });
+  advanceShop(w, w.clock + 100);
+  assert.ok(w.stunnedUntil > w.clock);
+  assert.equal(w.projectiles.length, 0);
+  assert.ok(w.events.some((e) => e.kind === 'crash'));
+});
+void test('mannequin can mount rolling cart and dismount, or crash into obstacle', () => {
+  const w = freshShop(NOW);
+  w.players = [
+    shelfPlayer('guard', 'Guard', NOW),
+    shelfPlayer('hider1', 'Hider', NOW),
+    shelfPlayer('hider2', 'Hider 2', NOW),
+    shelfPlayer('hider3', 'Hider 3', NOW),
+  ];
+  shelfAction(w, 'guard', { type: 'start' }, 'guard');
+  w.phase = 'playing';
+  w.clock = w.huntAt;
+  const hider = w.players[1];
+  const figure = w.figures.find((f) => f.id === hider.figureId)!;
+  const cart = w.carts[0];
+  figure.x = cart.x;
+  figure.z = cart.z;
+  shelfAction(w, hider.id, { type: 'mount-cart' }, 'guard');
+  assert.equal(cart.rider, figure.id);
+  const snap = shelfSnapshot(w, 'CODE12', 'guard', hider.id, 1);
+  assert.equal(snap.you.ridingCartId, cart.id);
+  shelfAction(w, hider.id, { type: 'dismount-cart' }, 'guard');
+  assert.equal(cart.rider, null);
+});
+void test('mannequins can shove ambient decoy mannequin into motion', () => {
+  const w = freshShop(NOW);
+  w.players = [
+    shelfPlayer('guard', 'Guard', NOW),
+    shelfPlayer('hider1', 'Hider', NOW),
+    shelfPlayer('hider2', 'Hider 2', NOW),
+    shelfPlayer('hider3', 'Hider 3', NOW),
+  ];
+  shelfAction(w, 'guard', { type: 'start' }, 'guard');
+  w.phase = 'playing';
+  w.clock = w.huntAt;
+  const hider = w.players[1];
+  const figure = w.figures.find((f) => f.id === hider.figureId)!;
+  const dummy = w.figures.find(
+    (f) => !w.players.some((p) => p.figureId === f.id),
+  )!;
+  figure.x = dummy.x + 0.5;
+  figure.z = dummy.z;
+  figure.angle = -Math.PI / 2;
+  shelfAction(w, hider.id, { type: 'shove' }, 'guard');
+  assert.ok(w.shovedDummies[dummy.id]);
+  assert.ok(dummy.moving);
+  assert.ok(w.events.some((e) => e.kind === 'throw'));
+});
+void test('guard whistle triggers flinch and coffee spill causes slip', () => {
+  const w = freshShop(NOW);
+  w.players = [
+    shelfPlayer('guard', 'Guard', NOW),
+    shelfPlayer('hider1', 'Hider', NOW),
+    shelfPlayer('hider2', 'Hider 2', NOW),
+    shelfPlayer('hider3', 'Hider 3', NOW),
+  ];
+  shelfAction(w, 'guard', { type: 'start' }, 'guard');
+  w.phase = 'playing';
+  w.clock = w.huntAt;
+  shelfAction(w, 'guard', { type: 'whistle' }, 'guard');
+  assert.ok(w.guardWhistleEffectUntil > w.clock);
+  const hiderSnap = shelfSnapshot(w, 'CODE12', 'guard', 'hider1', 1);
+  assert.equal(hiderSnap.you.flinching, true);
+  shelfAction(w, 'guard', { type: 'spill-coffee' }, 'guard');
+  assert.equal(w.hazards.length, 1);
+  assert.equal(w.hazards[0].kind, 'coffee');
+});
+void test('intercom announcement masks footstep and lift sound events', () => {
+  const w = freshShop(NOW);
+  w.players = [
+    shelfPlayer('guard', 'Guard', NOW),
+    shelfPlayer('hider1', 'Hider', NOW),
+    shelfPlayer('hider2', 'Hider 2', NOW),
+    shelfPlayer('hider3', 'Hider 3', NOW),
+  ];
+  shelfAction(w, 'guard', { type: 'start' }, 'guard');
+  w.phase = 'playing';
+  w.clock = w.huntAt;
+  const hider = w.players[1];
+  const figure = w.figures.find((f) => f.id === hider.figureId)!;
+  figure.x = 0;
+  figure.z = -2.8;
+  shelfAction(w, hider.id, { type: 'intercom' }, 'guard');
+  assert.ok(w.clock < w.intercomUntil);
+  const snap = shelfSnapshot(w, 'CODE12', 'guard', hider.id, 1);
+  assert.equal(snap.intercomActive, true);
+  const eventsBefore = w.events.length;
+  const prop = w.items.find((i) => i.kind === 'prop')!;
+  prop.holder = figure.id;
+  figure.carrying = prop.id;
+  shelfAction(w, hider.id, { type: 'drop' }, 'guard');
+  assert.equal(w.events.length, eventsBefore);
+});

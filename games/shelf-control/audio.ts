@@ -71,7 +71,17 @@ export class ShelfAudio {
                 ? 'item.ladder.place'
                 : event.kind === 'catch'
                   ? 'event.capture'
-                  : 'event.inspect';
+                  : event.kind === 'throw'
+                    ? 'item.ladder.drop'
+                    : event.kind === 'crash'
+                      ? 'event.power-off'
+                      : event.kind === 'whistle'
+                        ? 'event.inspect'
+                        : event.kind === 'intercom'
+                          ? 'item.key.unlock'
+                          : event.kind === 'slip'
+                            ? 'step.floor'
+                            : 'event.inspect';
       this.player.play(cue, 0.65, event);
     }
     if (this.events.size > 200)

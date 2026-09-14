@@ -181,6 +181,58 @@ export function shelfPlant(
   }
   parent.add(group);
 }
+export function cartModel() {
+  const group = new THREE.Group();
+  block(group, [1.1, 0.08, 0.8], [0, 0.16, 0], palette.oak);
+  block(group, [1.14, 0.06, 0.06], [0, 0.14, 0.38], palette.ink);
+  block(group, [1.14, 0.06, 0.06], [0, 0.14, -0.38], palette.ink);
+  block(group, [0.06, 0.85, 0.06], [0, 0.55, -0.38], palette.ink);
+  block(group, [0.72, 0.06, 0.06], [0, 0.95, -0.38], palette.clay);
+  for (const x of [-0.45, 0.45]) {
+    for (const z of [-0.3, 0.3]) {
+      block(group, [0.1, 0.1, 0.1], [x, 0.06, z], 0x333333);
+    }
+  }
+  return group;
+}
+
+export function intercomModel() {
+  const group = new THREE.Group();
+  block(group, [0.55, 0.95, 0.4], [0, 0.48, 0], palette.ink);
+  block(group, [0.5, 0.12, 0.36], [0, 0.98, 0.02], palette.clay);
+  block(group, [0.04, 0.28, 0.04], [0.12, 1.15, 0.05], 0x222222);
+  ball(group, 0.05, 1.3, 0x111111);
+  return group;
+}
+
+export function hazardModel(_kind: 'coffee' = 'coffee') {
+  const group = new THREE.Group();
+  const puddle = new THREE.Mesh(
+    new THREE.CircleGeometry(0.55, 16),
+    new THREE.MeshStandardMaterial({
+      color: 0x3c2415,
+      roughness: 0.15,
+      metalness: 0.1,
+    }),
+  );
+  puddle.rotation.x = -Math.PI / 2;
+  puddle.position.y = 0.015;
+  puddle.receiveShadow = true;
+  group.add(puddle);
+  const mug = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, 0.18, 12),
+    new THREE.MeshStandardMaterial({
+      color: palette.ivory,
+      roughness: 0.5,
+    }),
+  );
+  mug.rotation.z = Math.PI / 2;
+  mug.position.set(-0.25, 0.08, 0);
+  mug.castShadow = true;
+  group.add(mug);
+  return group;
+}
+
 export type Doll = ReturnType<typeof mannequin>;
 export function animateDoll(
   doll: Doll,
@@ -188,6 +240,8 @@ export function animateDoll(
   moving: boolean,
   time: number,
   carrying: boolean,
+  ridingCart = false,
+  flinching = false,
 ) {
   const swing = moving ? Math.sin(time * 9) * 0.48 : 0;
   doll.limbs.forEach((joint, i) => {
@@ -197,10 +251,27 @@ export function animateDoll(
       0,
     );
   });
-  if (!moving) {
-    doll.limbs[0].rotation.z = pose === 1 ? -2.25 : pose === 2 ? -0.8 : -0.08;
-    doll.limbs[1].rotation.z = pose === 1 ? 0.5 : pose === 2 ? 2.4 : 0.08;
+  if (ridingCart) {
+    doll.limbs[0].rotation.x = -1.1;
+    doll.limbs[1].rotation.x = -1.1;
+    doll.limbs[0].rotation.z = -0.2;
+    doll.limbs[1].rotation.z = 0.2;
+    doll.torso.rotation.x = 0.2;
+    doll.torso.rotation.y = 0;
+  } else {
+    doll.torso.rotation.x = 0;
+    if (!moving) {
+      doll.limbs[0].rotation.z = pose === 1 ? -2.25 : pose === 2 ? -0.8 : -0.08;
+      doll.limbs[1].rotation.z = pose === 1 ? 0.5 : pose === 2 ? 2.4 : 0.08;
+    }
+    if (carrying) doll.limbs[1].rotation.x = -1.3;
+    doll.torso.rotation.z = !moving && pose === 2 ? 0.12 : 0;
   }
-  if (carrying) doll.limbs[1].rotation.x = -1.3;
-  doll.torso.rotation.z = !moving && pose === 2 ? 0.12 : 0;
+  if (flinching) {
+    const twitch = Math.sin(time * 40) * 0.18;
+    doll.torso.rotation.y = twitch;
+    doll.torso.rotation.z += twitch * 0.5;
+  } else if (!ridingCart) {
+    doll.torso.rotation.y = 0;
+  }
 }

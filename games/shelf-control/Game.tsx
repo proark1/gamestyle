@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { ShelfConnection, requestShelf } from './connection';
-import { DOOR, HATCH, SWITCH, clearSight } from './layout';
+import { DOOR, HATCH, INTERCOM, SWITCH, clearSight } from './layout';
 import {
   distance,
   type Action,
@@ -52,11 +52,15 @@ function hint(s: Snapshot) {
       ? 'You made it outside. Keep your teammates’ hiding places secret.'
       : 'Caught! Keep the other mannequins’ hiding places secret.';
   if (s.you.role === 'guard')
-    return 'Move to look around. Click a mannequin to select it. Inspect from close by.';
+    return 'Click mannequin to select & Inspect (E). F · Whistle flinch. C · Spill coffee.';
   if (s.phase === 'hiding')
     return 'Find your spot. Space changes your pose. The guard cannot see the showroom yet.';
+  if (s.you.ridingCartId)
+    return 'Drifting on flatbed cart! Steer with WASD. Don’t crash! C or E · Dismount';
   const near = (p: Point) => distance(body, p) < 1.65 && clearSight(body, p);
   if (s.you.task) return 'Hold still while you switch security off…';
+  if (near(INTERCOM) && !s.intercomActive)
+    return 'E · Broadcast on P.A. (masks all footsteps for 6s)';
   if (near(SWITCH) && !s.objectives?.powerOff)
     return 'E · Switch off security. Stay still for 3.5 seconds.';
   if (near(DOOR))
@@ -76,7 +80,11 @@ function hint(s: Snapshot) {
           ? 'Bring the ladder to this hatch.'
           : 'E · Climb out through the service hatch';
   if (s.you.carrying)
-    return `Carrying ${s.you.carrying === 'prop' ? 'a display box' : `the ${s.you.carrying}`}. Q · Put it down`;
+    return `Carrying ${s.you.carrying === 'prop' ? 'a display box' : `the ${s.you.carrying}`}. F · Throw! Q · Put it down`;
+  const cart = s.carts.find((c) => !c.rider && near(c));
+  if (cart) return 'E or C · Mount flatbed cart to drift!';
+  const dummy = s.figures.find((f) => f.id !== s.you.figureId && near(f));
+  if (dummy) return 'E or F · Shove decoy mannequin forward to bait the guard!';
   const item = s.items.find((i) => !i.holder && near(i));
   return item
     ? `E · Pick up ${item.kind === 'prop' ? 'display box' : item.kind}`
@@ -550,6 +558,11 @@ export default function ShelfControl() {
               )}
             </div>
           </div>
+          {snapshot.intercomActive && (
+            <div className="shelf-intercom-banner">
+              P.A. BROADCAST ACTIVE · ALL FOOTSTEPS MASKED
+            </div>
+          )}
           <div className="shelf-instruction" aria-live="polite">
             {hint(snapshot)}
             {snapshot.you.task > 0 && (
@@ -562,10 +575,17 @@ export default function ShelfControl() {
               <div className="shelf-keyboard">
                 <kbd>W A S D</kbd> move · <kbd>E</kbd>{' '}
                 {guard ? 'inspect' : 'interact'}
-                {!guard && (
+                {guard ? (
                   <>
                     {' '}
-                    · <kbd>Space</kbd> pose · <kbd>Q</kbd> drop
+                    · <kbd>F</kbd> whistle · <kbd>C</kbd> coffee
+                  </>
+                ) : (
+                  <>
+                    {' '}
+                    · <kbd>Space</kbd> pose · <kbd>F</kbd>{' '}
+                    {snapshot.you.carrying ? 'throw' : 'shove'} · <kbd>C</kbd>{' '}
+                    cart · <kbd>Q</kbd> drop
                   </>
                 )}
               </div>
@@ -588,13 +608,69 @@ export default function ShelfControl() {
                     ? snapshot.inspectCooldown > 0
                       ? `Wait ${(snapshot.inspectCooldown / 1000).toFixed(1)}s`
                       : 'Inspect'
-                    : 'Interact'}{' '}
+                    : snapshot.you.ridingCartId
+                      ? 'Dismount'
+                      : 'Interact'}{' '}
                   <kbd>E</kbd>
                 </button>
-                {!guard && (
-                  <button onClick={() => act({ type: 'drop' })}>
-                    Drop <kbd>Q</kbd>
-                  </button>
+                {guard ? (
+                  <>
+                    <button
+                      disabled={
+                        snapshot.guardWhistleCooldown > 0 ||
+                        snapshot.phase === 'hiding'
+                      }
+                      onClick={() => act({ type: 'whistle' })}
+                    >
+                      {snapshot.guardWhistleCooldown > 0
+                        ? `Whistle ${(snapshot.guardWhistleCooldown / 1000).toFixed(0)}s`
+                        : 'Whistle'}{' '}
+                      <kbd>F</kbd>
+                    </button>
+                    <button
+                      disabled={
+                        !snapshot.guardCoffeeReady ||
+                        snapshot.phase === 'hiding'
+                      }
+                      onClick={() => act({ type: 'spill-coffee' })}
+                    >
+                      {snapshot.guardCoffeeReady
+                        ? 'Spill Coffee'
+                        : 'Coffee Spilled'}{' '}
+                      <kbd>C</kbd>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() =>
+                        act({
+                          type: snapshot.you.carrying ? 'throw' : 'shove',
+                        })
+                      }
+                    >
+                      {snapshot.you.carrying ? 'Throw' : 'Shove Dummy'}{' '}
+                      <kbd>F</kbd>
+                    </button>
+                    <button
+                      onClick={() =>
+                        act({
+                          type: snapshot.you.ridingCartId
+                            ? 'dismount-cart'
+                            : 'mount-cart',
+                        })
+                      }
+                    >
+                      {snapshot.you.ridingCartId ? 'Dismount' : 'Ride Cart'}{' '}
+                      <kbd>C</kbd>
+                    </button>
+                    <button
+                      disabled={!snapshot.you.carrying}
+                      onClick={() => act({ type: 'drop' })}
+                    >
+                      Drop <kbd>Q</kbd>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -807,7 +883,10 @@ export default function ShelfControl() {
               <p>
                 Shelves block your view. NPCs move and carry boxes too. Face a
                 suspicious figure or click it to select it, get close, and press
-                E to inspect. Five wrong guesses lose the shift.
+                E to inspect. Five wrong guesses lose the shift. Blow your
+                whistle (F) to trigger an involuntary flinch in living
+                mannequins, and spill your thermos coffee (C) to make runners
+                slip and slide!
               </p>
             </article>
             <article>
@@ -819,17 +898,24 @@ export default function ShelfControl() {
                 Strike a pose to look like an ordinary mannequin.
               </p>
               <p>
-                Switch security off in the Lighting aisle. Then bring two keys
-                to the loading door at the back, or carry the ladder to the
-                orange hatch at the front right. Press E at a ready exit to
-                escape.
+                Throw items (F) to create loud noise distractions or bonk the
+                guard. Shove decoy dummies (F) into view to bait mistaken
+                inspections. Drift down aisles on rolling carts (C), or
+                broadcast over the central P.A. intercom to mask your crew’s
+                footsteps!
+              </p>
+              <p>
+                Switch security off in Lighting to enable escapes. Then bring
+                two keys to the loading door or the ladder to the service hatch.
               </p>
             </article>
           </div>
           <p className="shelf-help-controls">
-            <kbd>WASD / arrows</kbd> move · <kbd>E</kbd> interact / inspect
+            <kbd>WASD / arrows</kbd> move · <kbd>E</kbd> interact / inspect ·{' '}
+            <kbd>F</kbd> throw / shove / whistle
             <br />
-            Mannequins: <kbd>Space</kbd> stop and pose · <kbd>Q</kbd> drop
+            <kbd>C</kbd> cart / spill coffee · <kbd>Space</kbd> pose ·{' '}
+            <kbd>Q</kbd> drop
             <br />
             On touchscreens, use the movement stick and action buttons.
           </p>

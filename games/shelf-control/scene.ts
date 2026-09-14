@@ -7,6 +7,7 @@ import {
   DISPLAYS,
   DOOR,
   HATCH,
+  INTERCOM,
   OBSTACLES,
   SWITCH,
   WIDTH,
@@ -14,6 +15,9 @@ import {
 import {
   animateDoll,
   block,
+  cartModel,
+  hazardModel,
+  intercomModel,
   itemModel,
   mannequin,
   palette,
@@ -36,6 +40,16 @@ export class ShelfScene {
   private camera = new THREE.OrthographicCamera(-12, 12, 9, -9, 0.1, 80);
   private dolls = new Map<string, Doll>();
   private items = new Map<string, THREE.Group>();
+  private carts = new Map<string, THREE.Group>();
+  private projectiles = new Map<number, THREE.Group>();
+  private hazards = new Map<string, THREE.Group>();
+  private sunlight: THREE.DirectionalLight;
+  private emergencyLight: THREE.PointLight;
+  private guardSpotLight?: THREE.SpotLight;
+  private guardSpotTarget?: THREE.Object3D;
+  private guardBounceLight?: THREE.PointLight;
+  private guardBeamMesh?: THREE.Mesh;
+  private playerAuraLight?: THREE.PointLight;
   private guard = mannequin(true);
   private snapshot?: Snapshot;
   private keys = new Set<string>();
@@ -58,6 +72,7 @@ export class ShelfScene {
     private onAction: (action: Action) => void,
     private preview = false,
   ) {
+    const isDark = !preview;
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: false,
@@ -66,9 +81,9 @@ export class ShelfScene {
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.setClearColor(palette.background);
+    this.renderer.setClearColor(isDark ? 0x060b13 : palette.background);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
+    this.renderer.toneMappingExposure = isDark ? 1.05 : 1.25;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.setAttribute(
@@ -77,20 +92,88 @@ export class ShelfScene {
         ? 'Shelf Control showroom preview.'
         : 'Furniture showroom. Use the movement and action controls to play.',
     );
-    this.scene.add(new THREE.HemisphereLight(0xfff2d4, 0x8fa282, 3));
-    const sunlight = new THREE.DirectionalLight(0xfff1d2, 3.2);
-    sunlight.position.set(-13, 24, 12);
-    sunlight.castShadow = true;
-    sunlight.shadow.mapSize.set(1024, 1024);
-    sunlight.shadow.normalBias = 0.05;
-    Object.assign(sunlight.shadow.camera, {
-      left: -20,
-      right: 20,
-      top: 20,
-      bottom: -20,
-    });
-    this.scene.add(sunlight);
-    this.scene.fog = new THREE.Fog(palette.background, 65, 120);
+    if (isDark) {
+      this.scene.add(new THREE.HemisphereLight(0x182438, 0x070c14, 0.42));
+      const sunlight = new THREE.DirectionalLight(0x324766, 0.28);
+      sunlight.position.set(-13, 24, 12);
+      sunlight.castShadow = true;
+      sunlight.shadow.mapSize.set(1024, 1024);
+      sunlight.shadow.normalBias = 0.05;
+      Object.assign(sunlight.shadow.camera, {
+        left: -20,
+        right: 20,
+        top: 20,
+        bottom: -20,
+      });
+      this.scene.add(sunlight);
+      this.sunlight = sunlight;
+      this.emergencyLight = new THREE.PointLight(0xff4400, 0, 25);
+      this.emergencyLight.position.set(0, 4.5, 0);
+      this.scene.add(this.emergencyLight);
+      this.scene.fog = new THREE.Fog(0x060b13, 16, 42);
+
+      // Guard Flashlight (SpotLight + Volumetric Cone)
+      this.guardSpotLight = new THREE.SpotLight(
+        0xfff5dd,
+        36,
+        20,
+        Math.PI / 4.6,
+        0.55,
+        1.15,
+      );
+      this.guardSpotLight.castShadow = true;
+      this.guardSpotLight.shadow.mapSize.set(1024, 1024);
+      this.guardSpotLight.shadow.bias = -0.001;
+      this.guardSpotTarget = new THREE.Object3D();
+      this.scene.add(this.guardSpotTarget);
+      this.guardSpotLight.target = this.guardSpotTarget;
+      this.scene.add(this.guardSpotLight);
+
+      this.guardBounceLight = new THREE.PointLight(0xffecd0, 1.8, 4.0);
+      this.scene.add(this.guardBounceLight);
+
+      // Flashlight volumetric beam cone (apex at origin, extends along -Z)
+      const beamGeo = new THREE.CylinderGeometry(0.08, 2.6, 13, 20, 1, true);
+      beamGeo.rotateX(Math.PI / 2);
+      beamGeo.translate(0, 0, -6.5);
+      this.guardBeamMesh = new THREE.Mesh(
+        beamGeo,
+        new THREE.MeshBasicMaterial({
+          color: 0xfff4db,
+          transparent: true,
+          opacity: 0.16,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
+      );
+      this.guardBeamMesh.castShadow = false;
+      this.guardBeamMesh.receiveShadow = false;
+      this.scene.add(this.guardBeamMesh);
+
+      // Player living mannequin aura light (eyes adjusted to darkness)
+      this.playerAuraLight = new THREE.PointLight(0x608098, 2.2, 5.5);
+      this.scene.add(this.playerAuraLight);
+    } else {
+      this.scene.add(new THREE.HemisphereLight(0xfff2d4, 0x8fa282, 3));
+      const sunlight = new THREE.DirectionalLight(0xfff1d2, 3.2);
+      sunlight.position.set(-13, 24, 12);
+      sunlight.castShadow = true;
+      sunlight.shadow.mapSize.set(1024, 1024);
+      sunlight.shadow.normalBias = 0.05;
+      Object.assign(sunlight.shadow.camera, {
+        left: -20,
+        right: 20,
+        top: 20,
+        bottom: -20,
+      });
+      this.scene.add(sunlight);
+      this.sunlight = sunlight;
+      this.emergencyLight = new THREE.PointLight(0xff6600, 0, 25);
+      this.emergencyLight.position.set(0, 4.5, 0);
+      this.scene.add(this.emergencyLight);
+      this.scene.fog = new THREE.Fog(palette.background, 65, 120);
+    }
     block(
       this.scene,
       [WIDTH * 2 + 0.7, 0.65, DEPTH * 2 + 0.7],
@@ -181,6 +264,10 @@ export class ShelfScene {
     );
     sign(this.scene, 'HATCH · LADDER', HATCH.x, 1.8, HATCH.z, 3);
     sign(this.scene, 'STAFF ONLY', 0, 0.2, 10.5, 3.2).rotation.x = -Math.PI / 2;
+    const intercomStation = intercomModel();
+    intercomStation.position.set(INTERCOM.x, 0, INTERCOM.z);
+    this.scene.add(intercomStation);
+    sign(this.scene, 'P.A. INTERCOM', INTERCOM.x, 1.6, INTERCOM.z, 2.6);
     const ringMaterial = new THREE.MeshBasicMaterial({
       color: 0x527c5b,
       side: THREE.DoubleSide,
@@ -196,11 +283,12 @@ export class ShelfScene {
     this.field = new THREE.Mesh(
       new THREE.BufferGeometry(),
       new THREE.MeshBasicMaterial({
-        color: 0xffefd0,
+        color: isDark ? 0xfff4db : 0xffefd0,
         transparent: true,
-        opacity: 0.38,
+        opacity: isDark ? 0.32 : 0.38,
         depthWrite: false,
         side: THREE.DoubleSide,
+        blending: isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
       }),
     );
     this.scene.add(this.field);
@@ -323,6 +411,30 @@ export class ShelfScene {
       event.preventDefault();
       this.onAction({ type: 'drop' });
     }
+    if (event.code === 'KeyF') {
+      event.preventDefault();
+      this.clearInput();
+      if (this.snapshot?.you.role === 'guard') {
+        this.onAction({ type: 'whistle' });
+      } else if (this.snapshot?.you.carrying) {
+        this.onAction({ type: 'throw' });
+      } else {
+        this.onAction({ type: 'shove' });
+      }
+    }
+    if (event.code === 'KeyC') {
+      event.preventDefault();
+      this.clearInput();
+      if (this.snapshot?.you.role === 'guard') {
+        this.onAction({ type: 'spill-coffee' });
+      } else {
+        this.onAction({
+          type: this.snapshot?.you.ridingCartId
+            ? 'dismount-cart'
+            : 'mount-cart',
+        });
+      }
+    }
   };
   private keyup = (event: KeyboardEvent) => {
     if (this.keys.delete(event.code)) this.sendMove();
@@ -396,6 +508,49 @@ export class ShelfScene {
         this.items.set(item.id, model);
       }
     }
+    const cartIds = new Set(s.carts.map((c) => c.id));
+    for (const [id, cart] of this.carts)
+      if (!cartIds.has(id)) {
+        this.remove(cart);
+        this.carts.delete(id);
+      }
+    for (const cart of s.carts) {
+      let model = this.carts.get(cart.id);
+      if (!model) {
+        model = cartModel();
+        this.scene.add(model);
+        this.carts.set(cart.id, model);
+      }
+      model.position.set(cart.x, 0, cart.z);
+      model.rotation.y = cart.angle;
+    }
+    const hazardIds = new Set(s.hazards.map((h) => h.id));
+    for (const [id, hazard] of this.hazards)
+      if (!hazardIds.has(id)) {
+        this.remove(hazard);
+        this.hazards.delete(id);
+      }
+    for (const hazard of s.hazards) {
+      if (!this.hazards.has(hazard.id)) {
+        const model = hazardModel('coffee');
+        model.position.set(hazard.x, 0, hazard.z);
+        this.scene.add(model);
+        this.hazards.set(hazard.id, model);
+      }
+    }
+    const projIds = new Set(s.projectiles.map((p) => p.id));
+    for (const [id, p] of this.projectiles)
+      if (!projIds.has(id)) {
+        this.remove(p);
+        this.projectiles.delete(id);
+      }
+    for (const p of s.projectiles) {
+      if (!this.projectiles.has(p.id)) {
+        const model = itemModel(p.kind);
+        this.scene.add(model);
+        this.projectiles.set(p.id, model);
+      }
+    }
     this.guard.group.visible = !!s.guard;
     this.field.visible =
       !!s.you.body &&
@@ -413,6 +568,16 @@ export class ShelfScene {
       return;
     this.lastField = { ...body };
     const isGuard = s.you.role === 'guard';
+    if (!this.preview) {
+      const fieldMat = this.field.material as THREE.MeshBasicMaterial;
+      if (isGuard) {
+        fieldMat.color.setHex(0xfff2d4);
+        fieldMat.opacity = 0.34;
+      } else {
+        fieldMat.color.setHex(0x5a7e9e);
+        fieldMat.opacity = 0.22;
+      }
+    }
     const edge = (angle: number) => {
       let near = 0,
         far = isGuard ? 7.5 : 9.5;
@@ -453,6 +618,69 @@ export class ShelfScene {
       time = now / 1000;
     this.motion.advance(now, this.paused);
     const own = this.motion.own();
+    const baseSunlight = this.preview ? 3.2 : 0.28;
+    if (s?.emergencyLighting) {
+      this.emergencyLight.intensity = 4.2 + Math.sin(time * 7.5) * 2.8;
+      this.sunlight.intensity = baseSunlight * 0.4;
+    } else if (this.emergencyLight) {
+      this.emergencyLight.intensity = 0;
+      this.sunlight.intensity = baseSunlight;
+    }
+
+    // Flashlight beam tracking for Guard (local guard or visible remote guard)
+    let activeGuardPos: { x: number; z: number; angle: number } | null = null;
+    if (s?.you.role === 'guard' && own) {
+      activeGuardPos = own;
+    } else if (s?.guard) {
+      const guardActor = this.motion.actor('guard');
+      if (guardActor) {
+        activeGuardPos = guardActor;
+      }
+    }
+
+    if (
+      activeGuardPos &&
+      this.guardSpotLight &&
+      this.guardSpotTarget &&
+      this.guardBounceLight &&
+      this.guardBeamMesh
+    ) {
+      const gx = activeGuardPos.x;
+      const gz = activeGuardPos.z;
+      const ga = activeGuardPos.angle;
+      const cosA = Math.cos(ga);
+      const sinA = Math.sin(ga);
+
+      // Flashlight lens position on torso right side
+      const lensX = gx + 0.42 * cosA + 0.55 * sinA;
+      const lensY = 1.05;
+      const lensZ = gz - 0.42 * sinA + 0.55 * cosA;
+
+      this.guardSpotLight.visible = true;
+      this.guardSpotLight.position.set(lensX, lensY, lensZ);
+      this.guardSpotTarget.position.set(gx + sinA * 10, 0.35, gz + cosA * 10);
+
+      this.guardBounceLight.visible = true;
+      this.guardBounceLight.position.set(lensX, lensY, lensZ);
+
+      this.guardBeamMesh.visible = true;
+      this.guardBeamMesh.position.set(lensX, lensY, lensZ);
+      this.guardBeamMesh.lookAt(this.guardSpotTarget.position);
+    } else {
+      if (this.guardSpotLight) this.guardSpotLight.visible = false;
+      if (this.guardBounceLight) this.guardBounceLight.visible = false;
+      if (this.guardBeamMesh) this.guardBeamMesh.visible = false;
+    }
+
+    // Mannequin local night-vision aura
+    if (this.playerAuraLight) {
+      if (s?.you.role !== 'guard' && own) {
+        this.playerAuraLight.visible = true;
+        this.playerAuraLight.position.set(own.x, 1.1, own.z);
+      } else {
+        this.playerAuraLight.visible = false;
+      }
+    }
     if (s?.you.body && own) {
       this.cameraTarget.set(own.x, 0, own.z);
       this.camera.position
@@ -466,7 +694,20 @@ export class ShelfScene {
         if (!body) continue;
         doll.group.position.set(body.x, 0, body.z);
         doll.group.rotation.y = body.angle;
-        animateDoll(doll, figure.pose, body.moving, time, !!figure.carrying);
+        const isLocal = figure.id === s.you.figureId;
+        const riding = isLocal
+          ? !!s.you.ridingCartId
+          : s.carts.some((c) => c.rider === figure.id);
+        const flinching = isLocal ? s.you.flinching : false;
+        animateDoll(
+          doll,
+          figure.pose,
+          body.moving,
+          time,
+          !!figure.carrying,
+          riding,
+          flinching,
+        );
         if (figure.task)
           doll.limbs[1].rotation.x = -1.3 + Math.sin(time * 6) * 0.15;
       }
@@ -491,6 +732,19 @@ export class ShelfScene {
           holder?.rotation.y ?? 0,
           item.kind === 'ladder' ? (holder ? -0.45 : Math.PI / 2) : 0,
         );
+      }
+      for (const p of s.projectiles) {
+        const model = this.projectiles.get(p.id);
+        if (model) {
+          const age = (s.clock - p.at) / 1000;
+          const arc = Math.max(
+            0.1,
+            Math.sin(Math.min(1, age / 1.2) * Math.PI) * 1.6,
+          );
+          model.position.set(p.x, arc, p.z);
+          model.rotation.x += 0.15;
+          model.rotation.y += 0.15;
+        }
       }
       const ringId = s.you.role === 'guard' ? this.selected : s.you.figureId;
       const doll = ringId ? this.dolls.get(ringId) : null;
@@ -533,6 +787,17 @@ export class ShelfScene {
     window.removeEventListener('blur', this.clearInput);
     document.removeEventListener('visibilitychange', this.visibility);
     this.renderer.domElement.removeEventListener('pointerdown', this.pick);
+    for (const [, c] of this.carts) this.remove(c);
+    this.carts.clear();
+    for (const [, p] of this.projectiles) this.remove(p);
+    this.projectiles.clear();
+    for (const [, h] of this.hazards) this.remove(h);
+    this.hazards.clear();
+    if (this.guardBeamMesh) this.remove(this.guardBeamMesh);
+    if (this.guardSpotLight) this.guardSpotLight.dispose();
+    if (this.guardBounceLight) this.guardBounceLight.dispose();
+    if (this.playerAuraLight) this.playerAuraLight.dispose();
+    if (this.guardSpotTarget) this.guardSpotTarget.removeFromParent();
     this.remove(this.scene);
     this.renderer.dispose();
     this.renderer.domElement.remove();

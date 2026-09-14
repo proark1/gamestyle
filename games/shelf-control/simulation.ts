@@ -1,23 +1,27 @@
 import {
+  blocked,
+  CARTS_SPAWN,
   clearSight,
   DISPLAYS,
   DOOR,
+  EQUIPMENT,
   HATCH,
+  INTERCOM,
   move,
   OFFICE,
   SWITCH,
   visible,
-  EQUIPMENT,
 } from './layout';
 import { driveBots } from './bots';
 import {
+  CART_SPEED,
   distance,
+  GUARD_SPEED,
   HIDE_MS,
   HUNT_MS,
   idleInput,
-  WALK_SPEED,
   LADDER_SPEED,
-  GUARD_SPEED,
+  WALK_SPEED,
   type Action,
   type Figure,
   type Item,
@@ -51,6 +55,16 @@ export function freshShop(now: number, seed = 91317): World {
     guard: { ...OFFICE, angle: Math.PI },
     figures: [],
     items: [],
+    projectiles: [],
+    projectileSeq: 0,
+    carts: [],
+    hazards: [],
+    intercomUntil: 0,
+    intercomCooldown: 0,
+    guardWhistleAt: 0,
+    guardWhistleEffectUntil: 0,
+    guardCoffeeUsed: false,
+    shovedDummies: {},
     mistakes: 5,
     inspectAt: 0,
     stunnedUntil: 0,
@@ -100,6 +114,15 @@ function begin(w: World) {
       }),
     ),
   ];
+  w.carts = CARTS_SPAWN.map((c) => ({ ...c, rider: null, speed: 0 }));
+  w.projectiles = [];
+  w.hazards = [];
+  w.intercomUntil = 0;
+  w.intercomCooldown = 0;
+  w.guardWhistleAt = 0;
+  w.guardWhistleEffectUntil = 0;
+  w.guardCoffeeUsed = false;
+  w.shovedDummies = {};
   Object.assign(w, {
     phase: 'hiding',
     started: w.clock,
@@ -137,6 +160,15 @@ function sound(
   point: Point,
   material: Item['kind'] = 'prop',
 ) {
+  if (
+    w.clock < (w.intercomUntil ?? 0) &&
+    kind !== 'crash' &&
+    kind !== 'whistle' &&
+    kind !== 'intercom' &&
+    kind !== 'switch'
+  ) {
+    return;
+  }
   w.events.push({
     id: ++w.eventSeq,
     at: w.clock,
@@ -146,6 +178,13 @@ function sound(
     z: point.z,
   });
   w.events = w.events.filter((event) => w.clock - event.at < 1600).slice(-20);
+}
+export function dismount(w: World, figure: Figure) {
+  const cart = w.carts?.find((c) => c.rider === figure.id);
+  if (cart) {
+    cart.rider = null;
+    cart.speed = 0;
+  }
 }
 export function drop(w: World, figure: Figure) {
   const item = w.items.find((item) => item.id === figure.carrying);
@@ -217,6 +256,28 @@ export function shelfAction(
   if (id === w.guardId) {
     if (w.phase === 'hiding')
       throw new Error('Stay in the office until the hiding countdown ends.');
+    if (action.type === 'whistle') {
+      if (w.clock < (w.guardWhistleAt ?? 0))
+        throw new Error('Whistle is on cooldown.');
+      w.guardWhistleAt = w.clock + 18000;
+      w.guardWhistleEffectUntil = w.clock + 700;
+      sound(w, 'whistle', w.guard, 'prop');
+      return;
+    }
+    if (action.type === 'spill-coffee') {
+      if (w.guardCoffeeUsed)
+        throw new Error('Coffee already spilled this round.');
+      w.guardCoffeeUsed = true;
+      w.hazards = w.hazards ?? [];
+      w.hazards.push({
+        id: `coffee-${w.round}`,
+        kind: 'coffee',
+        x: w.guard.x,
+        z: w.guard.z,
+      });
+      sound(w, 'drop', w.guard, 'prop');
+      return;
+    }
     if (action.type !== 'inspect' && action.type !== 'interact')
       throw new Error('Inspect a nearby suspicious mannequin.');
     if (w.clock < w.inspectAt)
@@ -236,6 +297,7 @@ export function shelfAction(
     w.inspectAt = w.clock + 2000;
     if (w.players.some((p) => p.figureId === figure.id)) {
       drop(w, figure);
+      dismount(w, figure);
       figure.status = 'caught';
       figure.task = 0;
       sound(w, 'catch', figure);
@@ -251,6 +313,7 @@ export function shelfAction(
   if (!figure || figure.status !== 'active')
     throw new Error('You are waiting for the next shift.');
   if (action.type === 'pose') {
+    dismount(w, figure);
     figure.pose = (figure.pose + 1) % 3;
     figure.task = 0;
     player.input = idleInput(player.input.seq);
@@ -261,12 +324,101 @@ export function shelfAction(
     figure.task = 0;
     return;
   }
+  if (action.type === 'throw') {
+    if (w.phase === 'hiding')
+      throw new Error('Wait for the hunt to begin before throwing items.');
+    const held = w.items.find((i) => i.id === figure.carrying);
+    if (!held) throw new Error('Carry an item first to throw it.');
+    held.holder = null;
+    figure.carrying = null;
+    held.x = figure.x;
+    held.z = figure.z;
+    w.projectiles = w.projectiles ?? [];
+    w.projectiles.push({
+      id: ++w.projectileSeq,
+      x: figure.x,
+      z: figure.z,
+      vx: Math.sin(figure.angle) * 8.5,
+      vz: Math.cos(figure.angle) * 8.5,
+      kind: held.kind,
+      at: w.clock,
+    });
+    sound(w, 'throw', figure, held.kind);
+    return;
+  }
+  if (action.type === 'shove') {
+    if (w.phase === 'hiding') throw new Error('Hide first.');
+    const dummy = w.figures.find(
+      (f) =>
+        f.id !== figure.id &&
+        !w.players.some((p) => p.figureId === f.id) &&
+        f.status === 'active' &&
+        reachable(figure, f, 2.0),
+    );
+    if (!dummy) throw new Error('Stand near a display mannequin to shove it.');
+    w.shovedDummies = w.shovedDummies ?? {};
+    w.shovedDummies[dummy.id] = {
+      until: w.clock + 2200,
+      dx: Math.sin(figure.angle),
+      dz: Math.cos(figure.angle),
+    };
+    dummy.moving = true;
+    sound(w, 'throw', dummy, 'prop');
+    return;
+  }
+  if (action.type === 'mount-cart') {
+    const currentCart = w.carts?.find((c) => c.rider === figure.id);
+    if (currentCart) {
+      dismount(w, figure);
+      return;
+    }
+    const cart = w.carts?.find((c) => !c.rider && reachable(figure, c, 1.8));
+    if (!cart) throw new Error('No rolling cart nearby.');
+    cart.rider = figure.id;
+    cart.speed = 0;
+    return;
+  }
+  if (action.type === 'dismount-cart') {
+    dismount(w, figure);
+    return;
+  }
+  if (action.type === 'intercom') {
+    if (w.phase === 'hiding') throw new Error('Wait for the shift to start.');
+    if (!reachable(figure, INTERCOM, 2.0))
+      throw new Error('Move closer to the service desk intercom.');
+    if (w.clock < (w.intercomCooldown ?? 0))
+      throw new Error('The intercom announcement is on cooldown.');
+    w.intercomUntil = w.clock + 6000;
+    w.intercomCooldown = w.clock + 22000;
+    sound(w, 'intercom', INTERCOM, 'prop');
+    return;
+  }
   if (action.type !== 'interact')
     throw new Error('Only the guard can inspect mannequins.');
   if (w.phase === 'hiding')
     throw new Error(
       'Choose a hiding spot now. Start your escape when the hunt begins.',
     );
+  if (w.carts?.some((c) => c.rider === figure.id)) {
+    dismount(w, figure);
+    return;
+  }
+  if (!figure.carrying && reachable(figure, INTERCOM, 1.8)) {
+    if (w.clock >= (w.intercomCooldown ?? 0)) {
+      w.intercomUntil = w.clock + 6000;
+      w.intercomCooldown = w.clock + 22000;
+      sound(w, 'intercom', INTERCOM, 'prop');
+      return;
+    }
+  }
+  const nearbyCart =
+    !figure.carrying &&
+    w.carts?.find((c) => !c.rider && reachable(figure, c, 1.8));
+  if (nearbyCart) {
+    nearbyCart.rider = figure.id;
+    nearbyCart.speed = 0;
+    return;
+  }
   const held = w.items.find((i) => i.id === figure.carrying);
   if (!w.powerOff && reachable(figure, SWITCH)) {
     figure.task = figure.task ? 0 : 0.001;
@@ -297,6 +449,7 @@ export function shelfAction(
         'The loading door needs both keys. The service hatch needs the ladder.',
       );
     drop(w, figure);
+    dismount(w, figure);
     figure.status = 'escaped';
     figure.task = 0;
     sound(w, 'escape', figure);
@@ -313,8 +466,27 @@ export function shelfAction(
         (!action.target || i.id === action.target),
     )
     .sort((a, b) => distance(a, figure) - distance(b, figure))[0];
-  if (!item)
+  if (!item) {
+    const nearbyDummy = w.figures.find(
+      (f) =>
+        f.id !== figure.id &&
+        !w.players.some((p) => p.figureId === f.id) &&
+        f.status === 'active' &&
+        reachable(figure, f, 1.8),
+    );
+    if (nearbyDummy) {
+      w.shovedDummies = w.shovedDummies ?? {};
+      w.shovedDummies[nearbyDummy.id] = {
+        until: w.clock + 2200,
+        dx: Math.sin(figure.angle),
+        dz: Math.cos(figure.angle),
+      };
+      nearbyDummy.moving = true;
+      sound(w, 'throw', nearbyDummy, 'prop');
+      return;
+    }
     throw new Error('Move closer to a key, prop, ladder, switch or exit.');
+  }
   item.holder = figure.id;
   figure.carrying = item.id;
   figure.task = 0;
@@ -386,6 +558,66 @@ export function advanceShop(w: World, now: number) {
       (id, action) => shelfAction(w, id, action, ''),
     );
     if (w.phase !== 'playing' && w.phase !== 'hiding') break;
+    if (w.shovedDummies) {
+      for (const [dummyId, shove] of Object.entries(w.shovedDummies)) {
+        if (w.clock >= shove.until) {
+          delete w.shovedDummies[dummyId];
+          const f = w.figures.find((fig) => fig.id === dummyId);
+          if (f) f.moving = false;
+          continue;
+        }
+        const f = w.figures.find((fig) => fig.id === dummyId);
+        if (f && f.status === 'active') {
+          f.moving = move(f, { x: shove.dx, z: shove.dz }, 2.8, dt);
+        }
+      }
+    }
+    if (w.projectiles?.length) {
+      for (let pIdx = w.projectiles.length - 1; pIdx >= 0; pIdx--) {
+        const p = w.projectiles[pIdx];
+        const nextX = p.x + p.vx * dt;
+        const nextZ = p.z + p.vz * dt;
+        if (blocked({ x: nextX, z: nextZ }, 0.25)) {
+          const item = w.items.find(
+            (i) => !i.holder && !i.delivered && i.kind === p.kind,
+          );
+          if (item) {
+            item.x = p.x;
+            item.z = p.z;
+          }
+          sound(w, 'crash', p, p.kind);
+          w.projectiles.splice(pIdx, 1);
+          continue;
+        }
+        p.x = nextX;
+        p.z = nextZ;
+        if (w.phase === 'playing' && distance(p, w.guard) < 1.1) {
+          w.stunnedUntil = Math.max(w.stunnedUntil, w.clock + 1600);
+          const item = w.items.find(
+            (i) => !i.holder && !i.delivered && i.kind === p.kind,
+          );
+          if (item) {
+            item.x = p.x;
+            item.z = p.z;
+          }
+          sound(w, 'crash', w.guard, p.kind);
+          w.projectiles.splice(pIdx, 1);
+          continue;
+        }
+        if (w.clock - p.at > 1200) {
+          const item = w.items.find(
+            (i) => !i.holder && !i.delivered && i.kind === p.kind,
+          );
+          if (item) {
+            item.x = p.x;
+            item.z = p.z;
+          }
+          sound(w, 'drop', p, p.kind);
+          w.projectiles.splice(pIdx, 1);
+          continue;
+        }
+      }
+    }
     for (const figure of w.figures) {
       if (figure.status !== 'active') {
         figure.moving = false;
@@ -396,13 +628,64 @@ export function advanceShop(w: World, now: number) {
         npc(w, figure, dt);
         continue;
       }
-      const input = w.clock - player.seen < 750 ? player.input : idleInput();
-      figure.moving = move(
-        figure,
-        input,
-        figure.carrying === 'ladder' ? LADDER_SPEED : WALK_SPEED,
-        dt,
-      );
+      const ridingCart = w.carts?.find((c) => c.rider === figure.id);
+      if (ridingCart) {
+        const input = w.clock - player.seen < 750 ? player.input : idleInput();
+        const inputLen = Math.hypot(input.x, input.z);
+        if (inputLen > 0.1) {
+          const targetAngle = Math.atan2(input.x, input.z);
+          let diff = targetAngle - ridingCart.angle;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          ridingCart.angle += diff * Math.min(1, dt * 5.5);
+          ridingCart.speed = Math.min(CART_SPEED, ridingCart.speed + dt * 8);
+        } else {
+          ridingCart.speed = Math.max(0, ridingCart.speed - dt * 6);
+        }
+        if (ridingCart.speed > 0.1) {
+          const dirX = Math.sin(ridingCart.angle);
+          const dirZ = Math.cos(ridingCart.angle);
+          const nextX = ridingCart.x + dirX * ridingCart.speed * dt;
+          const nextZ = ridingCart.z + dirZ * ridingCart.speed * dt;
+          if (blocked({ x: nextX, z: nextZ }, 0.45)) {
+            sound(w, 'crash', ridingCart, 'prop');
+            ridingCart.speed = 0;
+            ridingCart.rider = null;
+            figure.task = 0;
+            figure.moving = false;
+          } else {
+            ridingCart.x = nextX;
+            ridingCart.z = nextZ;
+            figure.x = ridingCart.x;
+            figure.z = ridingCart.z;
+            figure.angle = ridingCart.angle;
+            figure.moving = true;
+          }
+        } else {
+          figure.moving = false;
+        }
+      } else {
+        const input = w.clock - player.seen < 750 ? player.input : idleInput();
+        figure.moving = move(
+          figure,
+          input,
+          figure.carrying === 'ladder' ? LADDER_SPEED : WALK_SPEED,
+          dt,
+        );
+      }
+      if (w.hazards?.length && figure.moving) {
+        for (const h of w.hazards) {
+          if (distance(figure, h) < 0.8) {
+            move(
+              figure,
+              { x: Math.sin(figure.angle), z: Math.cos(figure.angle) },
+              4.5,
+              dt,
+            );
+            sound(w, 'slip', figure, 'prop');
+          }
+        }
+      }
       if (figure.task) {
         if (
           figure.moving ||
@@ -481,6 +764,15 @@ export function shelfSnapshot(
       const holder = w.figures.find((f) => f.id === item.holder);
       return { ...item, ...(holder ? { x: holder.x, z: holder.z } : {}) };
     });
+  const projectiles = (w.projectiles ?? []).filter((p) => sees(p));
+  const carts = (w.carts ?? []).filter((c) => sees(c));
+  const hazards = (w.hazards ?? []).filter((h) => sees(h));
+  const ridingCart = w.carts?.find((c) => c.rider === figure?.id);
+  const flinching =
+    !guard &&
+    active &&
+    figure?.status === 'active' &&
+    w.clock < (w.guardWhistleEffectUntil ?? 0);
   const crew = w.figures.filter((f) =>
     w.players.some((p) => p.figureId === f.id),
   );
@@ -511,10 +803,15 @@ export function shelfSnapshot(
       task: figure?.task ?? 0,
       input: player ? { ...player.input } : idleInput(),
       stunnedFor: guard ? Math.max(0, w.stunnedUntil - w.clock) : 0,
+      ridingCartId: ridingCart?.id ?? null,
+      flinching,
     },
     guard: canSee && (guard || sees(w.guard)) ? { ...w.guard } : null,
     figures: figures.map((f) => ({ ...f })),
     items,
+    projectiles,
+    carts,
+    hazards,
     events: w.events.filter((e) => w.clock - e.at < 500 && sees(e)),
     mistakes: w.mistakes,
     escaped: crew.filter((f) => f.status === 'escaped').length,
@@ -525,5 +822,11 @@ export function shelfSnapshot(
         ? null
         : { powerOff: w.powerOff, keys: w.keys, ladder: w.ladder },
     inspectCooldown: guard ? Math.max(0, w.inspectAt - w.clock) : 0,
+    guardWhistleCooldown: guard
+      ? Math.max(0, (w.guardWhistleAt ?? 0) - w.clock)
+      : 0,
+    guardCoffeeReady: guard ? !w.guardCoffeeUsed : false,
+    intercomActive: w.clock < (w.intercomUntil ?? 0),
+    emergencyLighting: !guard ? w.powerOff : w.powerOff && sees(SWITCH),
   };
 }

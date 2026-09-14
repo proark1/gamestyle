@@ -14,6 +14,13 @@ export type Action = {
     | 'pose'
     | 'interact'
     | 'drop'
+    | 'throw'
+    | 'shove'
+    | 'mount-cart'
+    | 'dismount-cart'
+    | 'whistle'
+    | 'spill-coffee'
+    | 'intercom'
     | 'inspect'
     | 'add-bot'
     | 'remove-bot'
@@ -34,6 +41,22 @@ export type Item = Point & {
   kind: 'key' | 'ladder' | 'prop';
   holder: string | null;
   delivered: boolean;
+};
+export type Projectile = Point & {
+  id: number;
+  vx: number;
+  vz: number;
+  kind: Item['kind'];
+  at: number;
+};
+export type Cart = Body & {
+  id: string;
+  rider: string | null;
+  speed: number;
+};
+export type Hazard = Point & {
+  id: string;
+  kind: 'coffee';
 };
 export type Player = {
   id: string;
@@ -75,7 +98,19 @@ export type BotBrain = {
 export type SoundEvent = Point & {
   id: number;
   at: number;
-  kind: 'lift' | 'drop' | 'lock' | 'switch' | 'inspect' | 'catch' | 'escape';
+  kind:
+    | 'lift'
+    | 'drop'
+    | 'lock'
+    | 'switch'
+    | 'inspect'
+    | 'catch'
+    | 'escape'
+    | 'throw'
+    | 'crash'
+    | 'whistle'
+    | 'intercom'
+    | 'slip';
   material: 'key' | 'ladder' | 'prop';
 };
 export type World = {
@@ -90,6 +125,16 @@ export type World = {
   guard: Body;
   figures: Figure[];
   items: Item[];
+  projectiles: Projectile[];
+  projectileSeq: number;
+  carts: Cart[];
+  hazards: Hazard[];
+  intercomUntil: number;
+  intercomCooldown: number;
+  guardWhistleAt: number;
+  guardWhistleEffectUntil: number;
+  guardCoffeeUsed: boolean;
+  shovedDummies: Record<string, { until: number; dx: number; dz: number }>;
   mistakes: number;
   inspectAt: number;
   stunnedUntil: number;
@@ -123,10 +168,15 @@ export type Snapshot = {
     task: number;
     input?: Input;
     stunnedFor?: number;
+    ridingCartId: string | null;
+    flinching: boolean;
   };
   guard: Body | null;
   figures: Figure[];
   items: Item[];
+  projectiles: Projectile[];
+  carts: Cart[];
+  hazards: Hazard[];
   events: SoundEvent[];
   mistakes: number;
   escaped: number;
@@ -134,12 +184,17 @@ export type Snapshot = {
   message: string;
   objectives: { powerOff: boolean; keys: number; ladder: boolean } | null;
   inspectCooldown: number;
+  guardWhistleCooldown: number;
+  guardCoffeeReady: boolean;
+  intercomActive: boolean;
+  emergencyLighting: boolean;
 };
 export const HIDE_MS = 15_000,
   HUNT_MS = 180_000;
 export const WALK_SPEED = 3.1,
   LADDER_SPEED = 2.15,
-  GUARD_SPEED = 3.65;
+  GUARD_SPEED = 3.65,
+  CART_SPEED = 6.2;
 export type SnapshotTiming = {
   sentAt: number;
   receivedAt: number;
