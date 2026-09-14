@@ -1,18 +1,23 @@
 'use client';
 /* eslint-disable next/no-img-element, @next/next/no-img-element */
+/* oxlint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events, jsx-a11y/prefer-tag-over-role */
 
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
 import {
   Award,
   Box,
   Check,
   Coins,
+  Footprints,
   Lock,
+  RotateCcw,
+  RotateCw,
   Shirt,
   Sparkles,
   Trophy,
   User,
+  UserCheck,
   X,
 } from 'lucide-react';
 import { getItemThumbnails } from '../rendering/cosmetics/standalone-item';
@@ -28,11 +33,14 @@ import {
   subscribeWardrobe,
   wardrobeSnapshot,
 } from './wardrobe-state';
-import WardrobePreview, { type WardrobePreviewMode } from './WardrobePreview';
-import './wardrobe.css';
+import WardrobePreview, {
+  type WardrobePreviewHandle,
+  type WardrobePreviewMode,
+} from './WardrobePreview';
+import type { WorkerPose } from '../rendering/worker-pose';
 
 const SLOT_NAMES: Record<Slot | 'all', string> = {
-  all: 'All items',
+  all: 'All',
   hat: 'Hats',
   top: 'Tops',
   legs: 'Trousers',
@@ -57,12 +65,16 @@ export default function WardrobeDialog({
   const [activeTab, setActiveTab] = useState<'wardrobe' | 'goals'>('wardrobe');
   const [selectedSlot, setSelectedSlot] = useState<Slot | 'all'>('all');
   const [previewMode, setPreviewMode] = useState<WardrobePreviewMode>('avatar');
+  const [avatarPose, setAvatarPose] = useState<WorkerPose>('walk');
+  const [isSpinning, setIsSpinning] = useState(true);
   const [selectedItem, setSelectedItem] = useState<Item | null>(
     ITEMS[0] ?? null,
   );
   const [fittedOverrides, setFittedOverrides] = useState<
     Partial<Record<Slot, string | null>>
   >({});
+
+  const previewRef = useRef<WardrobePreviewHandle>(null);
 
   const thumbnails = useMemo(() => {
     if (!open) return {};
@@ -151,85 +163,187 @@ export default function WardrobeDialog({
             </button>
           </div>
 
-          {/* Dialog Content */}
+          {/* Dialog Content: 3D preview active across both Wardrobe and Perks! */}
           <div className="wardrobe-body">
-            {activeTab === 'wardrobe' ? (
-              <div className="wardrobe-main-layout">
-                {/* 3D Preview Panel with Dual Modes */}
-                <div className="wardrobe-preview-panel">
-                  {/* Mode Toggle Bar */}
-                  <div className="wardrobe-preview-mode-bar">
-                    <button
-                      type="button"
-                      className="wardrobe-mode-btn"
-                      data-active={previewMode === 'item'}
-                      onClick={() => setPreviewMode('item')}
-                      title="View selected item alone in 3D"
-                    >
-                      <Box size={13} /> View Item Alone
-                    </button>
-                    <button
-                      type="button"
-                      className="wardrobe-mode-btn"
-                      data-active={previewMode === 'avatar'}
-                      onClick={() => setPreviewMode('avatar')}
-                      title="Preview avatar wearing fitted outfit"
-                    >
-                      <User size={13} /> Fit to Avatar
-                    </button>
-                  </div>
-
-                  <div className="wardrobe-preview-stage">
-                    <WardrobePreview
-                      look={previewLook}
-                      mode={previewMode}
-                      itemId={selectedItem?.id ?? null}
-                    />
-                  </div>
-
-                  {previewMode === 'item' && selectedItem ? (
-                    <div className="wardrobe-inspect-bar">
-                      <div className="wardrobe-inspect-info">
-                        <span className="wardrobe-inspect-name">
-                          {selectedItem.name}
-                        </span>
-                        <span className="wardrobe-inspect-slot">
-                          {SLOT_NAMES[selectedItem.slot]}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="wardrobe-btn-fit-action"
-                        onClick={() => {
-                          toggleFit(selectedItem);
-                          setPreviewMode('avatar');
-                        }}
-                      >
-                        <Sparkles size={13} /> Fit to Avatar
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="wardrobe-preview-hint">
-                        Drag horizontally to rotate avatar
-                      </div>
-                      {hasFittedChanges && (
-                        <div className="wardrobe-fitted-notice">
-                          <span>Previewing fitted items</span>
-                          <button
-                            type="button"
-                            className="wardrobe-reset-fit-btn"
-                            onClick={() => setFittedOverrides({})}
-                          >
-                            Reset
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
+            <div className="wardrobe-main-layout">
+              {/* 3D Preview Panel with Turning, Walk, Still and Poses */}
+              <div className="wardrobe-preview-panel">
+                {/* Mode Toggle Bar */}
+                <div className="wardrobe-preview-mode-bar">
+                  <button
+                    type="button"
+                    className="wardrobe-mode-btn"
+                    data-active={previewMode === 'item'}
+                    onClick={() => setPreviewMode('item')}
+                    title="View selected item alone in 3D"
+                  >
+                    <Box size={13} /> View Item Alone
+                  </button>
+                  <button
+                    type="button"
+                    className="wardrobe-mode-btn"
+                    data-active={previewMode === 'avatar'}
+                    onClick={() => setPreviewMode('avatar')}
+                    title="Preview avatar wearing fitted outfit"
+                  >
+                    <User size={13} /> Fit to Avatar
+                  </button>
                 </div>
 
-                {/* Catalog & Equipment List */}
+                {/* 3D Viewport */}
+                <div className="wardrobe-preview-stage">
+                  <WardrobePreview
+                    ref={previewRef}
+                    look={previewLook}
+                    mode={previewMode}
+                    itemId={selectedItem?.id ?? null}
+                    pose={avatarPose}
+                    spinning={isSpinning}
+                  />
+                </div>
+
+                {/* Interactive Motion & Turning Controls */}
+                <div className="wardrobe-motion-controls">
+                  {previewMode === 'avatar' && (
+                    <div
+                      className="wardrobe-pose-row"
+                      aria-label="Avatar movements and poses"
+                    >
+                      <button
+                        type="button"
+                        className="wardrobe-ctrl-btn"
+                        data-active={avatarPose === 'still'}
+                        onClick={() => setAvatarPose('still')}
+                        title="Stand still with natural breathing"
+                      >
+                        <UserCheck size={12} /> Stand Still
+                      </button>
+                      <button
+                        type="button"
+                        className="wardrobe-ctrl-btn"
+                        data-active={avatarPose === 'walk'}
+                        onClick={() => setAvatarPose('walk')}
+                        title="Walk in place"
+                      >
+                        <Footprints size={12} /> Walk
+                      </button>
+                      <button
+                        type="button"
+                        className="wardrobe-ctrl-btn"
+                        data-active={avatarPose === 'wave'}
+                        onClick={() => setAvatarPose('wave')}
+                        title="Friendly greeting wave"
+                      >
+                        <Sparkles size={12} /> Wave
+                      </button>
+                      <button
+                        type="button"
+                        className="wardrobe-ctrl-btn"
+                        data-active={avatarPose === 'hero'}
+                        onClick={() => setAvatarPose('hero')}
+                        title="Hero stance with hands on hips"
+                      >
+                        <Award size={12} /> Hero
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Turning Controls: Toggle Auto-Turn, Angle Steps & Face Front */}
+                  <div
+                    className="wardrobe-turn-row"
+                    aria-label="Avatar rotation"
+                  >
+                    <button
+                      type="button"
+                      className="wardrobe-turn-btn wardrobe-turn-toggle"
+                      data-active={isSpinning}
+                      onClick={() => setIsSpinning((v) => !v)}
+                      title={
+                        isSpinning
+                          ? 'Pause 360° turning'
+                          : 'Activate continuous 360° turning'
+                      }
+                    >
+                      <RotateCw
+                        size={12}
+                        className={isSpinning ? 'wardrobe-spin-active' : ''}
+                      />
+                      <span>{isSpinning ? 'Turning: ON' : 'Turn: OFF'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="wardrobe-turn-btn"
+                      onClick={() => previewRef.current?.turnBy(-Math.PI / 4)}
+                      title="Turn left 45°"
+                    >
+                      <RotateCcw size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      className="wardrobe-turn-btn"
+                      onClick={() => {
+                        setIsSpinning(false);
+                        previewRef.current?.faceFront();
+                      }}
+                      title="Face front"
+                    >
+                      Front
+                    </button>
+                    <button
+                      type="button"
+                      className="wardrobe-turn-btn"
+                      onClick={() => previewRef.current?.turnBy(Math.PI / 4)}
+                      title="Turn right 45°"
+                    >
+                      <RotateCw size={12} />
+                    </button>
+                  </div>
+                </div>
+
+                {previewMode === 'item' && selectedItem ? (
+                  <div className="wardrobe-inspect-bar">
+                    <div className="wardrobe-inspect-info">
+                      <span className="wardrobe-inspect-name">
+                        {selectedItem.name}
+                      </span>
+                      <span className="wardrobe-inspect-slot">
+                        {SLOT_NAMES[selectedItem.slot]}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="wardrobe-btn-fit-action"
+                      onClick={() => {
+                        toggleFit(selectedItem);
+                        setPreviewMode('avatar');
+                      }}
+                    >
+                      <Sparkles size={13} /> Fit to Avatar
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="wardrobe-preview-hint">
+                      Drag horizontally to rotate 360°
+                    </div>
+                    {hasFittedChanges && (
+                      <div className="wardrobe-fitted-notice">
+                        <span>Previewing fitted items</span>
+                        <button
+                          type="button"
+                          className="wardrobe-reset-fit-btn"
+                          onClick={() => setFittedOverrides({})}
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Right Panel: Customizer & Shop OR Unlockable Perks & Goals */}
+              {activeTab === 'wardrobe' ? (
                 <div className="wardrobe-catalog-panel">
                   {/* Slot Filter Buttons */}
                   <div className="wardrobe-slots-filter">
@@ -261,111 +375,97 @@ export default function WardrobeDialog({
                         <div
                           key={item.id}
                           className="wardrobe-item-card"
-                          data-selected={isSelected}
                           data-equipped={isEquipped}
-                        >
-                          {/* Standalone 3D Item Thumbnail */}
-                          <button
-                            type="button"
-                            className="wardrobe-item-thumb-box"
-                            title="Click to view item alone in 3D"
-                            onClick={() => {
+                          data-fitted={isFitted && !isEquipped}
+                          data-unlocked={unlocked}
+                          data-selected={isSelected}
+                          onClick={() => {
+                            setSelectedItem(item);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
                               setSelectedItem(item);
-                              setPreviewMode('item');
-                            }}
-                          >
+                            }
+                          }}
+                        >
+                          <div className="wardrobe-item-thumb-box">
                             {thumbnails[item.id] ? (
                               <img
                                 src={thumbnails[item.id]}
                                 alt={item.name}
-                                className="wardrobe-item-thumb-img"
+                                className="wardrobe-item-thumb"
                                 loading="lazy"
                               />
                             ) : (
-                              <div className="wardrobe-item-thumb-placeholder" />
+                              <div className="wardrobe-thumb-fallback" />
                             )}
-                          </button>
-
-                          <div className="wardrobe-item-meta">
-                            <span className="wardrobe-item-slot">
-                              {SLOT_NAMES[item.slot]}
-                            </span>
-                            {unlocked ? (
-                              <span
-                                style={{
-                                  color: '#27634f',
-                                  fontSize: '11px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '2px',
-                                }}
-                              >
-                                <Check size={12} /> Owned
+                            {isEquipped && (
+                              <span className="wardrobe-item-badge">
+                                <Check size={11} strokeWidth={3} /> Equipped
                               </span>
-                            ) : item.price ? (
-                              <span
-                                style={{
-                                  color: '#8c5b08',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {item.price} Coins
+                            )}
+                            {!isEquipped && isFitted && (
+                              <span className="wardrobe-item-badge wardrobe-badge-fitted">
+                                <Sparkles size={10} /> Fitted
                               </span>
-                            ) : null}
+                            )}
                           </div>
 
-                          <button
-                            type="button"
-                            className="wardrobe-item-name-btn"
-                            title="Select item"
-                            onClick={() => setSelectedItem(item)}
-                          >
-                            {item.name}
-                          </button>
+                          <div className="wardrobe-item-info">
+                            <span className="wardrobe-item-name">
+                              {item.name}
+                            </span>
+                            <span className="wardrobe-item-slot-name">
+                              {SLOT_NAMES[item.slot]}
+                            </span>
+                          </div>
 
                           <div className="wardrobe-item-actions">
-                            {/* If Owned: Can Equip or Unequip */}
-                            {isEquipped ? (
-                              <button
-                                type="button"
-                                className="wardrobe-item-btn wardrobe-btn-unequip"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  equipItem(item.slot, null);
-                                }}
-                              >
-                                Unequip
-                              </button>
-                            ) : unlocked ? (
-                              <button
-                                type="button"
-                                className="wardrobe-item-btn wardrobe-btn-equip"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  equipItem(item.slot, item.id);
-                                }}
-                              >
-                                <Sparkles size={13} /> Equip
-                              </button>
+                            {unlocked ? (
+                              isEquipped ? (
+                                <button
+                                  type="button"
+                                  className="wardrobe-item-btn wardrobe-btn-unequip"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    equipItem(item.slot, null);
+                                  }}
+                                >
+                                  Take Off
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="wardrobe-item-btn wardrobe-btn-equip"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    equipItem(item.slot, item.id);
+                                    setFittedOverrides((prev) => {
+                                      const next = { ...prev };
+                                      delete next[item.slot];
+                                      return next;
+                                    });
+                                  }}
+                                >
+                                  Equip
+                                </button>
+                              )
                             ) : (
-                              /* If NOT Owned: CANNOT equip! Can only Fit to Avatar to preview */
                               <>
                                 <button
                                   type="button"
                                   className="wardrobe-item-btn wardrobe-btn-fit"
-                                  data-active={isFitted}
+                                  data-fitted={isFitted}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedItem(item);
                                     toggleFit(item);
                                   }}
-                                  title="Try on avatar in 3D preview"
+                                  title="Preview on avatar without buying"
                                 >
-                                  <Sparkles size={12} />{' '}
-                                  {isFitted ? 'Fitted' : 'Fit to Avatar'}
+                                  <Sparkles size={11} />{' '}
+                                  {isFitted ? 'Fitted' : 'Fit'}
                                 </button>
-
                                 {item.price ? (
                                   <button
                                     type="button"
@@ -373,30 +473,27 @@ export default function WardrobeDialog({
                                     disabled={state.coins < item.price}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const ok = buyItem(item.id);
-                                      if (ok) equipItem(item.slot, item.id);
+                                      buyItem(item.id);
                                     }}
                                     title={
                                       state.coins < item.price
-                                        ? `Need ${item.price - state.coins} more coins`
+                                        ? 'Not enough coins'
                                         : `Buy for ${item.price} coins`
                                     }
                                   >
-                                    <Coins size={12} />{' '}
-                                    {state.coins < item.price
-                                      ? `Need ${item.price - state.coins} more`
-                                      : `Buy (${item.price})`}
+                                    <Coins size={12} /> {item.price}
                                   </button>
                                 ) : associatedGoal ? (
                                   <div
-                                    className="wardrobe-goal-locked"
-                                    title={associatedGoal.label}
+                                    className="wardrobe-item-goal-hint"
+                                    title={`Unlocked by: ${associatedGoal.label}`}
                                   >
                                     <Lock
-                                      size={10}
+                                      size={12}
                                       style={{
                                         display: 'inline',
                                         marginRight: '3px',
+                                        verticalAlign: '-1px',
                                       }}
                                     />
                                     {associatedGoal.label}
@@ -410,108 +507,129 @@ export default function WardrobeDialog({
                     })}
                   </div>
                 </div>
-              </div>
-            ) : (
-              /* Goals & Perks Panel */
-              <div className="wardrobe-goals-panel">
-                <p className="wardrobe-goals-intro">
-                  Play games and spend time with friends across Jumbleyard to
-                  unlock legendary items and wardrobe perks!
-                </p>
+              ) : (
+                /* Unlockable Perks & Goals Panel */
+                <div className="wardrobe-goals-panel">
+                  <p className="wardrobe-goals-intro">
+                    Play games and spend time with friends across Jumbleyard to
+                    unlock legendary items and wardrobe perks!
+                  </p>
 
-                <div className="wardrobe-goals-list">
-                  {GOALS.map((goal) => {
-                    const progress = getGoalProgress(goal, state.stats);
-                    const rewardItem = ITEMS.find(
-                      (item) => item.goal === goal.id,
-                    );
-                    const isUnlocked = rewardItem
-                      ? isItemUnlocked(state, rewardItem)
-                      : progress.complete;
-                    const isEquipped =
-                      rewardItem &&
-                      state.look[rewardItem.slot] === rewardItem.id;
+                  <div className="wardrobe-goals-list">
+                    {GOALS.map((goal) => {
+                      const progress = getGoalProgress(goal, state.stats);
+                      const rewardItem = ITEMS.find(
+                        (item) => item.goal === goal.id,
+                      );
+                      const isUnlocked = rewardItem
+                        ? isItemUnlocked(state, rewardItem)
+                        : progress.complete;
+                      const isEquipped =
+                        rewardItem &&
+                        state.look[rewardItem.slot] === rewardItem.id;
+                      const isFitted =
+                        rewardItem &&
+                        previewLook[rewardItem.slot] === rewardItem.id;
 
-                    return (
-                      <div
-                        key={goal.id}
-                        className="wardrobe-goal-card"
-                        data-completed={progress.complete}
-                      >
-                        <div className="wardrobe-goal-title-wrap">
-                          <h4 className="wardrobe-goal-label">{goal.label}</h4>
-                          <span
-                            className="wardrobe-goal-badge"
-                            data-completed={progress.complete}
-                          >
-                            {progress.complete ? (
-                              <span
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '3px',
-                                }}
-                              >
-                                <Check size={12} /> Unlocked
-                              </span>
-                            ) : (
-                              `${progress.percentage}%`
-                            )}
-                          </span>
-                        </div>
-
-                        {rewardItem && (
-                          <div className="wardrobe-goal-reward">
-                            <Award size={14} color="#8c5b08" />
-                            <span>
-                              Reward: <strong>{rewardItem.name}</strong> (
-                              {SLOT_NAMES[rewardItem.slot]})
+                      return (
+                        <div
+                          key={goal.id}
+                          className="wardrobe-goal-card"
+                          data-completed={progress.complete}
+                        >
+                          <div className="wardrobe-goal-title-wrap">
+                            <h4 className="wardrobe-goal-label">{goal.label}</h4>
+                            <span
+                              className="wardrobe-goal-badge"
+                              data-completed={progress.complete}
+                            >
+                              {progress.complete ? (
+                                <span
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                  }}
+                                >
+                                  <Check size={12} /> Unlocked
+                                </span>
+                              ) : (
+                                `${progress.percentage}%`
+                              )}
                             </span>
                           </div>
-                        )}
 
-                        <div className="wardrobe-progress-bar-wrap">
-                          <div
-                            className="wardrobe-progress-bar-fill"
-                            style={{ width: `${progress.percentage}%` }}
-                          />
-                        </div>
-
-                        <div className="wardrobe-progress-text">
-                          <span>
-                            {goal.measure === 'every-game'
-                              ? `${progress.current} of ${progress.target} games played`
-                              : goal.measure === 'games'
-                                ? `${progress.current} of ${progress.target} games played`
-                                : `${progress.current} of ${progress.target} hours played`}
-                          </span>
-                          {rewardItem && isUnlocked && (
-                            <button
-                              type="button"
-                              className="wardrobe-item-btn wardrobe-btn-equip"
-                              style={{
-                                padding: '3px 8px',
-                                fontSize: '11px',
-                                marginTop: 0,
-                              }}
-                              onClick={() => {
-                                if (isEquipped) {
-                                  equipItem(rewardItem.slot, null);
-                                } else {
-                                  equipItem(rewardItem.slot, rewardItem.id);
-                                }
-                              }}
-                            >
-                              {isEquipped ? 'Unequip' : 'Equip Reward'}
-                            </button>
+                          {rewardItem && (
+                            <div className="wardrobe-goal-reward">
+                              <Award size={14} color="#8c5b08" />
+                              <span style={{ flex: 1 }}>
+                                Reward: <strong>{rewardItem.name}</strong> (
+                                {SLOT_NAMES[rewardItem.slot]})
+                              </span>
+                              <button
+                                type="button"
+                                className="wardrobe-goal-fit-btn"
+                                data-fitted={isFitted}
+                                onClick={() => {
+                                  setSelectedItem(rewardItem);
+                                  toggleFit(rewardItem);
+                                }}
+                                title="Try on this reward item on your avatar"
+                              >
+                                <Sparkles size={11} />{' '}
+                                {isFitted ? 'Fitted' : 'Preview'}
+                              </button>
+                            </div>
                           )}
+
+                          <div className="wardrobe-progress-bar-wrap">
+                            <div
+                              className="wardrobe-progress-bar-fill"
+                              style={{ width: `${progress.percentage}%` }}
+                            />
+                          </div>
+
+                          <div className="wardrobe-progress-text">
+                            <span>
+                              {goal.measure === 'every-game'
+                                ? `${progress.current} of ${progress.target} games played`
+                                : goal.measure === 'games'
+                                  ? `${progress.current} of ${progress.target} games played`
+                                  : `${progress.current} of ${progress.target} hours played`}
+                            </span>
+                            {rewardItem && isUnlocked && (
+                              <button
+                                type="button"
+                                className="wardrobe-item-btn wardrobe-btn-equip"
+                                style={{
+                                  padding: '3px 8px',
+                                  fontSize: '11px',
+                                  marginTop: 0,
+                                }}
+                                onClick={() => {
+                                  if (isEquipped) {
+                                    equipItem(rewardItem.slot, null);
+                                  } else {
+                                    equipItem(rewardItem.slot, rewardItem.id);
+                                    setFittedOverrides((prev) => {
+                                      const next = { ...prev };
+                                      delete next[rewardItem.slot];
+                                      return next;
+                                    });
+                                  }
+                                }}
+                              >
+                                {isEquipped ? 'Unequip' : 'Equip Reward'}
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </Dialog.Popup>
       </Dialog.Portal>

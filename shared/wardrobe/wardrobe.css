@@ -236,6 +236,139 @@
   pointer-events: none;
 }
 
+/* Motion & Turning Controls */
+.wardrobe-motion-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 253, 245, 0.95);
+  border-top: 1px solid #e2dbca;
+  backdrop-filter: blur(4px);
+}
+
+.wardrobe-pose-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.wardrobe-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 2px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fdfbf5;
+  border: 1px solid #dcd4be;
+  color: #4b665c;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.wardrobe-ctrl-btn:hover {
+  background: #f4ece0;
+  border-color: #b7c7ae;
+  color: #23433c;
+}
+
+.wardrobe-ctrl-btn[data-active='true'] {
+  background: #2b5247;
+  color: #fff8e8;
+  border-color: #2b5247;
+  box-shadow: 0 1px 3px rgba(43, 82, 71, 0.2);
+}
+
+.wardrobe-turn-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wardrobe-turn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fdfbf5;
+  border: 1px solid #dcd4be;
+  color: #556c65;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wardrobe-turn-btn:hover {
+  background: #f4ece0;
+  border-color: #b7c7ae;
+  color: #23433c;
+}
+
+.wardrobe-turn-toggle {
+  flex: 1;
+  font-size: 11px;
+}
+
+.wardrobe-turn-toggle[data-active='true'] {
+  background: #e5f1ea;
+  border-color: #72b08e;
+  color: #1e5a38;
+}
+
+.wardrobe-turn-toggle[data-active='false'] {
+  background: #f3efea;
+  border-color: #d1c8bd;
+  color: #7d8481;
+}
+
+.wardrobe-spin-active {
+  animation: wardrobeSpinIcon 3s linear infinite;
+}
+
+@keyframes wardrobeSpinIcon {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wardrobe-goal-fit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fffdf5;
+  border: 1px solid #c4bca6;
+  color: #4b665c;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.wardrobe-goal-fit-btn:hover {
+  background: #f1ebd8;
+  color: #1e3c34;
+}
+
+.wardrobe-goal-fit-btn[data-fitted='true'] {
+  background: #2b5247;
+  color: #fff8e8;
+  border-color: #2b5247;
+}
+
 .wardrobe-inspect-bar {
   display: flex;
   align-items: center;
@@ -561,7 +694,7 @@
 
 .wardrobe-goals-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 14px;
 }
 
