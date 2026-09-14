@@ -173,21 +173,54 @@ export function potModel() {
   return g;
 }
 
+export function gooseModel() {
+  const g = new T.Group();
+  ball(g, [0.32, 0.28, 0.42], [0, 0.35, 0], '#f0ede6');
+  cylinder(g, 0.09, 0.35, [0, 0.6, 0.22], '#f0ede6');
+  ball(g, [0.15, 0.15, 0.2], [0, 0.8, 0.3], '#f0ede6');
+  cone(g, 0.08, 0.24, [0, 0.78, 0.48], '#e88228');
+  const wL = box(g, [0.08, 0.25, 0.38], [-0.3, 0.38, 0], '#ded8cc');
+  wL.name = 'wingL';
+  const wR = box(g, [0.08, 0.25, 0.38], [0.3, 0.38, 0], '#ded8cc');
+  wR.name = 'wingR';
+  return g;
+}
+
 export function blockModel(b: Block) {
   const g = new T.Group();
-  if (b.part === 'banner') {
+  if (b.part === 'banner' || b.mascotKind === 'banner') {
+    const bannerColor = b.team === 'blue' ? '#2f7d74' : '#c2472f';
     box(g, [1.56, 0.6, 1.56], [0, -b.h / 2 + 0.3, 0], '#b0a289', true);
     cylinder(g, 0.09, b.h, [0, 0, 0], '#6b4a2c', 8);
     const cloth = box(
       g,
       [0.06, 1.15, 1.35],
       [0, b.h / 2 - 0.85, 0.72],
-      '#c2472f',
+      bannerColor,
       false,
     );
     cloth.name = 'cloth';
     box(cloth, [0.07, 0.34, 0.4], [0.01, 0.06, 0], '#e8c46a', false);
     cone(g, 0.11, 0.3, [0, b.h / 2 + 0.15, 0], '#d8b45c');
+    return g;
+  }
+  if (b.part === 'mascot' && b.mascotKind === 'rooster') {
+    box(g, [1.1, 0.25, 1.1], [0, -b.h / 2 + 0.12, 0], '#b0a289', true);
+    ball(g, [0.42, 0.48, 0.38], [0, 0, 0], '#d8a13d');
+    ball(g, [0.22, 0.24, 0.22], [0, 0.42, 0.18], '#e8c46a');
+    box(g, [0.06, 0.18, 0.2], [0, 0.6, 0.18], '#c2472f');
+    cone(g, 0.07, 0.16, [0, 0.4, 0.4], '#e0882e');
+    box(g, [0.08, 0.3, 0.4], [-0.38, 0.04, 0], '#b88628');
+    box(g, [0.08, 0.3, 0.4], [0.38, 0.04, 0], '#b88628');
+    cone(g, 0.18, 0.5, [0, 0.26, -0.35], '#d8a13d');
+    return g;
+  }
+  if (b.part === 'mascot' && b.mascotKind === 'cheese') {
+    box(g, [1.2, 0.2, 1.2], [0, -b.h / 2 + 0.1, 0], '#b0a289', true);
+    cylinder(g, 0.7, 0.52, [0, 0, 0], '#e8be48', 20);
+    cylinder(g, 0.72, 0.12, [0, 0, 0], '#d89e32', 20);
+    ball(g, [0.12, 0.12, 0.12], [0.25, 0.1, 0.25], '#caa030');
+    ball(g, [0.09, 0.09, 0.09], [-0.3, -0.08, -0.15], '#caa030');
     return g;
   }
   const mesh = box(g, [b.w, b.h, b.d], [0, 0, 0], b.color, b.part !== 'gate');
@@ -216,11 +249,15 @@ export function blockModel(b: Block) {
  * The whole engine turns on its bed, so the crew can swing the aim by leaning
  * on the frame. Named parts drive the wind-up and the release sweep.
  */
-export function trebuchet() {
+export function trebuchet(
+  pos: { x: number; z: number } = TREBUCHET,
+  team: 'red' | 'blue' = 'red',
+) {
   const g = new T.Group();
-  g.position.set(TREBUCHET.x, 0, TREBUCHET.z);
+  g.position.set(pos.x, 0, pos.z);
   const bed = new T.Group();
   bed.name = 'bed';
+  const accentColor = team === 'blue' ? '#2f7d74' : '#c2472f';
   // Ground bed and A-frames.
   for (const x of [-2.5, 2.5])
     box(bed, [0.55, 0.4, 9], [x, 0.2, 0], '#6b4a2c', true);
@@ -284,7 +321,7 @@ export function trebuchet() {
   lever.name = 'lever';
   lever.position.set(LEVER.x - TREBUCHET.x, 0, LEVER.z - TREBUCHET.z);
   box(lever, [0.5, 1.1, 0.5], [0, 0.55, 0], '#6b4a2c', true);
-  const handle = box(lever, [0.16, 1.3, 0.16], [0, 1.5, 0], '#c2472f', true);
+  const handle = box(lever, [0.16, 1.3, 0.16], [0, 1.5, 0], accentColor, true);
   handle.name = 'handle';
   ball(lever, [0.16, 0.16, 0.16], [0, 2.15, 0], '#e8c46a');
   bed.add(lever);

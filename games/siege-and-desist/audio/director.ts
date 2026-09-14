@@ -25,6 +25,10 @@ const EVENT_CUES: Record<string, { cue: string; at: 'castle' | 'engine' }> = {
   bees: { cue: 'event.bees', at: 'castle' },
   banner: { cue: 'event.banner', at: 'castle' },
   finish: { cue: 'event.finish', at: 'engine' },
+  topple: { cue: 'event.topple', at: 'castle' },
+  midair: { cue: 'event.midair', at: 'engine' },
+  honk: { cue: 'event.honk', at: 'engine' },
+  counterbattery: { cue: 'event.counterbattery', at: 'engine' },
 };
 
 /** Sound follows authoritative simulation time, never local guesses. */

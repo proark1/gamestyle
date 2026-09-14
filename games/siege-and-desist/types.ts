@@ -24,6 +24,19 @@ export const MAX_TURN = 0.42;
 export const ENGINE_REACH = 6;
 export const BANNER_DOWN = 3.2;
 
+export type GameMode = 'classic' | 'clash2v2';
+export type TeamId = 'red' | 'blue';
+
+export const TREBUCHET_RED = { x: 0, z: 9.5 };
+export const CRANK_RED = { x: 0, z: 5.3 };
+export const SLING_RED = { x: 0, z: 13.2 };
+export const CASTLE_RED = { x: 0, z: 23.5 };
+
+export const TREBUCHET_BLUE = { x: 0, z: -9.5 };
+export const CRANK_BLUE = { x: 0, z: -5.3 };
+export const SLING_BLUE = { x: 0, z: -13.2 };
+export const CASTLE_BLUE = { x: 0, z: -23.5 };
+
 /** Siege stones are heavy on purpose: a light one bounces off good masonry. */
 export const AMMO = {
   boulder: {
@@ -72,6 +85,8 @@ export type Crew = {
   id: string;
   name: string;
   color: number;
+  team?: TeamId;
+  bot?: boolean;
   x: number;
   y: number;
   z: number;
@@ -96,7 +111,7 @@ export type Crew = {
 /** One rigid block of the keep. Quaternions arrive from the solver once it moves. */
 export type Block = {
   id: number;
-  part: 'wall' | 'gate' | 'tower' | 'keep' | 'banner';
+  part: 'wall' | 'gate' | 'tower' | 'keep' | 'banner' | 'mascot';
   w: number;
   h: number;
   d: number;
@@ -115,12 +130,25 @@ export type Block = {
   burning: number;
   sleeping: boolean;
   fallen: boolean;
+  team?: TeamId;
+  towerIndex?: 0 | 1 | 2;
+  mascotKind?: 'rooster' | 'banner' | 'cheese';
+};
+
+export type EngineState = {
+  wind: number;
+  turn: number;
+  loaded: AmmoKind | null;
+  rider: string;
+  loosedAt: number;
+  supply: AmmoKind[];
 };
 
 export type Shot = {
   id: number;
   kind: AmmoKind;
   rider: string;
+  team?: TeamId;
   x: number;
   y: number;
   z: number;
@@ -157,7 +185,11 @@ export type SiegeEvent = {
     | 'pot'
     | 'bees'
     | 'banner'
-    | 'finish';
+    | 'finish'
+    | 'topple'
+    | 'midair'
+    | 'honk'
+    | 'counterbattery';
   text: string;
 };
 
@@ -166,6 +198,8 @@ export type SiegeWorld = {
   started: number;
   remainder: number;
   phase: 'lobby' | 'playing' | 'relief' | 'won' | 'lost';
+  mode: GameMode;
+  winner?: TeamId | 'draw';
   players: Crew[];
   blocks: Block[];
   totalBlocks: number;
@@ -177,7 +211,7 @@ export type SiegeWorld = {
   eventId: number;
   shotId: number;
   potId: number;
-  /** Counterweight travel, 0 resting to 1 fully wound. */
+  /** Counterweight travel, 0 resting to 1 fully wound (Red/Primary engine). */
   wind: number;
   turn: number;
   loaded: AmmoKind | null;
@@ -185,6 +219,21 @@ export type SiegeWorld = {
   /** Timestamp of the release, so the arm animation and the shot stay in step. */
   loosedAt: number;
   supply: AmmoKind[];
+  /** Blue engine in 2v2 Clash mode */
+  engineBlue?: EngineState;
+  /** 3 Towers per team in 2v2 (0: Left Rooster, 1: Center Keep/Banner, 2: Right Cheese) */
+  towers?: {
+    red: [boolean, boolean, boolean];
+    blue: [boolean, boolean, boolean];
+  };
+  /** Midfield wandering goose */
+  goose?: {
+    x: number;
+    z: number;
+    vx: number;
+    vz: number;
+    honkUntil: number;
+  };
   rubble: number;
   bannerDown: boolean;
   beesUntil: number;
@@ -205,9 +254,13 @@ export type SiegeAction = {
     | 'loose'
     | 'ride'
     | 'jump'
-    | 'help';
+    | 'help'
+    | 'switchTeam'
+    | 'setMode';
   /** Which way `push` swings the aim: 1 to the left, -1 to the right. */
   side?: number;
+  team?: TeamId;
+  mode?: GameMode;
 };
 
 export type SiegeSnapshot = {

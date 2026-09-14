@@ -1,10 +1,13 @@
-import { buildCastle, defenderPosts } from './castle';
+import { Vec3 } from 'cannon-es';
+import { buildCastle, buildClashCastles, defenderPosts } from './castle';
 import { solverFor } from './physics';
 import {
   AMMO,
   AMMO_ORDER,
   BANNER_DOWN,
   CRANK,
+  CRANK_RED,
+  CRANK_BLUE,
   ENGINE_REACH,
   FIELD,
   MAX_TURN,
@@ -14,32 +17,44 @@ import {
   GRAVITY,
   LAUNCH_Y,
   SLING,
+  SLING_RED,
+  SLING_BLUE,
   TREBUCHET,
+  TREBUCHET_RED,
+  TREBUCHET_BLUE,
   idleInput,
   power,
   tally,
   windTime,
   type AmmoKind,
   type Crew,
+  type GameMode,
   type SiegeAction,
   type Block,
   type Shot,
   type SiegeEvent,
   type SiegeSnapshot,
   type SiegeWorld,
+  type TeamId,
 } from './types';
 
 const POT_INTERVAL = 7200;
 
-export function freshSiege(now: number): SiegeWorld {
+export function freshSiege(
+  now: number,
+  mode: GameMode = 'classic',
+): SiegeWorld {
+  const isClash = mode === 'clash2v2';
+  const blocks = isClash ? buildClashCastles() : buildCastle();
   const world: SiegeWorld = {
     clock: now,
     started: 0,
     remainder: 0,
     phase: 'lobby',
+    mode,
     players: [],
-    blocks: buildCastle(),
-    totalBlocks: 0,
+    blocks,
+    totalBlocks: blocks.length,
     gone: [],
     shots: [],
     pots: [],
@@ -60,8 +75,30 @@ export function freshSiege(now: number): SiegeWorld {
     nextPot: 0,
     crewSize: 0,
     volleys: 0,
+    ...(isClash
+      ? {
+          engineBlue: {
+            wind: 0,
+            turn: 0,
+            loaded: 'boulder',
+            rider: '',
+            loosedAt: -10000,
+            supply: [...AMMO_ORDER, 'boulder', 'cow', 'firepot', 'boulder'],
+          },
+          towers: {
+            red: [true, true, true],
+            blue: [true, true, true],
+          },
+          goose: {
+            x: 0,
+            z: 0,
+            vx: 0.8,
+            vz: 0.3,
+            honkUntil: 0,
+          },
+        }
+      : {}),
   };
-  world.totalBlocks = world.blocks.length;
   return world;
 }
 
@@ -70,20 +107,36 @@ export function newCrew(
   name: string,
   color: number,
   now: number,
+  team?: TeamId,
+  bot = false,
+  mode: GameMode = 'classic',
 ): Crew {
+  const is2v2 = mode === 'clash2v2';
+  const isBlue = is2v2 && team === 'blue';
+  const crank = is2v2 ? (team === 'blue' ? CRANK_BLUE : CRANK_RED) : CRANK;
+  const facing = isBlue ? 0 : Math.PI;
+
   return {
     id,
     name: name.slice(0, 18),
     color,
-    // Every crewmate starts in reach of the winch, so the opening move is
-    // obvious and all four can put their shoulder to it immediately.
-    x: CRANK.x + (color % 2 ? 2 : -2),
+    team: team ?? (is2v2 ? (color % 2 === 1 ? 'blue' : 'red') : 'red'),
+    bot,
+    x: crank.x + (color % 2 ? 1.4 : -1.4),
     y: 0,
-    z: CRANK.z - 1 + Math.floor(color / 2) * 1.2,
+    z:
+      crank.z +
+      (isBlue
+        ? Math.floor(color / 2)
+          ? 0.8
+          : -0.8
+        : Math.floor(color / 2)
+          ? -0.8
+          : 0.8),
     vx: 0,
     vy: 0,
     vz: 0,
-    facing: Math.PI,
+    facing,
     flying: false,
     winding: false,
     pushing: 0,
@@ -113,10 +166,18 @@ const upright = (p: Crew, w: SiegeWorld) =>
 
 export const banner = (w: SiegeWorld) =>
   w.blocks.find((b) => b.part === 'banner');
-export const winders = (w: SiegeWorld) =>
-  w.players.filter(
-    (p) => p.winding && upright(p, w) && near(p, TREBUCHET, ENGINE_REACH),
+export const winders = (w: SiegeWorld, team: TeamId = 'red') => {
+  const is2v2 = w.mode === 'clash2v2';
+  const treb =
+    is2v2 && team === 'blue'
+      ? TREBUCHET_BLUE
+      : is2v2
+        ? TREBUCHET_RED
+        : TREBUCHET;
+  return w.players.filter(
+    (p) => p.winding && upright(p, w) && near(p, treb, ENGINE_REACH),
   ).length;
+};
 
 function finish(w: SiegeWorld, won: boolean) {
   w.phase = won ? 'won' : 'lost';
@@ -148,6 +209,37 @@ function drawAmmo(w: SiegeWorld): AmmoKind {
   return w.supply.shift()!;
 }
 
+function drawAmmoBlue(w: SiegeWorld): AmmoKind {
+  if (!w.engineBlue) return 'boulder';
+  if (!w.engineBlue.supply.length)
+    w.engineBlue.supply = [
+      'boulder',
+      'boulder',
+      'firepot',
+      'boulder',
+      'beehive',
+      'cow',
+    ];
+  return w.engineBlue.supply.shift()!;
+}
+
+function finishClash(w: SiegeWorld, winner: TeamId | 'draw') {
+  w.phase = 'won';
+  w.winner = winner;
+  for (const p of w.players) {
+    p.input = idleInput();
+    p.winding = false;
+    p.pushing = 0;
+  }
+  emit(
+    w,
+    'finish',
+    winner === 'draw'
+      ? 'Catastrophic double collapse! Both castles lie in ruins. It is a draw!'
+      : `${winner.toUpperCase()} TEAM WINS! All three opposing towers have been toppled!`,
+  );
+}
+
 export function siegeAction(
   w: SiegeWorld,
   id: string,
@@ -156,35 +248,107 @@ export function siegeAction(
 ) {
   const p = w.players.find((c) => c.id === id);
   if (!p) throw new Error('Join the siege first.');
+
+  if (action.type === 'setMode') {
+    if (id !== host)
+      throw new Error('Only the captain can choose the game mode.');
+    if (w.phase !== 'lobby') throw new Error('The assault has already begun.');
+    const nextMode = action.mode ?? 'classic';
+    w.mode = nextMode;
+    const fresh = freshSiege(w.clock, nextMode);
+    w.blocks = fresh.blocks;
+    w.totalBlocks = fresh.totalBlocks;
+    w.engineBlue = fresh.engineBlue;
+    w.towers = fresh.towers;
+    w.goose = fresh.goose;
+    emit(
+      w,
+      'wind',
+      `Mode set to ${nextMode === 'clash2v2' ? '2v2 Castle Clash' : 'Classic Siege'}.`,
+    );
+    return;
+  }
+
+  if (action.type === 'switchTeam') {
+    if (w.phase !== 'lobby')
+      throw new Error('Teams are locked once assault begins.');
+    p.team = action.team ?? (p.team === 'blue' ? 'red' : 'blue');
+    emit(w, 'load', `${p.name} joined Team ${p.team.toUpperCase()}.`);
+    return;
+  }
+
   if (action.type === 'start' || action.type === 'restart') {
     if (id !== host) throw new Error('Only the captain can call the assault.');
     if (action.type === 'start' && w.phase !== 'lobby')
       throw new Error('The assault has already begun.');
     if (action.type === 'restart' && w.phase !== 'won' && w.phase !== 'lost')
       throw new Error('See this siege out before calling another.');
-    const players = w.players.map((c) =>
-      newCrew(c.id, c.name, c.color, w.clock),
-    );
+
+    const mode = action.mode ?? w.mode ?? 'classic';
+    let players: Crew[];
+
+    if (mode === 'clash2v2') {
+      const existing = w.players.map((c, i) => {
+        const team = c.team ?? (i % 2 === 0 ? 'red' : 'blue');
+        return newCrew(c.id, c.name, c.color, w.clock, team, c.bot, 'clash2v2');
+      });
+      // Fill empty slots up to 4 with bot crewmates
+      const botNames = [
+        'Brother Roger',
+        'Sir Cedric',
+        'Lord Dunce',
+        'Baron Bumbling',
+      ];
+      while (existing.length < 4) {
+        const idx = existing.length;
+        const redCount = existing.filter((pl) => pl.team === 'red').length;
+        const blueCount = existing.filter((pl) => pl.team === 'blue').length;
+        const team: TeamId = redCount <= blueCount ? 'red' : 'blue';
+        existing.push(
+          newCrew(
+            `bot-${idx}`,
+            botNames[idx] ?? `Bot ${idx}`,
+            idx,
+            w.clock,
+            team,
+            true,
+            'clash2v2',
+          ),
+        );
+      }
+      players = existing;
+    } else {
+      players = w.players.map((c) =>
+        newCrew(c.id, c.name, c.color, w.clock, 'red', false, 'classic'),
+      );
+    }
+
     const eventId = w.eventId;
-    Object.assign(w, freshSiege(w.clock), {
+    Object.assign(w, freshSiege(w.clock, mode), {
       players,
       phase: 'playing',
       started: w.clock,
       crewSize: players.length,
       nextPot: w.clock + POT_INTERVAL,
-      // Pointed at the keep from the off. The opening swing used to be random,
-      // which meant the first job of every siege was undoing it.
       turn: 0,
       eventId,
     });
-    // The pile loads itself, in order, so nobody spends the round fetching.
     w.loaded = drawAmmo(w);
-    emit(w, 'start', 'Hold the winch to wind it, then loose. That is the job.');
+    if (w.engineBlue) w.engineBlue.loaded = drawAmmoBlue(w);
+    emit(
+      w,
+      'start',
+      mode === 'clash2v2'
+        ? '2v2 CASTLE CLASH! Topple all three opposing towers to win!'
+        : 'Hold the winch to wind it, then loose. That is the job.',
+    );
     return;
   }
+
   if (w.phase !== 'playing' && w.phase !== 'relief')
     throw new Error('Wait for the captain to call the assault.');
   if (p.flying) throw new Error('You are currently airborne. Enjoy the view.');
+
   if (action.type === 'stopWind') {
     p.winding = false;
     return;
@@ -215,34 +379,46 @@ export function siegeAction(
     emit(w, 'squash', `${p.name} hauled ${friend.name} back onto their feet.`);
     return;
   }
+
+  // Determine which engine the player is standing near
+  const is2v2 = w.mode === 'clash2v2';
+  const nearBlueEngine = is2v2 && near(p, TREBUCHET_BLUE, ENGINE_REACH);
+  const nearRedEngine = near(
+    p,
+    is2v2 ? TREBUCHET_RED : TREBUCHET,
+    ENGINE_REACH,
+  );
+  const usingBlue = nearBlueEngine && (!nearRedEngine || p.team === 'blue');
+
   if (action.type === 'wind') {
-    if (!near(p, TREBUCHET, ENGINE_REACH))
-      throw new Error('Get to the engine first.');
+    if (!nearBlueEngine && !nearRedEngine)
+      throw new Error('Get to an engine first.');
     p.winding = true;
     return;
   }
   if (action.type === 'push') {
-    if (!near(p, TREBUCHET, ENGINE_REACH))
-      throw new Error('Get to the engine first.');
-    // Which way you lean is the key you hold, not the side you happen to be
-    // standing on. Working that out was a puzzle nobody asked for.
+    if (!nearBlueEngine && !nearRedEngine)
+      throw new Error('Get to an engine first.');
     p.pushing = action.side === -1 ? -1 : 1;
     return;
   }
   if (action.type === 'ride') {
-    if (!near(p, SLING, 2.4))
+    const slingSpot = usingBlue ? SLING_BLUE : is2v2 ? SLING_RED : SLING;
+    if (!near(p, slingSpot, 2.6))
       throw new Error('Climb into the sling at the back of the frame.');
-    if (w.rider === p.id) {
-      w.rider = '';
-      w.loaded = drawAmmo(w);
+
+    const engine = usingBlue ? w.engineBlue! : w;
+    if (engine.rider === p.id) {
+      engine.rider = '';
+      engine.loaded = usingBlue ? drawAmmoBlue(w) : drawAmmo(w);
       emit(w, 'load', `${p.name} thought better of it and climbed out.`);
       return;
     }
-    if (w.rider) throw new Error('Someone braver is already in the sling.');
-    // Whatever the sling had reloaded goes back on the pile to make room.
-    if (w.loaded) w.supply.unshift(w.loaded);
-    w.loaded = null;
-    w.rider = p.id;
+    if (engine.rider)
+      throw new Error('Someone braver is already in the sling.');
+    if (engine.loaded) engine.supply.unshift(engine.loaded);
+    engine.loaded = null;
+    engine.rider = p.id;
     emit(
       w,
       'load',
@@ -250,31 +426,50 @@ export function siegeAction(
     );
     return;
   }
+
   if (action.type !== 'loose') throw new Error('Unknown siege action.');
-  if (!near(p, TREBUCHET, ENGINE_REACH))
-    throw new Error('Get to the engine first.');
-  // The one job you still cannot do alone, which is the whole joke.
-  if (w.rider === p.id)
+  if (!nearBlueEngine && !nearRedEngine)
+    throw new Error('Get to an engine first.');
+
+  const engine = usingBlue ? w.engineBlue! : w;
+  if (engine.rider === p.id)
     throw new Error('You are in the sling. Someone else pulls the pin.');
-  if (!w.loaded && !w.rider) throw new Error('Nothing is loaded.');
-  if (w.wind < 0.12) throw new Error('Wind the counterweight first.');
-  loose(w, p.name);
+  if (!engine.loaded && !engine.rider) throw new Error('Nothing is loaded.');
+  if (engine.wind < 0.12) throw new Error('Wind the counterweight first.');
+
+  loose(w, p.name, usingBlue ? 'blue' : 'red');
 }
 
-function loose(w: SiegeWorld, by: string) {
-  const kind: AmmoKind = w.rider ? 'crew' : w.loaded!;
-  const v = power(w.wind);
+function loose(w: SiegeWorld, by: string, team: TeamId = 'red') {
+  const isBlue = team === 'blue' && w.mode === 'clash2v2' && !!w.engineBlue;
+  const engine = isBlue ? w.engineBlue! : w;
+  const kind: AmmoKind = engine.rider ? 'crew' : engine.loaded!;
+  const v = power(engine.wind);
   const horizontal = v * Math.cos(ELEVATION);
-  const vx = -Math.sin(w.turn) * horizontal;
-  const vz = -Math.cos(w.turn) * horizontal;
+
+  // Red shoots towards North (-z), Blue shoots towards South (+z)
+  const dirZ = isBlue ? 1 : -1;
+  const vx = isBlue
+    ? -Math.sin(engine.turn) * horizontal
+    : Math.sin(engine.turn) * horizontal;
+  const vz = dirZ * Math.cos(engine.turn) * horizontal;
   const vy = v * Math.sin(ELEVATION);
-  const shot = {
+  const slingPos = isBlue
+    ? SLING_BLUE
+    : w.mode === 'clash2v2'
+      ? SLING_RED
+      : SLING;
+
+  const shot: Shot = {
     id: ++w.shotId,
     kind,
-    rider: w.rider,
-    x: SLING.x - Math.sin(w.turn) * 1.4,
+    rider: engine.rider,
+    team,
+    x: slingPos.x - Math.sin(engine.turn) * 1.4,
     y: LAUNCH_Y,
-    z: SLING.z - Math.cos(w.turn) * 1.4,
+    z: isBlue
+      ? slingPos.z + Math.cos(engine.turn) * 1.4
+      : slingPos.z - Math.cos(engine.turn) * 1.4,
     vx,
     vy,
     vz,
@@ -284,8 +479,9 @@ function loose(w: SiegeWorld, by: string) {
   };
   w.shots.push(shot);
   solverFor(w).addShot(shot);
-  if (w.rider) {
-    const rider = w.players.find((c) => c.id === w.rider);
+
+  if (engine.rider) {
+    const rider = w.players.find((c) => c.id === engine.rider);
     if (rider) {
       rider.flying = true;
       rider.winding = false;
@@ -300,17 +496,16 @@ function loose(w: SiegeWorld, by: string) {
     }
   }
   w.volleys++;
-  // The next payload is already in the sling by the time the arm settles.
-  w.loaded = drawAmmo(w);
-  w.rider = '';
-  w.wind = 0;
-  w.loosedAt = w.clock;
+  engine.loaded = isBlue ? drawAmmoBlue(w) : drawAmmo(w);
+  engine.rider = '';
+  engine.wind = 0;
+  engine.loosedAt = w.clock;
   emit(
     w,
     'loose',
     kind === 'crew'
       ? `${by} loosed the sling. There is a person in it.`
-      : `${by} loosed the ${AMMO[kind].name.toLowerCase()}.`,
+      : `${by} loosed the ${AMMO[kind].name.toLowerCase()}!`,
   );
 }
 
@@ -424,9 +619,109 @@ function strike(w: SiegeWorld, s: Shot) {
     );
 }
 
+function stepBots(w: SiegeWorld, dt: number) {
+  if (w.phase !== 'playing' && w.phase !== 'relief') return;
+  const is2v2 = w.mode === 'clash2v2';
+  const bots = w.players.filter((p) => p.bot && upright(p, w) && !p.flying);
+
+  for (const bot of bots) {
+    const isBlue = bot.team === 'blue';
+    const engine = isBlue ? w.engineBlue : w;
+    if (!engine) continue;
+    const crank = isBlue ? CRANK_BLUE : is2v2 ? CRANK_RED : CRANK;
+    const treb = isBlue ? TREBUCHET_BLUE : is2v2 ? TREBUCHET_RED : TREBUCHET;
+
+    // 1. Rescue downed ally
+    const downedAlly = w.players.find(
+      (a) =>
+        a.team === bot.team &&
+        a.id !== bot.id &&
+        a.stunnedUntil > w.clock &&
+        !a.flying &&
+        Math.hypot(bot.x - a.x, bot.z - a.z) < 6,
+    );
+    if (downedAlly) {
+      const dx = downedAlly.x - bot.x;
+      const dz = downedAlly.z - bot.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < 2.2) {
+        downedAlly.stunnedUntil = w.clock;
+        emit(
+          w,
+          'squash',
+          `${bot.name} hauled ${downedAlly.name} back onto their feet.`,
+        );
+      } else {
+        bot.input = { x: dx / dist, z: dz / dist, seq: bot.input.seq + 1 };
+      }
+      continue;
+    }
+
+    // 2. Wind engine if under threshold
+    if (engine.wind < 0.72) {
+      const distToCrank = Math.hypot(bot.x - crank.x, bot.z - crank.z);
+      if (distToCrank > 1.6) {
+        const dx = crank.x - bot.x;
+        const dz = crank.z - bot.z;
+        const dist = Math.hypot(dx, dz);
+        bot.input = { x: dx / dist, z: dz / dist, seq: bot.input.seq + 1 };
+        bot.winding = false;
+      } else {
+        bot.input = idleInput();
+        bot.winding = true;
+      }
+      continue;
+    }
+
+    // 3. Engine is wound! Aim and loose
+    bot.winding = false;
+    let targetTurn = 0;
+    if (is2v2 && w.towers) {
+      const oppTeam = isBlue ? 'red' : 'blue';
+      const towers = w.towers[oppTeam];
+      // Tower 0 (Left, x = -8.5), Tower 1 (Center, x = 0), Tower 2 (Right, x = +8.5)
+      if (towers[0]) targetTurn = isBlue ? -0.26 : 0.26;
+      else if (towers[2]) targetTurn = isBlue ? 0.26 : -0.26;
+      else targetTurn = 0;
+    }
+
+    if (Math.abs(engine.turn - targetTurn) > 0.04) {
+      engine.turn += Math.sign(targetTurn - engine.turn) * 0.22 * dt;
+      continue;
+    }
+
+    const distToTreb = Math.hypot(bot.x - treb.x, bot.z - treb.z);
+    if (distToTreb > ENGINE_REACH - 1.5) {
+      const dx = treb.x - bot.x;
+      const dz = treb.z - bot.z;
+      const dist = Math.hypot(dx, dz);
+      bot.input = { x: dx / dist, z: dz / dist, seq: bot.input.seq + 1 };
+    } else {
+      bot.input = idleInput();
+      if (
+        !engine.rider &&
+        Math.random() < 0.04 &&
+        w.clock - bot.lastAction > 20000
+      ) {
+        bot.lastAction = w.clock;
+        engine.rider = bot.id;
+        emit(w, 'load', `${bot.name} climbed into the sling! For glory!`);
+      } else if (engine.wind >= 0.2 && (engine.loaded || engine.rider)) {
+        loose(w, bot.name, isBlue ? 'blue' : 'red');
+      }
+    }
+  }
+}
+
 function step(w: SiegeWorld, dt: number) {
   if (w.phase !== 'playing' && w.phase !== 'relief') return;
-  if (w.phase === 'playing' && w.clock >= w.started + ROUND_MS - RELIEF_MS) {
+  const is2v2 = w.mode === 'clash2v2';
+
+  if (
+    !is2v2 &&
+    w.phase === 'playing' &&
+    w.clock >= w.started + ROUND_MS - RELIEF_MS
+  ) {
     w.phase = 'relief';
     w.reliefAt = w.started + ROUND_MS;
     emit(
@@ -435,15 +730,23 @@ function step(w: SiegeWorld, dt: number) {
       'Dust on the road. A relief column is coming. Last volleys!',
     );
   }
-  if (w.phase === 'relief' && w.clock >= w.reliefAt) {
+  if (!is2v2 && w.phase === 'relief' && w.clock >= w.reliefAt) {
     finish(w, false);
     return;
   }
+
+  // 1. Run bot AI updates
+  stepBots(w, dt);
+
   const solver = solverFor(w);
-  // Winch and aim, both driven by however many shoulders are on them.
+
+  // 2. Winch and aim for primary (Red) engine
+  const redTreb = is2v2 ? TREBUCHET_RED : TREBUCHET;
   const crank = winders(w);
   if (crank) w.wind = Math.min(1, w.wind + (dt * 1000) / windTime(crank));
-  const pushers = w.players.filter((p) => p.pushing && upright(p, w));
+  const pushers = w.players.filter(
+    (p) => p.pushing && upright(p, w) && near(p, redTreb, ENGINE_REACH),
+  );
   if (pushers.length) {
     const direction = pushers.reduce((n, p) => n + p.pushing, 0);
     w.turn = Math.max(
@@ -451,6 +754,36 @@ function step(w: SiegeWorld, dt: number) {
       Math.min(MAX_TURN, w.turn + Math.sign(direction) * 0.22 * dt),
     );
   }
+
+  // 3. Winch and aim for Blue engine in 2v2
+  if (is2v2 && w.engineBlue) {
+    const blueWinders = w.players.filter(
+      (p) =>
+        p.winding && upright(p, w) && near(p, TREBUCHET_BLUE, ENGINE_REACH),
+    ).length;
+    if (blueWinders) {
+      w.engineBlue.wind = Math.min(
+        1,
+        w.engineBlue.wind + (dt * 1000) / windTime(blueWinders),
+      );
+    }
+    const bluePushers = w.players.filter(
+      (p) =>
+        p.pushing && upright(p, w) && near(p, TREBUCHET_BLUE, ENGINE_REACH),
+    );
+    if (bluePushers.length) {
+      const direction = bluePushers.reduce((n, p) => n + p.pushing, 0);
+      w.engineBlue.turn = Math.max(
+        -MAX_TURN,
+        Math.min(
+          MAX_TURN,
+          w.engineBlue.turn + Math.sign(direction) * 0.22 * dt,
+        ),
+      );
+    }
+  }
+
+  // 4. Update players
   for (const p of w.players) {
     if (p.flying) {
       p.vy -= GRAVITY * dt;
@@ -466,12 +799,21 @@ function step(w: SiegeWorld, dt: number) {
       continue;
     }
     if (w.rider === p.id) {
-      p.x = SLING.x - Math.sin(w.turn) * 1.2;
-      p.z = SLING.z - Math.cos(w.turn) * 1.2;
+      const slingPos = is2v2 ? SLING_RED : SLING;
+      p.x = slingPos.x - Math.sin(w.turn) * 1.2;
+      p.z = slingPos.z - Math.cos(w.turn) * 1.2;
       p.y = 0.7 + w.wind * 0.5;
       p.facing = Math.PI + w.turn;
       continue;
     }
+    if (is2v2 && w.engineBlue && w.engineBlue.rider === p.id) {
+      p.x = SLING_BLUE.x + Math.sin(w.engineBlue.turn) * 1.2;
+      p.z = SLING_BLUE.z + Math.cos(w.engineBlue.turn) * 1.2;
+      p.y = 0.7 + w.engineBlue.wind * 0.5;
+      p.facing = w.engineBlue.turn;
+      continue;
+    }
+
     const stunned = p.stunnedUntil > w.clock;
     const anchored = p.winding || p.pushing !== 0;
     const length = Math.max(1, Math.hypot(p.input.x, p.input.z));
@@ -493,6 +835,7 @@ function step(w: SiegeWorld, dt: number) {
     }
     p.x = Math.max(-FIELD.x, Math.min(FIELD.x, p.x));
     p.z = Math.max(-FIELD.z, Math.min(FIELD.z, p.z));
+
     // Falling masonry flattens anyone standing under it.
     if (grounded && !stunned)
       for (const b of w.blocks) {
@@ -501,8 +844,9 @@ function step(w: SiegeWorld, dt: number) {
           knock(w, p, 2000, `${p.name} was flattened by falling masonry.`);
       }
   }
-  // Defenders answer with clay pots until the bees arrive.
-  if (w.clock >= w.nextPot && w.clock >= w.beesUntil) {
+
+  // 5. Defenders (clay pots) in classic mode only
+  if (!is2v2 && w.clock >= w.nextPot && w.clock >= w.beesUntil) {
     const posts = defenderPosts();
     const post = posts[Math.floor(Math.random() * posts.length)];
     const target = {
@@ -532,8 +876,6 @@ function step(w: SiegeWorld, dt: number) {
       if (!p.flying && Math.hypot(p.x - pot.x, p.z - pot.z) < 2.3)
         knock(w, p, 1900, `${p.name} caught a clay pot. Rude.`);
     if (Math.hypot(pot.x - TREBUCHET.x, pot.z - TREBUCHET.z) < 4) {
-      // A pot on the frame costs both the wind and the aim, so a crew under
-      // fire has to keep coming back to the winch and the push points.
       const nudge = (pot.x < TREBUCHET.x ? 1 : -1) * 0.05;
       w.turn = Math.max(-MAX_TURN, Math.min(MAX_TURN, w.turn + nudge));
       if (w.wind > 0) {
@@ -543,7 +885,25 @@ function step(w: SiegeWorld, dt: number) {
     }
   }
   w.pots = w.pots.filter((c) => c.y > 0);
-  // Fire eats through timber first, then loosens the stone around it.
+
+  // 6. Midfield wandering Goose
+  if (w.goose) {
+    const g = w.goose;
+    g.x += g.vx * dt;
+    g.z += g.vz * dt;
+    if (g.x < -14 || g.x > 14) g.vx = -g.vx;
+    if (g.z < -4 || g.z > 4) g.vz = -g.vz;
+    for (const p of w.players) {
+      if (Math.hypot(p.x - g.x, p.z - g.z) < 2.0 && w.clock > g.honkUntil) {
+        g.honkUntil = w.clock + 2500;
+        g.vx = (g.x < p.x ? -1 : 1) * 3.5;
+        g.vz = (g.z < p.z ? -1 : 1) * 3.5;
+        emit(w, 'honk', `${p.name} startled the Goose of War! *HONK*`);
+      }
+    }
+  }
+
+  // 7. Fire effects
   const burnt = w.blocks.filter((b) => b.burning && w.clock >= b.burning);
   if (burnt.length) {
     for (const b of burnt) {
@@ -558,20 +918,86 @@ function step(w: SiegeWorld, dt: number) {
       `Burnt through. ${burnt.length} stone${burnt.length === 1 ? '' : 's'} gone.`,
     );
   }
+
   solver.step(dt);
   solver.read(w);
+
+  // 8. Mid-air projectile collisions
+  const colliding = new Set<number>();
+  for (let i = 0; i < w.shots.length; i++) {
+    const s1 = w.shots[i];
+    if (s1.landed || s1.y < 1.2 || colliding.has(s1.id)) continue;
+    for (let j = i + 1; j < w.shots.length; j++) {
+      const s2 = w.shots[j];
+      if (s2.landed || s2.y < 1.2 || colliding.has(s2.id)) continue;
+      const d = Math.hypot(s1.x - s2.x, s1.y - s2.y, s1.z - s2.z);
+      if (d < 1.8) {
+        colliding.add(s1.id);
+        colliding.add(s2.id);
+        solver.removeShot(s1.id);
+        solver.removeShot(s2.id);
+        emit(
+          w,
+          'midair',
+          `MID-AIR COLLISION! ${AMMO[s1.kind].name} and ${AMMO[s2.kind].name} shattered in mid-air!`,
+        );
+      }
+    }
+  }
+  if (colliding.size > 0) {
+    w.shots = w.shots.filter((s) => !colliding.has(s.id));
+  }
+
+  // 9. Process shots & impacts
   for (const s of w.shots) {
     strike(w, s);
     const resting = Math.hypot(s.vx, s.vy, s.vz) < 1.2 && s.y < 3;
     if (!s.landed && (resting || s.y <= AMMO[s.kind].radius + 0.05))
       landShot(w, s.id);
   }
+
+  // Counter-battery hits in 2v2
+  if (is2v2) {
+    for (const s of w.shots) {
+      if (s.landed && w.clock - s.landed < 200) {
+        if (s.team === 'red' && w.engineBlue) {
+          if (
+            Math.hypot(s.x - TREBUCHET_BLUE.x, s.z - TREBUCHET_BLUE.z) < 4.4
+          ) {
+            if (w.engineBlue.wind > 0.08) {
+              w.engineBlue.wind = 0;
+              emit(
+                w,
+                'counterbattery',
+                'Direct hit on Blue trebuchet! Counterweight slipped!',
+              );
+            }
+          }
+        }
+        if (s.team === 'blue') {
+          if (Math.hypot(s.x - TREBUCHET_RED.x, s.z - TREBUCHET_RED.z) < 4.4) {
+            if (w.wind > 0.08) {
+              w.wind = 0;
+              emit(
+                w,
+                'counterbattery',
+                'Direct hit on Red trebuchet! Counterweight slipped!',
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
   for (const s of w.shots.filter(
     (o) => o.landed && w.clock - o.landed > 6000,
   )) {
     solver.removeShot(s.id);
   }
   w.shots = w.shots.filter((s) => !s.landed || w.clock - s.landed <= 6000);
+
+  // 10. Rubble & Tower checking
   let rubble = 0;
   for (const b of w.blocks) {
     const moved =
@@ -579,12 +1005,108 @@ function step(w: SiegeWorld, dt: number) {
     if (moved !== b.fallen) b.fallen = moved;
     if (moved) rubble++;
   }
-  const flag = banner(w);
   w.rubble = rubble + (w.totalBlocks - w.blocks.length);
-  if (flag && !w.bannerDown && flag.y < BANNER_DOWN) {
-    w.bannerDown = true;
-    emit(w, 'banner', 'THE BANNER IS DOWN. The keep is yours.');
-    finish(w, true);
+
+  // 2v2 Tower checking
+  if (is2v2 && w.towers) {
+    const teams: TeamId[] = ['red', 'blue'];
+    for (const team of teams) {
+      // Tower 0: Rooster
+      if (w.towers[team][0]) {
+        const rooster = w.blocks.find(
+          (b) => b.team === team && b.towerIndex === 0 && b.part === 'mascot',
+        );
+        if (
+          rooster &&
+          (rooster.y < 2.5 ||
+            Math.hypot(rooster.x - rooster.homeX, rooster.z - rooster.homeZ) >
+              1.8)
+        ) {
+          w.towers[team][0] = false;
+          emit(
+            w,
+            'topple',
+            `${team === 'red' ? 'Red' : 'Blue'} team's Golden Rooster was toppled! 🐓`,
+          );
+        }
+      }
+      // Tower 1: Banner & Keep
+      if (w.towers[team][1]) {
+        const flag = w.blocks.find(
+          (b) => b.team === team && b.towerIndex === 1 && b.part === 'banner',
+        );
+        if (
+          flag &&
+          (flag.y < 3.2 ||
+            Math.hypot(flag.x - flag.homeX, flag.z - flag.homeZ) > 1.8)
+        ) {
+          w.towers[team][1] = false;
+          emit(
+            w,
+            'topple',
+            `${team === 'red' ? 'Red' : 'Blue'} team's Royal Keep crashed down! 👑`,
+          );
+        }
+      }
+      // Tower 2: Cheese
+      if (w.towers[team][2]) {
+        const cheese = w.blocks.find(
+          (b) => b.team === team && b.towerIndex === 2 && b.part === 'mascot',
+        );
+        if (
+          cheese &&
+          (cheese.y < 2.5 ||
+            Math.hypot(cheese.x - cheese.homeX, cheese.z - cheese.homeZ) > 1.8)
+        ) {
+          w.towers[team][2] = false;
+          const cheeseBody = solver.blocks.get(cheese.id);
+          if (cheeseBody) {
+            const impulseZ = team === 'blue' ? 40 : -40;
+            cheeseBody.applyImpulse(
+              new Vec3((Math.random() - 0.5) * 30, 15, impulseZ),
+              new Vec3(0, 0, 0),
+            );
+          }
+          emit(
+            w,
+            'topple',
+            `${team === 'red' ? 'Red' : 'Blue'} team's Sacred Cheese is loose and rolling! 🧀`,
+          );
+        }
+      }
+    }
+
+    // Check rolling cheese knocking down players
+    const rollingCheeses = w.blocks.filter(
+      (b) => b.mascotKind === 'cheese' && !b.sleeping,
+    );
+    for (const cheese of rollingCheeses) {
+      for (const p of w.players) {
+        if (upright(p, w) && Math.hypot(p.x - cheese.x, p.z - cheese.z) < 1.6) {
+          knock(w, p, 2000, `${p.name} was steamrolled by the Sacred Cheese!`);
+        }
+      }
+    }
+
+    // Victory check for 2v2
+    const redLost = !w.towers.red[0] && !w.towers.red[1] && !w.towers.red[2];
+    const blueLost =
+      !w.towers.blue[0] && !w.towers.blue[1] && !w.towers.blue[2];
+    if (redLost && blueLost) {
+      finishClash(w, 'draw');
+    } else if (redLost) {
+      finishClash(w, 'blue');
+    } else if (blueLost) {
+      finishClash(w, 'red');
+    }
+  } else {
+    // Classic banner check
+    const flag = banner(w);
+    if (flag && !w.bannerDown && flag.y < BANNER_DOWN) {
+      w.bannerDown = true;
+      emit(w, 'banner', 'THE BANNER IS DOWN. The keep is yours.');
+      finish(w, true);
+    }
   }
 }
 
@@ -646,7 +1168,8 @@ export function hydrateSiege(w: SiegeWorld): SiegeWorld {
   if (w.blocks.length + w.gone.length >= w.totalBlocks) return w;
   const sent = new Map(w.blocks.map((b) => [b.id, b]));
   const dropped = new Set(w.gone);
-  w.blocks = buildCastle()
+  const baseline = w.mode === 'clash2v2' ? buildClashCastles() : buildCastle();
+  w.blocks = baseline
     .filter((b) => !dropped.has(b.id))
     .map((b) => sent.get(b.id) ?? b);
   return w;

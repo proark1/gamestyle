@@ -20,6 +20,7 @@ import {
 
 const adapter: GameAdapter<SiegeWorld, SiegeSnapshot> = {
   game: 'siege-and-desist',
+  autonomous: (p) => !!p.bot,
   actions: [
     'start',
     'restart',
@@ -31,10 +32,14 @@ const adapter: GameAdapter<SiegeWorld, SiegeSnapshot> = {
     'ride',
     'jump',
     'help',
+    'switchTeam',
+    'setMode',
   ],
   create: freshSiege,
   add: (w, m) => {
-    w.players.push(newCrew(m.id, m.name, m.color, w.clock));
+    const team =
+      w.mode === 'clash2v2' ? (m.color % 2 === 1 ? 'blue' : 'red') : 'red';
+    w.players.push(newCrew(m.id, m.name, m.color, w.clock, team));
   },
   remove: removeCrew,
   input(w, id, value) {

@@ -11,17 +11,21 @@ import {
   siegeSnapshot,
   winders,
 } from './simulation';
-import { buildCastle } from './castle';
+import { buildCastle, buildClashCastles } from './castle';
 import { createEngine } from './peer';
 import { siegeCatalog } from './audio';
 import {
   BANNER_DOWN,
   CRANK,
+  CRANK_RED,
+  CRANK_BLUE,
   MAX_TURN,
   RELIEF_MS,
   ROUND_MS,
   SLING,
   TREBUCHET,
+  TREBUCHET_RED,
+  TREBUCHET_BLUE,
   rangeFor,
   type AmmoKind,
   type SiegeWorld,
@@ -668,4 +672,177 @@ void test('every crewmate starts within reach of the winch', () => {
   advanceSiege(alone, alone.clock + 1000);
   advanceSiege(w, w.clock + 1000);
   assert.ok(w.wind > alone.wind, 'four shoulders beat one');
+});
+
+void test('2v2 castle clash builds two opposing castles with three towers and mascots each', () => {
+  const blocks = buildClashCastles();
+  const redBlocks = blocks.filter((b) => b.team === 'red');
+  const blueBlocks = blocks.filter((b) => b.team === 'blue');
+
+  assert.ok(redBlocks.length > 30, 'red castle has blocks');
+  assert.ok(blueBlocks.length > 30, 'blue castle has blocks');
+
+  // Red blocks reside at South (z > 0), Blue blocks at North (z < 0)
+  for (const b of redBlocks) {
+    assert.ok(b.z > 0, 'red blocks are on south side (z > 0)');
+  }
+  for (const b of blueBlocks) {
+    assert.ok(b.z < 0, 'blue blocks are on north side (z < 0)');
+  }
+
+  // Check 3 mascots on each side: rooster, banner (crown), cheese
+  for (const team of ['red', 'blue'] as const) {
+    const teamBlocks = blocks.filter((b) => b.team === team);
+    const rooster = teamBlocks.find((b) => b.mascotKind === 'rooster');
+    const crown = teamBlocks.find((b) => b.part === 'banner');
+    const cheese = teamBlocks.find((b) => b.mascotKind === 'cheese');
+
+    assert.ok(rooster, `${team} castle has golden rooster tower`);
+    assert.ok(crown, `${team} castle has royal keep banner`);
+    assert.ok(cheese, `${team} castle has sacred cheese wheel tower`);
+
+    assert.equal(rooster?.towerIndex, 0, 'rooster is tower 0');
+    assert.equal(crown?.towerIndex, 1, 'keep/banner is tower 1');
+    assert.equal(cheese?.towerIndex, 2, 'cheese is tower 2');
+  }
+});
+
+void test('2v2 starts with dual engines, goose of war, and auto-fills bots up to 4 crewmates', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(newCrew('0', 'Player 1', 0, w.clock, 'red'));
+
+  assert.equal(w.mode, 'clash2v2');
+  assert.ok(w.engineBlue, 'blue engine initialized');
+  assert.ok(w.towers, 'towers tracked');
+  assert.equal(w.towers.red.length, 3, '3 red towers');
+  assert.equal(w.towers.blue.length, 3, '3 blue towers');
+  assert.ok(w.goose, 'goose of war spawned');
+
+  siegeAction(w, '0', { type: 'start', mode: 'clash2v2' }, '0');
+
+  assert.equal(w.players.length, 4, 'auto-fills up to 4 crewmates');
+  const redTeam = w.players.filter((p) => p.team === 'red');
+  const blueTeam = w.players.filter((p) => p.team === 'blue');
+  assert.equal(redTeam.length, 2, 'red team has 2 members');
+  assert.equal(blueTeam.length, 2, 'blue team has 2 members');
+
+  const bots = w.players.filter((p) => p.bot);
+  assert.equal(bots.length, 3, '3 bots created to fill human practice lobby');
+  for (const bot of bots) {
+    assert.ok(bot.bot, 'bot flag is true');
+  }
+});
+
+void test('dual trebuchets fire in opposite directions towards enemy castles', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(newCrew('p-red', 'RedGunner', 0, w.clock, 'red'));
+  w.players.push(newCrew('p-blue', 'BlueGunner', 1, w.clock, 'blue'));
+
+  // Move RedGunner to Red engine crank and BlueGunner to Blue engine crank
+  w.players[0]!.x = CRANK_RED.x;
+  w.players[0]!.z = CRANK_RED.z;
+  w.players[1]!.x = CRANK_BLUE.x;
+  w.players[1]!.z = CRANK_BLUE.z;
+
+  siegeAction(w, 'p-red', { type: 'start', mode: 'clash2v2' }, 'p-red');
+
+  // Red player winds Red engine
+  w.wind = 0.8;
+  w.loaded = 'boulder';
+  const redPlayer = w.players.find((p) => p.id === 'p-red')!;
+  redPlayer.x = TREBUCHET_RED.x;
+  redPlayer.z = TREBUCHET_RED.z;
+
+  siegeAction(w, 'p-red', { type: 'loose' }, 'p-red');
+  const redShot = w.shots.find((s) => s.team === 'red');
+  assert.ok(redShot, 'red engine fired a shot');
+  assert.ok(
+    redShot.vz < 0,
+    'red shot flies north towards blue castle (vz < 0)',
+  );
+
+  // Blue player winds Blue engine
+  w.engineBlue!.wind = 0.8;
+  w.engineBlue!.loaded = 'boulder';
+  const bluePlayer = w.players.find((p) => p.id === 'p-blue')!;
+  bluePlayer.x = TREBUCHET_BLUE.x;
+  bluePlayer.z = TREBUCHET_BLUE.z;
+
+  siegeAction(w, 'p-blue', { type: 'loose' }, 'p-red');
+  const blueShot = w.shots.find((s) => s.team === 'blue');
+  assert.ok(blueShot, 'blue engine fired a shot');
+  assert.ok(
+    blueShot.vz > 0,
+    'blue shot flies south towards red castle (vz > 0)',
+  );
+});
+
+void test('mid-air projectile collision destroys opposing shots with an explosion', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(newCrew('0', 'Cap', 0, w.clock, 'red'));
+  siegeAction(w, '0', { type: 'start', mode: 'clash2v2' }, '0');
+
+  // Create two opposing shots colliding at x=0, y=10, z=0
+  w.shots = [
+    {
+      id: 1,
+      kind: 'boulder',
+      rider: '',
+      x: 0,
+      y: 10,
+      z: 0.5,
+      vx: 0,
+      vy: 0,
+      vz: -10,
+      spin: 0,
+      landed: 0,
+      struck: 0,
+      team: 'red',
+    },
+    {
+      id: 2,
+      kind: 'boulder',
+      rider: '',
+      x: 0,
+      y: 10,
+      z: -0.5,
+      vx: 0,
+      vy: 0,
+      vz: 10,
+      spin: 0,
+      landed: 0,
+      struck: 0,
+      team: 'blue',
+    },
+  ];
+
+  advanceSiege(w, w.clock + 50);
+
+  // Both shots should be destroyed in mid-air collision
+  assert.equal(w.shots.length, 0, 'shots destroyed by midair collision');
+  const midairEvent = w.events.find((e) => e.kind === 'midair');
+  assert.ok(midairEvent, 'midair collision event emitted');
+  assert.ok(
+    midairEvent.text.includes('MID-AIR COLLISION'),
+    'event text announces midair collision',
+  );
+});
+
+void test('toppling all three enemy towers awards victory in 2v2', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(newCrew('0', 'Cap', 0, w.clock, 'red'));
+  siegeAction(w, '0', { type: 'start', mode: 'clash2v2' }, '0');
+
+  assert.equal(w.phase, 'playing');
+
+  // Topple all 3 blue towers
+  w.towers!.blue = [false, false, false];
+
+  // Remove corresponding mascot blocks to simulate physical collapse
+  w.blocks = w.blocks.filter((b) => b.team !== 'blue' || !b.mascotKind);
+
+  advanceSiege(w, w.clock + 50);
+
+  assert.equal(w.phase, 'won', 'game transitions to won');
+  assert.equal(w.winner, 'red', 'red team wins by toppling all 3 blue towers');
 });

@@ -5,6 +5,7 @@ import {
   blockModel,
   crewMember,
   defenders,
+  gooseModel,
   poseCrew,
   potModel,
   siegeField,
@@ -14,6 +15,11 @@ import { freshSiege, newCrew } from './simulation';
 import {
   COLORS,
   SLING,
+  SLING_RED,
+  SLING_BLUE,
+  TREBUCHET,
+  TREBUCHET_RED,
+  TREBUCHET_BLUE,
   idleInput,
   rangeFor,
   type AmmoKind,
@@ -76,7 +82,7 @@ const RELAXED = -0.55;
 const WOUND = 0.48;
 const SWEEP = -1.45;
 /** Where the arm sits at a given wind, and how it whips through a release. */
-export function armAngle(w: SiegeWorld, clock: number) {
+export function armAngle(w: { wind: number; loosedAt: number }, clock: number) {
   const since = clock - w.loosedAt;
   if (since >= 0 && since < 1200) {
     const t = since / 1000;
@@ -100,12 +106,15 @@ export class SiegeScene {
   private renderer: T.WebGLRenderer;
   private field = siegeField();
   private engine = trebuchet();
+  private engineBlue: T.Group | null = null;
   private wallGuards = defenders();
   private people = new Map<string, T.Group>();
   private blocks = new Map<number, T.Group>();
   private shots = new Map<number, T.Group>();
   private pots = new Map<number, T.Group>();
   private payload: { kind: AmmoKind; model: T.Group } | null = null;
+  private payloadBlue: { kind: AmmoKind; model: T.Group } | null = null;
+  private goose: T.Group | null = null;
   private snapshot: SiegeSnapshot | null = null;
   private demo = freshSiege(100000);
   private keys = new Set<string>();
@@ -117,7 +126,7 @@ export class SiegeScene {
   private lastInput = 0;
   private seq = 0;
   private localId = '';
-  private view: 'shot' | 'follow' = 'shot';
+  private view: 'shot' | 'follow' | 'overview' = 'shot';
   /** Where the crew has dragged the camera to, around whatever it is watching. */
   private orbit = { yaw: 0, pitch: REST_PITCH, dolly: 1 };
   private pointers = new Map<number, { x: number; y: number }>();
@@ -232,7 +241,12 @@ export class SiegeScene {
     if (!this.blocked) this.touch = v;
   }
   changeCamera() {
-    this.view = this.view === 'shot' ? 'follow' : 'shot';
+    this.view =
+      this.view === 'shot'
+        ? 'follow'
+        : this.view === 'follow'
+          ? 'overview'
+          : 'shot';
     // Also the way back to a sensible angle once a drag has gone wandering.
     this.orbit = { yaw: 0, pitch: REST_PITCH, dolly: 1 };
   }
@@ -446,15 +460,30 @@ export class SiegeScene {
     for (const p of w.players) {
       let model = this.people.get(p.id);
       if (!model) {
-        model = crewMember(COLORS[p.color % 4]);
-        const name = label(p.name, '#2a2420', '#f0dcb4', 2.1);
+        let colorHex = COLORS[p.color % 4];
+        if (w.mode === 'clash2v2') {
+          colorHex =
+            p.team === 'blue'
+              ? p.color % 2 === 0
+                ? '#2f7d74'
+                : '#7c5aa0'
+              : p.color % 2 === 0
+                ? '#c2472f'
+                : '#d8a13d';
+        }
+        model = crewMember(colorHex);
+        const displayName = p.bot ? `${p.name} [Bot]` : p.name;
+        const name = label(displayName, '#2a2420', '#f0dcb4', 2.1);
         name.position.y = 2.6;
         model.add(name);
         model.position.set(p.x, p.y, p.z);
         this.people.set(p.id, model);
         this.scene.add(model);
       }
-      const snap = p.flying || w.rider === p.id;
+      const snap =
+        p.flying ||
+        w.rider === p.id ||
+        (w.engineBlue && w.engineBlue.rider === p.id);
       model.position.lerp(
         new T.Vector3(p.x, p.y, p.z),
         snap ? 1 : Math.min(1, dt * 18),
@@ -475,11 +504,14 @@ export class SiegeScene {
   }
 
   private syncEngine(w: SiegeWorld, now: number) {
+    const is2v2 = w.mode === 'clash2v2';
+    const redPos = is2v2 ? TREBUCHET_RED : TREBUCHET;
+    this.engine.position.set(redPos.x, 0, redPos.z);
+
     const bed = this.engine.getObjectByName('bed')!;
     bed.rotation.y = w.turn;
     const arm = this.engine.getObjectByName('arm')!;
     arm.rotation.x = armAngle(w, w.clock);
-    // Counterweight and sling hang plumb regardless of the beam's angle.
     this.engine.getObjectByName('counterweight')!.rotation.x = -arm.rotation.x;
     const sling = this.engine.getObjectByName('sling')!;
     sling.rotation.x = -arm.rotation.x;
@@ -504,7 +536,53 @@ export class SiegeScene {
       .getObjectByName('handle')!;
     const sinceLoose = w.clock - w.loosedAt;
     leverHandle.rotation.x = sinceLoose >= 0 && sinceLoose < 500 ? -0.9 : 0;
-    this.wallGuards.visible = w.beesUntil <= w.clock;
+
+    // 2v2 Blue Engine sync
+    if (is2v2) {
+      if (!this.engineBlue) {
+        this.engineBlue = trebuchet(TREBUCHET_BLUE, 'blue');
+        this.engineBlue.rotation.y = Math.PI;
+        this.scene.add(this.engineBlue);
+      }
+      this.engineBlue.visible = true;
+      const bState = w.engineBlue;
+      const bedB = this.engineBlue.getObjectByName('bed')!;
+      bedB.rotation.y = bState ? bState.turn : 0;
+      const armB = this.engineBlue.getObjectByName('arm')!;
+      const angleB = bState
+        ? armAngle({ wind: bState.wind, loosedAt: bState.loosedAt }, w.clock)
+        : -0.55;
+      armB.rotation.x = angleB;
+      this.engineBlue.getObjectByName('counterweight')!.rotation.x = -angleB;
+      this.engineBlue.getObjectByName('sling')!.rotation.x = -angleB;
+      const payloadSlotB = this.engineBlue.getObjectByName('payload')!;
+      const showingB = bState?.loaded ?? null;
+      if (this.payloadBlue?.kind !== showingB) {
+        if (this.payloadBlue) {
+          payloadSlotB.remove(this.payloadBlue.model);
+          this.release(this.payloadBlue.model);
+          this.payloadBlue = null;
+        }
+        if (showingB) {
+          const modelB = ammoModel(showingB);
+          payloadSlotB.add(modelB);
+          this.payloadBlue = { kind: showingB, model: modelB };
+        }
+      }
+      const drumB = this.engineBlue.getObjectByName('drum')!;
+      drumB.rotation.y = bState ? bState.wind * 26 : 0;
+      const leverHandleB = this.engineBlue
+        .getObjectByName('lever')!
+        .getObjectByName('handle')!;
+      const sinceLooseB = bState ? w.clock - bState.loosedAt : -1;
+      leverHandleB.rotation.x =
+        sinceLooseB >= 0 && sinceLooseB < 500 ? -0.9 : 0;
+      this.wallGuards.visible = false;
+    } else {
+      if (this.engineBlue) this.engineBlue.visible = false;
+      this.wallGuards.visible = w.beesUntil <= w.clock;
+    }
+
     for (const guard of this.wallGuards.children) {
       const throwing = guard.getObjectByName('throw');
       if (throwing)
@@ -517,6 +595,25 @@ export class SiegeScene {
     }
   }
 
+  private syncGoose(w: SiegeWorld, now: number) {
+    if (w.goose) {
+      if (!this.goose) {
+        this.goose = gooseModel();
+        this.scene.add(this.goose);
+      }
+      this.goose.visible = true;
+      this.goose.position.set(w.goose.x, 0, w.goose.z);
+      this.goose.rotation.y = Math.atan2(w.goose.vx, w.goose.vz);
+      const honking = w.clock < w.goose.honkUntil;
+      const wL = this.goose.getObjectByName('wingL');
+      const wR = this.goose.getObjectByName('wingR');
+      if (wL) wL.rotation.z = honking ? Math.sin(now * 0.035) * 0.8 : 0;
+      if (wR) wR.rotation.z = honking ? -Math.sin(now * 0.035) * 0.8 : 0;
+    } else if (this.goose) {
+      this.goose.visible = false;
+    }
+  }
+
   private frameCamera(w: SiegeWorld, dt: number) {
     const me = w.players.find((p) => p.id === this.localId);
     const flight = w.shots.find((s) => !s.landed && s.y > 1.2);
@@ -524,25 +621,31 @@ export class SiegeScene {
     const zoom = narrow ? 1.45 : 1;
     let target: T.Vector3;
     let look: T.Vector3;
-    if (flight && this.view === 'shot') {
-      // Ride behind the shot so the crew can see where it is going to land.
+
+    if (this.view === 'overview') {
+      look = new T.Vector3(0, 3, 0);
+      target = this.orbitPos(look, 68 * zoom, 0.28);
+    } else if (flight && this.view === 'shot') {
       look = new T.Vector3(flight.x, Math.max(1, flight.y), flight.z);
+      const zOffset = flight.vz > 0 ? -9 : 9;
       target = new T.Vector3(
         flight.x - flight.vx * 0.55,
         Math.max(6, flight.y + 7),
-        flight.z - flight.vz * 0.55 + 9,
+        flight.z - flight.vz * 0.55 + zOffset,
       );
     } else if (me && this.view === 'follow') {
-      // Closer in, and a little steeper, so a crewmate reads against the ground.
-      look = new T.Vector3(me.x, 1.4, me.z - 3);
+      look = new T.Vector3(me.x, 1.4, me.z + (me.team === 'blue' ? 3 : -3));
       target = this.orbitPos(look, 19.5 * zoom, 0.19);
     } else {
-      // Behind and above the engine, so the crew, the trebuchet and the keep
-      // are all in one frame and the throw reads as an arc rather than a plan.
-      look = new T.Vector3(0, 5, -10);
-      target = this.orbitPos(look, 48 * zoom);
+      if (w.mode === 'clash2v2' && me?.team === 'blue') {
+        look = new T.Vector3(0, 5, -8);
+        target = this.orbitPos(look, 48 * zoom, 0);
+      } else {
+        look = new T.Vector3(0, 5, -10);
+        target = this.orbitPos(look, 48 * zoom);
+      }
     }
-    // A drag has to answer immediately, or the camera feels like it is on a rope.
+
     const chase = flight ? 6 : this.pointers.size ? 12 : 2.6;
     this.camera.position.lerp(target, Math.min(1, dt * chase));
     this.look.lerp(look, Math.min(1, dt * (flight ? 6 : 3)));
@@ -574,17 +677,33 @@ export class SiegeScene {
     this.syncShots(w);
     this.syncCrew(w, now, dt);
     this.syncEngine(w, now);
+    this.syncGoose(w, now);
+
     const me = w.players.find((p) => p.id === this.localId);
     this.ring.visible = !!me && !me.flying;
     if (me) this.ring.position.set(me.x, 0.06, me.z);
-    // A ground ring shows the crew where the current wind and aim would land.
+
+    // Ground ring showing where the engine will land
     this.aim.visible = w.phase === 'playing' || w.phase === 'relief';
-    const range = rangeFor(w.wind);
-    this.aim.position.set(
-      SLING.x - Math.sin(w.turn) * range,
-      0.05,
-      SLING.z - Math.cos(w.turn) * range,
-    );
+    const isBlue = w.mode === 'clash2v2' && me?.team === 'blue';
+    const activeEngine = isBlue && w.engineBlue ? w.engineBlue : w;
+    const range = rangeFor(activeEngine.wind);
+
+    if (isBlue) {
+      this.aim.position.set(
+        SLING_BLUE.x + Math.sin(activeEngine.turn) * range,
+        0.05,
+        SLING_BLUE.z + Math.cos(activeEngine.turn) * range,
+      );
+    } else {
+      const slingPos = w.mode === 'clash2v2' ? SLING_RED : SLING;
+      this.aim.position.set(
+        slingPos.x - Math.sin(activeEngine.turn) * range,
+        0.05,
+        slingPos.z - Math.cos(activeEngine.turn) * range,
+      );
+    }
+
     this.frameCamera(w, dt);
     if (!document.hidden) this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(this.render);

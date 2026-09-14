@@ -48,9 +48,14 @@ import {
   ENGINE_REACH,
   ROUND_MS,
   SLING,
+  SLING_RED,
+  SLING_BLUE,
   TREBUCHET,
+  TREBUCHET_RED,
+  TREBUCHET_BLUE,
   idleInput,
   rangeFor,
+  type GameMode,
   type SiegeAction,
   type SiegeSession,
   type SiegeSnapshot,
@@ -79,6 +84,12 @@ const at = (
 
 const tracker = new GameTracker(siegeAnalytics);
 
+const MASCOTS = [
+  { icon: '🐓', label: 'Rooster' },
+  { icon: '👑', label: 'Keep' },
+  { icon: '🧀', label: 'Cheese' },
+] as const;
+
 export default function SiegeAndDesist() {
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
@@ -95,6 +106,7 @@ export default function SiegeAndDesist() {
     [session, setSession] = useState<SiegeSession | null>(null),
     [name, setName] = useState(''),
     [code, setCode] = useState(''),
+    [selectedMode, setSelectedMode] = useState<GameMode>('clash2v2'),
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
     [muted, setMuted] = useState(false),
@@ -405,17 +417,50 @@ export default function SiegeAndDesist() {
 
   const disabled =
     !playing || status !== 'online' || !!modal || !me || me.flying;
-  // One reach covers the whole engine. Winding, aiming and loosing all used to
-  // be separate spots you had to walk between to fire a single shot.
-  const atEngine = at(me, TREBUCHET, ENGINE_REACH);
-  const nearSling = at(me, SLING, 2.6);
+  const is2v2 = w?.mode === 'clash2v2';
+  const playerTeam = me?.team ?? 'red';
+  const nearRedEngine = at(me, TREBUCHET_RED, ENGINE_REACH);
+  const nearBlueEngine = is2v2 && at(me, TREBUCHET_BLUE, ENGINE_REACH);
+  const atEngine = is2v2
+    ? nearRedEngine || nearBlueEngine
+    : at(me, TREBUCHET, ENGINE_REACH);
+
+  const nearRedSling = at(me, SLING_RED, 2.6);
+  const nearBlueSling = is2v2 && at(me, SLING_BLUE, 2.6);
+  const nearSling = is2v2 ? nearRedSling || nearBlueSling : at(me, SLING, 2.6);
+
+  const activeEngineTeam = nearBlueEngine
+    ? 'blue'
+    : nearRedEngine
+      ? 'red'
+      : playerTeam;
+  const displayedEngine =
+    is2v2 && activeEngineTeam === 'blue' && w?.engineBlue
+      ? {
+          engine: w.engineBlue,
+          label: 'BLUE TREBUCHET (North)',
+          color: '#38bdf8',
+        }
+      : {
+          engine: {
+            wind: w?.wind ?? 0,
+            turn: w?.turn ?? 0,
+            loaded: w?.loaded ?? null,
+            rider: w?.rider ?? null,
+            supply: w?.supply ?? [],
+          },
+          label: is2v2 ? 'RED TREBUCHET (South)' : 'COUNTERWEIGHT',
+          color: '#f87171',
+        };
+
   const lastEvent = w?.events.at(-1);
   const flag = w && banner(w);
   const standing = w
     ? w.blocks.filter((b) => !b.fallen && b.part !== 'banner').length
     : 0;
-  const pulling = w ? winders(w) : 0;
-  const riding = !!me && w?.rider === me.id;
+  const pulling = w ? winders(w, activeEngineTeam) : 0;
+  const riding =
+    !!me && (w?.rider === me.id || (is2v2 && w?.engineBlue?.rider === me.id));
   // Mirrors the reach the simulation enforces for `help`, so the button is lit
   // only when there is actually somebody to haul up. The compact layout hides
   // whatever is unavailable, and a permanently lit button would never hide.
@@ -478,15 +523,56 @@ export default function SiegeAndDesist() {
               AND DESIST<span className="sad-dot">.</span>
             </span>
           </h1>
+          <div
+            className="sad-mode-selector"
+            role="radiogroup"
+            aria-label="Game mode"
+          >
+            <button
+              type="button"
+              className={`sad-mode-btn ${selectedMode === 'clash2v2' ? 'active' : ''}`}
+              onClick={() => setSelectedMode('clash2v2')}
+            >
+              <span className="sad-mode-title">
+                <Swords size={16} /> 2v2 Castle Clash
+              </span>
+              <span className="sad-mode-desc">
+                Two castles · Dual weapons · Rooster, Crown & Sacred Cheese
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`sad-mode-btn ${selectedMode === 'classic' ? 'active' : ''}`}
+              onClick={() => setSelectedMode('classic')}
+            >
+              <span className="sad-mode-title">
+                <Castle size={16} /> Classic Siege
+              </span>
+              <span className="sad-mode-desc">
+                Co-op crew · Single keep · Topple the royal banner
+              </span>
+            </button>
+          </div>
+
           <p className="sad-tagline">
-            One trebuchet.
-            <br />
-            <em>Four opinions.</em>
+            {selectedMode === 'clash2v2' ? (
+              <>
+                Two castles. Two engines.
+                <br />
+                <em>Pure medieval chaos.</em>
+              </>
+            ) : (
+              <>
+                One trebuchet.
+                <br />
+                <em>Four opinions.</em>
+              </>
+            )}
           </p>
           <p className="sad-intro">
-            Wind the counterweight, load the sling, and bring down the
-            keep&rsquo;s banner before dawn. Somebody will end up in the sling.
-            It will not be an accident.
+            {selectedMode === 'clash2v2'
+              ? 'Two opposing camps face off. Defend your Golden Rooster, Keep, and Sacred Cheese Wheel while blasting their towers to rubble. Watch out for mid-air collisions, rolling cheese, and the Goose of War!'
+              : 'Wind the counterweight, load the sling, and bring down the keep’s banner before dawn. Somebody will end up in the sling. It will not be an accident.'}
           </p>
           <form
             className="setup-card"
@@ -513,7 +599,11 @@ export default function SiegeAndDesist() {
                 <LoaderCircle className="spin" size={18} />
               ) : (
                 <>
-                  <Swords size={18} /> Raise a siege <ArrowRight size={18} />
+                  <Swords size={18} />{' '}
+                  {selectedMode === 'clash2v2'
+                    ? 'Raise a 2v2 Clash'
+                    : 'Raise a siege'}{' '}
+                  <ArrowRight size={18} />
                 </>
               )}
             </button>
@@ -531,20 +621,29 @@ export default function SiegeAndDesist() {
               disabled={!ready || busy}
               onClick={startPractice}
             >
-              Try solo <ArrowUpRight size={14} />
+              {selectedMode === 'clash2v2' ? 'Try 2v2 vs bots' : 'Try solo'}{' '}
+              <ArrowUpRight size={14} />
             </button>
             <p className="start-tip">
               {ready
-                ? 'No download. No conquest. One extremely large lever.'
+                ? selectedMode === 'clash2v2'
+                  ? 'Opposing castles. Bots automatically fill empty crew slots.'
+                  : 'No download. No conquest. One extremely large lever.'
                 : 'Preparing the siege field…'}
             </p>
           </form>
           <div className="sad-facts">
             <span>
-              <Users size={14} /> 1–4 players
+              <Users size={14} />{' '}
+              {selectedMode === 'clash2v2'
+                ? '1–4 players (bots fill)'
+                : '1–4 players'}
             </span>
             <span>
-              <Timer size={14} /> 4-minute sieges
+              <Timer size={14} />{' '}
+              {selectedMode === 'clash2v2'
+                ? 'First to 3 towers'
+                : '4-minute sieges'}
             </span>
           </div>
         </section>
@@ -567,37 +666,110 @@ export default function SiegeAndDesist() {
 
       {session && (
         <>
-          <section className="sad-scoreboard" aria-label="Siege progress">
-            <div>
-              <span>THE KEEP</span>
-              <strong>
-                <Castle size={22} />
-                {standing}
-              </strong>
-              <small>
-                stones standing · {w?.rubble ?? 0} down · {w?.volleys ?? 0}{' '}
-                volleys
-              </small>
-            </div>
-            <div
-              className={
-                w?.phase === 'relief' ? 'sad-clock urgent' : 'sad-clock'
-              }
+          {is2v2 && w?.towers ? (
+            <section
+              className="sad-scoreboard clash"
+              aria-label="Castle clash progress"
             >
-              <span>
-                {w?.phase === 'relief' ? 'RELIEF COMING' : 'UNTIL DAWN'}
-              </span>
-              <strong>
-                {w?.phase === 'lobby'
-                  ? '4:00'
-                  : time(
-                      w?.phase === 'relief'
-                        ? w.reliefAt - w.clock
-                        : ROUND_MS - ((w?.clock ?? 0) - (w?.started ?? 0)),
-                    )}
-              </strong>
-            </div>
-          </section>
+              <div
+                className={`sad-castle-card red ${playerTeam === 'red' ? 'my-castle' : ''}`}
+              >
+                <div className="sad-castle-meta">
+                  <span className="castle-name">
+                    RED CASTLE {playerTeam === 'red' ? '(Yours)' : ''}
+                  </span>
+                  <small>South Engine</small>
+                </div>
+                <div className="sad-towers">
+                  {w.towers.red.map((standing, index) => (
+                    <span
+                      key={index}
+                      className={`sad-tower-badge ${standing ? 'standing' : 'toppled'}`}
+                      title={`${MASCOTS[index].label} Tower (${standing ? 'Standing' : 'Toppled'})`}
+                    >
+                      <span className="tower-icon">{MASCOTS[index].icon}</span>
+                      <span className="tower-label">
+                        {MASCOTS[index].label}
+                      </span>
+                      <span className="tower-status">
+                        {standing ? 'OK' : 'DOWN'}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="sad-clash-middle">
+                <span className="sad-vs">VS</span>
+                <div className="sad-clock">
+                  <Timer size={14} />
+                  <strong>
+                    {w.phase === 'lobby'
+                      ? '4:00'
+                      : time(ROUND_MS - ((w.clock ?? 0) - (w.started ?? 0)))}
+                  </strong>
+                </div>
+              </div>
+              <div
+                className={`sad-castle-card blue ${playerTeam === 'blue' ? 'my-castle' : ''}`}
+              >
+                <div className="sad-castle-meta">
+                  <span className="castle-name">
+                    BLUE CASTLE {playerTeam === 'blue' ? '(Yours)' : ''}
+                  </span>
+                  <small>North Engine</small>
+                </div>
+                <div className="sad-towers">
+                  {w.towers.blue.map((standing, index) => (
+                    <span
+                      key={index}
+                      className={`sad-tower-badge ${standing ? 'standing' : 'toppled'}`}
+                      title={`${MASCOTS[index].label} Tower (${standing ? 'Standing' : 'Toppled'})`}
+                    >
+                      <span className="tower-icon">{MASCOTS[index].icon}</span>
+                      <span className="tower-label">
+                        {MASCOTS[index].label}
+                      </span>
+                      <span className="tower-status">
+                        {standing ? 'OK' : 'DOWN'}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </section>
+          ) : (
+            <section className="sad-scoreboard" aria-label="Siege progress">
+              <div>
+                <span>THE KEEP</span>
+                <strong>
+                  <Castle size={22} />
+                  {standing}
+                </strong>
+                <small>
+                  stones standing · {w?.rubble ?? 0} down · {w?.volleys ?? 0}{' '}
+                  volleys
+                </small>
+              </div>
+              <div
+                className={
+                  w?.phase === 'relief' ? 'sad-clock urgent' : 'sad-clock'
+                }
+              >
+                <span>
+                  {w?.phase === 'relief' ? 'RELIEF COMING' : 'UNTIL DAWN'}
+                </span>
+                <strong>
+                  {w?.phase === 'lobby'
+                    ? '4:00'
+                    : time(
+                        w?.phase === 'relief'
+                          ? w.reliefAt - w.clock
+                          : ROUND_MS - ((w?.clock ?? 0) - (w?.started ?? 0)),
+                      )}
+                </strong>
+              </div>
+            </section>
+          )}
 
           <aside className="sad-crew" aria-label="Siege crew">
             <div className="sad-crew-title">
@@ -623,9 +795,14 @@ export default function SiegeAndDesist() {
                     ],
                   }}
                 />
-                <span>
+                <span className="sad-crew-name">
                   {p.name}
                   {p.id === session.id ? ' (you)' : ''}
+                  {is2v2 && (
+                    <em className={`sad-team-pill ${p.team ?? 'red'}`}>
+                      {p.team === 'blue' ? 'BLUE' : 'RED'}
+                    </em>
+                  )}
                 </span>
                 <small>
                   {p.flying
@@ -636,7 +813,9 @@ export default function SiegeAndDesist() {
                         ? 'WINDING'
                         : p.pushing
                           ? 'AIMING'
-                          : '—'}
+                          : p.bot
+                            ? 'BOT'
+                            : '—'}
                 </small>
               </div>
             ))}
@@ -644,11 +823,11 @@ export default function SiegeAndDesist() {
 
           {w?.phase === 'lobby' && (
             <section className="sad-lobby">
-              <span className="sad-kicker">THE CAMP IS PITCHED</span>
+              <span className="sad-kicker">
+                {is2v2 ? '2v2 CASTLE CLASH' : 'THE CAMP IS PITCHED'}
+              </span>
               <h2>
-                Fetch three
-                <br />
-                strong friends.
+                {is2v2 ? 'Gather both camps.' : 'Fetch three strong friends.'}
               </h2>
               <button
                 className="sad-room-code"
@@ -658,15 +837,101 @@ export default function SiegeAndDesist() {
                 {copied ? <Check size={19} /> : <Copy size={19} />}
               </button>
               <p>
-                Share this code with up to three friends. Join before the
-                captain calls the assault.
+                {is2v2
+                  ? 'Red Castle (South) vs Blue Castle (North). Empty slots will be filled with bots.'
+                  : 'Share this code with up to three friends. Join before the captain calls the assault.'}
               </p>
+              {is2v2 && (
+                <div className="sad-lobby-teams">
+                  <div
+                    className={`sad-team-box red ${playerTeam === 'red' ? 'mine' : ''}`}
+                  >
+                    <div className="sad-team-box-header">
+                      <strong>RED CAMP</strong>
+                      <small>South Engine & Castle</small>
+                    </div>
+                    <div className="sad-team-members">
+                      {w.players
+                        .filter((p) => (p.team ?? 'red') === 'red')
+                        .map((p) => (
+                          <div key={p.id} className="sad-member-chip">
+                            <i
+                              style={{
+                                background: [
+                                  '#c2472f',
+                                  '#2f7d74',
+                                  '#d8a13d',
+                                  '#7c5aa0',
+                                ][p.color % 4],
+                              }}
+                            />
+                            <span>
+                              {p.name}
+                              {p.id === session.id ? ' (you)' : ''}
+                            </span>
+                          </div>
+                        ))}
+                      {w.players.filter((p) => (p.team ?? 'red') === 'red')
+                        .length === 0 && (
+                        <span className="empty-hint">No crew yet</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="sad-lobby-vs">VS</div>
+                  <div
+                    className={`sad-team-box blue ${playerTeam === 'blue' ? 'mine' : ''}`}
+                  >
+                    <div className="sad-team-box-header">
+                      <strong>BLUE CAMP</strong>
+                      <small>North Engine & Castle</small>
+                    </div>
+                    <div className="sad-team-members">
+                      {w.players
+                        .filter((p) => p.team === 'blue')
+                        .map((p) => (
+                          <div key={p.id} className="sad-member-chip">
+                            <i
+                              style={{
+                                background: [
+                                  '#c2472f',
+                                  '#2f7d74',
+                                  '#d8a13d',
+                                  '#7c5aa0',
+                                ][p.color % 4],
+                              }}
+                            />
+                            <span>
+                              {p.name}
+                              {p.id === session.id ? ' (you)' : ''}
+                            </span>
+                          </div>
+                        ))}
+                      {w.players.filter((p) => p.team === 'blue').length ===
+                        0 && <span className="empty-hint">No crew yet</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {is2v2 && (
+                <button
+                  type="button"
+                  className="sad-switch-team-btn"
+                  onClick={() => action({ type: 'switchTeam' })}
+                >
+                  <Swords size={16} /> Switch to{' '}
+                  {playerTeam === 'red' ? 'Blue' : 'Red'} Camp
+                </button>
+              )}
               <button
                 className="sad-primary"
                 disabled={!captain || status !== 'online'}
-                onClick={() => action({ type: 'start' })}
+                onClick={() => action({ type: 'start', mode: w.mode })}
               >
-                {captain ? 'Call the assault' : 'Waiting for the captain…'}
+                {captain
+                  ? is2v2
+                    ? 'Begin the Castle Clash'
+                    : 'Call the assault'
+                  : 'Waiting for the captain…'}
                 <ArrowUpRight size={19} />
               </button>
             </section>
@@ -677,30 +942,41 @@ export default function SiegeAndDesist() {
               <section className="sad-engine" aria-label="Trebuchet state">
                 <div className="sad-wind">
                   <span>
-                    COUNTERWEIGHT{pulling ? ` · ${pulling} winding` : ''}
+                    {displayedEngine.label}
+                    {pulling ? ` · ${pulling} winding` : ''}
                   </span>
                   <div className="sad-wind-track">
-                    <i style={{ width: `${Math.round(w.wind * 100)}%` }} />
+                    <i
+                      style={{
+                        width: `${Math.round(displayedEngine.engine.wind * 100)}%`,
+                        background: displayedEngine.color,
+                      }}
+                    />
                   </div>
                   <small>
-                    Range {Math.round(rangeFor(w.wind))}m
-                    <span> · gate 20m · keep 28m</span>
+                    Range {Math.round(rangeFor(displayedEngine.engine.wind))}m
+                    <span>
+                      {is2v2
+                        ? ' · enemy trebuchet 19m · enemy keep 33m'
+                        : ' · gate 20m · keep 28m'}
+                    </span>
                   </small>
                 </div>
                 <div className="sad-payload">
                   <span>SLING</span>
                   <strong>
-                    {w.rider
-                      ? (w.players.find((p) => p.id === w.rider)?.name ??
-                        'Someone')
-                      : w.loaded
-                        ? AMMO[w.loaded].name
+                    {displayedEngine.engine.rider
+                      ? (w.players.find(
+                          (p) => p.id === displayedEngine.engine.rider,
+                        )?.name ?? 'Someone')
+                      : displayedEngine.engine.loaded
+                        ? AMMO[displayedEngine.engine.loaded].name
                         : 'Empty'}
                   </strong>
                   <small>
-                    {w.turn === 0
+                    {displayedEngine.engine.turn === 0
                       ? 'Aimed straight'
-                      : `Swung ${w.turn > 0 ? 'left' : 'right'}`}
+                      : `Swung ${displayedEngine.engine.turn > 0 ? (activeEngineTeam === 'blue' ? 'right' : 'left') : activeEngineTeam === 'blue' ? 'left' : 'right'}`}
                   </small>
                 </div>
               </section>
@@ -720,7 +996,7 @@ export default function SiegeAndDesist() {
               {(me?.flying ||
                 riding ||
                 (me && me.stunnedUntil > w.clock) ||
-                (flag && flag.y <= BANNER_DOWN + 1)) && (
+                (!is2v2 && flag && flag.y <= BANNER_DOWN + 1)) && (
                 <div className="sad-your-status">
                   {me?.flying ? (
                     'You are airborne. Nothing to do but arrive.'
@@ -792,8 +1068,9 @@ export default function SiegeAndDesist() {
                     disabled ||
                     !atEngine ||
                     riding ||
-                    (!w.loaded && !w.rider) ||
-                    w.wind < 0.12
+                    (!displayedEngine.engine.loaded &&
+                      !displayedEngine.engine.rider) ||
+                    displayedEngine.engine.wind < 0.12
                   }
                   onClick={() => action({ type: 'loose' })}
                 >
@@ -830,7 +1107,9 @@ export default function SiegeAndDesist() {
                       ? 'Airborne. Nothing to do but arrive.'
                       : me && w && me.stunnedUntil > w.clock
                         ? 'Flattened. A crewmate can haul you up.'
-                        : 'Walk back to the engine.'}
+                        : is2v2
+                          ? `Walk to the ${playerTeam.toUpperCase()} trebuchet (or infiltrate enemy's).`
+                          : 'Walk back to the engine.'}
                   </span>
                 )}
               </nav>
@@ -838,8 +1117,9 @@ export default function SiegeAndDesist() {
                   After that they are a permanent banner of things you know. */}
               {w.volleys === 0 && (
                 <span className="sad-movement-hint">
-                  WASD to move · hold R to wind, F to loose, Q and E to aim ·
-                  drag the field to look around, scroll to zoom
+                  {is2v2
+                    ? 'WASD to move · hold R to wind, F to loose, Q and E to aim · topple all 3 enemy towers'
+                    : 'WASD to move · hold R to wind, F to loose, Q and E to aim · drag the field to look around, scroll to zoom'}
                 </span>
               )}
             </>
@@ -849,23 +1129,53 @@ export default function SiegeAndDesist() {
             <section className="sad-results">
               <Trophy size={34} />
               <span className="sad-kicker">
-                {w.phase === 'won' ? 'THE KEEP IS YOURS' : 'DAWN CAME FIRST'}
+                {is2v2
+                  ? w.winner === playerTeam
+                    ? 'VICTORY IN THE CLASH'
+                    : w.winner === 'draw'
+                      ? 'DRAW AT DAWN'
+                      : 'DEFEAT IN THE CLASH'
+                  : w.phase === 'won'
+                    ? 'THE KEEP IS YOURS'
+                    : 'DAWN CAME FIRST'}
               </span>
               <h2>
-                {w.phase === 'won'
-                  ? 'Banner down.'
-                  : 'Still standing. Annoyingly.'}
+                {is2v2
+                  ? w.winner === playerTeam
+                    ? `Team ${playerTeam.toUpperCase()} stands victorious!`
+                    : w.winner === 'draw'
+                      ? 'Both castles stood their ground.'
+                      : `Team ${w.winner ? w.winner.toUpperCase() : 'Enemy'} destroyed your towers.`
+                  : w.phase === 'won'
+                    ? 'Banner down.'
+                    : 'Still standing. Annoyingly.'}
               </h2>
               <p>
-                {w.rubble} stones brought down over {w.volleys} volleys.
-                <br />
-                {w.players.reduce((n, p) => n + p.launches, 0)} crewmates were
-                launched on purpose.
+                {is2v2 && w.towers ? (
+                  <>
+                    Red towers toppled:{' '}
+                    {w.towers.red.filter((standing) => !standing).length}/3 ·
+                    Blue towers toppled:{' '}
+                    {w.towers.blue.filter((standing) => !standing).length}/3
+                    <br />
+                    {w.volleys} volleys fired across the battlefield.
+                  </>
+                ) : (
+                  <>
+                    {w.rubble} stones brought down over {w.volleys} volleys.
+                    <br />
+                    {w.players.reduce((n, p) => n + p.launches, 0)} crewmates
+                    were launched on purpose.
+                  </>
+                )}
               </p>
               <div className="sad-result-list">
                 {w.players.map((p) => (
                   <div key={p.id}>
-                    <span>{p.name}</span>
+                    <span>
+                      {p.name}
+                      {is2v2 ? ` (${(p.team ?? 'red').toUpperCase()})` : ''}
+                    </span>
                     <b>
                       {p.loaded} loaded · {p.launches} flights
                     </b>
@@ -875,9 +1185,13 @@ export default function SiegeAndDesist() {
               <button
                 className="sad-primary"
                 disabled={!captain || status !== 'online'}
-                onClick={() => action({ type: 'restart' })}
+                onClick={() => action({ type: 'restart', mode: w.mode })}
               >
-                {captain ? 'Another siege' : 'Waiting for the captain…'}
+                {captain
+                  ? is2v2
+                    ? 'Another Clash'
+                    : 'Another siege'
+                  : 'Waiting for the captain…'}
                 <ArrowUpRight size={18} />
               </button>
               <button className="sad-text-button" onClick={() => void leave()}>

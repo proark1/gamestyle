@@ -15,15 +15,15 @@ caps for headings — while the playfield keeps Jumbleyard's chunky toy look.
 
 Stand at the engine and hold `R`, then press `F`.
 
-| Key      | Does                                     |
-| -------- | ---------------------------------------- |
-| hold `R` | wind the counterweight — this is the aim |
-| `F`      | loose                                    |
-| `Q` `E`  | swing the aim left and right             |
-| `C`      | climb into the sling, at the sling       |
-| `H`      | haul up a flattened crewmate             |
-| drag     | swing the camera round the siege         |
-| scroll   | move in and out — pinch on a touchscreen |
+| Key      | Does                                             |
+| -------- | ------------------------------------------------ |
+| hold `R` | wind the counterweight — this is the aim         |
+| `F`      | loose                                            |
+| `Q` `E`  | swing the aim left and right                     |
+| `C`      | climb into the sling, at the sling               |
+| `H`      | haul up a flattened crewmate                     |
+| drag     | swing the camera round the siege                 |
+| scroll   | move in and out — pinch on a touchscreen         |
 | `V`      | engine or crewmate, and back to a resting camera |
 
 All of it works from anywhere within six metres of the frame. This is the second

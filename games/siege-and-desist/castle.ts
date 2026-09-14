@@ -1,4 +1,10 @@
-import { CASTLE, type Block } from './types';
+import {
+  CASTLE,
+  CASTLE_BLUE,
+  CASTLE_RED,
+  type Block,
+  type TeamId,
+} from './types';
 
 const STONE = ['#a89a83', '#9d8f79', '#b0a289'];
 /** Course pitch and block height leave a hair of clearance, never an overlap. */
@@ -19,6 +25,9 @@ function block(
   size: number[],
   pos: number[],
   color: string,
+  team?: TeamId,
+  towerIndex?: 0 | 1 | 2,
+  mascotKind?: 'rooster' | 'banner' | 'cheese',
 ): Block {
   const b: Block = {
     id: out.length,
@@ -40,6 +49,9 @@ function block(
     burning: 0,
     sleeping: true,
     fallen: false,
+    team,
+    towerIndex,
+    mascotKind,
   };
   out.push(b);
   return b;
@@ -150,4 +162,145 @@ export function defenderPosts() {
     { x: -(WALL_START + 2), y: wallTop, z: wallZ },
     { x: WALL_START + 2, y: wallTop, z: wallZ },
   ];
+}
+
+/**
+ * Builds two opposing castles for 2v2 Castle Clash:
+ * - Blue Castle at North (z = -23.5)
+ * - Red Castle at South (z = +23.5)
+ * Each castle has three distinct destructible towers:
+ * - Tower 0 (Left, x = -8.5): The Golden Rooster mascot on top
+ * - Tower 1 (Center, x = 0): The Royal Banner & Keep on top
+ * - Tower 2 (Right, x = +8.5): The Giant Sacred Cheese Wheel on top
+ */
+export function buildClashCastles(): Block[] {
+  const out: Block[] = [];
+  const teams: TeamId[] = ['blue', 'red'];
+
+  for (const team of teams) {
+    const castleZ = team === 'blue' ? CASTLE_BLUE.z : CASTLE_RED.z;
+    const facingSign = team === 'blue' ? 1 : -1; // Blue faces south (+z), Red faces north (-z)
+    const wallZ = castleZ + facingSign * 2.2;
+
+    // --- Tower 0 (Left Tower at x = -8.5): The Golden Rooster ---
+    for (let course = 0; course < 4; course++) {
+      const y = BASE + course * COURSE;
+      for (const dx of [-0.65, 0.65]) {
+        for (const dz of [-0.65, 0.65]) {
+          block(
+            out,
+            'tower',
+            [1.25, HEIGHT, 1.25],
+            [-8.5 + dx, y, castleZ + dz],
+            STONE[(course + (dx > 0 ? 1 : 0)) % 3],
+            team,
+            0,
+          );
+        }
+      }
+    }
+    // Rooster Mascot block atop Left Tower
+    block(
+      out,
+      'mascot',
+      [1.1, 1.3, 1.1],
+      [-8.5, BASE + 4 * COURSE + 0.65, castleZ],
+      '#d8a13d',
+      team,
+      0,
+      'rooster',
+    );
+
+    // --- Tower 1 (Center Keep at x = 0): Royal Banner ---
+    const WIDE = [-1.3, 0, 1.3];
+    for (let course = 0; course < 5; course++) {
+      const y = BASE + course * COURSE;
+      const top = course === 4;
+      for (const dx of WIDE) {
+        for (const dz of [-1.1, 1.1]) {
+          if (top && Math.abs(dx) < 0.5) continue; // well for the banner pole
+          block(
+            out,
+            'keep',
+            [1.2, HEIGHT, 1.1],
+            [dx, y, castleZ + dz],
+            STONE[(course + (dx > 0 ? 1 : 0)) % 3],
+            team,
+            1,
+          );
+        }
+      }
+    }
+    // Banner block atop Center Keep
+    const wellY = BASE + 3 * COURSE + HEIGHT / 2;
+    const poleH = 3.2;
+    block(
+      out,
+      'banner',
+      [0.5, poleH, 0.5],
+      [0, wellY + poleH / 2, castleZ],
+      '#7a4a24',
+      team,
+      1,
+      'banner',
+    );
+
+    // --- Tower 2 (Right Tower at x = +8.5): The Giant Cheese Wheel ---
+    for (let course = 0; course < 4; course++) {
+      const y = BASE + course * COURSE;
+      for (const dx of [-0.65, 0.65]) {
+        for (const dz of [-0.65, 0.65]) {
+          block(
+            out,
+            'tower',
+            [1.25, HEIGHT, 1.25],
+            [8.5 + dx, y, castleZ + dz],
+            STONE[(course + (dx > 0 ? 1 : 0)) % 3],
+            team,
+            2,
+          );
+        }
+      }
+    }
+    // Giant Cheese Wheel Mascot block atop Right Tower
+    block(
+      out,
+      'mascot',
+      [1.5, 0.85, 1.5],
+      [8.5, BASE + 4 * COURSE + 0.45, castleZ],
+      '#e8be48',
+      team,
+      2,
+      'cheese',
+    );
+
+    // --- Connecting Curtain Walls ---
+    for (let course = 0; course < 2; course++) {
+      const y = BASE + course * COURSE;
+      // Left curtain wall connecting Tower 0 and Center Keep
+      for (const x of [-5.5, -3.2]) {
+        block(
+          out,
+          'wall',
+          [2.1, HEIGHT, 1.2],
+          [x, y, wallZ],
+          STONE[(course + Math.abs(Math.round(x))) % 3],
+          team,
+        );
+      }
+      // Right curtain wall connecting Center Keep and Tower 2
+      for (const x of [3.2, 5.5]) {
+        block(
+          out,
+          'wall',
+          [2.1, HEIGHT, 1.2],
+          [x, y, wallZ],
+          STONE[(course + Math.abs(Math.round(x))) % 3],
+          team,
+        );
+      }
+    }
+  }
+
+  return out;
 }
