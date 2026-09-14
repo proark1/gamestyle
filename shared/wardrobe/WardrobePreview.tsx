@@ -25,14 +25,32 @@ export default function WardrobePreview({
     const height = container.clientHeight || 280;
 
     const scene = new T.Scene();
-    const camera = new T.PerspectiveCamera(38, width / height, 0.1, 20);
-    camera.position.set(0, 1.05, 3.2);
+    const camera = new T.PerspectiveCamera(34, 1, 0.1, 50);
 
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(width, height);
     renderer.outputColorSpace = T.SRGBColorSpace;
     container.appendChild(renderer.domElement);
+
+    function fitCamera(w: number, h: number) {
+      if (w <= 0 || h <= 0) return;
+      const aspect = w / h;
+      camera.aspect = aspect;
+      const halfFovRad = (camera.fov * Math.PI) / 360;
+      const tanFov = Math.tan(halfFovRad);
+      // Ensure the whole model (feet at 0, top of hat at ~2.2, width ~1.3) is completely framed:
+      const targetH = 2.65;
+      const targetW = 1.80;
+      const distH = targetH / (2 * tanFov);
+      const distW = targetW / (2 * aspect * tanFov);
+      const dist = Math.max(distH, distW);
+      camera.position.set(0, 1.20, dist);
+      camera.lookAt(0, 1.02, 0);
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    fitCamera(width, height);
 
     const ambient = new T.AmbientLight(0xfff6ea, 1.9);
     scene.add(ambient);
@@ -47,6 +65,19 @@ export default function WardrobePreview({
 
     const turn = new T.Group();
     scene.add(turn);
+
+    const shadow = new T.Mesh(
+      new T.RingGeometry(0, 0.65, 32),
+      new T.MeshBasicMaterial({
+        color: 0x22352b,
+        transparent: true,
+        opacity: 0.12,
+        side: T.DoubleSide,
+      }),
+    );
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = 0.005;
+    turn.add(shadow);
 
     let currentModel: T.Object3D | null = null;
 
@@ -65,7 +96,7 @@ export default function WardrobePreview({
         currentModel = null;
       }
       const { model } = dressedWorker(0, {}, newLook);
-      model.position.y = -0.15;
+      model.position.set(0, 0, 0);
       turn.add(model);
       currentModel = model;
     }
@@ -120,9 +151,7 @@ export default function WardrobePreview({
         const w = entry.contentRect.width;
         const h = entry.contentRect.height;
         if (w > 0 && h > 0) {
-          camera.aspect = w / h;
-          camera.updateProjectionMatrix();
-          renderer.setSize(w, h);
+          fitCamera(w, h);
         }
       }
     });
@@ -137,6 +166,8 @@ export default function WardrobePreview({
       if (currentModel) {
         disposeTree(currentModel);
       }
+      shadow.geometry.dispose();
+      (shadow.material as T.Material).dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
