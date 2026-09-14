@@ -47,7 +47,6 @@ export class ShelfScene {
   private emergencyLight: THREE.PointLight;
   private guardSpotLight?: THREE.SpotLight;
   private guardSpotTarget?: THREE.Object3D;
-  private guardBounceLight?: THREE.PointLight;
   private guardBeamMesh?: THREE.Mesh;
   private playerAuraLight?: THREE.PointLight;
   private guard = mannequin(true);
@@ -81,9 +80,9 @@ export class ShelfScene {
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.setClearColor(isDark ? 0x060b13 : palette.background);
+    this.renderer.setClearColor(isDark ? 0x0c1522 : palette.background);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = isDark ? 1.05 : 1.25;
+    this.renderer.toneMappingExposure = isDark ? 1.15 : 1.25;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.setAttribute(
@@ -93,8 +92,8 @@ export class ShelfScene {
         : 'Furniture showroom. Use the movement and action controls to play.',
     );
     if (isDark) {
-      this.scene.add(new THREE.HemisphereLight(0x182438, 0x070c14, 0.42));
-      const sunlight = new THREE.DirectionalLight(0x324766, 0.28);
+      this.scene.add(new THREE.HemisphereLight(0x223650, 0x0c1522, 0.65));
+      const sunlight = new THREE.DirectionalLight(0x426084, 0.52);
       sunlight.position.set(-13, 24, 12);
       sunlight.castShadow = true;
       sunlight.shadow.mapSize.set(1024, 1024);
@@ -110,38 +109,35 @@ export class ShelfScene {
       this.emergencyLight = new THREE.PointLight(0xff4400, 0, 25);
       this.emergencyLight.position.set(0, 4.5, 0);
       this.scene.add(this.emergencyLight);
-      this.scene.fog = new THREE.Fog(0x060b13, 16, 42);
+      this.scene.fog = new THREE.Fog(0x0c1522, 22, 55);
 
-      // Guard Flashlight (SpotLight + Volumetric Cone)
+      // Guard Flashlight: Focused forward searchlight with soft penumbra
       this.guardSpotLight = new THREE.SpotLight(
-        0xfff5dd,
-        36,
-        20,
-        Math.PI / 4.6,
-        0.55,
-        1.15,
+        0xffeed2,
+        14,
+        17,
+        Math.PI / 5.2,
+        0.75,
+        1.2,
       );
       this.guardSpotLight.castShadow = true;
       this.guardSpotLight.shadow.mapSize.set(1024, 1024);
-      this.guardSpotLight.shadow.bias = -0.001;
+      this.guardSpotLight.shadow.bias = -0.0008;
       this.guardSpotTarget = new THREE.Object3D();
       this.scene.add(this.guardSpotTarget);
       this.guardSpotLight.target = this.guardSpotTarget;
       this.scene.add(this.guardSpotLight);
 
-      this.guardBounceLight = new THREE.PointLight(0xffecd0, 1.8, 4.0);
-      this.scene.add(this.guardBounceLight);
-
-      // Flashlight volumetric beam cone (apex at origin, extends along -Z)
-      const beamGeo = new THREE.CylinderGeometry(0.08, 2.6, 13, 20, 1, true);
+      // Flashlight volumetric beam cone: apex at origin, extends along +Z directly towards target
+      const beamGeo = new THREE.CylinderGeometry(0.06, 2.2, 11, 24, 1, true);
       beamGeo.rotateX(Math.PI / 2);
-      beamGeo.translate(0, 0, -6.5);
+      beamGeo.translate(0, 0, 5.5);
       this.guardBeamMesh = new THREE.Mesh(
         beamGeo,
         new THREE.MeshBasicMaterial({
-          color: 0xfff4db,
+          color: 0xffeed2,
           transparent: true,
-          opacity: 0.16,
+          opacity: 0.08,
           blending: THREE.AdditiveBlending,
           depthWrite: false,
           side: THREE.DoubleSide,
@@ -152,7 +148,7 @@ export class ShelfScene {
       this.scene.add(this.guardBeamMesh);
 
       // Player living mannequin aura light (eyes adjusted to darkness)
-      this.playerAuraLight = new THREE.PointLight(0x608098, 2.2, 5.5);
+      this.playerAuraLight = new THREE.PointLight(0x608098, 1.6, 4.5);
       this.scene.add(this.playerAuraLight);
     } else {
       this.scene.add(new THREE.HemisphereLight(0xfff2d4, 0x8fa282, 3));
@@ -244,10 +240,11 @@ export class ShelfScene {
         2.5,
         shelf.z,
         Math.min(3.8, Math.max(shelf.w, shelf.d)),
+        isDark,
       );
     }
     block(this.scene, [2.7, 2.4, 0.15], [DOOR.x, 1.1, -10.7], palette.clay);
-    sign(this.scene, 'LOADING · 2 KEYS', 0, 2.8, -10.5, 4.3);
+    sign(this.scene, 'LOADING · 2 KEYS', 0, 2.8, -10.5, 4.3, isDark);
     block(this.scene, [0.4, 1.2, 0.7], [SWITCH.x, 0.6, SWITCH.z], palette.ink);
     block(
       this.scene,
@@ -255,19 +252,27 @@ export class ShelfScene {
       [SWITCH.x, 0.85, SWITCH.z + 0.4],
       palette.clay,
     );
-    sign(this.scene, 'SECURITY', SWITCH.x, 2.1, SWITCH.z, 2.5);
+    sign(this.scene, 'SECURITY', SWITCH.x, 2.1, SWITCH.z, 2.5, isDark);
     block(
       this.scene,
       [1.5, 0.1, 1.5],
       [HATCH.x, -0.015, HATCH.z],
       palette.clay,
     );
-    sign(this.scene, 'HATCH · LADDER', HATCH.x, 1.8, HATCH.z, 3);
-    sign(this.scene, 'STAFF ONLY', 0, 0.2, 10.5, 3.2).rotation.x = -Math.PI / 2;
+    sign(this.scene, 'HATCH · LADDER', HATCH.x, 1.8, HATCH.z, 3, isDark);
+    sign(
+      this.scene,
+      'STAFF ONLY',
+      0,
+      0.2,
+      10.5,
+      3.2,
+      isDark,
+    ).rotation.x = -Math.PI / 2;
     const intercomStation = intercomModel();
     intercomStation.position.set(INTERCOM.x, 0, INTERCOM.z);
     this.scene.add(intercomStation);
-    sign(this.scene, 'P.A. INTERCOM', INTERCOM.x, 1.6, INTERCOM.z, 2.6);
+    sign(this.scene, 'P.A. INTERCOM', INTERCOM.x, 1.6, INTERCOM.z, 2.6, isDark);
     const ringMaterial = new THREE.MeshBasicMaterial({
       color: 0x527c5b,
       side: THREE.DoubleSide,
@@ -571,17 +576,33 @@ export class ShelfScene {
     if (!this.preview) {
       const fieldMat = this.field.material as THREE.MeshBasicMaterial;
       if (isGuard) {
-        fieldMat.color.setHex(0xfff2d4);
-        fieldMat.opacity = 0.34;
+        fieldMat.color.setHex(0xffedd0);
+        fieldMat.opacity = 0.12;
       } else {
-        fieldMat.color.setHex(0x5a7e9e);
-        fieldMat.opacity = 0.22;
+        fieldMat.color.setHex(0x3e5e7e);
+        fieldMat.opacity = 0.12;
       }
     }
     const edge = (angle: number) => {
-      let near = 0,
+      let near = 0;
+      let far = 9.5;
+      if (!this.preview) {
+        if (isGuard) {
+          const cosDelta = Math.cos(angle - body.angle);
+          if (cosDelta < 0.4) {
+            // Flashlight only in the front: zero floor light behind or to sides!
+            return [body.x, 0.003, body.z];
+          }
+          // Inside forward flashlight beam: reach forward up to 8.5m
+          const falloff = (cosDelta - 0.4) / 0.6;
+          far = 3.0 + falloff * 5.5;
+        } else {
+          far = 4.2;
+        }
+      } else {
         far = isGuard ? 7.5 : 9.5;
-      if (isGuard && Math.cos(angle - body.angle) < 0.15) far = 1.59;
+        if (isGuard && Math.cos(angle - body.angle) < 0.15) far = 1.59;
+      }
       for (let i = 0; i < 10; i++) {
         const mid = (near + far) / 2,
           p = {
@@ -618,7 +639,7 @@ export class ShelfScene {
       time = now / 1000;
     this.motion.advance(now, this.paused);
     const own = this.motion.own();
-    const baseSunlight = this.preview ? 3.2 : 0.28;
+    const baseSunlight = this.preview ? 3.2 : 0.52;
     if (s?.emergencyLighting) {
       this.emergencyLight.intensity = 4.2 + Math.sin(time * 7.5) * 2.8;
       this.sunlight.intensity = baseSunlight * 0.4;
@@ -642,7 +663,6 @@ export class ShelfScene {
       activeGuardPos &&
       this.guardSpotLight &&
       this.guardSpotTarget &&
-      this.guardBounceLight &&
       this.guardBeamMesh
     ) {
       const gx = activeGuardPos.x;
@@ -652,23 +672,23 @@ export class ShelfScene {
       const sinA = Math.sin(ga);
 
       // Flashlight lens position on torso right side
-      const lensX = gx + 0.42 * cosA + 0.55 * sinA;
-      const lensY = 1.05;
-      const lensZ = gz - 0.42 * sinA + 0.55 * cosA;
+      const lensX = gx + 0.38 * cosA + 0.48 * sinA;
+      const lensY = 0.98;
+      const lensZ = gz - 0.38 * sinA + 0.48 * cosA;
 
       this.guardSpotLight.visible = true;
       this.guardSpotLight.position.set(lensX, lensY, lensZ);
-      this.guardSpotTarget.position.set(gx + sinA * 10, 0.35, gz + cosA * 10);
-
-      this.guardBounceLight.visible = true;
-      this.guardBounceLight.position.set(lensX, lensY, lensZ);
+      this.guardSpotTarget.position.set(
+        gx + sinA * 8.5,
+        0.3,
+        gz + cosA * 8.5,
+      );
 
       this.guardBeamMesh.visible = true;
       this.guardBeamMesh.position.set(lensX, lensY, lensZ);
       this.guardBeamMesh.lookAt(this.guardSpotTarget.position);
     } else {
       if (this.guardSpotLight) this.guardSpotLight.visible = false;
-      if (this.guardBounceLight) this.guardBounceLight.visible = false;
       if (this.guardBeamMesh) this.guardBeamMesh.visible = false;
     }
 
@@ -795,7 +815,6 @@ export class ShelfScene {
     this.hazards.clear();
     if (this.guardBeamMesh) this.remove(this.guardBeamMesh);
     if (this.guardSpotLight) this.guardSpotLight.dispose();
-    if (this.guardBounceLight) this.guardBounceLight.dispose();
     if (this.playerAuraLight) this.playerAuraLight.dispose();
     if (this.guardSpotTarget) this.guardSpotTarget.removeFromParent();
     this.remove(this.scene);

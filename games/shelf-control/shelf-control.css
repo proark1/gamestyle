@@ -280,13 +280,13 @@
 .shelf-active {
   min-height: 0;
   height: 100dvh;
-  background: #060b13;
+  background: #0c1522;
 }
 .shelf-active .shelf-canvas {
-  background: #060b13;
+  background: #0c1522;
 }
 .shelf-active .shelf-header {
-  background: #060b13b3;
+  background: #0c1522b3;
   border-bottom: 1px solid #1a2736;
   backdrop-filter: blur(8px);
 }

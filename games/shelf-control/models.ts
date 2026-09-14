@@ -65,16 +65,22 @@ export function sign(
   y: number,
   z: number,
   width = 3,
+  dark = false,
 ) {
   const canvas = document.createElement('canvas');
   canvas.width = 768;
   canvas.height = 160;
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#fff4d7';
+  ctx.fillStyle = dark ? '#131e2be6' : '#fff4d7';
   ctx.beginPath();
   ctx.roundRect(0, 0, 768, 160, 22);
   ctx.fill();
-  ctx.fillStyle = '#294a43';
+  if (dark) {
+    ctx.strokeStyle = '#2d435d';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+  }
+  ctx.fillStyle = dark ? '#edd8b4' : '#294a43';
   ctx.font = '500 60px Fredoka, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -86,7 +92,7 @@ export function sign(
     new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
-      toneMapped: false,
+      toneMapped: true,
       side: THREE.DoubleSide,
     }),
   );
