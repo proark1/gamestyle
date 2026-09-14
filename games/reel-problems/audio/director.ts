@@ -78,7 +78,22 @@ export class ReelAudioDirector {
     loop(
       'strain',
       playing && maxTension > 0.45 ? 'ambience.strain' : null,
-      Math.min(0.8, maxTension),
+      maxTension > 0.85 ? 1.0 : Math.min(0.8, maxTension),
+    );
+    const sharkHuntingSwimmer =
+      playing &&
+      w.wildlife.some(
+        (s) =>
+          s.kind === 'shark' &&
+          s.activeUntil > w.clock &&
+          w.players.some(
+            (p) => p.swimming && Math.hypot(s.x - p.x, s.z - p.z) < 18,
+          ),
+      );
+    loop(
+      'dread',
+      playing && sharkHuntingSwimmer ? 'ambience.dread' : null,
+      0.75,
     );
     const speed = Math.hypot(w.boat.vx, w.boat.vz);
     loop(
@@ -141,6 +156,11 @@ export class ReelAudioDirector {
       if (playing) {
         if (urgent && old.clock - w.started < ROUND_MS - 60_000)
           hit('event.time-warning');
+        if (
+          w.clock - w.started >= ROUND_MS - 15_000 &&
+          old.clock - w.started < ROUND_MS - 15_000
+        )
+          hit('event.time-warning', 1.0);
         if (
           Object.keys(w.gear).some(
             (key) =>

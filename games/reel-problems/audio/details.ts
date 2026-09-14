@@ -155,6 +155,12 @@ export const reelDetails = [
     'A person slowly paddles in calm lake water, small regular hand splashes and close ripples, no distress.',
     0.4,
   ),
+  bed(
+    'ambience.dread',
+    'Shark stalking swimmer',
+    'Low tense rhythmic bass pulses repeating steadily underwater, evoking a stalking shark predator.',
+    0.6,
+  ),
   ...(
     [
       ['menu', 'At the dock', 'Easygoing anticipation, 84 BPM.', 32, true],

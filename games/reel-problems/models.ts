@@ -177,6 +177,91 @@ export function createBoat() {
 /** How far forward the rod hand is raised. */
 const ROD_ARM = -0.9;
 const ROD_TILT = 0.85;
+export function createComicBubble(type: 'alert' | 'sweat' | 'dizzy') {
+  if (typeof document === 'undefined') {
+    const sprite = new THREE.Sprite();
+    sprite.scale.set(1.4, 1.4, 1);
+    return sprite;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  ctx.clearRect(0, 0, 128, 128);
+  if (type === 'alert') {
+    ctx.fillStyle = '#ff4242';
+    ctx.beginPath();
+    ctx.arc(64, 64, 48, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 72px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('!', 64, 66);
+  } else if (type === 'sweat') {
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(64, 18);
+    ctx.bezierCurveTo(90, 60, 100, 95, 64, 108);
+    ctx.bezierCurveTo(28, 95, 38, 60, 64, 18);
+    ctx.fill();
+  } else if (type === 'dizzy') {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 52px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⭐', 64, 64);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: texture,
+      depthTest: false,
+      transparent: true,
+    }),
+  );
+  sprite.scale.set(1.4, 1.4, 1);
+  return sprite;
+}
+
+export function createFloatingScore(text: string, color = '#ffd24a') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 96;
+  const ctx = canvas.getContext('2d')!;
+  ctx.clearRect(0, 0, 256, 96);
+  ctx.fillStyle = '#173639';
+  ctx.beginPath();
+  ctx.roundRect(8, 8, 240, 80, 20);
+  ctx.fill();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = color;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.font = 'bold 44px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 48);
+  const texture = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: texture,
+      depthTest: false,
+      transparent: true,
+    }),
+  );
+  sprite.scale.set(3.2, 1.2, 1);
+  return sprite;
+}
+
+export function createFloatingHat(color: string) {
+  const g = new THREE.Group();
+  const hatMat = material(color);
+  cylinder(g, 0.44, 0.05, [0, 0.02, 0], hatMat);
+  cylinder(g, 0.28, 0.2, [0, 0.12, 0], hatMat);
+  return g;
+}
+
 const ROD_LENGTH = 2.25;
 
 /**
@@ -196,28 +281,94 @@ export function createAngler(color: string, look?: Look) {
     box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material('#ffb75f'));
   if (!worn.hat) {
     const hat = material(color);
-    cylinder(body, 0.46, 0.06, [0, WORKER_HEAD_TOP + 0.02, 0], hat);
-    cylinder(body, 0.3, 0.24, [0, WORKER_HEAD_TOP + 0.16, 0], hat);
+    const brim = cylinder(body, 0.46, 0.06, [0, WORKER_HEAD_TOP + 0.02, 0], hat);
+    brim.name = 'angler-hat';
+    const crown = cylinder(body, 0.3, 0.24, [0, WORKER_HEAD_TOP + 0.16, 0], hat);
+    crown.name = 'angler-hat';
   }
-  // The rod leaves the right hand, raised to hold it out over the water.
+  // The rod leaves the right hand with flexible bending segments.
   const arm = g.userData.armR as THREE.Group;
   arm.rotation.x = ROD_ARM;
   g.updateMatrixWorld(true);
   const grip = arm
     .getObjectByName('worker-hand')!
     .getWorldPosition(new THREE.Vector3());
+  const localGrip = g.worldToLocal(grip.clone());
+
+  const rodRoot = new THREE.Group();
+  rodRoot.name = 'rod';
+  rodRoot.position.copy(localGrip);
+  rodRoot.rotation.x = ROD_TILT;
+  g.add(rodRoot);
+
+  const woodMat = material('#d2ab73');
+  const segLength = ROD_LENGTH / 4;
+  let curParent: THREE.Object3D = rodRoot;
+  const segments: THREE.Group[] = [];
+
+  for (let i = 0; i < 4; i++) {
+    const seg = new THREE.Group();
+    seg.position.set(0, i === 0 ? 0 : segLength, 0);
+    const radius = 0.03 - i * 0.004;
+    cylinder(seg, radius, segLength, [0, segLength / 2, 0], woodMat);
+    curParent.add(seg);
+    segments.push(seg);
+    curParent = seg;
+  }
+
+  const tipAnchor = new THREE.Object3D();
+  tipAnchor.position.set(0, segLength, 0);
+  curParent.add(tipAnchor);
+
   const along = new THREE.Vector3(0, Math.cos(ROD_TILT), Math.sin(ROD_TILT));
-  const middle = grip.clone().addScaledVector(along, ROD_LENGTH / 2);
-  const rod = cylinder(
-    g,
-    0.028,
-    ROD_LENGTH,
-    middle.toArray(),
-    material('#d2ab73'),
-  );
-  rod.rotation.x = ROD_TILT;
-  rod.name = 'rod';
   g.userData.rodTip = grip.addScaledVector(along, ROD_LENGTH);
+
+  const tmpTip = new THREE.Vector3();
+  g.userData.updateRod = (tension: number, surge: boolean, now: number) => {
+    const bend =
+      Math.min(1.4, tension * 1.1) +
+      (surge ? 0.3 + Math.sin(now / 45) * 0.08 : 0);
+    segments[1].rotation.x = bend * 0.22;
+    segments[2].rotation.x = bend * 0.38;
+    segments[3].rotation.x = bend * 0.52;
+    if (surge || tension > 0.8) {
+      const shudder = Math.sin(now / 35) * (tension * 0.03);
+      segments[2].rotation.z = shudder;
+      segments[3].rotation.z = -shudder;
+    } else {
+      segments[2].rotation.z = 0;
+      segments[3].rotation.z = 0;
+    }
+    tipAnchor.getWorldPosition(tmpTip);
+    g.worldToLocal(tmpTip);
+    (g.userData.rodTip as THREE.Vector3).copy(tmpTip);
+  };
+
+  const trophy = createCatch('salmon');
+  trophy.name = 'trophy-fish';
+  trophy.scale.setScalar(0.7);
+  trophy.position.set(0, 2.7, 0.1);
+  trophy.visible = false;
+  g.add(trophy);
+
+  const bubbleAlert = createComicBubble('alert');
+  bubbleAlert.name = 'bubble-alert';
+  bubbleAlert.position.set(0, 3.4, 0);
+  bubbleAlert.visible = false;
+  g.add(bubbleAlert);
+
+  const bubbleSweat = createComicBubble('sweat');
+  bubbleSweat.name = 'bubble-sweat';
+  bubbleSweat.position.set(0.65, 3.2, 0);
+  bubbleSweat.visible = false;
+  g.add(bubbleSweat);
+
+  const bubbleDizzy = createComicBubble('dizzy');
+  bubbleDizzy.name = 'bubble-dizzy';
+  bubbleDizzy.position.set(0, 3.3, 0);
+  bubbleDizzy.visible = false;
+  g.add(bubbleDizzy);
+
   return g;
 }
 /**
@@ -233,6 +384,9 @@ export function poseAngler(
   clinging = false,
   climbing = false,
   downed = false,
+  tumble = false,
+  trophy = false,
+  slipping = false,
 ) {
   const body = model.userData.body as THREE.Group | undefined;
   const legL = model.userData.legL as THREE.Group | undefined;
@@ -247,6 +401,26 @@ export function poseAngler(
     legR.rotation.set(0.15, 0, -0.1);
     armL.rotation.set(0.4, 0, 0.3);
     armR.rotation.set(0.4, 0, -0.3);
+    return;
+  }
+
+  if (tumble) {
+    // Comically flat on back with kicking feet and frantic hands
+    if (body) body.rotation.set(-0.55, 0, 0);
+    legL.rotation.set(-1.1 + Math.sin(now / 90) * 0.18, 0, 0.2);
+    legR.rotation.set(-0.95 - Math.sin(now / 90) * 0.18, 0, -0.2);
+    armL.rotation.set(-2.4 + Math.sin(now / 60) * 0.3, 0, 0.35);
+    armR.rotation.set(-2.4 - Math.sin(now / 60) * 0.3, 0, -0.35);
+    return;
+  }
+
+  if (trophy) {
+    // Triumphant posture holding catch high
+    if (body) body.rotation.set(-0.15, 0, 0);
+    legL.rotation.set(0, 0, 0.2);
+    legR.rotation.set(0, 0, -0.2);
+    armL.rotation.set(-2.6, 0, -0.25);
+    armR.rotation.set(-2.6, 0, 0.25);
     return;
   }
 
@@ -302,6 +476,17 @@ export function poseAngler(
       legL.rotation.set(Math.sin(scull) * 0.35, 0, 0.15);
       legR.rotation.set(-Math.sin(scull) * 0.35, 0, -0.15);
     }
+    return;
+  }
+
+  if (slipping && !airborne) {
+    // Panicked windmilling arms trying to stay upright
+    if (body) body.rotation.set(0.18, 0, Math.sin(now / 70) * 0.2);
+    const windmill = now / 55;
+    armL.rotation.set(Math.sin(windmill) * 2.8, 0, 0.4);
+    armR.rotation.set(Math.sin(windmill + Math.PI) * 2.8, 0, -0.4);
+    legL.rotation.set(Math.sin(now / 75) * 0.65, 0, 0.15);
+    legR.rotation.set(-Math.sin(now / 75) * 0.65, 0, -0.15);
     return;
   }
 

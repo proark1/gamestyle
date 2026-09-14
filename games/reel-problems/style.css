@@ -1135,10 +1135,116 @@
   .reel-spin,
   .reel-line-panel .almost-up,
   .reel-climb-progress.almost-up .reel-climb-progress-bar::-webkit-progress-value,
-  .reel-climb-progress.almost-up .reel-climb-progress-bar::-moz-progress-bar {
+  .reel-climb-progress.almost-up .reel-climb-progress-bar::-moz-progress-bar,
+  .reel-tension-vignette,
+  .reel-trophy-banner,
+  .reel-trophy-banner-icon,
+  .reel-slap-alert {
     animation: none;
   }
   .reel-primary {
     transition: none;
   }
+}
+
+.reel-tension-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: inset 0 0 100px 30px rgba(239, 68, 68, 0.65);
+  transition: opacity 0.15s ease-out;
+  animation: reel-vignette-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes reel-vignette-pulse {
+  from {
+    box-shadow: inset 0 0 80px 25px rgba(239, 68, 68, 0.5);
+  }
+  to {
+    box-shadow: inset 0 0 120px 45px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.reel-trophy-banner {
+  position: absolute;
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #ffd700, #ffae19);
+  color: #1a3c3e;
+  border: 3px solid #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25), 0 0 20px rgba(255, 215, 0, 0.6);
+  pointer-events: none;
+  animation: reel-trophy-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.reel-trophy-banner-icon {
+  color: #794306;
+  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.5));
+  animation: reel-trophy-wiggle 1.2s ease-in-out infinite;
+}
+
+.reel-trophy-banner-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.reel-trophy-banner-text strong {
+  font: 800 18px 'Fredoka', sans-serif;
+  letter-spacing: 1px;
+}
+
+.reel-trophy-banner-text span {
+  font: 700 13px 'DM Sans', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+@keyframes reel-trophy-pop {
+  0% {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes reel-trophy-wiggle {
+  0%, 100% {
+    transform: rotate(-10deg) scale(1.1);
+  }
+  50% {
+    transform: rotate(10deg) scale(1.2);
+  }
+}
+
+.reel-slap-alert {
+  position: absolute;
+  top: 170px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 24;
+  padding: 8px 18px;
+  background: #173639eb;
+  color: #fca5a5;
+  border: 2px solid #ef4444;
+  border-radius: 16px;
+  font: 700 14px 'Fredoka', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  animation: reel-slap-shake 0.4s ease-in-out;
+}
+
+@keyframes reel-slap-shake {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-55%) rotate(-4deg); }
+  75% { transform: translateX(-45%) rotate(4deg); }
 }

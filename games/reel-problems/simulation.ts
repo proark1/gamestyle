@@ -674,7 +674,7 @@ function land(w: ReelWorld, p: Angler, f: Fish) {
   bank(w, f.kind, crew, names, '');
 }
 /** A catch safe in the well: points, credit, any gear it fits, maybe a crab. */
-function bank(
+export function bank(
   w: ReelWorld,
   kind: CatchKind,
   crew: Angler[],
@@ -801,7 +801,7 @@ function advanceFlyingFish(w: ReelWorld) {
   const fx = ff.fromX + (ff.toX - ff.fromX) * t;
   const fz = ff.fromZ + (ff.toZ - ff.fromZ) * t;
   const fy = Math.sin(t * Math.PI) * 2.2;
-  if (!ff.hit && fy > 0.35 && fy < 1.6) {
+  if (!ff.hit && fy > 0.35 && fy < 2.5) {
     for (const p of w.players) {
       if (p.swimming || p.y > 0.3) continue;
       const d = Math.hypot(p.x - fx, p.z - fz);
@@ -809,6 +809,7 @@ function advanceFlyingFish(w: ReelWorld) {
         ff.hit = true;
         if (!p.input.brace) {
           p.tumbleUntil = w.clock + 750;
+          p.lostHat = true;
           const shoveDir = Math.sign(ff.toX - ff.fromX);
           p.slipX += shoveDir * 2.5;
           announce(
@@ -828,7 +829,7 @@ function advanceFlyingFish(w: ReelWorld) {
     }
   }
 }
-function step(w: ReelWorld, dt: number) {
+export function step(w: ReelWorld, dt: number) {
   const boat = w.boat;
   const sea = advanceChaos(w, dt, announce);
   if (sea.crack) springLeak(w, sea.crack, announce);
@@ -976,6 +977,13 @@ function step(w: ReelWorld, dt: number) {
         p.z = clamp(p.z + nz * push, -BOAT_HALF.z, BOAT_HALF.z);
         q.x = clamp(q.x - nx * push, -BOAT_HALF.x, BOAT_HALF.x);
         q.z = clamp(q.z - nz * push, -BOAT_HALF.z, BOAT_HALF.z);
+        p.slipX += nx * push * 0.8;
+        p.slipZ += nz * push * 0.8;
+        q.slipX -= nx * push * 0.8;
+        q.slipZ -= nz * push * 0.8;
+        if (!w.events.some((e) => e.kind === 'bump' && e.id === w.eventId)) {
+          announce(w, 'bump', `${p.name} and ${q.name} bumped on deck!`);
+        }
         if (w.clock - p.landedAt < 250 || w.clock - q.landedAt < 250) {
           p.slipX += nx * 0.7;
           p.slipZ += nz * 0.7;
@@ -1239,6 +1247,7 @@ function step(w: ReelWorld, dt: number) {
   }
   advanceCrab(w, dt, announce);
   settleGull(w);
+  advanceFlyingFish(w);
   // On the lake bed the wreck goes nowhere.
   if (boat.sunk) return;
   // Water aboard is weight: a flooded boat answers wind and paddles sluggishly.

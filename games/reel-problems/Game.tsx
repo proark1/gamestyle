@@ -494,6 +494,28 @@ export default function ReelProblems() {
   return (
     <main className={`reel-game${session ? ' in-session' : ''}`}>
       <div className="reel-canvas" ref={container} />
+      {playing && (me?.line?.tension ?? 0) > 0.85 && (
+        <div
+          className="reel-tension-vignette"
+          style={{
+            opacity: Math.min(1, ((me?.line?.tension ?? 0) - 0.85) / 0.25),
+          }}
+        />
+      )}
+      {playing && w?.players.some((p) => (p.trophyUntil ?? 0) > w.clock) && (
+        <output className="reel-trophy-banner">
+          <Trophy size={28} className="reel-trophy-banner-icon" />
+          <div className="reel-trophy-banner-text">
+            <strong>RECORD CATCH!</strong>
+            <span>THE LAKE MANAGER HAS BEEN LANDED!</span>
+          </div>
+        </output>
+      )}
+      {playing && me && (me.tumbleUntil ?? 0) > (w?.clock ?? 0) && (
+        <div className="reel-slap-alert">
+          <span>💫 SMACKED FLAT ON DECK!</span>
+        </div>
+      )}
       <header className="reel-header">
         <a href="/" className="reel-brand">
           <span>

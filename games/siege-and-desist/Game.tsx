@@ -485,8 +485,8 @@ export default function SiegeAndDesist() {
           </p>
           <p className="sad-intro">
             Wind the counterweight, load the sling, and bring down the
-            keep&rsquo;s banner before dawn. Somebody will end up in the
-            sling. It will not be an accident.
+            keep&rsquo;s banner before dawn. Somebody will end up in the sling.
+            It will not be an accident.
           </p>
           <form
             className="setup-card"

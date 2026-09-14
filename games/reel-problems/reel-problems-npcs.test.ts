@@ -101,67 +101,56 @@ void test('peer coordinator and engine integration: supportsNpcRoster, manageNpc
   const store = memoryStore();
   const createRes = await handlePeerRoom(
     store,
-    { game: 'reel-problems', op: 'create', name: 'Captain', instance: 'browser' },
+    { game: 'reel-problems', op: 'create', name: 'Captain' },
     NOW,
   );
   assert.ok(createRes.session);
-  const hostId = createRes.session.id;
-  const code = createRes.session.code;
-  const epoch = createRes.view.epoch;
+  const session = createRes.session;
+  const instance = 'tab-1';
 
-  await handlePeerRoom(
+  // Join the hello phase so instance is registered
+  const helloRes = await handlePeerRoom(
     store,
     {
-      game: 'reel-problems',
+      ...session,
       op: 'hello',
-      id: hostId,
-      code,
-      token: createRes.session.token,
-      instance: 'browser',
+      instance,
     },
-    NOW,
+    NOW + 5,
   );
+  const epoch = helloRes.view.epoch;
+
+  const call = (op: string, extra: Record<string, unknown> = {}) =>
+    handlePeerRoom(
+      store,
+      {
+        ...session,
+        instance,
+        epoch,
+        op,
+        ...extra,
+      },
+      NOW + 10,
+    );
 
   // Add NPC via RPC
-  const rpcAdd = await handlePeerRoom(
-    store,
-    {
-      game: 'reel-problems',
-      op: 'npc',
-      action: { type: 'add-npc', slot: 1 },
-      requestId: 'req-1',
-      epoch,
-      id: hostId,
-      code,
-      token: createRes.session.token,
-      instance: 'browser',
-    },
-    NOW + 10,
-  );
-  assert.equal(rpcAdd.view.npcs?.slots.length, 1);
-  assert.equal(rpcAdd.view.npcs?.slots[0].color, 1);
+  const added = await call('npc', {
+    action: { type: 'add-npc', slot: 1 },
+    requestId: 'req-1',
+  });
+  assert.equal(added.view.npcs?.slots.length, 1);
+  assert.equal(added.view.npcs?.slots[0].color, 1);
 
   // Fill NPCs via RPC
-  const rpcFill = await handlePeerRoom(
-    store,
-    {
-      game: 'reel-problems',
-      op: 'npc',
-      action: { type: 'fill-npcs' },
-      requestId: 'req-2',
-      epoch,
-      id: hostId,
-      code,
-      token: createRes.session.token,
-      instance: 'browser',
-    },
-    NOW + 20,
-  );
-  assert.equal(rpcFill.view.npcs?.slots.length, 3);
+  const filled = await call('npc', {
+    action: { type: 'fill-npcs' },
+    requestId: 'req-2',
+  });
+  assert.equal(filled.view.npcs?.slots.length, 3);
 
   // Engine reconciliation
   const engine = createEngine(NOW);
-  engine.reconcile(rpcFill.view.members, rpcFill.view.npcs);
+  engine.reconcile(filled.view.members, filled.view.npcs);
   assert.equal(engine.world.players.length, 4);
   assert.equal(engine.world.players.filter((p) => p.bot).length, 3);
 
@@ -223,9 +212,10 @@ void test('NPC casts a line when rod is empty and joins team-pull on big catches
 });
 
 void test('NPC eases off reeling during fish surge or high tension to prevent line snap', () => {
-  const CALM_NOW = 102000;
-  const w = freshReel(CALM_NOW);
-  w.players.push(newAngler('human', 'Captain', 0, CALM_NOW));
+  // Use a clock where Math.sin(w.clock / 1050) is negative (no surge by default)
+  const CALM_CLOCK = 101_500;
+  const w = freshReel(CALM_CLOCK);
+  w.players.push(newAngler('human', 'Captain', 0, CALM_CLOCK));
   reelAction(w, 'human', { type: 'add-npc', slot: 1 }, 'human');
   reelAction(w, 'human', { type: 'start' }, 'human');
 
@@ -233,9 +223,7 @@ void test('NPC eases off reeling during fish surge or high tension to prevent li
   const perch = w.fish.find((f) => f.kind === 'perch')!;
   perch.respawnAt = 0;
   perch.surge = false;
-  perch.stamina = 3;
-  perch.x = w.boat.x + 5;
-  perch.z = w.boat.z;
+  perch.stamina = 10;
 
   bot.line = {
     kind: 'fish',
@@ -248,23 +236,23 @@ void test('NPC eases off reeling during fish surge or high tension to prevent li
     tangled: false,
     crossing: 0,
     castAt: w.clock,
-    clearUntil: w.clock + 1000,
+    clearUntil: w.clock + 5000,
   };
 
   // Normal calm fish: bot should reel in
-  tick(w, 100);
+  tick(w, 50);
   assert.equal(bot.input.reel, true, 'Bot should reel when tension is low and fish is not surging');
 
   // Now fish surges
-  w.clock = 106600;
-  tick(w, 100);
+  perch.surge = true;
+  tick(w, 50);
   assert.equal(bot.input.reel, false, 'Bot should stop reeling during surge');
   assert.equal(bot.input.brace, true, 'Bot should brace during surge');
 
-  // Surge stops but line tension is high
-  w.clock = 102000;
-  bot.line.length = 1;
-  tick(w, 100);
+  // Surge stops but line tension is dangerous
+  perch.surge = false;
+  bot.line.tension = 0.95;
+  tick(w, 50);
   assert.equal(bot.input.reel, false, 'Bot should not reel when line tension is dangerous');
 });
 
@@ -337,10 +325,10 @@ void test('NPC climbs aboard when swimming and rescues drowning teammates', () =
   bot.overboardAt = w.clock;
   bot.clinging = true;
   bot.climb = 0.2;
-  bot.x = w.boat.x + 1.2;
+  bot.x = w.boat.x + 2.75;
   bot.z = w.boat.z;
 
-  tick(w, 100);
+  tick(w, 50);
   assert.equal(bot.input.reel, true, 'Bot should hold climb when clinging');
 
   // Now bot is back aboard, and human teammate is swimming nearby

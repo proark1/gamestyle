@@ -107,6 +107,18 @@ const effects = {
     'Crab punted overboard',
     'A boot stomps a wooden deck with a thud, then a small crab plops into the water.',
   ],
+  slap: [
+    'Salmon slap',
+    'A flying fish smacks a fisherman on deck with a loud cartoon splat.',
+  ],
+  trophy: [
+    'Trophy catch fanfare',
+    'A triumphant brass fanfare and sparkling bells celebrate catching a record fish.',
+  ],
+  bump: [
+    'Angler bump',
+    'Two fishermen bump into each other on a wet boat deck with a cartoon thud.',
+  ],
 } as const;
 /**
  * Filtered-noise stand-ins used until the workshop generates real clips, so a
@@ -212,6 +224,22 @@ const textures: Partial<
     filter: 'bandpass',
     peak: 0.85,
     hits: 5,
+  },
+  slap: {
+    duration: 0.35,
+    from: 800,
+    to: 120,
+    filter: 'lowpass',
+    peak: 1.1,
+    hits: 2,
+  },
+  bump: {
+    duration: 0.25,
+    from: 400,
+    to: 100,
+    filter: 'lowpass',
+    peak: 0.7,
+    hits: 1,
   },
 };
 export const reelCatalog: Cue[] = [
@@ -333,6 +361,27 @@ export class ReelSound {
         filter.disconnect();
         envelope.disconnect();
       };
+      return;
+    }
+    if (kind === 'trophy') {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+        env.gain.setValueAtTime(0.001, t + idx * 0.08);
+        env.gain.linearRampToValueAtTime(0.4, t + idx * 0.08 + 0.02);
+        env.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.4);
+        osc.connect(env);
+        env.connect(this.gain!);
+        osc.start(t + idx * 0.08);
+        osc.stop(t + idx * 0.08 + 0.45);
+        osc.onended = () => {
+          osc.disconnect();
+          env.disconnect();
+        };
+      });
       return;
     }
     const frequency =

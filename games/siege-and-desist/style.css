@@ -164,7 +164,10 @@
 
 .sad-tagline {
   margin: 0 0 10px;
-  font: 500 23px/1.25 'Fredoka', var(--display), sans-serif;
+  font:
+    500 23px/1.25 'Fredoka',
+    var(--display),
+    sans-serif;
   color: #2a2520;
 }
 
@@ -294,7 +297,10 @@
 }
 
 .sad-game .scene-caption > span:last-child {
-  font: 400 italic 15px 'EB Garamond', Georgia, serif;
+  font:
+    400 italic 15px 'EB Garamond',
+    Georgia,
+    serif;
   color: #3d3124;
 }
 

@@ -564,7 +564,7 @@ void test('movement inputs are camera-relative so W always runs forward into the
   // W (z = -1) runs into the screen (-Z)
   const restW = cameraRelativeInput({ x: 0, z: -1 }, 0);
   assert.ok(Math.abs(restW.x - 0) < 1e-6);
-  assert.ok(Math.abs(restW.z - (-1)) < 1e-6);
+  assert.ok(Math.abs(restW.z - -1) < 1e-6);
 
   // S (z = +1) runs towards the camera (+Z)
   const restS = cameraRelativeInput({ x: 0, z: 1 }, 0);
@@ -578,19 +578,19 @@ void test('movement inputs are camera-relative so W always runs forward into the
 
   // A (x = -1) runs left (-X)
   const restA = cameraRelativeInput({ x: -1, z: 0 }, 0);
-  assert.ok(Math.abs(restA.x - (-1)) < 1e-6);
+  assert.ok(Math.abs(restA.x - -1) < 1e-6);
   assert.ok(Math.abs(restA.z - 0) < 1e-6);
 
   // Swung quarter-turn clockwise (yaw = Math.PI / 2, looking from +X towards -X):
   // W now moves in -X (forward into the view)
   const quarterW = cameraRelativeInput({ x: 0, z: -1 }, Math.PI / 2);
-  assert.ok(Math.abs(quarterW.x - (-1)) < 1e-6);
+  assert.ok(Math.abs(quarterW.x - -1) < 1e-6);
   assert.ok(Math.abs(quarterW.z - 0) < 1e-6);
 
   // D now moves in -Z (right on screen from camera's vantage)
   const quarterD = cameraRelativeInput({ x: 1, z: 0 }, Math.PI / 2);
   assert.ok(Math.abs(quarterD.x - 0) < 1e-6);
-  assert.ok(Math.abs(quarterD.z - (-1)) < 1e-6);
+  assert.ok(Math.abs(quarterD.z - -1) < 1e-6);
 
   // Swung half-turn (yaw = Math.PI, looking from behind castle back at crew):
   // W now moves in +Z (forward into the view)

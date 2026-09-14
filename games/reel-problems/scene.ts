@@ -23,6 +23,8 @@ import {
   createCatch,
   createCrab,
   createPaddle,
+  createFloatingHat,
+  createFloatingScore,
   deckSway,
   material,
   nameLabel,
@@ -95,6 +97,24 @@ export class ReelScene {
   private localId = '';
   private wide = false;
   private stopped = false;
+  private trauma = 0;
+  private lastProcessedEvent = 0;
+  private floatingScores: {
+    sprite: THREE.Sprite;
+    born: number;
+    duration: number;
+    startY: number;
+  }[] = [];
+  private floatingHats = new Map<string, THREE.Group>();
+  private splashParticles: {
+    pos: THREE.Vector3;
+    vel: THREE.Vector3;
+    life: number;
+    maxLife: number;
+  }[] = [];
+  private splashPoints!: THREE.Points;
+  private boatWake!: THREE.Mesh;
+  private flyingFishMesh = createCatch('salmon');
   constructor(
     private container: HTMLDivElement,
     private cb: Callbacks,
@@ -150,6 +170,42 @@ export class ReelScene {
     this.boat.add(this.splash);
     this.crab.visible = false;
     this.boat.add(this.crab);
+    const wakeGeom = new THREE.PlaneGeometry(3.6, 5.5, 3, 3);
+    wakeGeom.rotateX(-Math.PI / 2);
+    this.boatWake = new THREE.Mesh(
+      wakeGeom,
+      new THREE.MeshBasicMaterial({
+        color: '#cbf1f4',
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      }),
+    );
+    this.boatWake.position.set(0, 0.02, 4.0);
+    this.yaw.add(this.boatWake);
+
+    const splashGeom = new THREE.BufferGeometry();
+    const splashPositions = new Float32Array(160 * 3);
+    splashGeom.setAttribute(
+      'position',
+      new THREE.BufferAttribute(splashPositions, 3),
+    );
+    this.splashPoints = new THREE.Points(
+      splashGeom,
+      new THREE.PointsMaterial({
+        color: '#e0f7fa',
+        size: 0.32,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+      }),
+    );
+    this.splashPoints.frustumCulled = false;
+    this.scene.add(this.splashPoints);
+
+    this.flyingFishMesh.visible = false;
+    this.flyingFishMesh.scale.setScalar(0.75);
+    this.scene.add(this.flyingFishMesh);
     this.dockBeacon.rotation.x = -Math.PI / 2;
     this.dockBeacon.position.set(DOCK.x, 0.15, DOCK.z - 1);
     this.dockBeacon.visible = false;
@@ -232,6 +288,33 @@ export class ReelScene {
     this.input = idleInput();
     this.cb.input(this.input);
   };
+  private spawnSplash(
+    x: number,
+    y: number,
+    z: number,
+    count = 18,
+    speed = 4.2,
+  ) {
+    for (let i = 0; i < count; i++) {
+      if (this.splashParticles.length >= 150) this.splashParticles.shift();
+      const angle = Math.random() * Math.PI * 2;
+      const spread = (Math.random() * 0.5 + 0.5) * speed;
+      this.splashParticles.push({
+        pos: new THREE.Vector3(
+          x + (Math.random() - 0.5) * 0.4,
+          y + 0.05,
+          z + (Math.random() - 0.5) * 0.4,
+        ),
+        vel: new THREE.Vector3(
+          Math.cos(angle) * spread * 0.65,
+          Math.random() * speed + 1.2,
+          Math.sin(angle) * spread * 0.65,
+        ),
+        life: 0,
+        maxLife: 0.5 + Math.random() * 0.4,
+      });
+    }
+  }
   private hidden = () => {
     if (document.hidden) this.resetInput();
   };
@@ -434,6 +517,12 @@ export class ReelScene {
           this.disposeObject(ripple);
           this.swimRipples.delete(id);
         }
+        const hat = this.floatingHats.get(id);
+        if (hat) {
+          this.scene.remove(hat);
+          this.disposeObject(hat);
+          this.floatingHats.delete(id);
+        }
       }
     for (const p of world.players) {
       let object = this.anglers.get(p.id);
@@ -502,6 +591,13 @@ export class ReelScene {
             : 0.52 + lift;
       object.position.lerp(new THREE.Vector3(p.x, height, p.z), smooth);
       object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
+      const tumbling = !p.swimming && world.clock < (p.tumbleUntil ?? 0);
+      const trophy = !p.swimming && world.clock < (p.trophyUntil ?? 0);
+      const sliding =
+        !p.swimming &&
+        !tumbling &&
+        (Math.abs(p.slipX) > 0.08 || Math.abs(p.slipZ) > 0.08);
+
       if (falling) {
         // A jump goes in head first; a slip tumbles in sideways.
         const dove = object.userData.dove === true;
@@ -515,6 +611,12 @@ export class ReelScene {
         if (downed) {
           targetRotX = 1.45;
           targetRotZ = 0.6;
+        } else if (tumbling) {
+          targetRotX = 1.4;
+          targetRotZ = Math.sin(now / 100) * 0.2;
+        } else if (trophy) {
+          targetRotX = -0.05;
+          targetRotZ = 0;
         } else if (p.clinging) {
           // Scrambling up the side: the harder you haul, the more you swing.
           targetRotX = -0.35;
@@ -543,10 +645,69 @@ export class ReelScene {
         p.clinging,
         p.clinging && p.input.reel,
         downed,
+        tumbling,
+        trophy,
+        sliding,
       );
-      // Rod is stowed while swimming or paddling
+      // Rod is stowed while swimming, paddling, tumbling, or holding trophy
       const paddling = !p.swimming && !!p.paddle;
-      object.getObjectByName('rod')!.visible = !paddling && !p.swimming;
+      const rod = object.getObjectByName('rod');
+      if (rod) rod.visible = !paddling && !p.swimming && !tumbling && !trophy;
+
+      const hookedFish =
+        p.line?.kind === 'fish'
+          ? world.fish.find((f) => f.id === p.line?.target)
+          : undefined;
+      if (typeof object.userData.updateRod === 'function') {
+        object.userData.updateRod(
+          p.line?.tension ?? 0,
+          hookedFish?.surge ?? false,
+          now,
+        );
+      }
+
+      // Hat on head vs floating hat in water
+      object.traverse((child) => {
+        if (child.name === 'angler-hat') child.visible = !p.lostHat;
+      });
+
+      let floatingHat = this.floatingHats.get(p.id);
+      if (p.lostHat) {
+        if (!floatingHat) {
+          floatingHat = createFloatingHat(ANGLER_COLORS[p.color]);
+          this.scene.add(floatingHat);
+          this.floatingHats.set(p.id, floatingHat);
+          floatingHat.position.set(p.x, 0.04, p.z);
+        }
+        floatingHat.visible = true;
+        floatingHat.position.y = 0.04 + Math.sin(now / 350 + p.x) * 0.03;
+        floatingHat.rotation.y += dt * 0.5;
+        floatingHat.rotation.z = Math.sin(now / 400) * 0.15;
+      } else if (floatingHat) {
+        floatingHat.visible = false;
+      }
+
+      // Trophy fish mesh
+      const trophyMesh = object.getObjectByName('trophy-fish');
+      if (trophyMesh) trophyMesh.visible = trophy;
+
+      // Comic reaction bubbles
+      const alertBubble = object.getObjectByName('bubble-alert');
+      const sweatBubble = object.getObjectByName('bubble-sweat');
+      const dizzyBubble = object.getObjectByName('bubble-dizzy');
+      if (alertBubble)
+        alertBubble.visible =
+          !downed &&
+          !tumbling &&
+          ((p.line?.tension ?? 0) > 0.85 || p.line?.tangled === true);
+      if (sweatBubble)
+        sweatBubble.visible =
+          !downed &&
+          !tumbling &&
+          (p.clinging ||
+            sliding ||
+            ((p.line?.tension ?? 0) > 0.65 && (p.line?.tension ?? 0) <= 0.85));
+      if (dizzyBubble) dizzyBubble.visible = downed || tumbling;
       const label = object.getObjectByName('label');
       if (label) {
         const targetY = p.swimming ? (moving ? 1.8 : 2.2) : 2.65;
@@ -770,6 +931,143 @@ export class ReelScene {
       1 - Math.exp(-4 * dt),
     );
     this.camera.lookAt(look as THREE.Vector3);
+
+    // Process new events for camera trauma, splashes, floating scores
+    if (world.events && world.events.length > 0) {
+      for (const ev of world.events) {
+        if (ev.id > this.lastProcessedEvent) {
+          this.lastProcessedEvent = ev.id;
+          if (
+            ev.kind === 'thunder' ||
+            ev.kind === 'shark' ||
+            ev.kind === 'ram'
+          ) {
+            this.trauma = Math.min(1, this.trauma + 0.65);
+          } else if (
+            ev.kind === 'snap' ||
+            ev.kind === 'slap' ||
+            ev.kind === 'bump'
+          ) {
+            this.trauma = Math.min(1, this.trauma + 0.35);
+          } else if (ev.kind === 'sink') {
+            this.trauma = Math.min(1, this.trauma + 0.85);
+          }
+
+          if (ev.kind === 'splash' || ev.kind === 'slap') {
+            this.spawnSplash(
+              b.x + (Math.random() - 0.5) * 3,
+              0.2,
+              b.z + (Math.random() - 0.5) * 3,
+              25,
+              3.5,
+            );
+          } else if (ev.kind === 'thunder') {
+            this.spawnSplash(
+              world.weather.lightningX,
+              0.2,
+              world.weather.lightningZ,
+              35,
+              6,
+            );
+          } else if (ev.kind === 'catch' || ev.kind === 'trophy') {
+            const scoreText =
+              ev.kind === 'trophy' ? '⭐ TROPHY! +100' : ev.text;
+            const scoreSprite = createFloatingScore(
+              scoreText,
+              ev.kind === 'trophy' ? '#ffd24a' : '#7bed9f',
+            );
+            scoreSprite.position.set(b.x, 3.8, b.z);
+            this.scene.add(scoreSprite);
+            this.floatingScores.push({
+              sprite: scoreSprite,
+              born: now,
+              duration: 1800,
+              startY: 3.8,
+            });
+          }
+        }
+      }
+    }
+
+    // Flying fish mesh update
+    const ff = world.flyingFish;
+    if (ff) {
+      const elapsed = world.clock - ff.at;
+      const t = Math.min(1, Math.max(0, elapsed / ff.duration));
+      const fx = ff.fromX + (ff.toX - ff.fromX) * t;
+      const fz = ff.fromZ + (ff.toZ - ff.fromZ) * t;
+      const fy = Math.sin(t * Math.PI) * 2.2;
+      const angle = Math.atan2(ff.toX - ff.fromX, ff.toZ - ff.fromZ);
+      this.flyingFishMesh.visible = true;
+      this.flyingFishMesh.position.set(fx, fy, fz);
+      this.flyingFishMesh.rotation.set(
+        Math.sin(now / 80) * 0.4,
+        angle,
+        Math.cos(now / 80) * 0.4,
+      );
+    } else {
+      this.flyingFishMesh.visible = false;
+    }
+
+    // Boat wake update
+    const speed = Math.hypot(b.vx, b.vz);
+    const targetWakeOpacity = Math.min(0.55, speed * 0.15);
+    const wakeMat = this.boatWake.material as THREE.MeshBasicMaterial;
+    wakeMat.opacity += (targetWakeOpacity - wakeMat.opacity) * smooth;
+    this.boatWake.visible = wakeMat.opacity > 0.01 && !b.sunk;
+
+    // Splash particles update
+    const splashPos = this.splashPoints.geometry.getAttribute(
+      'position',
+    ) as THREE.BufferAttribute;
+    let activeParticles = 0;
+    for (let i = this.splashParticles.length - 1; i >= 0; i--) {
+      const sp = this.splashParticles[i];
+      sp.life += dt;
+      if (sp.life >= sp.maxLife) {
+        this.splashParticles.splice(i, 1);
+        continue;
+      }
+      sp.vel.y -= 9.8 * dt * 1.4;
+      sp.pos.addScaledVector(sp.vel, dt);
+      splashPos.setXYZ(
+        activeParticles,
+        sp.pos.x,
+        Math.max(0.01, sp.pos.y),
+        sp.pos.z,
+      );
+      activeParticles++;
+    }
+    for (let i = activeParticles; i < 160; i++) {
+      splashPos.setXYZ(i, 0, -999, 0);
+    }
+    splashPos.needsUpdate = true;
+
+    // Floating scores update
+    for (let i = this.floatingScores.length - 1; i >= 0; i--) {
+      const item = this.floatingScores[i];
+      const age = now - item.born;
+      const progress = age / item.duration;
+      if (progress >= 1) {
+        this.scene.remove(item.sprite);
+        this.disposeObject(item.sprite);
+        this.floatingScores.splice(i, 1);
+      } else {
+        item.sprite.position.y = item.startY + progress * 2.2;
+        (item.sprite.material as THREE.SpriteMaterial).opacity =
+          1 - progress * progress;
+      }
+    }
+
+    // Camera trauma / shake
+    if (this.trauma > 0) {
+      this.trauma = Math.max(0, this.trauma - dt * 1.2);
+      const shake = this.trauma * this.trauma;
+      this.camera.position.x += (Math.random() - 0.5) * 0.9 * shake;
+      this.camera.position.y += (Math.random() - 0.5) * 0.6 * shake;
+      this.camera.position.z += (Math.random() - 0.5) * 0.6 * shake;
+      this.camera.rotation.z += (Math.random() - 0.5) * 0.04 * shake;
+    }
     this.renderer.render(this.scene, this.camera);
   };
   private disposeObject(root: THREE.Object3D) {
@@ -795,6 +1093,14 @@ export class ReelScene {
     this.abort.abort();
     this.observer.disconnect();
     this.resetInput();
+    for (const item of this.floatingScores) {
+      this.disposeObject(item.sprite);
+    }
+    this.floatingScores.length = 0;
+    for (const hat of this.floatingHats.values()) {
+      this.disposeObject(hat);
+    }
+    this.floatingHats.clear();
     this.disposeObject(this.scene);
     this.renderer.dispose();
     this.renderer.domElement.remove();
