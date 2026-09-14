@@ -3,26 +3,35 @@
 import { useEffect, useRef } from 'react';
 import * as T from 'three';
 import { dressedWorker } from '../rendering/cosmetics/dress';
+import { buildStandaloneItem } from '../rendering/cosmetics/standalone-item';
 import { disposeGeometry } from '../rendering/primitives';
 import type { Look } from './look';
 
+export type WardrobePreviewMode = 'avatar' | 'item';
+
 export default function WardrobePreview({
   look,
+  mode = 'avatar',
+  itemId,
   className,
 }: {
   look: Look;
+  mode?: WardrobePreviewMode;
+  itemId?: string | null;
   className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const lookRef = useRef(look);
-  const applyLookRef = useRef<((l: Look) => void) | null>(null);
+  const modeRef = useRef(mode);
+  const itemIdRef = useRef(itemId);
+  const applyViewRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const width = container.clientWidth || 240;
-    const height = container.clientHeight || 280;
+    let currentW = container.clientWidth || 240;
+    let currentH = container.clientHeight || 280;
 
     const scene = new T.Scene();
     const camera = new T.PerspectiveCamera(34, 1, 0.1, 50);
@@ -32,34 +41,49 @@ export default function WardrobePreview({
     renderer.outputColorSpace = T.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
+    let modelBbox = new T.Box3();
+
     function fitCamera(w: number, h: number) {
       if (w <= 0 || h <= 0) return;
+      currentW = w;
+      currentH = h;
       const aspect = w / h;
       camera.aspect = aspect;
       const halfFovRad = (camera.fov * Math.PI) / 360;
       const tanFov = Math.tan(halfFovRad);
-      // Ensure the whole model (feet at 0, top of hat at ~2.2, width ~1.3) is completely framed:
-      const targetH = 2.65;
-      const targetW = 1.80;
-      const distH = targetH / (2 * tanFov);
-      const distW = targetW / (2 * aspect * tanFov);
-      const dist = Math.max(distH, distW);
-      camera.position.set(0, 1.20, dist);
-      camera.lookAt(0, 1.02, 0);
+
+      if (modeRef.current === 'item') {
+        const size = modelBbox.getSize(new T.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z, 0.35);
+        const targetH = maxDim * 1.55;
+        const targetW = maxDim * 1.55;
+        const distH = targetH / (2 * tanFov);
+        const distW = targetW / (2 * aspect * tanFov);
+        const dist = Math.max(distH, distW);
+        camera.position.set(0, 0.04, dist);
+        camera.lookAt(0, 0, 0);
+      } else {
+        // Avatar framing: full worker (feet at 0, top of hat at ~2.2, width ~1.3)
+        const targetH = 2.65;
+        const targetW = 1.8;
+        const distH = targetH / (2 * tanFov);
+        const distW = targetW / (2 * aspect * tanFov);
+        const dist = Math.max(distH, distW);
+        camera.position.set(0, 1.2, dist);
+        camera.lookAt(0, 1.02, 0);
+      }
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     }
 
-    fitCamera(width, height);
-
-    const ambient = new T.AmbientLight(0xfff6ea, 1.9);
+    const ambient = new T.AmbientLight(0xfff6ea, 2.0);
     scene.add(ambient);
 
-    const sun = new T.DirectionalLight(0xffffff, 2.2);
+    const sun = new T.DirectionalLight(0xffffff, 2.3);
     sun.position.set(2.5, 4.5, 3.5);
     scene.add(sun);
 
-    const fill = new T.DirectionalLight(0xd9e5ff, 1.1);
+    const fill = new T.DirectionalLight(0xd9e5ff, 1.2);
     fill.position.set(-3, 2, -2);
     scene.add(fill);
 
@@ -89,20 +113,36 @@ export default function WardrobePreview({
       });
     }
 
-    function applyLook(newLook: Look) {
+    function applyView() {
       if (currentModel) {
         turn.remove(currentModel);
         disposeTree(currentModel);
         currentModel = null;
       }
-      const { model } = dressedWorker(0, {}, newLook);
-      model.position.set(0, 0, 0);
-      turn.add(model);
-      currentModel = model;
+
+      if (modeRef.current === 'item' && itemIdRef.current) {
+        const itemModel = buildStandaloneItem(itemIdRef.current);
+        itemModel.position.set(0, 0, 0);
+        turn.add(itemModel);
+        currentModel = itemModel;
+        modelBbox = new T.Box3().setFromObject(itemModel);
+        shadow.scale.set(0.65, 0.65, 0.65);
+        shadow.position.y = modelBbox.min.y - 0.02;
+      } else {
+        const { model } = dressedWorker(0, {}, lookRef.current);
+        model.position.set(0, 0, 0);
+        turn.add(model);
+        currentModel = model;
+        modelBbox = new T.Box3().setFromObject(model);
+        shadow.scale.set(1, 1, 1);
+        shadow.position.y = 0.005;
+      }
+
+      fitCamera(currentW, currentH);
     }
 
-    applyLookRef.current = applyLook;
-    applyLook(lookRef.current);
+    applyViewRef.current = applyView;
+    applyView();
 
     let frameId: number;
     let rotation = 0.25;
@@ -137,7 +177,7 @@ export default function WardrobePreview({
 
     const render = () => {
       if (!dragging) {
-        rotation += 0.006;
+        rotation += modeRef.current === 'item' ? 0.01 : 0.006;
       }
       turn.rotation.y = rotation;
       renderer.render(scene, camera);
@@ -172,14 +212,16 @@ export default function WardrobePreview({
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
-      applyLookRef.current = null;
+      applyViewRef.current = null;
     };
   }, []);
 
   useEffect(() => {
     lookRef.current = look;
-    applyLookRef.current?.(look);
-  }, [look]);
+    modeRef.current = mode;
+    itemIdRef.current = itemId;
+    applyViewRef.current?.();
+  }, [look, mode, itemId]);
 
   return (
     <div
@@ -192,7 +234,7 @@ export default function WardrobePreview({
         touchAction: 'none',
         cursor: 'grab',
       }}
-      title="Drag horizontally to spin character"
+      title="Drag horizontally to rotate 3D preview"
     />
   );
 }
