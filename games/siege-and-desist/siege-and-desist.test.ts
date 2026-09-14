@@ -6,6 +6,7 @@ import {
   freshSiege,
   hydrateSiege,
   newCrew,
+  reconcileClashBots,
   removeCrew,
   siegeAction,
   siegeSnapshot,
@@ -710,6 +711,7 @@ void test('2v2 castle clash builds two opposing castles with three towers and ma
 void test('2v2 starts with dual engines, goose of war, and auto-fills bots up to 4 crewmates', () => {
   const w = freshSiege(1000, 'clash2v2');
   w.players.push(newCrew('0', 'Player 1', 0, w.clock, 'red'));
+  reconcileClashBots(w);
 
   assert.equal(w.mode, 'clash2v2');
   assert.ok(w.engineBlue, 'blue engine initialized');
@@ -718,9 +720,15 @@ void test('2v2 starts with dual engines, goose of war, and auto-fills bots up to
   assert.equal(w.towers.blue.length, 3, '3 blue towers');
   assert.ok(w.goose, 'goose of war spawned');
 
+  assert.equal(w.players.length, 4, 'auto-fills up to 4 crewmates in lobby');
+  const redLobby = w.players.filter((p) => (p.team ?? 'red') === 'red');
+  const blueLobby = w.players.filter((p) => p.team === 'blue');
+  assert.equal(redLobby.length, 2, 'red team has 2 members in lobby');
+  assert.equal(blueLobby.length, 2, 'blue team has 2 members in lobby');
+
   siegeAction(w, '0', { type: 'start', mode: 'clash2v2' }, '0');
 
-  assert.equal(w.players.length, 4, 'auto-fills up to 4 crewmates');
+  assert.equal(w.players.length, 4, 'auto-fills up to 4 crewmates during play');
   const redTeam = w.players.filter((p) => p.team === 'red');
   const blueTeam = w.players.filter((p) => p.team === 'blue');
   assert.equal(redTeam.length, 2, 'red team has 2 members');
@@ -731,6 +739,68 @@ void test('2v2 starts with dual engines, goose of war, and auto-fills bots up to
   for (const bot of bots) {
     assert.ok(bot.bot, 'bot flag is true');
   }
+});
+
+void test('2v2 lobby rebalances bots when player switches teams or a second human joins', () => {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(newCrew('0', 'Host', 0, w.clock, 'red'));
+  reconcileClashBots(w);
+
+  // Initially: Host (Red) + 1 Bot (Red), 2 Bots (Blue)
+  assert.equal(w.players.filter((p) => !p.bot && p.team === 'red').length, 1);
+  assert.equal(w.players.filter((p) => p.bot && p.team === 'red').length, 1);
+  assert.equal(w.players.filter((p) => p.bot && p.team === 'blue').length, 2);
+
+  // Host switches to Blue:
+  siegeAction(w, '0', { type: 'switchTeam', team: 'blue' }, '0');
+  // Now: 2 Bots (Red), Host (Blue) + 1 Bot (Blue)
+  assert.equal(w.players.filter((p) => !p.bot && p.team === 'blue').length, 1);
+  assert.equal(w.players.filter((p) => p.bot && p.team === 'blue').length, 1);
+  assert.equal(w.players.filter((p) => p.bot && p.team === 'red').length, 2);
+
+  // 2nd human joins Red:
+  w.players.push(newCrew('1', 'Guest', 1, w.clock, 'red'));
+  reconcileClashBots(w);
+  // Now: 1 Human + 1 Bot on Red, 1 Human + 1 Bot on Blue
+  assert.equal(w.players.length, 4);
+  assert.equal(w.players.filter((p) => (p.team ?? 'red') === 'red').length, 2);
+  assert.equal(w.players.filter((p) => p.team === 'blue').length, 2);
+  assert.equal(w.players.filter((p) => p.bot).length, 2);
+});
+
+void test('peer createEngine respects configured mode and auto-fills bots on member add', async () => {
+  const { createEngine: makeEngine, setConfiguredMode } =
+    await import('./peer');
+  setConfiguredMode('clash2v2');
+  const engine = makeEngine(10000);
+  const world = engine.world as SiegeWorld;
+  assert.equal(world.mode, 'clash2v2');
+  assert.ok(world.engineBlue, 'engineBlue initialized');
+
+  // Reconcile with 1 member (host)
+  engine.reconcile([
+    {
+      id: 'host-1',
+      name: 'Assad',
+      color: 0,
+      instance: 'inst-1',
+      order: 0,
+      seen: 10000,
+    },
+  ]);
+  const players = world.players;
+  assert.equal(players.length, 4, '1 host + 3 bots in lobby');
+  const red = players.filter((p) => (p.team ?? 'red') === 'red');
+  const blue = players.filter((p) => p.team === 'blue');
+  assert.equal(red.length, 2, 'Host on red + 1 bot on red');
+  assert.equal(blue.length, 2, '2 bots on blue');
+  assert.equal(red[0].name, 'Assad');
+  assert.ok(red[1].bot, 'teammate is a bot');
+  assert.ok(blue[0].bot, 'opponent 1 is a bot');
+  assert.ok(blue[1].bot, 'opponent 2 is a bot');
+
+  // Reset mode to default
+  setConfiguredMode('classic');
 });
 
 void test('dual trebuchets fire in opposite directions towards enemy castles', () => {

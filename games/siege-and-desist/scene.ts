@@ -11,7 +11,7 @@ import {
   siegeField,
   trebuchet,
 } from './models';
-import { freshSiege, newCrew } from './simulation';
+import { freshSiege, newCrew, reconcileClashBots } from './simulation';
 import {
   COLORS,
   SLING,
@@ -23,6 +23,7 @@ import {
   idleInput,
   rangeFor,
   type AmmoKind,
+  type GameMode,
   type SiegeAction,
   type SiegeInput,
   type SiegeSnapshot,
@@ -188,13 +189,9 @@ export class SiegeScene {
     this.ring.rotation.x = -Math.PI / 2;
     this.aim.rotation.x = -Math.PI / 2;
     this.scene.add(this.ring, this.aim);
-    for (let i = 0; i < 3; i++)
-      this.demo.players.push(
-        newCrew(`demo-${i}`, ['Kayi', 'Bahadir', 'Selim'][i], i, 100000),
-      );
-    this.demo.wind = 0.65;
-    this.camera.position.set(0, 15, 37);
-    this.camera.lookAt(0, 5, -10);
+    this.setMode('clash2v2');
+    this.camera.position.set(0, 16, 42);
+    this.camera.lookAt(0, 4, 0);
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(container);
     this.resize();
@@ -224,6 +221,33 @@ export class SiegeScene {
       opts,
     );
     this.frame = requestAnimationFrame(this.render);
+  }
+
+  setMode(mode: GameMode) {
+    if (this.snapshot) return;
+    this.demo = freshSiege(100000, mode);
+    if (mode === 'clash2v2') {
+      reconcileClashBots(this.demo);
+      for (const p of this.demo.players) {
+        p.facing = p.team === 'blue' ? 0 : Math.PI;
+      }
+    } else {
+      for (let i = 0; i < 3; i++)
+        this.demo.players.push(
+          newCrew(`demo-${i}`, ['Kayi', 'Bahadir', 'Selim'][i], i, 100000),
+        );
+      this.demo.wind = 0.65;
+    }
+    for (const [, model] of this.blocks) {
+      this.scene.remove(model);
+      this.release(model);
+    }
+    this.blocks.clear();
+    for (const [, model] of this.people) {
+      this.scene.remove(model);
+      this.release(model);
+    }
+    this.people.clear();
   }
 
   setSession(id: string) {
@@ -640,6 +664,9 @@ export class SiegeScene {
       if (w.mode === 'clash2v2' && me?.team === 'blue') {
         look = new T.Vector3(0, 5, -8);
         target = this.orbitPos(look, 48 * zoom, 0);
+      } else if (w.mode === 'clash2v2' && !me) {
+        look = new T.Vector3(0, 4, 0);
+        target = this.orbitPos(look, 56 * zoom, 0.22);
       } else {
         look = new T.Vector3(0, 5, -10);
         target = this.orbitPos(look, 48 * zoom);

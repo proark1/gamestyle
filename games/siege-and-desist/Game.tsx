@@ -38,6 +38,7 @@ import {
   freshSiege,
   hydrateSiege,
   newCrew,
+  reconcileClashBots,
   siegeAction,
   siegeSnapshot,
   winders,
@@ -188,6 +189,12 @@ export default function SiegeAndDesist() {
       /* Preferences are optional. */
     }
     const invite = new URL(location.href).searchParams.get('room');
+    const urlMode = new URL(location.href).searchParams.get('mode');
+    if (urlMode === 'classic' || urlMode === 'clash2v2') {
+      queueMicrotask(() => {
+        if (!disposed) setSelectedMode(urlMode);
+      });
+    }
     if (invite && /^[A-Z2-9]{6}$/i.test(invite))
       queueMicrotask(() => {
         if (!disposed) {
@@ -275,6 +282,10 @@ export default function SiegeAndDesist() {
     sound.current?.unlock();
     savePrefs();
     try {
+      const peerModule = await import('./peer');
+      if (op === 'create') {
+        peerModule.setConfiguredMode(selectedMode);
+      }
       const reply = await enterPeerRoom<SiegeSnapshot>(
         'siege-and-desist',
         {
@@ -288,10 +299,11 @@ export default function SiegeAndDesist() {
         throw new Error('The siege camp could not be joined. Try again.');
       attach(reply.session, reply.snapshot);
       setModal(null);
+      const modeParam = selectedMode === 'clash2v2' ? '&mode=clash2v2' : '';
       history.replaceState(
         null,
         '',
-        `/siege-and-desist?room=${reply.session.code}`,
+        `/siege-and-desist?room=${reply.session.code}${modeParam}`,
       );
     } catch (error) {
       setNotice(
@@ -313,10 +325,15 @@ export default function SiegeAndDesist() {
     sound.current?.reset();
     savePrefs();
     const now = Date.now(),
-      world = freshSiege(now),
+      world = freshSiege(now, selectedMode),
       s = { code: 'PRACTICE', id: 'practice-crew', token: '' };
-    world.players.push(newCrew(s.id, name.trim() || 'You', 0, now));
-    siegeAction(world, s.id, { type: 'start' }, s.id);
+    world.players.push(
+      newCrew(s.id, name.trim() || 'You', 0, now, 'red', false, selectedMode),
+    );
+    if (selectedMode === 'clash2v2') {
+      reconcileClashBots(world);
+    }
+    siegeAction(world, s.id, { type: 'start', mode: selectedMode }, s.id);
     local.current = world;
     activeSession.current = s;
     setSession(s);
@@ -368,6 +385,12 @@ export default function SiegeAndDesist() {
     scene.current?.setBlocked(!!modal || status !== 'online');
   }, [modal, status, ready]);
 
+  useEffect(() => {
+    if (!session) {
+      scene.current?.setMode(selectedMode);
+    }
+  }, [selectedMode, session, ready]);
+
   async function leave() {
     tracker.observe({ stage: 'menu' });
     setBusy(true);
@@ -400,8 +423,9 @@ export default function SiegeAndDesist() {
 
   async function copyInvite() {
     try {
+      const modeParam = w?.mode === 'clash2v2' ? '&mode=clash2v2' : '';
       await navigator.clipboard.writeText(
-        `${location.origin}/siege-and-desist?room=${session?.code}`,
+        `${location.origin}/siege-and-desist?room=${session?.code}${modeParam}`,
       );
       setCopied(true);
     } catch {
@@ -798,6 +822,7 @@ export default function SiegeAndDesist() {
                 <span className="sad-crew-name">
                   {p.name}
                   {p.id === session.id ? ' (you)' : ''}
+                  {p.bot ? ' [Bot]' : ''}
                   {is2v2 && (
                     <em className={`sad-team-pill ${p.team ?? 'red'}`}>
                       {p.team === 'blue' ? 'BLUE' : 'RED'}
@@ -868,6 +893,7 @@ export default function SiegeAndDesist() {
                             <span>
                               {p.name}
                               {p.id === session.id ? ' (you)' : ''}
+                              {p.bot ? ' [Bot]' : ''}
                             </span>
                           </div>
                         ))}
@@ -903,6 +929,7 @@ export default function SiegeAndDesist() {
                             <span>
                               {p.name}
                               {p.id === session.id ? ' (you)' : ''}
+                              {p.bot ? ' [Bot]' : ''}
                             </span>
                           </div>
                         ))}

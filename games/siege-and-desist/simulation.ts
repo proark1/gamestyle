@@ -151,6 +151,96 @@ export function newCrew(
   };
 }
 
+export const CLASH_BOT_ROSTER = [
+  { id: 'bot-roger', name: 'Brother Roger' },
+  { id: 'bot-cedric', name: 'Sir Cedric' },
+  { id: 'bot-dunce', name: 'Lord Dunce' },
+  { id: 'bot-baron', name: 'Baron Bumbling' },
+] as const;
+
+export function reconcileClashBots(w: SiegeWorld) {
+  if (w.mode !== 'clash2v2') return;
+
+  const humans = w.players.filter((p) => !p.bot);
+  const redHumans = humans.filter((p) => (p.team ?? 'red') === 'red');
+  const blueHumans = humans.filter((p) => p.team === 'blue');
+
+  const redBotsNeeded = Math.max(0, 2 - redHumans.length);
+  const blueBotsNeeded = Math.max(0, 2 - blueHumans.length);
+
+  // Current bots
+  const redBots = w.players.filter((p) => p.bot && (p.team ?? 'red') === 'red');
+  const blueBots = w.players.filter((p) => p.bot && p.team === 'blue');
+
+  // Prune excess bots
+  if (redBots.length > redBotsNeeded) {
+    const toRemove = redBots.slice(redBotsNeeded);
+    const removeIds = new Set(toRemove.map((b) => b.id));
+    w.players = w.players.filter((p) => !removeIds.has(p.id));
+  }
+  if (blueBots.length > blueBotsNeeded) {
+    const toRemove = blueBots.slice(blueBotsNeeded);
+    const removeIds = new Set(toRemove.map((b) => b.id));
+    w.players = w.players.filter((p) => !removeIds.has(p.id));
+  }
+
+  // Add missing bots to Red
+  const currentRedBots = w.players.filter(
+    (p) => p.bot && (p.team ?? 'red') === 'red',
+  );
+  if (currentRedBots.length < redBotsNeeded) {
+    const needed = redBotsNeeded - currentRedBots.length;
+    for (let i = 0; i < needed; i++) {
+      const usedIds = new Set(w.players.map((p) => p.id));
+      const template = CLASH_BOT_ROSTER.find((b) => !usedIds.has(b.id)) ?? {
+        id: `bot-red-${Date.now()}-${i}`,
+        name: `Red Bot ${i + 1}`,
+      };
+      const usedColors = new Set(w.players.map((p) => p.color));
+      let color = 0;
+      while (usedColors.has(color) && color < 4) color++;
+      w.players.push(
+        newCrew(
+          template.id,
+          template.name,
+          color,
+          w.clock,
+          'red',
+          true,
+          'clash2v2',
+        ),
+      );
+    }
+  }
+
+  // Add missing bots to Blue
+  const currentBlueBots = w.players.filter((p) => p.bot && p.team === 'blue');
+  if (currentBlueBots.length < blueBotsNeeded) {
+    const needed = blueBotsNeeded - currentBlueBots.length;
+    for (let i = 0; i < needed; i++) {
+      const usedIds = new Set(w.players.map((p) => p.id));
+      const template = CLASH_BOT_ROSTER.find((b) => !usedIds.has(b.id)) ?? {
+        id: `bot-blue-${Date.now()}-${i}`,
+        name: `Blue Bot ${i + 1}`,
+      };
+      const usedColors = new Set(w.players.map((p) => p.color));
+      let color = 1;
+      while (usedColors.has(color) && color < 4) color++;
+      w.players.push(
+        newCrew(
+          template.id,
+          template.name,
+          color,
+          w.clock,
+          'blue',
+          true,
+          'clash2v2',
+        ),
+      );
+    }
+  }
+}
+
 function emit(w: SiegeWorld, kind: SiegeEvent['kind'], text: string) {
   w.events.push({ id: ++w.eventId, at: w.clock, kind, text });
   if (w.events.length > 24) w.events.shift();
@@ -261,6 +351,11 @@ export function siegeAction(
     w.engineBlue = fresh.engineBlue;
     w.towers = fresh.towers;
     w.goose = fresh.goose;
+    if (nextMode === 'clash2v2') {
+      reconcileClashBots(w);
+    } else {
+      w.players = w.players.filter((c) => !c.bot);
+    }
     emit(
       w,
       'wind',
@@ -273,6 +368,7 @@ export function siegeAction(
     if (w.phase !== 'lobby')
       throw new Error('Teams are locked once assault begins.');
     p.team = action.team ?? (p.team === 'blue' ? 'red' : 'blue');
+    reconcileClashBots(w);
     emit(w, 'load', `${p.name} joined Team ${p.team.toUpperCase()}.`);
     return;
   }
@@ -288,39 +384,16 @@ export function siegeAction(
     let players: Crew[];
 
     if (mode === 'clash2v2') {
-      const existing = w.players.map((c, i) => {
-        const team = c.team ?? (i % 2 === 0 ? 'red' : 'blue');
-        return newCrew(c.id, c.name, c.color, w.clock, team, c.bot, 'clash2v2');
-      });
-      // Fill empty slots up to 4 with bot crewmates
-      const botNames = [
-        'Brother Roger',
-        'Sir Cedric',
-        'Lord Dunce',
-        'Baron Bumbling',
-      ];
-      while (existing.length < 4) {
-        const idx = existing.length;
-        const redCount = existing.filter((pl) => pl.team === 'red').length;
-        const blueCount = existing.filter((pl) => pl.team === 'blue').length;
-        const team: TeamId = redCount <= blueCount ? 'red' : 'blue';
-        existing.push(
-          newCrew(
-            `bot-${idx}`,
-            botNames[idx] ?? `Bot ${idx}`,
-            idx,
-            w.clock,
-            team,
-            true,
-            'clash2v2',
-          ),
-        );
-      }
-      players = existing;
-    } else {
+      reconcileClashBots(w);
       players = w.players.map((c) =>
-        newCrew(c.id, c.name, c.color, w.clock, 'red', false, 'classic'),
+        newCrew(c.id, c.name, c.color, w.clock, c.team, c.bot, 'clash2v2'),
       );
+    } else {
+      players = w.players
+        .filter((c) => !c.bot)
+        .map((c) =>
+          newCrew(c.id, c.name, c.color, w.clock, 'red', false, 'classic'),
+        );
     }
 
     const eventId = w.eventId;
@@ -1112,6 +1185,9 @@ function step(w: SiegeWorld, dt: number) {
 
 export function advanceSiege(w: SiegeWorld, now: number) {
   if (!Number.isFinite(now) || now <= w.clock) return;
+  if (w.mode === 'clash2v2' && w.players.length > 0) {
+    reconcileClashBots(w);
+  }
   const target = w.clock + Math.min(250, now - w.clock);
   w.remainder += target - w.clock;
   const tick = 1000 / 60;
@@ -1122,6 +1198,11 @@ export function advanceSiege(w: SiegeWorld, now: number) {
   }
   w.remainder = Math.max(0, w.remainder);
   w.clock = target;
+  if (w.phase === 'lobby') {
+    for (const p of w.players) {
+      if (p.bot) p.seen = w.clock;
+    }
+  }
 }
 
 /**
