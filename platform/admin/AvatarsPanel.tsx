@@ -16,7 +16,8 @@ const SLOT_NAMES: Record<Slot, string> = {
   top: 'Top',
   legs: 'Legs',
   shoes: 'Shoes',
-  face: 'Face',
+  face: 'Glasses',
+  beard: 'Beard',
 };
 const wearsSomething = (look: Look) => Object.values(look).some(Boolean);
 

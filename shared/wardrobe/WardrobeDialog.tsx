@@ -37,7 +37,8 @@ const SLOT_NAMES: Record<Slot | 'all', string> = {
   top: 'Tops',
   legs: 'Trousers',
   shoes: 'Shoes',
-  face: 'Face',
+  face: 'Glasses',
+  beard: 'Beards',
 };
 
 export default function WardrobeDialog({

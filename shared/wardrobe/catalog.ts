@@ -3,7 +3,7 @@
  * goals that unlock the few that cannot be bought. Data only, so the server
  * and the browser can both import it. Item ids are never reused.
  */
-export const SLOTS = ['hat', 'top', 'legs', 'shoes', 'face'] as const;
+export const SLOTS = ['hat', 'top', 'legs', 'shoes', 'face', 'beard'] as const;
 export type Slot = (typeof SLOTS)[number];
 
 export type Goal = {
@@ -137,9 +137,8 @@ export const ITEMS: readonly Item[] = [
     goal: 'fifty-hours',
   },
 
-  // Face
+  // Glasses & Eye Accessories
   { id: 'round-glasses', slot: 'face', name: 'Round Glasses', price: 60 },
-  { id: 'big-moustache', slot: 'face', name: 'Big Moustache', price: 120 },
   { id: 'snorkel-mask', slot: 'face', name: 'Snorkel Mask', price: 200 },
   {
     id: 'master-disguise',
@@ -152,6 +151,11 @@ export const ITEMS: readonly Item[] = [
   { id: 'pixel-shades', slot: 'face', name: 'Pixel Shades', price: 140 },
   { id: 'welding-goggles', slot: 'face', name: 'Welding Goggles', price: 210 },
   { id: 'star-shades', slot: 'face', name: 'Star Shades', goal: 'ten-hours' },
+
+  // Beards & Facial Hair
+  { id: 'big-moustache', slot: 'beard', name: 'Big Moustache', price: 120 },
+  { id: 'trimmed-beard', slot: 'beard', name: 'Trimmed Beard', price: 150 },
+  { id: 'wizard-beard', slot: 'beard', name: 'Wizard Beard', price: 200 },
 ];
 
 export function findItem(id: string) {

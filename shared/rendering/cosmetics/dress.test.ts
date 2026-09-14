@@ -141,7 +141,7 @@ void test('tops keep the shirt in the player colour and let it show', () => {
 
 void test('legs, shoes and face items stay easy to tell from every player colour', () => {
   for (const item of ITEMS.filter((entry) =>
-    (['legs', 'shoes', 'face'] as Slot[]).includes(entry.slot),
+    (['legs', 'shoes', 'face', 'beard'] as Slot[]).includes(entry.slot),
   )) {
     const model = ITEM_MODELS[item.id];
     const colours = [
@@ -173,13 +173,26 @@ void test('legs and shoes recolour the trousers and boots, never the shirt', () 
   assert.equal(colour(model.userData.armL.children[0] as T.Mesh), COLORS[1]);
 });
 
+void test('glasses and beard can be worn simultaneously', () => {
+  const { worn } = dressedWorker(
+    0,
+    {},
+    {
+      face: 'round-glasses',
+      beard: 'big-moustache',
+    },
+  );
+  assert.equal(worn.face, true);
+  assert.equal(worn.beard, true);
+});
+
 void test('an unknown or misplaced item builds the plain worker', () => {
   const plain = worker(3);
   const { model, worn } = dressedWorker(3, {}, {
     hat: 'retired-item',
     top: 'top-hat',
   } as Look);
-  assert.deepEqual(Object.values(worn), [false, false, false, false, false]);
+  assert.deepEqual(Object.values(worn), [false, false, false, false, false, false]);
   assert.deepEqual(meshes(model).map(colour), meshes(plain).map(colour));
   assert.equal(meshes(model).filter(inLook).length, 0);
 });
