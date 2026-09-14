@@ -557,6 +557,52 @@ void test('the camera can be swung the whole way round the siege', async () => {
   assert.ok(orbitAround({ x: 0, y: 0, z: 0 }, 20, 0, -9).y >= 1.2);
 });
 
+void test('movement inputs are camera-relative so W always runs forward into the view', async () => {
+  const { cameraRelativeInput } = await import('./scene');
+
+  // At resting yaw (yaw = 0):
+  // W (z = -1) runs into the screen (-Z)
+  const restW = cameraRelativeInput({ x: 0, z: -1 }, 0);
+  assert.ok(Math.abs(restW.x - 0) < 1e-6);
+  assert.ok(Math.abs(restW.z - (-1)) < 1e-6);
+
+  // S (z = +1) runs towards the camera (+Z)
+  const restS = cameraRelativeInput({ x: 0, z: 1 }, 0);
+  assert.ok(Math.abs(restS.x - 0) < 1e-6);
+  assert.ok(Math.abs(restS.z - 1) < 1e-6);
+
+  // D (x = +1) runs right (+X)
+  const restD = cameraRelativeInput({ x: 1, z: 0 }, 0);
+  assert.ok(Math.abs(restD.x - 1) < 1e-6);
+  assert.ok(Math.abs(restD.z - 0) < 1e-6);
+
+  // A (x = -1) runs left (-X)
+  const restA = cameraRelativeInput({ x: -1, z: 0 }, 0);
+  assert.ok(Math.abs(restA.x - (-1)) < 1e-6);
+  assert.ok(Math.abs(restA.z - 0) < 1e-6);
+
+  // Swung quarter-turn clockwise (yaw = Math.PI / 2, looking from +X towards -X):
+  // W now moves in -X (forward into the view)
+  const quarterW = cameraRelativeInput({ x: 0, z: -1 }, Math.PI / 2);
+  assert.ok(Math.abs(quarterW.x - (-1)) < 1e-6);
+  assert.ok(Math.abs(quarterW.z - 0) < 1e-6);
+
+  // D now moves in -Z (right on screen from camera's vantage)
+  const quarterD = cameraRelativeInput({ x: 1, z: 0 }, Math.PI / 2);
+  assert.ok(Math.abs(quarterD.x - 0) < 1e-6);
+  assert.ok(Math.abs(quarterD.z - (-1)) < 1e-6);
+
+  // Swung half-turn (yaw = Math.PI, looking from behind castle back at crew):
+  // W now moves in +Z (forward into the view)
+  const halfW = cameraRelativeInput({ x: 0, z: -1 }, Math.PI);
+  assert.ok(Math.abs(halfW.x - 0) < 1e-6);
+  assert.ok(Math.abs(halfW.z - 1) < 1e-6);
+
+  // Diagonal movement is normalized
+  const diag = cameraRelativeInput({ x: 1, z: -1 }, 0.85);
+  assert.ok(Math.abs(Math.hypot(diag.x, diag.z) - 1) < 1e-6);
+});
+
 void test('the beam winds down behind the pivot and whips at the castle', async () => {
   const { armAngle } = await import('./scene');
   // Where the throwing end of the beam actually ends up, rotated about the

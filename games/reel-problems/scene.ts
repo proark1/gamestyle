@@ -443,7 +443,11 @@ export class ReelScene {
           p.id === this.localId ? getEquippedLook() : undefined,
         );
         const label = nameLabel(
-          p.id === this.localId ? `${p.name} · YOU` : p.name,
+          p.id === this.localId
+            ? `${p.name} · YOU`
+            : p.bot
+              ? `${p.name} · NPC`
+              : p.name,
           ANGLER_COLORS[p.color],
         );
         label.name = 'label';

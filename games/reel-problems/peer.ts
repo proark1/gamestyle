@@ -7,6 +7,7 @@ import {
   freshReel,
   newAngler,
   removeAngler,
+  reconcileReelNpcs,
   advanceReel,
   reelAction,
   reelSnapshot,
@@ -22,6 +23,8 @@ import { freshDebris, freshWeather, freshWildlife } from './chaos';
 
 const adapter: GameAdapter<ReelWorld, ReelSnapshot> = {
   game: 'reel-problems',
+  autonomous: (player) => !!player.bot,
+  roster: (world, roster) => reconcileReelNpcs(world, roster.slots),
   actions: [
     'start',
     'restart',

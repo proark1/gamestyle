@@ -3,6 +3,7 @@
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
 import {
+  ArrowRight,
   ArrowUpRight,
   Camera,
   Castle,
@@ -15,6 +16,7 @@ import {
   Hand,
   LoaderCircle,
   Swords,
+  Timer,
   Trophy,
   Users,
 } from 'lucide-react';
@@ -465,77 +467,105 @@ export default function SiegeAndDesist() {
         />
       </header>
 
-      {!session ? (
-        <section className="sad-menu">
-          <div className="sad-menu-copy">
-            <span className="sad-kicker">
-              <span /> THE JUMBLEYARD SIEGE
+      {!session && (
+        <section className="sad-welcome">
+          <p className="eyebrow">
+            <span className="tiny-line" /> THE JUMBLEYARD SIEGE
+          </p>
+          <h1>
+            SIEGE
+            <span>
+              AND DESIST<span className="sad-dot">.</span>
             </span>
-            <h1>
-              One trebuchet.
-              <br />
-              <em>Four opinions.</em>
-            </h1>
-            <p>
-              Wind the counterweight, load the sling, and bring down the
-              keep&rsquo;s banner before dawn. Somebody will end up in the
-              sling. It will not be an accident.
-            </p>
-            <div className="sad-meta">
-              <span>
-                <Users size={16} /> 1–4 players
-              </span>
-              <span>4-minute sieges</span>
-            </div>
-            <label className="sad-name">
-              Your siege name
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={18}
-                placeholder="Definitely Not Aiming"
-                autoComplete="nickname"
-              />
-            </label>
+          </h1>
+          <p className="sad-tagline">
+            One trebuchet.
+            <br />
+            <em>Four opinions.</em>
+          </p>
+          <p className="sad-intro">
+            Wind the counterweight, load the sling, and bring down the
+            keep&rsquo;s banner before dawn. Somebody will end up in the
+            sling. It will not be an accident.
+          </p>
+          <form
+            className="setup-card"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (ready && !busy) void enter('create');
+            }}
+          >
+            <label htmlFor="sad-name">YOUR SIEGE NAME</label>
+            <input
+              id="sad-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={18}
+              placeholder="Definitely Not Aiming"
+              autoComplete="nickname"
+            />
             <button
-              className="sad-primary"
+              type="submit"
+              className="primary-button"
               disabled={!ready || busy}
-              onClick={() => void enter('create')}
             >
               {busy ? (
-                <LoaderCircle className="sad-spin" size={20} />
+                <LoaderCircle className="spin" size={18} />
               ) : (
-                <Swords size={20} />
-              )}{' '}
-              Raise a siege <ArrowUpRight size={20} />
+                <>
+                  <Swords size={18} /> Raise a siege <ArrowRight size={18} />
+                </>
+              )}
             </button>
-            <div className="sad-menu-secondary">
-              <button
-                disabled={!ready || busy}
-                onClick={() => setModal('join')}
-              >
-                Join a crew
-              </button>
-              <button disabled={!ready || busy} onClick={startPractice}>
-                Try solo
-              </button>
-            </div>
-            <small className="sad-menu-note">
-              No download. No conquest. One extremely large lever.
-            </small>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={!ready || busy}
+              onClick={() => setModal('join')}
+            >
+              Join a crew <Users size={17} />
+            </button>
+            <button
+              type="button"
+              className="practice-link"
+              disabled={!ready || busy}
+              onClick={startPractice}
+            >
+              Try solo <ArrowUpRight size={14} />
+            </button>
+            <p className="start-tip">
+              {ready
+                ? 'No download. No conquest. One extremely large lever.'
+                : 'Preparing the siege field…'}
+            </p>
+          </form>
+          <div className="sad-facts">
+            <span>
+              <Users size={14} /> 1–4 players
+            </span>
+            <span>
+              <Timer size={14} /> 4-minute sieges
+            </span>
           </div>
-          <figure className="sad-menu-art">
-            <div className="sad-menu-art-fallback" aria-hidden="true">
-              <Castle size={72} />
-              <Crosshair size={40} />
-            </div>
-            <figcaption>
-              <span>LAST WORDS OF A SIEGE CREW</span>
-              <strong>&ldquo;Wind it a bit more.&rdquo;</strong>
-            </figcaption>
-          </figure>
         </section>
-      ) : (
+      )}
+
+      {!session && (
+        <>
+          <aside className="scene-caption">
+            <span className="map-badge">LAST WORDS OF A SIEGE CREW</span>
+            <span>&ldquo;Wind it a bit more.&rdquo;</span>
+          </aside>
+          <footer className="start-footer">
+            <span>
+              <span className="live-dot" /> NO DOWNLOAD. JUST BRING YOUR CREW.
+            </span>
+            <span>ONE EXTREMELY LARGE LEVER.</span>
+          </footer>
+        </>
+      )}
+
+      {session && (
         <>
           <section className="sad-scoreboard" aria-label="Siege progress">
             <div>

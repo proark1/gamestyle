@@ -48,6 +48,12 @@ import {
 } from './hull';
 import { paddleStroke, togglePaddle } from './paddles';
 import { advanceCrab, maybeCrab, stompCrab } from './crab';
+import {
+  changeNpcSlots,
+  isNpcAction,
+  type NpcSlot,
+} from '../../shared/rooms/npc-slots';
+import { tickReelNpcs } from './npcs';
 
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
@@ -163,6 +169,10 @@ export function newAngler(
     lastAction: -1000,
     catches: 0,
     splashes: 0,
+    tumbleUntil: 0,
+    trophyUntil: 0,
+    trophyKind: undefined,
+    lostHat: false,
   };
 }
 export function freshReel(now: number): ReelWorld {
@@ -206,6 +216,8 @@ export function freshReel(now: number): ReelWorld {
     debris: freshDebris(),
     crab: null,
     pending: null,
+    flyingFish: null,
+    nextFlyingFishAt: now + 32_000,
   };
   const kinds: CatchKind[] = [
     'perch',
@@ -251,6 +263,19 @@ export function removeAngler(w: ReelWorld, id: string) {
       other.line = null;
   w.players = w.players.filter((p) => p.id !== id);
 }
+export function reconcileReelNpcs(w: ReelWorld, slots: NpcSlot[]) {
+  for (const p of w.players)
+    if (p.bot && !slots.some((slot) => slot.id === p.id))
+      removeAngler(w, p.id);
+  for (const slot of slots) {
+    const existing = w.players.find((p) => p.id === slot.id);
+    if (existing) continue;
+    const bot = newAngler(slot.id, slot.name, slot.color, w.clock);
+    bot.bot = true;
+    bot.task = 'Ready';
+    w.players.push(bot);
+  }
+}
 function board(
   w: ReelWorld,
   p: Angler,
@@ -269,6 +294,10 @@ function board(
   p.slipX = p.slipZ = p.y = p.vy = 0;
   p.pinched = false;
   p.paddle = 0;
+  p.tumbleUntil = 0;
+  p.trophyUntil = 0;
+  p.trophyKind = undefined;
+  p.lostHat = false;
   for (const other of w.players)
     if (other.line?.kind === 'player' && other.line.target === p.id)
       other.line = null;
@@ -288,10 +317,14 @@ function enterWater(w: ReelWorld, p: Angler, point: Vector) {
   p.slipX = p.slipZ = p.y = p.vy = 0;
   p.pinched = false;
   p.paddle = 0;
+  p.tumbleUntil = 0;
+  p.trophyUntil = 0;
+  p.trophyKind = undefined;
 }
 function splash(w: ReelWorld, p: Angler) {
   enterWater(w, p, anglerPosition(w, p));
   p.splashes++;
+  p.lostHat = true;
   announce(
     w,
     'splash',
@@ -325,6 +358,7 @@ function dive(w: ReelWorld, p: Angler) {
   );
   if (pinched) {
     p.splashes++;
+    p.lostHat = true;
     announce(
       w,
       'splash',
@@ -444,14 +478,28 @@ export function reelAction(
 ) {
   const p = w.players.find((p) => p.id === id);
   if (!p) throw new Error('Join the boat before playing.');
+  if (isNpcAction(a)) {
+    if (p.bot || id !== host)
+      throw new Error('Only the captain can manage NPCs.');
+    if (w.phase === 'playing')
+      throw new Error('Finish this tournament before changing NPCs.');
+    const slots = changeNpcSlots(
+      w.players.filter((player) => player.bot),
+      w.players.filter((player) => !player.bot),
+      a,
+    );
+    reconcileReelNpcs(w, slots);
+    return;
+  }
   if (a.type === 'start' || a.type === 'restart') {
     if (id !== host)
       throw new Error('Only the captain can start a tournament.');
     if (a.type === 'start' && w.phase !== 'lobby')
       throw new Error('The tournament has already started.');
-    const members = w.players.map((p) =>
-      newAngler(p.id, p.name, p.color, w.clock),
-    );
+    const members = w.players.map((p) => ({
+      ...newAngler(p.id, p.name, p.color, w.clock),
+      ...(p.bot ? { bot: true as const, task: 'Ready' } : {}),
+    }));
     const eventId = w.eventId;
     Object.assign(w, freshReel(w.clock));
     w.players = members;
@@ -463,6 +511,7 @@ export function reelAction(
     return;
   }
   if (w.phase !== 'playing') return;
+  if (p.tumbleUntil > w.clock) return;
   if (w.clock - p.lastAction < 200) return;
   p.lastAction = w.clock;
   if (a.type === 'cut') {
@@ -634,7 +683,11 @@ function bank(
 ) {
   const spec = CATCHES[kind];
   w.score += spec.value;
-  for (const angler of crew) angler.catches++;
+  for (const angler of crew) {
+    angler.catches++;
+    angler.trophyUntil = w.clock + 1800;
+    angler.trophyKind = kind;
+  }
   w.haul[kind] = (w.haul[kind] ?? 0) + 1;
   const junk = kind === 'tire' || kind === 'magnet' || kind === 'boot';
   if (junk) w.gear[kind] = true;
@@ -650,7 +703,7 @@ function bank(
             : '';
   announce(
     w,
-    'catch',
+    kind === 'monster' ? 'trophy' : 'catch',
     `${lead}${names} landed ${spec.name}! +${spec.value}.${bonus}`,
   );
 }
@@ -715,6 +768,66 @@ function ramDriftwood(w: ReelWorld) {
     }
   }
 }
+function advanceFlyingFish(w: ReelWorld) {
+  if (w.boat.sunk) {
+    w.flyingFish = null;
+    return;
+  }
+  if (!w.flyingFish) {
+    if (w.phase === 'playing' && w.clock >= (w.nextFlyingFishAt ?? 0)) {
+      const fromLeft = random(w) < 0.5;
+      const zOffset = (random(w) * 2 - 1) * (BOAT_HALF.z - 0.6);
+      w.flyingFish = {
+        id: `ff-${w.clock}`,
+        fromX: fromLeft ? -4.6 : 4.6,
+        fromZ: zOffset + (random(w) * 2 - 1) * 0.4,
+        toX: fromLeft ? 4.6 : -4.6,
+        toZ: zOffset,
+        at: w.clock,
+        duration: 1300,
+        hit: false,
+      };
+      w.nextFlyingFishAt = w.clock + 28_000 + random(w) * 24_000;
+    }
+    return;
+  }
+  const ff = w.flyingFish;
+  const elapsed = w.clock - ff.at;
+  if (elapsed >= ff.duration) {
+    w.flyingFish = null;
+    return;
+  }
+  const t = elapsed / ff.duration;
+  const fx = ff.fromX + (ff.toX - ff.fromX) * t;
+  const fz = ff.fromZ + (ff.toZ - ff.fromZ) * t;
+  const fy = Math.sin(t * Math.PI) * 2.2;
+  if (!ff.hit && fy > 0.35 && fy < 1.6) {
+    for (const p of w.players) {
+      if (p.swimming || p.y > 0.3) continue;
+      const d = Math.hypot(p.x - fx, p.z - fz);
+      if (d < 0.85) {
+        ff.hit = true;
+        if (!p.input.brace) {
+          p.tumbleUntil = w.clock + 750;
+          const shoveDir = Math.sign(ff.toX - ff.fromX);
+          p.slipX += shoveDir * 2.5;
+          announce(
+            w,
+            'slap',
+            `${p.name} got slapped by a leaping salmon! Hold Shift to brace!`,
+          );
+        } else {
+          announce(
+            w,
+            'slap',
+            `${p.name} braced against the leaping salmon like a rock!`,
+          );
+        }
+        break;
+      }
+    }
+  }
+}
 function step(w: ReelWorld, dt: number) {
   const boat = w.boat;
   const sea = advanceChaos(w, dt, announce);
@@ -747,7 +860,9 @@ function step(w: ReelWorld, dt: number) {
       swim(w, p, dt);
       continue;
     }
-    if (p.paddle) {
+    if (p.tumbleUntil > w.clock) {
+      // Tumbling on deck from line snap or flying salmon: cannot walk, slip continues
+    } else if (p.paddle) {
       // Kneeling at the rail, the stick strokes the paddle instead of walking.
       p.x = p.paddle * BOAT_HALF.x;
       const push = paddleStroke(w, p);
@@ -842,6 +957,33 @@ function step(w: ReelWorld, dt: number) {
     }
     rollLoad -= p.x * (input.brace ? 0.035 : 0.075);
     pitchLoad += p.z * (input.brace ? 0.025 : 0.05);
+  }
+  // Player-to-player soft bumping on deck
+  for (let i = 0; i < w.players.length; i++) {
+    const p = w.players[i];
+    if (p.swimming) continue;
+    for (let j = i + 1; j < w.players.length; j++) {
+      const q = w.players[j];
+      if (q.swimming) continue;
+      const dx = p.x - q.x;
+      const dz = p.z - q.z;
+      const d = Math.hypot(dx, dz);
+      if (d < 0.75 && d > 0.001) {
+        const push = (0.75 - d) * 0.45;
+        const nx = dx / d;
+        const nz = dz / d;
+        p.x = clamp(p.x + nx * push, -BOAT_HALF.x, BOAT_HALF.x);
+        p.z = clamp(p.z + nz * push, -BOAT_HALF.z, BOAT_HALF.z);
+        q.x = clamp(q.x - nx * push, -BOAT_HALF.x, BOAT_HALF.x);
+        q.z = clamp(q.z - nz * push, -BOAT_HALF.z, BOAT_HALF.z);
+        if (w.clock - p.landedAt < 250 || w.clock - q.landedAt < 250) {
+          p.slipX += nx * 0.7;
+          p.slipZ += nz * 0.7;
+          q.slipX -= nx * 0.7;
+          q.slipZ -= nz * 0.7;
+        }
+      }
+    }
   }
   for (const f of w.fish) {
     const spec = CATCHES[f.kind];
@@ -1010,6 +1152,9 @@ function step(w: ReelWorld, dt: number) {
         'snap',
         `${p.name} snapped a line! Ease off E when the tension turns red.`,
       );
+      p.tumbleUntil = w.clock + 900;
+      p.slipX -= dx * 2.8;
+      p.slipZ -= dz * 2.8;
       cutLine(w, p);
       continue;
     }
@@ -1142,6 +1287,15 @@ export function advanceReel(w: ReelWorld, now: number) {
     w.clock += elapsed;
     return;
   }
+  const host =
+    w.players.find((player) => !player.bot)?.id ?? w.players[0]?.id ?? '';
+  tickReelNpcs(w, (id, action) => {
+    try {
+      reelAction(w, id, action, host);
+    } catch {
+      // Ignored for autonomous actions on cooldown or invalid targets.
+    }
+  });
   w.remainder += elapsed / 1000;
   w.clock += elapsed;
   while (w.remainder >= 1 / 60) {

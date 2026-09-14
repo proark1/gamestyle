@@ -96,6 +96,7 @@ function wound(w: ReelWorld, emit: Emit, p: Angler, bite: boolean) {
   p.health = Math.max(0, p.health - (bite ? SHARK_BITE : JELLY_STING));
   p.clinging = false;
   p.climb = 0;
+  if (bite) p.lostHat = true;
   if (!bite) p.stunUntil = w.clock + STING_STUN_MS;
   // Thrown clear of the boat, so the hull is a swim away again.
   const dx = p.x - w.boat.x,

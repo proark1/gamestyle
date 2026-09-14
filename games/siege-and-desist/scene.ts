@@ -52,6 +52,23 @@ export function orbitAround(
   };
 }
 
+/**
+ * Projects screen-relative movement (WASD or touch joystick) into world space
+ * based on the camera's orbit yaw, so pressing 'W' (forward) always moves the
+ * character away from the camera into the screen.
+ */
+export function cameraRelativeInput(
+  input: { x: number; z: number },
+  yaw: number,
+): { x: number; z: number } {
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  const wx = input.x * cos + input.z * sin;
+  const wz = -input.x * sin + input.z * cos;
+  const d = Math.max(1, Math.hypot(wx, wz));
+  return { x: wx / d, z: wz / d };
+}
+
 // Negative angles carry the throwing end toward the castle, positive ones back
 // over the crew. Winding therefore counts up, and the release sweeps down past
 // rest and over the top: the beam whips the way the shot actually flies.
@@ -547,8 +564,8 @@ export class SiegeScene {
         : this.touch.z +
           Number(this.keys.has('s') || this.keys.has('arrowdown')) -
           Number(this.keys.has('w') || this.keys.has('arrowup'));
-      const d = Math.max(1, Math.hypot(x, z));
-      this.cb.input({ x: x / d, z: z / d, seq: ++this.seq });
+      const relative = cameraRelativeInput({ x, z }, this.orbit.yaw);
+      this.cb.input({ ...relative, seq: ++this.seq });
       this.lastInput = now;
     }
     this.cb.tick();

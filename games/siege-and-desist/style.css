@@ -102,69 +102,223 @@
   margin-left: -2px;
 }
 
-/* Menu -------------------------------------------------------------------- */
-.sad-menu {
+/* Start / Welcome Screen -------------------------------------------------- */
+.sad-game:not(.in-session)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    #d9bb8af2 0%,
+    #d9bb8ae8 26%,
+    #d9bb8a80 50%,
+    #d9bb8a00 72%
+  );
+}
+
+.sad-game:not(.in-session) .sad-header {
+  background: linear-gradient(180deg, #d9bb8acc 0%, #d9bb8a00 100%);
+}
+
+.sad-game:not(.in-session) .sad-brand {
+  color: #1f2327;
+}
+
+.sad-game:not(.in-session) .sad-brand em {
+  color: #b58828;
+}
+
+.sad-welcome {
   position: relative;
-  z-index: 2;
-  width: min(1240px, 94%);
-  margin: max(10px, calc((100dvh - 780px) / 3)) auto 0;
-  display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  align-items: center;
-  gap: 34px;
+  z-index: 4;
+  width: 360px;
+  margin: 6px 0 0 5.4%;
+  color: #1f2327;
 }
-.sad-menu-copy {
-  padding: 32px;
-  background: var(--panel);
-  border: 1px solid var(--edge);
-  border-top: 3px solid var(--gold);
-  border-radius: 6px;
-  box-shadow: 0 22px 60px #16191c66;
-  backdrop-filter: blur(3px);
+
+.sad-welcome .eyebrow {
+  color: #5c4d3c;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 1.5px;
 }
-.sad-kicker {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-family: var(--display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2.6px;
-  color: var(--gold);
-}
-.sad-kicker > span {
-  width: 6px;
-  height: 6px;
-  transform: rotate(45deg);
+
+.sad-welcome .tiny-line {
   background: var(--red);
 }
-.sad-menu h1 {
-  font: 600 clamp(40px, 4.3vw, 62px)/1.04 var(--display);
-  letter-spacing: 0.5px;
-  color: var(--cream);
-  margin: 20px 0 16px;
+
+.sad-welcome h1 {
+  font-family: 'Fredoka', var(--display), sans-serif;
+  font-weight: 600;
+  font-size: 72px;
+  line-height: 0.88;
+  letter-spacing: -2px;
+  margin: 18px 0 14px;
+  color: #1f2327;
 }
-.sad-menu h1 em {
+
+.sad-welcome h1 > span {
+  color: var(--red);
+}
+
+.sad-tagline {
+  margin: 0 0 10px;
+  font: 500 23px/1.25 'Fredoka', var(--display), sans-serif;
+  color: #2a2520;
+}
+
+.sad-tagline em {
   font-style: normal;
-  color: var(--gold);
+  color: #9d7324;
 }
-.sad-menu p {
-  font-size: 18px;
-  line-height: 1.62;
-  margin: 0 0 18px;
-  color: var(--muted);
+
+.sad-intro {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #574b3d;
+  font-family: 'DM Sans', var(--body), sans-serif;
 }
-.sad-meta {
+
+.sad-welcome .setup-card {
+  background: #fff8ebf0;
+  border: 1px solid #fdecce;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 9px 24px #4a382015;
+}
+
+.sad-welcome .setup-card label {
+  color: #5a4b3a;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.sad-welcome .setup-card input {
+  background: #fbf4e2;
+  border: 1px solid #dfd2b8;
+  color: #1f2327;
+  border-radius: 10px;
+  padding: 11px 13px;
+  font-family: 'DM Sans', var(--body), sans-serif;
+}
+
+.sad-welcome .setup-card input:focus {
+  border-color: #c99e46;
+  outline: 2px solid #c99e46;
+}
+
+.sad-welcome .primary-button {
+  background: linear-gradient(170deg, #f5cb68, #e5b343);
+  border: 1px solid #cc9a31;
+  box-shadow: 0 3px 0 #ab7c20;
+  color: #282115;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+.sad-welcome .primary-button:hover:not(:disabled) {
+  background: linear-gradient(170deg, #ffd77a, #f0be4e);
+}
+
+.sad-welcome .secondary-button {
+  border: 1px solid #d4c5a9;
+  background: transparent;
+  color: #352b20;
+  font-family: 'DM Sans', sans-serif;
+  border-radius: 10px;
+}
+
+.sad-welcome .secondary-button:hover:not(:disabled) {
+  background: #f5ebd5;
+}
+
+.sad-welcome .practice-link {
+  color: #6d5b47;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.sad-welcome .practice-link:hover:not(:disabled) {
+  color: #282115;
+}
+
+.sad-welcome .start-tip {
+  color: #6b5a48;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.sad-facts {
   display: flex;
   gap: 18px;
-  font-size: 15px;
-  margin-bottom: 20px;
-  color: var(--parchment);
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #63523f;
+  font-family: 'DM Sans', sans-serif;
 }
-.sad-meta span {
+
+.sad-facts span {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
+}
+
+/* Right-side scene caption and bottom start-footer */
+.sad-game .scene-caption {
+  position: absolute;
+  bottom: 106px;
+  left: 66%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  z-index: 4;
+}
+
+.sad-game .map-badge {
+  background: #fff6e2e6;
+  border: 1px solid #ebd3a7;
+  color: #7d5b1d;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 14px #4a382012;
+  transform: rotate(-2deg);
+  font-family: 'DM Sans', var(--display), sans-serif;
+}
+
+.sad-game .scene-caption > span:last-child {
+  font: 400 italic 15px 'EB Garamond', Georgia, serif;
+  color: #3d3124;
+}
+
+.sad-game .start-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 22px 36px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  border-top: 1px solid #73593b22;
+  color: #6b5742;
+  font-family: 'DM Sans', sans-serif;
+  z-index: 4;
+}
+
+.sad-game .start-footer .live-dot {
+  background: #c2472f;
+  box-shadow: 0 0 0 4px #c2472f22;
 }
 .sad-name {
   display: block;
@@ -214,66 +368,6 @@
 .sad-primary:active {
   transform: translateY(3px);
   box-shadow: 0 3px 0 #8d6f36;
-}
-.sad-menu-secondary {
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
-}
-.sad-menu-secondary button {
-  flex: 1;
-  padding: 13px;
-  font: 600 12px var(--display);
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  color: var(--parchment);
-  background: #16191c66;
-  border: 1px solid var(--edge);
-  border-radius: 4px;
-}
-.sad-menu-secondary button:not(:disabled):hover {
-  border-color: var(--gold);
-  color: var(--gold-bright);
-}
-.sad-menu-note {
-  display: block;
-  margin-top: 14px;
-  font-size: 15px;
-  color: #8b8271;
-}
-.sad-menu-art {
-  position: relative;
-  margin: 0;
-  border: 1px solid var(--edge);
-  border-top: 3px solid var(--red);
-  border-radius: 6px;
-  overflow: hidden;
-  background: linear-gradient(150deg, #2b3036, #16191c);
-  box-shadow: 0 22px 60px #16191c66;
-}
-.sad-menu-art-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  min-height: 300px;
-  color: #4a4034;
-}
-.sad-menu-art figcaption {
-  padding: 18px 22px 22px;
-  border-top: 1px solid var(--edge);
-}
-.sad-menu-art figcaption span {
-  display: block;
-  font-family: var(--display);
-  font-size: 10px;
-  letter-spacing: 2.4px;
-  color: var(--gold);
-  margin-bottom: 6px;
-}
-.sad-menu-art figcaption strong {
-  font: 400 italic 22px var(--body);
-  color: var(--cream);
 }
 
 /* In-session panels -------------------------------------------------------- */
@@ -784,12 +878,16 @@
   }
 }
 @media (max-width: 900px) {
-  .sad-menu {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    margin-top: 8px;
+  .sad-welcome {
+    width: auto;
+    max-width: 380px;
+    margin: 8px 18px 24px;
   }
-  .sad-menu-art {
+  .sad-welcome h1 {
+    font-size: 54px;
+  }
+  .sad-game .scene-caption,
+  .sad-game .start-footer {
     display: none;
   }
   .sad-header {
@@ -1010,19 +1108,16 @@
   .sad-game:not(.in-session) {
     overflow-y: auto;
   }
-  .sad-menu {
+  .sad-welcome {
     margin-top: 8px;
   }
-  .sad-menu h1 {
+  .sad-welcome h1 {
     font-size: clamp(28px, 5vw, 40px);
     margin: 12px 0 10px;
   }
-  .sad-menu p {
-    font-size: 15px;
+  .sad-intro {
+    font-size: 13px;
     margin-bottom: 12px;
-  }
-  .sad-menu-copy {
-    padding: 20px;
   }
   .sad-header {
     height: calc(50px + env(safe-area-inset-top));
@@ -1085,9 +1180,6 @@
 }
 
 @media (max-width: 420px) {
-  .sad-menu-copy {
-    padding: 22px;
-  }
   .sad-action {
     padding: 0 13px;
   }

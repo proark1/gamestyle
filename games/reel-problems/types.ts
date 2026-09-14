@@ -1,4 +1,5 @@
 import type { Session } from '../../shared/rooms/session';
+import type { NpcAction } from '../../shared/rooms/npc-slots';
 
 export const ROUND_MS = 300_000;
 export const LAKE_RADIUS = 42;
@@ -206,6 +207,8 @@ export type Angler = {
   id: string;
   name: string;
   color: number;
+  bot?: true;
+  task?: string;
   x: number;
   z: number;
   facing: number;
@@ -238,6 +241,13 @@ export type Angler = {
   lastAction: number;
   catches: number;
   splashes: number;
+  /** Knocked on the deck by line snap or a flying fish slap. */
+  tumbleUntil: number;
+  /** Holding caught trophy fish high above head. */
+  trophyUntil: number;
+  trophyKind?: CatchKind;
+  /** Hat knocked off into the water on a spill or shark hit. */
+  lostHat: boolean;
 };
 export type Fish = Vector & {
   id: string;
@@ -335,6 +345,9 @@ export type ReelEvent = {
     | 'crab'
     | 'pinch'
     | 'stomp'
+    | 'slap'
+    | 'trophy'
+    | 'bump'
     | 'start'
     | 'finish';
 };
@@ -392,6 +405,18 @@ export type ReelWorld = {
   debris: Driftwood[];
   crab: Crab | null;
   pending: PendingCatch | null;
+  flyingFish?: FlyingFish | null;
+  nextFlyingFishAt?: number;
+};
+export type FlyingFish = {
+  id: string;
+  fromX: number;
+  fromZ: number;
+  toX: number;
+  toZ: number;
+  at: number;
+  duration: number;
+  hit: boolean;
 };
 export type ReelSnapshot = {
   code: string;
@@ -400,7 +425,7 @@ export type ReelSnapshot = {
   world: ReelWorld;
 };
 export type ReelSession = Session;
-export type ReelAction = {
+export type ReelControlAction = {
   type:
     | 'start'
     | 'restart'
@@ -413,6 +438,7 @@ export type ReelAction = {
   x?: number;
   z?: number;
 };
+export type ReelAction = ReelControlAction | NpcAction;
 export const idleInput = (): ReelInput => ({
   x: 0,
   z: 0,

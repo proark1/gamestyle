@@ -30,6 +30,11 @@ import {
   enterPeerRoom,
 } from '../../shared/peer/connection';
 import {
+  isNpcAction,
+  type NpcAction,
+} from '../../shared/rooms/npc-slots';
+import { CrewSlots } from './CrewSlots';
+import {
   advanceReel,
   freshReel,
   newAngler,
@@ -70,22 +75,26 @@ function HoldButton({
   active,
   hold,
   disabled,
+  progress,
 }: {
   children: React.ReactNode;
   label: string;
   active: boolean;
   hold: (held: boolean) => void;
   disabled: boolean;
+  progress?: number;
 }) {
   const release = (e: PointerEvent<HTMLButtonElement>) => {
     hold(false);
     if (e.currentTarget.hasPointerCapture(e.pointerId))
       e.currentTarget.releasePointerCapture(e.pointerId);
   };
+  const hasProgress = typeof progress === 'number' && progress > 0;
+  const almostUp = typeof progress === 'number' && progress >= 0.75;
   return (
     <button
       type="button"
-      className={`reel-action${active ? ' active' : ''}`}
+      className={`reel-action${active ? ' active' : ''}${hasProgress ? ' has-progress' : ''}${almostUp ? ' almost-up' : ''}`}
       aria-label={label}
       aria-pressed={active}
       disabled={disabled}
@@ -108,6 +117,13 @@ function HoldButton({
         if (e.key === ' ' || e.key === 'Enter') hold(false);
       }}
     >
+      {hasProgress && (
+        <span
+          className="reel-action-fill"
+          style={{ width: `${Math.min(100, Math.round(progress * 100))}%` }}
+          aria-hidden="true"
+        />
+      )}
       {children}
     </button>
   );
@@ -132,6 +148,7 @@ export default function ReelProblems() {
     [code, setCode] = useState(''),
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
+    [npcBusy, setNpcBusy] = useState(false),
     [muted, setMuted] = useState(false),
     [notice, setNotice] = useState(''),
     [copied, setCopied] = useState(false),
@@ -369,6 +386,12 @@ export default function ReelProblems() {
             local.current.clock,
           ),
         );
+      } else if (isNpcAction(a)) {
+        setNpcBusy(true);
+        void network.current
+          ?.manageNpcs(a as NpcAction)
+          .catch((error) => setNotice(error.message))
+          .finally(() => setNpcBusy(false));
       } else
         void network.current
           ?.action(a)
@@ -434,7 +457,13 @@ export default function ReelProblems() {
       : sunk
         ? 'The boat sank! Swim to the dock — follow the arrow'
         : me.clinging
-          ? 'Holding on — hold E to climb aboard'
+          ? me.input.reel
+            ? me.climb >= 0.75
+              ? 'Almost aboard! Pulling onto deck…'
+              : 'Climbing aboard… hold on!'
+            : me.climb > 0
+              ? 'Slipping down! Hold E to keep climbing'
+              : 'Holding on — hold E to climb aboard'
           : 'Overboard! Swim to the hull'
     : me?.paddle
       ? `${paddleSide(me.paddle) === 'port' ? 'Port' : 'Starboard'} paddle: W strokes forward, S back · P puts it down`
@@ -645,14 +674,16 @@ export default function ReelProblems() {
                 <i style={{ background: ANGLER_COLORS[p.color] }} />
                 <span>
                   {p.name}
-                  {p.id === session.id ? ' (you)' : ''}
+                  {p.id === session.id ? ' (you)' : p.bot ? ' (NPC)' : ''}
                 </span>
                 <small>
                   {p.swimming
                     ? w && w.clock < p.downedUntil
                       ? 'under!'
                       : p.clinging
-                        ? 'climbing'
+                        ? p.climb > 0
+                          ? `climbing ${Math.round(p.climb * 100)}%`
+                          : 'climbing'
                         : 'swimming'
                     : p.paddle
                       ? 'paddling'
@@ -702,9 +733,15 @@ export default function ReelProblems() {
               >
                 {session.code} <Copy size={19} />
               </button>
+              <CrewSlots
+                players={w.players}
+                host={captain}
+                busy={npcBusy || busy || status !== 'online'}
+                onAction={(a) => action(a)}
+              />
               <button
                 className="reel-primary"
-                disabled={!captain || status !== 'online'}
+                disabled={!captain || busy || npcBusy || status !== 'online'}
                 onClick={() => action({ type: 'start' })}
               >
                 {captain ? 'Start the tournament' : 'Waiting for the captain…'}{' '}
@@ -720,7 +757,11 @@ export default function ReelProblems() {
               >
                 <span
                   className={
-                    fishOn?.surge || me?.line?.tangled ? 'warning' : ''
+                    fishOn?.surge || me?.line?.tangled
+                      ? 'warning'
+                      : me?.clinging && me.climb >= 0.75
+                        ? 'almost-up'
+                        : ''
                   }
                 >
                   {lineLabel}
@@ -782,14 +823,27 @@ export default function ReelProblems() {
                   </div>
                 )}
                 {me?.clinging && (
-                  <div className="reel-fish-stamina">
-                    <small>CLIMB</small>
+                  <div
+                    className={`reel-climb-progress${me.climb >= 0.75 ? ' almost-up' : ''}${me.input.reel ? ' active' : ''}`}
+                  >
+                    <div className="reel-climb-header">
+                      <small>
+                        {me.climb >= 0.75
+                          ? 'ALMOST ABOARD'
+                          : me.input.reel
+                            ? 'CLIMBING ABOARD'
+                            : 'CLIMB ABOARD'}
+                      </small>
+                      <span className="reel-climb-pct">
+                        {Math.round(me.climb * 100)}%
+                      </span>
+                    </div>
                     <progress
+                      className="reel-climb-progress-bar"
                       aria-label="Climb progress"
                       max={1}
                       value={me.climb}
                     />
-                    <span>{Math.round(me.climb * 100)}%</span>
                   </div>
                 )}
                 {fishOn && (
@@ -836,7 +890,11 @@ export default function ReelProblems() {
                 <HoldButton
                   label={
                     me?.clinging
-                      ? 'Hold to climb'
+                      ? me.climb >= 0.75
+                        ? 'Almost aboard! Keep holding'
+                        : me.climb > 0
+                          ? `Climbing: ${Math.round(me.climb * 100)}%`
+                          : 'Hold to climb'
                       : hands === 'patch'
                         ? 'Hold to patch the leak'
                         : hands === 'bail'
@@ -848,11 +906,22 @@ export default function ReelProblems() {
                   disabled={
                     uiDisabled || (!me?.line && !me?.clinging && !hands)
                   }
+                  progress={
+                    me?.clinging
+                      ? me.climb
+                      : hands === 'patch' && w?.leak
+                        ? w.leak.patch
+                        : undefined
+                  }
                 >
                   <Anchor size={18} />
                   <span>
                     {me?.clinging
-                      ? 'Climb'
+                      ? me.climb >= 0.75
+                        ? 'Almost up!'
+                        : me.climb > 0
+                          ? `Climb ${Math.round(me.climb * 100)}%`
+                          : 'Climb'
                       : hands === 'patch'
                         ? 'Patch'
                         : hands === 'bail'
@@ -955,9 +1024,17 @@ export default function ReelProblems() {
                   </span>
                 ))}
               </div>
+              {!practice && w && (
+                <CrewSlots
+                  players={w.players}
+                  host={captain}
+                  busy={npcBusy || busy || status !== 'online'}
+                  onAction={(a) => action(a)}
+                />
+              )}
               <button
                 className="reel-primary"
-                disabled={!captain}
+                disabled={!captain || busy || npcBusy || status !== 'online'}
                 onClick={() => action({ type: 'restart' })}
               >
                 {captain ? 'One more tournament' : 'Waiting for the captain…'}

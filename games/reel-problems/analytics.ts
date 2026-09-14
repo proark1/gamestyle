@@ -26,6 +26,9 @@ export const reelAnalytics: GameAnalytics = {
     rescue: 'Pulled a friend aboard',
     jump: 'Jumped',
     paddle: 'Took or stowed a paddle',
+    'add-npc': 'Added an NPC',
+    'fill-npcs': 'Filled seats with NPCs',
+    'remove-npc': 'Removed an NPC',
     start: 'Started the tournament',
     restart: 'Started another tournament',
   },
@@ -36,10 +39,12 @@ export function reelPlayState(
   session: { code: string; id: string },
 ): PlayState {
   const { world } = snapshot;
+  const bots = world.players.filter((player) => player.bot).length;
   const base = {
     mode: modeOf(session, snapshot.host),
     room: session.code,
-    humans: world.players.length,
+    humans: world.players.length - bots,
+    npcs: bots,
     round: world.started,
   };
   if (world.phase === 'lobby') return { stage: 'lobby', ...base };
