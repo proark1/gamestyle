@@ -134,7 +134,7 @@ void test('the games on the shared worker build its exact body and change only c
   }
 });
 
-void test('nine games dress the shared worker in wardrobe items over their own clothes', () => {
+void test('ten games dress the shared worker in wardrobe items over their own clothes', () => {
   const dressable = AVATAR_GAMES.flatMap((card) =>
     card.looks
       .filter((look) => look.dressable)
@@ -142,6 +142,7 @@ void test('nine games dress the shared worker in wardrobe items over their own c
   );
   assert.deepEqual(dressable.map(({ key }) => key).sort(), [
     'chaos:worker',
+    'crane-clash:crane-crew',
     'dont-wake-the-giant:thief',
     'load-bearing:wrecker',
     'one-more-button:contestant',

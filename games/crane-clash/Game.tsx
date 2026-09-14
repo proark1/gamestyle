@@ -1,0 +1,373 @@
+'use client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowRight, RotateCcw, Timer } from 'lucide-react';
+import type { PeerGameConnection } from '../../shared/peer/connection';
+import {
+  advanceCraneClash,
+  craneClashAction,
+  craneClashSnapshot,
+  freshClashWorld,
+  newPlayer,
+} from './simulation';
+import { reconcileClashBots } from './bots';
+import {
+  ROUND_MS,
+  idleInput,
+  timeLeft,
+  type CraneClashAction,
+  type CraneClashSession,
+  type CraneClashSnapshot,
+  type CraneClashWorld,
+  type PlayerInput,
+  type Role,
+  type TeamId,
+} from './types';
+import { CraneClashSound } from './audio';
+import { CraneClashScene } from './scene';
+import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { craneClashAnalytics, craneClashPlayState } from './analytics';
+
+const tracker = new GameTracker(craneClashAnalytics);
+
+const formatTime = (ms: number) => {
+  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+};
+
+export default function CraneClash() {
+  useGameTracker(tracker);
+
+  const container = useRef<HTMLDivElement>(null);
+  const scene = useRef<CraneClashScene | null>(null);
+  const sound = useRef<CraneClashSound | null>(null);
+  const network = useRef<PeerGameConnection<CraneClashSnapshot> | null>(null);
+  const localWorld = useRef<CraneClashWorld | null>(null);
+  const currentInput = useRef(idleInput());
+
+  const [snapshot, setSnapshot] = useState<CraneClashSnapshot | null>(null);
+  const [team, setTeam] = useState<TeamId>('orange');
+  const [role, setRole] = useState<Role>('swinger');
+
+  const sessionRef = useRef<CraneClashSession>({
+    id: 'p-local',
+    token: 'solo-token',
+    code: 'SOLO',
+    team: 'orange',
+    role: 'swinger',
+    name: 'Bauarbeiter',
+  });
+
+  const dispatchAction = useCallback((act: CraneClashAction) => {
+    tracker.action(act.type);
+    sound.current?.unlock();
+    if (network.current) {
+      void network.current.action(act);
+    } else if (localWorld.current) {
+      craneClashAction(localWorld.current, sessionRef.current.id, act, true);
+      const snap = craneClashSnapshot(
+        localWorld.current,
+        'SOLO',
+        sessionRef.current.id,
+        sessionRef.current.id,
+        Date.now(),
+      );
+      setSnapshot(snap);
+      scene.current?.render(snap);
+      sound.current?.update(snap.world, sessionRef.current.id);
+    }
+  }, []);
+
+  // Initialize scene and sound
+  useEffect(() => {
+    if (!container.current) return;
+
+    sound.current = new CraneClashSound();
+
+    scene.current = new CraneClashScene(container.current, {
+      input: (inp: PlayerInput) => {
+        currentInput.current = inp;
+        if (localWorld.current) {
+          const p = localWorld.current.players.find(
+            (pl) => pl.id === sessionRef.current.id,
+          );
+          if (p) {
+            p.input = inp;
+            p.seen = localWorld.current.clock;
+          }
+        }
+      },
+      action: (act: CraneClashAction) => {
+        dispatchAction(act);
+      },
+    });
+
+    const initialWorld = freshClashWorld(Date.now());
+    initialWorld.players.push(
+      newPlayer(
+        sessionRef.current.id,
+        'Bauarbeiter',
+        0,
+        sessionRef.current.team,
+        sessionRef.current.role,
+        false,
+      ),
+    );
+    reconcileClashBots(initialWorld);
+
+    localWorld.current = initialWorld;
+
+    const initialSnap = craneClashSnapshot(
+      initialWorld,
+      'SOLO',
+      sessionRef.current.id,
+      sessionRef.current.id,
+      1,
+    );
+    setSnapshot(initialSnap);
+
+    const timer = setInterval(() => {
+      if (!localWorld.current) return;
+      advanceCraneClash(localWorld.current, Date.now());
+      const snap = craneClashSnapshot(
+        localWorld.current,
+        'SOLO',
+        sessionRef.current.id,
+        sessionRef.current.id,
+        Date.now(),
+      );
+      setSnapshot(snap);
+      scene.current?.render(snap);
+      sound.current?.update(snap.world, sessionRef.current.id);
+    }, 16);
+
+    return () => {
+      clearInterval(timer);
+      scene.current?.destroy();
+      scene.current = null;
+      sound.current?.reset();
+      sound.current = null;
+      network.current?.stop();
+      network.current = null;
+    };
+  }, [dispatchAction]);
+
+  // Report analytics state
+  useEffect(() => {
+    if (snapshot) {
+      tracker.observe(craneClashPlayState(snapshot, sessionRef.current));
+    }
+  }, [snapshot]);
+
+  // Update scene when team/role changes
+  useEffect(() => {
+    sessionRef.current.team = team;
+    sessionRef.current.role = role;
+    scene.current?.setLocalPlayer(sessionRef.current.id, team, role);
+  }, [team, role]);
+
+  const world = snapshot?.world;
+  const isPlaying = world?.phase === 'playing';
+  const isEnded = world?.phase === 'ended';
+
+  const orangeScore = world?.scores.orange.height ?? 0;
+  const tealScore = world?.scores.teal.height ?? 0;
+  const msLeft = world ? timeLeft(world) : ROUND_MS;
+
+  const handleStart = () => {
+    dispatchAction({ type: 'start' });
+  };
+
+  const handleRestart = () => {
+    dispatchAction({ type: 'restart' });
+    dispatchAction({ type: 'start' });
+  };
+
+  const handleTeamChange = (newTeam: TeamId) => {
+    setTeam(newTeam);
+    dispatchAction({ type: 'switchTeam', team: newTeam });
+  };
+
+  const handleRoleChange = (newRole: Role) => {
+    setRole(newRole);
+    dispatchAction({ type: 'switchRole', role: newRole });
+  };
+
+  return (
+    <main className="cc-game">
+      <div ref={container} className="cc-canvas" />
+
+      {/* Top HUD with Scores & Timer */}
+      <div className="cc-hud">
+        <div className="cc-team-score orange">
+          <div className="cc-score-val">{orangeScore.toFixed(1)}m</div>
+          <div className="cc-score-meta">
+            <span>Team Orange</span>
+            <span>{world?.scores.orange.crates || 0} Kisten</span>
+          </div>
+        </div>
+
+        <div className="cc-timer-badge">
+          <Timer size={18} />
+          <span>{formatTime(msLeft)}</span>
+        </div>
+
+        <div className="cc-team-score teal">
+          <div className="cc-score-meta" style={{ textAlign: 'right' }}>
+            <span>Team Teal</span>
+            <span>{world?.scores.teal.crates || 0} Kisten</span>
+          </div>
+          <div className="cc-score-val">{tealScore.toFixed(1)}m</div>
+        </div>
+      </div>
+
+      {/* Lobby / Team Choice Overlay */}
+      {!isPlaying && !isEnded && (
+        <div className="cc-welcome">
+          <h1>
+            Crane <span>Clash</span>.
+          </h1>
+          <div className="cc-tagline">
+            ZWEI KRÄNE. VIER SPIELER. BAUSTELLEN-CHAOS.
+          </div>
+          <p className="cc-desc">
+            Schwinge am Seil durch die Luft, greife Holzkisten und Steinblöcke
+            und baue mit deinem Kranführer den höchsten Turm vor Ablauf der
+            Zeit!
+          </p>
+
+          <div className="cc-role-selector">
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                color: '#777',
+              }}
+            >
+              Dein Team
+            </span>
+            <div className="cc-role-row">
+              <button
+                type="button"
+                className={`cc-btn orange ${team === 'orange' ? 'active' : ''}`}
+                onClick={() => handleTeamChange('orange')}
+              >
+                Team Orange
+              </button>
+              <button
+                type="button"
+                className={`cc-btn teal ${team === 'teal' ? 'active' : ''}`}
+                onClick={() => handleTeamChange('teal')}
+              >
+                Team Teal
+              </button>
+            </div>
+
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                color: '#777',
+                marginTop: 4,
+              }}
+            >
+              Deine Rolle
+            </span>
+            <div className="cc-role-row">
+              <button
+                type="button"
+                className={`cc-btn ${role === 'swinger' ? 'active' : ''}`}
+                onClick={() => handleRoleChange('swinger')}
+              >
+                Seil-Akrobat (Hängt)
+              </button>
+              <button
+                type="button"
+                className={`cc-btn ${role === 'operator' ? 'active' : ''}`}
+                onClick={() => handleRoleChange('operator')}
+              >
+                Kranführer (Kabine)
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="cc-btn primary"
+            onClick={handleStart}
+          >
+            Match starten <ArrowRight size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* Match Ended Announcement */}
+      {isEnded && (
+        <div className="cc-ended-banner">
+          <h2>Match Vorbei!</h2>
+          <div className={`cc-ended-winner ${world?.winner || ''}`}>
+            {world?.winner === 'orange'
+              ? 'Team Orange gewinnt!'
+              : world?.winner === 'teal'
+                ? 'Team Teal gewinnt!'
+                : 'Unentschieden!'}
+          </div>
+          <p style={{ margin: '0 0 20px', color: '#666' }}>
+            Orange: {orangeScore.toFixed(1)}m | Teal: {tealScore.toFixed(1)}m
+          </p>
+          <button
+            type="button"
+            className="cc-btn primary"
+            onClick={handleRestart}
+          >
+            <RotateCcw size={18} /> Nochmal spielen
+          </button>
+        </div>
+      )}
+
+      {/* Controls Bar at bottom */}
+      <div className="cc-hint-bar">
+        {role === 'swinger' ? (
+          <>
+            <span>
+              <span className="cc-hint-key">WASD</span> Schaukeln & Schwung
+              aufbauen
+            </span>
+            <span>
+              <span className="cc-hint-key">E</span> /{' '}
+              <span className="cc-hint-key">Space</span> Kiste Greifen / Werfen
+            </span>
+            <span>
+              <span className="cc-hint-key">V</span> Kamera wechseln
+            </span>
+          </>
+        ) : (
+          <>
+            <span>
+              <span className="cc-hint-key">A</span>/
+              <span className="cc-hint-key">D</span> Drehen
+            </span>
+            <span>
+              <span className="cc-hint-key">W</span>/
+              <span className="cc-hint-key">S</span> Laufkatze
+            </span>
+            <span>
+              <span className="cc-hint-key">Q</span>/
+              <span className="cc-hint-key">Z</span> Heben/Senken
+            </span>
+            <span>
+              <span className="cc-hint-key">V</span> Kamera
+            </span>
+          </>
+        )}
+      </div>
+    </main>
+  );
+}

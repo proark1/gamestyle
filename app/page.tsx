@@ -36,6 +36,7 @@ const PINNED = [
   'shelf-control',
 ] as const;
 const SHUFFLED = [
+  'crane-clash',
   'siege-and-desist',
   'load-bearing',
   'wrong-floor',
@@ -57,6 +58,96 @@ function shuffle(slugs: readonly string[]) {
 }
 
 const CARDS: Record<string, ReactElement> = {
+  'crane-clash': (
+    <a
+      key="crane-clash"
+      className="game-card crane-clash-card"
+      href="/crane-clash"
+      aria-label="Crane Clash: swing from the crane cable and stack crates as high as possible"
+    >
+      <div className="game-card-art">
+        <svg
+          viewBox="0 0 384 256"
+          className="wreck-scene"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <title>
+            Two tall construction cranes with workers swinging from cables,
+            stacking boxes in a chaotic yard.
+          </title>
+          <rect width="384" height="256" fill="#dce7e9" />
+          <rect y="196" width="384" height="60" fill="#b8c7b8" />
+          {/* Left Orange Crane */}
+          <rect x="40" y="40" width="12" height="160" fill="#e58e38" />
+          <rect x="30" y="40" width="110" height="10" fill="#e58e38" />
+          <rect x="18" y="46" width="22" height="16" fill="#444" />
+          {/* Right Teal Crane */}
+          <rect x="332" y="40" width="12" height="160" fill="#349387" />
+          <rect x="244" y="40" width="110" height="10" fill="#349387" />
+          <rect x="344" y="46" width="22" height="16" fill="#444" />
+          {/* Cable & Swinger Orange */}
+          <line
+            x1="110"
+            y1="50"
+            x2="140"
+            y2="120"
+            stroke="#2b2a29"
+            strokeWidth="2"
+          />
+          <circle cx="140" cy="122" r="8" fill="#e58e38" />
+          {/* Cable & Swinger Teal */}
+          <line
+            x1="274"
+            y1="50"
+            x2="244"
+            y2="110"
+            stroke="#2b2a29"
+            strokeWidth="2"
+          />
+          <circle cx="244" cy="112" r="8" fill="#349387" />
+          {/* Crates stacked in middle */}
+          <rect x="172" y="166" width="40" height="30" fill="#c09156" rx="2" />
+          <rect x="176" y="138" width="32" height="28" fill="#9ba199" rx="2" />
+          <rect x="180" y="112" width="24" height="26" fill="#ebb734" rx="2" />
+          {/* Platforms */}
+          <rect x="60" y="192" width="50" height="8" fill="#d97438" />
+          <rect x="274" y="192" width="50" height="8" fill="#2f877c" />
+        </svg>
+        <span className="game-card-tag">
+          <HardHat size={14} /> 2 KRÄNE · 4 SPIELER
+        </span>
+        <span className="new-game-tag">NEU IN JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 Spieler (2v2)
+          </span>
+          <span>
+            <Timer size={14} /> 3-Minuten Match
+          </span>
+        </div>
+        <h2>
+          Crane <span>Clash</span>
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Zwei Kräne, ein chaotischer Baustellenhof und wer schwingt, fliegt!
+          Hänge am Seil, bring dich durch Eigenbewegung in Schwung, greife
+          Kisten und baue mit deinem Team den höchsten Turm.
+        </p>
+        <div className="game-card-bottom">
+          <span>Wer am höchsten baut, gewinnt.</span>
+          <strong>
+            Crane Clash spielen <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
   'siege-and-desist': (
     <a
       key="siege-and-desist"

@@ -2,24 +2,23 @@
 
 Approved on 2026-09-07:
 
-| Game | Display name | Existing route / internal ID |
-| --- | --- | --- |
-| Cooperative flood survival | Stack or Sink | `/stack-or-sink` |
-| Blend in and escape | Blend Business | `/act-natural` |
-| Cooperative sofa delivery | Uphill Delivery | `/uphill-delivery` |
-| Cooperative stealth and theft | Tiptoe Thieves | `/dont-wake-the-giant` |
-| Chaotic cooperative construction | Permit Pending | `/chaos` |
-| First-person construction | Brick by Hand | `/first-person` |
+| Game                             | Display name    | Existing route / internal ID |
+| -------------------------------- | --------------- | ---------------------------- |
+| Cooperative flood survival       | Stack or Sink   | `/stack-or-sink`             |
+| Blend in and escape              | Blend Business  | `/act-natural`               |
+| Cooperative sofa delivery        | Uphill Delivery | `/uphill-delivery`           |
+| Cooperative stealth and theft    | Tiptoe Thieves  | `/dont-wake-the-giant`       |
+| Chaotic cooperative construction | Permit Pending  | `/chaos`                     |
+| First-person construction        | Brick by Hand   | `/first-person`              |
 
 Added 2026-09-09:
 
-| Game | Display name | Route / internal ID |
-| --- | --- | --- |
-| Cooperative medieval siege | Siege and Desist | `/siege-and-desist` |
+| Game                                  | Display name     | Route / internal ID |
+| ------------------------------------- | ---------------- | ------------------- |
+| Cooperative medieval siege            | Siege and Desist | `/siege-and-desist` |
+| Competitive crane stacking party game | Crane Clash      | `/crane-clash`      |
 
-Siege and Desist is a Medieval Empires-themed mini game. The display name, route,
-game identifier, audio namespace and room namespace are all `siege-and-desist`,
-so nothing here needed a compatibility alias.
+Crane Clash is a 2v2 physics party game where 2 cranes and 4 players swing, grab, and stack crates as high as possible. The display name, route, game identifier, and room namespace are `crane-clash`.
 
 The platform is **Jumbleyard**, with this exact spelling. Blend Business and
 Tiptoe Thieves are deliberately independent of a particular animal, disguise,

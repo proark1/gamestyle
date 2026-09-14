@@ -1,0 +1,262 @@
+.cc-game {
+  position: relative;
+  height: 100dvh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #dce7e9;
+  color: var(--ink, #252422);
+  font-family: 'DM Sans', sans-serif;
+  user-select: none;
+}
+
+.cc-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.cc-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Topbar HUD */
+.cc-hud {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  pointer-events: none;
+}
+
+.cc-team-score {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+.cc-team-score.orange {
+  border-left: 6px solid #e58e38;
+}
+
+.cc-team-score.teal {
+  border-right: 6px solid #349387;
+}
+
+.cc-score-val {
+  font-size: 28px;
+  line-height: 1;
+  font-family: 'Fredoka', sans-serif;
+}
+
+.cc-team-score.orange .cc-score-val {
+  color: #d97438;
+}
+
+.cc-team-score.teal .cc-score-val {
+  color: #2f877c;
+}
+
+.cc-score-meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #6d6b67;
+  letter-spacing: 0.5px;
+}
+
+.cc-timer-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #252422;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Welcome Overlay */
+.cc-welcome {
+  position: absolute;
+  top: 60px;
+  left: 36px;
+  z-index: 20;
+  width: 360px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.cc-welcome h1 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 44px;
+  line-height: 0.95;
+  margin: 0 0 8px;
+}
+
+.cc-welcome h1 span {
+  color: #e58e38;
+}
+
+.cc-tagline {
+  font-weight: 600;
+  font-size: 14px;
+  color: #5d5a55;
+  margin-bottom: 12px;
+}
+
+.cc-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #63615c;
+  margin-bottom: 18px;
+}
+
+.cc-role-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+  background: #f4f5f1;
+  padding: 12px;
+  border-radius: 16px;
+}
+
+.cc-role-row {
+  display: flex;
+  gap: 8px;
+}
+
+.cc-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.cc-btn.active {
+  border-color: #252422;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cc-btn.orange {
+  background: #faeade;
+  color: #a64b18;
+}
+.cc-btn.orange.active {
+  background: #e58e38;
+  color: #fff;
+}
+
+.cc-btn.teal {
+  background: #def0ee;
+  color: #1a5e55;
+}
+.cc-btn.teal.active {
+  background: #349387;
+  color: #fff;
+}
+
+.cc-btn.primary {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 14px;
+  background: #252422;
+  color: #fff;
+}
+.cc-btn.primary:hover {
+  background: #3d3b37;
+}
+
+/* Controls Hint Bar */
+.cc-hint-bar {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+  font-weight: 600;
+  color: #4f4c46;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.cc-hint-key {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #e5e5df;
+  border: 1px solid #cecdc7;
+  font-family: monospace;
+  font-size: 11px;
+  color: #222;
+  margin-right: 4px;
+}
+
+/* Match Ended Banner */
+.cc-ended-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  padding: 36px 44px;
+  border-radius: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.cc-ended-banner h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 42px;
+  margin: 0 0 10px;
+}
+
+.cc-ended-winner {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 22px;
+}
+
+.cc-ended-winner.orange {
+  color: #d97438;
+}
+.cc-ended-winner.teal {
+  color: #2f877c;
+}

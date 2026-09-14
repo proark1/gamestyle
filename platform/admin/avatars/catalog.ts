@@ -16,6 +16,7 @@ import { siegeAvatars } from '../../../games/siege-and-desist/avatar';
 import { stackAvatars } from '../../../games/stack-or-sink/avatar';
 import { deliveryAvatars } from '../../../games/uphill-delivery/avatar';
 import { hotelAvatars } from '../../../games/wrong-floor/avatar';
+import { craneClashAvatars } from '../../../games/crane-clash/avatar';
 import { GAMES } from '../../analytics/catalog';
 
 export type AvatarCard = {
@@ -120,6 +121,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
     note: 'The shared worker in wood; the guard adds a badge and a torch.',
   },
   'load-bearing': { looks: loadBearingAvatars, note: SHARED },
+  'crane-clash': {
+    looks: craneClashAvatars,
+    note: 'The shared worker wearing team-colored hard hat and safety harness.',
+  },
 };
 
 /** Every game's player avatars, in the order the admin lists the games. */

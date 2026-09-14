@@ -10,6 +10,7 @@ import { createEngine as hotel } from '../../games/wrong-floor/peer';
 import { createEngine as breakfast } from '../../games/four-brain-cells/peer';
 import { createEngine as demolition } from '../../games/load-bearing/peer';
 import { createEngine as siege } from '../../games/siege-and-desist/peer';
+import { createEngine as craneClash } from '../../games/crane-clash/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
 const engines = {
   'wrong-floor': hotel,
@@ -22,6 +23,7 @@ const engines = {
   'four-brain-cells': breakfast,
   'load-bearing': demolition,
   'siege-and-desist': siege,
+  'crane-clash': craneClash,
 };
 export function createPeerEngine(
   game: GameId,
