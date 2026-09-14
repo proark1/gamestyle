@@ -1,5 +1,5 @@
 import { Quaternion, Vec3 } from 'cannon-es';
-import { LEVEL, ROUTE, GATE, DOOR, bridgePose } from './level';
+import { LEVEL, ROUTE, GATE, DOOR, bridgePose, PINES } from './level';
 import type { DeliveryPlayer, DeliveryWorld, Vec } from './types';
 
 export const distanceXZ = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -8,7 +8,7 @@ export const clamp = (v: number, low: number, high: number) =>
 export const angleDelta = (a: number, b: number) =>
   Math.atan2(Math.sin(a - b), Math.cos(a - b));
 const surfaces = LEVEL.filter(
-  (b) => !/customer-(back|side)|alley/.test(b.id),
+  (b) => !/customer-(back|side|front)|alley/.test(b.id),
 ).map((box) => {
   const q = new Quaternion(
     box.quaternion.x,
@@ -70,13 +70,22 @@ export function routeProjection(p: Vec) {
 }
 
 export function deliverySolid(x: number, z: number, y: number) {
-  return LEVEL.some(
-    (b) =>
-      /customer-(back|side)|alley/.test(b.id) &&
-      y < b.position.y + b.size[1] / 2 &&
-      y + 1.8 > b.position.y - b.size[1] / 2 &&
-      Math.abs(x - b.position.x) < b.size[0] / 2 + 0.38 &&
-      Math.abs(z - b.position.z) < b.size[2] / 2 + 0.38,
+  if (
+    LEVEL.some(
+      (b) =>
+        /customer-(back|side|front)|alley/.test(b.id) &&
+        y < b.position.y + b.size[1] / 2 &&
+        y + 1.8 > b.position.y - b.size[1] / 2 &&
+        Math.abs(x - b.position.x) < b.size[0] / 2 + 0.38 &&
+        Math.abs(z - b.position.z) < b.size[2] / 2 + 0.38,
+    )
+  )
+    return true;
+  return PINES.some(
+    (p) =>
+      y < -0.6 + 5 * p.size &&
+      y + 1.8 > -0.6 &&
+      Math.hypot(x - p.x, z - p.z) < 0.45 * p.size,
   );
 }
 export function npcObstacle(
@@ -159,10 +168,16 @@ export function deliveryGripClear(w: DeliveryWorld, from: Vec, grip: Vec) {
     if (
       LEVEL.some(
         (box) =>
-          /customer-(back|side)|alley/.test(box.id) &&
+          /customer-(back|side|front)|alley/.test(box.id) &&
           Math.abs(y - box.position.y) < box.size[1] / 2 &&
           Math.abs(x - box.position.x) < box.size[0] / 2 &&
           Math.abs(z - box.position.z) < box.size[2] / 2,
+      ) ||
+      PINES.some(
+        (p) =>
+          y < -0.6 + 5 * p.size &&
+          y > -1.2 &&
+          Math.hypot(x - p.x, z - p.z) < 0.45 * p.size,
       )
     )
       return false;

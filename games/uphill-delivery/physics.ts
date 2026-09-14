@@ -4,7 +4,7 @@ import {
   PLAYER_HEIGHT,
   PLAYER_RADIUS,
 } from '../../shared/physics/sofa';
-import { LEVEL, bridgePose, DOOR, GATE, goatPose, GOATS } from './level';
+import { LEVEL, PINES, bridgePose, DOOR, GATE, goatPose, GOATS } from './level';
 import {
   GRIPS,
   SOFA_CENTER,
@@ -39,12 +39,12 @@ export function cargoInsideRoom(w: DeliveryWorld) {
       for (const z of [-0.94, 0.94]) {
         const p = body.pointToWorldFrame(new C.Vec3(x, y, z));
         if (
-          p.x < -8.85 ||
+          p.x < -10.9 ||
           p.x > -3.25 ||
-          p.z < -26.15 ||
-          p.z > -19.85 ||
+          p.z < -26.9 ||
+          p.z > -19.1 ||
           p.y < 21.92 ||
-          p.y > 25
+          p.y > 26
         )
           return false;
       }
@@ -144,6 +144,29 @@ export class DeliveryPhysics {
       });
       e.addBody(b);
     }
+    // Trees in the valley have physical trunks so movers and cargo cannot pass through.
+    for (const tree of PINES) {
+      const height = 2.5 * tree.size;
+      const b = new C.Body({
+        mass: 0,
+        material: barrier,
+        shape: new C.Box(
+          new C.Vec3(0.35 * tree.size, height, 0.35 * tree.size),
+        ),
+        position: new C.Vec3(tree.x, -0.6 + height, tree.z),
+      });
+      e.addBody(b);
+      this.surfaces.set(b.id, 'tree');
+    }
+    // The delivery truck at the depot is a physical obstacle.
+    const truckBody = new C.Body({
+      mass: 0,
+      material: barrier,
+      position: new C.Vec3(-14.15, 1.3, 18),
+    });
+    truckBody.addShape(new C.Box(new C.Vec3(2.7, 1.4, 1.4)));
+    e.addBody(truckBody);
+    this.surfaces.set(truckBody.id, 'truck');
     this.sofa = new C.Body({
       mass: 84,
       material: cargoMaterial,

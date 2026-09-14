@@ -608,7 +608,7 @@ void test('a human can choose a valid placement away from the autonomous target'
 
 void test('cargo sliding out of the delivery area is picked up again after settling', () => {
   const w = crew(1, 1);
-  placeCargo(w, -6.8, 22.01, -23);
+  placeCargo(w, -8.9, 22.01, -23);
   w.door = w.doorTarget = Math.PI / 2;
   Object.assign(w.players[0], { x: 1, y: 22, z: -23 });
   tick(w);

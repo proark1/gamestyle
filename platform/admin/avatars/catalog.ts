@@ -71,7 +71,10 @@ export const POTENTIAL_AVATARS: readonly AvatarCard[] = [
 
 const SHARED = 'The shared worker model, unchanged.';
 const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
-  'siege-and-desist': { looks: siegeAvatars },
+  'siege-and-desist': {
+    looks: siegeAvatars,
+    note: 'The shared worker with a conical helmet and a nasal bar.',
+  },
   'stack-or-sink': {
     looks: stackAvatars,
     note: 'The shared worker in its cap: the template the other games follow.',

@@ -1,10 +1,14 @@
 import * as T from 'three';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 import { box, beam, label, material } from '../../shared/rendering/primitives';
+import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import type { Look } from '../../shared/wardrobe/look';
 import { defenderPosts } from './castle';
 import {
   AMMO,
   CASTLE,
+  COLORS,
   CRANK,
   LEVER,
   PILE,
@@ -59,42 +63,64 @@ function cone(
   return m;
 }
 
-/** A Kayi siege hand: felt tunic, boots, and a very optimistic helmet. */
-export function crewMember(color: string) {
-  const g = new T.Group();
-  box(g, [0.52, 0.68, 0.36], [0, 1.06, 0], color, true);
-  box(g, [0.56, 0.16, 0.4], [0, 0.78, 0], '#5b4a34', true);
-  ball(g, [0.34, 0.36, 0.32], [0, 1.72, 0], '#e8c39a');
-  ball(g, [0.35, 0.14, 0.33], [0, 1.94, -0.02], '#4a3524');
-  for (const x of [-0.11, 0.11])
-    ball(g, [0.033, 0.05, 0.024], [x, 1.74, 0.3], '#2c2119');
-  box(g, [0.2, 0.09, 0.03], [0, 1.58, 0.3], '#4a3524', true);
-  // Conical helmet with a nasal bar, the game's most recognisable silhouette.
-  const helmet = new T.Group();
-  helmet.name = 'helmet';
-  cone(helmet, 0.28, 0.42, [0, 2.06, 0], '#b9a06a');
-  box(helmet, [0.05, 0.24, 0.05], [0, 1.82, 0.27], '#b9a06a');
-  ball(helmet, [0.06, 0.08, 0.06], [0, 2.3, 0], '#d8c48a');
-  g.add(helmet);
-  for (let i = 0; i < 2; i++) {
-    const side = i ? 1 : -1;
-    const leg = box(
-      g,
-      [0.24, 0.56, 0.26],
-      [side * 0.16, 0.36, 0],
-      '#54473a',
+/** A Kayi siege hand: the collection's shared worker in a felt tunic, boots, and a conical helmet. */
+export function crewMember(color: string | number, look?: Look) {
+  const shirt =
+    typeof color === 'string' ? color : COLORS[Math.abs(color) % COLORS.length];
+  const colorIndex = typeof color === 'number' ? color : COLORS.indexOf(color);
+  const colorNum = colorIndex >= 0 ? colorIndex : 0;
+
+  const { model: g, worn } = dressedWorker(
+    colorNum,
+    {
+      shirt,
+      overalls: '#54473a',
+      boots: '#3d2e21',
+      cap: false,
+    },
+    look,
+  );
+
+  const body = g.userData.body as T.Group;
+
+  // Leather belt and brass buckle across the tunic waist
+  box(body, [0.7, 0.12, 0.46], [0, 0.68, 0], '#5b4a34', true);
+  box(body, [0.12, 0.12, 0.04], [0, 0.68, 0.24], '#d8a13d', true);
+
+  // Conical helmet with a nasal bar; replaced if a player wears their own wardrobe hat
+  if (!worn.hat) {
+    const helmet = new T.Group();
+    helmet.name = 'helmet';
+    cone(helmet, 0.34, 0.42, [0, WORKER_HEAD_TOP + 0.21, 0], '#b9a06a');
+    box(
+      helmet,
+      [0.05, 0.24, 0.05],
+      [0, WORKER_HEAD_TOP - 0.12, 0.27],
+      '#b9a06a',
       true,
     );
-    leg.name = `leg${i}`;
-    box(leg, [0.28, 0.16, 0.4], [0, -0.22, 0.07], '#3d2e21', true);
-    const arm = box(g, [0.21, 0.6, 0.21], [side * 0.37, 1.1, 0], color, true);
-    arm.name = `arm${i}`;
-    ball(arm, [0.12, 0.13, 0.12], [0, -0.28, 0], '#e8c39a');
+    ball(helmet, [0.06, 0.08, 0.06], [0, WORKER_HEAD_TOP + 0.44, 0], '#d8c48a');
+    body.add(helmet);
+    g.userData.hatTop = WORKER_HEAD_TOP + 0.46;
   }
+
+  // Set limb aliases for compatibility with legacy object lookups
+  const rig = g.userData as {
+    legL: T.Object3D;
+    legR: T.Object3D;
+    armL: T.Object3D;
+    armR: T.Object3D;
+  };
+  rig.legL.name = 'leg0';
+  rig.legR.name = 'leg1';
+  rig.armL.name = 'arm0';
+  rig.armR.name = 'arm1';
+
   const carried = new T.Group();
   carried.name = 'carried';
   carried.position.set(0, 1.15, 0.62);
   g.add(carried);
+
   return g;
 }
 
@@ -105,13 +131,27 @@ export function poseCrew(
   pose: { walking: boolean; winding: boolean; flying: boolean },
 ) {
   const swing = pose.walking ? Math.sin(now * 0.013) * 0.55 : 0;
-  for (let i = 0; i < 2; i++) {
-    model.getObjectByName(`leg${i}`)!.rotation.x = swing * (i ? 1 : -1);
-    model.getObjectByName(`arm${i}`)!.rotation.x = pose.winding
+  const rig = model.userData as {
+    legL?: T.Object3D;
+    legR?: T.Object3D;
+    armL?: T.Object3D;
+    armR?: T.Object3D;
+  };
+  const legL = rig.legL ?? model.getObjectByName('leg0');
+  const legR = rig.legR ?? model.getObjectByName('leg1');
+  const armL = rig.armL ?? model.getObjectByName('arm0');
+  const armR = rig.armR ?? model.getObjectByName('arm1');
+
+  if (legL && legR && armL && armR) {
+    legL.rotation.x = -swing;
+    legR.rotation.x = swing;
+    const armPose = pose.winding
       ? -1.15 + Math.sin(now * 0.009) * 0.35
       : pose.flying
         ? -2.5
-        : swing * (i ? -1 : 1);
+        : null;
+    armL.rotation.x = armPose ?? swing;
+    armR.rotation.x = armPose ?? -swing;
   }
 }
 

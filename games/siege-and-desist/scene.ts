@@ -1,5 +1,6 @@
 import * as T from 'three';
 import { label } from '../../shared/rendering/primitives';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   ammoModel,
   blockModel,
@@ -495,7 +496,10 @@ export class SiegeScene {
                 ? '#c2472f'
                 : '#d8a13d';
         }
-        model = crewMember(colorHex);
+        model = crewMember(
+          colorHex,
+          this.localId === p.id ? getEquippedLook() : undefined,
+        );
         const displayName = p.bot ? `${p.name} [Bot]` : p.name;
         const name = label(displayName, '#2a2420', '#f0dcb4', 2.1);
         name.position.y = 2.6;

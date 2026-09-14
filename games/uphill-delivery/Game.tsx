@@ -646,9 +646,13 @@ export default function UphillDelivery() {
           {playing && (
             <div className="delivery-bottom">
               <p className="delivery-hint">
-                {me?.grip !== null && me?.grip !== undefined
-                  ? 'Walk together to carry. Back up to pull. Release before opening a gate.'
-                  : 'Walk into the sofa to push. Grab a corner to lift. Jump onto its cushions.'}
+                {altitude > 21
+                  ? me?.grip !== null && me?.grip !== undefined
+                    ? 'Carry the sofa inside No. 4 and release (E) to finish the delivery!'
+                    : 'Get the whole sofa inside No. 4 and let it settle to win!'
+                  : me?.grip !== null && me?.grip !== undefined
+                    ? 'Walk together to carry. Back up to pull. Release before opening a gate.'
+                    : 'Walk into the sofa to push. Grab a corner to lift. Jump onto its cushions.'}
               </p>
               <div className="delivery-dock">
                 <button

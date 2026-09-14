@@ -152,10 +152,12 @@ for (let i = 0; i < ROUTE.length - 1; i++) {
 }
 LEVEL.push(
   block('porch', [6, 0.6, 6], -1.1, 21.7, -23, '#d8c9a4'),
-  block('customer-floor', [6.2, 0.6, 7], -6.1, 21.7, -23, '#d6ba89'),
-  block('customer-back', [0.4, 3.3, 7], -9.1, 23.65, -23, '#c2cba5'),
-  block('customer-side-a', [6.2, 3.3, 0.35], -6.1, 23.65, -26.4, '#c2cba5'),
-  block('customer-side-b', [6.2, 3.3, 0.35], -6.1, 23.65, -19.6, '#c2cba5'),
+  block('customer-floor', [8.4, 0.6, 8.8], -7.2, 21.7, -23, '#d6ba89'),
+  block('customer-back', [0.45, 3.5, 8.8], -11.2, 23.75, -23, '#b85f47'),
+  block('customer-side-a', [8.4, 3.5, 0.4], -7.2, 23.75, -27.2, '#b85f47'),
+  block('customer-side-b', [8.4, 3.5, 0.4], -7.2, 23.75, -18.8, '#b85f47'),
+  block('customer-front-a', [0.4, 3.5, 2.55], -3.2, 23.75, -26.125, '#b85f47'),
+  block('customer-front-b', [0.4, 3.5, 2.55], -3.2, 23.75, -19.875, '#b85f47'),
   // A narrow village lane forces the crew to turn the sofa lengthways.
   block('alley-left', [6.5, 2.8, 1.25], -4.5, 10.1, -3.15, '#c5b291'),
   block('alley-right', [6.5, 2.8, 1.25], -4.5, 10.1, 1.15, '#adbd9c'),
@@ -208,7 +210,7 @@ export const FOUNDATIONS: LevelBox[] = [
     ),
   ),
 ];
-/** Valley pines, nudged outward wherever a canopy would grow into a foundation. */
+/** Valley pines, nudged outward wherever a canopy would grow into a foundation or the delivery truck. */
 export const PINES = Array.from({ length: 24 }, (_, i) => {
   const side = i % 2 ? -1 : 1,
     size = 0.8 + (i % 4) * 0.22,
@@ -216,7 +218,14 @@ export const PINES = Array.from({ length: 24 }, (_, i) => {
     // The widest cone, plus a little air.
     reach = 1.15 * size + 0.2;
   let x = side * (16.5 + Math.sin(i * 4.2) * 3);
-  for (const f of FOUNDATIONS) {
+  const obstacles = [
+    ...FOUNDATIONS,
+    // The delivery truck and depot parking area at the start
+    { position: { x: -14.2, z: 17.8 }, size: [6.8, 2.5, 5.2] },
+    // Open catchment fall corridor beside the upper road
+    { position: { x: 19, z: 4 }, size: [3.2, 0, 3.2] },
+  ];
+  for (const f of obstacles) {
     const dz = Math.abs(z - f.position.z) - f.size[2] / 2;
     if (dz >= reach) continue;
     const clear = f.size[0] / 2 + Math.sqrt(reach ** 2 - Math.max(0, dz) ** 2);

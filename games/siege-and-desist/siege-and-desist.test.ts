@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import * as T from 'three';
+import { siegeAvatars } from './avatar';
+import { crewMember, poseCrew } from './models';
 import {
   advanceSiege,
   banner,
@@ -1016,4 +1019,117 @@ void test('accurate shot at enemy tower strikes masonry', () => {
   }
 
   assert.ok(struck, 'accurately aimed shot struck enemy castle masonry');
+});
+
+function lowestY(root: T.Object3D) {
+  root.updateMatrixWorld(true);
+  const bounds = new T.Box3();
+  const part = new T.Box3();
+  root.traverseVisible((object) => {
+    const mesh = object as T.Mesh;
+    if (!mesh.isMesh) return;
+    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+    bounds.union(
+      part.copy(mesh.geometry.boundingBox!).applyMatrix4(mesh.matrixWorld),
+    );
+  });
+  return bounds.min.y;
+}
+
+void test('siege crew avatar uses the shared worker rig, stands on ground, and faces forward', () => {
+  const model = crewMember(0);
+  const rig = model.userData as Record<string, T.Object3D>;
+  for (const key of ['body', 'legL', 'legR', 'armL', 'armR']) {
+    assert.ok(rig[key] instanceof T.Object3D, `crew has ${key}`);
+  }
+  for (const key of ['legL', 'legR', 'armL', 'armR']) {
+    let parent = rig[key].parent;
+    while (parent && parent !== rig.body) parent = parent.parent;
+    assert.equal(parent, rig.body, `crew's ${key} is attached to body`);
+  }
+  assert.ok(Math.abs(lowestY(model)) < 0.01, 'crew stands at y = 0');
+
+  // Verify backward compatibility aliases
+  assert.ok(
+    model.getObjectByName('leg0') === rig.legL,
+    'leg0 resolves to legL',
+  );
+  assert.ok(
+    model.getObjectByName('leg1') === rig.legR,
+    'leg1 resolves to legR',
+  );
+  assert.ok(
+    model.getObjectByName('arm0') === rig.armL,
+    'arm0 resolves to armL',
+  );
+  assert.ok(
+    model.getObjectByName('arm1') === rig.armR,
+    'arm1 resolves to armR',
+  );
+});
+
+void test('siege crew has a conical helmet by default and replaces it with wardrobe hats', () => {
+  const bare = crewMember(0);
+  assert.ok(
+    bare.getObjectByName('helmet'),
+    'default crew wears conical helmet',
+  );
+
+  const dressed = crewMember(0, { hat: 'beanie' });
+  assert.equal(
+    dressed.getObjectByName('helmet'),
+    undefined,
+    'wardrobe hat replaces helmet',
+  );
+});
+
+void test('poseCrew swings limbs on walking, lifts arms on winding and raises overhead on flying', () => {
+  const model = crewMember(0);
+  const { legL, legR, armL, armR } = model.userData as Record<
+    string,
+    T.Object3D
+  >;
+
+  // Idle
+  poseCrew(model, 1000, { walking: false, winding: false, flying: false });
+  assert.equal(legL.rotation.x, 0);
+  assert.equal(legR.rotation.x, 0);
+
+  // Walking
+  poseCrew(model, 1000, { walking: true, winding: false, flying: false });
+  assert.ok(
+    legL.rotation.x * legR.rotation.x < 0,
+    'legs swing opposite each other',
+  );
+  assert.ok(
+    legL.rotation.x * armL.rotation.x < 0,
+    'left arm swings opposite left leg',
+  );
+
+  // Winding
+  poseCrew(model, 1000, { walking: false, winding: true, flying: false });
+  assert.ok(armL.rotation.x < -0.5, 'left arm raised for winding');
+  assert.ok(armR.rotation.x < -0.5, 'right arm raised for winding');
+
+  // Flying
+  poseCrew(model, 1000, { walking: false, winding: false, flying: true });
+  assert.equal(armL.rotation.x, -2.5, 'left arm back for flying');
+  assert.equal(armR.rotation.x, -2.5, 'right arm back for flying');
+});
+
+void test('siegeAvatars is dressable and builds an animated preview', () => {
+  assert.equal(siegeAvatars.length, 1);
+  const [crew] = siegeAvatars;
+  assert.equal(crew.key, 'crew');
+  assert.equal(crew.dressable, true, 'marked dressable');
+
+  const preview = crew.create({ hat: 'beanie' });
+  assert.ok(preview.root instanceof T.Object3D);
+  assert.equal(
+    preview.root.getObjectByName('helmet'),
+    undefined,
+    'honors wardrobe look in preview',
+  );
+  assert.ok(typeof preview.pose === 'function');
+  preview.pose?.(1, true);
 });

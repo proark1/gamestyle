@@ -6,8 +6,9 @@ export const siegeAvatars: readonly AvatarLook[] = [
   {
     key: 'crew',
     label: 'Siege crew',
-    create() {
-      const root = crewMember(COLORS[0]);
+    dressable: true,
+    create(look) {
+      const root = crewMember(COLORS[0], look);
       return {
         root,
         pose: (time, walking) =>
