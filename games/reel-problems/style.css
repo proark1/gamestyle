@@ -623,9 +623,6 @@
 .reel-game .touch-controls {
   display: none;
 }
-.reel-game .touch-controls .touch-jump {
-  display: none;
-}
 @media (pointer: coarse) {
   .reel-game .touch-controls {
     display: block;
@@ -648,6 +645,34 @@
     border: 2px solid #fff9e9;
     border-radius: 50%;
     background: #f2c368db;
+  }
+  /* Stacked over the stick: beside it, it runs into the line panel on phones. */
+  .reel-game .touch-controls[data-touch-controls] .touch-jump {
+    position: absolute;
+    left: 21px;
+    bottom: calc(100% + 12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 2px solid #fff9e9;
+    border-radius: 50%;
+    background: #f2c368db;
+    color: #285758;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .reel-game .touch-controls[data-touch-controls] .touch-jump:disabled {
+    opacity: 0.4;
+  }
+  /* That button already covers jumping on a touch screen. */
+  .reel-game .reel-jump-action {
+    display: none;
   }
 }
 @media (max-width: 1000px) {

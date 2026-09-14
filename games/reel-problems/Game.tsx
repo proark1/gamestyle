@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import {
   Anchor,
+  ArrowUp,
   ArrowUpRight,
   Camera,
   Check,
@@ -47,6 +48,8 @@ import {
   type ReelWorld,
 } from './types';
 import { ReelSound } from './audio';
+import { handsOnHull } from './hull';
+import { paddleSide } from './paddles';
 import { WEATHER_LABELS } from './chaos';
 import type { ReelScene } from './scene';
 import './style.css';
@@ -421,23 +424,39 @@ export default function ReelProblems() {
       ? w?.fish.find((f) => f.id === me.line?.target)
       : null;
   const downed = !!me?.swimming && !!w && w.clock < me.downedUntil;
+  const sunk = !!w?.boat.sunk;
+  const hands = me && w ? handsOnHull(w, me) : null;
   const lineLabel = me?.swimming
     ? downed
-      ? 'Pulled under! The crew is hauling you out'
-      : me.clinging
-        ? 'Holding on — hold E to climb aboard'
-        : 'Overboard! Swim to the hull'
-    : me?.line?.tangled
-      ? 'Tangled! Press R to loosen'
-      : me?.line?.kind === 'player'
-        ? 'You hooked a friend'
-        : fishOn?.surge
-          ? 'Fish surging — ease off E!'
-          : fishOn
-            ? `${CATCHES[fishOn.kind].name} — reel it in!`
-            : me?.line
-              ? 'Waiting for a bite…'
-              : 'Click the water or press Space to cast';
+      ? sunk
+        ? 'Pulled under! You come round when a new boat is out'
+        : 'Pulled under! The crew is hauling you out'
+      : sunk
+        ? 'The boat sank! Swim to the dock — follow the arrow'
+        : me.clinging
+          ? 'Holding on — hold E to climb aboard'
+          : 'Overboard! Swim to the hull'
+    : me?.paddle
+      ? `${paddleSide(me.paddle) === 'port' ? 'Port' : 'Starboard'} paddle: W strokes forward, S back · P puts it down`
+      : w?.pending
+        ? 'A seagull is diving for the catch — jump!'
+        : hands === 'patch'
+          ? 'On the leak — hold E to patch it!'
+          : w?.leak
+            ? 'LEAK! Get to the spray and hold E'
+            : hands === 'bail'
+              ? 'Water aboard — hold E to bail'
+              : me?.line?.tangled
+                ? 'Tangled! Press R to loosen'
+                : me?.line?.kind === 'player'
+                  ? 'You hooked a friend'
+                  : fishOn?.surge
+                    ? 'Fish surging — ease off E!'
+                    : fishOn
+                      ? `${CATCHES[fishOn.kind].name} — reel it in!`
+                      : me?.line
+                        ? 'Waiting for a bite…'
+                        : 'Click the water or press Space to cast';
   const helpers = fishOn && w ? hookedAnglers(w, fishOn.id) : [];
   const seaLife =
     w?.wildlife?.filter((visitor) => visitor.activeUntil > w.clock) ?? [];
@@ -598,6 +617,11 @@ export default function ReelProblems() {
                 {seaLife.some((v) => v.kind === 'jellyfish') && (
                   <span>Jellyfish nearby</span>
                 )}
+                {seaLife.some((v) => v.kind === 'gull') && (
+                  <span>Seagulls overhead</span>
+                )}
+                {w.crab && <span>Crab aboard!</span>}
+                {w.leak && <span>LEAK!</span>}
               </div>
             </aside>
           )}
@@ -630,11 +654,17 @@ export default function ReelProblems() {
                       : p.clinging
                         ? 'climbing'
                         : 'swimming'
-                    : p.line?.tangled
-                      ? 'tangled'
-                      : p.line?.kind === 'fish'
-                        ? 'fish on!'
-                        : 'aboard'}
+                    : p.paddle
+                      ? 'paddling'
+                      : p.input.reel && w && handsOnHull(w, p) === 'patch'
+                        ? 'patching'
+                        : p.input.reel && w && handsOnHull(w, p) === 'bail'
+                          ? 'bailing'
+                          : p.line?.tangled
+                            ? 'tangled'
+                            : p.line?.kind === 'fish'
+                              ? 'fish on!'
+                              : 'aboard'}
                 </small>
               </div>
             ))}
@@ -729,6 +759,28 @@ export default function ReelProblems() {
                     </span>
                   </div>
                 )}
+                {!!w && (!!w.leak || w.boat.flood > 0.01) && (
+                  <div className="reel-fish-stamina">
+                    <small>WATER</small>
+                    <progress
+                      aria-label="Water in the boat"
+                      max={1}
+                      value={w.boat.flood}
+                    />
+                    <span>{Math.round(w.boat.flood * 100)}%</span>
+                  </div>
+                )}
+                {w?.leak && (
+                  <div className="reel-fish-stamina">
+                    <small>PATCH</small>
+                    <progress
+                      aria-label="Leak patch progress"
+                      max={1}
+                      value={w.leak.patch}
+                    />
+                    <span>{Math.round(w.leak.patch * 100)}%</span>
+                  </div>
+                )}
                 {me?.clinging && (
                   <div className="reel-fish-stamina">
                     <small>CLIMB</small>
@@ -768,7 +820,7 @@ export default function ReelProblems() {
               <TouchControls
                 disabled={uiDisabled}
                 move={(v) => scene.current?.move(v)}
-                jump={() => action({ type: me?.swimming ? 'rescue' : 'cast' })}
+                jump={() => action({ type: me?.swimming ? 'rescue' : 'jump' })}
               />
               <nav className="reel-action-dock" aria-label="Fishing actions">
                 <button
@@ -782,14 +834,30 @@ export default function ReelProblems() {
                   </span>
                 </button>
                 <HoldButton
-                  label={me?.clinging ? 'Hold to climb' : 'Hold to reel'}
+                  label={
+                    me?.clinging
+                      ? 'Hold to climb'
+                      : hands === 'patch'
+                        ? 'Hold to patch the leak'
+                        : hands === 'bail'
+                          ? 'Hold to bail'
+                          : 'Hold to reel'
+                  }
                   active={!!me?.input.reel}
                   hold={(held) => scene.current?.hold('reel', held)}
-                  disabled={uiDisabled || (!me?.line && !me?.clinging)}
+                  disabled={
+                    uiDisabled || (!me?.line && !me?.clinging && !hands)
+                  }
                 >
                   <Anchor size={18} />
                   <span>
-                    {me?.clinging ? 'Climb' : 'Reel'}
+                    {me?.clinging
+                      ? 'Climb'
+                      : hands === 'patch'
+                        ? 'Patch'
+                        : hands === 'bail'
+                          ? 'Bail'
+                          : 'Reel'}
                     <kbd>Hold E</kbd>
                   </span>
                 </HoldButton>
@@ -804,6 +872,28 @@ export default function ReelProblems() {
                     Brace<kbd>Shift</kbd>
                   </span>
                 </HoldButton>
+                <button
+                  className="reel-action reel-jump-action"
+                  disabled={uiDisabled || me?.swimming}
+                  onClick={() => action({ type: 'jump' })}
+                >
+                  <ArrowUp size={18} />
+                  <span>
+                    Jump<kbd>J</kbd>
+                  </span>
+                </button>
+                <button
+                  className="reel-action"
+                  disabled={
+                    uiDisabled || me?.swimming || (!me?.paddle && !!me?.line)
+                  }
+                  onClick={() => action({ type: 'paddle' })}
+                >
+                  <span>
+                    {me?.paddle ? 'Stow' : 'Paddle'}
+                    <kbd>P</kbd>
+                  </span>
+                </button>
                 <button
                   className="reel-action"
                   disabled={uiDisabled || !me?.line?.tangled}
@@ -836,7 +926,8 @@ export default function ReelProblems() {
                 </button>
               </nav>
               <span className="reel-movement-hint">
-                WASD / arrows · move around the boat · click the water to aim
+                WASD / arrows · move · J jump · P paddle · E reel, patch or bail
+                · click the water to aim
               </span>
             </>
           )}
@@ -853,6 +944,9 @@ export default function ReelProblems() {
                 {w?.players.reduce((sum, p) => sum + p.catches, 0)} catches.{' '}
                 {w?.players.reduce((sum, p) => sum + p.splashes, 0)} unplanned
                 swims.
+                {w?.sinks
+                  ? ` ${w.sinks} ${w.sinks === 1 ? 'boat' : 'boats'} sunk.`
+                  : ''}
               </p>
               <div className="reel-haul">
                 {Object.entries(w?.haul ?? {}).map(([kind, count]) => (
@@ -929,6 +1023,33 @@ export default function ReelProblems() {
                 extreme tilts.
               </p>
               <p>
+                <b>Jump:</b> J or the Jump button. Landing rocks the boat. Jump
+                at the rail while moving toward the water to dive in — sharks go
+                for swimmers, so have a way back.
+              </p>
+              <p>
+                <b>Paddle:</b> stand at a rail and press P. W strokes forward
+                and S back. A lone paddler also swings the bow away from their
+                side, so paddle on both rails to go straight. No fishing with a
+                paddle in hand.
+              </p>
+              <p>
+                <b>Leaks:</b> a cracked plank sprays water. Stand on it and hold
+                E for five seconds, faster with a friend. After ten seconds the
+                water pours in; hold E at the bucket to bail and buy time. If
+                the boat fills it sinks with all your gear, and you swim for a
+                new one at the dock while the sharks close in. Driftwood, shark
+                bumps, thunder waves and two anglers landing jumps together can
+                all crack a plank.
+              </p>
+              <p>
+                <b>Critters:</b> seagulls dive for fresh catches, so jump while
+                one swoops or it steals the fish. Crabs climb out of the live
+                well and pinch; land a jump on one to punt it overboard.
+                Cannonball in beside small fish to stun them, and the next cast
+                bites at once.
+              </p>
+              <p>
                 <b>Cast:</b> click a fish on the lake, or Space for a nearby
                 catch. Your hook can catch friends too.
               </p>
@@ -970,8 +1091,8 @@ export default function ReelProblems() {
                 and a lucky boot helps tire fish.
               </p>
               <p>
-                Touch players: use the joystick and fishing buttons. Hold Reel
-                and Brace; tap the other actions.
+                Touch players: use the joystick, the Jump button above it, and
+                the fishing buttons. Hold Reel and Brace; tap the other actions.
               </p>
             </div>
           )}

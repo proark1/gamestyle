@@ -3,7 +3,9 @@ import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as THREE from 'three';
 import {
   ANGLER_COLORS,
+  DOCK,
   LANDING_MS,
+  LEAK_WINDOW_MS,
   WELL_SURFACE,
   idleInput,
   landingPose,
@@ -19,6 +21,8 @@ import {
   createAngler,
   createBoat,
   createCatch,
+  createCrab,
+  createPaddle,
   deckSway,
   material,
   nameLabel,
@@ -60,6 +64,19 @@ export class ReelScene {
     }),
   );
   private splashAt = -1e9;
+  private hull = 0;
+  /** The stowaway, kept after it is punted so it can fly off the deck. */
+  private crab = createCrab();
+  private crabGoneAt = -1e9;
+  /** Points a swimmer at the dock while the boat is on the lake bed. */
+  private dockArrow = new THREE.Mesh(
+    new THREE.ConeGeometry(0.35, 0.9, 3),
+    new THREE.MeshBasicMaterial({ color: '#ffd24a' }),
+  );
+  private dockBeacon = new THREE.Mesh(
+    new THREE.TorusGeometry(1.6, 0.12, 6, 28),
+    new THREE.MeshBasicMaterial({ color: '#ffd24a', transparent: true }),
+  );
   private observer: ResizeObserver;
   private resizePending = true;
   private viewportWidth = 0;
@@ -93,7 +110,7 @@ export class ReelScene {
     this.renderer.setClearColor('#cee4d5');
     this.renderer.domElement.setAttribute(
       'aria-label',
-      'Fishing lake. Click the water to cast; use WASD to move.',
+      'Fishing lake. Click the water to cast; WASD moves, J jumps and P takes a paddle.',
     );
     this.renderer.domElement.tabIndex = 0;
     container.appendChild(this.renderer.domElement);
@@ -130,6 +147,13 @@ export class ReelScene {
     this.splash.position.set(0, WELL_SURFACE + 0.02, 0);
     this.splash.visible = false;
     this.boat.add(this.splash);
+    this.crab.visible = false;
+    this.boat.add(this.crab);
+    this.dockBeacon.rotation.x = -Math.PI / 2;
+    this.dockBeacon.position.set(DOCK.x, 0.15, DOCK.z - 1);
+    this.dockBeacon.visible = false;
+    this.dockArrow.visible = false;
+    this.scene.add(this.dockBeacon, this.dockArrow);
     for (let i = 0; i < 4; i++)
       this.demo.players.push(
         newAngler(
@@ -245,6 +269,8 @@ export class ReelScene {
         'f',
         'shift',
         'v',
+        'j',
+        'p',
       ].includes(key)
     )
       return;
@@ -253,6 +279,8 @@ export class ReelScene {
     if (e.repeat) return;
     if (key === 'v') this.changeCamera();
     if (key === ' ') this.cb.action({ type: 'cast' });
+    if (key === 'j') this.cb.action({ type: 'jump' });
+    if (key === 'p') this.cb.action({ type: 'paddle' });
     if (key === 'q') this.cb.action({ type: 'cut' });
     if (key === 'r') this.cb.action({ type: 'untangle' });
     if (key === 'f') this.cb.action({ type: 'rescue' });
@@ -328,17 +356,58 @@ export class ReelScene {
       b = world.boat;
     this.sea.update(world, now);
     const smooth = 1 - Math.exp(-12 * dt);
+    // A new boat bobs up at the dock rather than gliding over from the wreck.
+    if ((b.hull ?? 0) !== this.hull) {
+      this.hull = b.hull ?? 0;
+      this.yaw.position.set(b.x, -2.5, b.z);
+      this.yaw.rotation.y = b.yaw;
+    }
+    // Hosts from before leaks send no water level.
+    const flood = b.flood ?? 0;
+    // It sits lower as it fills, then slips under and stays there.
     this.yaw.position.lerp(
-      new THREE.Vector3(b.x, 0.16 + Math.sin(now / 900) * 0.06, b.z),
-      smooth,
+      new THREE.Vector3(
+        b.x,
+        0.16 + Math.sin(now / 900) * 0.06 - flood * 0.45 - (b.sunk ? 3.2 : 0),
+        b.z,
+      ),
+      b.sunk ? 1 - Math.exp(-1.5 * dt) : smooth,
     );
     this.yaw.rotation.y += (b.yaw - this.yaw.rotation.y) * smooth;
     this.boat.rotation.z +=
-      ((this.snapshot ? b.roll : Math.sin(now / 1400) * 0.07) -
+      ((this.snapshot
+        ? b.roll + (b.sunk ? 0.45 : 0)
+        : Math.sin(now / 1400) * 0.07) -
         this.boat.rotation.z) *
       smooth;
     this.boat.rotation.x += (b.pitch - this.boat.rotation.x) * smooth;
     this.boat.getObjectByName('tire')!.visible = world.gear.tire;
+    const bilge = this.boat.getObjectByName('bilge')!;
+    bilge.visible = flood > 0.01;
+    bilge.position.y = 0.45 + flood * 0.6;
+    const leak = this.boat.getObjectByName('leak')!,
+      open = world.leak;
+    leak.visible = !!open && !b.sunk;
+    if (open) {
+      leak.position.set(open.x, 0.51, open.z);
+      leak
+        .getObjectByName('jet')!
+        .scale.set(
+          1,
+          0.6 +
+            Math.abs(Math.sin(now / 90)) * 0.6 +
+            (world.clock - open.at >= LEAK_WINDOW_MS ? 0.7 : 0),
+          1,
+        );
+      (
+        (leak.getObjectByName('leak-ring') as THREE.Mesh)
+          .material as THREE.MeshBasicMaterial
+      ).opacity = 0.45 + Math.sin(now / 160) * 0.35;
+    }
+    for (const side of [-1, 1])
+      this.boat.getObjectByName(
+        side < 0 ? 'paddle-port' : 'paddle-starboard',
+      )!.visible = !world.players.some((p) => !p.swimming && p.paddle === side);
     const ids = new Set(world.players.map((p) => p.id));
     for (const [id, object] of this.anglers)
       if (!ids.has(id)) {
@@ -396,11 +465,16 @@ export class ReelScene {
           // Keep the world position at the rim so the fall visibly reaches the water.
           parent.attach(object);
           object.userData.fellAt = now;
+          // Still in the air on its last frame aboard: that was a jump, not a slip.
+          object.userData.dove = object.userData.airborne === true;
         } else {
           parent.add(object);
           object.position.set(p.x, p.swimming ? -0.45 : 0.52, p.z);
         }
       }
+      // A host from before jumping sends no height.
+      const lift = p.swimming ? 0 : (p.y ?? 0);
+      object.userData.airborne = lift > 0;
       const downed = p.swimming && world.clock < p.downedUntil;
       const falling =
         p.swimming && now - (object.userData.fellAt ?? -1000) < 500;
@@ -411,13 +485,16 @@ export class ReelScene {
           ? -0.5 + p.climb * 1.02
           : p.swimming
             ? -0.48 + Math.sin(now / 200) * 0.08
-            : 0.52;
+            : 0.52 + lift;
       object.position.lerp(new THREE.Vector3(p.x, height, p.z), smooth);
       object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
       if (falling) {
+        // A jump goes in head first; a slip tumbles in sideways.
+        const dove = object.userData.dove === true;
         object.rotation.x =
-          Math.sin(((now - object.userData.fellAt) / 500) * Math.PI) * 0.9;
-        object.rotation.z = 0.65;
+          Math.sin(((now - object.userData.fellAt) / 500) * Math.PI) *
+          (dove ? 1.4 : 0.9);
+        object.rotation.z = dove ? 0 : 0.65;
       } else if (downed) {
         object.rotation.x = 1.45;
         object.rotation.z = 0.6;
@@ -433,7 +510,30 @@ export class ReelScene {
         object,
         now,
         !p.swimming && Math.hypot(p.input.x, p.input.z) > 0.1,
+        lift > 0,
       );
+      // A paddle in hand replaces the rod, and strokes swing it through the water.
+      const paddling = !p.swimming && !!p.paddle;
+      object.getObjectByName('rod')!.visible = !paddling;
+      let paddle = object.userData.paddle as THREE.Group | undefined;
+      if (paddling && !paddle) {
+        paddle = createPaddle();
+        paddle.scale.setScalar(0.9);
+        object.add(paddle);
+        object.userData.paddle = paddle;
+      }
+      if (paddle) {
+        paddle.visible = paddling;
+        // Paddlers face the bow, so the outboard rail is on their other hand.
+        const out = -(p.paddle || 1);
+        const stroke = Math.abs(p.input.z) > 0.2;
+        paddle.position.set(out * 0.3, 1.25, 0.25);
+        paddle.rotation.set(
+          stroke ? Math.sin(now / 260) * 0.6 * Math.sign(-p.input.z) : 0.2,
+          0,
+          Math.PI + out * 0.46,
+        );
+      }
       const line = this.lines.get(p.id)!,
         bobber = this.bobbers.get(p.id)!;
       line.visible = bobber.visible = !!p.line;
@@ -512,11 +612,23 @@ export class ReelScene {
         continue;
       }
       object.scale.setScalar(object.userData.size);
+      // A cannonballed fish floats belly up, wobbling.
+      const dazed = world.clock < (f.stunnedUntil ?? 0);
       const y = f.surge
         ? 0.45 + Math.abs(Math.sin(now / 230)) * 0.65
-        : -0.03 + Math.sin(now / 650 + f.x) * 0.05;
+        : dazed
+          ? 0.1
+          : -0.03 + Math.sin(now / 650 + f.x) * 0.05;
       object.position.lerp(new THREE.Vector3(f.x, y, f.z), smooth);
-      object.rotation.set(0, f.angle, f.surge ? Math.sin(now / 90) * 0.12 : 0);
+      object.rotation.set(
+        0,
+        f.angle,
+        dazed
+          ? Math.PI + Math.sin(now / 200) * 0.3
+          : f.surge
+            ? Math.sin(now / 90) * 0.12
+            : 0,
+      );
     }
     const splash = (now - this.splashAt) / 420;
     this.splash.visible = splash >= 0 && splash < 1;
@@ -525,13 +637,67 @@ export class ReelScene {
       (this.splash.material as THREE.MeshBasicMaterial).opacity =
         0.9 * (1 - splash);
     }
+    // The crab rides the deck, and cartwheels off it once it is gone.
+    const crab = world.crab;
+    if (crab && !b.sunk) {
+      this.crab.visible = true;
+      this.crabGoneAt = -1e9;
+      this.crab.position.set(crab.x, 0.51, crab.z);
+      this.crab.rotation.set(0, crab.angle + Math.sin(now / 60) * 0.2, 0);
+      const snap = Math.sin(now / 110) * 0.25;
+      this.crab.getObjectByName('clawL')!.rotation.y = snap;
+      this.crab.getObjectByName('clawR')!.rotation.y = -snap;
+    } else if (this.crab.visible) {
+      if (this.crabGoneAt < 0) this.crabGoneAt = now;
+      const t = (now - this.crabGoneAt) / 650;
+      this.crab.position.y = 0.51 + Math.sin(Math.min(1, t) * Math.PI) * 1.8;
+      this.crab.position.x += Math.sign(this.crab.position.x || 1) * dt * 5;
+      this.crab.rotation.z += dt * 14;
+      if (t >= 1) this.crab.visible = false;
+    }
+    const me = world.players.find((p) => p.id === this.localId);
+    this.dockBeacon.visible = !!b.sunk;
+    if (b.sunk) {
+      this.dockBeacon.scale.setScalar(1 + Math.sin(now / 250) * 0.15);
+      (this.dockBeacon.material as THREE.MeshBasicMaterial).opacity =
+        0.6 + Math.sin(now / 250) * 0.3;
+    }
+    this.dockArrow.visible = !!b.sunk && !!me?.swimming;
+    if (this.dockArrow.visible && me) {
+      const dx = DOCK.x - me.x,
+        dz = DOCK.z - 1 - me.z,
+        d = Math.max(0.01, Math.hypot(dx, dz));
+      this.dockArrow.position.set(
+        me.x + (dx / d) * 2.2,
+        0.6,
+        me.z + (dz / d) * 2.2,
+      );
+      this.dockArrow.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(dx / d, 0, dz / d),
+      );
+    }
+    // Follow your own swim when there is no boat to watch, or it is far away.
+    const focus =
+      me?.swimming && (b.sunk || Math.hypot(me.x - b.x, me.z - b.z) > 14)
+        ? me
+        : null;
     const zoom = this.wide ? 1.6 : 1;
     const small = this.camera.aspect < 0.8 ? 1.2 : 1;
+    const fx = focus ? focus.x : b.x,
+      fz = focus ? focus.z : b.z;
     this.camera.position.lerp(
-      new THREE.Vector3(b.x, 25 * zoom * small, b.z + 27 * zoom * small),
+      new THREE.Vector3(fx, 25 * zoom * small, fz + 27 * zoom * small),
       1 - Math.exp(-3 * dt),
     );
-    this.camera.lookAt(this.yaw.position.x, 0, this.yaw.position.z);
+    const look = (this.camera.userData.look ??= this.yaw.position.clone());
+    (look as THREE.Vector3).lerp(
+      focus
+        ? new THREE.Vector3(focus.x, 0, focus.z)
+        : new THREE.Vector3(this.yaw.position.x, 0, this.yaw.position.z),
+      1 - Math.exp(-4 * dt),
+    );
+    this.camera.lookAt(look as THREE.Vector3);
     this.renderer.render(this.scene, this.camera);
   };
   private disposeObject(root: THREE.Object3D) {

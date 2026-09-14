@@ -14,6 +14,7 @@ import {
 import { createEngine } from './peer';
 import {
   BITE_COOLDOWN,
+  BOAT_HALF,
   CATCHES,
   CLIMB_MS,
   DOWNED_MS,
@@ -32,6 +33,10 @@ function game(count = 1) {
   for (let i = 0; i < count; i++)
     w.players.push(newAngler(String(i), `Angler ${i}`, i, w.clock));
   reelAction(w, '0', { type: 'start' }, '0');
+  // Leaks, driftwood and gulls have their own tests in leaks-and-paddles.test.ts.
+  w.debris = [];
+  w.leakReadyAt = Number.MAX_SAFE_INTEGER;
+  w.wildlife = w.wildlife.filter((v) => v.kind !== 'gull');
   return w;
 }
 function tick(w: ReelWorld, seconds: number) {
@@ -471,4 +476,94 @@ void test('Host checkpoints retain catches, fish and boat dynamics and clear hel
   );
   assert.equal(replacement.world.score, 99);
   assert.deepEqual(replacement.world.fish, engine.world.fish);
+});
+function onDeck() {
+  const w = game(),
+    p = w.players[0];
+  w.fish = [];
+  w.wildlife = [];
+  p.recoveredAt = w.clock - 3000;
+  return { w, p };
+}
+void test('A jump leaves the deck and lands back on it, once per take-off', () => {
+  const { w, p } = onDeck();
+  p.x = 0.5;
+  p.z = -1;
+  reelAction(w, p.id, { type: 'jump' }, p.id);
+  tick(w, 0.2);
+  assert.ok(p.y > 0.4, `in the air (${p.y})`);
+  tick(w, 0.3);
+  reelAction(w, p.id, { type: 'jump' }, p.id);
+  tick(w, 0.05);
+  assert.ok(p.vy < 0, 'mid-air is nothing to push off from');
+  tick(w, 1);
+  assert.equal(p.y, 0);
+  assert.equal(p.vy, 0);
+  assert.equal(p.swimming, false);
+  assert.deepEqual({ x: p.x, z: p.z }, { x: 0.5, z: -1 });
+  // Nor is the water.
+  const lake = overboard();
+  reelAction(lake.w, lake.p.id, { type: 'jump' }, lake.p.id);
+  assert.equal(lake.p.vy, 0);
+});
+void test('Jumping at the rail toward the water dives in, out past the hull on that side', () => {
+  for (const [axis, sign] of [
+    ['x', 1],
+    ['x', -1],
+    ['z', 1],
+    ['z', -1],
+  ] as const) {
+    const { w, p } = onDeck(),
+      label = `${axis} ${sign}`;
+    w.boat.yaw = 0.6;
+    p[axis] = sign * BOAT_HALF[axis];
+    reelAction(w, p.id, { type: 'cast', x: 12, z: 0 }, p.id);
+    tick(w, 0.3);
+    // Movement is steered in lake directions, so turn "out of this side" into one.
+    const c = Math.cos(w.boat.yaw),
+      s = Math.sin(w.boat.yaw),
+      out =
+        axis === 'x'
+          ? { x: sign * c, z: -sign * s }
+          : { x: sign * s, z: sign * c };
+    p.input.x = out.x;
+    p.input.z = out.z;
+    reelAction(w, p.id, { type: 'jump' }, p.id);
+    tick(w, 0.6);
+    assert.equal(p.swimming, true, label);
+    assert.equal(p.line, null, `${label}: the rod stays behind`);
+    assert.equal(p.splashes, 0, `${label}: a dive is not an unplanned swim`);
+    assert.ok(
+      w.events.some((e) => e.kind === 'splash' && e.text.includes('jumped in')),
+      label,
+    );
+    assert.equal(p.clinging, false, `${label}: swimming, not hanging on`);
+    assert.ok(hullGap(w, p) > GRAB_REACH, `${label}: lands out past the hull`);
+    const dx = p.x - w.boat.x,
+      dz = p.z - w.boat.z;
+    assert.equal(
+      Math.sign(axis === 'x' ? dx * c - dz * s : dx * s + dz * c),
+      sign,
+      `${label}: over the side it jumped from`,
+    );
+    p.input.x = -out.x;
+    p.input.z = -out.z;
+    tick(w, 2);
+    assert.equal(p.clinging, true, `${label}: and can swim straight back`);
+  }
+});
+void test('Only a jump from near the rail, heading out, clears the gunwale', () => {
+  const still = onDeck();
+  still.p.x = BOAT_HALF.x;
+  reelAction(still.w, still.p.id, { type: 'jump' }, still.p.id);
+  tick(still.w, 1.5);
+  assert.equal(still.p.swimming, false, 'straight up comes straight down');
+  assert.equal(still.p.x, BOAT_HALF.x);
+  const run = onDeck();
+  run.p.x = 0;
+  run.p.input.x = 1;
+  reelAction(run.w, run.p.id, { type: 'jump' }, run.p.id);
+  tick(run.w, 1.5);
+  assert.equal(run.p.swimming, false, 'a run from mid-deck lands short');
+  assert.equal(run.p.splashes, 0);
 });

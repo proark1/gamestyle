@@ -1,6 +1,12 @@
 import * as THREE from 'three';
-import { createJellyfish, createShark } from './models';
-import type { ReelWorld } from './types';
+import {
+  createCatch,
+  createGull,
+  createJellyfish,
+  createLog,
+  createShark,
+} from './models';
+import { GULL_DIVE_MS, type ReelWorld } from './types';
 
 /** Fixed buffers keep storm effects cheap on touch devices. */
 export class SeaScene {
@@ -24,6 +30,7 @@ export class SeaScene {
   );
   private lightning: THREE.Mesh;
   private visitors = new Map<string, THREE.Group>();
+  private logs = new Map<string, THREE.Group>();
   private sky = new THREE.Color('#cee4d5');
   private calmSky = new THREE.Color('#cee4d5');
   private stormSky = new THREE.Color('#536b85');
@@ -141,20 +148,84 @@ export class SeaScene {
       if (!active.has(visitor.id)) continue;
       let object = this.visitors.get(visitor.id);
       if (!object) {
-        object = visitor.kind === 'shark' ? createShark() : createJellyfish();
+        object =
+          visitor.kind === 'shark'
+            ? createShark()
+            : visitor.kind === 'gull'
+              ? createGull()
+              : createJellyfish();
         this.visitors.set(visitor.id, object);
         this.scene.add(object);
       }
       object.visible = true;
+      object.rotation.y = visitor.angle;
+      if (visitor.kind === 'gull') {
+        this.gull(w, visitor, object, t);
+        continue;
+      }
       object.position.set(
         visitor.x,
         0.12 + Math.sin(t * 3 + visitor.x) * 0.06,
         visitor.z,
       );
-      object.rotation.y = visitor.angle;
       if (visitor.kind === 'jellyfish')
         object.scale.setScalar(1 + Math.sin(t * 4 + visitor.z) * 0.09);
       else object.rotation.z = Math.sin(t * 5) * 0.035;
     }
+    for (const log of w.debris ?? []) {
+      let object = this.logs.get(log.id);
+      if (!object) {
+        object = createLog();
+        this.logs.set(log.id, object);
+        this.scene.add(object);
+      }
+      object.position.set(
+        log.x,
+        0.04 + Math.sin(t * 1.3 + log.z) * 0.04,
+        log.z,
+      );
+      object.rotation.y = log.angle;
+      object.rotation.z = Math.sin(t * 0.9 + log.x) * 0.06;
+    }
+  }
+
+  /** Wheeling high, stooping at the live well during a dive, or away with a fish. */
+  private gull(
+    w: ReelWorld,
+    visitor: ReelWorld['wildlife'][number],
+    object: THREE.Group,
+    t: number,
+  ) {
+    const diving = w.pending?.gull === visitor.id ? w.pending : null;
+    const flap = Math.sin(t * (diving || visitor.carry ? 22 : 9)) * 0.6;
+    object.getObjectByName('wingL')!.rotation.z = flap;
+    object.getObjectByName('wingR')!.rotation.z = -flap;
+    if (diving) {
+      // Fold in, drop onto the well, and hang there flapping until someone jumps.
+      const k = Math.min(1, 1 - (diving.until - w.clock) / GULL_DIVE_MS);
+      const dive = Math.min(1, k * 1.8);
+      object.position.set(
+        visitor.x + (w.boat.x - visitor.x) * dive,
+        5.5 + (1.6 - 5.5) * dive,
+        visitor.z + (w.boat.z - visitor.z) * dive,
+      );
+    } else
+      object.position.set(
+        visitor.x,
+        (visitor.carry ? 4 : 5.5) + Math.sin(t * 2 + visitor.x) * 0.2,
+        visitor.z,
+      );
+    let carried = object.userData.carried as THREE.Group | undefined;
+    if (visitor.carry && object.userData.carryKind !== visitor.carry) {
+      if (carried) object.remove(carried);
+      carried = createCatch(visitor.carry);
+      carried.scale.multiplyScalar(0.55);
+      carried.position.set(0, -0.35, 0.1);
+      carried.rotation.z = Math.PI / 2;
+      object.add(carried);
+      object.userData.carried = carried;
+      object.userData.carryKind = visitor.carry;
+    }
+    if (carried) carried.visible = !!visitor.carry;
   }
 }

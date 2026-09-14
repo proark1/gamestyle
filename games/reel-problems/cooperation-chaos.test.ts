@@ -20,6 +20,10 @@ function game(count = 2) {
     newAngler(String(i), `Angler ${i}`, i, w.clock),
   );
   reelAction(w, '0', { type: 'start' }, '0');
+  // Leaks, driftwood and gulls have their own tests in leaks-and-paddles.test.ts.
+  w.debris = [];
+  w.leakReadyAt = Number.MAX_SAFE_INTEGER;
+  w.wildlife = w.wildlife.filter((v) => v.kind !== 'gull');
   return w;
 }
 function tick(w: ReelWorld, seconds: number) {
@@ -305,11 +309,18 @@ void test('Host recovery keeps shared hooks, slipping, storm timing and encounte
   for (const p of legacy.world.players) {
     delete p.slipX;
     delete p.slipZ;
+    delete p.y;
+    delete p.vy;
   }
   legacy.world.fish[0].hooked = '0';
   const migrated = createEngine(900_000, legacy);
   assert.equal(hookedAnglers(migrated.world, fish.id).length, 3);
   migrated.advance(50);
   assert.ok(Number.isFinite(migrated.world.players[0].slipX));
+  assert.deepEqual(
+    [migrated.world.players[0].y, migrated.world.players[0].vy],
+    [0, 0],
+    'anglers from before jumping start with both feet on the deck',
+  );
   assert.equal(migrated.world.weather.kind, 'calm');
 });

@@ -3,7 +3,13 @@ import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
 import * as THREE from 'three';
-import { CATCHES, HULL_HALF, WELL_SURFACE, type CatchKind } from './types';
+import {
+  BUCKET,
+  CATCHES,
+  HULL_HALF,
+  WELL_SURFACE,
+  type CatchKind,
+} from './types';
 
 export function material(color: string, roughness = 0.85) {
   return new THREE.MeshStandardMaterial({ color, roughness });
@@ -106,6 +112,66 @@ export function createBoat() {
   }
   gear.visible = false;
   group.add(gear);
+  // A pointed bow at -z, so a paddler can tell which way is forward.
+  box(group, [0.9, 0.62, 0.9], [0, 0, -HULL_HALF.z], hull).rotation.y =
+    Math.PI / 4;
+  // One paddle along each rail, blade to the bow; hidden while someone holds it.
+  for (const side of [-1, 1]) {
+    const paddle = createPaddle();
+    paddle.name = side < 0 ? 'paddle-port' : 'paddle-starboard';
+    paddle.rotation.x = -Math.PI / 2;
+    paddle.position.set(side * 2.2, 0.62, 0.9);
+    group.add(paddle);
+  }
+  const bucket = createBucket();
+  bucket.name = 'bucket';
+  bucket.position.set(BUCKET.x, 0.51, BUCKET.z);
+  group.add(bucket);
+  // Water in the bottom of the boat, raised by the renderer as it floods.
+  const bilge = new THREE.Mesh(
+    new THREE.PlaneGeometry(HULL_HALF.x * 2 - 0.5, HULL_HALF.z * 2 - 0.5),
+    new THREE.MeshStandardMaterial({
+      color: '#3f9aa2',
+      transparent: true,
+      opacity: 0.72,
+      roughness: 0.2,
+    }),
+  );
+  bilge.name = 'bilge';
+  bilge.rotation.x = -Math.PI / 2;
+  bilge.visible = false;
+  group.add(bilge);
+  // A spout of spray over a warning ring, placed on the cracked plank by the renderer.
+  const leak = new THREE.Group();
+  leak.name = 'leak';
+  leak.visible = false;
+  const jet = new THREE.Mesh(
+    new THREE.ConeGeometry(0.14, 0.9, 8, 1, true),
+    new THREE.MeshStandardMaterial({
+      color: '#dff6f7',
+      transparent: true,
+      opacity: 0.8,
+      roughness: 0.1,
+      side: THREE.DoubleSide,
+    }),
+  );
+  jet.name = 'jet';
+  jet.rotation.x = Math.PI;
+  jet.position.y = 0.45;
+  leak.add(jet);
+  const warning = new THREE.Mesh(
+    new THREE.RingGeometry(0.38, 0.5, 24),
+    new THREE.MeshBasicMaterial({
+      color: '#ff6b4a',
+      side: THREE.DoubleSide,
+      transparent: true,
+    }),
+  );
+  warning.name = 'leak-ring';
+  warning.rotation.x = -Math.PI / 2;
+  warning.position.y = 0.03;
+  leak.add(warning);
+  group.add(leak);
   return group;
 }
 /** How far forward the rod hand is raised. */
@@ -150,19 +216,25 @@ export function createAngler(color: string, look?: Look) {
     material('#d2ab73'),
   );
   rod.rotation.x = ROD_TILT;
+  rod.name = 'rod';
   g.userData.rodTip = grip.addScaledVector(along, ROD_LENGTH);
   return g;
 }
-/** Steps an angler across the deck, rod held steady; `now` is in milliseconds. */
+/**
+ * Steps an angler across the deck, rod held steady, or tucks them up in a jump;
+ * `now` is in milliseconds.
+ */
 export function poseAngler(
   model: THREE.Object3D,
   now: number,
   moving: boolean,
+  airborne = false,
 ) {
-  const stride = moving ? Math.sin(now / 95) * 0.45 : 0;
-  model.userData.legL.rotation.x = stride;
-  model.userData.legR.rotation.x = -stride;
-  model.userData.armL.rotation.x = -stride * 0.7;
+  const stride = moving && !airborne ? Math.sin(now / 95) * 0.45 : 0;
+  // In the air: knees up and the free arm thrown out for balance.
+  model.userData.legL.rotation.x = airborne ? -0.6 : stride;
+  model.userData.legR.rotation.x = airborne ? -0.35 : -stride;
+  model.userData.armL.rotation.x = airborne ? -1.8 : -stride * 0.7;
   model.userData.armR.rotation.x = ROD_ARM;
 }
 /** How far an angler rocks on deck; `now` is in milliseconds. */
@@ -363,4 +435,79 @@ export function nameLabel(text: string, color: string) {
   sprite.scale.set(2.7, 0.68, 1);
   sprite.position.y = 2.65;
   return sprite;
+}
+/** A paddle standing on its grip: shaft up +y, blade at the top. */
+export function createPaddle() {
+  const g = new THREE.Group(),
+    wood = material('#c79a62');
+  cylinder(g, 0.035, 1.7, [0, 0.85, 0], wood);
+  box(g, [0.22, 0.5, 0.04], [0, 1.85, 0], wood);
+  return g;
+}
+export function createBucket() {
+  const g = new THREE.Group(),
+    tin = material('#6f8fa3');
+  tin.side = THREE.DoubleSide;
+  const pail = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.2, 0.15, 0.32, 12, 1, true),
+    tin,
+  );
+  pail.position.y = 0.16;
+  pail.castShadow = true;
+  g.add(pail);
+  cylinder(g, 0.15, 0.02, [0, 0.01, 0], material('#58788a'));
+  const handle = new THREE.Mesh(
+    new THREE.TorusGeometry(0.19, 0.012, 4, 12, Math.PI),
+    material('#3c4f59'),
+  );
+  handle.position.y = 0.32;
+  g.add(handle);
+  return g;
+}
+export function createCrab() {
+  const g = new THREE.Group(),
+    shell = material('#e0613f'),
+    dark = material('#3a2a24');
+  ball(g, [0.22, 0.09, 0.17], [0, 0.1, 0], shell);
+  for (const x of [-1, 1]) {
+    ball(g, [0.08, 0.05, 0.07], [x * 0.2, 0.12, 0.2], shell).name =
+      x < 0 ? 'clawL' : 'clawR';
+    for (const z of [-0.08, 0, 0.08])
+      box(g, [0.14, 0.02, 0.02], [x * 0.24, 0.05, z], shell);
+    ball(g, [0.025, 0.035, 0.025], [x * 0.06, 0.2, 0.13], dark);
+  }
+  return g;
+}
+/** Driftwood lying along +z. */
+export function createLog() {
+  const g = new THREE.Group();
+  cylinder(g, 0.28, 2.4, [0, 0, 0], material('#7a5a3a')).rotation.x =
+    Math.PI / 2;
+  for (const z of [-1.21, 1.21])
+    cylinder(g, 0.25, 0.03, [0, 0, z], material('#c9a577')).rotation.x =
+      Math.PI / 2;
+  return g;
+}
+/** A gull facing +z, with `wingL` and `wingR` to flap. */
+export function createGull() {
+  const g = new THREE.Group(),
+    white = material('#f4f4ef'),
+    grey = material('#9aa5ab');
+  ball(g, [0.18, 0.16, 0.42], [0, 0, 0], white);
+  ball(g, [0.12, 0.12, 0.12], [0, 0.1, 0.36], white);
+  const beak = new THREE.Mesh(
+    new THREE.ConeGeometry(0.035, 0.16, 5),
+    material('#f0a63a'),
+  );
+  beak.rotation.x = Math.PI / 2;
+  beak.position.set(0, 0.08, 0.52);
+  g.add(beak);
+  for (const x of [-1, 1]) {
+    const wing = new THREE.Group();
+    wing.name = x < 0 ? 'wingL' : 'wingR';
+    box(wing, [0.62, 0.03, 0.22], [x * 0.31, 0, 0], grey);
+    wing.position.set(x * 0.12, 0.05, 0);
+    g.add(wing);
+  }
+  return g;
 }

@@ -9,6 +9,8 @@ export const reelAnalytics: GameAnalytics = {
   game: 'reel-problems',
   milestones: [
     { key: 'overboard', label: 'Someone fell overboard' },
+    { key: 'leak', label: 'The boat sprang a leak' },
+    { key: 'sank', label: 'The boat sank' },
     { key: 'first-catch', label: 'Landed the first catch' },
     { key: 'half-goal', label: 'Reached half the catch target' },
     { key: 'goal', label: 'Reached the catch target' },
@@ -22,6 +24,8 @@ export const reelAnalytics: GameAnalytics = {
     cut: 'Cut a line free',
     untangle: 'Untangled lines',
     rescue: 'Pulled a friend aboard',
+    jump: 'Jumped',
+    paddle: 'Took or stowed a paddle',
     start: 'Started the tournament',
     restart: 'Started another tournament',
   },
@@ -42,6 +46,8 @@ export function reelPlayState(
   const milestones: string[] = [];
   if (world.players.some((player) => player.swimming))
     milestones.push('overboard');
+  if (world.leaks) milestones.push('leak');
+  if (world.sinks) milestones.push('sank');
   if (Object.values(world.haul).some((count) => (count ?? 0) > 0))
     milestones.push('first-catch');
   if (world.score >= world.goal / 2) milestones.push('half-goal');
