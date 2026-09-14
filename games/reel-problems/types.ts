@@ -44,6 +44,63 @@ export const WIND_PITCH = 0.22;
 export const GRAB_REACH = 1.6;
 /** Held-E milliseconds to haul yourself up the side and over the gunwale. */
 export const CLIMB_MS = 5000;
+/** Take-off speed of a jump in metres per second: a little under a metre of air. */
+export const JUMP_SPEED = 4.2;
+export const GRAVITY = 9.8;
+/** Feet this high above the deck clear the gunwale; the rail top sits 0.51 m up. */
+export const RAIL_CLEARANCE = 0.5;
+/** A jump over the side lands this far off the hull, out of reach of a grab. */
+export const DIVE_REACH = GRAB_REACH + 0.4;
+/** A leak seeps for ten seconds, then pours: left alone it sinks the boat at twenty. */
+export const LEAK_WINDOW_MS = 10_000;
+export const FLOOD_SEEP = 0.025;
+export const FLOOD_RUSH = 0.075;
+/** Held-E milliseconds for one angler to patch; each extra patcher adds PATCH_HELP of one. */
+export const PATCH_MS = 5000;
+export const PATCH_HELP = 0.65;
+/** Patch progress lost per second while nobody holds the leak. */
+export const PATCH_DECAY = 0.08;
+export const LEAK_REACH = 0.9;
+/** The one bucket, in deck metres. Held E beside it bails water over the side. */
+export const BUCKET = { x: -1.55, z: 2.75 };
+export const BUCKET_REACH = 0.8;
+export const BAIL_RATE = 0.04;
+/** A patched hull sheds its water slowly on its own. */
+export const DRAIN_RATE = 0.015;
+/** No leaks in a tournament's first 45 s or last 30 s, nor within 40 s of the last. */
+export const LEAK_FIRST_MS = 45_000;
+export const LEAK_LAST_MS = 30_000;
+export const LEAK_GAP_MS = 40_000;
+/** Water end of the dock planks, where a swimmer can get a new boat. */
+export const DOCK = { x: 0, z: 38, half: 2.75 };
+export const DOCK_REACH = 1.6;
+/** Where a new boat waits, stern to the dock and bow to the lake. */
+export const MOORING = { x: 0, z: 33.4 };
+/** Nobody made it to the dock: the harbour master sends a boat out anyway. */
+export const DOCK_RESCUE_MS = 30_000;
+/** How long the sharks drawn to a wreck stay hunting. */
+export const WRECK_SHARK_MS = 30_000;
+/** A stroke's push along the bow, and how much of it turns the boat from the rail. */
+export const PADDLE_THRUST = 8;
+export const PADDLE_TURN = 0.35;
+/** How near the rail an angler must stand to take that side's paddle. */
+export const PADDLE_REACH = 0.7;
+export const LOG_RADIUS = 0.6;
+/** Closing speed at which hitting driftwood cracks a plank instead of nudging it. */
+export const RAM_SPEED = 1.1;
+/** How long a seagull's dive for a landed catch lasts; a jump in that time scares it. */
+export const GULL_DIVE_MS = 1600;
+export const CRAB_CHANCE = 0.25;
+export const CRAB_MS = 40_000;
+export const PINCH_REACH = 0.45;
+export const PINCH_COOLDOWN = 2500;
+/** A pinch is a small hop with a shove, enough to clear the rail from beside it. */
+export const PINCH_HOP = 3.4;
+export const PINCH_SHOVE = 2.4;
+export const STOMP_REACH = 0.6;
+/** A deliberate jump in stuns small fish this close to the splash. */
+export const CANNONBALL_REACH = 4.5;
+export const STUN_MS = 8000;
 /** Damage to a swimmer, out of one whole angler. Two shark bites is fatal. */
 export const SHARK_BITE = 0.55;
 export const JELLY_STING = 0.2;
@@ -154,6 +211,16 @@ export type Angler = {
   facing: number;
   slipX: number;
   slipZ: number;
+  /** Height above the deck while jumping, in metres; 0 with both feet down. */
+  y: number;
+  /** Upward speed of that jump, in metres per second. */
+  vy: number;
+  /** When both feet last came back down on the deck. */
+  landedAt: number;
+  /** Airborne because a crab pinched them, not because they chose to jump. */
+  pinched: boolean;
+  /** The paddle in hand: -1 port, 1 starboard, 0 none. */
+  paddle: number;
   swimming: boolean;
   /** Hanging off the hull, riding with the boat, ready to climb. */
   clinging: boolean;
@@ -181,6 +248,8 @@ export type Fish = Vector & {
   stamina: number;
   respawnAt: number;
   surge: boolean;
+  /** Knocked silly by a cannonball: it drifts, and a hook near it bites at once. */
+  stunnedUntil: number;
 };
 export type Boat = Vector & {
   vx: number;
@@ -191,6 +260,52 @@ export type Boat = Vector & {
   pitch: number;
   rollVelocity: number;
   pitchVelocity: number;
+  /** Water aboard, 0 dry to 1 gone under. */
+  flood: number;
+  /** On the lake bed: no deck, no hull to hold, until a new boat leaves the dock. */
+  sunk: boolean;
+  sunkAt: number;
+  /** Counts boats launched this tournament, so clients know to stop gliding the old one. */
+  hull: number;
+};
+export type LeakCause =
+  | 'random'
+  | 'shark'
+  | 'thunder'
+  | 'log'
+  | 'monster'
+  | 'landing';
+/** A cracked plank, in deck metres. */
+export type Leak = {
+  x: number;
+  z: number;
+  at: number;
+  /** Patch progress, 0 to 1. */
+  patch: number;
+  /** The "pouring in" warning has gone out. */
+  warned: boolean;
+};
+export type Driftwood = Vector & {
+  id: string;
+  vx: number;
+  vz: number;
+  angle: number;
+  bumpAt: number;
+};
+/** A crab that came aboard with a catch, in deck metres. */
+export type Crab = {
+  x: number;
+  z: number;
+  angle: number;
+  pinchAt: number;
+  until: number;
+};
+/** A landed catch a seagull is diving for; it only scores if someone scares the bird. */
+export type PendingCatch = {
+  kind: CatchKind;
+  crew: string[];
+  until: number;
+  gull: string;
 };
 export type ReelEvent = {
   id: number;
@@ -209,6 +324,17 @@ export type ReelEvent = {
     | 'chomp'
     | 'jellyfish'
     | 'sting'
+    | 'leak'
+    | 'patched'
+    | 'flooding'
+    | 'sink'
+    | 'launch'
+    | 'ram'
+    | 'gull'
+    | 'steal'
+    | 'crab'
+    | 'pinch'
+    | 'stomp'
     | 'start'
     | 'finish';
 };
@@ -229,11 +355,15 @@ export type LakeWeather = {
 };
 export type SeaVisitor = Vector & {
   id: string;
-  kind: 'shark' | 'jellyfish';
+  kind: 'shark' | 'jellyfish' | 'gull';
   angle: number;
   activeUntil: number;
   nextAt: number;
   hitAt: number;
+  /** Drawn by a sinking boat; leaves for good when its hunt is over. */
+  wreck?: boolean;
+  /** A gull making off with a stolen catch. */
+  carry?: CatchKind;
 };
 export type ReelWorld = {
   clock: number;
@@ -252,6 +382,16 @@ export type ReelWorld = {
   haul: Partial<Record<CatchKind, number>>;
   events: ReelEvent[];
   eventId: number;
+  leak: Leak | null;
+  /** Earliest moment any leak may spring, provoked or not. */
+  leakReadyAt: number;
+  /** When the next unprovoked leak springs. */
+  leakDueAt: number;
+  leaks: number;
+  sinks: number;
+  debris: Driftwood[];
+  crab: Crab | null;
+  pending: PendingCatch | null;
 };
 export type ReelSnapshot = {
   code: string;
@@ -261,7 +401,15 @@ export type ReelSnapshot = {
 };
 export type ReelSession = Session;
 export type ReelAction = {
-  type: 'start' | 'restart' | 'cast' | 'cut' | 'untangle' | 'rescue';
+  type:
+    | 'start'
+    | 'restart'
+    | 'cast'
+    | 'cut'
+    | 'untangle'
+    | 'rescue'
+    | 'jump'
+    | 'paddle';
   x?: number;
   z?: number;
 };

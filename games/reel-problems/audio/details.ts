@@ -132,6 +132,24 @@ export const reelDetails = [
     0.48,
   ),
   bed(
+    'ambience.leak',
+    'Water spraying in',
+    'A steady jet of lake water sprays through a cracked wooden plank and patters on the deck.',
+    0.5,
+  ),
+  bed(
+    'ambience.paddle',
+    'Paddling',
+    'A wooden paddle dips and pulls through lake water in a steady stroke rhythm, drips between strokes.',
+    0.45,
+  ),
+  bed(
+    'ambience.bail',
+    'Bailing water',
+    'A bucket scoops water from a small boat and tosses it over the side, steady repeating splashes.',
+    0.45,
+  ),
+  bed(
     'ambience.swim',
     'Swimming beside the boat',
     'A person slowly paddles in calm lake water, small regular hand splashes and close ripples, no distress.',

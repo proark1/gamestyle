@@ -11,7 +11,9 @@ import {
   WIND_PITCH,
   WIND_ROLL,
   type Angler,
+  type Driftwood,
   type LakeWeather,
+  type LeakCause,
   type ReelEvent,
   type ReelWorld,
   type SeaVisitor,
@@ -48,7 +50,7 @@ export function freshWeather(now: number): LakeWeather {
 }
 
 export function freshWildlife(now: number): SeaVisitor[] {
-  return ['shark', 'jellyfish', 'jellyfish'].map((kind, i) => ({
+  return ['shark', 'jellyfish', 'jellyfish', 'gull'].map((kind, i) => ({
     id: `visitor-${i}`,
     kind: kind as SeaVisitor['kind'],
     x: 0,
@@ -58,6 +60,25 @@ export function freshWildlife(now: number): SeaVisitor[] {
     nextAt: now + 24_000 + i * 11_000,
     hitAt: 0,
   }));
+}
+
+/** Two logs out by the shore, drifting in across the lake. */
+export function freshDebris(): Driftwood[] {
+  return [
+    { x: 31, z: -24 },
+    { x: -30, z: 25 },
+  ].map(({ x, z }, i) => {
+    const d = Math.hypot(x, z);
+    return {
+      id: `log-${i}`,
+      x,
+      z,
+      vx: (-x / d) * 0.7,
+      vz: (-z / d) * 0.7,
+      angle: Math.atan2(-x, -z),
+      bumpAt: 0,
+    };
+  });
 }
 
 type Emit = (w: ReelWorld, kind: ReelEvent['kind'], message: string) => void;
@@ -101,10 +122,19 @@ function wound(w: ReelWorld, emit: Emit, p: Angler, bite: boolean) {
   );
 }
 
+const ARRIVALS: Record<SeaVisitor['kind'], string> = {
+  shark: 'Shark fin! Watch for a bump and keep your balance.',
+  jellyfish:
+    'Jellyfish drifting in! Keep your lines away from the glowing tentacles.',
+  gull: 'Seagulls overhead! When one dives for a catch, jump to scare it off.',
+};
+
 /** Only the host advances hazards; all timing and randomness survive handover. */
 export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
   const weather = w.weather,
     boat = w.boat;
+  // A plank the sea cracked this frame, for the hull to spring a leak from.
+  let crack: LeakCause | null = null;
   if (w.clock >= weather.until) {
     const next: Record<WeatherKind, WeatherKind> = {
       calm: 'wind',
@@ -144,6 +174,7 @@ export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
     weather.lightningZ = boat.z + Math.cos(strikeAngle) * 12;
     boat.rollVelocity -= localX * 0.38;
     boat.pitchVelocity += localZ * 0.28;
+    if (random(w) < 0.2) crack = 'thunder';
     emit(
       w,
       'thunder',
@@ -151,9 +182,14 @@ export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
     );
   }
 
+  // Sharks a wreck drew in leave for good once their hunt is over.
+  w.wildlife = w.wildlife.filter(
+    (visitor) => !visitor.wreck || w.clock < visitor.activeUntil,
+  );
   for (const visitor of w.wildlife) {
     if (visitor.activeUntil && w.clock >= visitor.activeUntil) {
       visitor.activeUntil = 0;
+      visitor.carry = undefined;
       visitor.nextAt = w.clock + 28_000 + random(w) * 22_000;
     }
     if (!visitor.activeUntil) {
@@ -165,13 +201,7 @@ export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
       visitor.activeUntil =
         w.clock + (visitor.kind === 'shark' ? 19_000 : 26_000);
       visitor.hitAt = w.clock + 2200;
-      emit(
-        w,
-        visitor.kind,
-        visitor.kind === 'shark'
-          ? 'Shark fin! Watch for a bump and keep your balance.'
-          : 'Jellyfish drifting in! Keep your lines away from the glowing tentacles.',
-      );
+      emit(w, visitor.kind, ARRIVALS[visitor.kind]);
     }
     if (visitor.kind === 'shark') {
       const prey = swimmers(w)
@@ -210,7 +240,7 @@ export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
         const bx = visitor.x - boat.x,
           bz = visitor.z - boat.z;
         const near = Math.hypot(bx, bz);
-        if (near < 6 && w.clock >= visitor.hitAt) {
+        if (!boat.sunk && near < 6 && w.clock >= visitor.hitAt) {
           visitor.hitAt = w.clock + 6200;
           const nx = bx / Math.max(0.1, near),
             nz = bz / Math.max(0.1, near);
@@ -220,12 +250,32 @@ export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
             (nx * Math.cos(boat.yaw) - nz * Math.sin(boat.yaw)) * 1.35;
           boat.pitchVelocity -=
             (nx * Math.sin(boat.yaw) + nz * Math.cos(boat.yaw)) * 0.95;
+          if (random(w) < 0.2) crack = 'shark';
           emit(
             w,
             'shark',
             'The shark bumped the hull! Shift your weight and hold on!',
           );
         }
+      }
+    } else if (visitor.kind === 'gull') {
+      // Wheeling over the boat, or off over the shore with a stolen catch.
+      const dx = visitor.x - boat.x,
+        dz = visitor.z - boat.z,
+        out = Math.max(0.01, Math.hypot(dx, dz));
+      if (visitor.carry) {
+        visitor.x += (dx / out) * dt * 8;
+        visitor.z += (dz / out) * dt * 8;
+        visitor.angle = Math.atan2(dx, dz);
+      } else {
+        const orbit = Math.atan2(dx, dz) + dt * 0.9,
+          tx = boat.x + Math.sin(orbit) * 4 - visitor.x,
+          tz = boat.z + Math.cos(orbit) * 4 - visitor.z,
+          d = Math.max(0.01, Math.hypot(tx, tz)),
+          travel = Math.min(d, dt * 9);
+        visitor.x += (tx / d) * travel;
+        visitor.z += (tz / d) * travel;
+        visitor.angle = Math.atan2(tx, tz);
       }
     } else {
       visitor.x += (Math.sin(visitor.angle) * 0.3 + weather.windX * 0.035) * dt;
@@ -264,6 +314,22 @@ export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
       visitor.z *= 40 / radius;
     }
   }
+  for (const log of w.debris) {
+    log.x += (log.vx + weather.windX * 0.02) * dt;
+    log.z += (log.vz + weather.windZ * 0.02) * dt;
+    if (Math.hypot(log.x, log.z) <= 40.5) continue;
+    // Washed ashore: another piece floats in from elsewhere, across the boat's water.
+    const from = random(w) * Math.PI * 2;
+    log.x = Math.sin(from) * 39;
+    log.z = Math.cos(from) * 39;
+    const aimX = boat.x + (random(w) * 2 - 1) * 8 - log.x,
+      aimZ = boat.z + (random(w) * 2 - 1) * 8 - log.z,
+      d = Math.max(1, Math.hypot(aimX, aimZ)),
+      speed = 0.5 + random(w) * 0.4;
+    log.vx = (aimX / d) * speed;
+    log.vz = (aimZ / d) * speed;
+    log.angle = Math.atan2(log.vx, log.vz);
+  }
   const wave = Math.sin(w.clock / 660) * 0.22 + Math.sin(w.clock / 1100) * 0.1;
   return {
     forceX: weather.windX,
@@ -272,5 +338,6 @@ export function advanceChaos(w: ReelWorld, dt: number, emit: Emit) {
     // the boat harder than the gust itself does.
     roll: -localX * weather.gust * WIND_ROLL * (1 + wave),
     pitch: localZ * weather.gust * WIND_PITCH * (1 + wave),
+    crack,
   };
 }

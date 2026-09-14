@@ -66,6 +66,47 @@ const effects = {
     'Jellyfish sting',
     'A crackling electric zap fizzes over wet skin and rises into a stinging burn.',
   ],
+  leak: [
+    'Plank springs a leak',
+    'A wooden boat plank cracks with a sharp pop and a jet of water starts spraying.',
+  ],
+  patched: [
+    'Leak patched',
+    'A hammer taps a patch onto a wet wooden plank three times, then the spraying stops.',
+  ],
+  flooding: [
+    'Water pouring in',
+    'Lake water gushes and sloshes into a small wooden boat with a hollow rising gurgle.',
+  ],
+  sink: [
+    'Boat sinks',
+    'A small wooden boat fills and slips under the water with heavy glugging bubbles.',
+  ],
+  launch: [
+    'New boat launched',
+    'A small wooden boat is shoved off a dock with a knock and settles onto calm water.',
+  ],
+  ram: [
+    'Rammed driftwood',
+    'A wooden boat bow thumps hard into a floating log with a hollow knock.',
+  ],
+  gull: ['Seagulls arrive', 'Two seagulls cry and flap overhead above a lake.'],
+  steal: [
+    'Seagull steals a fish',
+    'A seagull swoops with a flurry of wings, snatches a wet fish and squawks.',
+  ],
+  crab: [
+    'Crab aboard',
+    'A small crab scuttles with quick clicking legs across wet wooden planks.',
+  ],
+  pinch: [
+    'Crab pinch',
+    'A crab claw snaps shut with a sharp click and a quick scuffle of boots on wood.',
+  ],
+  stomp: [
+    'Crab punted overboard',
+    'A boot stomps a wooden deck with a thud, then a small crab plops into the water.',
+  ],
 } as const;
 /**
  * Filtered-noise stand-ins used until the workshop generates real clips, so a
@@ -122,6 +163,46 @@ const textures: Partial<
     to: 70,
     filter: 'lowpass',
     peak: 1.1,
+    hits: 2,
+  },
+  leak: {
+    duration: 0.8,
+    from: 3000,
+    to: 900,
+    filter: 'bandpass',
+    peak: 0.7,
+    hits: 1,
+  },
+  flooding: {
+    duration: 1.6,
+    from: 900,
+    to: 200,
+    filter: 'lowpass',
+    peak: 0.8,
+    hits: 3,
+  },
+  sink: {
+    duration: 2.4,
+    from: 600,
+    to: 60,
+    filter: 'lowpass',
+    peak: 1.1,
+    hits: 4,
+  },
+  ram: {
+    duration: 0.5,
+    from: 500,
+    to: 80,
+    filter: 'lowpass',
+    peak: 0.9,
+    hits: 1,
+  },
+  stomp: {
+    duration: 0.6,
+    from: 700,
+    to: 100,
+    filter: 'lowpass',
+    peak: 0.8,
     hits: 2,
   },
   sting: {

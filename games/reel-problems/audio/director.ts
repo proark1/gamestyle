@@ -1,6 +1,7 @@
 import type { SceneAudioPlan } from '../../../shared/audio/scene-plan';
 import { ROUND_MS, type ReelWorld } from '../types';
 import { anglerPosition } from '../simulation';
+import { handsOnHull } from '../hull';
 
 export class ReelAudioDirector {
   private previous: ReelWorld | null = null;
@@ -92,6 +93,23 @@ export class ReelAudioDirector {
         : null,
       0.65,
     );
+    const aboard = w.players.filter((p) => !p.swimming);
+    loop('leak', playing && w.leak ? 'ambience.leak' : null, 0.6);
+    loop(
+      'paddle',
+      playing && aboard.some((p) => p.paddle && Math.abs(p.input.z) > 0.2)
+        ? 'ambience.paddle'
+        : null,
+      0.55,
+    );
+    loop(
+      'bail',
+      playing &&
+        aboard.some((p) => p.input.reel && handsOnHull(w, p) === 'bail')
+        ? 'ambience.bail'
+        : null,
+      0.55,
+    );
     const untangled =
       !!old &&
       w.players.some(
@@ -141,6 +159,15 @@ export class ReelAudioDirector {
         }
         for (const p of w.players) {
           const before = old.players.find((b) => b.id === p.id);
+          // Both feet back on the planks after a jump.
+          if (before && !p.swimming && !before.swimming && before.y > 0 && !p.y)
+            plan.hits.push({
+              id: 'step.deck',
+              variant: true,
+              strength: 0.9,
+              position: anglerPosition(w, p),
+              sourceId: p.id,
+            });
           const distance = before
             ? Math.hypot(p.x - before.x, p.z - before.z)
             : 0;

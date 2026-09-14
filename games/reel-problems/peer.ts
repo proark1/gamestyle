@@ -12,16 +12,26 @@ import {
   reelSnapshot,
 } from './simulation';
 import {
+  LEAK_FIRST_MS,
   idleInput,
   type ReelAction,
   type ReelSnapshot,
   type ReelWorld,
 } from './types';
-import { freshWeather, freshWildlife } from './chaos';
+import { freshDebris, freshWeather, freshWildlife } from './chaos';
 
 const adapter: GameAdapter<ReelWorld, ReelSnapshot> = {
   game: 'reel-problems',
-  actions: ['start', 'restart', 'cast', 'cut', 'untangle', 'rescue'],
+  actions: [
+    'start',
+    'restart',
+    'cast',
+    'cut',
+    'untangle',
+    'rescue',
+    'jump',
+    'paddle',
+  ],
   create: freshReel,
   add: (w, m) => {
     w.players.push(newAngler(m.id, m.name, m.color, w.clock));
@@ -48,10 +58,29 @@ export function createEngine(now: number, checkpoint?: EngineCheckpoint) {
   const engine = new PeerEngine(adapter, now, checkpoint);
   // Held reeling and bracing are transient, just like movement, after a handover.
   if (checkpoint) {
+    const w = engine.world;
     // Upgrade pre-weather checkpoints using existing player lines as hook links.
-    engine.world.weather ??= freshWeather(engine.world.clock);
-    engine.world.wildlife ??= freshWildlife(engine.world.clock);
-    for (const p of engine.world.players) {
+    w.weather ??= freshWeather(w.clock);
+    w.wildlife ??= freshWildlife(w.clock);
+    // Checkpoints from before leaks, gulls, crabs and driftwood.
+    if (!w.wildlife.some((v) => v.kind === 'gull'))
+      w.wildlife.push(
+        ...freshWildlife(w.clock).filter((v) => v.kind === 'gull'),
+      );
+    w.debris ??= freshDebris();
+    w.leak ??= null;
+    w.crab ??= null;
+    w.pending ??= null;
+    w.leaks ??= 0;
+    w.sinks ??= 0;
+    w.leakReadyAt ??= w.started + LEAK_FIRST_MS;
+    w.leakDueAt ??= w.leakReadyAt + 15_000;
+    w.boat.flood ??= 0;
+    w.boat.sunk ??= false;
+    w.boat.sunkAt ??= 0;
+    w.boat.hull ??= 0;
+    for (const f of w.fish) f.stunnedUntil ??= 0;
+    for (const p of w.players) {
       p.input = idleInput();
       p.slipX ??= 0;
       p.slipZ ??= 0;
@@ -60,6 +89,11 @@ export function createEngine(now: number, checkpoint?: EngineCheckpoint) {
       p.health ??= 1;
       p.stunUntil ??= 0;
       p.downedUntil ??= 0;
+      p.y ??= 0;
+      p.vy ??= 0;
+      p.landedAt ??= 0;
+      p.pinched ??= false;
+      p.paddle ??= 0;
     }
   }
   return engine;

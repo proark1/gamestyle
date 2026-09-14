@@ -60,3 +60,24 @@ void test('failed fishing finish uses its own result and menu stops the fishing 
   assert.equal(menu.reset, true);
   assert.ok(menu.loops.some((l) => l.id === 'music.menu'));
 });
+
+void test('a jump thuds when it comes back down on the deck, not on take-off', () => {
+  const director = new ReelAudioDirector(),
+    w = freshReel(100000);
+  w.players.push(newAngler('you', 'You', 0, w.clock));
+  w.phase = 'playing';
+  w.started = w.clock;
+  director.update(w, 'you');
+  w.clock += 100;
+  w.players[0].y = 0.6;
+  assert.equal(
+    director.update(w, 'you').hits.some((h) => h.id === 'step.deck'),
+    false,
+  );
+  w.clock += 100;
+  w.players[0].y = 0;
+  assert.equal(
+    director.update(w, 'you').hits.filter((h) => h.id === 'step.deck').length,
+    1,
+  );
+});
