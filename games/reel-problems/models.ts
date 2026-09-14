@@ -281,9 +281,21 @@ export function createAngler(color: string, look?: Look) {
     box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material('#ffb75f'));
   if (!worn.hat) {
     const hat = material(color);
-    const brim = cylinder(body, 0.46, 0.06, [0, WORKER_HEAD_TOP + 0.02, 0], hat);
+    const brim = cylinder(
+      body,
+      0.46,
+      0.06,
+      [0, WORKER_HEAD_TOP + 0.02, 0],
+      hat,
+    );
     brim.name = 'angler-hat';
-    const crown = cylinder(body, 0.3, 0.24, [0, WORKER_HEAD_TOP + 0.16, 0], hat);
+    const crown = cylinder(
+      body,
+      0.3,
+      0.24,
+      [0, WORKER_HEAD_TOP + 0.16, 0],
+      hat,
+    );
     crown.name = 'angler-hat';
   }
   // The rod leaves the right hand with flexible bending segments.

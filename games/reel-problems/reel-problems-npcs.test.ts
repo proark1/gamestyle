@@ -8,10 +8,7 @@ import {
   hookedAnglers,
 } from './simulation';
 import { createEngine } from './peer';
-import {
-  BUCKET,
-  type ReelWorld,
-} from './types';
+import { BUCKET, type ReelWorld } from './types';
 import { handlePeerRoom } from '../../shared/peer/coordinator';
 import type { RoomStore, Row } from '../../shared/rooms/types';
 
@@ -76,7 +73,10 @@ void test('local slot management: add NPC, fill slots, remove NPC, enforce capta
   // Remove NPC
   reelAction(w, 'human', { type: 'remove-npc', target: bot1.id }, 'human');
   assert.equal(w.players.length, 3);
-  assert.equal(w.players.some((p) => p.id === bot1.id), false);
+  assert.equal(
+    w.players.some((p) => p.id === bot1.id),
+    false,
+  );
 
   // Start tournament: cannot change slots during playing phase
   reelAction(w, 'human', { type: 'start' }, 'human');
@@ -241,7 +241,11 @@ void test('NPC eases off reeling during fish surge or high tension to prevent li
 
   // Normal calm fish: bot should reel in
   tick(w, 50);
-  assert.equal(bot.input.reel, true, 'Bot should reel when tension is low and fish is not surging');
+  assert.equal(
+    bot.input.reel,
+    true,
+    'Bot should reel when tension is low and fish is not surging',
+  );
 
   // Now fish surges
   perch.surge = true;
@@ -253,7 +257,11 @@ void test('NPC eases off reeling during fish surge or high tension to prevent li
   perch.surge = false;
   bot.line.tension = 0.95;
   tick(w, 50);
-  assert.equal(bot.input.reel, false, 'Bot should not reel when line tension is dangerous');
+  assert.equal(
+    bot.input.reel,
+    false,
+    'Bot should not reel when line tension is dangerous',
+  );
 });
 
 void test('NPC rushes to patch leak and bails water when flooded', () => {
@@ -277,7 +285,11 @@ void test('NPC rushes to patch leak and bails water when flooded', () => {
   bot.x = 0;
   bot.z = 1.6; // right beside leak
   tick(w, 100);
-  assert.equal(bot.input.reel, true, 'Bot should hold reel (patch) when standing at leak');
+  assert.equal(
+    bot.input.reel,
+    true,
+    'Bot should hold reel (patch) when standing at leak',
+  );
   assert.equal(bot.task, 'Patching leak');
 
   // Now leak is patched, but boat is flooded
@@ -286,7 +298,11 @@ void test('NPC rushes to patch leak and bails water when flooded', () => {
   bot.x = BUCKET.x;
   bot.z = BUCKET.z; // beside bucket
   tick(w, 100);
-  assert.equal(bot.input.reel, true, 'Bot should hold reel (bail) when at bucket in a flooded boat');
+  assert.equal(
+    bot.input.reel,
+    true,
+    'Bot should hold reel (bail) when at bucket in a flooded boat',
+  );
   assert.equal(bot.task, 'Bailing water');
 });
 
@@ -344,5 +360,9 @@ void test('NPC climbs aboard when swimming and rescues drowning teammates', () =
   human.z = w.boat.z + 1.5;
 
   tick(w, 300);
-  assert.equal(human.swimming, false, 'Bot should rescue nearby drowning human');
+  assert.equal(
+    human.swimming,
+    false,
+    'Bot should rescue nearby drowning human',
+  );
 });

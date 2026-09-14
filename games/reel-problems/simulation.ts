@@ -265,8 +265,7 @@ export function removeAngler(w: ReelWorld, id: string) {
 }
 export function reconcileReelNpcs(w: ReelWorld, slots: NpcSlot[]) {
   for (const p of w.players)
-    if (p.bot && !slots.some((slot) => slot.id === p.id))
-      removeAngler(w, p.id);
+    if (p.bot && !slots.some((slot) => slot.id === p.id)) removeAngler(w, p.id);
   for (const slot of slots) {
     const existing = w.players.find((p) => p.id === slot.id);
     if (existing) continue;

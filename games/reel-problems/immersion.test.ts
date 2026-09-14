@@ -1,11 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  freshReel,
-  newAngler,
-  step,
-  bank,
-} from './simulation';
+import { freshReel, newAngler, step, bank } from './simulation';
 import { ReelAudioDirector } from './audio/director';
 import { ROUND_MS } from './types';
 
@@ -44,15 +39,25 @@ void test('Flying fish ("Salmon Slap") knocks unbraced anglers flat on deck, but
 
   // Check results:
   // p1 was unbraced: should have tumbleUntil set, lost hat, and a slap event announced
-  assert.ok(p1.tumbleUntil > w.clock, 'Unbraced angler should be knocked into a tumble');
-  assert.equal(p1.lostHat, true, 'Unbraced angler should lose their hat on slap');
+  assert.ok(
+    p1.tumbleUntil > w.clock,
+    'Unbraced angler should be knocked into a tumble',
+  );
+  assert.equal(
+    p1.lostHat,
+    true,
+    'Unbraced angler should lose their hat on slap',
+  );
 
   // p2 was bracing: should resist the tumble
   assert.equal(p2.tumbleUntil, 0, 'Braced angler should not tumble');
   assert.equal(p2.lostHat, false, 'Braced angler should keep their hat');
 
   // Event was logged
-  assert.ok(w.events.some((e) => e.kind === 'slap'), 'Slap event should be announced');
+  assert.ok(
+    w.events.some((e) => e.kind === 'slap'),
+    'Slap event should be announced',
+  );
 });
 
 void test('Anglers bump and repel each other softly when colliding on deck', () => {
@@ -75,7 +80,10 @@ void test('Anglers bump and repel each other softly when colliding on deck', () 
   // Both players should experience repulsion velocity
   assert.ok(p1.slipX < 0, 'p1 should be pushed left away from p2');
   assert.ok(p2.slipX > 0, 'p2 should be pushed right away from p1');
-  assert.ok(w.events.some((e) => e.kind === 'bump'), 'Bump event should be announced');
+  assert.ok(
+    w.events.some((e) => e.kind === 'bump'),
+    'Bump event should be announced',
+  );
 });
 
 void test('Line snap triggers recoil tumble and lost balance', () => {
@@ -107,7 +115,10 @@ void test('Line snap triggers recoil tumble and lost balance', () => {
 
   assert.equal(p.line, null, 'Line should be snapped and gone');
   assert.ok(p.tumbleUntil > w.clock, 'Player should tumble upon line snap');
-  assert.ok(Math.hypot(p.slipX, p.slipZ) > 0, 'Player should have recoil slip velocity');
+  assert.ok(
+    Math.hypot(p.slipX, p.slipZ) > 0,
+    'Player should have recoil slip velocity',
+  );
 });
 
 void test('Landing The Lake Manager triggers trophy celebration pose', () => {
@@ -123,7 +134,10 @@ void test('Landing The Lake Manager triggers trophy celebration pose', () => {
 
   assert.ok(p.trophyUntil > w.clock, 'Player should have trophy pose active');
   assert.equal(p.trophyKind, 'monster', 'Trophy kind should match catch');
-  assert.ok(w.events.some((e) => e.kind === 'trophy'), 'Trophy event should be announced');
+  assert.ok(
+    w.events.some((e) => e.kind === 'trophy'),
+    'Trophy event should be announced',
+  );
 });
 
 void test('Audio Director triggers dread loop when shark stalks swimming player and 15s time warning', () => {

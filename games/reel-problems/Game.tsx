@@ -29,10 +29,7 @@ import {
   PeerGameConnection,
   enterPeerRoom,
 } from '../../shared/peer/connection';
-import {
-  isNpcAction,
-  type NpcAction,
-} from '../../shared/rooms/npc-slots';
+import { isNpcAction, type NpcAction } from '../../shared/rooms/npc-slots';
 import { CrewSlots } from './CrewSlots';
 import {
   advanceReel,

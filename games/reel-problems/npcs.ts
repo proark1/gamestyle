@@ -258,7 +258,8 @@ export function tickReelNpcs(
     // -------------------------------------------------------------
     if (!p.line && !p.paddle && canAct(p)) {
       const availableFish = w.fish.filter(
-        (f) => !f.respawnAt && distance(pPos, f) >= 1.5 && distance(pPos, f) <= 22,
+        (f) =>
+          !f.respawnAt && distance(pPos, f) >= 1.5 && distance(pPos, f) <= 22,
       );
 
       if (availableFish.length > 0) {
