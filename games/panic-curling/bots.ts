@@ -29,6 +29,16 @@ export function reconcileCurlingBots(world: PanicCurlingWorld) {
   let nameIndex = 0;
 
   for (const team of teams) {
+    // If a human deliverer exists on this team, remove any AI deliverer on this team
+    const hasHumanDeliverer = world.players.some(
+      (p) => !p.bot && p.team === team && p.role === 'deliverer',
+    );
+    if (hasHumanDeliverer) {
+      world.players = world.players.filter(
+        (p) => !(p.bot && p.team === team && p.role === 'deliverer'),
+      );
+    }
+
     for (const role of neededRoles) {
       const exists = world.players.some(
         (p) => p.team === team && p.role === role,
@@ -83,8 +93,14 @@ export function updateCurlingBots(world: PanicCurlingWorld, dt: number) {
     // Role specific behavior
     if (world.phase === 'aiming') {
       if (bot.team === world.turnTeam && bot.role === 'deliverer') {
+        // Human deliverers take priority: never auto-deliver if a human deliverer is present!
+        const hasHumanDeliverer = world.players.some(
+          (p) => !p.bot && p.team === world.turnTeam && p.role === 'deliverer',
+        );
+        if (hasHumanDeliverer) continue;
+
         // AI Deliverer waits briefly then launches stone
-        if (world.phaseTimer > 1.5) {
+        if (world.phaseTimer > 1.8) {
           botDeliverStone(world, bot);
         }
       }

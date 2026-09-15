@@ -75,6 +75,18 @@ export default function PanicCurlingGame() {
   const [isSweeping, setIsSweeping] = useState(false);
   const [steerDir, setSteerDir] = useState(0);
 
+  // Synchronization refs for 60fps simulation loop without effect tearing
+  const aimAngleRef = useRef(0);
+  const powerRef = useRef(0.5);
+  const spinRef = useRef(1);
+  const stoneKindRef = useRef<StoneKind>('granite');
+  const activeGadgetRef = useRef<GadgetId>('broom');
+  const isSweepingRef = useRef(false);
+  const steerDirRef = useRef(0);
+  const soundEnabledRef = useRef(true);
+  const teamRef = useRef<TeamId>('red');
+  const roleRef = useRef<Role>('deliverer');
+
   const sessionRef = useRef<PanicCurlingSession>({
     id: 'player-local',
     token: 'local-token',
@@ -92,6 +104,9 @@ export default function PanicCurlingGame() {
       void networkRef.current.action(act);
     } else if (localWorld.current) {
       panicCurlingAction(localWorld.current, sessionRef.current.id, act, true);
+      if (act.type === 'switchRole' || act.type === 'switchTeam') {
+        reconcileCurlingBots(localWorld.current);
+      }
       const snap = panicCurlingSnapshot(
         localWorld.current,
         'SOLO',
@@ -103,7 +118,7 @@ export default function PanicCurlingGame() {
     }
   }, []);
 
-  // Initialize Scene, Audio, and Local World
+  // Initialize Scene, Audio, and Local World (runs once)
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -156,21 +171,21 @@ export default function PanicCurlingGame() {
       lastTime = time;
 
       if (localWorld.current) {
-        // Feed player input
+        // Feed player input from stable refs
         const me = localWorld.current.players.find(
           (p) => p.id === sessionRef.current.id,
         );
         if (me) {
           me.input = {
             ...currentInput.current,
-            aimAngle,
-            power,
-            spin,
-            stoneKind,
-            sweep: isSweeping,
-            steer: steerDir,
+            aimAngle: aimAngleRef.current,
+            power: powerRef.current,
+            spin: spinRef.current,
+            stoneKind: stoneKindRef.current,
+            sweep: isSweepingRef.current,
+            steer: steerDirRef.current,
           };
-          me.gadget = activeGadget;
+          me.gadget = activeGadgetRef.current;
         }
 
         // Update Bots
@@ -180,7 +195,7 @@ export default function PanicCurlingGame() {
         advancePanicCurling(localWorld.current, Date.now());
 
         // Play events audio
-        if (audioRef.current && soundEnabled) {
+        if (audioRef.current && soundEnabledRef.current) {
           for (const ev of localWorld.current.events) {
             audioRef.current.playEvent(ev);
           }
@@ -206,22 +221,21 @@ export default function PanicCurlingGame() {
       cancelAnimationFrame(frameId);
       sceneRef.current?.dispose();
     };
-  }, [
-    soundEnabled,
-    aimAngle,
-    power,
-    spin,
-    stoneKind,
-    isSweeping,
-    steerDir,
-    activeGadget,
-  ]);
+  }, [dispatchAction]);
 
   // Power meter oscillation while aiming
   useEffect(() => {
-    if (!powerOscillating || snapshot?.world.phase !== 'aiming') return;
+    if (!powerOscillating) return;
     let up = true;
     const interval = setInterval(() => {
+      const current = localWorld.current;
+      if (
+        !current ||
+        current.phase !== 'aiming' ||
+        current.turnTeam !== teamRef.current
+      ) {
+        return;
+      }
       setPower((prev) => {
         let next = up ? prev + 0.03 : prev - 0.03;
         if (next >= 0.95) {
@@ -231,33 +245,36 @@ export default function PanicCurlingGame() {
           up = true;
           next = 0.1;
         }
+        powerRef.current = next;
         return next;
       });
     }, 30);
     return () => clearInterval(interval);
-  }, [powerOscillating, snapshot?.world.phase]);
+  }, [powerOscillating]);
 
   const handleLaunch = () => {
     setPowerOscillating(false);
     audioRef.current?.unlock();
     dispatchAction({
       type: 'deliver',
-      power,
-      angle: aimAngle,
-      spin,
-      kind: stoneKind,
+      power: powerRef.current,
+      angle: aimAngleRef.current,
+      spin: spinRef.current,
+      kind: stoneKindRef.current,
     });
-    setTimeout(() => setPowerOscillating(true), 2000);
+    setTimeout(() => setPowerOscillating(true), 2500);
   };
 
   const handleSwitchTeam = (newTeam: TeamId) => {
     setTeam(newTeam);
+    teamRef.current = newTeam;
     sessionRef.current.team = newTeam;
     dispatchAction({ type: 'switchTeam', team: newTeam });
   };
 
   const handleSwitchRole = (newRole: Role) => {
     setRole(newRole);
+    roleRef.current = newRole;
     sessionRef.current.role = newRole;
     dispatchAction({ type: 'switchRole', role: newRole });
   };
@@ -265,6 +282,14 @@ export default function PanicCurlingGame() {
   const handleTossBanana = () => {
     audioRef.current?.unlock();
     dispatchAction({ type: 'throwBanana' });
+  };
+
+  const toggleSound = () => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      soundEnabledRef.current = next;
+      return next;
+    });
   };
 
   const world = snapshot?.world;
@@ -279,7 +304,7 @@ export default function PanicCurlingGame() {
     <div className="curling-container">
       <GameToolbar
         muted={!soundEnabled}
-        onToggleSound={() => setSoundEnabled(!soundEnabled)}
+        onToggleSound={toggleSound}
         onHelp={() => {}}
       />
 
@@ -318,6 +343,13 @@ export default function PanicCurlingGame() {
         </div>
       )}
 
+      {/* Waiting Indicator during Opponent Turn */}
+      {world?.phase === 'aiming' && !isMyTurn && (
+        <div className="curling-waiting-banner">
+          ⏳ Opponent is lining up their throw...
+        </div>
+      )}
+
       {/* Deliverer Aim & Power Controls */}
       {isDeliverPhase && (
         <div className="curling-deliver-hud">
@@ -329,6 +361,7 @@ export default function PanicCurlingGame() {
                   className={`curling-toggle-btn ${stoneKind === k ? 'active' : ''}`}
                   onClick={() => {
                     setStoneKind(k);
+                    stoneKindRef.current = k;
                     dispatchAction({ type: 'switchStone', kind: k });
                   }}
                 >
@@ -340,13 +373,19 @@ export default function PanicCurlingGame() {
             <div className="curling-btn-group">
               <button
                 className={`curling-toggle-btn ${spin < 0 ? 'active' : ''}`}
-                onClick={() => setSpin(-1)}
+                onClick={() => {
+                  setSpin(-1);
+                  spinRef.current = -1;
+                }}
               >
                 ⟲ Curl Left
               </button>
               <button
                 className={`curling-toggle-btn ${spin > 0 ? 'active' : ''}`}
-                onClick={() => setSpin(1)}
+                onClick={() => {
+                  setSpin(1);
+                  spinRef.current = 1;
+                }}
               >
                 ⟳ Curl Right
               </button>
@@ -369,19 +408,34 @@ export default function PanicCurlingGame() {
           <div className="curling-hud-row">
             <button
               className="curling-toggle-btn"
-              onClick={() => setAimAngle((a) => Math.max(-0.35, a - 0.05))}
+              onClick={() =>
+                setAimAngle((a) => {
+                  const next = Math.max(-0.35, a - 0.05);
+                  aimAngleRef.current = next;
+                  return next;
+                })
+              }
             >
               ◀ Aim Left
             </button>
             <button
               className="curling-toggle-btn"
-              onClick={() => setAimAngle(0)}
+              onClick={() => {
+                setAimAngle(0);
+                aimAngleRef.current = 0;
+              }}
             >
               Center
             </button>
             <button
               className="curling-toggle-btn"
-              onClick={() => setAimAngle((a) => Math.min(0.35, a + 0.05))}
+              onClick={() =>
+                setAimAngle((a) => {
+                  const next = Math.min(0.35, a + 0.05);
+                  aimAngleRef.current = next;
+                  return next;
+                })
+              }
             >
               Aim Right ▶
             </button>
@@ -393,35 +447,71 @@ export default function PanicCurlingGame() {
         </div>
       )}
 
-      {/* Sweeper Controls */}
-      {isSlidePhase && role === 'sweeper' && (
+      {/* Sweeper Controls (Available to sweepers and the throwing team during slide) */}
+      {isSlidePhase && (role === 'sweeper' || isMyTurn) && (
         <div className="curling-sweeper-hud">
           <button
             className={`curling-steer-btn ${steerDir === -1 ? 'active' : ''}`}
-            onMouseDown={() => setSteerDir(-1)}
-            onMouseUp={() => setSteerDir(0)}
-            onTouchStart={() => setSteerDir(-1)}
-            onTouchEnd={() => setSteerDir(0)}
+            onMouseDown={() => {
+              setSteerDir(-1);
+              steerDirRef.current = -1;
+            }}
+            onMouseUp={() => {
+              setSteerDir(0);
+              steerDirRef.current = 0;
+            }}
+            onTouchStart={() => {
+              setSteerDir(-1);
+              steerDirRef.current = -1;
+            }}
+            onTouchEnd={() => {
+              setSteerDir(0);
+              steerDirRef.current = 0;
+            }}
           >
             ⇦ Steer Left
           </button>
 
           <button
             className={`curling-sweep-btn ${isSweeping ? 'active' : ''}`}
-            onMouseDown={() => setIsSweeping(true)}
-            onMouseUp={() => setIsSweeping(false)}
-            onTouchStart={() => setIsSweeping(true)}
-            onTouchEnd={() => setIsSweeping(false)}
+            onMouseDown={() => {
+              setIsSweeping(true);
+              isSweepingRef.current = true;
+            }}
+            onMouseUp={() => {
+              setIsSweeping(false);
+              isSweepingRef.current = false;
+            }}
+            onTouchStart={() => {
+              setIsSweeping(true);
+              isSweepingRef.current = true;
+            }}
+            onTouchEnd={() => {
+              setIsSweeping(false);
+              isSweepingRef.current = false;
+            }}
           >
             <Sparkles size={24} /> SWEEP! HARDER!
           </button>
 
           <button
             className={`curling-steer-btn ${steerDir === 1 ? 'active' : ''}`}
-            onMouseDown={() => setSteerDir(1)}
-            onMouseUp={() => setSteerDir(0)}
-            onTouchStart={() => setSteerDir(1)}
-            onTouchEnd={() => setSteerDir(0)}
+            onMouseDown={() => {
+              setSteerDir(1);
+              steerDirRef.current = 1;
+            }}
+            onMouseUp={() => {
+              setSteerDir(0);
+              steerDirRef.current = 0;
+            }}
+            onTouchStart={() => {
+              setSteerDir(1);
+              steerDirRef.current = 1;
+            }}
+            onTouchEnd={() => {
+              setSteerDir(0);
+              steerDirRef.current = 0;
+            }}
           >
             Steer Right ⇨
           </button>
@@ -429,7 +519,7 @@ export default function PanicCurlingGame() {
       )}
 
       {/* Gadget Switcher Bar */}
-      {role === 'sweeper' && (
+      {(role === 'sweeper' || (isSlidePhase && isMyTurn)) && (
         <div
           style={{
             position: 'absolute',
@@ -448,6 +538,7 @@ export default function PanicCurlingGame() {
               style={{ background: 'rgba(18, 38, 52, 0.88)' }}
               onClick={() => {
                 setActiveGadget(g);
+                activeGadgetRef.current = g;
                 dispatchAction({ type: 'switchGadget', gadget: g });
               }}
             >
