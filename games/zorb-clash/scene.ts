@@ -156,11 +156,14 @@ export class ZorbClashScene {
     turf.receiveShadow = true;
     this.scene.add(turf);
 
-    // Field line markings
+    // Field line markings with polygonOffset to guarantee zero Z-fighting
     const lineMat = new T.MeshBasicMaterial({
       color: '#ffffff',
       opacity: 0.9,
       transparent: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
     });
 
     // Center circle
@@ -184,20 +187,62 @@ export class ZorbClashScene {
     spot.position.y = 0.02;
     this.scene.add(spot);
 
-    // Stadium surrounding stands / barrier
+    // Stadium surrounding under-ground plate safely below turf (y = -0.2)
+    const subGroundMat = new T.MeshStandardMaterial({
+      color: '#1a1c29',
+      roughness: 0.9,
+    });
+    const subGroundGeo = new T.PlaneGeometry(
+      PITCH_WIDTH + 36,
+      PITCH_LENGTH + 36,
+    );
+    const subGround = new T.Mesh(subGroundGeo, subGroundMat);
+    subGround.rotation.x = -Math.PI / 2;
+    subGround.position.y = -0.2;
+    this.scene.add(subGround);
+
+    // Stadium surrounding perimeter barrier walls
     const barrierMat = new T.MeshStandardMaterial({
       color: '#2b2d42',
       roughness: 0.5,
     });
-    const barrierGeo = new T.BoxGeometry(
-      PITCH_WIDTH + 14,
-      2.5,
-      PITCH_LENGTH + 18,
-    );
-    // Cutout center
-    const outerWall = new T.Mesh(barrierGeo, barrierMat);
-    outerWall.position.set(0, -1.25, 0);
-    this.scene.add(outerWall);
+
+    // West and East outer boundary walls
+    const sideWallGeo = new T.BoxGeometry(1.4, 1.6, PITCH_LENGTH + 12);
+    const westWall = new T.Mesh(sideWallGeo, barrierMat);
+    westWall.position.set(-(PITCH_WIDTH / 2 + 3.8), 0.8, 0);
+    westWall.castShadow = true;
+    this.scene.add(westWall);
+
+    const eastWall = new T.Mesh(sideWallGeo, barrierMat);
+    eastWall.position.set(PITCH_WIDTH / 2 + 3.8, 0.8, 0);
+    eastWall.castShadow = true;
+    this.scene.add(eastWall);
+
+    // North and South outer boundary walls flanking the goals
+    const endWallWidth = (PITCH_WIDTH + 8 - GOAL_WIDTH) / 2;
+    const endWallGeo = new T.BoxGeometry(endWallWidth, 1.6, 1.4);
+
+    for (const zSign of [-1, 1]) {
+      const zPos = zSign * (PITCH_LENGTH / 2 + 5.8);
+      const leftEndWall = new T.Mesh(endWallGeo, barrierMat);
+      leftEndWall.position.set(
+        -(GOAL_WIDTH / 2 + endWallWidth / 2),
+        0.8,
+        zPos,
+      );
+      leftEndWall.castShadow = true;
+      this.scene.add(leftEndWall);
+
+      const rightEndWall = new T.Mesh(endWallGeo, barrierMat);
+      rightEndWall.position.set(
+        GOAL_WIDTH / 2 + endWallWidth / 2,
+        0.8,
+        zPos,
+      );
+      rightEndWall.castShadow = true;
+      this.scene.add(rightEndWall);
+    }
   }
 
   private setupGoals() {
@@ -533,8 +578,13 @@ export class ZorbClashScene {
     let x = 0;
     let z = 0;
 
-    if (this.keysDown.has('KeyA') || this.keysDown.has('ArrowLeft')) x -= 1;
-    if (this.keysDown.has('KeyD') || this.keysDown.has('ArrowRight')) x += 1;
+    // Screen-relative mapping: from camera facing +Z:
+    // Screen-left is world +X (A / ArrowLeft)
+    // Screen-right is world -X (D / ArrowRight)
+    // Screen-forward is world +Z (W / ArrowUp)
+    // Screen-back is world -Z (S / ArrowDown)
+    if (this.keysDown.has('KeyA') || this.keysDown.has('ArrowLeft')) x += 1;
+    if (this.keysDown.has('KeyD') || this.keysDown.has('ArrowRight')) x -= 1;
     if (this.keysDown.has('KeyW') || this.keysDown.has('ArrowUp')) z += 1;
     if (this.keysDown.has('KeyS') || this.keysDown.has('ArrowDown')) z -= 1;
 
