@@ -2,21 +2,22 @@
 
 Each game owns its implementation in `games/<id>/`. The folder identifiers match existing routes and saved room identifiers, so the displayed names can change without invalidating invitations, recordings, or database rows.
 
-| Folder                      | Game            | Route                  |
-| --------------------------- | --------------- | ---------------------- |
-| `games/stack-or-sink`       | Stack or Sink   | `/stack-or-sink`       |
-| `games/reel-problems`       | Reel Problems   | `/reel-problems`       |
-| `games/wrong-floor`         | Wrong Floor     | `/wrong-floor`         |
-| `games/four-brain-cells`    | Four Brain Cells | `/four-brain-cells`   |
-| `games/act-natural`         | Blend Business  | `/act-natural`         |
-| `games/shelf-control`       | Shelf Control   | `/shelf-control`       |
-| `games/uphill-delivery`     | Uphill Delivery | `/uphill-delivery`     |
-| `games/dont-wake-the-giant` | Tiptoe Thieves  | `/dont-wake-the-giant` |
-| `games/one-more-button`     | One More Button | `/one-more-button`     |
-| `games/load-bearing`        | Load Bearing    | `/load-bearing`        |
-| `games/siege-and-desist`   | Siege and Desist | `/siege-and-desist`   |
-| `games/chaos`               | Permit Pending  | `/chaos`               |
-| `games/first-person`        | Brick by Hand   | `/first-person`        |
+| Folder                      | Game             | Route                  |
+| --------------------------- | ---------------- | ---------------------- |
+| `games/stack-or-sink`       | Stack or Sink    | `/stack-or-sink`       |
+| `games/reel-problems`       | Reel Problems    | `/reel-problems`       |
+| `games/wrong-floor`         | Wrong Floor      | `/wrong-floor`         |
+| `games/four-brain-cells`    | Four Brain Cells | `/four-brain-cells`    |
+| `games/act-natural`         | Blend Business   | `/act-natural`         |
+| `games/shelf-control`       | Shelf Control    | `/shelf-control`       |
+| `games/uphill-delivery`     | Uphill Delivery  | `/uphill-delivery`     |
+| `games/dont-wake-the-giant` | Tiptoe Thieves   | `/dont-wake-the-giant` |
+| `games/one-more-button`     | One More Button  | `/one-more-button`     |
+| `games/load-bearing`        | Load Bearing     | `/load-bearing`        |
+| `games/siege-and-desist`    | Siege and Desist | `/siege-and-desist`    |
+| `games/chaos`               | Permit Pending   | `/chaos`               |
+| `games/first-person`        | Brick by Hand    | `/first-person`        |
+| `games/basketball`          | Court Clash      | `/basketball`          |
 
 ## Ownership and dependencies
 

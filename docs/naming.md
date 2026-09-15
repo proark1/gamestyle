@@ -17,8 +17,10 @@ Added 2026-09-09:
 | ------------------------------------- | ---------------- | ------------------- |
 | Cooperative medieval siege            | Siege and Desist | `/siege-and-desist` |
 | Competitive crane stacking party game | Crane Clash      | `/crane-clash`      |
+| 2v2 street basketball party game      | Court Clash      | `/basketball`       |
 
 Crane Clash is a 2v2 physics party game where 2 cranes and 4 players swing, grab, and stack crates as high as possible. The display name, route, game identifier, and room namespace are `crane-clash`.
+Court Clash is a 2v2 street basketball party game in the Stack or Sink style with super jumps and combo dunks. The display name is `Court Clash`, the route and game identifier are `basketball`.
 
 The platform is **Jumbleyard**, with this exact spelling. Blend Business and
 Tiptoe Thieves are deliberately independent of a particular animal, disguise,

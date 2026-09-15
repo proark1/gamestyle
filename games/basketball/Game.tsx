@@ -1,0 +1,329 @@
+'use client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Flame, RotateCcw, Timer, Trophy } from 'lucide-react';
+import type { PeerGameConnection } from '../../shared/peer/connection';
+import {
+  advanceBasketball,
+  basketballAction,
+  basketballSnapshot,
+  canSuperJump,
+  freshBasketballWorld,
+  newPlayer,
+} from './simulation';
+import { reconcileBasketballBots, stepBasketballBot } from './bots';
+import {
+  idleInput,
+  type BasketballAction,
+  type BasketballSession,
+  type BasketballSnapshot,
+  type BasketballWorld,
+  type PlayerInput,
+  type TeamId,
+} from './types';
+import { BasketballSound } from './audio';
+import { BasketballScene } from './scene';
+import './style.css';
+import {
+  GameTracker,
+  useGameTracker,
+} from '../../shared/analytics/game-tracker';
+import { basketballAnalytics } from './analytics';
+
+const tracker = new GameTracker(basketballAnalytics);
+
+export default function BasketballGame() {
+  useGameTracker(tracker);
+
+  const container = useRef<HTMLDivElement>(null);
+  const scene = useRef<BasketballScene | null>(null);
+  const sound = useRef<BasketballSound | null>(null);
+  const network = useRef<PeerGameConnection<BasketballSnapshot> | null>(null);
+  const localWorld = useRef<BasketballWorld | null>(null);
+  const currentInput = useRef(idleInput());
+
+  const [snapshot, setSnapshot] = useState<BasketballSnapshot | null>(null);
+  const [team, setTeam] = useState<TeamId>('orange');
+
+  const sessionRef = useRef<BasketballSession>({
+    id: 'p-local',
+    token: 'solo-token',
+    code: 'SOLO',
+    name: 'Baller',
+    team: 'orange',
+  });
+
+  const dispatchAction = useCallback((act: BasketballAction) => {
+    tracker.action(act.type);
+    sound.current?.unlock();
+    if (network.current) {
+      void network.current.action(act);
+    } else if (localWorld.current) {
+      basketballAction(localWorld.current, sessionRef.current.id, act, true);
+      const snap = basketballSnapshot(
+        localWorld.current,
+        'SOLO',
+        sessionRef.current.id,
+        sessionRef.current.id,
+        Date.now(),
+      );
+      setSnapshot(snap);
+      scene.current?.render(snap);
+      sound.current?.update(snap.world, sessionRef.current.id);
+    }
+  }, []);
+
+  // Initialize scene and sound
+  useEffect(() => {
+    if (!container.current) return;
+
+    sound.current = new BasketballSound();
+
+    scene.current = new BasketballScene(container.current, {
+      input: (inp: PlayerInput) => {
+        currentInput.current = inp;
+        if (localWorld.current) {
+          const p = localWorld.current.players.find(
+            (pl) => pl.id === sessionRef.current.id,
+          );
+          if (p) {
+            p.input = inp;
+          }
+        }
+      },
+      action: dispatchAction,
+    });
+
+    // Initialize local world with bots
+    const now = Date.now();
+    const w = freshBasketballWorld(now);
+    w.players.push(
+      newPlayer(sessionRef.current.id, 'Du', 0, 'orange', false, 0),
+    );
+    reconcileBasketballBots(w);
+    localWorld.current = w;
+
+    const initialSnap = basketballSnapshot(
+      w,
+      'SOLO',
+      sessionRef.current.id,
+      sessionRef.current.id,
+      now,
+    );
+    setSnapshot(initialSnap);
+    scene.current.render(initialSnap);
+
+    // Main animation loop for local game simulation
+    let lastTime = performance.now();
+    let animId = 0;
+
+    const loop = (time: number) => {
+      animId = requestAnimationFrame(loop);
+      const dt = Math.min(0.05, (time - lastTime) / 1000);
+      lastTime = time;
+
+      if (localWorld.current && !network.current) {
+        // Step AI bots
+        for (const p of localWorld.current.players) {
+          if (p.bot) {
+            stepBasketballBot(p, localWorld.current, dt);
+          }
+        }
+
+        advanceBasketball(localWorld.current, dt);
+
+        const snap = basketballSnapshot(
+          localWorld.current,
+          'SOLO',
+          sessionRef.current.id,
+          sessionRef.current.id,
+          Date.now(),
+        );
+
+        setSnapshot(snap);
+        scene.current?.render(snap);
+        sound.current?.update(snap.world, sessionRef.current.id);
+      }
+    };
+
+    animId = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      scene.current?.dispose();
+      scene.current = null;
+      sound.current?.dispose();
+      sound.current = null;
+    };
+  }, [dispatchAction]);
+
+  useEffect(() => {
+    sessionRef.current.team = team;
+  }, [team]);
+
+  const world = snapshot?.world;
+  const localPlayer = snapshot
+    ? snapshot.world.players.find((p) => p.id === snapshot.localId)
+    : undefined;
+  const superReady = localPlayer ? canSuperJump(localPlayer) : false;
+
+  const handleStart = () => {
+    dispatchAction({ type: 'start' });
+  };
+
+  const handleRestart = () => {
+    dispatchAction({ type: 'restart' });
+  };
+
+  const handleSwitchTeam = (newTeam: TeamId) => {
+    setTeam(newTeam);
+    dispatchAction({ type: 'switchTeam' });
+  };
+
+  return (
+    <div className="bb-game">
+      <div ref={container} className="bb-canvas" />
+
+      {/* Topbar HUD */}
+      {world && world.phase !== 'lobby' && (
+        <div className="bb-hud">
+          {/* Orange Team Score */}
+          <div className="bb-team-score orange">
+            <div className="bb-score-val">{world.scores.orange}</div>
+            <div className="bb-score-meta">
+              <span>Orange</span>
+              <span>Team</span>
+            </div>
+          </div>
+
+          {/* Shot Clock Badge */}
+          <div className="bb-timer-badge">
+            <Timer size={18} />
+            <span>{Math.ceil(world.shotClockRemaining)}s</span>
+          </div>
+
+          {/* Teal Team Score */}
+          <div className="bb-team-score teal">
+            <div className="bb-score-meta" style={{ textAlign: 'right' }}>
+              <span>Teal</span>
+              <span>Team</span>
+            </div>
+            <div className="bb-score-val">{world.scores.teal}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Center Action HUD (Shot Meter & Super Jump indicator) */}
+      {localPlayer && world?.phase === 'playing' && (
+        <div className="bb-action-hud">
+          {localPlayer.chargingShot && (
+            <div className="bb-shot-meter-box">
+              <div className="bb-shot-meter-sweet" />
+              <div
+                className="bb-shot-meter-fill"
+                style={{
+                  width: `${Math.round(localPlayer.shotCharge * 100)}%`,
+                }}
+              />
+            </div>
+          )}
+
+          {superReady && (
+            <div className="bb-combo-badge">
+              <Flame
+                size={16}
+                style={{
+                  display: 'inline',
+                  verticalAlign: 'middle',
+                  marginRight: 4,
+                }}
+              />
+              SUPER JUMP READY! (Space x2)
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Lobby / Welcome Screen */}
+      {world?.phase === 'lobby' && (
+        <div className="bb-welcome">
+          <h1>
+            Court <span>Clash</span>
+          </h1>
+          <div className="bb-tagline">
+            2v2 Street Basketball im Jumbleyard-Stil
+          </div>
+          <div className="bb-desc">
+            Tritt im 2-gegen-2 Match an! Dribble, passe zu deinem Teammate,
+            triff 3-Pointer oder lade die Combo-Leiste für{' '}
+            <strong>spektakuläre Super-Jumps</strong> und Slam Dunks auf!
+          </div>
+
+          <div className="bb-team-selector">
+            <button
+              type="button"
+              className={`bb-btn orange ${team === 'orange' ? 'active' : ''}`}
+              onClick={() => handleSwitchTeam('orange')}
+            >
+              Team Orange
+            </button>
+            <button
+              type="button"
+              className={`bb-btn teal ${team === 'teal' ? 'active' : ''}`}
+              onClick={() => handleSwitchTeam('teal')}
+            >
+              Team Teal
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="bb-btn primary"
+            onClick={handleStart}
+          >
+            Match starten (bis 15 Pkt.)
+          </button>
+        </div>
+      )}
+
+      {/* Match Ended Banner */}
+      {world?.phase === 'ended' && (
+        <div className="bb-ended-banner">
+          <Trophy size={48} color="#e58e38" style={{ margin: '0 auto 12px' }} />
+          <h2>Match Beendet!</h2>
+          <div className={`bb-ended-winner ${world.winner ?? 'orange'}`}>
+            Team {world.winner?.toUpperCase()} gewinnt das Spiel!
+          </div>
+          <button
+            type="button"
+            className="bb-btn primary"
+            onClick={handleRestart}
+          >
+            <RotateCcw size={18} style={{ marginRight: 6 }} /> Rematch spielen
+          </button>
+        </div>
+      )}
+
+      {/* Controls Hint Bar */}
+      <div className="bb-hint-bar">
+        <span>
+          <span className="bb-hint-key">WASD</span> Bewegen
+        </span>
+        <span>
+          <span className="bb-hint-key">Space</span> Werfen / Dunken (Halten)
+        </span>
+        <span>
+          <span className="bb-hint-key">E</span> Passen / Stealen
+        </span>
+        <span>
+          <span className="bb-hint-key">Shift</span> Sprint
+        </span>
+        <span>
+          <span className="bb-hint-key">Space x2</span> Super Jump
+        </span>
+        <span>
+          <span className="bb-hint-key">V</span> Kamera
+        </span>
+      </div>
+    </div>
+  );
+}

@@ -10,6 +10,7 @@ import { breakfastCatalog } from '../../games/four-brain-cells/audio';
 import { loadBearingCatalog } from '../../games/load-bearing/audio';
 import { siegeCatalog } from '../../games/siege-and-desist/audio';
 import { craneClashCatalog } from '../../games/crane-clash/audio';
+import { basketballCatalog } from '../../games/basketball/audio';
 const catalogs: Record<GameId, Cue[]> = {
   'wrong-floor': hotelCatalog,
   'stack-or-sink': stackCatalog,
@@ -22,6 +23,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'load-bearing': loadBearingCatalog,
   'siege-and-desist': siegeCatalog,
   'crane-clash': craneClashCatalog,
+  basketball: basketballCatalog,
 };
 export function getCatalog(game: GameId): Cue[] {
   return catalogs[game];

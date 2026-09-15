@@ -17,6 +17,7 @@ import { stackAvatars } from '../../../games/stack-or-sink/avatar';
 import { deliveryAvatars } from '../../../games/uphill-delivery/avatar';
 import { hotelAvatars } from '../../../games/wrong-floor/avatar';
 import { craneClashAvatars } from '../../../games/crane-clash/avatar';
+import { basketballAvatars } from '../../../games/basketball/avatar';
 import { GAMES } from '../../analytics/catalog';
 
 export type AvatarCard = {
@@ -124,6 +125,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'crane-clash': {
     looks: craneClashAvatars,
     note: 'The shared worker wearing team-colored hard hat and safety harness.',
+  },
+  basketball: {
+    looks: basketballAvatars,
+    note: 'The shared worker in a team jersey, shorts and sneakers.',
   },
 };
 

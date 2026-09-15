@@ -36,6 +36,7 @@ const PINNED = [
   'shelf-control',
 ] as const;
 const SHUFFLED = [
+  'basketball',
   'crane-clash',
   'siege-and-desist',
   'load-bearing',
@@ -58,6 +59,137 @@ function shuffle(slugs: readonly string[]) {
 }
 
 const CARDS: Record<string, ReactElement> = {
+  basketball: (
+    <a
+      key="basketball"
+      className="game-card basketball-card"
+      href="/basketball"
+      aria-label="Court Clash: 2v2 street basketball in the Jumbleyard style"
+    >
+      <div className="game-card-art">
+        <svg
+          viewBox="0 0 384 256"
+          className="wreck-scene"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <title>
+            Two on two street basketball on a warm teal court with players
+            jumping for a slam dunk at the hoop.
+          </title>
+          <rect width="384" height="256" fill="#b5d4ca" />
+          <rect y="160" width="384" height="96" fill="#426357" />
+          {/* Key & 3pt line */}
+          <rect x="140" y="160" width="104" height="96" fill="#ba7447" />
+          <ellipse
+            cx="192"
+            cy="160"
+            rx="90"
+            ry="30"
+            fill="none"
+            stroke="#f4ede2"
+            strokeWidth="3"
+          />
+          <circle
+            cx="192"
+            cy="160"
+            r="32"
+            fill="none"
+            stroke="#f4ede2"
+            strokeWidth="2.5"
+          />
+          {/* Backboard & Pole */}
+          <rect x="188" y="45" width="8" height="120" fill="#3d4f49" />
+          <rect
+            x="156"
+            y="55"
+            width="72"
+            height="42"
+            fill="#eaf3f2"
+            stroke="#ffffff"
+            strokeWidth="2"
+            rx="2"
+          />
+          <rect
+            x="178"
+            y="70"
+            width="28"
+            height="20"
+            fill="none"
+            stroke="#d94c38"
+            strokeWidth="2"
+          />
+          {/* Rim & Net */}
+          <ellipse
+            cx="192"
+            cy="95"
+            rx="16"
+            ry="6"
+            fill="none"
+            stroke="#e5732f"
+            strokeWidth="3"
+          />
+          <polygon
+            points="178,96 206,96 200,120 184,120"
+            fill="rgba(255,255,255,0.7)"
+            stroke="#ffffff"
+            strokeWidth="1"
+          />
+          {/* Basketball */}
+          <circle cx="192" cy="80" r="14" fill="#e5732f" />
+          <path
+            d="M 180 80 Q 192 74 204 80 M 192 66 L 192 94"
+            stroke="#261911"
+            strokeWidth="1.5"
+            fill="none"
+          />
+          {/* Leaping Player */}
+          <circle cx="155" cy="115" r="9" fill="#e6b58b" />
+          <rect x="148" y="124" width="14" height="22" fill="#e58e38" rx="3" />
+          <line
+            x1="158"
+            y1="126"
+            x2="182"
+            y2="92"
+            stroke="#e6b58b"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="game-card-tag">
+          <Gamepad2 size={14} /> 2 GEGEN 2 · STREETBALL
+        </span>
+        <span className="new-game-tag">NEU IN JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 Spieler (2v2)
+          </span>
+          <span>
+            <Timer size={14} /> Bis 15 Punkte
+          </span>
+        </div>
+        <h2>
+          Court <span>Clash</span>
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Streetball im 2-gegen-2 Match! Dribble, passe zu deinem Teammate,
+          triff 3-Pointer oder nutze spektakuläre Supersprünge für krachende
+          Slam Dunks.
+        </p>
+        <div className="game-card-bottom">
+          <span>Swish oder Slam Dunk?</span>
+          <strong>
+            Court Clash spielen <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
   'crane-clash': (
     <a
       key="crane-clash"
