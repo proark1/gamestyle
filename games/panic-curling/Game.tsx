@@ -80,7 +80,10 @@ export default function PanicCurlingGame() {
 
   // Tactics & Reaction Toast state
   const [showTactics, setShowTactics] = useState(false);
-  const [reactionToast, setReactionToast] = useState<{ text: string; id: number } | null>(null);
+  const [reactionToast, setReactionToast] = useState<{
+    text: string;
+    id: number;
+  } | null>(null);
   const reactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Synchronization refs for 60fps simulation loop without effect tearing
@@ -209,21 +212,49 @@ export default function PanicCurlingGame() {
               audioRef.current.playEvent(ev);
             }
             if (ev.type === 'ice_break') {
-              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
-              setReactionToast({ text: '🌊 ICE CRACKED THROUGH!', id: Date.now() });
-              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+              if (reactionTimerRef.current)
+                clearTimeout(reactionTimerRef.current);
+              setReactionToast({
+                text: '🌊 ICE CRACKED THROUGH!',
+                id: Date.now(),
+              });
+              reactionTimerRef.current = setTimeout(
+                () => setReactionToast(null),
+                1800,
+              );
             } else if (ev.type === 'banana_slip') {
-              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
-              setReactionToast({ text: '🍌 WHOOPS! SLIPPED ON PEEL!', id: Date.now() });
-              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+              if (reactionTimerRef.current)
+                clearTimeout(reactionTimerRef.current);
+              setReactionToast({
+                text: '🍌 WHOOPS! SLIPPED ON PEEL!',
+                id: Date.now(),
+              });
+              reactionTimerRef.current = setTimeout(
+                () => setReactionToast(null),
+                1800,
+              );
             } else if (ev.type === 'stone_clack' && ev.volume > 0.35) {
-              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
-              setReactionToast({ text: '💥 THUNDEROUS TAKEOUT!', id: Date.now() });
-              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+              if (reactionTimerRef.current)
+                clearTimeout(reactionTimerRef.current);
+              setReactionToast({
+                text: '💥 THUNDEROUS TAKEOUT!',
+                id: Date.now(),
+              });
+              reactionTimerRef.current = setTimeout(
+                () => setReactionToast(null),
+                1800,
+              );
             } else if (ev.type === 'water_splash') {
-              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
-              setReactionToast({ text: '🥶 FELL INTO FROZEN WATER!', id: Date.now() });
-              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+              if (reactionTimerRef.current)
+                clearTimeout(reactionTimerRef.current);
+              setReactionToast({
+                text: '🥶 FELL INTO FROZEN WATER!',
+                id: Date.now(),
+              });
+              reactionTimerRef.current = setTimeout(
+                () => setReactionToast(null),
+                1800,
+              );
             }
           }
         }
@@ -446,11 +477,14 @@ export default function PanicCurlingGame() {
             >
               <span>{world.turnTeam === 'red' ? '🔴 RED' : '🔵 BLUE'}</span>
               <span>•</span>
-              <span>ROCK {world.throwIndex + 1}/{world.totalThrowsPerEnd}</span>
+              <span>
+                ROCK {world.throwIndex + 1}/{world.totalThrowsPerEnd}
+              </span>
             </div>
 
             <span className="curling-hammer-badge">
-              <Hammer size={12} /> {world.hammerTeam === 'red' ? 'Red' : 'Blue'} Hammer
+              <Hammer size={12} /> {world.hammerTeam === 'red' ? 'Red' : 'Blue'}{' '}
+              Hammer
             </span>
           </div>
 
@@ -528,7 +562,10 @@ export default function PanicCurlingGame() {
 
           {/* Spin Direction Row */}
           <div className="curling-hud-row">
-            <div className="curling-btn-group" style={{ width: '100%', justifyContent: 'center' }}>
+            <div
+              className="curling-btn-group"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
               <button
                 className={`curling-toggle-btn ${spin < 0 ? 'active' : ''}`}
                 style={{ flex: 1, justifyContent: 'center' }}
@@ -622,7 +659,9 @@ export default function PanicCurlingGame() {
           {/* Juicy Deliver Button */}
           <button className="curling-launch-btn" onClick={handleLaunch}>
             <span>DELIVER STONE! 🚀</span>
-            <span className="curling-launch-sub">Release at peak power to shoot</span>
+            <span className="curling-launch-sub">
+              Release at peak power to shoot
+            </span>
           </button>
         </div>
       )}

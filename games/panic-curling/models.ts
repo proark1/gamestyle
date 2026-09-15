@@ -281,20 +281,20 @@ function createSpectatorBleachers(g: T.Group, halfW: number) {
     // Tier 1 bench
     box(g, [0.8, 0.4, len], [bx, 0.2, 16.0], '#5d4037', true);
     // Tier 2 bench (higher and farther back)
-    box(
-      g,
-      [0.8, 0.75, len],
-      [bx + side * 0.75, 0.38, 16.0],
-      '#4e342e',
-      true,
-    );
+    box(g, [0.8, 0.75, len], [bx + side * 0.75, 0.38, 16.0], '#4e342e', true);
 
     // Populate with spectators along the benches
     for (let z = 4.0; z <= 28.0; z += 3.2) {
       const isSnowman = Math.abs(z % 6.4) < 1.0;
       if (isSnowman) {
         // Snowman fan on Tier 1
-        createSnowmanSpectator(g, bx, 0.4, z, side === -1 ? '#d94b38' : '#3277b3');
+        createSnowmanSpectator(
+          g,
+          bx,
+          0.4,
+          z,
+          side === -1 ? '#d94b38' : '#3277b3',
+        );
       } else {
         // Toy worker fan on Tier 2
         createFanSpectator(

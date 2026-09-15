@@ -27,13 +27,19 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  background: linear-gradient(135deg, rgba(28, 40, 51, 0.94), rgba(44, 62, 80, 0.94));
+  background: linear-gradient(
+    135deg,
+    rgba(28, 40, 51, 0.94),
+    rgba(44, 62, 80, 0.94)
+  );
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   padding: 10px 28px;
   border-radius: 32px;
   border: 2px solid rgba(241, 196, 15, 0.45);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   z-index: 20;
   max-width: 95vw;
 }
@@ -136,8 +142,14 @@
 }
 
 @keyframes dotPulse {
-  from { transform: scale(1.1); opacity: 0.8; }
-  to { transform: scale(1.35); opacity: 1; }
+  from {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.35);
+    opacity: 1;
+  }
 }
 
 .curling-round-turn {
@@ -198,8 +210,12 @@
 }
 
 @keyframes icePulse {
-  0% { transform: translateX(-50%) scale(1); }
-  100% { transform: translateX(-50%) scale(1.04); }
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    transform: translateX(-50%) scale(1.04);
+  }
 }
 
 .curling-reaction-toast {
@@ -224,8 +240,14 @@
 }
 
 @keyframes reactionPop {
-  0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
-  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  0% {
+    transform: translateX(-50%) scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================
@@ -263,7 +285,11 @@
   position: absolute;
   top: 66px;
   left: 18px;
-  background: linear-gradient(135deg, rgba(24, 35, 46, 0.96), rgba(35, 50, 65, 0.96));
+  background: linear-gradient(
+    135deg,
+    rgba(24, 35, 46, 0.96),
+    rgba(35, 50, 65, 0.96)
+  );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: 20px;
@@ -279,8 +305,14 @@
 }
 
 @keyframes tacticsSlide {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .curling-tactics-section-title {
@@ -304,13 +336,19 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(135deg, rgba(18, 30, 42, 0.94), rgba(28, 45, 60, 0.94));
+  background: linear-gradient(
+    135deg,
+    rgba(18, 30, 42, 0.94),
+    rgba(28, 45, 60, 0.94)
+  );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   padding: 18px 24px;
   border-radius: 28px;
   border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
   z-index: 25;
   width: 92%;
   max-width: 520px;
@@ -350,7 +388,9 @@
   border-color: #f1c40f;
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 6px 0 #1b4f72, 0 8px 20px rgba(52, 152, 219, 0.4);
+  box-shadow:
+    0 6px 0 #1b4f72,
+    0 8px 20px rgba(52, 152, 219, 0.4);
 }
 
 .curling-stone-card:active {
@@ -458,7 +498,13 @@
 
 .curling-power-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2ecc71 0%, #3498db 35%, #f39c12 70%, #e74c3c 100%);
+  background: linear-gradient(
+    90deg,
+    #2ecc71 0%,
+    #3498db 35%,
+    #f39c12 70%,
+    #e74c3c 100%
+  );
   border-radius: 11px;
   transition: width 0.04s linear;
 }
@@ -547,8 +593,12 @@
   font-weight: 900;
   letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 6px 0 #933c00, 0 10px 24px rgba(211, 84, 0, 0.5);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  box-shadow:
+    0 6px 0 #933c00,
+    0 10px 24px rgba(211, 84, 0, 0.5);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -558,7 +608,9 @@
 .curling-launch-btn:hover {
   background: linear-gradient(135deg, #f39c12, #e67e22);
   transform: translateY(-2px);
-  box-shadow: 0 8px 0 #933c00, 0 12px 28px rgba(243, 156, 18, 0.6);
+  box-shadow:
+    0 8px 0 #933c00,
+    0 12px 28px rgba(243, 156, 18, 0.6);
 }
 
 .curling-launch-btn:active {
@@ -629,7 +681,9 @@
   background: linear-gradient(135deg, #f39c12, #d35400);
   border-color: #f1c40f;
   color: #ffffff;
-  box-shadow: 0 4px 0 #933c00, 0 6px 18px rgba(243, 156, 18, 0.4);
+  box-shadow:
+    0 4px 0 #933c00,
+    0 6px 18px rgba(243, 156, 18, 0.4);
 }
 
 .curling-gadget-btn:active {
@@ -656,8 +710,12 @@
   font-weight: 900;
   letter-spacing: 0.8px;
   cursor: pointer;
-  box-shadow: 0 6px 0 #1e8449, 0 10px 28px rgba(46, 204, 113, 0.5);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  box-shadow:
+    0 6px 0 #1e8449,
+    0 10px 28px rgba(46, 204, 113, 0.5);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -667,7 +725,9 @@
 .curling-sweep-btn:hover {
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   transform: translateY(-2px);
-  box-shadow: 0 8px 0 #1e8449, 0 12px 32px rgba(46, 204, 113, 0.6);
+  box-shadow:
+    0 8px 0 #1e8449,
+    0 12px 32px rgba(46, 204, 113, 0.6);
 }
 
 .curling-sweep-btn:active,
@@ -718,14 +778,18 @@
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 5px 0 #b7950b, 0 8px 20px rgba(241, 196, 15, 0.4);
+  box-shadow:
+    0 5px 0 #b7950b,
+    0 8px 20px rgba(241, 196, 15, 0.4);
   z-index: 25;
   transition: all 0.1s ease;
 }
 
 .curling-banana-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 7px 0 #b7950b, 0 10px 24px rgba(241, 196, 15, 0.5);
+  box-shadow:
+    0 7px 0 #b7950b,
+    0 10px 24px rgba(241, 196, 15, 0.5);
 }
 
 .curling-banana-btn:active {
@@ -777,13 +841,21 @@
   width: 90%;
   text-align: center;
   color: #ffffff;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
 }
 
 @keyframes modalPop {
-  0% { transform: scale(0.85); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .curling-modal-title {
@@ -849,14 +921,18 @@
   font-weight: 900;
   letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 6px 0 #1e8449, 0 8px 24px rgba(39, 174, 96, 0.4);
+  box-shadow:
+    0 6px 0 #1e8449,
+    0 8px 24px rgba(39, 174, 96, 0.4);
   transition: all 0.12s ease;
 }
 
 .curling-action-btn:hover {
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   transform: translateY(-2px);
-  box-shadow: 0 8px 0 #1e8449, 0 12px 28px rgba(46, 204, 113, 0.5);
+  box-shadow:
+    0 8px 0 #1e8449,
+    0 12px 28px rgba(46, 204, 113, 0.5);
 }
 
 .curling-action-btn:active {
