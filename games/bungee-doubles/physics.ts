@@ -132,15 +132,23 @@ export function stepBungeeTether(
   };
 }
 
-/** Step ball simulation including gravity, bounce, net collisions and court bounds */
+export type BallPhysicsResult = {
+  bounced: boolean;
+  floorY: number;
+  crossedNet: boolean;
+  hitWall: 'back' | 'side' | null;
+  wallPos?: [number, number, number];
+};
+
+/** Step ball simulation including gravity, bounce, net collisions, and padel wall reflections */
 export function stepBallPhysics(
   ball: Ball,
   dt: number,
   events: GameEvent[],
   eventIdRef: { current: number },
-): { bounced: boolean; floorY: number; crossedNet: boolean } {
+): BallPhysicsResult {
   if (ball.state === 'serving') {
-    return { bounced: false, floorY: 0, crossedNet: false };
+    return { bounced: false, floorY: 0, crossedNet: false, hitWall: null };
   }
 
   const prevZ = ball.z;
@@ -206,7 +214,45 @@ export function stepBallPhysics(
     }
   }
 
-  return { bounced, floorY: BALL_RADIUS, crossedNet };
+  let hitWall: 'back' | 'side' | null = null;
+  let wallPos: [number, number, number] | undefined;
+  const halfL = COURT.length / 2;
+  const halfW = COURT.width / 2;
+
+  // Wall collisions (Padel enclosed court)
+  if (ball.y <= COURT.wallHeight) {
+    // Back glass walls
+    if (ball.z <= -halfL + BALL_RADIUS && ball.vz < 0) {
+      ball.z = -halfL + BALL_RADIUS;
+      ball.vz = -ball.vz * 0.75;
+      ball.vx *= 0.92;
+      hitWall = 'back';
+      wallPos = [ball.x, ball.y, ball.z];
+    } else if (ball.z >= halfL - BALL_RADIUS && ball.vz > 0) {
+      ball.z = halfL - BALL_RADIUS;
+      ball.vz = -ball.vz * 0.75;
+      ball.vx *= 0.92;
+      hitWall = 'back';
+      wallPos = [ball.x, ball.y, ball.z];
+    }
+
+    // Side mesh/glass walls
+    if (ball.x <= -halfW + BALL_RADIUS && ball.vx < 0) {
+      ball.x = -halfW + BALL_RADIUS;
+      ball.vx = -ball.vx * 0.72;
+      ball.vz *= 0.92;
+      if (!hitWall) hitWall = 'side';
+      wallPos = [ball.x, ball.y, ball.z];
+    } else if (ball.x >= halfW - BALL_RADIUS && ball.vx > 0) {
+      ball.x = halfW - BALL_RADIUS;
+      ball.vx = -ball.vx * 0.72;
+      ball.vz *= 0.92;
+      if (!hitWall) hitWall = 'side';
+      wallPos = [ball.x, ball.y, ball.z];
+    }
+  }
+
+  return { bounced, floorY: BALL_RADIUS, crossedNet, hitWall, wallPos };
 }
 
 /** Calculate launch velocity for returning the ball across the net */

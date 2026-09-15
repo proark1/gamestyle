@@ -17,6 +17,7 @@ export const COURT = {
   maxX: 6.5,
   minZ: -11,
   maxZ: 11,
+  wallHeight: 3.8,
 };
 
 export const BALL_RADIUS = 0.22;
@@ -109,6 +110,7 @@ export type Ball = {
   speedTrail: boolean;
   spinX: number;
   spinZ: number;
+  wallHitsOnCurrentSide: number;
 };
 
 export type GameEvent = {
@@ -118,6 +120,7 @@ export type GameEvent = {
     | 'smash_hit'
     | 'ball_bounce'
     | 'net_hit'
+    | 'wall_rebound'
     | 'bungee_stretch'
     | 'bungee_snap'
     | 'partner_bonk'

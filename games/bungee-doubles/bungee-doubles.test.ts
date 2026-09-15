@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  advanceBungee,
   freshBall,
   freshBungeeWorld,
   newPlayer,
@@ -123,6 +124,64 @@ void test('ball physics bounces off court and rebounds from net', () => {
   }
   assert.ok(bounced);
   assert.ok(events.some((e) => e.type === 'ball_bounce'));
+});
+
+void test('ball rebounds off padel back glass after floor bounce and remains live', () => {
+  const world = freshBungeeWorld();
+  world.phase = 'rally';
+  world.ball.state = 'in_play';
+  world.ball.x = 0;
+  world.ball.y = 1.0;
+  world.ball.z = 9.8;
+  world.ball.vz = 12.0; // Heading towards Teal back wall (z = 11)
+  world.ball.lastHitTeam = 'orange';
+  world.ball.currentSide = 'teal';
+  world.ball.bouncesOnCurrentSide = 1; // Already bounced once on Teal court floor!
+
+  advanceBungee(world, 1 / 10);
+
+  assert.ok(world.ball.vz < 0); // Rebounded off glass back towards net
+  assert.equal(world.phase, 'rally'); // Ball remains live
+  assert.ok(world.events.some((e) => e.type === 'wall_rebound'));
+});
+
+void test('ball hitting wall directly on the fly triggers fault and awards point to opponent', () => {
+  const world = freshBungeeWorld();
+  world.phase = 'rally';
+  world.ball.state = 'in_play';
+  world.ball.x = 0;
+  world.ball.y = 2.0;
+  world.ball.z = 9.8;
+  world.ball.vz = 14.0;
+  world.ball.lastHitTeam = 'orange';
+  world.ball.currentSide = 'teal';
+  world.ball.bouncesOnCurrentSide = 0; // Did not bounce on court floor!
+
+  const now = Date.now();
+  advanceBungee(world, 1 / 10, now);
+
+  assert.equal(world.phase, 'scored');
+  assert.equal(world.scores.teal, 1);
+  assert.equal(world.scores.orange, 0);
+  assert.ok(world.events.some((e) => e.type === 'point_scored'));
+});
+
+void test('ball rebounds off side wall and reverses horizontal velocity', () => {
+  const ball = freshBall();
+  ball.state = 'in_play';
+  ball.x = 5.8;
+  ball.y = 1.5;
+  ball.z = 3.0;
+  ball.vx = 8.0; // Moving towards side wall at x = 6.5
+  ball.vy = 0;
+  ball.vz = 0;
+
+  const events: GameEvent[] = [];
+  const eventIdRef = { current: 0 };
+  const res = stepBallPhysics(ball, 1 / 10, events, eventIdRef);
+
+  assert.equal(res.hitWall, 'side');
+  assert.ok(ball.vx < 0);
 });
 
 void test('calculateRacketShot produces trajectory clearing the net', () => {

@@ -17,6 +17,7 @@ const CUES: Record<GameEvent['type'], string | null> = {
   whistle: 'event.point_scored',
   cheer: 'event.point_scored',
   slingshot: 'event.bungee_snap',
+  wall_rebound: 'event.ball_bounce',
 };
 
 class ProceduralBungeeAudio {
@@ -88,6 +89,19 @@ class ProceduralBungeeAudio {
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.09);
+      } else if (type === 'wall_rebound') {
+        // Glass / mesh rebound thud
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(340, now);
+        osc.frequency.exponentialRampToValueAtTime(130, now + 0.11);
+        gain.gain.setValueAtTime(0.65 * volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
       } else if (type === 'net_hit') {
         // Metallic / tape buzz
         const osc = ctx.createOscillator();

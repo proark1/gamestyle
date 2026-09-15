@@ -41,6 +41,7 @@ export class BungeeScene {
   private currentInput: PlayerInput = idleInput();
   private shakeTimer = 0;
   private shakeIntensity = 0;
+  private lastHandledEventId = -1;
 
   // Particle pool for racket hits & bonks
   private particlePool: {
@@ -298,17 +299,21 @@ export class BungeeScene {
       }
     }
 
-    // Process fresh events for visual fx
-    const latestEvent = world.events[world.events.length - 1];
-    if (latestEvent) {
-      if (latestEvent.type === 'smash_hit') {
-        this.triggerScreenShake(0.35, 0.4);
-        if (latestEvent.pos) this.spawnHitPuff(latestEvent.pos, '#ff3300');
-      } else if (latestEvent.type === 'partner_bonk') {
-        this.triggerScreenShake(0.5, 0.6);
-        if (latestEvent.pos) this.spawnHitPuff(latestEvent.pos, '#ffcc00');
-      } else if (latestEvent.type === 'racket_hit') {
-        if (latestEvent.pos) this.spawnHitPuff(latestEvent.pos, '#ffff00');
+    // Process fresh events once for visual fx and subtle micro-haptics
+    for (const event of world.events) {
+      if (event.id <= this.lastHandledEventId) continue;
+      this.lastHandledEventId = Math.max(this.lastHandledEventId, event.id);
+
+      if (event.type === 'smash_hit') {
+        this.triggerScreenShake(0.04, 0.08); // Subtle, snappy micro-pulse
+        if (event.pos) this.spawnHitPuff(event.pos, '#ff3300');
+      } else if (event.type === 'partner_bonk') {
+        this.triggerScreenShake(0.06, 0.1); // Small tactile bonk
+        if (event.pos) this.spawnHitPuff(event.pos, '#ffcc00');
+      } else if (event.type === 'wall_rebound') {
+        if (event.pos) this.spawnHitPuff(event.pos, '#90e0ef'); // Cyan-glass sparkle
+      } else if (event.type === 'racket_hit') {
+        if (event.pos) this.spawnHitPuff(event.pos, '#ffff00');
       }
     }
 
@@ -331,12 +336,13 @@ export class BungeeScene {
 
     this.pollInput();
 
-    // Screen shake
+    // Subtle screen shake
     if (this.shakeTimer > 0) {
       this.shakeTimer -= dt;
-      const shakeOffset = (Math.random() - 0.5) * this.shakeIntensity;
-      this.camera.position.x = -15.5 + shakeOffset;
-      this.camera.position.y = 13.5 + shakeOffset;
+      const shakeOffsetX = (Math.random() - 0.5) * this.shakeIntensity;
+      const shakeOffsetY = (Math.random() - 0.5) * this.shakeIntensity;
+      this.camera.position.x = -15.5 + shakeOffsetX;
+      this.camera.position.y = 13.5 + shakeOffsetY;
     } else {
       this.camera.position.set(-15.5, 13.5, 0);
     }

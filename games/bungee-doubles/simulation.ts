@@ -34,6 +34,7 @@ export function freshBall(): Ball {
     speedTrail: false,
     spinX: 0,
     spinZ: 0,
+    wallHitsOnCurrentSide: 0,
   };
 }
 
@@ -316,6 +317,7 @@ function executeRacketHit(
     ball.lastHitTeam = player.team;
     ball.bouncesOnCurrentSide = 0;
     ball.currentSide = null;
+    ball.wallHitsOnCurrentSide = 0;
     ball.hitCountOnSide++;
 
     player.specialState = isSmash ? 'smashing' : 'swinging';
@@ -430,7 +432,7 @@ export function advanceBungee(
 
   // Step Ball
   if (world.ball.state === 'in_play') {
-    const { bounced } = stepBallPhysics(
+    const { bounced, hitWall, wallPos } = stepBallPhysics(
       world.ball,
       dt,
       world.events,
@@ -444,6 +446,26 @@ export function advanceBungee(
       world.ball.currentSide = currentSide;
       world.ball.bouncesOnCurrentSide = 0;
       world.ball.hitCountOnSide = 0;
+      world.ball.wallHitsOnCurrentSide = 0;
+    }
+
+    if (hitWall) {
+      if (world.ball.bouncesOnCurrentSide === 0) {
+        // In padel, hitting the wall directly on the fly is OUT!
+        const pointWinner: TeamId =
+          world.ball.lastHitTeam === 'orange' ? 'teal' : 'orange';
+        const wallName = hitWall === 'back' ? 'Glass Wall' : 'Side Mesh';
+        scorePoint(world, pointWinner, `Out! Direct ${wallName} hit`, now);
+      } else {
+        // Legal wall rebound: ball bounced on the court floor first!
+        world.ball.wallHitsOnCurrentSide++;
+        world.events.push({
+          id: ++eventIdRef.current,
+          type: 'wall_rebound',
+          text: hitWall === 'back' ? 'Glass Rebound!' : 'Side Mesh Rebound!',
+          pos: wallPos ?? [world.ball.x, world.ball.y, world.ball.z],
+        });
+      }
     }
 
     if (bounced) {

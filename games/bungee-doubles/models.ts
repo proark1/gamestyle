@@ -61,53 +61,86 @@ export function tennisPlayer(color: string, team: TeamId, look?: Look) {
   return g;
 }
 
-/** Creates a stylized low-poly tennis racket */
+/** Creates a stylized low-poly perforated padel bat (pala) */
 export function createTennisRacket(team: TeamId): T.Group {
   const g = new T.Group();
 
-  const frameColor = team === 'orange' ? '#e65c00' : '#008b8b';
-  const frameMat = material(frameColor);
+  const accentColor = team === 'orange' ? '#ff7700' : '#00b4d8';
+  const accentMat = material(accentColor);
+  const carbonMat = material('#202226');
   const gripMat = material('#ffffff');
-  const stringMat = new T.MeshStandardMaterial({
-    color: '#e8f4f8',
-    transparent: true,
-    opacity: 0.7,
-    roughness: 0.3,
-  });
+  const holeMat = material('#111317');
 
   // Handle / Grip
   const grip = new T.Mesh(
-    new T.CylinderGeometry(0.032, 0.035, 0.38, 8),
+    new T.CylinderGeometry(0.034, 0.038, 0.32, 8),
     gripMat,
   );
-  grip.position.set(0, 0.19, 0);
+  grip.position.set(0, 0.16, 0);
   grip.castShadow = true;
   g.add(grip);
 
-  // Shaft throat
-  const throat = new T.Mesh(
-    new T.CylinderGeometry(0.028, 0.028, 0.14, 8),
-    frameMat,
+  // Safety wrist lanyard cord at bottom of handle
+  const cord = new T.Mesh(
+    new T.TorusGeometry(0.035, 0.007, 6, 16),
+    accentMat,
   );
-  throat.position.set(0, 0.44, 0);
+  cord.position.set(0, 0.01, 0);
+  cord.rotation.x = Math.PI / 2;
+  g.add(cord);
+
+  // Bat Throat / Heart
+  const throat = new T.Mesh(
+    new T.BoxGeometry(0.1, 0.12, 0.05),
+    carbonMat,
+  );
+  throat.position.set(0, 0.36, 0);
   throat.castShadow = true;
   g.add(throat);
 
-  // Oval head frame (hoop)
-  const hoop = new T.Mesh(new T.TorusGeometry(0.2, 0.025, 8, 20), frameMat);
-  hoop.position.set(0, 0.67, 0);
-  hoop.scale.set(0.85, 1.25, 1);
-  hoop.castShadow = true;
-  g.add(hoop);
+  // Solid Composite Bat Face (Diamond / Round shape)
+  const faceMesh = new T.Mesh(
+    new T.CylinderGeometry(0.22, 0.22, 0.06, 16),
+    carbonMat,
+  );
+  faceMesh.position.set(0, 0.60, 0);
+  faceMesh.rotation.x = Math.PI / 2;
+  faceMesh.scale.set(1.0, 0.7, 1.2);
+  faceMesh.castShadow = true;
+  g.add(faceMesh);
 
-  // String face
-  const strings = new T.Mesh(new T.PlaneGeometry(0.3, 0.44), stringMat);
-  strings.position.set(0, 0.67, 0);
-  strings.rotation.y = Math.PI / 2;
-  g.add(strings);
+  // Outer edge protector rim (team colored)
+  const rimMesh = new T.Mesh(
+    new T.TorusGeometry(0.22, 0.018, 8, 24),
+    accentMat,
+  );
+  rimMesh.position.set(0, 0.60, 0);
+  rimMesh.scale.set(1.0, 1.2, 0.7);
+  rimMesh.castShadow = true;
+  g.add(rimMesh);
+
+  // Signature Padel perforations / drill holes pattern on face
+  const holePositions: [number, number][] = [
+    [-0.08, 0.54], [0, 0.54], [0.08, 0.54],
+    [-0.10, 0.60], [-0.04, 0.60], [0.04, 0.60], [0.10, 0.60],
+    [-0.10, 0.65], [-0.04, 0.65], [0.04, 0.65], [0.10, 0.65],
+    [-0.07, 0.70], [0, 0.70], [0.07, 0.70],
+  ];
+
+  for (const [hx, hy] of holePositions) {
+    const dot1 = new T.Mesh(new T.CircleGeometry(0.014, 8), holeMat);
+    dot1.position.set(hx, hy, 0.032);
+    g.add(dot1);
+    const dot2 = new T.Mesh(new T.CircleGeometry(0.014, 8), holeMat);
+    dot2.position.set(hx, hy, -0.032);
+    dot2.rotation.y = Math.PI;
+    g.add(dot2);
+  }
 
   return g;
 }
+
+export const createPadelBat = createTennisRacket;
 
 /** Creates the tennis ball with bright felt and curved seams */
 export function tennisBall(): T.Group {
@@ -260,17 +293,127 @@ export function tennisCourt(): T.Group {
   box(chairGroup, [0.7, 0.6, 0.08], [0, 2.15, -0.32], '#e67e22');
   g.add(chairGroup);
 
-  // Perimeter advertising banners / court walls
-  const bannerColor = '#16324a';
+  // --- Padel Court Enclosure (3.8m Glass Back Walls & Wire Mesh Sides) ---
+  const glassMat = new T.MeshStandardMaterial({
+    color: '#bde0fe',
+    transparent: true,
+    opacity: 0.32,
+    roughness: 0.05,
+    metalness: 0.2,
+    side: T.DoubleSide,
+  });
 
-  // North wall
-  box(g, [outerWidth, 0.8, 0.2], [0, 0.4, outerLength / 2], bannerColor);
-  // South wall
-  box(g, [outerWidth, 0.8, 0.2], [0, 0.4, -outerLength / 2], bannerColor);
-  // East wall
-  box(g, [0.2, 0.8, outerLength], [outerWidth / 2, 0.4, 0], bannerColor);
-  // West wall
-  box(g, [0.2, 0.8, outerLength], [-outerWidth / 2, 0.4, 0], bannerColor);
+  const meshMat = new T.MeshStandardMaterial({
+    color: '#283845',
+    transparent: true,
+    opacity: 0.6,
+    roughness: 0.8,
+    side: T.DoubleSide,
+  });
+
+  const postColor = '#1e293b'; // Charcoal structural steel
+  const wallH = COURT.wallHeight; // 3.8m
+  const halfW = COURT.width / 2; // 6.5m
+  const halfL = COURT.length / 2; // 11.0m
+
+  // --- Back Glass Walls (North & South) ---
+  for (const z of [-halfL, halfL]) {
+    // Panoramic Glass Panel
+    const backGlassGeo = new T.PlaneGeometry(COURT.width, wallH);
+    const backGlassMesh = new T.Mesh(backGlassGeo, glassMat);
+    backGlassMesh.position.set(0, wallH / 2, z);
+    g.add(backGlassMesh);
+
+    // Top horizontal steel beam
+    box(g, [COURT.width + 0.16, 0.08, 0.08], [0, wallH, z], postColor);
+    // Bottom kickplate trim
+    box(g, [COURT.width, 0.12, 0.06], [0, 0.06, z], postColor);
+
+    // Vertical structural posts every 2.6m
+    for (const x of [-halfW, -3.9, -1.3, 1.3, 3.9, halfW]) {
+      box(g, [0.08, wallH, 0.08], [x, wallH / 2, z], postColor);
+    }
+  }
+
+  // --- Side Walls (Glass corners + Wire mesh center) ---
+  for (const x of [-halfW, halfW]) {
+    // North corner glass (z from -11 to -7)
+    const cornerGlassNorth = new T.Mesh(
+      new T.PlaneGeometry(4.0, wallH),
+      glassMat,
+    );
+    cornerGlassNorth.position.set(x, wallH / 2, -9.0);
+    cornerGlassNorth.rotation.y = Math.PI / 2;
+    g.add(cornerGlassNorth);
+
+    // South corner glass (z from +7 to +11)
+    const cornerGlassSouth = new T.Mesh(
+      new T.PlaneGeometry(4.0, wallH),
+      glassMat,
+    );
+    cornerGlassSouth.position.set(x, wallH / 2, 9.0);
+    cornerGlassSouth.rotation.y = Math.PI / 2;
+    g.add(cornerGlassSouth);
+
+    // Center wire mesh (z from -7 to +7, height 3.0m)
+    const centerMesh = new T.Mesh(
+      new T.PlaneGeometry(14.0, 3.0),
+      meshMat,
+    );
+    centerMesh.position.set(x, 1.5, 0);
+    centerMesh.rotation.y = Math.PI / 2;
+    g.add(centerMesh);
+
+    // Top beam connecting entire side wall
+    box(g, [0.08, 0.08, COURT.length], [x, wallH, 0], postColor);
+    // Bottom kickplate trim
+    box(g, [0.06, 0.12, COURT.length], [x, 0.06, 0], postColor);
+
+    // Vertical side posts
+    for (const z of [-halfL, -7.0, -3.5, 0, 3.5, 7.0, halfL]) {
+      box(g, [0.08, wallH, 0.08], [x, wallH / 2, z], postColor);
+    }
+  }
+
+  // --- 4 Padel Court LED Floodlight Towers ---
+  const floodLightPos: [number, number][] = [
+    [-halfW - 0.5, -5.5],
+    [halfW + 0.5, -5.5],
+    [-halfW - 0.5, 5.5],
+    [halfW + 0.5, 5.5],
+  ];
+
+  for (const [fx, fz] of floodLightPos) {
+    const lightMast = new T.Group();
+    lightMast.position.set(fx, 0, fz);
+
+    // Main steel column (5.2m tall)
+    box(lightMast, [0.12, 5.2, 0.12], [0, 2.6, 0], '#1e293b');
+
+    // Angled cantilever arm pointing inward
+    const dirX = fx < 0 ? 0.35 : -0.35;
+    box(lightMast, [0.7, 0.08, 0.08], [dirX, 5.2, 0], '#1e293b');
+
+    // LED lamp head
+    const lampHead = new T.Mesh(
+      new T.BoxGeometry(0.5, 0.12, 0.35),
+      material('#2c3e50'),
+    );
+    lampHead.position.set(dirX * 1.5, 5.15, 0);
+    lampHead.rotation.z = fx < 0 ? -0.35 : 0.35;
+    lightMast.add(lampHead);
+
+    // Glowing LED emitter plane
+    const ledPlane = new T.Mesh(
+      new T.PlaneGeometry(0.42, 0.28),
+      new T.MeshBasicMaterial({ color: '#f8fafc' }),
+    );
+    ledPlane.position.set(dirX * 1.5, 5.08, 0);
+    ledPlane.rotation.x = Math.PI / 2;
+    lightMast.add(ledPlane);
+
+    g.add(lightMast);
+  }
 
   return g;
 }

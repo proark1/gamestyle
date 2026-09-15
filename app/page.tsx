@@ -65,18 +65,18 @@ const CARDS: Record<string, ReactElement> = {
       key="bungee-doubles"
       className="game-card bungee-doubles-card"
       href="/bungee-doubles"
-      aria-label="Bungee Doubles: 2v2 tethered tennis mayhem in the Jumbleyard style"
+      aria-label="Bungee Padel: 2v2 tethered padel mayhem with wall rebounds in the Jumbleyard style"
     >
       <div className="game-card-art">
         <img
           src="/images/bungee-doubles.png"
-          alt="Two toy tennis players in orange shirts tethered by an elastic bungee cord dive across the court for an overhead smash."
+          alt="Two toy padel players in orange shirts tethered by an elastic bungee cord dive across the court for a smash off the back glass."
           width="1536"
           height="1024"
           loading="lazy"
         />
         <span className="game-card-tag">
-          <Gamepad2 size={14} /> 2 GEGEN 2 · TENNIS MAYHEM
+          <Gamepad2 size={14} /> 2 GEGEN 2 · BUNGEE PADEL
         </span>
         <span className="new-game-tag">NEU IN JUMBLEYARD</span>
         <span className="game-card-play" aria-hidden="true">
@@ -93,19 +93,18 @@ const CARDS: Record<string, ReactElement> = {
           </span>
         </div>
         <h2>
-          Bungee <span>Doubles</span>
+          Bungee <span>Padel</span>
           <span className="game-title-dot">.</span>
         </h2>
         <p>
-          Tennis-Doppel mit absolutem Team-Chaos! Ihr seid mit eurem Teammate
-          durch ein hochelastisches Bungee-Seil verbunden. Nutzt die
-          Seilspannung für Überschall-Slingshots – oder kracht mit Karacho
-          ineinander!
+          Padel-Doppel mit absolutem Team-Chaos! Enge Glas- und Gitterwände,
+          wilde Rebounds von der Rückwand und euer Teammate am elastischen
+          Bungee-Seil. Nutzt die Seilspannung für Überschall-Smashs!
         </p>
         <div className="game-card-bottom">
-          <span>Slingshot oder Team-Bonk?</span>
+          <span>Glas-Rebound oder Team-Bonk?</span>
           <strong>
-            Bungee Doubles spielen <ArrowUpRight size={17} />
+            Bungee Padel spielen <ArrowUpRight size={17} />
           </strong>
         </div>
       </div>

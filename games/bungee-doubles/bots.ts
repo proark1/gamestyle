@@ -91,8 +91,19 @@ export function stepBungeeBot(
     const shouldGoForBall = distToBall <= partnerDistToBall + 0.8;
 
     if (shouldGoForBall) {
-      targetX = ball.x;
-      targetZ = ball.z;
+      // Padel glass wall anticipation:
+      // If ball has bounced once and is heading deep into the back glass, wait for the rebound
+      const headingToBackGlass =
+        (isOrange && ball.z < -8.5 && ball.vz < -2) ||
+        (!isOrange && ball.z > 8.5 && ball.vz > 2);
+
+      if (headingToBackGlass && ball.bouncesOnCurrentSide >= 1) {
+        targetX = ball.x;
+        targetZ = isOrange ? -8.2 : 8.2;
+      } else {
+        targetX = ball.x;
+        targetZ = ball.z;
+      }
 
       // When ball is in range, swing or smash!
       if (distToBall <= 2.2 && ball.y <= 2.8) {
