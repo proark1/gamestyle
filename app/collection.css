@@ -578,8 +578,7 @@
   }
 }
 
-/* Load Bearing. The painted illustration is still to be generated; until then
-   the card draws its own demolition site so the shelf stays complete. */
+/* Load Bearing card accents. */
 .wreck-card .game-card-tag {
   background: #f6dfb4;
   color: #9a5238;
@@ -590,9 +589,4 @@
 .wreck-art {
   background: #c7d3b6;
   overflow: hidden;
-}
-.wreck-scene {
-  display: block;
-  width: 100%;
-  height: 100%;
 }

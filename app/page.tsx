@@ -67,94 +67,13 @@ const CARDS: Record<string, ReactElement> = {
       aria-label="Court Clash: 2v2 street basketball in the Jumbleyard style"
     >
       <div className="game-card-art">
-        <svg
-          viewBox="0 0 384 256"
-          className="wreck-scene"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <title>
-            Two on two street basketball on a warm teal court with players
-            jumping for a slam dunk at the hoop.
-          </title>
-          <rect width="384" height="256" fill="#b5d4ca" />
-          <rect y="160" width="384" height="96" fill="#426357" />
-          {/* Key & 3pt line */}
-          <rect x="140" y="160" width="104" height="96" fill="#ba7447" />
-          <ellipse
-            cx="192"
-            cy="160"
-            rx="90"
-            ry="30"
-            fill="none"
-            stroke="#f4ede2"
-            strokeWidth="3"
-          />
-          <circle
-            cx="192"
-            cy="160"
-            r="32"
-            fill="none"
-            stroke="#f4ede2"
-            strokeWidth="2.5"
-          />
-          {/* Backboard & Pole */}
-          <rect x="188" y="45" width="8" height="120" fill="#3d4f49" />
-          <rect
-            x="156"
-            y="55"
-            width="72"
-            height="42"
-            fill="#eaf3f2"
-            stroke="#ffffff"
-            strokeWidth="2"
-            rx="2"
-          />
-          <rect
-            x="178"
-            y="70"
-            width="28"
-            height="20"
-            fill="none"
-            stroke="#d94c38"
-            strokeWidth="2"
-          />
-          {/* Rim & Net */}
-          <ellipse
-            cx="192"
-            cy="95"
-            rx="16"
-            ry="6"
-            fill="none"
-            stroke="#e5732f"
-            strokeWidth="3"
-          />
-          <polygon
-            points="178,96 206,96 200,120 184,120"
-            fill="rgba(255,255,255,0.7)"
-            stroke="#ffffff"
-            strokeWidth="1"
-          />
-          {/* Basketball */}
-          <circle cx="192" cy="80" r="14" fill="#e5732f" />
-          <path
-            d="M 180 80 Q 192 74 204 80 M 192 66 L 192 94"
-            stroke="#261911"
-            strokeWidth="1.5"
-            fill="none"
-          />
-          {/* Leaping Player */}
-          <circle cx="155" cy="115" r="9" fill="#e6b58b" />
-          <rect x="148" y="124" width="14" height="22" fill="#e58e38" rx="3" />
-          <line
-            x1="158"
-            y1="126"
-            x2="182"
-            y2="92"
-            stroke="#e6b58b"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-        </svg>
+        <img
+          src="/images/court-clash.png"
+          alt="Four toy basketball players in orange and teal jerseys compete on an outdoor court as one leaps toward the hoop for a slam dunk."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
         <span className="game-card-tag">
           <Gamepad2 size={14} /> 2 GEGEN 2 · STREETBALL
         </span>
@@ -198,53 +117,13 @@ const CARDS: Record<string, ReactElement> = {
       aria-label="Crane Clash: swing from the crane cable and stack crates as high as possible"
     >
       <div className="game-card-art">
-        <svg
-          viewBox="0 0 384 256"
-          className="wreck-scene"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <title>
-            Two tall construction cranes with workers swinging from cables,
-            stacking boxes in a chaotic yard.
-          </title>
-          <rect width="384" height="256" fill="#dce7e9" />
-          <rect y="196" width="384" height="60" fill="#b8c7b8" />
-          {/* Left Orange Crane */}
-          <rect x="40" y="40" width="12" height="160" fill="#e58e38" />
-          <rect x="30" y="40" width="110" height="10" fill="#e58e38" />
-          <rect x="18" y="46" width="22" height="16" fill="#444" />
-          {/* Right Teal Crane */}
-          <rect x="332" y="40" width="12" height="160" fill="#349387" />
-          <rect x="244" y="40" width="110" height="10" fill="#349387" />
-          <rect x="344" y="46" width="22" height="16" fill="#444" />
-          {/* Cable & Swinger Orange */}
-          <line
-            x1="110"
-            y1="50"
-            x2="140"
-            y2="120"
-            stroke="#2b2a29"
-            strokeWidth="2"
-          />
-          <circle cx="140" cy="122" r="8" fill="#e58e38" />
-          {/* Cable & Swinger Teal */}
-          <line
-            x1="274"
-            y1="50"
-            x2="244"
-            y2="110"
-            stroke="#2b2a29"
-            strokeWidth="2"
-          />
-          <circle cx="244" cy="112" r="8" fill="#349387" />
-          {/* Crates stacked in middle */}
-          <rect x="172" y="166" width="40" height="30" fill="#c09156" rx="2" />
-          <rect x="176" y="138" width="32" height="28" fill="#9ba199" rx="2" />
-          <rect x="180" y="112" width="24" height="26" fill="#ebb734" rx="2" />
-          {/* Platforms */}
-          <rect x="60" y="192" width="50" height="8" fill="#d97438" />
-          <rect x="274" y="192" width="50" height="8" fill="#2f877c" />
-        </svg>
+        <img
+          src="/images/crane-clash.png"
+          alt="Workers swing from orange and teal crane cables carrying wooden crates toward two teetering towers while their teammates operate the cranes."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
         <span className="game-card-tag">
           <HardHat size={14} /> 2 KRÄNE · 4 SPIELER
         </span>
@@ -565,39 +444,13 @@ const CARDS: Record<string, ReactElement> = {
       aria-label="Load Bearing: bring a condemned house down without destroying the piano"
     >
       <div className="game-card-art wreck-art">
-        <svg
-          viewBox="0 0 384 256"
-          className="wreck-scene"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <title>
-            A condemned house half demolished, a wrecking ball swinging past an
-            upright piano still standing on the exposed upper floor.
-          </title>
-          <rect width="384" height="256" fill="#c7d3b6" />
-          <circle cx="286" cy="58" r="34" fill="#fff1d2" />
-          <rect y="188" width="384" height="68" fill="#a4b98d" />
-          <g fill="#e9d9b0">
-            <rect x="70" y="96" width="14" height="92" />
-            <rect x="196" y="96" width="14" height="92" />
-          </g>
-          <rect x="70" y="82" width="140" height="16" fill="#d3b07b" />
-          <rect x="70" y="118" width="112" height="70" fill="#c9805c" />
-          <rect x="70" y="66" width="86" height="18" fill="#f1e5c8" />
-          <rect x="70" y="52" width="60" height="16" fill="#6f9a92" />
-          <g fill="#6d4530">
-            <rect x="160" y="44" width="38" height="24" rx="3" />
-            <rect x="163" y="56" width="32" height="5" fill="#f7edd4" />
-          </g>
-          <rect x="150" y="68" width="58" height="14" fill="#f1e5c8" />
-          <path d="M300 0 L300 96" stroke="#385d53" strokeWidth="3" />
-          <circle cx="300" cy="112" r="17" fill="#4a6b62" />
-          <g fill="#c9805c" opacity="0.9">
-            <rect x="222" y="176" width="30" height="12" rx="2" />
-            <rect x="252" y="182" width="22" height="8" rx="2" />
-            <rect x="40" y="180" width="26" height="10" rx="2" />
-          </g>
-        </svg>
+        <img
+          src="/images/load-bearing.png"
+          alt="A wrecking ball demolishes a toy house while four workers try to protect an upright piano on the exposed upper floor."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
         <span className="game-card-tag">
           <Hammer size={14} /> MIND THE PIANO
         </span>
