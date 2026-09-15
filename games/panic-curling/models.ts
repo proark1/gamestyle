@@ -181,21 +181,258 @@ export function createCurlingRinkMesh(): T.Group {
 
   // 6. Charming low-poly snowy pine trees along the perimeter
   const treeSpots = [
-    [-halfW - 2.8, -1.0],
-    [-halfW - 3.2, 10.0],
-    [-halfW - 2.6, 21.0],
-    [-halfW - 3.0, 32.0],
-    [halfW + 2.8, 2.0],
-    [halfW + 3.1, 14.0],
-    [halfW + 2.7, 26.0],
-    [halfW + 3.3, 35.0],
+    [-halfW - 3.4, -2.0],
+    [-halfW - 3.8, 8.0],
+    [-halfW - 3.2, 19.0],
+    [-halfW - 3.6, 30.0],
+    [halfW + 3.4, 0.0],
+    [halfW + 3.6, 12.0],
+    [halfW + 3.3, 24.0],
+    [halfW + 3.8, 33.0],
+    [-halfW - 5.2, 4.0],
+    [-halfW - 5.0, 16.0],
+    [halfW + 5.2, 6.0],
+    [halfW + 5.0, 20.0],
   ];
 
   for (const [tx, tz] of treeSpots) {
     createPineTree(g, tx, tz);
   }
 
+  // 7. Alpine Clubhouse behind the starting hack
+  createClubhouse(g);
+
+  // 8. Spectator Grandstands with cheering fans and snowmen
+  createSpectatorBleachers(g, halfW);
+
+  // 9. Overhead rustic timber arches with glowing festoon fairy lights
+  createFestoonArches(g, halfW);
+
+  // 10. Alpine Mountain Range Silhouette
+  createMountainBackdrop(g);
+
+  // 11. Humorous Dasher Board Placards along the sides
+  createDasherBoardPlacards(g, halfW);
+
   return g;
+}
+
+/** Cozy timber curling clubhouse behind the delivery hacks. */
+function createClubhouse(g: T.Group) {
+  const cz = -9.0;
+  // Main timber walls
+  box(g, [8.4, 3.2, 5.0], [0, 1.6, cz], '#422818', true);
+  // Log corner pillars
+  for (const cx of [-4.1, 4.1]) {
+    for (const zOff of [-2.4, 2.4]) {
+      box(g, [0.4, 3.4, 0.4], [cx, 1.7, cz + zOff], '#2c180a', true);
+    }
+  }
+
+  // Front porch overhang & pillars
+  box(g, [5.8, 0.25, 1.8], [0, 2.8, cz + 2.9], '#2c180a');
+  box(g, [6.0, 0.2, 1.9], [0, 3.0, cz + 2.9], '#f0f8ff', true); // Snow on porch
+  for (const px of [-2.6, 2.6]) {
+    box(g, [0.25, 2.8, 0.25], [px, 1.4, cz + 3.6], '#533722');
+  }
+
+  // Cozy glowing warm windows
+  for (const wx of [-2.4, -0.9, 0.9, 2.4]) {
+    // Window frame
+    box(g, [0.95, 1.1, 0.08], [wx, 1.8, cz + 2.54], '#2c180a');
+    // Glowing warm glass
+    box(g, [0.8, 0.95, 0.04], [wx, 1.8, cz + 2.56], '#ffeb99');
+    // Muntin cross bars
+    box(g, [0.8, 0.06, 0.06], [wx, 1.8, cz + 2.57], '#2c180a');
+    box(g, [0.06, 0.95, 0.06], [wx, 1.8, cz + 2.57], '#2c180a');
+  }
+
+  // Double doors
+  box(g, [1.4, 2.2, 0.08], [0, 1.1, cz + 2.53], '#5c3820');
+  box(g, [0.08, 0.2, 0.12], [-0.15, 1.1, cz + 2.58], '#f1c40f');
+  box(g, [0.08, 0.2, 0.12], [0.15, 1.1, cz + 2.58], '#f1c40f');
+
+  // Gabled timber roof
+  box(g, [9.0, 0.35, 5.8], [0, 3.5, cz], '#331f13');
+  // Thick fluffy snow on roof
+  box(g, [9.4, 0.45, 6.2], [0, 3.85, cz], '#f0f8ff', true);
+
+  // Stone chimney
+  box(g, [0.85, 2.8, 0.85], [3.0, 4.2, cz - 0.8], '#546e7a', true);
+  box(g, [1.05, 0.2, 1.05], [3.0, 5.6, cz - 0.8], '#37474f');
+  // Smoke puffs
+  ball(g, [0.28, 0.28, 0.28], [3.0, 6.0, cz - 0.8], '#e2edf2');
+  ball(g, [0.38, 0.38, 0.38], [3.1, 6.5, cz - 0.7], '#edf4f8');
+  ball(g, [0.48, 0.48, 0.48], [3.25, 7.1, cz - 0.6], '#f4f9fc');
+
+  // Carved wooden club sign
+  box(g, [4.8, 0.6, 0.1], [0, 3.3, cz + 3.82], '#2c180a', true);
+  box(g, [4.5, 0.4, 0.08], [0, 3.3, cz + 3.84], '#d94b38'); // Red banner strip
+}
+
+/** Stepped wooden spectator bleachers populated by toy workers and cute snowmen. */
+function createSpectatorBleachers(g: T.Group, halfW: number) {
+  for (const side of [-1, 1]) {
+    const bx = side * (halfW + 2.2);
+    const zStart = 2.0;
+    const zEnd = 30.0;
+    const len = zEnd - zStart;
+
+    // Tier 1 bench
+    box(g, [0.8, 0.4, len], [bx, 0.2, 16.0], '#5d4037', true);
+    // Tier 2 bench (higher and farther back)
+    box(
+      g,
+      [0.8, 0.75, len],
+      [bx + side * 0.75, 0.38, 16.0],
+      '#4e342e',
+      true,
+    );
+
+    // Populate with spectators along the benches
+    for (let z = 4.0; z <= 28.0; z += 3.2) {
+      const isSnowman = Math.abs(z % 6.4) < 1.0;
+      if (isSnowman) {
+        // Snowman fan on Tier 1
+        createSnowmanSpectator(g, bx, 0.4, z, side === -1 ? '#d94b38' : '#3277b3');
+      } else {
+        // Toy worker fan on Tier 2
+        createFanSpectator(
+          g,
+          bx + side * 0.75,
+          0.75,
+          z,
+          z % 2 === 0 ? '#d94b38' : '#3277b3',
+          z % 3 === 0 ? '#f39c12' : '#2ecc71',
+        );
+      }
+    }
+  }
+}
+
+/** Cute low-poly snowman spectator sitting on bleachers. */
+function createSnowmanSpectator(
+  g: T.Group,
+  x: number,
+  y: number,
+  z: number,
+  scarfColor: string,
+) {
+  // Lower body
+  ball(g, [0.32, 0.32, 0.32], [x, y + 0.28, z], '#ffffff');
+  // Head
+  ball(g, [0.24, 0.24, 0.24], [x, y + 0.65, z], '#ffffff');
+  // Warm scarf
+  box(g, [0.38, 0.08, 0.38], [x, y + 0.5, z], scarfColor, true);
+  // Trailing scarf tail
+  box(g, [0.1, 0.25, 0.06], [x + 0.12, y + 0.36, z - 0.16], scarfColor);
+  // Carrot nose
+  taper(g, 0.01, 0.04, 0.16, [x, y + 0.65, z - 0.28], '#e67e22', 5);
+  // Coal eyes
+  ball(g, [0.03, 0.03, 0.03], [x - 0.07, y + 0.7, z - 0.22], '#111111');
+  ball(g, [0.03, 0.03, 0.03], [x + 0.07, y + 0.7, z - 0.22], '#111111');
+  // Bobble winter hat
+  box(g, [0.28, 0.14, 0.28], [x, y + 0.82, z], scarfColor, true);
+  ball(g, [0.08, 0.08, 0.08], [x, y + 0.94, z], '#ffffff');
+}
+
+/** Toy worker spectator with winter coat and pom-pom beanie. */
+function createFanSpectator(
+  g: T.Group,
+  x: number,
+  y: number,
+  z: number,
+  coatColor: string,
+  hatColor: string,
+) {
+  // Torso / Parka
+  box(g, [0.38, 0.44, 0.34], [x, y + 0.32, z], coatColor, true);
+  // Fur collar
+  box(g, [0.36, 0.08, 0.32], [x, y + 0.52, z], '#edf6fa', true);
+  // Head
+  box(g, [0.28, 0.28, 0.28], [x, y + 0.7, z], '#f5cba7', true);
+  // Eyes
+  box(g, [0.04, 0.06, 0.02], [x - 0.07, y + 0.72, z - 0.15], '#222222');
+  box(g, [0.04, 0.06, 0.02], [x + 0.07, y + 0.72, z - 0.15], '#222222');
+  // Winter beanie
+  box(g, [0.32, 0.12, 0.32], [x, y + 0.86, z], hatColor, true);
+  ball(g, [0.09, 0.09, 0.09], [x, y + 0.97, z], '#ffffff');
+}
+
+/** Overhead rustic timber arches with festoon Edison fairy string lights. */
+function createFestoonArches(g: T.Group, halfW: number) {
+  const archZList = [-1.0, 11.0, 23.0, 34.0];
+  const postX = halfW + 1.2;
+
+  for (const az of archZList) {
+    // Left & right rustic timber posts
+    box(g, [0.25, 4.2, 0.25], [-postX, 2.1, az], '#4a3322');
+    box(g, [0.25, 4.2, 0.25], [postX, 2.1, az], '#4a3322');
+    // Top cross-beam
+    box(g, [postX * 2 + 0.5, 0.25, 0.25], [0, 4.15, az], '#4a3322');
+    // Snow on beam
+    box(g, [postX * 2 + 0.6, 0.12, 0.3], [0, 4.3, az], '#f0f8ff', true);
+
+    // Draped festoon Edison bulbs across the beam
+    const bulbCount = 6;
+    for (let b = 0; b < bulbCount; b++) {
+      const bx = -postX + 0.6 + (b * (postX * 2 - 1.2)) / (bulbCount - 1);
+      const sag = Math.sin((b / (bulbCount - 1)) * Math.PI) * 0.35;
+      const by = 4.0 - sag;
+      // Cord dropper
+      beam(g, [bx, 4.15, az], [bx, by + 0.1, az], 0.02, '#222222');
+      // Glowing warm bulb
+      ball(g, [0.12, 0.15, 0.12], [bx, by, az], '#ffe082');
+    }
+  }
+}
+
+/** Majestic alpine mountain silhouette in the background. */
+function createMountainBackdrop(g: T.Group) {
+  const peaks = [
+    { x: -28, z: 62, r: 18, h: 26, color: '#688295' },
+    { x: -12, z: 58, r: 15, h: 22, color: '#597488' },
+    { x: 8, z: 65, r: 20, h: 30, color: '#4a6579' },
+    { x: 26, z: 60, r: 16, h: 24, color: '#5e798d' },
+    { x: -35, z: 52, r: 12, h: 18, color: '#738e9f' },
+    { x: 38, z: 54, r: 14, h: 19, color: '#738e9f' },
+  ];
+
+  for (const p of peaks) {
+    // Rocky mountain base
+    taper(g, 0.1, p.r, p.h, [p.x, p.h / 2 - 2.0, p.z], p.color, 7);
+    // Pure snow cap on peak
+    taper(
+      g,
+      0.0,
+      p.r * 0.42,
+      p.h * 0.42,
+      [p.x, p.h - p.h * 0.21 - 2.0, p.z],
+      '#f0f8ff',
+      7,
+    );
+  }
+}
+
+/** Humorous illustrated wooden sponsor placards along perimeter boards. */
+function createDasherBoardPlacards(g: T.Group, halfW: number) {
+  const ads = [
+    { z: 4.0, textBg: '#c0392b', rim: '#ffffff' }, // ACME Brooms
+    { z: 12.0, textBg: '#2980b9', rim: '#ffffff' }, // Craggy Granite
+    { z: 20.0, textBg: '#e67e22', rim: '#ffffff' }, // Hot-Shot Torches
+    { z: 28.0, textBg: '#27ae60', rim: '#ffffff' }, // Slippery Peels
+  ];
+
+  for (const ad of ads) {
+    for (const side of [-1, 1]) {
+      const px = side * (halfW + 0.11);
+      // Board placard plate
+      box(g, [0.04, 0.26, 2.2], [px, 0.18, ad.z], ad.textBg);
+      // Top & bottom border trim
+      box(g, [0.06, 0.04, 2.24], [px, 0.31, ad.z], ad.rim);
+      box(g, [0.06, 0.04, 2.24], [px, 0.05, ad.z], ad.rim);
+    }
+  }
 }
 
 function createPineTree(g: T.Group, x: number, z: number) {

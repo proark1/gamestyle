@@ -16,22 +16,26 @@
   height: 100%;
 }
 
-/* Top Scoreboard */
+/* ==========================================================================
+   1. Alpine Tournament Scoreboard
+   ========================================================================== */
 .curling-scoreboard {
   position: absolute;
-  top: 18px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: rgba(18, 38, 52, 0.88);
-  backdrop-filter: blur(10px);
-  padding: 10px 24px;
-  border-radius: 28px;
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  gap: 18px;
+  background: linear-gradient(135deg, rgba(28, 40, 51, 0.94), rgba(44, 62, 80, 0.94));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 10px 28px;
+  border-radius: 32px;
+  border: 2px solid rgba(241, 196, 15, 0.45);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   z-index: 20;
+  max-width: 95vw;
 }
 
 .curling-team-score {
@@ -41,141 +45,381 @@
 }
 
 .curling-team-badge {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
 }
 
 .curling-team-badge.red {
-  background-color: #d94b38;
-  box-shadow: 0 0 10px rgba(217, 75, 56, 0.7);
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 0 12px rgba(231, 76, 60, 0.8);
 }
 
 .curling-team-badge.blue {
-  background-color: #3277b3;
-  box-shadow: 0 0 10px rgba(50, 119, 179, 0.7);
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  box-shadow: 0 0 12px rgba(52, 152, 219, 0.8);
 }
 
 .curling-team-name {
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1.05rem;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .curling-team-points {
-  font-size: 1.7rem;
+  font-size: 2.1rem;
   font-weight: 900;
-  color: #fce79a;
-  min-width: 24px;
+  color: #f1c40f;
+  min-width: 32px;
   text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  line-height: 1;
 }
 
 .curling-round-info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 14px;
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  gap: 3px;
+  padding: 0 18px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.curling-round-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .curling-round-title {
-  color: #8ed6ff;
+  color: #aed6f1;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
+}
+
+/* Three dots for the 3 Ends */
+.curling-end-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.curling-end-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.curling-end-dot.completed {
+  background: #f1c40f;
+  box-shadow: 0 0 6px rgba(241, 196, 15, 0.7);
+}
+
+.curling-end-dot.active {
+  background: #2ecc71;
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.9);
+  transform: scale(1.25);
+  animation: dotPulse 1.2s infinite alternate;
+}
+
+@keyframes dotPulse {
+  from { transform: scale(1.1); opacity: 0.8; }
+  to { transform: scale(1.35); opacity: 1; }
 }
 
 .curling-round-turn {
-  color: #ffffff;
-  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
   font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  color: #ffffff;
 }
 
-/* Warning Banner for Thin Ice */
+.curling-round-turn.red-turn {
+  background: rgba(231, 76, 60, 0.3);
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  color: #ff9d92;
+}
+
+.curling-round-turn.blue-turn {
+  background: rgba(52, 152, 219, 0.3);
+  border: 1px solid rgba(52, 152, 219, 0.5);
+  color: #a9d9ff;
+}
+
+.curling-hammer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: #f1c40f;
+  background: rgba(241, 196, 15, 0.15);
+  border: 1px solid rgba(241, 196, 15, 0.35);
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-top: 1px;
+}
+
+/* ==========================================================================
+   2. Thin Ice & Reaction Notifications
+   ========================================================================== */
 .curling-ice-warning {
   position: absolute;
   top: 86px;
   left: 50%;
   transform: translateX(-50%);
-  background: #c0392b;
+  background: linear-gradient(135deg, #c0392b, #962d22);
   color: #ffffff;
-  padding: 8px 18px;
-  border-radius: 20px;
+  padding: 8px 22px;
+  border-radius: 24px;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   letter-spacing: 0.5px;
   box-shadow: 0 6px 20px rgba(192, 57, 43, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   animation: icePulse 1s infinite alternate;
   z-index: 20;
 }
 
 @keyframes icePulse {
-  0% {
-    transform: translateX(-50%) scale(1);
-  }
-  100% {
-    transform: translateX(-50%) scale(1.05);
-  }
+  0% { transform: translateX(-50%) scale(1); }
+  100% { transform: translateX(-50%) scale(1.04); }
 }
 
-/* Deliverer HUD Controls */
+.curling-reaction-toast {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 26, 36, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #f1c40f;
+  padding: 10px 24px;
+  border-radius: 20px;
+  border: 2px solid #f1c40f;
+  font-weight: 900;
+  font-size: 1.15rem;
+  letter-spacing: 0.8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 30;
+  pointer-events: none;
+  animation: reactionPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+}
+
+@keyframes reactionPop {
+  0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* ==========================================================================
+   3. Collapsible "Match Tactics" Pill & Modal
+   ========================================================================== */
+.curling-tactics-pill {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(28, 40, 51, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  z-index: 22;
+  transition: all 0.15s ease;
+}
+
+.curling-tactics-pill:hover {
+  background: rgba(38, 54, 69, 0.95);
+  border-color: #f1c40f;
+  transform: translateY(-1px);
+}
+
+.curling-tactics-menu {
+  position: absolute;
+  top: 66px;
+  left: 18px;
+  background: linear-gradient(135deg, rgba(24, 35, 46, 0.96), rgba(35, 50, 65, 0.96));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  z-index: 23;
+  width: 260px;
+  animation: tacticsSlide 0.2s ease-out;
+}
+
+@keyframes tacticsSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.curling-tactics-section-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #85c1e9;
+  margin-bottom: -4px;
+}
+
+/* ==========================================================================
+   4. Deliverer Tactile Clay HUD
+   ========================================================================== */
 .curling-deliver-hud {
   position: absolute;
-  bottom: 24px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  background: rgba(14, 30, 42, 0.9);
-  backdrop-filter: blur(12px);
-  padding: 18px 26px;
-  border-radius: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(18, 30, 42, 0.94), rgba(28, 45, 60, 0.94));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 18px 24px;
+  border-radius: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   z-index: 25;
-  width: 90%;
-  max-width: 480px;
+  width: 92%;
+  max-width: 520px;
 }
 
+/* Stone Selection 3D Cards */
+.curling-stone-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.curling-stone-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #cfd8dc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.curling-stone-card:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+}
+
+.curling-stone-card.active {
+  background: linear-gradient(135deg, #2980b9, #3498db);
+  border-color: #f1c40f;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #1b4f72, 0 8px 20px rgba(52, 152, 219, 0.4);
+}
+
+.curling-stone-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.curling-stone-icon {
+  font-size: 1.4rem;
+  line-height: 1.1;
+}
+
+.curling-stone-name {
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.curling-stone-sub {
+  font-size: 0.65rem;
+  opacity: 0.8;
+  margin-top: 1px;
+}
+
+/* HUD Row Controls */
 .curling-hud-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 12px;
+  gap: 10px;
 }
 
 .curling-btn-group {
   display: flex;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.28);
   padding: 4px;
-  border-radius: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .curling-toggle-btn {
   background: transparent;
   border: none;
-  color: #cfd8dc;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 700;
+  color: #cbd5e1;
+  padding: 7px 12px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.curling-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .curling-toggle-btn.active {
-  background: #3498db;
+  background: linear-gradient(135deg, #e67e22, #d35400);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.5);
+  box-shadow: 0 3px 0 #933c00;
 }
 
+/* Power Meter with Labeled Tactical Zones */
 .curling-power-meter {
   display: flex;
   flex-direction: column;
@@ -186,157 +430,338 @@
 .curling-power-label {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.curling-power-zone-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(241, 196, 15, 0.2);
+  border: 1px solid rgba(241, 196, 15, 0.4);
+  color: #f1c40f;
 }
 
 .curling-power-bar-bg {
   position: relative;
   width: 100%;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 11px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.22);
 }
 
 .curling-power-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
-  border-radius: 10px;
-  transition: width 0.05s ease;
+  background: linear-gradient(90deg, #2ecc71 0%, #3498db 35%, #f39c12 70%, #e74c3c 100%);
+  border-radius: 11px;
+  transition: width 0.04s linear;
 }
 
+/* Zone Guides Beneath Meter */
+.curling-power-zones {
+  display: flex;
+  width: 100%;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  margin-top: -2px;
+}
+
+.curling-zone-guard {
+  width: 35%;
+  text-align: left;
+  color: #58d68d;
+}
+
+.curling-zone-draw {
+  width: 37%;
+  text-align: center;
+  color: #f5b041;
+}
+
+.curling-zone-takeout {
+  width: 28%;
+  text-align: right;
+  color: #ec7063;
+}
+
+/* Aim Rocker Buttons */
+.curling-aim-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.curling-aim-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.curling-aim-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.curling-aim-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.curling-aim-display {
+  color: #aed6f1;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0 8px;
+}
+
+/* Juicy Deliver Button */
 .curling-launch-btn {
   width: 100%;
   background: linear-gradient(135deg, #e67e22, #d35400);
   color: #ffffff;
   border: none;
-  padding: 14px 28px;
-  border-radius: 16px;
+  padding: 13px 24px;
+  border-radius: 18px;
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(230, 126, 34, 0.5);
-  transition:
-    transform 0.1s,
-    box-shadow 0.1s;
+  box-shadow: 0 6px 0 #933c00, 0 10px 24px rgba(211, 84, 0, 0.5);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .curling-launch-btn:hover {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(230, 126, 34, 0.65);
+  box-shadow: 0 8px 0 #933c00, 0 12px 28px rgba(243, 156, 18, 0.6);
 }
 
 .curling-launch-btn:active {
-  transform: translateY(1px);
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #933c00;
 }
 
-/* Waiting Indicator for Opponent Turn */
-.curling-waiting-banner {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(14, 30, 42, 0.9);
-  backdrop-filter: blur(12px);
-  color: #8ed6ff;
-  padding: 12px 28px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.curling-launch-sub {
+  font-size: 0.68rem;
   font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.5px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 22;
+  opacity: 0.85;
+  letter-spacing: 0.4px;
 }
 
-/* Sweeper HUD Controls */
-.curling-sweeper-hud {
+/* ==========================================================================
+   5. Sweeper Cockpit & Gadget Dock
+   ========================================================================== */
+.curling-sweeper-cockpit {
   position: absolute;
-  bottom: 24px;
+  bottom: 22px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 16px;
-  z-index: 25;
+  flex-direction: column;
   align-items: center;
+  gap: 12px;
+  z-index: 25;
+  width: 90%;
+  max-width: 480px;
+}
+
+/* Gadget Dock */
+.curling-gadget-dock {
+  display: flex;
+  gap: 8px;
+  background: rgba(18, 30, 42, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.curling-gadget-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 7px 14px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.curling-gadget-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.curling-gadget-btn.active {
+  background: linear-gradient(135deg, #f39c12, #d35400);
+  border-color: #f1c40f;
+  color: #ffffff;
+  box-shadow: 0 4px 0 #933c00, 0 6px 18px rgba(243, 156, 18, 0.4);
+}
+
+.curling-gadget-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Sweeper Steer & Scrub Controls */
+.curling-sweeper-hud {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  justify-content: center;
 }
 
 .curling-sweep-btn {
   background: linear-gradient(135deg, #27ae60, #2ecc71);
   color: #ffffff;
   border: none;
-  padding: 22px 34px;
+  padding: 18px 30px;
   border-radius: 28px;
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 900;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(46, 204, 113, 0.5);
-  transition:
-    transform 0.08s,
-    box-shadow 0.08s;
+  box-shadow: 0 6px 0 #1e8449, 0 10px 28px rgba(46, 204, 113, 0.5);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
   display: flex;
   align-items: center;
   gap: 10px;
+  touch-action: manipulation;
+}
+
+.curling-sweep-btn:hover {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 #1e8449, 0 12px 32px rgba(46, 204, 113, 0.6);
 }
 
 .curling-sweep-btn:active,
 .curling-sweep-btn.active {
-  transform: scale(0.94);
-  background: linear-gradient(135deg, #219653, #27ae60);
-  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.6);
+  transform: translateY(4px) scale(0.96);
+  background: linear-gradient(135deg, #1e8449, #27ae60);
+  box-shadow: 0 2px 0 #145a32;
 }
 
 .curling-steer-btn {
-  background: rgba(18, 38, 52, 0.88);
+  background: rgba(28, 40, 51, 0.92);
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  padding: 16px 22px;
+  padding: 14px 18px;
   border-radius: 20px;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
   transition: all 0.1s ease;
+  touch-action: manipulation;
+}
+
+.curling-steer-btn:hover {
+  background: rgba(38, 54, 69, 0.95);
+  transform: translateY(-1px);
 }
 
 .curling-steer-btn:active,
 .curling-steer-btn.active {
-  background: #3498db;
-  transform: scale(0.95);
+  background: #2980b9;
+  border-color: #3498db;
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
+/* Banana Sabotage Button */
 .curling-banana-btn {
   position: absolute;
   bottom: 24px;
   right: 24px;
-  background: #f1c40f;
-  color: #2c3e50;
-  border: none;
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  color: #1e293b;
+  border: 2px solid #ffffff;
   padding: 14px 22px;
-  border-radius: 20px;
-  font-size: 1rem;
+  border-radius: 22px;
+  font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(241, 196, 15, 0.4);
+  box-shadow: 0 5px 0 #b7950b, 0 8px 20px rgba(241, 196, 15, 0.4);
   z-index: 25;
+  transition: all 0.1s ease;
+}
+
+.curling-banana-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 #b7950b, 0 10px 24px rgba(241, 196, 15, 0.5);
 }
 
 .curling-banana-btn:active {
-  transform: scale(0.95);
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #b7950b;
 }
 
-/* Modal / End Summary */
+/* Waiting Indicator */
+.curling-waiting-banner {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 30, 42, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #aed6f1;
+  padding: 12px 28px;
+  border-radius: 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  z-index: 22;
+}
+
+/* ==========================================================================
+   6. End Summary & Match Finished Modals
+   ========================================================================== */
 .curling-modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10, 20, 30, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(10, 18, 26, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -344,27 +769,34 @@
 }
 
 .curling-modal-card {
-  background: #192d3c;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 26px;
+  background: linear-gradient(135deg, #1c2833, #273746);
+  border: 2px solid rgba(241, 196, 15, 0.4);
+  border-radius: 30px;
   padding: 36px 44px;
   max-width: 480px;
   width: 90%;
   text-align: center;
   color: #ffffff;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .curling-modal-title {
-  font-size: 2.1rem;
+  font-size: 2.2rem;
   font-weight: 900;
   color: #f1c40f;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .curling-modal-desc {
   font-size: 1.05rem;
-  color: #cfd8dc;
+  color: #cbd5e1;
   margin-bottom: 24px;
   line-height: 1.5;
 }
@@ -372,51 +804,62 @@
 .curling-modal-scores {
   display: flex;
   justify-content: space-around;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .curling-modal-team-score {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .curling-modal-team-name {
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 0.95rem;
 }
 
 .curling-modal-team-val {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   font-weight: 900;
+  line-height: 1;
 }
 
 .curling-modal-team-val.red {
   color: #e74c3c;
+  text-shadow: 0 0 12px rgba(231, 76, 60, 0.6);
 }
 
 .curling-modal-team-val.blue {
   color: #3498db;
+  text-shadow: 0 0 12px rgba(52, 152, 219, 0.6);
 }
 
 .curling-action-btn {
-  background: #27ae60;
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
   color: #ffffff;
   border: none;
-  padding: 14px 32px;
-  border-radius: 16px;
+  padding: 14px 34px;
+  border-radius: 18px;
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: 900;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(39, 174, 96, 0.4);
-  transition: all 0.15s ease;
+  box-shadow: 0 6px 0 #1e8449, 0 8px 24px rgba(39, 174, 96, 0.4);
+  transition: all 0.12s ease;
 }
 
 .curling-action-btn:hover {
-  background: #2ecc71;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
   transform: translateY(-2px);
+  box-shadow: 0 8px 0 #1e8449, 0 12px 28px rgba(46, 204, 113, 0.5);
+}
+
+.curling-action-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #1e8449;
 }

@@ -1,7 +1,13 @@
 import * as T from 'three';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
-import { basketballBall, basketballCourt, basketballPlayer } from './models';
-import { poseBasketballWorker } from './avatar';
+import {
+  ballDropShadow,
+  basketballBall,
+  basketballCourt,
+  basketballPlayer,
+  playerContactShadow,
+} from './models';
+import { poseBasketballWorker, poseSpectatorWorker } from './avatar';
 import {
   HOOP,
   idleInput,
@@ -19,11 +25,13 @@ type Callbacks = {
 
 export class BasketballScene {
   private scene = new T.Scene();
-  private camera = new T.PerspectiveCamera(48, 1, 0.1, 150);
+  private camera = new T.PerspectiveCamera(46, 1, 0.1, 150);
   private renderer: T.WebGLRenderer;
   private courtGroup = basketballCourt();
   private ballMesh = basketballBall();
+  private ballShadowMesh = ballDropShadow();
   private playerMeshes = new Map<string, T.Group>();
+  private playerShadows = new Map<string, T.Mesh>();
   private ring: T.Mesh;
   private trajectoryPoints: T.Mesh[] = [];
 
@@ -43,8 +51,13 @@ export class BasketballScene {
   private rimRotVel = 0;
   private shakeTimer = 0;
   private shakeIntensity = 0;
-  private baseCamPos = new T.Vector3(0, 15.5, 14.5);
-  private baseCamLook = new T.Vector3(0, 1.8, -3.8);
+  private targetCamPos = new T.Vector3(0, 16.2, 14.5);
+  private targetCamLook = new T.Vector3(0, 1.8, -3.8);
+  private currentCamPos = new T.Vector3(0, 16.2, 14.5);
+  private currentCamLook = new T.Vector3(0, 1.8, -3.8);
+  private zoomPunch = 0;
+  private netSwishTimer = 0;
+  private cheerTimer = 0;
 
   private confettiPool: {
     mesh: T.Mesh;
@@ -91,24 +104,28 @@ export class BasketballScene {
 
     // Stack or Sink style palette: pastel turquoise sky & warm sunlight
     this.scene.background = new T.Color('#b5d4ca');
-    this.scene.fog = new T.Fog('#b5d4ca', 35, 85);
+    this.scene.fog = new T.Fog('#b5d4ca', 38, 95);
 
     this.scene.add(new T.HemisphereLight('#fff2d4', '#7fa497', 2.8));
-    const sun = new T.DirectionalLight('#fff1d2', 3.2);
-    sun.position.set(-10, 24, 14);
+    const sun = new T.DirectionalLight('#fff1d2', 3.3);
+    sun.position.set(-14, 26, 16);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     Object.assign(sun.shadow.camera, {
-      left: -18,
-      right: 18,
-      top: 18,
-      bottom: -18,
+      left: -22,
+      right: 22,
+      top: 22,
+      bottom: -22,
+      near: 5,
+      far: 75,
     });
-    sun.shadow.normalBias = 0.05;
+    sun.shadow.bias = -0.0002;
+    sun.shadow.normalBias = 0.04;
     this.scene.add(sun);
 
-    // Court & Ball
+    // Court, Ball & Ball Drop Shadow
     this.scene.add(this.courtGroup);
+    this.scene.add(this.ballShadowMesh);
     this.scene.add(this.ballMesh);
 
     // Stack or Sink signature yellow target ring
@@ -251,12 +268,14 @@ export class BasketballScene {
 
   private updateCameraPosition(player?: Player) {
     if (this.cameraMode === 'follow' && player) {
-      this.baseCamPos.set(player.x * 0.7, player.y + 6.5, player.z + 9.5);
-      this.baseCamLook.set(player.x * 0.5, 2.0, HOOP.z * 0.6);
+      this.targetCamPos.set(player.x * 0.75, player.y + 6.8, player.z + 9.5);
+      this.targetCamLook.set(player.x * 0.5, 2.0, HOOP.z * 0.55);
     } else {
-      // Classic Stack or Sink isometric perspective
-      this.baseCamPos.set(0, 15.5, 14.5);
-      this.baseCamLook.set(0, 1.8, -3.8);
+      // Classic Stack or Sink isometric perspective with subtle focal action tracking
+      const focalX = player ? player.x * 0.22 : 0;
+      const focalZ = player ? -3.8 + (player.z - -3.8) * 0.18 : -3.8;
+      this.targetCamPos.set(focalX, 16.2, 14.2);
+      this.targetCamLook.set(focalX * 0.5, 1.8, focalZ);
     }
   }
 
@@ -359,7 +378,7 @@ export class BasketballScene {
     const world = snap.world;
     const now = world.clock;
 
-    // Check for new game events for visual FX (Shake, Rim Impulse, Confetti)
+    // Check for new game events for visual FX (Shake, Rim Impulse, Confetti, Cheer, Net Ripple)
     for (const ev of world.events) {
       if (ev.id <= this.lastEventId) continue;
       this.lastEventId = ev.id;
@@ -367,13 +386,20 @@ export class BasketballScene {
       if (
         ev.type === 'dunk' ||
         ev.type === 'superdunk' ||
-        ev.type === 'alleyoop'
+        ev.type === 'alleyoop' ||
+        ev.type === 'swish'
       ) {
         const isSuper = ev.type === 'superdunk';
         this.shakeTimer = isSuper ? 0.55 : 0.4;
-        this.shakeIntensity = isSuper ? 0.5 : 0.28;
+        this.shakeIntensity = isSuper ? 0.48 : 0.26;
         this.rimRotVel = isSuper ? -18.0 : -13.0;
-        this.spawnConfettiBurst(HOOP.x, HOOP.y, HOOP.z);
+        this.netSwishTimer = 0.75;
+        this.cheerTimer = 3.0;
+        this.zoomPunch = isSuper ? 1.3 : 0.85;
+
+        if (ev.type !== 'swish') {
+          this.spawnConfettiBurst(HOOP.x, HOOP.y, HOOP.z);
+        }
         if (isSuper) {
           for (let i = 0; i < 8; i++) {
             this.spawnFlame(HOOP.x, HOOP.y + 0.2, HOOP.z, 2.0);
@@ -381,25 +407,43 @@ export class BasketballScene {
         }
       } else if (ev.type === 'rim') {
         this.rimRotVel = -5.5;
+        this.netSwishTimer = 0.35;
       } else if (ev.type === 'rimhang') {
         this.rimRotVel = -8.5;
+        this.netSwishTimer = 0.5;
       } else if (ev.type === 'anklebreaker') {
         this.shakeTimer = 0.3;
         this.shakeIntensity = 0.22;
+        this.cheerTimer = 2.0;
+        this.zoomPunch = 0.55;
       }
     }
 
-    // 1. Render ball
+    // 1. Render ball & dynamic drop shadow
     this.ballMesh.position.set(world.ball.x, world.ball.y, world.ball.z);
+    this.ballShadowMesh.position.set(world.ball.x, 0.024, world.ball.z);
+    const heightAboveCourt = Math.max(0, world.ball.y - 0.24);
+    const shadowScale = Math.max(0.35, 1.0 - heightAboveCourt * 0.12);
+    this.ballShadowMesh.scale.set(shadowScale, shadowScale, shadowScale);
+    (this.ballShadowMesh.material as T.MeshBasicMaterial).opacity = Math.max(
+      0.08,
+      0.58 - heightAboveCourt * 0.07,
+    );
+
     if (!world.ball.heldBy) {
-      this.ballMesh.rotation.x += world.ball.vx * 0.05;
-      this.ballMesh.rotation.z += world.ball.vz * 0.05;
+      if (Math.hypot(world.ball.vx, world.ball.vz) > 0.4) {
+        this.ballMesh.rotation.x += world.ball.vz * 0.08;
+        this.ballMesh.rotation.z -= world.ball.vx * 0.08;
+      }
+      if (world.ball.vy !== 0) {
+        this.ballMesh.rotation.x -= 0.12; // backspin on flight
+      }
       if (world.ball.isSuperShot) {
         this.spawnFlame(world.ball.x, world.ball.y, world.ball.z);
       }
     }
 
-    // 2. Render players
+    // 2. Render players & player contact shadows
     const activeIds = new Set<string>();
     let localPlayer: Player | undefined;
 
@@ -419,6 +463,22 @@ export class BasketballScene {
       mesh.rotation.y =
         p.specialMove === 'spin' ? p.facing + p.spinAngle : p.facing;
 
+      // Contact shadow beneath each player
+      let pShadow = this.playerShadows.get(p.id);
+      if (!pShadow) {
+        pShadow = playerContactShadow();
+        this.playerShadows.set(p.id, pShadow);
+        this.scene.add(pShadow);
+      }
+      pShadow.position.set(p.x, 0.022, p.z);
+      const pAir = Math.max(0, p.y);
+      const pScale = Math.max(0.35, 1.0 - pAir * 0.14);
+      pShadow.scale.set(pScale, pScale, pScale);
+      (pShadow.material as T.MeshBasicMaterial).opacity = Math.max(
+        0.06,
+        0.35 - pAir * 0.08,
+      );
+
       const moving = Math.hypot(p.vx, p.vz) > 0.4;
       const dunking =
         p.specialMove === 'dunk' ||
@@ -426,6 +486,8 @@ export class BasketballScene {
           p.hasBall &&
           Math.hypot(p.x - HOOP.x, p.z - HOOP.z) < 3.5);
       const shooting = p.chargingShot || (!p.grounded && p.hasBall);
+      const defending = !p.hasBall && !p.chargingShot && p.grounded && !moving;
+      const tilt = Math.max(-0.22, Math.min(0.22, -p.vx * 0.04));
 
       // On Fire flame aura
       if (p.combo >= 80 || p.superJump) {
@@ -452,6 +514,8 @@ export class BasketballScene {
         spinning: p.specialMove === 'spin',
         dribbling:
           p.hasBall && !shooting && !dunking && p.specialMove !== 'dunk',
+        defending,
+        tilt,
         color: p.color,
         still:
           !moving &&
@@ -462,11 +526,17 @@ export class BasketballScene {
       });
     }
 
-    // Remove obsolete player meshes
+    // Remove obsolete player meshes and shadows
     for (const [id, mesh] of this.playerMeshes) {
       if (!activeIds.has(id)) {
         this.scene.remove(mesh);
         this.playerMeshes.delete(id);
+      }
+    }
+    for (const [id, shadow] of this.playerShadows) {
+      if (!activeIds.has(id)) {
+        this.scene.remove(shadow);
+        this.playerShadows.delete(id);
       }
     }
 
@@ -515,9 +585,56 @@ export class BasketballScene {
       rimAssembly.rotation.x = this.rimRot;
     }
 
-    // 2. Camera shake & positioning
-    this.camera.position.copy(this.baseCamPos);
-    this.camera.lookAt(this.baseCamLook);
+    // 2. Net ripple / swish animation on score / dunk
+    if (this.netSwishTimer > 0) {
+      this.netSwishTimer = Math.max(0, this.netSwishTimer - dt);
+      const netMesh = this.courtGroup.userData.netMesh as T.Mesh | undefined;
+      if (netMesh) {
+        const progress = this.netSwishTimer / 0.75;
+        const wave = Math.sin(time * 0.028) * 0.28 * progress;
+        netMesh.scale.set(1.0 + wave, 1.0 - progress * 0.15, 1.0 + wave);
+      }
+    } else {
+      const netMesh = this.courtGroup.userData.netMesh as T.Mesh | undefined;
+      if (netMesh && (netMesh.scale.x !== 1 || netMesh.scale.y !== 1)) {
+        netMesh.scale.set(1, 1, 1);
+      }
+    }
+
+    // 3. Bleacher spectators cheering and idle animation
+    if (this.cheerTimer > 0) {
+      this.cheerTimer = Math.max(0, this.cheerTimer - dt);
+    }
+    const spectators = this.courtGroup.userData.spectators as
+      | T.Group[]
+      | undefined;
+    if (spectators) {
+      for (let i = 0; i < spectators.length; i++) {
+        poseSpectatorWorker(
+          spectators[i],
+          time * 0.001,
+          i * 1.1,
+          this.cheerTimer > 0,
+        );
+      }
+    }
+
+    // 4. Smooth Damped Camera Motion & Zoom Punch
+    const lerpFactor = Math.min(1, dt * 6.5);
+    this.currentCamPos.lerp(this.targetCamPos, lerpFactor);
+    this.currentCamLook.lerp(this.targetCamLook, lerpFactor);
+
+    this.camera.position.copy(this.currentCamPos);
+
+    if (this.zoomPunch > 0.01) {
+      this.zoomPunch = Math.max(0, this.zoomPunch - dt * 2.2);
+      this.camera.position.z -= this.zoomPunch * 1.5;
+      this.camera.position.y -= this.zoomPunch * 0.8;
+    }
+
+    this.camera.lookAt(this.currentCamLook);
+
+    // Camera shake
     if (this.shakeTimer > 0) {
       this.shakeTimer = Math.max(0, this.shakeTimer - dt);
       const intensity = this.shakeIntensity * (this.shakeTimer / 0.5);
@@ -525,7 +642,7 @@ export class BasketballScene {
       this.camera.position.y += (Math.random() - 0.5) * intensity;
     }
 
-    // 3. Update Confetti particles
+    // 5. Update Confetti particles
     for (const p of this.confettiPool) {
       if (p.active) {
         p.life += dt;
@@ -547,7 +664,7 @@ export class BasketballScene {
       }
     }
 
-    // 4. Update Flame particles
+    // 6. Update Flame particles
     for (const p of this.flamePool) {
       if (p.active) {
         p.life += dt;

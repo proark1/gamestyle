@@ -43,6 +43,8 @@ export class PanicCurlingScene {
     life: number;
     maxLife: number;
   }[] = [];
+  private snowflakes: { mesh: T.Mesh; vx: number; vy: number; vz: number }[] =
+    [];
   private particleGeo = new T.BoxGeometry(0.06, 0.06, 0.06);
   private snowMat = new T.MeshBasicMaterial({ color: '#ffffff' });
   private steamMat = new T.MeshBasicMaterial({
@@ -55,48 +57,55 @@ export class PanicCurlingScene {
   private time = 0;
   private localPlayerId = '';
   private cameraTarget = new T.Vector3(0, 0, HACK_Z + 4);
+  private trauma = 0;
 
   constructor(container: HTMLDivElement, callbacks: SceneCallbacks) {
     this.container = container;
     this.callbacks = callbacks;
 
-    // 1. Setup Renderer
-    this.renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // 1. Setup Renderer with ACES Filmic Tone Mapping
+    this.renderer = new T.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
+    this.renderer.toneMapping = T.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.25;
+    this.renderer.outputColorSpace = T.SRGBColorSpace;
     container.appendChild(this.renderer.domElement);
 
-    // 2. Setup Scene and Fog
-    this.scene.background = new T.Color('#b8dcec');
-    this.scene.fog = new T.FogExp2('#b8dcec', 0.016);
+    // 2. Setup Scene and Atmospheric Winter Fog
+    this.scene.background = new T.Color('#9bc5de');
+    this.scene.fog = new T.FogExp2('#9bc5de', 0.012);
 
     // 3. Camera
     this.camera = new T.PerspectiveCamera(
-      42,
+      44,
       container.clientWidth / container.clientHeight,
       0.5,
-      120,
+      140,
     );
-    this.camera.position.set(0, 7.5, HACK_Z - 6.5);
-    this.camera.lookAt(0, 0, HACK_Z + 6);
+    this.camera.position.set(0, 5.0, HACK_Z - 5.5);
+    this.camera.lookAt(0, 0.4, HACK_Z + 12);
 
-    // 4. Lighting
-    const ambient = new T.AmbientLight('#e0f2fe', 1.1);
+    // 4. Lighting: Warm Golden Winter Sunlight & Sky Ambient
+    const ambient = new T.AmbientLight('#c8e4f8', 1.25);
     this.scene.add(ambient);
 
-    const sun = new T.DirectionalLight('#fffaf0', 1.6);
-    sun.position.set(12, 22, 8);
+    const sun = new T.DirectionalLight('#fff8ea', 1.85);
+    sun.position.set(16, 28, -6);
     sun.castShadow = true;
-    sun.shadow.mapSize.width = 1024;
-    sun.shadow.mapSize.height = 1024;
+    sun.shadow.mapSize.width = 2048;
+    sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 5;
-    sun.shadow.camera.far = 60;
-    sun.shadow.camera.left = -16;
-    sun.shadow.camera.right = 16;
-    sun.shadow.camera.top = 26;
-    sun.shadow.camera.bottom = -10;
+    sun.shadow.camera.far = 90;
+    sun.shadow.camera.left = -22;
+    sun.shadow.camera.right = 22;
+    sun.shadow.camera.top = 45;
+    sun.shadow.camera.bottom = -15;
     this.scene.add(sun);
 
     // 5. Rink Mesh
@@ -107,7 +116,10 @@ export class PanicCurlingScene {
     this.aimArrow = this.createAimArrow();
     this.scene.add(this.aimArrow);
 
-    // 7. Resize Observer
+    // 7. Ambient Falling Snow Particles
+    this.initSnowflakes();
+
+    // 8. Resize Observer
     this.resizeObserver = new ResizeObserver(() => {
       if (!this.container) return;
       const w = this.container.clientWidth;
@@ -142,6 +154,7 @@ export class PanicCurlingScene {
     // 5. Process Visual Particles & Events
     this.processEvents(world);
     this.updateParticles();
+    this.updateSnowflakes(0.016);
 
     // 6. Update Aim Arrow
     this.updateAimArrow(world);
@@ -354,26 +367,90 @@ export class PanicCurlingScene {
     const activeStone = world.stones.find((s) => s.id === world.activeStoneId);
 
     if (world.phase === 'sliding' && activeStone && !activeStone.stopped) {
-      // Smoothly follow active stone down the ice
-      const targetZ = activeStone.z;
-      const targetX = activeStone.x * 0.4;
-      this.cameraTarget.lerp(new T.Vector3(targetX, 0, targetZ + 3.0), 0.08);
+      if (activeStone.z > 21.0) {
+        // Elevated broadcast angle as stone approaches House rings
+        this.cameraTarget.lerp(new T.Vector3(0, 0.1, TEE_Z + 0.5), 0.07);
+        this.camera.position.lerp(new T.Vector3(0, 8.8, TEE_Z - 5.8), 0.07);
+      } else {
+        // Intimate dynamic tracking dolly behind active stone down the sheet
+        const targetZ = activeStone.z;
+        const targetX = activeStone.x * 0.45;
+        this.cameraTarget.lerp(
+          new T.Vector3(targetX, 0.35, targetZ + 3.2),
+          0.09,
+        );
 
-      const camZ = targetZ - 7.5;
-      const camY = 6.8;
-      this.camera.position.lerp(new T.Vector3(targetX, camY, camZ), 0.08);
-      this.camera.lookAt(this.cameraTarget);
+        const camZ = targetZ - 5.6;
+        const camY = 4.2;
+        this.camera.position.lerp(
+          new T.Vector3(targetX * 0.6, camY, camZ),
+          0.09,
+        );
+      }
     } else if (world.phase === 'end_summary') {
       // Zoom in on the House rings to inspect scoring
       this.cameraTarget.lerp(new T.Vector3(0, 0, TEE_Z), 0.06);
-      this.camera.position.lerp(new T.Vector3(0, 8.5, TEE_Z - 6.5), 0.06);
-      this.camera.lookAt(this.cameraTarget);
+      this.camera.position.lerp(new T.Vector3(0, 9.2, TEE_Z - 5.5), 0.06);
     } else {
-      // Aiming / warmup view at the delivery hack
-      this.cameraTarget.lerp(new T.Vector3(0, 0, HACK_Z + 5.0), 0.08);
-      this.camera.position.lerp(new T.Vector3(0, 7.2, HACK_Z - 6.0), 0.08);
-      this.camera.lookAt(this.cameraTarget);
+      // Aiming / warmup view: low dramatic perspective right behind hack
+      this.cameraTarget.lerp(new T.Vector3(0, 0.4, HACK_Z + 14.0), 0.08);
+      this.camera.position.lerp(new T.Vector3(0, 5.0, HACK_Z - 5.5), 0.08);
     }
+
+    // Apply trauma screen shake
+    if (this.trauma > 0) {
+      const shake = this.trauma * this.trauma * 0.35;
+      this.camera.position.x += (Math.random() - 0.5) * shake;
+      this.camera.position.y += (Math.random() - 0.5) * shake;
+      this.trauma = Math.max(0, this.trauma - 0.016 * 2.2);
+    }
+
+    this.camera.lookAt(this.cameraTarget);
+  }
+
+  private initSnowflakes() {
+    const flakeMat = new T.MeshBasicMaterial({
+      color: '#ffffff',
+      transparent: true,
+      opacity: 0.85,
+    });
+    const flakeGeo = new T.BoxGeometry(0.08, 0.08, 0.08);
+    for (let i = 0; i < 75; i++) {
+      const mesh = new T.Mesh(flakeGeo, flakeMat);
+      mesh.position.set(
+        (Math.random() - 0.5) * 22,
+        Math.random() * 12 + 0.5,
+        (Math.random() - 0.5) * 50 + 12,
+      );
+      this.scene.add(mesh);
+      this.snowflakes.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 0.4 - 0.15,
+        vy: -0.8 - Math.random() * 0.9,
+        vz: (Math.random() - 0.5) * 0.3,
+      });
+    }
+  }
+
+  private updateSnowflakes(dt: number) {
+    for (const f of this.snowflakes) {
+      f.mesh.position.x += f.vx * dt;
+      f.mesh.position.y += f.vy * dt;
+      f.mesh.position.z += f.vz * dt;
+      f.mesh.rotation.x += dt * 1.5;
+      f.mesh.rotation.y += dt * 2.0;
+
+      // Wrap around bounds
+      if (f.mesh.position.y < 0.05) {
+        f.mesh.position.y = 12.0;
+        f.mesh.position.x = (Math.random() - 0.5) * 22;
+        f.mesh.position.z = (Math.random() - 0.5) * 50 + 12;
+      }
+    }
+  }
+
+  public addTrauma(amount: number) {
+    this.trauma = Math.min(1.0, this.trauma + amount);
   }
 
   private spawnSweepParticles(x: number, z: number, gadget: GadgetId) {
@@ -402,6 +479,11 @@ export class PanicCurlingScene {
     for (const ev of world.events) {
       if (ev.type === 'water_splash') {
         this.spawnWaterSplashParticles(ev.x, ev.z);
+        this.addTrauma(0.35);
+      } else if (ev.type === 'ice_break') {
+        this.addTrauma(0.3);
+      } else if (ev.type === 'stone_clack') {
+        this.addTrauma(0.25);
       }
     }
   }

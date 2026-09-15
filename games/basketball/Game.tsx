@@ -1,7 +1,16 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Flame, RotateCcw, Timer, Trophy } from 'lucide-react';
+import {
+  AlertCircle,
+  Flame,
+  RotateCcw,
+  Timer,
+  Trophy,
+  Zap,
+} from 'lucide-react';
 import type { PeerGameConnection } from '../../shared/peer/connection';
+import { useMediaQuery } from '../../shared/browser/use-media-query';
+import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
 import {
   advanceBasketball,
   basketballAction,
@@ -33,6 +42,7 @@ const tracker = new GameTracker(basketballAnalytics);
 
 export default function BasketballGame() {
   useGameTracker(tracker);
+  const touchMode = useMediaQuery(TOUCH_CONTROLS_QUERY);
 
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<BasketballScene | null>(null);
@@ -251,25 +261,57 @@ export default function BasketballGame() {
       {world && world.phase !== 'lobby' && (
         <div className="bb-hud">
           {/* Orange Team Score */}
-          <div className="bb-team-score orange">
+          <div
+            className={`bb-team-score orange ${
+              world.possession === 'orange' ? 'has-possession' : ''
+            }`}
+          >
             <div className="bb-score-val">{world.scores.orange}</div>
             <div className="bb-score-meta">
               <span>Orange</span>
               <span>Team</span>
+              {world.possession === 'orange' && (
+                <span className="bb-poss-dot" />
+              )}
             </div>
           </div>
 
-          {/* Shot Clock Badge */}
-          <div className="bb-timer-badge">
-            <Timer size={18} />
-            <span>{Math.ceil(world.shotClockRemaining)}s</span>
+          {/* Center Clock & Clearance Info */}
+          <div className="bb-center-clock-group">
+            <div
+              className={`bb-timer-badge ${
+                world.shotClockRemaining <= 5 ? 'danger' : ''
+              }`}
+            >
+              <Timer size={18} />
+              <span>{Math.ceil(world.shotClockRemaining)}s</span>
+            </div>
+            {world.needsClearance && (
+              <div className="bb-clearance-badge">
+                <AlertCircle
+                  size={10}
+                  style={{ display: 'inline', marginRight: 4 }}
+                />
+                Ball klären (3er)
+              </div>
+            )}
           </div>
 
           {/* Teal Team Score */}
-          <div className="bb-team-score teal">
+          <div
+            className={`bb-team-score teal ${
+              world.possession === 'teal' ? 'has-possession' : ''
+            }`}
+          >
             <div className="bb-score-meta" style={{ textAlign: 'right' }}>
               <span>Teal</span>
               <span>Team</span>
+              {world.possession === 'teal' && (
+                <span
+                  className="bb-poss-dot"
+                  style={{ alignSelf: 'flex-end' }}
+                />
+              )}
             </div>
             <div className="bb-score-val">{world.scores.teal}</div>
           </div>
@@ -280,14 +322,26 @@ export default function BasketballGame() {
       {localPlayer && world?.phase === 'playing' && (
         <div className="bb-action-hud">
           {localPlayer.chargingShot && (
-            <div className="bb-shot-meter-box">
-              <div className="bb-shot-meter-sweet" />
-              <div
-                className="bb-shot-meter-fill"
-                style={{
-                  width: `${Math.round(localPlayer.shotCharge * 100)}%`,
-                }}
-              />
+            <div className="bb-shot-meter-container">
+              <div className="bb-shot-meter-box">
+                <div className="bb-shot-meter-sweet" />
+                <div
+                  className={`bb-shot-meter-fill ${
+                    localPlayer.shotCharge >= 0.7 &&
+                    localPlayer.shotCharge <= 0.85
+                      ? 'in-sweet'
+                      : ''
+                  }`}
+                  style={{
+                    width: `${Math.round(localPlayer.shotCharge * 100)}%`,
+                  }}
+                />
+              </div>
+              <div className="bb-shot-meter-label">
+                {localPlayer.shotCharge >= 0.7 && localPlayer.shotCharge <= 0.85
+                  ? '🔥 SWEET SPOT! (Loslassen)'
+                  : 'Wurf aufladen...'}
+              </div>
             </div>
           )}
 
@@ -318,6 +372,68 @@ export default function BasketballGame() {
               ON FIRE! (+Speed &amp; Power)
             </div>
           )}
+        </div>
+      )}
+
+      {/* Mobile Touch Controls Overlay */}
+      {touchMode && world?.phase === 'playing' && (
+        <div className="bb-touch-controls">
+          <div className="bb-touch-buttons">
+            <div className="bb-touch-row">
+              <button
+                type="button"
+                className="bb-touch-btn special"
+                onClick={() => dispatchAction({ type: 'crossover' })}
+              >
+                <Zap size={18} />
+                <span>Cross</span>
+              </button>
+              <button
+                type="button"
+                className="bb-touch-btn special"
+                onClick={() => dispatchAction({ type: 'spin' })}
+              >
+                <span>360°</span>
+                <span>Spin</span>
+              </button>
+            </div>
+            <div className="bb-touch-row">
+              <button
+                type="button"
+                className="bb-touch-btn pass"
+                onClick={() => {
+                  dispatchAction({ type: 'pass' });
+                  dispatchAction({ type: 'steal' });
+                }}
+              >
+                <span>Pass</span>
+                <span>Steal</span>
+              </button>
+              <button
+                type="button"
+                className="bb-touch-btn shoot"
+                onPointerDown={() => {
+                  if (localWorld.current) {
+                    const p = localWorld.current.players.find(
+                      (pl) => pl.id === sessionRef.current.id,
+                    );
+                    if (p) p.input.shoot = true;
+                  }
+                }}
+                onPointerUp={() => {
+                  if (localWorld.current) {
+                    const p = localWorld.current.players.find(
+                      (pl) => pl.id === sessionRef.current.id,
+                    );
+                    if (p) p.input.shoot = false;
+                  }
+                }}
+              >
+                <span>Shoot</span>
+                <span>Dunk</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

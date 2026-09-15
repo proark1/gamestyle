@@ -11,7 +11,13 @@ import {
   zorbClashSnapshot,
 } from './simulation';
 import { ZorbClashPhysics } from './physics';
-import type { PlayerInput, ZorbClashSnapshot, ZorbClashWorld } from './types';
+import type {
+  PlayerInput,
+  ZorbBall,
+  ZorbClashSnapshot,
+  ZorbClashWorld,
+  ZorbPlayer,
+} from './types';
 import {
   GameTracker,
   useGameTracker,
@@ -27,6 +33,128 @@ const formatTime = (seconds: number) => {
   const rem = s % 60;
   return `${m}:${rem < 10 ? '0' : ''}${rem}`;
 };
+
+function PitchRadar({
+  players,
+  ball,
+  selfId,
+}: {
+  players: ZorbPlayer[];
+  ball: ZorbBall;
+  selfId: string;
+}) {
+  const radarW = 110;
+  const radarH = 170;
+  const pad = 8;
+  const innerW = radarW - pad * 2;
+  const innerH = radarH - pad * 2;
+
+  // World pitch bounds: X [-17, 17], Z [-27, 27]
+  // Camera faces +Z (North): Screen-left is +X, Screen-top is +Z (Blue goal)
+  const toRadar = (x: number, z: number) => {
+    const normX = Math.max(0, Math.min(1, (17 - x) / 34));
+    const normY = Math.max(0, Math.min(1, (27 - z) / 54));
+    return {
+      x: pad + normX * innerW,
+      y: pad + normY * innerH,
+    };
+  };
+
+  const ballPos = toRadar(ball.x, ball.z);
+
+  return (
+    <div className="zorb-radar" aria-label="Pitch Mini-Radar">
+      <div className="zorb-radar-header">
+        <span>RADAR</span>
+      </div>
+      <svg
+        className="zorb-radar-svg"
+        viewBox={`0 0 ${radarW} ${radarH}`}
+        width={radarW}
+        height={radarH}
+      >
+        {/* Pitch Turf Background */}
+        <rect
+          x={pad}
+          y={pad}
+          width={innerW}
+          height={innerH}
+          rx={6}
+          className="zorb-radar-pitch"
+        />
+
+        {/* Halfway Line */}
+        <line
+          x1={pad}
+          y1={pad + innerH / 2}
+          x2={pad + innerW}
+          y2={pad + innerH / 2}
+          className="zorb-radar-line"
+        />
+
+        {/* Center Circle */}
+        <circle
+          cx={pad + innerW / 2}
+          cy={pad + innerH / 2}
+          r={14}
+          className="zorb-radar-line"
+          fill="none"
+        />
+        <circle
+          cx={pad + innerW / 2}
+          cy={pad + innerH / 2}
+          r={1.5}
+          className="zorb-radar-center-dot"
+        />
+
+        {/* Blue Goal Box (Top) */}
+        <rect
+          x={pad + innerW / 2 - 16}
+          y={pad}
+          width={32}
+          height={14}
+          className="zorb-radar-box blue"
+        />
+
+        {/* Red Goal Box (Bottom) */}
+        <rect
+          x={pad + innerW / 2 - 16}
+          y={pad + innerH - 14}
+          width={32}
+          height={14}
+          className="zorb-radar-box red"
+        />
+
+        {/* Ball */}
+        <circle
+          cx={ballPos.x}
+          cy={ballPos.y}
+          r={4}
+          className="zorb-radar-ball"
+        />
+
+        {/* Players */}
+        {players.map((p) => {
+          const pos = toRadar(p.x, p.z);
+          const isSelf = p.id === selfId;
+          const isTurtle = p.turtle;
+          return (
+            <g
+              key={p.id}
+              transform={`translate(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`}
+            >
+              {isSelf && <circle r={7} className="zorb-radar-self-ring" />}
+              <circle
+                r={isSelf ? 4.5 : 3.5}
+                className={`zorb-radar-player ${p.team} ${isTurtle ? 'turtle' : ''} ${isSelf ? 'self' : ''}`}
+              />
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
 export default function ZorbClash() {
   useGameTracker(tracker);
@@ -229,6 +357,15 @@ export default function ZorbClash() {
         </div>
       </div>
 
+      {/* Tactical Mini-Radar */}
+      {snapshot && (
+        <PitchRadar
+          players={snapshot.world.players}
+          ball={snapshot.world.ball}
+          selfId={selfId}
+        />
+      )}
+
       {/* Comical Upside-Down Turtle Alert */}
       {isTurtle && (
         <div className="zorb-turtle-banner">
@@ -254,6 +391,16 @@ export default function ZorbClash() {
 
       {/* Bottom Controls / Meter HUD */}
       <div className="zorb-hud-bottom">
+        {!touchActive && (
+          <div className="zorb-controls-hint">
+            <span className="zorb-key-tag">W</span>
+            <span className="zorb-key-tag">A</span>
+            <span className="zorb-key-tag">S</span>
+            <span className="zorb-key-tag">D</span>
+            <span className="zorb-hint-label">Roll</span>
+          </div>
+        )}
+
         <div className="zorb-dash-container">
           <div className="zorb-dash-label">
             <Zap size={15} color="#ffd166" />

@@ -3,10 +3,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ChevronDown,
+  ChevronUp,
   Flame,
+  Hammer,
   RotateCcw,
   Sparkles,
   Trophy,
+  Users,
   Wind,
   Zap,
 } from 'lucide-react';
@@ -29,7 +33,6 @@ import {
 } from './simulation';
 import {
   GADGET_CONFIGS,
-  STONE_CONFIGS,
   TEAM_NAMES,
   type GadgetId,
   type PanicCurlingAction,
@@ -74,6 +77,11 @@ export default function PanicCurlingGame() {
   const [activeGadget, setActiveGadget] = useState<GadgetId>('broom');
   const [isSweeping, setIsSweeping] = useState(false);
   const [steerDir, setSteerDir] = useState(0);
+
+  // Tactics & Reaction Toast state
+  const [showTactics, setShowTactics] = useState(false);
+  const [reactionToast, setReactionToast] = useState<{ text: string; id: number } | null>(null);
+  const reactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Synchronization refs for 60fps simulation loop without effect tearing
   const aimAngleRef = useRef(0);
@@ -194,10 +202,29 @@ export default function PanicCurlingGame() {
         // Advance simulation
         advancePanicCurling(localWorld.current, Date.now());
 
-        // Play events audio
-        if (audioRef.current && soundEnabledRef.current) {
+        // Play events audio & reaction toast
+        if (localWorld.current.events.length > 0) {
           for (const ev of localWorld.current.events) {
-            audioRef.current.playEvent(ev);
+            if (audioRef.current && soundEnabledRef.current) {
+              audioRef.current.playEvent(ev);
+            }
+            if (ev.type === 'ice_break') {
+              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+              setReactionToast({ text: '🌊 ICE CRACKED THROUGH!', id: Date.now() });
+              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+            } else if (ev.type === 'banana_slip') {
+              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+              setReactionToast({ text: '🍌 WHOOPS! SLIPPED ON PEEL!', id: Date.now() });
+              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+            } else if (ev.type === 'stone_clack' && ev.volume > 0.35) {
+              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+              setReactionToast({ text: '💥 THUNDEROUS TAKEOUT!', id: Date.now() });
+              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+            } else if (ev.type === 'water_splash') {
+              if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+              setReactionToast({ text: '🥶 FELL INTO FROZEN WATER!', id: Date.now() });
+              reactionTimerRef.current = setTimeout(() => setReactionToast(null), 1800);
+            }
           }
         }
 
@@ -310,36 +337,142 @@ export default function PanicCurlingGame() {
 
       <div ref={containerRef} className="curling-viewport" />
 
-      {/* Top Scoreboard */}
+      {/* Collapsible "Match Tactics" Pill & Menu */}
+      <div style={{ position: 'relative', zIndex: 30 }}>
+        <button
+          className="curling-tactics-pill"
+          onClick={() => setShowTactics((prev) => !prev)}
+        >
+          <Users size={16} />
+          <span>
+            {team === 'red' ? '🔴 Red Rovers' : '🔵 Blue Blazers'} •{' '}
+            {role.charAt(0).toUpperCase() + role.slice(1)}
+          </span>
+          {showTactics ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+
+        {showTactics && (
+          <div className="curling-tactics-menu">
+            <span className="curling-tactics-section-title">Select Team</span>
+            <div className="curling-btn-group">
+              <button
+                className={`curling-toggle-btn ${team === 'red' ? 'active' : ''}`}
+                onClick={() => {
+                  handleSwitchTeam('red');
+                  setShowTactics(false);
+                }}
+              >
+                🔴 Red Rovers
+              </button>
+              <button
+                className={`curling-toggle-btn ${team === 'blue' ? 'active' : ''}`}
+                onClick={() => {
+                  handleSwitchTeam('blue');
+                  setShowTactics(false);
+                }}
+              >
+                🔵 Blue Blazers
+              </button>
+            </div>
+
+            <span className="curling-tactics-section-title">Select Role</span>
+            <div className="curling-btn-group">
+              <button
+                className={`curling-toggle-btn ${role === 'deliverer' ? 'active' : ''}`}
+                onClick={() => {
+                  handleSwitchRole('deliverer');
+                  setShowTactics(false);
+                }}
+              >
+                Deliverer
+              </button>
+              <button
+                className={`curling-toggle-btn ${role === 'sweeper' ? 'active' : ''}`}
+                onClick={() => {
+                  handleSwitchRole('sweeper');
+                  setShowTactics(false);
+                }}
+              >
+                Sweeper
+              </button>
+              <button
+                className={`curling-toggle-btn ${role === 'defender' ? 'active' : ''}`}
+                onClick={() => {
+                  handleSwitchRole('defender');
+                  setShowTactics(false);
+                }}
+              >
+                Defender
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Top Alpine Tournament Scoreboard */}
       {world && (
         <div className="curling-scoreboard">
           <div className="curling-team-score">
-            <span className="curling-team-badge red" />
+            <span className="curling-team-badge red">🔴</span>
             <span className="curling-team-name">{TEAM_NAMES.red}</span>
             <span className="curling-team-points">{world.scores.red}</span>
           </div>
 
           <div className="curling-round-info">
-            <span className="curling-round-title">
-              End {world.round} of {world.maxRounds}
-            </span>
-            <span className="curling-round-turn">
-              {world.turnTeam === 'red' ? '🔴 RED THROW' : '🔵 BLUE THROW'}
+            <div className="curling-round-header">
+              <span className="curling-round-title">
+                End {world.round} of {world.maxRounds}
+              </span>
+              <div className="curling-end-dots">
+                {[1, 2, 3].map((endNum) => (
+                  <div
+                    key={endNum}
+                    className={`curling-end-dot ${
+                      endNum < world.round
+                        ? 'completed'
+                        : endNum === world.round
+                          ? 'active'
+                          : ''
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div
+              className={`curling-round-turn ${
+                world.turnTeam === 'red' ? 'red-turn' : 'blue-turn'
+              }`}
+            >
+              <span>{world.turnTeam === 'red' ? '🔴 RED' : '🔵 BLUE'}</span>
+              <span>•</span>
+              <span>ROCK {world.throwIndex + 1}/{world.totalThrowsPerEnd}</span>
+            </div>
+
+            <span className="curling-hammer-badge">
+              <Hammer size={12} /> {world.hammerTeam === 'red' ? 'Red' : 'Blue'} Hammer
             </span>
           </div>
 
           <div className="curling-team-score">
             <span className="curling-team-points">{world.scores.blue}</span>
             <span className="curling-team-name">{TEAM_NAMES.blue}</span>
-            <span className="curling-team-badge blue" />
+            <span className="curling-team-badge blue">🔵</span>
           </div>
+        </div>
+      )}
+
+      {/* Reaction Floater / Toast */}
+      {reactionToast && (
+        <div key={reactionToast.id} className="curling-reaction-toast">
+          {reactionToast.text}
         </div>
       )}
 
       {/* Thin Ice Hazard Warning Alert */}
       {hasStressedIce && (
         <div className="curling-ice-warning">
-          ⚠️ DANGER: THIN ICE IS CRACKING! DON&apos;T BUNCH UP!
+          ⚠️ DANGER: THIN ICE IS CRACKING! SPREAD OUT!
         </div>
       )}
 
@@ -353,26 +486,52 @@ export default function PanicCurlingGame() {
       {/* Deliverer Aim & Power Controls */}
       {isDeliverPhase && (
         <div className="curling-deliver-hud">
-          <div className="curling-hud-row">
-            <div className="curling-btn-group">
-              {(['granite', 'anvil', 'basket'] as StoneKind[]).map((k) => (
-                <button
-                  key={k}
-                  className={`curling-toggle-btn ${stoneKind === k ? 'active' : ''}`}
-                  onClick={() => {
-                    setStoneKind(k);
-                    stoneKindRef.current = k;
-                    dispatchAction({ type: 'switchStone', kind: k });
-                  }}
-                >
-                  {STONE_CONFIGS[k].name}
-                </button>
-              ))}
-            </div>
+          {/* Stone Selection 3D Cards */}
+          <div className="curling-stone-cards">
+            <button
+              className={`curling-stone-card ${stoneKind === 'granite' ? 'active' : ''}`}
+              onClick={() => {
+                setStoneKind('granite');
+                stoneKindRef.current = 'granite';
+                dispatchAction({ type: 'switchStone', kind: 'granite' });
+              }}
+            >
+              <span className="curling-stone-icon">🪨</span>
+              <span className="curling-stone-name">Granite</span>
+              <span className="curling-stone-sub">Balanced Curler</span>
+            </button>
+            <button
+              className={`curling-stone-card ${stoneKind === 'anvil' ? 'active' : ''}`}
+              onClick={() => {
+                setStoneKind('anvil');
+                stoneKindRef.current = 'anvil';
+                dispatchAction({ type: 'switchStone', kind: 'anvil' });
+              }}
+            >
+              <span className="curling-stone-icon">⚓</span>
+              <span className="curling-stone-name">Anvil</span>
+              <span className="curling-stone-sub">Cracks Ice • Smash</span>
+            </button>
+            <button
+              className={`curling-stone-card ${stoneKind === 'basket' ? 'active' : ''}`}
+              onClick={() => {
+                setStoneKind('basket');
+                stoneKindRef.current = 'basket';
+                dispatchAction({ type: 'switchStone', kind: 'basket' });
+              }}
+            >
+              <span className="curling-stone-icon">🧺</span>
+              <span className="curling-stone-name">Teammate</span>
+              <span className="curling-stone-sub">Agile • Wild Spin</span>
+            </button>
+          </div>
 
-            <div className="curling-btn-group">
+          {/* Spin Direction Row */}
+          <div className="curling-hud-row">
+            <div className="curling-btn-group" style={{ width: '100%', justifyContent: 'center' }}>
               <button
                 className={`curling-toggle-btn ${spin < 0 ? 'active' : ''}`}
+                style={{ flex: 1, justifyContent: 'center' }}
                 onClick={() => {
                   setSpin(-1);
                   spinRef.current = -1;
@@ -382,6 +541,7 @@ export default function PanicCurlingGame() {
               </button>
               <button
                 className={`curling-toggle-btn ${spin > 0 ? 'active' : ''}`}
+                style={{ flex: 1, justifyContent: 'center' }}
                 onClick={() => {
                   setSpin(1);
                   spinRef.current = 1;
@@ -392,10 +552,17 @@ export default function PanicCurlingGame() {
             </div>
           </div>
 
+          {/* Power Meter with Labeled Zones */}
           <div className="curling-power-meter">
             <div className="curling-power-label">
               <span>Launch Power: {Math.round(power * 100)}%</span>
-              <span>Aim Angle: {(aimAngle * 57.3).toFixed(1)}°</span>
+              <span className="curling-power-zone-tag">
+                {power < 0.35
+                  ? '🛡️ Guard Shot'
+                  : power < 0.72
+                    ? '🎯 Draw to House (Tee)'
+                    : '💥 High Takeout!'}
+              </span>
             </div>
             <div className="curling-power-bar-bg">
               <div
@@ -403,11 +570,17 @@ export default function PanicCurlingGame() {
                 style={{ width: `${power * 100}%` }}
               />
             </div>
+            <div className="curling-power-zones">
+              <span className="curling-zone-guard">Guard (0-35%)</span>
+              <span className="curling-zone-draw">House Draw (35-72%)</span>
+              <span className="curling-zone-takeout">Takeout (72-100%)</span>
+            </div>
           </div>
 
-          <div className="curling-hud-row">
+          {/* Aim Rocker Controls */}
+          <div className="curling-aim-group">
             <button
-              className="curling-toggle-btn"
+              className="curling-aim-btn"
               onClick={() =>
                 setAimAngle((a) => {
                   const next = Math.max(-0.35, a - 0.05);
@@ -418,17 +591,22 @@ export default function PanicCurlingGame() {
             >
               ◀ Aim Left
             </button>
+            <span className="curling-aim-display">
+              {aimAngle === 0
+                ? 'Center 0.0°'
+                : `${(aimAngle * 57.3).toFixed(1)}° ${aimAngle > 0 ? '▶' : '◀'}`}
+            </span>
             <button
-              className="curling-toggle-btn"
+              className="curling-aim-btn"
               onClick={() => {
                 setAimAngle(0);
                 aimAngleRef.current = 0;
               }}
             >
-              Center
+              Reset
             </button>
             <button
-              className="curling-toggle-btn"
+              className="curling-aim-btn"
               onClick={() =>
                 setAimAngle((a) => {
                   const next = Math.min(0.35, a + 0.05);
@@ -441,113 +619,105 @@ export default function PanicCurlingGame() {
             </button>
           </div>
 
+          {/* Juicy Deliver Button */}
           <button className="curling-launch-btn" onClick={handleLaunch}>
-            DELIVER STONE! 🚀
+            <span>DELIVER STONE! 🚀</span>
+            <span className="curling-launch-sub">Release at peak power to shoot</span>
           </button>
         </div>
       )}
 
-      {/* Sweeper Controls (Available to sweepers and the throwing team during slide) */}
+      {/* Sweeper Cockpit & Gadget Dock */}
       {isSlidePhase && (role === 'sweeper' || isMyTurn) && (
-        <div className="curling-sweeper-hud">
-          <button
-            className={`curling-steer-btn ${steerDir === -1 ? 'active' : ''}`}
-            onMouseDown={() => {
-              setSteerDir(-1);
-              steerDirRef.current = -1;
-            }}
-            onMouseUp={() => {
-              setSteerDir(0);
-              steerDirRef.current = 0;
-            }}
-            onTouchStart={() => {
-              setSteerDir(-1);
-              steerDirRef.current = -1;
-            }}
-            onTouchEnd={() => {
-              setSteerDir(0);
-              steerDirRef.current = 0;
-            }}
-          >
-            ⇦ Steer Left
-          </button>
+        <div className="curling-sweeper-cockpit">
+          {/* Tactile Gadget Selector */}
+          <div className="curling-gadget-dock">
+            {(['broom', 'hairdryer', 'blowtorch'] as GadgetId[]).map((g) => (
+              <button
+                key={g}
+                className={`curling-gadget-btn ${activeGadget === g ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveGadget(g);
+                  activeGadgetRef.current = g;
+                  dispatchAction({ type: 'switchGadget', gadget: g });
+                }}
+              >
+                {g === 'broom' && <Wind size={15} />}
+                {g === 'hairdryer' && <Zap size={15} />}
+                {g === 'blowtorch' && <Flame size={15} />}
+                <span>{GADGET_CONFIGS[g].name}</span>
+              </button>
+            ))}
+          </div>
 
-          <button
-            className={`curling-sweep-btn ${isSweeping ? 'active' : ''}`}
-            onMouseDown={() => {
-              setIsSweeping(true);
-              isSweepingRef.current = true;
-            }}
-            onMouseUp={() => {
-              setIsSweeping(false);
-              isSweepingRef.current = false;
-            }}
-            onTouchStart={() => {
-              setIsSweeping(true);
-              isSweepingRef.current = true;
-            }}
-            onTouchEnd={() => {
-              setIsSweeping(false);
-              isSweepingRef.current = false;
-            }}
-          >
-            <Sparkles size={24} /> SWEEP! HARDER!
-          </button>
-
-          <button
-            className={`curling-steer-btn ${steerDir === 1 ? 'active' : ''}`}
-            onMouseDown={() => {
-              setSteerDir(1);
-              steerDirRef.current = 1;
-            }}
-            onMouseUp={() => {
-              setSteerDir(0);
-              steerDirRef.current = 0;
-            }}
-            onTouchStart={() => {
-              setSteerDir(1);
-              steerDirRef.current = 1;
-            }}
-            onTouchEnd={() => {
-              setSteerDir(0);
-              steerDirRef.current = 0;
-            }}
-          >
-            Steer Right ⇨
-          </button>
-        </div>
-      )}
-
-      {/* Gadget Switcher Bar */}
-      {(role === 'sweeper' || (isSlidePhase && isMyTurn)) && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '100px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            gap: '8px',
-            zIndex: 25,
-          }}
-        >
-          {(['broom', 'hairdryer', 'blowtorch'] as GadgetId[]).map((g) => (
+          {/* Sweeper Steer & Scrub Controls */}
+          <div className="curling-sweeper-hud">
             <button
-              key={g}
-              className={`curling-toggle-btn ${activeGadget === g ? 'active' : ''}`}
-              style={{ background: 'rgba(18, 38, 52, 0.88)' }}
-              onClick={() => {
-                setActiveGadget(g);
-                activeGadgetRef.current = g;
-                dispatchAction({ type: 'switchGadget', gadget: g });
+              className={`curling-steer-btn ${steerDir === -1 ? 'active' : ''}`}
+              onMouseDown={() => {
+                setSteerDir(-1);
+                steerDirRef.current = -1;
+              }}
+              onMouseUp={() => {
+                setSteerDir(0);
+                steerDirRef.current = 0;
+              }}
+              onTouchStart={() => {
+                setSteerDir(-1);
+                steerDirRef.current = -1;
+              }}
+              onTouchEnd={() => {
+                setSteerDir(0);
+                steerDirRef.current = 0;
               }}
             >
-              {g === 'broom' && <Wind size={15} />}
-              {g === 'hairdryer' && <Zap size={15} />}
-              {g === 'blowtorch' && <Flame size={15} />}
-              {' ' + GADGET_CONFIGS[g].name}
+              ⇦ Steer Left
             </button>
-          ))}
+
+            <button
+              className={`curling-sweep-btn ${isSweeping ? 'active' : ''}`}
+              onMouseDown={() => {
+                setIsSweeping(true);
+                isSweepingRef.current = true;
+              }}
+              onMouseUp={() => {
+                setIsSweeping(false);
+                isSweepingRef.current = false;
+              }}
+              onTouchStart={() => {
+                setIsSweeping(true);
+                isSweepingRef.current = true;
+              }}
+              onTouchEnd={() => {
+                setIsSweeping(false);
+                isSweepingRef.current = false;
+              }}
+            >
+              <Sparkles size={24} /> SWEEP HARDER!
+            </button>
+
+            <button
+              className={`curling-steer-btn ${steerDir === 1 ? 'active' : ''}`}
+              onMouseDown={() => {
+                setSteerDir(1);
+                steerDirRef.current = 1;
+              }}
+              onMouseUp={() => {
+                setSteerDir(0);
+                steerDirRef.current = 0;
+              }}
+              onTouchStart={() => {
+                setSteerDir(1);
+                steerDirRef.current = 1;
+              }}
+              onTouchEnd={() => {
+                setSteerDir(0);
+                steerDirRef.current = 0;
+              }}
+            >
+              Steer Right ⇨
+            </button>
+          </div>
         </div>
       )}
 
@@ -557,61 +727,6 @@ export default function PanicCurlingGame() {
           🍌 Toss Banana ({myPlayer.bananasLeft} left)
         </button>
       )}
-
-      {/* Role & Team Switcher Bar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '76px',
-          left: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          zIndex: 22,
-        }}
-      >
-        <div
-          className="curling-btn-group"
-          style={{ background: 'rgba(18, 38, 52, 0.85)' }}
-        >
-          <button
-            className={`curling-toggle-btn ${team === 'red' ? 'active' : ''}`}
-            onClick={() => handleSwitchTeam('red')}
-          >
-            Red Team
-          </button>
-          <button
-            className={`curling-toggle-btn ${team === 'blue' ? 'active' : ''}`}
-            onClick={() => handleSwitchTeam('blue')}
-          >
-            Blue Team
-          </button>
-        </div>
-
-        <div
-          className="curling-btn-group"
-          style={{ background: 'rgba(18, 38, 52, 0.85)' }}
-        >
-          <button
-            className={`curling-toggle-btn ${role === 'deliverer' ? 'active' : ''}`}
-            onClick={() => handleSwitchRole('deliverer')}
-          >
-            Deliverer
-          </button>
-          <button
-            className={`curling-toggle-btn ${role === 'sweeper' ? 'active' : ''}`}
-            onClick={() => handleSwitchRole('sweeper')}
-          >
-            Sweeper
-          </button>
-          <button
-            className={`curling-toggle-btn ${role === 'defender' ? 'active' : ''}`}
-            onClick={() => handleSwitchRole('defender')}
-          >
-            Defender
-          </button>
-        </div>
-      </div>
 
       {/* End of End or Match Over Dialog */}
       {world?.phase === 'end_summary' && (

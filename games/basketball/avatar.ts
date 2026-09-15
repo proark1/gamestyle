@@ -15,6 +15,8 @@ export function poseBasketballWorker(
     crossover?: boolean;
     spinning?: boolean;
     dribbling: boolean;
+    defending?: boolean;
+    tilt?: number;
     color: number;
     still: boolean;
   },
@@ -30,6 +32,9 @@ export function poseBasketballWorker(
   rig.body.position.x = 0;
   rig.body.position.z = 0;
   rig.body.rotation.y = 0;
+
+  // Apply banking tilt into turns
+  const bankingTilt = pose.tilt ?? 0;
 
   if (pose.hanging) {
     // Two-handed rim hang: both arms straight up overhead gripping iron, legs dangling & swinging
@@ -104,34 +109,80 @@ export function poseBasketballWorker(
   } else if (pose.crossover) {
     // Low athletic crossover juke
     rig.body.rotation.x = 0.25;
-    rig.body.rotation.z = Math.sin(time * 18) * 0.25;
+    rig.body.rotation.z = Math.sin(time * 18) * 0.25 + bankingTilt;
     rig.legL.rotation.x = 0.4;
     rig.legR.rotation.x = -0.4;
     rig.armL.rotation.x = -0.8 + Math.sin(time * 18) * 0.5;
     rig.armR.rotation.x = -0.8 - Math.sin(time * 18) * 0.5;
   } else if (pose.dribbling) {
     // Dribble movement: right arm bouncing ball, legs walking
-    rig.body.rotation.z = pose.still
-      ? 0
-      : Math.sin(time * 2 + pose.color) * 0.02;
-    rig.body.rotation.x = 0;
+    rig.body.rotation.z =
+      bankingTilt + (pose.still ? 0 : Math.sin(time * 2 + pose.color) * 0.02);
+    rig.body.rotation.x = pose.moving ? 0.12 : 0;
     const legSwing = pose.moving ? Math.sin(time * 12) * 0.6 : 0;
     rig.legL.rotation.x = legSwing;
     rig.legR.rotation.x = -legSwing;
     rig.armL.rotation.x = -legSwing * 0.5 - 0.2;
     // Dribbling arm pumping up and down
     rig.armR.rotation.x = -0.55 + Math.sin(time * 10) * 0.45;
+  } else if (pose.defending) {
+    // Athletic defensive stance: crouched, knees bent, arms spread wide to contest
+    rig.body.position.y = -0.08;
+    rig.body.rotation.x = 0.18;
+    rig.body.rotation.z = bankingTilt;
+    rig.legL.rotation.x = 0.35;
+    rig.legR.rotation.x = -0.2;
+    rig.armL.rotation.x = -0.6;
+    rig.armR.rotation.x = -0.6;
+    rig.armL.rotation.z = -1.1 + Math.sin(time * 6) * 0.1;
+    rig.armR.rotation.z = 1.1 - Math.sin(time * 6) * 0.1;
   } else {
     // Normal standing / walking
-    rig.body.rotation.z = pose.still
-      ? 0
-      : Math.sin(time * 2 + pose.color) * 0.02;
-    rig.body.rotation.x = 0;
+    rig.body.position.y = pose.still
+      ? Math.sin(time * 3 + pose.color) * 0.02
+      : 0;
+    rig.body.rotation.z =
+      bankingTilt + (pose.still ? 0 : Math.sin(time * 2 + pose.color) * 0.02);
+    rig.body.rotation.x = pose.moving ? 0.1 : 0;
     const swing = pose.moving ? Math.sin(time * 12) * 0.6 : 0;
     rig.legL.rotation.x = swing;
     rig.legR.rotation.x = -swing;
     rig.armL.rotation.x = -swing * 0.65;
     rig.armR.rotation.x = swing * 0.65;
+  }
+}
+
+/**
+ * Animate seated / standing spectators on the bleachers.
+ */
+export function poseSpectatorWorker(
+  model: T.Object3D,
+  time: number,
+  seed: number,
+  cheering: boolean,
+) {
+  const rig = model.userData as Record<
+    'body' | 'legL' | 'legR' | 'armL' | 'armR',
+    T.Group
+  >;
+  if (!rig?.body) return;
+
+  if (cheering) {
+    // Cheering: arms raised pumping in the air, head bobbing
+    rig.body.rotation.x = -0.15;
+    rig.body.rotation.z = Math.sin(time * 10 + seed) * 0.08;
+    rig.armL.rotation.x = -2.6 + Math.sin(time * 12 + seed) * 0.3;
+    rig.armR.rotation.x = -2.6 - Math.sin(time * 12 + seed) * 0.3;
+    rig.armL.rotation.z = -0.4;
+    rig.armR.rotation.z = 0.4;
+  } else {
+    // Subtle seated idle: slight head tracking and breathing
+    rig.body.rotation.x = Math.sin(time * 2 + seed) * 0.04;
+    rig.body.rotation.y = Math.sin(time * 1.5 + seed * 2) * 0.12;
+    rig.armL.rotation.x = -0.4;
+    rig.armR.rotation.x = -0.4;
+    rig.armL.rotation.z = -0.1;
+    rig.armR.rotation.z = 0.1;
   }
 }
 

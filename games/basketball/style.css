@@ -24,13 +24,13 @@
 /* Topbar HUD */
 .bb-hud {
   position: absolute;
-  top: 16px;
+  top: 18px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   pointer-events: none;
 }
 
@@ -38,27 +38,44 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  padding: 8px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   font-weight: 700;
   pointer-events: auto;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  position: relative;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.bb-team-score.has-possession {
+  transform: scale(1.04);
 }
 
 .bb-team-score.orange {
   border-left: 6px solid #e58e38;
 }
+.bb-team-score.orange.has-possession {
+  box-shadow: 0 6px 24px rgba(229, 142, 56, 0.35);
+}
 
 .bb-team-score.teal {
   border-right: 6px solid #349387;
 }
+.bb-team-score.teal.has-possession {
+  box-shadow: 0 6px 24px rgba(52, 147, 135, 0.35);
+}
 
 .bb-score-val {
-  font-size: 32px;
+  font-size: 34px;
   line-height: 1;
   font-family: 'Fredoka', sans-serif;
+  min-width: 36px;
+  text-align: center;
 }
 
 .bb-team-score.orange .bb-score-val {
@@ -74,8 +91,33 @@
   flex-direction: column;
   font-size: 11px;
   text-transform: uppercase;
-  color: #6d6b67;
-  letter-spacing: 0.5px;
+  color: #63615c;
+  letter-spacing: 0.6px;
+}
+
+.bb-poss-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+.bb-team-score.orange .bb-poss-dot {
+  background: #e58e38;
+  box-shadow: 0 0 8px #e58e38;
+}
+
+.bb-team-score.teal .bb-poss-dot {
+  background: #349387;
+  box-shadow: 0 0 8px #349387;
+}
+
+.bb-center-clock-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .bb-timer-badge {
@@ -88,32 +130,76 @@
   color: #fff;
   font-family: 'Fredoka', sans-serif;
   font-size: 20px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+.bb-timer-badge.danger {
+  background: #c0392b;
+  color: #fff;
+  box-shadow: 0 0 18px rgba(192, 57, 43, 0.7);
+  animation: clockPulse 0.5s infinite alternate;
+}
+
+@keyframes clockPulse {
+  from {
+    transform: scale(0.98);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+.bb-clearance-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #f39c12;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  animation: pulse 0.7s infinite alternate;
+  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.4);
 }
 
 /* Shot Meter & Combo Meter (Center HUD) */
 .bb-action-hud {
   position: absolute;
-  bottom: 80px;
+  bottom: 84px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   pointer-events: none;
 }
 
+.bb-shot-meter-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(25, 30, 28, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
 .bb-shot-meter-box {
-  width: 180px;
+  width: 200px;
   height: 18px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   border-radius: 9px;
   overflow: hidden;
   position: relative;
   border: 2px solid #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .bb-shot-meter-sweet {
@@ -121,19 +207,33 @@
   left: 70%;
   width: 15%;
   height: 100%;
-  background: rgba(76, 209, 55, 0.65);
-  border-left: 2px solid #4cd137;
-  border-right: 2px solid #4cd137;
+  background: rgba(46, 204, 113, 0.65);
+  border-left: 2px solid #2ecc71;
+  border-right: 2px solid #2ecc71;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
 }
 
 .bb-shot-meter-fill {
   height: 100%;
-  background: linear-gradient(90deg, #fbc531, #e58e38);
-  transition: width 0.05s linear;
+  background: linear-gradient(90deg, #f1c40f, #e67e22);
+  transition: width 0.04s linear;
+}
+
+.bb-shot-meter-fill.in-sweet {
+  background: linear-gradient(90deg, #f1c40f, #2ecc71);
+  box-shadow: 0 0 12px #2ecc71;
+}
+
+.bb-shot-meter-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: #ecf0f1;
+  text-transform: uppercase;
 }
 
 .bb-combo-badge {
-  padding: 6px 14px;
+  padding: 6px 16px;
   border-radius: 20px;
   background: linear-gradient(135deg, #e84118, #fbc531);
   color: #ffffff;
@@ -141,7 +241,7 @@
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  box-shadow: 0 0 16px rgba(232, 65, 24, 0.6);
+  box-shadow: 0 0 18px rgba(232, 65, 24, 0.65);
   animation: pulse 1s infinite alternate;
 }
 
@@ -150,7 +250,7 @@
     transform: scale(0.96);
   }
   to {
-    transform: scale(1.05);
+    transform: scale(1.04);
   }
 }
 
@@ -413,5 +513,108 @@
   100% {
     opacity: 0;
     transform: translate(-50%, -70%) scale(0.9);
+  }
+}
+
+/* Mobile Touch Controls */
+.bb-touch-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.bb-touch-stick-area {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.bb-touch-stick-knob {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(37, 36, 34, 0.85);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  border: 2px solid #fff;
+  pointer-events: none;
+}
+
+.bb-touch-buttons {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.bb-touch-row {
+  display: flex;
+  gap: 12px;
+}
+
+.bb-touch-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  color: #252422;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 0.1s ease;
+}
+
+.bb-touch-btn:active {
+  transform: scale(0.92);
+}
+
+.bb-touch-btn.shoot {
+  width: 72px;
+  height: 72px;
+  background: #e58e38;
+  color: #fff;
+  font-size: 15px;
+  box-shadow: 0 6px 20px rgba(229, 142, 56, 0.45);
+}
+
+.bb-touch-btn.pass {
+  background: #349387;
+  color: #fff;
+}
+
+.bb-touch-btn.special {
+  background: #252422;
+  color: #ffe181;
+}
+
+@media (max-width: 820px) {
+  .bb-hint-bar {
+    display: none;
   }
 }
