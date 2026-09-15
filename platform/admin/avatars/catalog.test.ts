@@ -122,6 +122,7 @@ void test('the games on the shared worker build its exact body and change only c
     ['shelf-control', 'mannequin'],
     ['basketball', 'baller'],
     ['bungee-doubles', 'tennis-duo'],
+    ['panic-curling', 'curler'],
   ];
   for (const [id, key] of shared) {
     const look = AVATAR_GAMES.find((card) => card.id === id)?.looks.find(
@@ -150,6 +151,7 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     'dont-wake-the-giant:thief',
     'load-bearing:wrecker',
     'one-more-button:contestant',
+    'panic-curling:curler',
     'reel-problems:angler',
     'siege-and-desist:crew',
     'stack-or-sink:stacker',

@@ -52,7 +52,7 @@ for (const game of [
     );
     replacement.reconcile(members.slice(1));
     assert.deepEqual(
-      replacement.world.players.map((p) => p.id),
+      replacement.world.players.map((p: { id: string }) => p.id),
       ['b', 'c', 'd'],
     );
     assert.deepEqual(

@@ -20,6 +20,8 @@ import {
   Shuffle,
   Hammer,
   WifiOff,
+  Snowflake,
+  Zap,
 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
@@ -48,6 +50,8 @@ const SHUFFLED = [
   'dont-wake-the-giant',
   'chaos',
   'first-person',
+  'panic-curling',
+  'zorb-clash',
 ] as const;
 
 function shuffle(slugs: readonly string[]) {
@@ -105,6 +109,57 @@ const CARDS: Record<string, ReactElement> = {
           <span>Glas-Rebound oder Team-Bonk?</span>
           <strong>
             Bungee Padel spielen <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
+  'panic-curling': (
+    <a
+      key="panic-curling"
+      className="game-card curling-card"
+      href="/panic-curling"
+      aria-label="Panic Curling: Extreme Ice & Sweeper Chaos in the Jumbleyard style"
+    >
+      <div className="game-card-art">
+        <img
+          src="/images/panic-curling.png"
+          alt="Curling crew in winter parkas frantically scrubbing thin cracking pond ice with brooms and blowtorches as an anvil and teammate in a laundry basket slide toward the target house."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
+        <span className="game-card-tag">
+          <Snowflake size={14} /> EXTREME ICE & SWEEPER CHAOS
+        </span>
+        <span className="new-game-tag">NEU IN JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 Spieler
+          </span>
+          <span>
+            <Timer size={14} /> 3 Ends · Eis-Panik
+          </span>
+        </div>
+        <h2>
+          Panic <span>Curling</span>
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Olympisches Curling als schlitterndes Slapstick-Desaster! Werft
+          Granitblöcke, Ambosse oder eure Teammates im Wäschekorb. Schrubbt mit
+          Besen und Flammenwerfern das dünne Eis – aber passt auf, sonst brecht
+          ihr ein!
+        </p>
+        <div className="game-card-bottom">
+          <span>SWEEP! HARDER! NO, STOP!</span>
+          <strong>
+            Panic Curling spielen <ArrowUpRight size={17} />
           </strong>
         </div>
       </div>
@@ -801,6 +856,55 @@ const CARDS: Record<string, ReactElement> = {
           <span>One crew. Every brick.</span>
           <strong>
             Play Brick by Hand <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
+  'zorb-clash': (
+    <a
+      key="zorb-clash"
+      className="game-card zorb-clash-card"
+      href="/zorb-clash"
+      aria-label="Zorb Clash: Bubble soccer and sumo derby with hyper-bouncy Cannon physics"
+    >
+      <div className="game-card-art">
+        <img
+          src="/images/zorb-clash.png"
+          alt="Players inside giant transparent inflatable bumper balls crash into each other on a soccer pitch with bouncing ragdolls and an oversized ball."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
+        <span className="game-card-tag">
+          <Zap size={14} /> BUBBLE SOCCER · SUMO DERBY
+        </span>
+        <span className="new-game-tag">NEW TO JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 players
+          </span>
+          <span>Hyper-bouncy physics</span>
+        </div>
+        <h2>
+          Zorb <span>Clash</span>
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Fast-paced bubble soccer where hitting the ball is secondary and
+          launching your friends across the pitch is primary! Charge bumper
+          dashes, brace against hits, and wiggle out of the upside-down turtle
+          state.
+        </p>
+        <div className="game-card-bottom">
+          <span>Strap in. Bounce hard. Flip upside down.</span>
+          <strong>
+            Play Zorb Clash <ArrowUpRight size={17} />
           </strong>
         </div>
       </div>

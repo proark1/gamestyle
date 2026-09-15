@@ -11,7 +11,9 @@ export type GameId =
   | 'load-bearing'
   | 'crane-clash'
   | 'basketball'
-  | 'bungee-doubles';
+  | 'bungee-doubles'
+  | 'panic-curling'
+  | 'zorb-clash';
 export type AudioCategory =
   | 'material'
   | 'speech'
@@ -71,6 +73,8 @@ export const GAME_NAMES: Record<GameId, string> = {
   'crane-clash': 'Crane Clash',
   basketball: 'Court Clash',
   'bungee-doubles': 'Bungee Doubles',
+  'panic-curling': 'Panic Curling',
+  'zorb-clash': 'Zorb Clash',
 };
 export const isGameId = (v: unknown): v is GameId =>
   v === 'wrong-floor' ||
@@ -85,7 +89,9 @@ export const isGameId = (v: unknown): v is GameId =>
   v === 'load-bearing' ||
   v === 'crane-clash' ||
   v === 'basketball' ||
-  v === 'bungee-doubles';
+  v === 'bungee-doubles' ||
+  v === 'panic-curling' ||
+  v === 'zorb-clash';
 /** Reused clips keep their original immutable storage path. */
 export function audioFileUrl(file: string) {
   const [game, name] = file.split('/');

@@ -20,6 +20,7 @@ import { hotelAvatars } from '../../../games/wrong-floor/avatar';
 import { craneClashAvatars } from '../../../games/crane-clash/avatar';
 import { basketballAvatars } from '../../../games/basketball/avatar';
 import { bungeeDoublesAvatars } from '../../../games/bungee-doubles/avatar';
+import { curlingAvatars } from '../../../games/panic-curling/avatar';
 import { GAMES } from '../../analytics/catalog';
 
 export type AvatarCard = {
@@ -142,6 +143,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'bungee-doubles': {
     looks: bungeeDoublesAvatars,
     note: 'The shared worker in team polo, tennis shorts, sweatband and sneakers.',
+  },
+  'panic-curling': {
+    looks: curlingAvatars,
+    note: 'The shared worker in winter parka and curling shoes.',
   },
 };
 

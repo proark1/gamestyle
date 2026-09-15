@@ -12,6 +12,9 @@ import { siegeCatalog } from '../../games/siege-and-desist/audio';
 import { craneClashCatalog } from '../../games/crane-clash/audio';
 import { basketballCatalog } from '../../games/basketball/audio';
 import { bungeeDoublesCatalog } from '../../games/bungee-doubles/audio';
+import { panicCurlingCatalog } from '../../games/panic-curling/audio';
+import { zorbClashCatalog } from '../../games/zorb-clash/audio';
+
 const catalogs: Record<GameId, Cue[]> = {
   'wrong-floor': hotelCatalog,
   'stack-or-sink': stackCatalog,
@@ -26,7 +29,10 @@ const catalogs: Record<GameId, Cue[]> = {
   'crane-clash': craneClashCatalog,
   basketball: basketballCatalog,
   'bungee-doubles': bungeeDoublesCatalog,
+  'panic-curling': panicCurlingCatalog,
+  'zorb-clash': zorbClashCatalog,
 };
+
 export function getCatalog(game: GameId): Cue[] {
   return catalogs[game];
 }

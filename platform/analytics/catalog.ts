@@ -15,6 +15,7 @@ import { hotelAnalytics } from '../../games/wrong-floor/analytics';
 import { craneClashAnalytics } from '../../games/crane-clash/analytics';
 import { basketballAnalytics } from '../../games/basketball/analytics';
 import { bungeeDoublesAnalytics } from '../../games/bungee-doubles/analytics';
+import { panicCurlingAnalytics } from '../../games/panic-curling/analytics';
 
 export type CatalogGame = {
   id: string;
@@ -50,6 +51,7 @@ export const GAMES: readonly CatalogGame[] = [
   ['crane-clash', 'Crane Clash', craneClashAnalytics],
   ['basketball', 'Court Clash', basketballAnalytics],
   ['bungee-doubles', 'Bungee Doubles', bungeeDoublesAnalytics],
+  ['panic-curling', 'Panic Curling', panicCurlingAnalytics],
 ].map(([id, name, analytics]) => {
   const game = id as string;
   const construction = game === 'chaos' || game === 'first-person';
