@@ -46,46 +46,46 @@ export function poseTennisWorker(
     pose.specialState === 'smashing' ||
     pose.specialState === 'swinging'
   ) {
-    // Forehand / overhead smash swing
-    rig.body.rotation.y = -0.5;
-    rig.armR.rotation.set(-2.2, -0.6, -0.3); // High follow-through
-    rig.armL.rotation.set(-0.4, 0.3, 0.5);
+    // Forehand / overhead smash swing arc
+    const isSmash = pose.specialState === 'smashing';
+    rig.body.rotation.y = -0.4;
+    rig.body.rotation.x = isSmash ? 0.25 : 0.05;
+    rig.armR.rotation.set(isSmash ? -2.6 : -1.9, -0.45, -0.35); // Powerful stroke follow-through
+    rig.armL.rotation.set(-0.4, 0.35, 0.6);
     rig.legL.rotation.set(-0.3, 0, 0.1);
     rig.legR.rotation.set(0.4, 0, -0.1);
   } else if (pose.specialState === 'celebrating') {
     // Victorious racket pump
-    rig.body.position.y = Math.abs(Math.sin(time * 8)) * 0.12;
-    rig.armR.rotation.set(-2.7, 0, -0.2);
+    rig.body.position.y = Math.abs(Math.sin(time * 8)) * 0.14;
+    rig.armR.rotation.set(-2.8, 0, -0.2);
     rig.armL.rotation.set(-2.2, 0, 0.4);
     rig.legL.rotation.set(0.1, 0, 0.1);
     rig.legR.rotation.set(-0.1, 0, -0.1);
   } else if (pose.walking) {
     // Athletic court split-step running
-    const stride = time * 9;
-    const swing = Math.sin(stride) * 0.65;
-    rig.legL.rotation.set(swing, 0, 0);
-    rig.legR.rotation.set(-swing, 0, 0);
-    rig.armL.rotation.set(-swing * 0.5, 0, 0.15);
-    rig.armR.rotation.set(swing * 0.4 - 0.5, 0, -0.25); // Carrying racket forward
-    rig.body.position.y = Math.abs(Math.sin(stride)) * 0.05;
-    rig.body.rotation.set(0.08, Math.sin(stride) * 0.03, 0);
+    const stride = time * 9.5;
+    const swing = Math.sin(stride) * 0.7;
+    rig.legL.rotation.set(swing, 0, 0.05);
+    rig.legR.rotation.set(-swing, 0, -0.05);
+    rig.armL.rotation.set(-swing * 0.6, 0, 0.2);
+    rig.armR.rotation.set(swing * 0.35 - 0.7, -0.2, -0.25);
+    rig.body.position.y = Math.abs(Math.sin(stride)) * 0.06;
+    rig.body.rotation.set(0.12, Math.sin(stride) * 0.05, Math.sin(stride) * 0.03);
   } else {
     // Ready athletic stance
     rig.body.position.y = -0.06;
-    rig.body.rotation.set(0.12, 0, 0); // Slight crouch
-    rig.legL.rotation.set(0.1, 0, 0.12);
-    rig.legR.rotation.set(0.1, 0, -0.12);
+    rig.body.rotation.set(0.14, 0, 0); // Active crouch
+    rig.legL.rotation.set(0.12, 0, 0.12);
+    rig.legR.rotation.set(0.12, 0, -0.12);
     rig.armL.rotation.set(-0.6, 0.3, 0.4);
-    rig.armR.rotation.set(-0.8, -0.2, -0.3);
+    rig.armR.rotation.set(-0.85, -0.2, -0.3);
   }
 
-  // Update racket position to track right hand
-  if (rig.racket) {
-    const hand = rig.armR.getObjectByName('worker-hand');
-    if (hand) {
-      rig.racket.position.set(0.42, 0.65, 0.2);
-      rig.racket.rotation.set(rig.armR.rotation.x + 0.3, 0, 0);
-    }
+  // Ensure padel bat is gripped in player's right hand
+  if (rig.racket && rig.racket.parent !== rig.armR) {
+    rig.armR.add(rig.racket);
+    rig.racket.position.set(0, -0.36, 0.12);
+    rig.racket.rotation.set(Math.PI / 2 + 0.15, 0, 0);
   }
 }
 

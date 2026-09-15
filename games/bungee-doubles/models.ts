@@ -415,7 +415,6 @@ export function tennisCourt(): T.Group {
   // West Grandstand (behind x = -6.5)
   const standZ = 0;
   const standX = -10.2;
-  const bleacherWidth = 3.8;
   const bleacherLength = 22;
 
   // 3-tiered riser structure

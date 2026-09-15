@@ -42,13 +42,23 @@ export class BungeeScene {
   private shakeTimer = 0;
   private shakeIntensity = 0;
   private lastHandledEventId = -1;
+  private currentCamLook = new T.Vector3(0, 1.0, 0);
+  private baseCamPos = new T.Vector3(-14.2, 13.5, -9.6);
 
-  // Particle pool for racket hits & bonks
+  // Particle pool for racket hits, glass sparks & victory confetti
   private particlePool: {
     mesh: T.Mesh;
     vx: number;
     vy: number;
     vz: number;
+    life: number;
+    maxLife: number;
+    active: boolean;
+  }[] = [];
+
+  // Ball motion trail pool
+  private trailPool: {
+    mesh: T.Mesh;
     life: number;
     maxLife: number;
     active: boolean;
@@ -66,7 +76,7 @@ export class BungeeScene {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.22;
 
     this.container.appendChild(this.renderer.domElement);
 
@@ -81,6 +91,7 @@ export class BungeeScene {
     this.setupScene();
     this.setupLighting();
     this.setupParticles();
+    this.setupTrail();
     this.setupInputs();
 
     this.observer = new ResizeObserver(() => this.resize());
@@ -91,41 +102,46 @@ export class BungeeScene {
   }
 
   private setupScene() {
-    this.scene.background = new T.Color('#87ceeb'); // Sunny open sky blue
-    this.scene.fog = new T.FogExp2('#87ceeb', 0.012);
+    this.scene.background = new T.Color('#78b7e6'); // Vibrant Mediterranean sky
+    this.scene.fog = new T.FogExp2('#8ec4ee', 0.01);
 
     this.scene.add(this.courtGroup);
     this.scene.add(this.ballMesh);
     this.scene.add(this.landingTarget.mesh);
 
-    // Stadium camera position (slightly elevated sideline view)
-    this.camera.position.set(-15.5, 13.5, 0);
-    this.camera.lookAt(0, 1.2, 0);
+    // Elevated 3/4 broadcast camera position with cinematic depth
+    this.camera.position.copy(this.baseCamPos);
+    this.camera.lookAt(0, 1.0, 0);
   }
 
   private setupLighting() {
-    const hemi = new T.HemisphereLight('#ffffff', '#445566', 0.85);
+    const hemi = new T.HemisphereLight('#ffffff', '#334155', 0.95);
     this.scene.add(hemi);
 
-    const sun = new T.DirectionalLight('#fff8e7', 1.4);
-    sun.position.set(18, 30, 15);
+    const sun = new T.DirectionalLight('#fffaf0', 1.55);
+    sun.position.set(16, 26, 12);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
     sun.shadow.mapSize.height = 2048;
-    sun.shadow.camera.near = 10;
+    sun.shadow.camera.near = 6;
     sun.shadow.camera.far = 70;
-    sun.shadow.camera.left = -16;
-    sun.shadow.camera.right = 16;
-    sun.shadow.camera.top = 18;
-    sun.shadow.camera.bottom = -18;
-    sun.shadow.bias = -0.0004;
+    sun.shadow.camera.left = -20;
+    sun.shadow.camera.right = 20;
+    sun.shadow.camera.top = 22;
+    sun.shadow.camera.bottom = -22;
+    sun.shadow.bias = -0.0003;
     this.scene.add(sun);
+
+    // Subtle warm court fill light over the net to make the ball and players pop
+    const courtFill = new T.PointLight('#ffe8d6', 0.85, 25);
+    courtFill.position.set(0, 5.5, 0);
+    this.scene.add(courtFill);
   }
 
   private setupParticles() {
     const geo = new T.BoxGeometry(0.12, 0.12, 0.12);
     const mat = new T.MeshBasicMaterial({ color: '#ffea00' });
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 60; i++) {
       const mesh = new T.Mesh(geo, mat.clone());
       mesh.visible = false;
       this.scene.add(mesh);
@@ -141,7 +157,32 @@ export class BungeeScene {
     }
   }
 
-  private spawnHitPuff(pos: [number, number, number], color = '#ffea00') {
+  private setupTrail() {
+    const geo = new T.SphereGeometry(0.16, 8, 6);
+    const mat = new T.MeshBasicMaterial({
+      color: '#fff37a',
+      transparent: true,
+      opacity: 0.7,
+    });
+    for (let i = 0; i < 16; i++) {
+      const mesh = new T.Mesh(geo, mat.clone());
+      mesh.visible = false;
+      this.scene.add(mesh);
+      this.trailPool.push({
+        mesh,
+        life: 0,
+        maxLife: 0.22,
+        active: false,
+      });
+    }
+  }
+
+  private spawnHitPuff(
+    pos: [number, number, number],
+    color = '#ffea00',
+    count = 8,
+    speed = 5,
+  ) {
     let spawned = 0;
     for (const p of this.particlePool) {
       if (!p.active) {
@@ -149,13 +190,35 @@ export class BungeeScene {
         p.mesh.visible = true;
         (p.mesh.material as T.MeshBasicMaterial).color.set(color);
         p.mesh.position.set(pos[0], pos[1], pos[2]);
-        p.vx = (Math.random() - 0.5) * 6;
-        p.vy = Math.random() * 5 + 2;
-        p.vz = (Math.random() - 0.5) * 6;
+        p.vx = (Math.random() - 0.5) * speed;
+        p.vy = Math.random() * (speed * 0.8) + 1.5;
+        p.vz = (Math.random() - 0.5) * speed;
         p.life = 0;
-        p.maxLife = 0.35 + Math.random() * 0.2;
+        p.maxLife = 0.3 + Math.random() * 0.25;
         spawned++;
-        if (spawned >= 8) break;
+        if (spawned >= count) break;
+      }
+    }
+  }
+
+  private spawnConfetti(pos: [number, number, number]) {
+    const confettiColors = ['#ff3366', '#ffd166', '#06d6a0', '#118ab2', '#ffffff'];
+    for (let i = 0; i < 24; i++) {
+      const col = confettiColors[i % confettiColors.length];
+      this.spawnHitPuff(pos, col, 1, 8);
+    }
+  }
+
+  private spawnBallTrail(x: number, y: number, z: number, color = '#fff37a') {
+    for (const t of this.trailPool) {
+      if (!t.active) {
+        t.active = true;
+        t.mesh.visible = true;
+        (t.mesh.material as T.MeshBasicMaterial).color.set(color);
+        t.mesh.position.set(x, y, z);
+        t.life = 0;
+        t.mesh.scale.set(1, 1, 1);
+        break;
       }
     }
   }
@@ -251,8 +314,20 @@ export class BungeeScene {
     this.ballMesh.rotation.x += world.ball.vx * 0.15;
     this.ballMesh.rotation.z += world.ball.vz * 0.15;
 
-    // Update landing indicator
-    this.landingTarget.update(world.ball.x, world.ball.z, world.ball.y);
+    // Update landing indicator and contact shadow with clock
+    this.landingTarget.update(
+      world.ball.x,
+      world.ball.z,
+      world.ball.y,
+      world.clock,
+    );
+
+    // Dynamic ball speed trail on high-velocity shots and smashes
+    const ballSpeed = Math.hypot(world.ball.vx, world.ball.vy, world.ball.vz);
+    if (world.ball.speedTrail || world.ball.isSmash || ballSpeed > 11) {
+      const trailColor = world.ball.isSmash ? '#ff3700' : '#ffe600';
+      this.spawnBallTrail(world.ball.x, world.ball.y, world.ball.z, trailColor);
+    }
 
     // Update or create player meshes
     const currentIds = new Set(world.players.map((p) => p.id));
@@ -283,7 +358,7 @@ export class BungeeScene {
       });
     }
 
-    // Update bungee cords between teammates
+    // Update bungee cords between teammates with tension vibration and clock
     for (const team of ['orange', 'teal'] as const) {
       const teamPlayers = world.players.filter((p) => p.team === team);
       const tether = world.tethers[team];
@@ -293,6 +368,7 @@ export class BungeeScene {
           [teamPlayers[0].x, teamPlayers[0].y, teamPlayers[0].z],
           [teamPlayers[1].x, teamPlayers[1].y, teamPlayers[1].z],
           tether.tension,
+          world.clock,
         );
       } else {
         this.bungeeCords[team].group.visible = false;
@@ -306,21 +382,29 @@ export class BungeeScene {
 
       if (event.type === 'smash_hit') {
         this.triggerScreenShake(0.04, 0.08); // Subtle, snappy micro-pulse
-        if (event.pos) this.spawnHitPuff(event.pos, '#ff3300');
+        if (event.pos) this.spawnHitPuff(event.pos, '#ff3700', 12, 6);
       } else if (event.type === 'partner_bonk') {
         this.triggerScreenShake(0.06, 0.1); // Small tactile bonk
-        if (event.pos) this.spawnHitPuff(event.pos, '#ffcc00');
+        if (event.pos) this.spawnHitPuff(event.pos, '#ffcc00', 10, 5);
       } else if (event.type === 'wall_rebound') {
-        if (event.pos) this.spawnHitPuff(event.pos, '#90e0ef'); // Cyan-glass sparkle
+        if (event.pos) this.spawnHitPuff(event.pos, '#90e0ef', 8, 4); // Cyan-glass sparkle
+      } else if (event.type === 'dive') {
+        if (event.pos) this.spawnHitPuff(event.pos, '#cbd5e1', 10, 3); // Turf dust puff
+      } else if (event.type === 'point_scored' || event.type === 'game_won') {
+        this.spawnConfetti(event.pos ?? [0, 2, 0]);
       } else if (event.type === 'racket_hit') {
-        if (event.pos) this.spawnHitPuff(event.pos, '#ffff00');
+        if (event.pos) this.spawnHitPuff(event.pos, '#ffff00', 6, 4);
       }
     }
 
-    // Camera framing: smoothly follow the action between ball and court center
-    const targetCamLookX = world.ball.x * 0.35;
-    const targetCamLookZ = world.ball.z * 0.45;
-    this.camera.lookAt(targetCamLookX, 1.2, targetCamLookZ);
+    // Camera framing: smoothly follow the action across the court
+    const targetCamLookX = world.ball.x * 0.28;
+    const targetCamLookZ = world.ball.z * 0.35;
+    this.currentCamLook.lerp(
+      new T.Vector3(targetCamLookX, 1.0, targetCamLookZ),
+      0.06,
+    );
+    this.camera.lookAt(this.currentCamLook);
   }
 
   private triggerScreenShake(intensity: number, duration: number) {
@@ -336,15 +420,32 @@ export class BungeeScene {
 
     this.pollInput();
 
-    // Subtle screen shake
+    // Subtle screen shake on top of broadcast camera position
     if (this.shakeTimer > 0) {
       this.shakeTimer -= dt;
       const shakeOffsetX = (Math.random() - 0.5) * this.shakeIntensity;
       const shakeOffsetY = (Math.random() - 0.5) * this.shakeIntensity;
-      this.camera.position.x = -15.5 + shakeOffsetX;
-      this.camera.position.y = 13.5 + shakeOffsetY;
+      this.camera.position.set(
+        this.baseCamPos.x + shakeOffsetX,
+        this.baseCamPos.y + shakeOffsetY,
+        this.baseCamPos.z,
+      );
     } else {
-      this.camera.position.set(-15.5, 13.5, 0);
+      this.camera.position.copy(this.baseCamPos);
+    }
+
+    // Update ball trails
+    for (const t of this.trailPool) {
+      if (t.active) {
+        t.life += dt;
+        if (t.life >= t.maxLife) {
+          t.active = false;
+          t.mesh.visible = false;
+        } else {
+          const scale = 1 - t.life / t.maxLife;
+          t.mesh.scale.set(scale, scale, scale);
+        }
+      }
     }
 
     // Update particles
