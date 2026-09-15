@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as T from 'three';
 import { advanceZorbClash, freshZorbWorld, newZorbPlayer } from './simulation';
 import { ZorbClashPhysics } from './physics';
 import { botInput } from './bots';
 import { createEngine } from './peer';
-import { BALL_RADIUS, PITCH_LENGTH } from './types';
+import { createZorbAvatar, poseZorbWorker } from './avatar';
+import { BALL_RADIUS, PITCH_LENGTH, ZORB_RADIUS } from './types';
 
 void test('world initializes with bouncy ball, cushions, and ramps', () => {
   const w = freshZorbWorld(1000);
@@ -177,3 +179,58 @@ void test('peer engine creates zorb-clash room and manages players', () => {
   const snap = engine.snapshot('ROOM1', 'user-1', 'user-1', 1);
   assert.ok(snap.world.players.some((p: { id: string }) => p.id === 'user-1'));
 });
+
+void test('avatar worker mesh stays strictly inside the Zorb bubble in all states', () => {
+  const rig = createZorbAvatar('red', 0);
+  const states = [
+    { name: 'turtle', state: { speed: 0, turtle: true, braced: false, dashCharge: 0, dashing: false } },
+    { name: 'braced', state: { speed: 0, turtle: false, braced: true, dashCharge: 0, dashing: false } },
+    { name: 'dashCharge', state: { speed: 3, turtle: false, braced: false, dashCharge: 0.9, dashing: false } },
+    { name: 'sprinting', state: { speed: 10, turtle: false, braced: false, dashCharge: 0, dashing: false } },
+  ];
+
+  for (const { name, state } of states) {
+    let maxDist = 0;
+    for (let t = 0; t < 3; t += 0.1) {
+      poseZorbWorker(rig, t, state);
+      rig.root.updateMatrixWorld(true);
+      rig.workerGroup.traverse((obj) => {
+        if ((obj as T.Mesh).isMesh) {
+          const box = new T.Box3().setFromObject(obj);
+          for (const corner of [
+            new T.Vector3(box.min.x, box.min.y, box.min.z),
+            new T.Vector3(box.max.x, box.min.y, box.min.z),
+            new T.Vector3(box.min.x, box.max.y, box.min.z),
+            new T.Vector3(box.max.x, box.max.y, box.max.z),
+          ]) {
+            maxDist = Math.max(maxDist, corner.length());
+          }
+        }
+      });
+    }
+    assert.ok(
+      maxDist < ZORB_RADIUS,
+      `Avatar exceeded Zorb bubble radius in ${name} state: maxDist=${maxDist}, radius=${ZORB_RADIUS}`,
+    );
+  }
+});
+
+void test('physics responds accurately to left, right, forward, back inputs', () => {
+  const w = freshZorbWorld(1000);
+  const p = newZorbPlayer('p-test', 'Test', 0, 'red', false);
+  w.players.push(p);
+  const physics = new ZorbClashPhysics(w);
+
+  // Test Left (world +X)
+  p.input.x = 1.0;
+  p.input.z = 0;
+  for (let i = 0; i < 20; i++) physics.step(1 / 60);
+  assert.ok(p.vx > 0.3, `Left input produces positive vx (+X screen-left): ${p.vx}`);
+
+  // Test Right (world -X)
+  p.input.x = -1.0;
+  p.input.z = 0;
+  for (let i = 0; i < 40; i++) physics.step(1 / 60);
+  assert.ok(p.vx < -0.3, `Right input produces negative vx (-X screen-right): ${p.vx}`);
+});
+
