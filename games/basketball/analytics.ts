@@ -13,6 +13,8 @@ export const basketballAnalytics: GameAnalytics = {
     { key: 'first-dunk', label: 'First slam dunk' },
     { key: 'super-jump', label: 'Super jump combo executed' },
     { key: 'high-score', label: 'Team reached 10 points' },
+    { key: 'ankle-breaker', label: 'Broke a defender ankles' },
+    { key: 'first-alley-oop', label: 'Completed first alley-oop' },
   ],
   reasons: {
     'target-reached': 'A team reached the target score',
@@ -26,6 +28,10 @@ export const basketballAnalytics: GameAnalytics = {
     steal: 'Stole the ball',
     'super-jump': 'Activated super jump combo',
     'switch-team': 'Switched team',
+    crossover: 'Executed crossover dribble',
+    spin: 'Executed 360 spin move',
+    'step-back': 'Executed step-back jumper',
+    'alley-oop': 'Completed an alley-oop',
   },
 };
 
@@ -52,6 +58,10 @@ export function basketballPlayState(
   if (world.players.some((p) => p.score >= 3)) milestones.push('first-three');
   if (world.players.some((p) => p.superJump)) milestones.push('super-jump');
   if (maxScore >= 10) milestones.push('high-score');
+  if (world.events.some((e) => e.type === 'anklebreaker'))
+    milestones.push('ankle-breaker');
+  if (world.events.some((e) => e.type === 'alleyoop'))
+    milestones.push('first-alley-oop');
 
   if (world.phase === 'playing') {
     return { stage: 'playing', ...base, milestones };

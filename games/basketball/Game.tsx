@@ -43,6 +43,20 @@ export default function BasketballGame() {
 
   const [snapshot, setSnapshot] = useState<BasketballSnapshot | null>(null);
   const [team, setTeam] = useState<TeamId>('orange');
+  const [celebrationBanner, setCelebrationBanner] = useState<{
+    text: string;
+    subtext: string;
+    type: string;
+    team?: TeamId;
+  } | null>(null);
+
+  const lastEventProcessed = useRef(0);
+
+  useEffect(() => {
+    if (!celebrationBanner) return;
+    const t = setTimeout(() => setCelebrationBanner(null), 1900);
+    return () => clearTimeout(t);
+  }, [celebrationBanner]);
 
   const sessionRef = useRef<BasketballSession>({
     id: 'p-local',
@@ -130,6 +144,56 @@ export default function BasketballGame() {
         }
 
         advanceBasketball(localWorld.current, dt);
+
+        // Check for celebration banners from newly emitted events
+        for (const ev of localWorld.current.events) {
+          if (ev.id <= lastEventProcessed.current) continue;
+          lastEventProcessed.current = ev.id;
+
+          if (ev.type === 'superdunk') {
+            setCelebrationBanner({
+              text: '🔥 MONSTER SLAM!!',
+              subtext: 'BOOMSHAKALAKA!',
+              type: 'superdunk',
+              team: ev.team,
+            });
+          } else if (ev.type === 'dunk') {
+            setCelebrationBanner({
+              text: '💥 SLAM DUNK!!',
+              subtext: 'COUNT THE BASKET!',
+              type: 'dunk',
+              team: ev.team,
+            });
+          } else if (ev.type === 'anklebreaker') {
+            setCelebrationBanner({
+              text: '⚡ ANKLE BREAKER!!',
+              subtext: 'LEFT HIM FROZEN!',
+              type: 'anklebreaker',
+              team: ev.team,
+            });
+          } else if (ev.type === 'alleyoop') {
+            setCelebrationBanner({
+              text: '🚀 ALLEY-OOP SLAM!!',
+              subtext: 'AIRBORNE PERFECTION!',
+              type: 'alleyoop',
+              team: ev.team,
+            });
+          } else if (ev.type === 'spin') {
+            setCelebrationBanner({
+              text: '🌪️ 360 SPIN MOVE!',
+              subtext: 'DIZZY DEFENSE!',
+              type: 'spin',
+              team: ev.team,
+            });
+          } else if (ev.type === 'stepback') {
+            setCelebrationBanner({
+              text: '🎯 STEP-BACK JUMPER!',
+              subtext: 'PURE SEPARATION!',
+              type: 'stepback',
+              team: ev.team,
+            });
+          }
+        }
 
         const snap = basketballSnapshot(
           localWorld.current,
@@ -240,6 +304,32 @@ export default function BasketballGame() {
               SUPER JUMP READY! (Space x2)
             </div>
           )}
+
+          {localPlayer.combo >= 80 && (
+            <div className="bb-combo-badge fire">
+              <Flame
+                size={16}
+                style={{
+                  display: 'inline',
+                  verticalAlign: 'middle',
+                  marginRight: 4,
+                }}
+              />
+              ON FIRE! (+Speed &amp; Power)
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Spectacular Celebration Banner Overlay */}
+      {celebrationBanner && (
+        <div
+          className={`bb-celebration-banner ${celebrationBanner.type} ${celebrationBanner.team ?? ''}`}
+        >
+          <div className="bb-celebration-title">{celebrationBanner.text}</div>
+          <div className="bb-celebration-subtitle">
+            {celebrationBanner.subtext}
+          </div>
         </div>
       )}
 
@@ -253,9 +343,10 @@ export default function BasketballGame() {
             2v2 Street Basketball im Jumbleyard-Stil
           </div>
           <div className="bb-desc">
-            Tritt im 2-gegen-2 Match an! Dribble, passe zu deinem Teammate,
-            triff 3-Pointer oder lade die Combo-Leiste für{' '}
-            <strong>spektakuläre Super-Jumps</strong> und Slam Dunks auf!
+            Tritt im 2-gegen-2 Match an! Dribble, breche Knöchel mit Crossovern,
+            wirf Step-Backs, passe spektakuläre Alley-Oops und lade die
+            Combo-Leiste für <strong>spektakuläre Super-Jumps</strong> und Slam
+            Dunks auf!
           </div>
 
           <div className="bb-team-selector">
@@ -309,10 +400,19 @@ export default function BasketballGame() {
           <span className="bb-hint-key">WASD</span> Bewegen
         </span>
         <span>
-          <span className="bb-hint-key">Space</span> Werfen / Dunken (Halten)
+          <span className="bb-hint-key">Space</span> Werfen / Dunken
         </span>
         <span>
-          <span className="bb-hint-key">E</span> Passen / Stealen
+          <span className="bb-hint-key">F</span> Crossover
+        </span>
+        <span>
+          <span className="bb-hint-key">C</span> 360° Spin
+        </span>
+        <span>
+          <span className="bb-hint-key">S+Space</span> Step-Back
+        </span>
+        <span>
+          <span className="bb-hint-key">E</span> Pass / Alley-Oop
         </span>
         <span>
           <span className="bb-hint-key">Shift</span> Sprint

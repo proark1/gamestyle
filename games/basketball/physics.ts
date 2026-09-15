@@ -256,7 +256,60 @@ export function stepBallPhysics(
   return result;
 }
 
-export function stepPlayerMovement(player: Player, dt: number): void {
+export function stepPlayerMovement(
+  player: Player,
+  dt: number,
+  now = Date.now(),
+): void {
+  // 1. Rim Hang logic (Player suspends from rim during power dunk)
+  if (player.hangUntil > now) {
+    player.x = HOOP.x;
+    player.z = HOOP.z + 0.32;
+    player.y = HOOP.y - 1.35;
+    player.vx = 0;
+    player.vy = 0;
+    player.vz = 0;
+    player.grounded = false;
+    player.jumping = true;
+    player.specialMove = 'hang';
+    return;
+  }
+
+  // 2. Special move timing & spin logic
+  if (player.moveTimer > 0) {
+    player.moveTimer = Math.max(0, player.moveTimer - dt);
+    if (player.specialMove === 'spin') {
+      player.spinAngle += dt * Math.PI * 6.5;
+      // Fast forward drive in facing direction during spin
+      player.vx = Math.sin(player.facing) * 7.8;
+      player.vz = Math.cos(player.facing) * 7.8;
+    }
+    if (player.moveTimer <= 0 && player.specialMove !== 'stumbled') {
+      player.specialMove = 'none';
+      player.spinAngle = 0;
+    }
+  }
+
+  // 3. Stunned / Stumbled check
+  if (player.stunnedUntil > now) {
+    player.specialMove = 'stumbled';
+    player.input.x = 0;
+    player.input.z = 0;
+    player.vx *= 0.85;
+    player.vz *= 0.85;
+  } else if (player.specialMove === 'stumbled') {
+    player.specialMove = 'none';
+  }
+
+  // 4. Celebration check
+  if (player.celebrateUntil > now) {
+    if (player.specialMove === 'none') {
+      player.specialMove = 'celebrate';
+    }
+  } else if (player.specialMove === 'celebrate') {
+    player.specialMove = 'none';
+  }
+
   const speed = player.input.sprint ? 7.2 : 5.0;
   const accel = 18;
 
@@ -268,11 +321,13 @@ export function stepPlayerMovement(player: Player, dt: number): void {
   const targetVx = normX * speed;
   const targetVz = normZ * speed;
 
-  player.vx += (targetVx - player.vx) * Math.min(1, accel * dt);
-  player.vz += (targetVz - player.vz) * Math.min(1, accel * dt);
+  if (player.specialMove !== 'spin') {
+    player.vx += (targetVx - player.vx) * Math.min(1, accel * dt);
+    player.vz += (targetVz - player.vz) * Math.min(1, accel * dt);
+  }
 
-  // Update facing angle when moving
-  if (Math.hypot(player.vx, player.vz) > 0.3) {
+  // Update facing angle when moving (except during 360 spin where spinAngle handles visual rotation)
+  if (Math.hypot(player.vx, player.vz) > 0.3 && player.specialMove !== 'spin') {
     player.facing = Math.atan2(player.vx, player.vz);
   }
 
@@ -286,6 +341,9 @@ export function stepPlayerMovement(player: Player, dt: number): void {
       player.grounded = true;
       player.jumping = false;
       player.superJump = false;
+      if (player.specialMove === 'dunk' || player.specialMove === 'hang') {
+        player.specialMove = 'none';
+      }
     }
   }
 

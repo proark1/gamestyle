@@ -69,6 +69,8 @@ const adapter: GameAdapter<BasketballWorld, BasketballSnapshot> = {
       pass: raw.pass === true,
       steal: raw.steal === true,
       sprint: raw.sprint === true,
+      crossover: raw.crossover === true,
+      spin: raw.spin === true,
       seq: Number(raw.seq) || 0,
     };
     player.seen = w.clock;

@@ -317,3 +317,101 @@
 .bb-ended-winner.teal {
   color: #2f877c;
 }
+
+/* On Fire Badge */
+.bb-combo-badge.fire {
+  background: linear-gradient(135deg, #ff1900, #ff9900);
+  box-shadow: 0 0 24px rgba(255, 69, 0, 0.85);
+  animation: firePulse 0.45s infinite alternate;
+}
+
+@keyframes firePulse {
+  from {
+    transform: scale(0.98);
+    box-shadow: 0 0 16px rgba(255, 69, 0, 0.7);
+  }
+  to {
+    transform: scale(1.08);
+    box-shadow: 0 0 32px rgba(255, 140, 0, 1);
+  }
+}
+
+/* Spectacular Celebration Popups */
+.bb-celebration-banner {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  pointer-events: none;
+  text-align: center;
+  padding: 18px 36px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.25),
+    0 0 40px rgba(255, 165, 0, 0.4);
+  animation: bannerPop 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.bb-celebration-banner.superdunk {
+  border: 3px solid #ff471a;
+  box-shadow:
+    0 16px 52px rgba(255, 69, 0, 0.45),
+    0 0 45px rgba(255, 100, 0, 0.6);
+}
+
+.bb-celebration-banner.anklebreaker {
+  border: 3px solid #ffd32a;
+  box-shadow: 0 16px 52px rgba(255, 211, 42, 0.4);
+}
+
+.bb-celebration-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #e58e38, #ff471a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 20px rgba(229, 142, 56, 0.3);
+  margin-bottom: 4px;
+}
+
+.bb-celebration-banner.teal .bb-celebration-title {
+  background: linear-gradient(135deg, #349387, #10ac84);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bb-celebration-subtitle {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #576574;
+}
+
+@keyframes bannerPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20%) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  25% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(0.9);
+  }
+}

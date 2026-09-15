@@ -15,6 +15,16 @@ const CUES: Record<GameEvent['type'], string | null> = {
   pass: 'event.pass',
   whistle: 'event.whistle',
   buzzer: 'event.buzzer',
+  crossover: 'event.crossover',
+  anklebreaker: 'event.anklebreaker',
+  spin: 'event.spin',
+  stepback: 'event.stepback',
+  alleyoop: 'event.alleyoop',
+  cheer: 'event.crowd_cheer',
+  gasp: 'event.crowd_gasp',
+  fire: 'event.fire',
+  rimhang: 'event.rimhang',
+  celebrate: 'event.win',
 };
 
 class ProceduralBasketballAudio {
@@ -113,14 +123,14 @@ class ProceduralBasketballAudio {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(type === 'superdunk' ? 160 : 120, now);
-        osc.frequency.exponentialRampToValueAtTime(25, now + 0.4);
-        gain.gain.setValueAtTime(0.85 * volume, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.frequency.setValueAtTime(type === 'superdunk' ? 180 : 130, now);
+        osc.frequency.exponentialRampToValueAtTime(22, now + 0.45);
+        gain.gain.setValueAtTime(0.95 * volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.42);
+        osc.stop(now + 0.48);
 
         // Clatter
         for (const freq of [440, 780, 1150]) {
@@ -129,15 +139,131 @@ class ProceduralBasketballAudio {
           mOsc.type = 'triangle';
           mOsc.frequency.setValueAtTime(freq, now);
           mGain.gain.setValueAtTime(
-            (type === 'superdunk' ? 0.45 : 0.3) * volume,
+            (type === 'superdunk' ? 0.5 : 0.35) * volume,
             now,
           );
-          mGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          mGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
           mOsc.connect(mGain);
           mGain.connect(ctx.destination);
           mOsc.start(now);
-          mOsc.stop(now + 0.32);
+          mOsc.stop(now + 0.36);
         }
+      } else if (type === 'cheer') {
+        // Stadium crowd roar: dual filtered noise swell + whistling cheers
+        const bufLen = ctx.sampleRate * 1.8;
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) {
+          d[i] = Math.random() * 2 - 1;
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.linearRampToValueAtTime(1400, now + 0.4);
+        filter.frequency.exponentialRampToValueAtTime(600, now + 1.8);
+        filter.Q.setValueAtTime(1.8, now);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.65 * volume, now + 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        src.start(now);
+      } else if (type === 'gasp') {
+        // Crowd "OHHHHH!" gasp: downward sweeping formant filter
+        const bufLen = ctx.sampleRate * 0.9;
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) {
+          d[i] = Math.random() * 2 - 1;
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(650, now);
+        filter.frequency.exponentialRampToValueAtTime(220, now + 0.7);
+        filter.Q.setValueAtTime(3.8, now);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.7 * volume, now + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        src.start(now);
+      } else if (type === 'crossover' || type === 'anklebreaker') {
+        // Rapid double sneaker screech + air whip
+        for (let idx = 0; idx < 2; idx++) {
+          const tOffset = idx * 0.08;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1300 + idx * 300, now + tOffset);
+          osc.frequency.exponentialRampToValueAtTime(
+            2600,
+            now + tOffset + 0.07,
+          );
+          gain.gain.setValueAtTime(0.4 * volume, now + tOffset);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + tOffset + 0.07);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + tOffset);
+          osc.stop(now + tOffset + 0.08);
+        }
+      } else if (type === 'spin') {
+        // 360 aerodynamic whoosh
+        const bufLen = ctx.sampleRate * 0.35;
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) {
+          d[i] = Math.random() * 2 - 1;
+        }
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(350, now);
+        filter.frequency.linearRampToValueAtTime(2200, now + 0.18);
+        filter.frequency.linearRampToValueAtTime(400, now + 0.35);
+        filter.Q.setValueAtTime(2.2, now);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.55 * volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        src.start(now);
+      } else if (type === 'rimhang') {
+        // Metallic ring spring tension and rattle
+        for (const freq of [290, 310, 580]) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.35 * volume, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.62);
+        }
+      } else if (type === 'fire') {
+        // Roaring flame explosion burst
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(90, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.5);
+        gain.gain.setValueAtTime(0.6 * volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.52);
       } else if (type === 'squeak') {
         // High pitched rubber chirp
         const osc = ctx.createOscillator();

@@ -31,12 +31,42 @@ export class BasketballScene {
   private abort = new AbortController();
   private observer: ResizeObserver;
   private frameId = 0;
-  private lastTime = 0;
+  private lastTime = performance.now();
   private localId = '';
   private currentInput: PlayerInput = idleInput();
   private lastSpacePress = 0;
   private isSpaceHeld = false;
   private cameraMode: 'iso' | 'follow' = 'iso';
+
+  private lastEventId = 0;
+  private rimRot = 0;
+  private rimRotVel = 0;
+  private shakeTimer = 0;
+  private shakeIntensity = 0;
+  private baseCamPos = new T.Vector3(0, 15.5, 14.5);
+  private baseCamLook = new T.Vector3(0, 1.8, -3.8);
+
+  private confettiPool: {
+    mesh: T.Mesh;
+    vx: number;
+    vy: number;
+    vz: number;
+    rx: number;
+    ry: number;
+    life: number;
+    maxLife: number;
+    active: boolean;
+  }[] = [];
+
+  private flamePool: {
+    mesh: T.Mesh;
+    vx: number;
+    vy: number;
+    vz: number;
+    life: number;
+    maxLife: number;
+    active: boolean;
+  }[] = [];
 
   constructor(
     private container: HTMLDivElement,
@@ -54,7 +84,7 @@ export class BasketballScene {
 
     this.renderer.domElement.setAttribute(
       'aria-label',
-      'Court Clash basketball arena. WASD moves, Space shoots/dunks, E passes/steals, Shift sprints, V switches camera.',
+      'Court Clash basketball arena. WASD moves, Space shoots/dunks, F crossovers, C spins, E passes/steals, Shift sprints, V switches camera.',
     );
     this.renderer.domElement.tabIndex = 0;
     container.appendChild(this.renderer.domElement);
@@ -109,6 +139,61 @@ export class BasketballScene {
       this.scene.add(dot);
     }
 
+    // Initialize 3D Confetti Particle Pool
+    const confettiColors = [
+      '#e58e38',
+      '#349387',
+      '#ffe181',
+      '#ffffff',
+      '#ff4757',
+    ];
+    const confGeo = new T.BoxGeometry(0.12, 0.08, 0.02);
+    for (let i = 0; i < 50; i++) {
+      const col = confettiColors[i % confettiColors.length];
+      const mat = new T.MeshBasicMaterial({
+        color: col,
+        side: T.DoubleSide,
+        transparent: true,
+        opacity: 1,
+      });
+      const mesh = new T.Mesh(confGeo, mat);
+      mesh.visible = false;
+      this.scene.add(mesh);
+      this.confettiPool.push({
+        mesh,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        rx: 0,
+        ry: 0,
+        life: 0,
+        maxLife: 1.2,
+        active: false,
+      });
+    }
+
+    // Initialize Flame Particle Pool
+    const flameGeo = new T.SphereGeometry(0.12, 6, 4);
+    for (let i = 0; i < 35; i++) {
+      const mat = new T.MeshBasicMaterial({
+        color: i % 2 === 0 ? '#ff471a' : '#fbc531',
+        transparent: true,
+        opacity: 0.9,
+      });
+      const mesh = new T.Mesh(flameGeo, mat);
+      mesh.visible = false;
+      this.scene.add(mesh);
+      this.flamePool.push({
+        mesh,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        life: 0,
+        maxLife: 0.45,
+        active: false,
+      });
+    }
+
     this.updateCameraPosition();
 
     this.observer = new ResizeObserver(() => this.resize());
@@ -123,14 +208,55 @@ export class BasketballScene {
     this.frameId = requestAnimationFrame(this.renderLoop);
   }
 
+  private spawnConfettiBurst(x: number, y: number, z: number) {
+    for (const p of this.confettiPool) {
+      if (!p.active) {
+        p.active = true;
+        p.mesh.visible = true;
+        p.mesh.position.set(
+          x + (Math.random() - 0.5) * 0.4,
+          y + (Math.random() - 0.5) * 0.4,
+          z + (Math.random() - 0.5) * 0.4,
+        );
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2.5 + Math.random() * 4.5;
+        p.vx = Math.cos(angle) * speed;
+        p.vy = 3.5 + Math.random() * 4.0;
+        p.vz = Math.sin(angle) * speed;
+        p.rx = (Math.random() - 0.5) * 12;
+        p.ry = (Math.random() - 0.5) * 12;
+        p.life = 0;
+        p.maxLife = 0.9 + Math.random() * 0.6;
+      }
+    }
+  }
+
+  private spawnFlame(x: number, y: number, z: number, boostY = 0) {
+    const p = this.flamePool.find((f) => !f.active);
+    if (!p) return;
+    p.active = true;
+    p.mesh.visible = true;
+    p.mesh.position.set(
+      x + (Math.random() - 0.5) * 0.25,
+      y + (Math.random() - 0.5) * 0.2,
+      z + (Math.random() - 0.5) * 0.25,
+    );
+    p.vx = (Math.random() - 0.5) * 0.8;
+    p.vy = 1.2 + Math.random() * 1.5 + boostY;
+    p.vz = (Math.random() - 0.5) * 0.8;
+    p.life = 0;
+    p.maxLife = 0.35 + Math.random() * 0.2;
+    p.mesh.scale.setScalar(1.0);
+  }
+
   private updateCameraPosition(player?: Player) {
     if (this.cameraMode === 'follow' && player) {
-      this.camera.position.set(player.x * 0.7, player.y + 6.5, player.z + 9.5);
-      this.camera.lookAt(player.x * 0.5, 2.0, HOOP.z * 0.6);
+      this.baseCamPos.set(player.x * 0.7, player.y + 6.5, player.z + 9.5);
+      this.baseCamLook.set(player.x * 0.5, 2.0, HOOP.z * 0.6);
     } else {
       // Classic Stack or Sink isometric perspective
-      this.camera.position.set(0, 15.5, 14.5);
-      this.camera.lookAt(0, 1.8, -3.8);
+      this.baseCamPos.set(0, 15.5, 14.5);
+      this.baseCamLook.set(0, 1.8, -3.8);
     }
   }
 
@@ -150,12 +276,24 @@ export class BasketballScene {
     const now = Date.now();
 
     if (e.code === 'Space') {
+      // Check for Step-back Jumper when moving backward
+      if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) {
+        this.cb.action({ type: 'stepback' });
+      }
       // Check for Super Jump double-tap
       if (now - this.lastSpacePress < 320) {
         this.cb.action({ type: 'superJump' });
       }
       this.lastSpacePress = now;
       this.isSpaceHeld = true;
+    }
+
+    if (e.code === 'KeyF') {
+      this.cb.action({ type: 'crossover' });
+    }
+
+    if (e.code === 'KeyC') {
+      this.cb.action({ type: 'spin' });
     }
 
     if (e.code === 'KeyE') {
@@ -208,6 +346,8 @@ export class BasketballScene {
       pass: this.keys.has('KeyE'),
       steal: this.keys.has('KeyQ'),
       sprint,
+      crossover: this.keys.has('KeyF'),
+      spin: this.keys.has('KeyC'),
       seq: this.currentInput.seq + 1,
     };
 
@@ -219,11 +359,44 @@ export class BasketballScene {
     const world = snap.world;
     const now = world.clock;
 
+    // Check for new game events for visual FX (Shake, Rim Impulse, Confetti)
+    for (const ev of world.events) {
+      if (ev.id <= this.lastEventId) continue;
+      this.lastEventId = ev.id;
+
+      if (
+        ev.type === 'dunk' ||
+        ev.type === 'superdunk' ||
+        ev.type === 'alleyoop'
+      ) {
+        const isSuper = ev.type === 'superdunk';
+        this.shakeTimer = isSuper ? 0.55 : 0.4;
+        this.shakeIntensity = isSuper ? 0.5 : 0.28;
+        this.rimRotVel = isSuper ? -18.0 : -13.0;
+        this.spawnConfettiBurst(HOOP.x, HOOP.y, HOOP.z);
+        if (isSuper) {
+          for (let i = 0; i < 8; i++) {
+            this.spawnFlame(HOOP.x, HOOP.y + 0.2, HOOP.z, 2.0);
+          }
+        }
+      } else if (ev.type === 'rim') {
+        this.rimRotVel = -5.5;
+      } else if (ev.type === 'rimhang') {
+        this.rimRotVel = -8.5;
+      } else if (ev.type === 'anklebreaker') {
+        this.shakeTimer = 0.3;
+        this.shakeIntensity = 0.22;
+      }
+    }
+
     // 1. Render ball
     this.ballMesh.position.set(world.ball.x, world.ball.y, world.ball.z);
     if (!world.ball.heldBy) {
       this.ballMesh.rotation.x += world.ball.vx * 0.05;
       this.ballMesh.rotation.z += world.ball.vz * 0.05;
+      if (world.ball.isSuperShot) {
+        this.spawnFlame(world.ball.x, world.ball.y, world.ball.z);
+      }
     }
 
     // 2. Render players
@@ -243,22 +416,49 @@ export class BasketballScene {
       }
 
       mesh.position.set(p.x, p.y, p.z);
-      mesh.rotation.y = p.facing;
+      mesh.rotation.y =
+        p.specialMove === 'spin' ? p.facing + p.spinAngle : p.facing;
 
       const moving = Math.hypot(p.vx, p.vz) > 0.4;
       const dunking =
-        !p.grounded &&
-        p.hasBall &&
-        Math.hypot(p.x - HOOP.x, p.z - HOOP.z) < 3.5;
+        p.specialMove === 'dunk' ||
+        (!p.grounded &&
+          p.hasBall &&
+          Math.hypot(p.x - HOOP.x, p.z - HOOP.z) < 3.5);
       const shooting = p.chargingShot || (!p.grounded && p.hasBall);
+
+      // On Fire flame aura
+      if (p.combo >= 80 || p.superJump) {
+        if (Math.random() < 0.4) {
+          this.spawnFlame(p.x, p.y + 0.8, p.z);
+        }
+      }
 
       poseBasketballWorker(mesh, now * 0.001, {
         moving,
         shooting,
-        dunking,
-        dribbling: p.hasBall && !shooting && !dunking,
+        dunking:
+          p.specialMove === 'dunk'
+            ? p.dunkType === 'windmill360'
+              ? 'windmill'
+              : p.dunkType === 'powerhang'
+                ? 'hang'
+                : 'tomahawk'
+            : dunking,
+        hanging: p.specialMove === 'hang' || p.hangUntil > now,
+        celebrating: p.specialMove === 'celebrate' || p.celebrateUntil > now,
+        stumbled: p.specialMove === 'stumbled' || p.stunnedUntil > now,
+        crossover: p.specialMove === 'crossover',
+        spinning: p.specialMove === 'spin',
+        dribbling:
+          p.hasBall && !shooting && !dunking && p.specialMove !== 'dunk',
         color: p.color,
-        still: !moving && !shooting && !dunking && !p.hasBall,
+        still:
+          !moving &&
+          !shooting &&
+          !dunking &&
+          !p.hasBall &&
+          p.specialMove === 'none',
       });
     }
 
@@ -298,8 +498,73 @@ export class BasketballScene {
     }
   }
 
-  private renderLoop = (_time: number) => {
+  private renderLoop = (time: number) => {
     this.frameId = requestAnimationFrame(this.renderLoop);
+    const dt = Math.min(0.05, (time - this.lastTime) / 1000);
+    this.lastTime = time;
+
+    // 1. Breakaway spring rim physics
+    const springK = 240;
+    const damping = 16;
+    this.rimRotVel += (-this.rimRot * springK - this.rimRotVel * damping) * dt;
+    this.rimRot += this.rimRotVel * dt;
+    const rimAssembly = this.courtGroup.userData.rimAssembly as
+      | T.Group
+      | undefined;
+    if (rimAssembly) {
+      rimAssembly.rotation.x = this.rimRot;
+    }
+
+    // 2. Camera shake & positioning
+    this.camera.position.copy(this.baseCamPos);
+    this.camera.lookAt(this.baseCamLook);
+    if (this.shakeTimer > 0) {
+      this.shakeTimer = Math.max(0, this.shakeTimer - dt);
+      const intensity = this.shakeIntensity * (this.shakeTimer / 0.5);
+      this.camera.position.x += (Math.random() - 0.5) * intensity;
+      this.camera.position.y += (Math.random() - 0.5) * intensity;
+    }
+
+    // 3. Update Confetti particles
+    for (const p of this.confettiPool) {
+      if (p.active) {
+        p.life += dt;
+        if (p.life >= p.maxLife) {
+          p.active = false;
+          p.mesh.visible = false;
+        } else {
+          p.vy -= 9.8 * dt; // gravity
+          p.vx *= 0.97;
+          p.vz *= 0.97;
+          p.mesh.position.x += p.vx * dt;
+          p.mesh.position.y += p.vy * dt;
+          p.mesh.position.z += p.vz * dt;
+          p.mesh.rotation.x += p.rx * dt;
+          p.mesh.rotation.y += p.ry * dt;
+          const alpha = Math.max(0, 1 - p.life / p.maxLife);
+          (p.mesh.material as T.MeshBasicMaterial).opacity = alpha;
+        }
+      }
+    }
+
+    // 4. Update Flame particles
+    for (const p of this.flamePool) {
+      if (p.active) {
+        p.life += dt;
+        if (p.life >= p.maxLife) {
+          p.active = false;
+          p.mesh.visible = false;
+        } else {
+          p.mesh.position.x += p.vx * dt;
+          p.mesh.position.y += p.vy * dt;
+          p.mesh.position.z += p.vz * dt;
+          const scale = Math.max(0.1, 1 - p.life / p.maxLife);
+          p.mesh.scale.setScalar(scale);
+          (p.mesh.material as T.MeshBasicMaterial).opacity = scale;
+        }
+      }
+    }
+
     this.renderer.render(this.scene, this.camera);
   };
 

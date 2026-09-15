@@ -184,7 +184,7 @@ export function basketballHoop(): T.Group {
     '#d94c38',
   );
 
-  // 3. Rim Mounting Bracket & Ring
+  // 3. Rim Mounting Bracket & Breakaway Spring Assembly
   // Sturdy bracket connecting backboard to rim
   box(
     g,
@@ -193,18 +193,23 @@ export function basketballHoop(): T.Group {
     '#d94c38',
   );
 
+  // Breakaway Spring Rim Assembly (hinged at bracket front)
+  const hingeZ = HOOP.backboardZ + 0.3;
+  const rimAssembly = new T.Group();
+  rimAssembly.position.set(HOOP.x, HOOP.y, hingeZ);
+
   // Rim Torus
+  const rimOffsetZ = HOOP.z - hingeZ;
   const rimMesh = new T.Mesh(
     new T.TorusGeometry(HOOP.rimRadius, 0.032, 10, 28),
     material('#e5732f'),
   );
-  rimMesh.position.set(HOOP.x, HOOP.y, HOOP.z);
+  rimMesh.position.set(0, 0, rimOffsetZ);
   rimMesh.rotation.x = Math.PI / 2;
   rimMesh.castShadow = true;
-  g.add(rimMesh);
+  rimAssembly.add(rimMesh);
 
-  // 4. Net
-  // Classic tapered cylinder net
+  // 4. Net (Attached under the rim)
   const netGeo = new T.CylinderGeometry(
     HOOP.rimRadius * 0.96,
     HOOP.rimRadius * 0.58,
@@ -219,8 +224,11 @@ export function basketballHoop(): T.Group {
     roughness: 0.8,
   });
   const netMesh = new T.Mesh(netGeo, netMat);
-  netMesh.position.set(HOOP.x, HOOP.y - 0.32, HOOP.z);
-  g.add(netMesh);
+  netMesh.position.set(0, -0.32, rimOffsetZ);
+  rimAssembly.add(netMesh);
+
+  g.add(rimAssembly);
+  g.userData.rimAssembly = rimAssembly;
 
   return g;
 }
@@ -295,7 +303,9 @@ export function basketballCourt(): T.Group {
   }
 
   // Hoop added to court
-  g.add(basketballHoop());
+  const hoop = basketballHoop();
+  g.add(hoop);
+  g.userData.rimAssembly = hoop.userData.rimAssembly;
 
   // Perimeter Fencing & Urban Yard Scenery
   // Back fence

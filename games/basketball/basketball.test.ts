@@ -145,3 +145,90 @@ void test('basketballAvatars exports dressable worker avatar', () => {
   assert.ok(preview.root, 'avatar model created');
   assert.ok(typeof preview.pose === 'function', 'pose function exists');
 });
+
+void test('crossover breaks defender ankles and triggers anklebreaker event', () => {
+  const w = freshBasketballWorld(1000);
+  w.phase = 'playing';
+
+  const p1 = newPlayer('p1', 'Baller', 0, 'orange', false, 0);
+  p1.hasBall = true;
+  p1.x = 0;
+  p1.z = 0;
+
+  const def = newPlayer('def1', 'Defender', 1, 'teal', false, 1);
+  def.x = 0.5;
+  def.z = -1.2;
+
+  w.players.push(p1, def);
+  w.ball.heldBy = p1.id;
+
+  basketballAction(w, 'p1', { type: 'crossover' }, true);
+
+  assert.equal(p1.specialMove, 'crossover', 'p1 executed crossover');
+  assert.equal(
+    def.specialMove,
+    'stumbled',
+    'defender stumbled / broken ankles',
+  );
+  assert.ok(def.stunnedUntil > w.clock, 'defender is stunned');
+  assert.ok(
+    w.events.some((e) => e.type === 'anklebreaker'),
+    'anklebreaker event emitted',
+  );
+});
+
+void test('360 spin move grants forward boost and evades steals', () => {
+  const w = freshBasketballWorld(1000);
+  w.phase = 'playing';
+
+  const p1 = newPlayer('p1', 'Baller', 0, 'orange', false, 0);
+  p1.hasBall = true;
+  p1.facing = 0;
+
+  const def = newPlayer('def1', 'Defender', 1, 'teal', false, 1);
+  def.x = p1.x + 0.5;
+  def.z = p1.z;
+
+  w.players.push(p1, def);
+  w.ball.heldBy = p1.id;
+
+  basketballAction(w, 'p1', { type: 'spin' }, true);
+  assert.equal(p1.specialMove, 'spin', 'p1 entered spin move');
+  assert.ok(p1.combo > 0, 'spin awarded combo');
+
+  // Attempt steal while p1 is spinning
+  basketballAction(w, 'def1', { type: 'steal' }, true);
+  assert.equal(p1.hasBall, true, 'p1 kept ball during spin');
+  assert.equal(
+    def.hasBall,
+    false,
+    'defender could not steal from spinning player',
+  );
+});
+
+void test('alley-oop lob launches high pass and teammate slam', () => {
+  const w = freshBasketballWorld(1000);
+  w.phase = 'playing';
+
+  const passer = newPlayer('p1', 'PointGuard', 0, 'orange', false, 0);
+  passer.hasBall = true;
+  passer.x = 0;
+  passer.z = 3.0;
+
+  const dunker = newPlayer('p2', 'Center', 0, 'orange', false, 1);
+  dunker.x = HOOP.x;
+  dunker.z = HOOP.z + 2.0;
+
+  w.players.push(passer, dunker);
+  w.ball.heldBy = passer.id;
+
+  basketballAction(w, 'p1', { type: 'alleyoop' }, true);
+
+  assert.equal(w.ball.isAlleyOop, true, 'ball is flagged as alley-oop');
+  assert.equal(w.ball.shotBy, dunker.id, 'dunker is target shooter');
+  assert.equal(dunker.specialMove, 'dunk', 'dunker leaps into air for slam');
+  assert.ok(
+    w.events.some((e) => e.type === 'alleyoop'),
+    'alley-oop event was emitted',
+  );
+});

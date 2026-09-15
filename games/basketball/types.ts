@@ -34,6 +34,8 @@ export type PlayerInput = {
   pass: boolean;
   steal: boolean;
   sprint: boolean;
+  crossover: boolean;
+  spin: boolean;
   seq: number;
 };
 
@@ -45,9 +47,23 @@ export function idleInput(): PlayerInput {
     pass: false,
     steal: false,
     sprint: false,
+    crossover: false,
+    spin: false,
     seq: 0,
   };
 }
+
+export type SpecialMove =
+  | 'none'
+  | 'crossover'
+  | 'spin'
+  | 'stepback'
+  | 'dunk'
+  | 'hang'
+  | 'celebrate'
+  | 'stumbled';
+
+export type DunkType = 'tomahawk' | 'powerhang' | 'windmill360';
 
 export type Player = {
   id: string;
@@ -76,6 +92,12 @@ export type Player = {
   steals: number;
   stunnedUntil: number;
   lastJump: number;
+  specialMove: SpecialMove;
+  moveTimer: number;
+  celebrateUntil: number;
+  hangUntil: number;
+  spinAngle: number;
+  dunkType?: DunkType;
   input: PlayerInput;
   seen: number;
 };
@@ -94,6 +116,7 @@ export type Ball = {
   isSuperShot: boolean;
   isDunk: boolean;
   isThreePointer: boolean;
+  isAlleyOop?: boolean;
   spin: number;
 };
 
@@ -110,7 +133,17 @@ export type GameEvent = {
     | 'pass'
     | 'squeak'
     | 'buzzer'
-    | 'whistle';
+    | 'whistle'
+    | 'crossover'
+    | 'anklebreaker'
+    | 'spin'
+    | 'stepback'
+    | 'alleyoop'
+    | 'cheer'
+    | 'gasp'
+    | 'fire'
+    | 'rimhang'
+    | 'celebrate';
   text: string;
   team?: TeamId;
   pos?: [number, number, number];
@@ -140,7 +173,11 @@ export type BasketballAction =
   | { type: 'shoot'; charge: number; superJump?: boolean }
   | { type: 'pass' }
   | { type: 'steal' }
-  | { type: 'superJump' };
+  | { type: 'superJump' }
+  | { type: 'crossover' }
+  | { type: 'spin' }
+  | { type: 'stepback' }
+  | { type: 'alleyoop' };
 
 export type BasketballSnapshot = {
   code: string;

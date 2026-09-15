@@ -79,6 +79,11 @@ export function newPlayer(
     steals: 0,
     stunnedUntil: 0,
     lastJump: 0,
+    specialMove: 'none',
+    moveTimer: 0,
+    celebrateUntil: 0,
+    hangUntil: 0,
+    spinAngle: 0,
     input: idleInput(),
     seen: 0,
   };
@@ -204,7 +209,7 @@ export function advanceBasketball(w: BasketballWorld, dt: number): void {
       p.shotCharge = 0;
     }
 
-    stepPlayerMovement(p, dt);
+    stepPlayerMovement(p, dt, w.clock);
   }
 
   // 3. Position held ball or step loose/flying ball
@@ -241,6 +246,30 @@ export function advanceBasketball(w: BasketballWorld, dt: number): void {
       }
     }
   } else {
+    // Check Alley-Oop mid-air finish
+    if (w.ball.isAlleyOop && w.ball.shotBy) {
+      const recipient = w.players.find((p) => p.id === w.ball.shotBy);
+      if (recipient) {
+        const distHoop = Math.hypot(recipient.x - HOOP.x, recipient.z - HOOP.z);
+        const distBall = Math.hypot(
+          recipient.x - w.ball.x,
+          recipient.z - w.ball.z,
+        );
+        if (distHoop < 2.2 && distBall < 2.0 && w.ball.y >= HOOP.y - 0.5) {
+          // Mid-air catch and slam!
+          w.ball.x = recipient.x;
+          w.ball.y = HOOP.y + 0.25;
+          w.ball.z = recipient.z;
+          w.ball.vx = (HOOP.x - recipient.x) * 3.0;
+          w.ball.vy = -6.5;
+          w.ball.vz = (HOOP.z - recipient.z) * 3.0;
+          w.ball.isDunk = true;
+          recipient.specialMove = 'dunk';
+          recipient.dunkType = 'powerhang';
+        }
+      }
+    }
+
     // Ball is in air or loose on ground
     const eventIdRef = { current: w.eventId };
     const stepResult = stepBallPhysics(w.ball, dt, eventIdRef);
@@ -265,8 +294,18 @@ export function advanceBasketball(w: BasketballWorld, dt: number): void {
         // Boost combo
         shooter.combo = Math.min(
           100,
-          shooter.combo + (stepResult.isSuper ? 40 : 25),
+          shooter.combo + (stepResult.isSuper ? 45 : 25),
         );
+        // Trigger celebratory pose
+        shooter.celebrateUntil = w.clock + 1300;
+        if (shooter.dunkType === 'powerhang') {
+          shooter.hangUntil = w.clock + 450;
+          emitEvent(w, 'rimhang', 'Rattle on the rim!', scoringTeam, [
+            HOOP.x,
+            HOOP.y,
+            HOOP.z,
+          ]);
+        }
       }
 
       emitEvent(
@@ -276,6 +315,32 @@ export function advanceBasketball(w: BasketballWorld, dt: number): void {
         scoringTeam,
         [HOOP.x, HOOP.y, HOOP.z],
       );
+
+      // Grand celebration crowd roar
+      if (stepResult.isDunk || stepResult.isSuper || stepResult.isThree) {
+        emitEvent(w, 'cheer', 'CROWD ERUPTION!', scoringTeam, [
+          HOOP.x,
+          HOOP.y,
+          HOOP.z,
+        ]);
+      }
+      if (stepResult.isSuper) {
+        emitEvent(w, 'fire', 'FIRE EXPLOSION!', scoringTeam, [
+          HOOP.x,
+          HOOP.y,
+          HOOP.z,
+        ]);
+      }
+      if (w.ball.isAlleyOop) {
+        emitEvent(
+          w,
+          'alleyoop',
+          `🚀 ALLEY-OOP SLAM BY ${shooter?.name ?? 'TEAMMATE'}!`,
+          scoringTeam,
+          [HOOP.x, HOOP.y, HOOP.z],
+        );
+        w.ball.isAlleyOop = false;
+      }
 
       // Check win condition
       if (w.scores[scoringTeam] >= w.targetScore) {
@@ -344,6 +409,15 @@ function executeShot(w: BasketballWorld, p: Player): void {
     // Dunk action!
     w.ball.isDunk = true;
     w.ball.isThreePointer = false;
+    p.specialMove = 'dunk';
+    if (isSuper) {
+      p.dunkType = 'windmill360';
+    } else if (p.input.sprint && p.combo >= 25) {
+      p.dunkType = 'powerhang';
+    } else {
+      p.dunkType = 'tomahawk';
+    }
+
     // Launch towards rim apex
     w.ball.x = p.x;
     w.ball.y = p.y + 1.8;
@@ -354,10 +428,16 @@ function executeShot(w: BasketballWorld, p: Player): void {
     w.ball.vy = 3.5;
     w.ball.vz = dz * 2.8;
 
+    const dunkLabel = isSuper
+      ? 'SUPER DUNK!'
+      : p.dunkType === 'powerhang'
+        ? 'POWER SLAM!'
+        : 'SLAM DUNK!';
+
     emitEvent(
       w,
       isSuper ? 'superdunk' : 'dunk',
-      `${p.name} goes for a ${isSuper ? 'SUPER DUNK!' : 'SLAM DUNK!'}`,
+      `${p.name} goes for a ${dunkLabel}`,
       p.team,
     );
     if (isSuper) p.combo = 0; // Consume super combo
@@ -440,13 +520,136 @@ export function basketballAction(
 
   if (w.phase !== 'playing') return;
 
-  // Pass to teammate
-  if (action.type === 'pass' && p.hasBall) {
+  // Crossover / Ankle Breaker move
+  if (
+    action.type === 'crossover' &&
+    p.hasBall &&
+    p.grounded &&
+    p.moveTimer <= 0
+  ) {
+    p.specialMove = 'crossover';
+    p.moveTimer = 0.35;
+    p.combo = Math.min(100, p.combo + 15);
+
+    // Lateral burst
+    const cutSide = p.input.x < 0 ? -1 : 1;
+    const sideAngle = p.facing + cutSide * (Math.PI / 2);
+    p.vx += Math.sin(sideAngle) * 5.8;
+    p.vz += Math.cos(sideAngle) * 5.8;
+
+    // Check for defender ankle breaker within 2.2m
+    const defenders = w.players.filter((other) => other.team !== p.team);
+    const nearbyDefender = defenders.find((other) => {
+      const dist = Math.hypot(other.x - p.x, other.z - p.z);
+      return dist < 2.2;
+    });
+
+    if (nearbyDefender) {
+      nearbyDefender.stunnedUntil = w.clock + 1100;
+      nearbyDefender.specialMove = 'stumbled';
+      nearbyDefender.vx *= 0.15;
+      nearbyDefender.vz *= 0.15;
+      p.combo = Math.min(100, p.combo + 25);
+      emitEvent(
+        w,
+        'anklebreaker',
+        `⚡ ${p.name} BROKE ${nearbyDefender.name}'S ANKLES!`,
+        p.team,
+        [nearbyDefender.x, nearbyDefender.y, nearbyDefender.z],
+      );
+      emitEvent(w, 'gasp', 'OHHHHHH!', p.team);
+    } else {
+      emitEvent(w, 'crossover', `${p.name} cuts with a crossover!`, p.team);
+    }
+    return;
+  }
+
+  // 360 Spin Move
+  if (action.type === 'spin' && p.hasBall && p.grounded && p.moveTimer <= 0) {
+    p.specialMove = 'spin';
+    p.moveTimer = 0.4;
+    p.spinAngle = 0;
+    p.combo = Math.min(100, p.combo + 15);
+    p.vx = Math.sin(p.facing) * 7.5;
+    p.vz = Math.cos(p.facing) * 7.5;
+    emitEvent(w, 'spin', `🌪️ ${p.name} hits a 360 spin move!`, p.team);
+    return;
+  }
+
+  // Step-back Jumper
+  if (
+    action.type === 'stepback' &&
+    p.hasBall &&
+    p.grounded &&
+    p.moveTimer <= 0
+  ) {
+    p.specialMove = 'stepback';
+    p.moveTimer = 0.35;
+    const dx = p.x - HOOP.x;
+    const dz = p.z - HOOP.z;
+    const dist = Math.max(0.1, Math.hypot(dx, dz));
+    p.vx = (dx / dist) * 6.5;
+    p.vz = (dz / dist) * 6.5;
+    p.combo = Math.min(100, p.combo + 10);
+    emitEvent(w, 'stepback', `🎯 ${p.name} steps back for separation!`, p.team);
+    return;
+  }
+
+  // Pass or Alley-Oop Lob to teammate
+  if ((action.type === 'pass' || action.type === 'alleyoop') && p.hasBall) {
     const teammates = w.players.filter(
       (mate) => mate.team === p.team && mate.id !== p.id,
     );
     if (teammates.length > 0) {
-      // Find teammate in best position
+      // Check for Alley-Oop: Teammate cutting near hoop (< 4.8m)
+      const cuttingMate = teammates.find(
+        (mate) => distanceToHoop(mate.x, mate.z) < 4.8,
+      );
+
+      if (
+        cuttingMate &&
+        (action.type === 'alleyoop' || distanceToHoop(p.x, p.z) > 4.2)
+      ) {
+        // High Alley-Oop Lob Pass!
+        p.hasBall = false;
+        w.ball.heldBy = null;
+        w.ball.lastHeldBy = p.id;
+        w.ball.shotBy = cuttingMate.id;
+        w.ball.shotTeam = p.team;
+        w.ball.isAlleyOop = true;
+        w.ball.isDunk = false;
+
+        w.ball.x = p.x;
+        w.ball.y = p.y + 1.8;
+        w.ball.z = p.z;
+
+        const targetX = HOOP.x;
+        const targetZ = HOOP.z + 0.3;
+        const dx = targetX - p.x;
+        const dz = targetZ - p.z;
+        const timeToHoop = 0.75;
+
+        w.ball.vx = dx / timeToHoop;
+        w.ball.vy = 7.2;
+        w.ball.vz = dz / timeToHoop;
+
+        cuttingMate.grounded = false;
+        cuttingMate.jumping = true;
+        cuttingMate.vy = 9.2;
+        cuttingMate.specialMove = 'dunk';
+        cuttingMate.dunkType = 'powerhang';
+
+        p.combo = Math.min(100, p.combo + 25);
+        emitEvent(
+          w,
+          'alleyoop',
+          `🚀 ${p.name} LOBS AN ALLEY-OOP TO ${cuttingMate.name}!`,
+          p.team,
+        );
+        return;
+      }
+
+      // Normal Pass
       const target = teammates[0];
       p.hasBall = false;
       w.ball.heldBy = null;
@@ -467,10 +670,21 @@ export function basketballAction(
     return;
   }
 
-  // Steal / Swipe
+  // Steal / Swipe (Cannot steal from a spinning player)
   if (action.type === 'steal' && !p.hasBall) {
     const ballHandler = w.players.find((other) => other.hasBall);
     if (ballHandler && ballHandler.team !== p.team) {
+      if (ballHandler.specialMove === 'spin') {
+        // Spin move evades the steal!
+        emitEvent(
+          w,
+          'squeak',
+          `${ballHandler.name} spun right past the steal!`,
+          ballHandler.team,
+        );
+        return;
+      }
+
       const dist = Math.hypot(p.x - ballHandler.x, p.z - ballHandler.z);
       if (dist < 1.75) {
         // Successful steal!

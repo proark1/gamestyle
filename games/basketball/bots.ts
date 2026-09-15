@@ -47,11 +47,30 @@ export function stepBasketballBot(
   bot.input.pass = false;
   bot.input.steal = false;
   bot.input.sprint = false;
+  bot.input.crossover = false;
+  bot.input.spin = false;
+
+  if (bot.stunnedUntil > w.clock) {
+    bot.input.x = 0;
+    bot.input.z = 0;
+    return;
+  }
 
   const distToBasket = distanceToHoop(bot.x, bot.z);
 
   // 1. Bot has the ball (Offense)
   if (bot.hasBall) {
+    // Check Super Jump
+    if (bot.combo >= 60 && distToBasket < 5.5 && bot.grounded) {
+      bot.superJump = true;
+      bot.grounded = false;
+      bot.jumping = true;
+      bot.vy = 10.5;
+      bot.specialMove = 'dunk';
+      bot.dunkType = 'windmill360';
+      return;
+    }
+
     // If charging shot, hold until sweet spot (0.72..0.80)
     if (bot.chargingShot) {
       if (bot.shotCharge >= 0.74) {
@@ -69,7 +88,22 @@ export function stepBasketballBot(
       return;
     }
 
-    // Drive towards hoop or open space
+    // Check for crossover if defender is right in front
+    const defenders = w.players.filter((p) => p.team !== bot.team);
+    const nearbyDef = defenders.find(
+      (p) => Math.hypot(p.x - bot.x, p.z - bot.z) < 2.0,
+    );
+    if (nearbyDef && bot.moveTimer <= 0 && Math.random() < 0.08) {
+      // Bot initiates crossover juke!
+      bot.specialMove = 'crossover';
+      bot.moveTimer = 0.35;
+      const cutSide = bot.x > 0 ? -1 : 1;
+      bot.vx += cutSide * 5.5;
+      bot.combo = Math.min(100, bot.combo + 10);
+      return;
+    }
+
+    // Drive towards hoop
     const targetX = 0;
     const targetZ = HOOP.z + 2.5;
     const dx = targetX - bot.x;
@@ -104,16 +138,17 @@ export function stepBasketballBot(
   // 3. Teammate has the ball (Off-ball Offense)
   const ballHolder = w.players.find((p) => p.id === w.ball.heldBy);
   if (ballHolder && ballHolder.team === bot.team) {
-    // Position on opposite wing for spacing
-    const wingX = ballHolder.x > 0 ? -4.5 : 4.5;
-    const wingZ = -4.0;
-    const dx = wingX - bot.x;
-    const dz = wingZ - bot.z;
+    // Cut towards the basket to be open for a pass or alley-oop!
+    const cutX = ballHolder.x > 0 ? -2.2 : 2.2;
+    const cutZ = HOOP.z + 2.2;
+    const dx = cutX - bot.x;
+    const dz = cutZ - bot.z;
     const dist = Math.hypot(dx, dz);
 
     if (dist > 0.8) {
       bot.input.x = dx / dist;
       bot.input.z = dz / dist;
+      bot.input.sprint = true;
     } else {
       bot.input.x = 0;
       bot.input.z = 0;
@@ -137,9 +172,13 @@ export function stepBasketballBot(
       bot.input.sprint = true;
     }
 
-    // Try steal if close enough
+    // Try steal if close enough (cannot steal if ballHolder is spinning)
     const distToHolder = Math.hypot(bot.x - ballHolder.x, bot.z - ballHolder.z);
-    if (distToHolder < 1.4 && Math.random() < 0.05) {
+    if (
+      distToHolder < 1.4 &&
+      ballHolder.specialMove !== 'spin' &&
+      Math.random() < 0.05
+    ) {
       bot.input.steal = true;
     }
   }
