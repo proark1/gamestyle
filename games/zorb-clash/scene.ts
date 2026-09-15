@@ -226,20 +226,12 @@ export class ZorbClashScene {
     for (const zSign of [-1, 1]) {
       const zPos = zSign * (PITCH_LENGTH / 2 + 5.8);
       const leftEndWall = new T.Mesh(endWallGeo, barrierMat);
-      leftEndWall.position.set(
-        -(GOAL_WIDTH / 2 + endWallWidth / 2),
-        0.8,
-        zPos,
-      );
+      leftEndWall.position.set(-(GOAL_WIDTH / 2 + endWallWidth / 2), 0.8, zPos);
       leftEndWall.castShadow = true;
       this.scene.add(leftEndWall);
 
       const rightEndWall = new T.Mesh(endWallGeo, barrierMat);
-      rightEndWall.position.set(
-        GOAL_WIDTH / 2 + endWallWidth / 2,
-        0.8,
-        zPos,
-      );
+      rightEndWall.position.set(GOAL_WIDTH / 2 + endWallWidth / 2, 0.8, zPos);
       rightEndWall.castShadow = true;
       this.scene.add(rightEndWall);
     }

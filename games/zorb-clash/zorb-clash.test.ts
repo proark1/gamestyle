@@ -183,10 +183,46 @@ void test('peer engine creates zorb-clash room and manages players', () => {
 void test('avatar worker mesh stays strictly inside the Zorb bubble in all states', () => {
   const rig = createZorbAvatar('red', 0);
   const states = [
-    { name: 'turtle', state: { speed: 0, turtle: true, braced: false, dashCharge: 0, dashing: false } },
-    { name: 'braced', state: { speed: 0, turtle: false, braced: true, dashCharge: 0, dashing: false } },
-    { name: 'dashCharge', state: { speed: 3, turtle: false, braced: false, dashCharge: 0.9, dashing: false } },
-    { name: 'sprinting', state: { speed: 10, turtle: false, braced: false, dashCharge: 0, dashing: false } },
+    {
+      name: 'turtle',
+      state: {
+        speed: 0,
+        turtle: true,
+        braced: false,
+        dashCharge: 0,
+        dashing: false,
+      },
+    },
+    {
+      name: 'braced',
+      state: {
+        speed: 0,
+        turtle: false,
+        braced: true,
+        dashCharge: 0,
+        dashing: false,
+      },
+    },
+    {
+      name: 'dashCharge',
+      state: {
+        speed: 3,
+        turtle: false,
+        braced: false,
+        dashCharge: 0.9,
+        dashing: false,
+      },
+    },
+    {
+      name: 'sprinting',
+      state: {
+        speed: 10,
+        turtle: false,
+        braced: false,
+        dashCharge: 0,
+        dashing: false,
+      },
+    },
   ];
 
   for (const { name, state } of states) {
@@ -225,12 +261,17 @@ void test('physics responds accurately to left, right, forward, back inputs', ()
   p.input.x = 1.0;
   p.input.z = 0;
   for (let i = 0; i < 20; i++) physics.step(1 / 60);
-  assert.ok(p.vx > 0.3, `Left input produces positive vx (+X screen-left): ${p.vx}`);
+  assert.ok(
+    p.vx > 0.3,
+    `Left input produces positive vx (+X screen-left): ${p.vx}`,
+  );
 
   // Test Right (world -X)
   p.input.x = -1.0;
   p.input.z = 0;
   for (let i = 0; i < 40; i++) physics.step(1 / 60);
-  assert.ok(p.vx < -0.3, `Right input produces negative vx (-X screen-right): ${p.vx}`);
+  assert.ok(
+    p.vx < -0.3,
+    `Right input produces negative vx (-X screen-right): ${p.vx}`,
+  );
 });
-
