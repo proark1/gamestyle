@@ -3,6 +3,7 @@ import type { AvatarLook } from '../../../shared/rendering/avatar-preview';
 import { bumble, walkBumble } from '../../../shared/rendering/avatars/bumble';
 import { hollow, walkHollow } from '../../../shared/rendering/avatars/hollow';
 import { mochi, walkMochi } from '../../../shared/rendering/avatars/mochi';
+import { milo, walkMilo } from '../../../shared/rendering/avatars/milo';
 import { farmAvatars } from '../../../games/act-natural/avatar';
 import { chaosAvatars } from '../../../games/chaos/avatar';
 import { giantAvatars } from '../../../games/dont-wake-the-giant/avatar';
@@ -68,6 +69,13 @@ export const POTENTIAL_AVATARS: readonly AvatarCard[] = [
     tag: 'Scary',
     note: 'A tall hooded wraith with a stitched mask and long claws. It limps, and its head snaps sideways. Player colour: glowing eyes.',
     looks: [potential('hollow', 'Hollow', hollow, walkHollow)],
+  },
+  {
+    id: 'human',
+    name: 'Milo',
+    tag: 'Human',
+    note: 'A soft, rounded human with swept hair, a crooked smile and easygoing steps. Wears a sweater and sneakers. Player colour: sweater.',
+    looks: [potential('milo', 'Milo', milo, walkMilo)],
   },
 ];
 

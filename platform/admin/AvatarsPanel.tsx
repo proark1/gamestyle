@@ -268,8 +268,8 @@ export default function AvatarsPanel() {
         <section className={styles.section} aria-labelledby="potential-avatars">
           <h2 id="potential-avatars">Potential avatars</h2>
           <p className={admin.cardNote}>
-            New characters to choose from for other games: one funny, one cute
-            and one scary. Each is rigged like the shared worker, so a
+            New characters to choose from for other games: funny, cute, scary
+            and a rounded human. Each is rigged like the shared worker, so a
             game&rsquo;s existing walk code can drive it, and each takes the
             player colour.
           </p>

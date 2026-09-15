@@ -5,11 +5,13 @@ import { worker } from '../worker';
 import { bumble, walkBumble } from './bumble';
 import { hollow, walkHollow } from './hollow';
 import { mochi, walkMochi } from './mochi';
+import { milo, walkMilo } from './milo';
 
 const AVATARS = [
   { name: 'Bumble', build: bumble, walk: walkBumble },
   { name: 'Mochi', build: mochi, walk: walkMochi },
   { name: 'Hollow', build: hollow, walk: walkHollow },
+  { name: 'Milo', build: milo, walk: walkMilo },
 ];
 
 function lowestPoint(root: T.Object3D) {
