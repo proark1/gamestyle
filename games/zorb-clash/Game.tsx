@@ -182,7 +182,8 @@ export default function ZorbClash() {
     const normX = Math.max(-1, Math.min(1, dx / maxDist));
     const normZ = Math.max(-1, Math.min(1, -dy / maxDist));
 
-    setPlayerInput({ x: normX, z: normZ });
+    // Screen-relative mapping: right is world -X, left is world +X
+    setPlayerInput({ x: -normX, z: normZ });
   };
 
   const handleTouchEnd = () => {
