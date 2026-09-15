@@ -1,0 +1,284 @@
+.bungee-game {
+  position: relative;
+  height: 100dvh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #7fc3e6;
+  color: var(--ink, #252422);
+  font-family: 'DM Sans', sans-serif;
+  user-select: none;
+}
+
+.bungee-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.bungee-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Topbar HUD */
+.bungee-hud {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  pointer-events: none;
+}
+
+.bungee-team-score {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+.bungee-team-score.orange {
+  border-left: 6px solid #e58e38;
+}
+
+.bungee-team-score.teal {
+  border-right: 6px solid #349387;
+}
+
+.bungee-score-val {
+  font-size: 32px;
+  line-height: 1;
+  font-family: 'Fredoka', sans-serif;
+}
+
+.bungee-team-score.orange .bungee-score-val {
+  color: #d97438;
+}
+
+.bungee-team-score.teal .bungee-score-val {
+  color: #2f877c;
+}
+
+.bungee-score-meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #6d6b67;
+  letter-spacing: 0.5px;
+}
+
+.bungee-center-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 16px;
+  border-radius: 18px;
+  background: #1c2e3d;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+}
+
+.bungee-rally-val {
+  color: #ffd166;
+  font-size: 20px;
+}
+
+/* Tension Gauge */
+.bungee-tension-card {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+  pointer-events: none;
+}
+
+.bungee-tension-bar {
+  width: 90px;
+  height: 8px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  overflow: hidden;
+}
+
+.bungee-tension-fill {
+  height: 100%;
+  width: 0%;
+  transition:
+    width 0.08s ease-out,
+    background-color 0.15s ease;
+}
+
+.bungee-tension-fill.safe {
+  background: #2ecc71;
+}
+
+.bungee-tension-fill.warning {
+  background: #f39c12;
+}
+
+.bungee-tension-fill.danger {
+  background: #e74c3c;
+  animation: pulse-danger 0.3s infinite alternate;
+}
+
+@keyframes pulse-danger {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Celebration and Point Banners */
+.bungee-banner {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 36px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  pointer-events: none;
+  animation: banner-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bungee-banner h2 {
+  margin: 0;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 38px;
+  color: #1c2e3d;
+}
+
+.bungee-banner p {
+  margin: 4px 0 0;
+  font-size: 16px;
+  color: #666;
+}
+
+@keyframes banner-pop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Controls Tooltip / Action Dock */
+.bungee-dock {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.bungee-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: none;
+  background: #f0f2f5;
+  color: #333;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bungee-btn:hover {
+  background: #e2e5e9;
+  transform: translateY(-1px);
+}
+
+.bungee-btn.primary {
+  background: #e58e38;
+  color: #fff;
+}
+
+.bungee-btn.primary:hover {
+  background: #d47e2a;
+}
+
+.bungee-touch-controls {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bungee-action-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1c2e3d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.bungee-action-circle.smash {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.bungee-action-circle.dive {
+  background: #3498db;
+  color: #fff;
+}

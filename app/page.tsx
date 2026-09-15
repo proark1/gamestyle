@@ -36,6 +36,7 @@ const PINNED = [
   'shelf-control',
 ] as const;
 const SHUFFLED = [
+  'bungee-doubles',
   'basketball',
   'crane-clash',
   'siege-and-desist',
@@ -59,6 +60,57 @@ function shuffle(slugs: readonly string[]) {
 }
 
 const CARDS: Record<string, ReactElement> = {
+  'bungee-doubles': (
+    <a
+      key="bungee-doubles"
+      className="game-card bungee-doubles-card"
+      href="/bungee-doubles"
+      aria-label="Bungee Doubles: 2v2 tethered tennis mayhem in the Jumbleyard style"
+    >
+      <div className="game-card-art">
+        <img
+          src="/images/bungee-doubles.png"
+          alt="Two toy tennis players in orange shirts tethered by an elastic bungee cord dive across the court for an overhead smash."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
+        <span className="game-card-tag">
+          <Gamepad2 size={14} /> 2 GEGEN 2 · TENNIS MAYHEM
+        </span>
+        <span className="new-game-tag">NEU IN JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 Spieler (2v2)
+          </span>
+          <span>
+            <Timer size={14} /> Bis 7 Punkte
+          </span>
+        </div>
+        <h2>
+          Bungee <span>Doubles</span>
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Tennis-Doppel mit absolutem Team-Chaos! Ihr seid mit eurem Teammate
+          durch ein hochelastisches Bungee-Seil verbunden. Nutzt die
+          Seilspannung für Überschall-Slingshots – oder kracht mit Karacho
+          ineinander!
+        </p>
+        <div className="game-card-bottom">
+          <span>Slingshot oder Team-Bonk?</span>
+          <strong>
+            Bungee Doubles spielen <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
   basketball: (
     <a
       key="basketball"

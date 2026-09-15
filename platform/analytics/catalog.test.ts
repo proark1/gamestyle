@@ -17,7 +17,7 @@ const page = (route: string) =>
   existsSync(`app/(handwerker)/${route}/page.tsx`);
 
 void test('every game has its route, a sound workshop and well-formed report keys', () => {
-  assert.equal(GAMES.length, 15);
+  assert.equal(GAMES.length, 16);
   assert.equal(new Set(GAMES.map((game) => game.id)).size, GAMES.length);
   for (const game of GAMES) {
     assert.equal(game.analytics.game, game.id);

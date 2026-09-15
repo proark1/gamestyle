@@ -121,6 +121,7 @@ void test('the games on the shared worker build its exact body and change only c
     ['act-natural', 'farmer'],
     ['shelf-control', 'mannequin'],
     ['basketball', 'baller'],
+    ['bungee-doubles', 'tennis-duo'],
   ];
   for (const [id, key] of shared) {
     const look = AVATAR_GAMES.find((card) => card.id === id)?.looks.find(
@@ -135,7 +136,7 @@ void test('the games on the shared worker build its exact body and change only c
   }
 });
 
-void test('eleven games dress the shared worker in wardrobe items over their own clothes', () => {
+void test('games dress the shared worker in wardrobe items over their own clothes', () => {
   const dressable = AVATAR_GAMES.flatMap((card) =>
     card.looks
       .filter((look) => look.dressable)
@@ -143,6 +144,7 @@ void test('eleven games dress the shared worker in wardrobe items over their own
   );
   assert.deepEqual(dressable.map(({ key }) => key).sort(), [
     'basketball:baller',
+    'bungee-doubles:tennis-duo',
     'chaos:worker',
     'crane-clash:crane-crew',
     'dont-wake-the-giant:thief',
