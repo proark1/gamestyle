@@ -52,10 +52,17 @@ export function tennisPlayer(color: string, team: TeamId, look?: Look) {
   box(body, [0.26, 0.18, 0.03], [0, 1.05, 0.22], '#ffffff');
   box(body, [0.06, 0.14, 0.04], [0, 0.95, 0.22], '#ffffff');
 
-  // Tennis racket attached to player root
+  // Padel bat firmly gripped in player's right hand
   const racket = createTennisRacket(team);
   racket.name = 'tennis-racket';
-  g.add(racket);
+  const armR = g.userData.armR as T.Group | undefined;
+  if (armR) {
+    racket.position.set(0, -0.36, 0.12);
+    racket.rotation.set(Math.PI / 2 + 0.15, 0, 0);
+    armR.add(racket);
+  } else {
+    g.add(racket);
+  }
   g.userData.racket = racket;
 
   return g;
@@ -171,24 +178,24 @@ export function tennisBall(): T.Group {
   return g;
 }
 
-/** Creates the complete 3D tennis court scene with net and surroundings */
+/** Creates the complete 3D padel stadium arena scene with net, glass enclosure, bleachers, and floodlights */
 export function tennisCourt(): T.Group {
   const g = new T.Group();
 
-  // Court floor dimensions
-  const outerWidth = COURT.width + 5;
-  const outerLength = COURT.length + 6;
+  // Arena floor dimensions (wide stadium apron)
+  const arenaWidth = 30;
+  const arenaLength = 38;
 
-  // Outer surround (navy / dark blue)
-  const outerMat = material('#1d4e74');
-  const outerGeo = new T.PlaneGeometry(outerWidth, outerLength);
+  // Outer stadium surround (dark modern graphite court apron)
+  const outerMat = material('#121d28');
+  const outerGeo = new T.PlaneGeometry(arenaWidth, arenaLength);
   const outerMesh = new T.Mesh(outerGeo, outerMat);
   outerMesh.rotation.x = -Math.PI / 2;
   outerMesh.receiveShadow = true;
   g.add(outerMesh);
 
-  // Playing court surface (bright royal court blue)
-  const courtMat = material('#2a6fa8');
+  // Playing court surface (vibrant cobalt blue padel turf)
+  const courtMat = material('#1a68a5');
   const courtGeo = new T.PlaneGeometry(COURT.width, COURT.length);
   const courtMesh = new T.Mesh(courtGeo, courtMat);
   courtMesh.position.y = 0.005;
@@ -212,19 +219,13 @@ export function tennisCourt(): T.Group {
   addLine(COURT.width, lw, 0, -COURT.length / 2);
   addLine(COURT.width, lw, 0, COURT.length / 2);
 
-  // Sidelines (outer doubles)
+  // Sidelines
   addLine(lw, COURT.length, -COURT.width / 2, 0);
   addLine(lw, COURT.length, COURT.width / 2, 0);
 
-  // Singles sidelines (1.1m in from outer edge)
-  const singlesOffset = COURT.width / 2 - 1.1;
-  addLine(lw, COURT.length, -singlesOffset, 0);
-  addLine(lw, COURT.length, singlesOffset, 0);
-
   // Service lines (at z = -5.5 and z = 5.5)
-  const serviceWidth = singlesOffset * 2;
-  addLine(serviceWidth, lw, 0, -COURT.serviceLineZ);
-  addLine(serviceWidth, lw, 0, COURT.serviceLineZ);
+  addLine(COURT.width, lw, 0, -COURT.serviceLineZ);
+  addLine(COURT.width, lw, 0, COURT.serviceLineZ);
 
   // Center service line (between service line and net)
   addLine(lw, COURT.serviceLineZ * 2, 0, 0);
@@ -233,13 +234,13 @@ export function tennisCourt(): T.Group {
   addLine(lw, 0.4, 0, -COURT.length / 2 + 0.2);
   addLine(lw, 0.4, 0, COURT.length / 2 - 0.2);
 
-  // --- Tennis Net ---
-  const netPostMat = material('#333333');
-  const postRadius = 0.08;
-  const postHeight = COURT.netHeight + 0.1;
-  const postOffset = COURT.width / 2 + 0.5;
+  // --- Padel Net ---
+  const netPostMat = material('#22262b');
+  const postRadius = 0.07;
+  const postHeight = COURT.netHeight + 0.08;
+  const postOffset = COURT.width / 2 + 0.35;
 
-  // Left & Right posts
+  // Left & Right net posts with wire tension crank
   for (const x of [-postOffset, postOffset]) {
     const post = new T.Mesh(
       new T.CylinderGeometry(postRadius, postRadius, postHeight, 12),
@@ -248,6 +249,15 @@ export function tennisCourt(): T.Group {
     post.position.set(x, postHeight / 2, 0);
     post.castShadow = true;
     g.add(post);
+
+    // Tension crank wheel
+    const crank = new T.Mesh(
+      new T.CylinderGeometry(0.04, 0.04, 0.05, 8),
+      material('#ffaa00'),
+    );
+    crank.position.set(x + (x > 0 ? 0.08 : -0.08), postHeight - 0.1, 0);
+    crank.rotation.z = Math.PI / 2;
+    g.add(crank);
   }
 
   // Net top cable / white headband
@@ -262,9 +272,9 @@ export function tennisCourt(): T.Group {
   // Net mesh grid
   const netGeo = new T.PlaneGeometry(postOffset * 2, COURT.netHeight);
   const netMat = new T.MeshStandardMaterial({
-    color: '#1a1a1a',
+    color: '#151515',
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.65,
     side: T.DoubleSide,
     roughness: 0.9,
   });
@@ -272,42 +282,32 @@ export function tennisCourt(): T.Group {
   netMesh.position.set(0, COURT.netHeight / 2, 0);
   g.add(netMesh);
 
-  // Center white strap
-  const strap = new T.Mesh(
-    new T.BoxGeometry(0.12, COURT.netHeight, 0.05),
-    material('#ffffff'),
-  );
-  strap.position.set(0, COURT.netHeight / 2, 0);
-  g.add(strap);
-
-  // Umpire chair on the side
-  const chairGroup = new T.Group();
-  chairGroup.position.set(-postOffset - 1.4, 0, 0);
-  // Legs
-  box(chairGroup, [0.08, 2.2, 0.08], [-0.3, 1.1, -0.3], '#2e4057');
-  box(chairGroup, [0.08, 2.2, 0.08], [0.3, 1.1, -0.3], '#2e4057');
-  box(chairGroup, [0.08, 2.2, 0.08], [-0.3, 1.1, 0.3], '#2e4057');
-  box(chairGroup, [0.08, 2.2, 0.08], [0.3, 1.1, 0.3], '#2e4057');
-  // Seat
-  box(chairGroup, [0.7, 0.1, 0.7], [0, 1.8, 0], '#e67e22');
-  box(chairGroup, [0.7, 0.6, 0.08], [0, 2.15, -0.32], '#e67e22');
-  g.add(chairGroup);
+  // Center white strap with tension buckle
+  box(g, [0.12, COURT.netHeight, 0.05], [0, COURT.netHeight / 2, 0], '#ffffff');
+  box(g, [0.14, 0.06, 0.06], [0, COURT.netHeight - 0.04, 0], '#333333');
 
   // --- Padel Court Enclosure (3.8m Glass Back Walls & Wire Mesh Sides) ---
   const glassMat = new T.MeshStandardMaterial({
-    color: '#bde0fe',
+    color: '#c2e7ff',
     transparent: true,
-    opacity: 0.32,
-    roughness: 0.05,
-    metalness: 0.2,
+    opacity: 0.35,
+    roughness: 0.04,
+    metalness: 0.15,
+    side: T.DoubleSide,
+  });
+
+  const frostedDecalMat = new T.MeshBasicMaterial({
+    color: '#ffffff',
+    transparent: true,
+    opacity: 0.75,
     side: T.DoubleSide,
   });
 
   const meshMat = new T.MeshStandardMaterial({
     color: '#283845',
     transparent: true,
-    opacity: 0.6,
-    roughness: 0.8,
+    opacity: 0.62,
+    roughness: 0.7,
     side: T.DoubleSide,
   });
 
@@ -324,18 +324,32 @@ export function tennisCourt(): T.Group {
     backGlassMesh.position.set(0, wallH / 2, z);
     g.add(backGlassMesh);
 
-    // Top horizontal steel beam
-    box(g, [COURT.width + 0.16, 0.08, 0.08], [0, wallH, z], postColor);
+    // Official frosted safety vinyl lines across glass at eye levels
+    for (const decalY of [1.15, 1.45]) {
+      const decal = new T.Mesh(
+        new T.PlaneGeometry(COURT.width, 0.04),
+        frostedDecalMat,
+      );
+      decal.position.set(0, decalY, z + (z < 0 ? 0.01 : -0.01));
+      g.add(decal);
+    }
+
+    // Top horizontal structural beam
+    box(g, [COURT.width + 0.16, 0.09, 0.09], [0, wallH, z], postColor);
     // Bottom kickplate trim
     box(g, [COURT.width, 0.12, 0.06], [0, 0.06, z], postColor);
 
     // Vertical structural posts every 2.6m
     for (const x of [-halfW, -3.9, -1.3, 1.3, 3.9, halfW]) {
       box(g, [0.08, wallH, 0.08], [x, wallH / 2, z], postColor);
+      // Small glass fixing brackets
+      for (const by of [0.6, 1.8, 3.0]) {
+        box(g, [0.12, 0.08, 0.1], [x, by, z], '#475569');
+      }
     }
   }
 
-  // --- Side Walls (Glass corners + Wire mesh center) ---
+  // --- Side Walls (Glass corners + Wire mesh center + Doorways) ---
   for (const x of [-halfW, halfW]) {
     // North corner glass (z from -11 to -7)
     const cornerGlassNorth = new T.Mesh(
@@ -355,95 +369,225 @@ export function tennisCourt(): T.Group {
     cornerGlassSouth.rotation.y = Math.PI / 2;
     g.add(cornerGlassSouth);
 
-    // Center wire mesh (z from -7 to +7, height 3.0m)
-    const centerMesh = new T.Mesh(
-      new T.PlaneGeometry(14.0, 3.0),
-      meshMat,
-    );
-    centerMesh.position.set(x, 1.5, 0);
-    centerMesh.rotation.y = Math.PI / 2;
-    g.add(centerMesh);
+    // Side frosted safety lines
+    for (const decalY of [1.15, 1.45]) {
+      for (const cz of [-9.0, 9.0]) {
+        const sideDecal = new T.Mesh(
+          new T.PlaneGeometry(4.0, 0.04),
+          frostedDecalMat,
+        );
+        sideDecal.position.set(x + (x < 0 ? 0.01 : -0.01), decalY, cz);
+        sideDecal.rotation.y = Math.PI / 2;
+        g.add(sideDecal);
+      }
+    }
+
+    // Center wire mesh panels (leaving 1.6m doorway open at center z = 0)
+    // North mesh (z from -7.0 to -1.0)
+    const meshNorth = new T.Mesh(new T.PlaneGeometry(6.0, 3.0), meshMat);
+    meshNorth.position.set(x, 1.5, -4.0);
+    meshNorth.rotation.y = Math.PI / 2;
+    g.add(meshNorth);
+
+    // South mesh (z from 1.0 to 7.0)
+    const meshSouth = new T.Mesh(new T.PlaneGeometry(6.0, 3.0), meshMat);
+    meshSouth.position.set(x, 1.5, 4.0);
+    meshSouth.rotation.y = Math.PI / 2;
+    g.add(meshSouth);
 
     // Top beam connecting entire side wall
     box(g, [0.08, 0.08, COURT.length], [x, wallH, 0], postColor);
-    // Bottom kickplate trim
+    // Bottom kickplate
     box(g, [0.06, 0.12, COURT.length], [x, 0.06, 0], postColor);
 
     // Vertical side posts
-    for (const z of [-halfL, -7.0, -3.5, 0, 3.5, 7.0, halfL]) {
+    for (const z of [-halfL, -7.0, -3.5, -1.0, 1.0, 3.5, 7.0, halfL]) {
       box(g, [0.08, wallH, 0.08], [x, wallH / 2, z], postColor);
     }
+
+    // Entrance doorway padding protectors (Orange on west, Teal on east)
+    const padColor = x < 0 ? '#ff8c38' : '#2aa89b';
+    box(g, [0.14, 2.0, 0.14], [x, 1.0, -1.0], padColor);
+    box(g, [0.14, 2.0, 0.14], [x, 1.0, 1.0], padColor);
+  }
+
+  // --- Spectator Grandstand Bleachers ---
+  // West Grandstand (behind x = -6.5)
+  const standZ = 0;
+  const standX = -10.2;
+  const bleacherWidth = 3.8;
+  const bleacherLength = 22;
+
+  // 3-tiered riser structure
+  for (let tier = 0; tier < 3; tier++) {
+    const tierH = 0.5 + tier * 0.45;
+    const tierDepth = 1.1;
+    const tierX = standX - tier * tierDepth;
+    box(
+      g,
+      [tierDepth, tierH, bleacherLength],
+      [tierX, tierH / 2, standZ],
+      '#1c2834',
+    );
+
+    // Rows of stadium fold-down seats
+    const numSeats = 14;
+    for (let s = 0; s < numSeats; s++) {
+      const sz = -bleacherLength / 2 + 1.2 + (s * (bleacherLength - 2.4)) / (numSeats - 1);
+      const seatColor = (s + tier) % 2 === 0 ? '#264653' : '#2a9d8f';
+      // Seat cushion
+      box(g, [0.45, 0.08, 0.45], [tierX, tierH + 0.04, sz], seatColor);
+      // Seat backrest
+      box(g, [0.08, 0.35, 0.45], [tierX - 0.2, tierH + 0.22, sz], seatColor);
+    }
+  }
+
+  // East Grandstand (behind x = +6.5)
+  const eastStandX = 10.2;
+  for (let tier = 0; tier < 3; tier++) {
+    const tierH = 0.5 + tier * 0.45;
+    const tierDepth = 1.1;
+    const tierX = eastStandX + tier * tierDepth;
+    box(
+      g,
+      [tierDepth, tierH, bleacherLength],
+      [tierX, tierH / 2, standZ],
+      '#1c2834',
+    );
+
+    const numSeats = 14;
+    for (let s = 0; s < numSeats; s++) {
+      const sz = -bleacherLength / 2 + 1.2 + (s * (bleacherLength - 2.4)) / (numSeats - 1);
+      const seatColor = (s + tier) % 2 === 0 ? '#e76f51' : '#f4a261';
+      box(g, [0.45, 0.08, 0.45], [tierX, tierH + 0.04, sz], seatColor);
+      box(g, [0.08, 0.35, 0.45], [tierX + 0.2, tierH + 0.22, sz], seatColor);
+    }
+  }
+
+  // --- Sideline Team Benches & Gear by Court Entrance ---
+  for (const [bx, bTeam] of [
+    [-8.0, 'orange'],
+    [8.0, 'teal'],
+  ] as const) {
+    const bColor = bTeam === 'orange' ? '#e58e38' : '#349387';
+    // Bench seat
+    box(g, [0.6, 0.45, 2.4], [bx, 0.22, 0], '#243444');
+    box(g, [0.65, 0.06, 2.5], [bx, 0.48, 0], '#334756');
+
+    // Folded team towel on bench
+    box(g, [0.4, 0.06, 0.5], [bx, 0.54, -0.6], bColor);
+
+    // Sports duffle bag beside bench
+    box(g, [0.35, 0.3, 0.6], [bx, 0.15, 0.8], '#1b2631');
+    box(g, [0.36, 0.04, 0.6], [bx, 0.28, 0.8], bColor);
+
+    // Water bottle
+    const bottle = new T.Mesh(
+      new T.CylinderGeometry(0.06, 0.06, 0.25, 8),
+      material('#ffffff'),
+    );
+    bottle.position.set(bx, 0.64, 0.3);
+    g.add(bottle);
   }
 
   // --- 4 Padel Court LED Floodlight Towers ---
   const floodLightPos: [number, number][] = [
-    [-halfW - 0.5, -5.5],
-    [halfW + 0.5, -5.5],
-    [-halfW - 0.5, 5.5],
-    [halfW + 0.5, 5.5],
+    [-halfW - 0.4, -6.0],
+    [halfW + 0.4, -6.0],
+    [-halfW - 0.4, 6.0],
+    [halfW + 0.4, 6.0],
   ];
 
   for (const [fx, fz] of floodLightPos) {
     const lightMast = new T.Group();
     lightMast.position.set(fx, 0, fz);
 
-    // Main steel column (5.2m tall)
-    box(lightMast, [0.12, 5.2, 0.12], [0, 2.6, 0], '#1e293b');
-
-    // Angled cantilever arm pointing inward
-    const dirX = fx < 0 ? 0.35 : -0.35;
-    box(lightMast, [0.7, 0.08, 0.08], [dirX, 5.2, 0], '#1e293b');
-
-    // LED lamp head
-    const lampHead = new T.Mesh(
-      new T.BoxGeometry(0.5, 0.12, 0.35),
-      material('#2c3e50'),
+    // Modern tapered structural steel mast (5.8m tall)
+    const mast = new T.Mesh(
+      new T.CylinderGeometry(0.08, 0.14, 5.8, 8),
+      material('#1e293b'),
     );
-    lampHead.position.set(dirX * 1.5, 5.15, 0);
-    lampHead.rotation.z = fx < 0 ? -0.35 : 0.35;
-    lightMast.add(lampHead);
+    mast.position.set(0, 2.9, 0);
+    mast.castShadow = true;
+    lightMast.add(mast);
 
-    // Glowing LED emitter plane
-    const ledPlane = new T.Mesh(
-      new T.PlaneGeometry(0.42, 0.28),
-      new T.MeshBasicMaterial({ color: '#f8fafc' }),
-    );
-    ledPlane.position.set(dirX * 1.5, 5.08, 0);
-    ledPlane.rotation.x = Math.PI / 2;
-    lightMast.add(ledPlane);
+    // Double angled LED fixture head
+    const dirX = fx < 0 ? 0.4 : -0.4;
+    box(lightMast, [0.8, 0.08, 0.08], [dirX, 5.75, 0], '#1e293b');
+
+    // Twin rectangular LED heads
+    for (const headZ of [-0.25, 0.25]) {
+      const lampHead = new T.Mesh(
+        new T.BoxGeometry(0.55, 0.14, 0.32),
+        material('#2c3e50'),
+      );
+      lampHead.position.set(dirX * 1.6, 5.68, headZ);
+      lampHead.rotation.z = fx < 0 ? -0.4 : 0.4;
+      lightMast.add(lampHead);
+
+      // Glowing LED emitter face
+      const ledPlane = new T.Mesh(
+        new T.PlaneGeometry(0.48, 0.26),
+        new T.MeshBasicMaterial({ color: '#f1f5f9' }),
+      );
+      ledPlane.position.set(dirX * 1.6, 5.6, headZ);
+      ledPlane.rotation.x = Math.PI / 2;
+      lightMast.add(ledPlane);
+    }
 
     g.add(lightMast);
   }
 
+  // --- Elevated Stadium Tournament Ribbon Banner Display ---
+  const bannerY = 4.6;
+  const bannerZ = halfL + 1.2;
+  box(g, [14.0, 0.75, 0.15], [0, bannerY, -bannerZ], '#0f172a');
+  box(g, [13.8, 0.65, 0.02], [0, bannerY, -bannerZ + 0.08], '#0284c7');
+
+  box(g, [14.0, 0.75, 0.15], [0, bannerY, bannerZ], '#0f172a');
+  box(g, [13.8, 0.65, 0.02], [0, bannerY, bannerZ - 0.08], '#0284c7');
+
   return g;
 }
 
-/** Dynamic Bungee Cord 3D Mesh connecting two players */
+/** Dynamic Bungee Cord 3D Mesh connecting two players with tension vibration and carabiners */
 export function createBungeeCord(team: TeamId): {
   group: T.Group;
   update: (
     posA: [number, number, number],
     posB: [number, number, number],
     tension: number,
+    clock?: number,
   ) => void;
 } {
   const group = new T.Group();
-  const numSegments = 10;
+  const numSegments = 12;
   const segments: T.Mesh[] = [];
 
   const teamColor = team === 'orange' ? '#ff7700' : '#00b4d8';
   const cordMat = new T.MeshStandardMaterial({
     color: teamColor,
-    roughness: 0.4,
-    metalness: 0.1,
+    roughness: 0.3,
+    metalness: 0.2,
   });
 
   for (let i = 0; i < numSegments; i++) {
-    const seg = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 1, 6), cordMat);
+    const seg = new T.Mesh(new T.CylinderGeometry(0.045, 0.045, 1, 8), cordMat);
     seg.castShadow = true;
     group.add(seg);
     segments.push(seg);
   }
+
+  // Hip attachment carabiner clips
+  const clipMat = new T.MeshStandardMaterial({
+    color: '#94a3b8',
+    metalness: 0.8,
+    roughness: 0.2,
+  });
+  const clipA = new T.Mesh(new T.TorusGeometry(0.065, 0.018, 8, 16), clipMat);
+  const clipB = new T.Mesh(new T.TorusGeometry(0.065, 0.018, 8, 16), clipMat);
+  group.add(clipA);
+  group.add(clipB);
 
   const vA = new T.Vector3();
   const vB = new T.Vector3();
@@ -453,22 +597,33 @@ export function createBungeeCord(team: TeamId): {
     posA: [number, number, number],
     posB: [number, number, number],
     tension: number,
+    clock = 0,
   ) {
-    vA.set(posA[0], posA[1] + 0.6, posA[2]); // Attach near player hips
+    vA.set(posA[0], posA[1] + 0.6, posA[2]); // Hip attachment point
     vB.set(posB[0], posB[1] + 0.6, posB[2]);
 
-    // Color shifts based on tension
-    if (tension > 0.85) {
-      cordMat.color.set('#ff2200'); // Danger snap red
-    } else if (tension > 0.5) {
-      cordMat.color.set('#ffbb00'); // High tension yellow
+    clipA.position.copy(vA);
+    clipB.position.copy(vB);
+
+    // Dynamic color & emissive glow based on tension
+    if (tension > 0.82) {
+      cordMat.color.set('#ff1a1a'); // Critical snap red
+      cordMat.emissive.set('#ff0033');
+      cordMat.emissiveIntensity = 0.5 + Math.sin(clock * 20) * 0.4;
+    } else if (tension > 0.52) {
+      cordMat.color.set('#ffaa00'); // Warning amber
+      cordMat.emissive.set('#ff6600');
+      cordMat.emissiveIntensity = 0.25;
     } else {
       cordMat.color.set(teamColor);
+      cordMat.emissive.set('#000000');
+      cordMat.emissiveIntensity = 0;
     }
 
-    // Calculate curve points with catenary droop
     const slack = Math.max(0, 1 - tension);
-    const sag = slack * 0.45; // Sag towards floor when slack
+    const sag = slack * 0.45;
+    // Harmonic high-tension vibration
+    const vibration = tension > 0.5 ? Math.sin(clock * 32) * tension * 0.03 : 0;
 
     for (let i = 0; i < numSegments; i++) {
       const t1 = i / numSegments;
@@ -477,9 +632,13 @@ export function createBungeeCord(team: TeamId): {
       const p1 = new T.Vector3().lerpVectors(vA, vB, t1);
       const p2 = new T.Vector3().lerpVectors(vA, vB, t2);
 
-      // Apply parabolic droop
       p1.y -= Math.sin(t1 * Math.PI) * sag;
       p2.y -= Math.sin(t2 * Math.PI) * sag;
+
+      if (vibration !== 0) {
+        p1.y += Math.sin(t1 * Math.PI * 2) * vibration;
+        p2.y += Math.sin(t2 * Math.PI * 2) * vibration;
+      }
 
       const segMid = new T.Vector3().lerpVectors(p1, p2, 0.5);
       const segLen = p1.distanceTo(p2);
@@ -488,7 +647,6 @@ export function createBungeeCord(team: TeamId): {
       seg.position.copy(segMid);
       seg.scale.set(1, segLen, 1);
 
-      // Orient cylinder along segment
       dir.subVectors(p2, p1).normalize();
       seg.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), dir);
     }
@@ -497,30 +655,70 @@ export function createBungeeCord(team: TeamId): {
   return { group, update };
 }
 
-/** Ball landing target reticle projected onto the court floor */
+/** Ball landing target reticle and soft contact shadow on court floor */
 export function createLandingTarget(): {
-  mesh: T.Mesh;
-  update: (x: number, z: number, ballY: number) => void;
+  mesh: T.Group;
+  update: (x: number, z: number, ballY: number, clock?: number) => void;
 } {
-  const geo = new T.RingGeometry(0.25, 0.38, 18);
-  const mat = new T.MeshBasicMaterial({
-    color: '#ffff00',
-    transparent: true,
-    opacity: 0.7,
-    side: T.DoubleSide,
-  });
-  const mesh = new T.Mesh(geo, mat);
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.y = 0.02;
+  const g = new T.Group();
 
-  function update(x: number, z: number, ballY: number) {
-    mesh.position.x = x;
-    mesh.position.z = z;
-    // Scale ring smaller as ball gets closer to floor
-    const scale = Math.max(0.5, Math.min(2.5, ballY * 0.4));
-    mesh.scale.set(scale, scale, 1);
-    mat.opacity = Math.max(0.2, 0.85 - ballY * 0.08);
+  // 1. Soft radial contact shadow
+  const shadowGeo = new T.CircleGeometry(0.4, 24);
+  const shadowMat = new T.MeshBasicMaterial({
+    color: '#071520',
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+  });
+  const shadowMesh = new T.Mesh(shadowGeo, shadowMat);
+  shadowMesh.rotation.x = -Math.PI / 2;
+  shadowMesh.position.y = 0.015;
+  g.add(shadowMesh);
+
+  // 2. High-tech arcade reticle ring
+  const ringGeo = new T.RingGeometry(0.25, 0.34, 28);
+  const ringMat = new T.MeshBasicMaterial({
+    color: '#ffd166',
+    transparent: true,
+    opacity: 0.85,
+    side: T.DoubleSide,
+    depthWrite: false,
+  });
+  const ringMesh = new T.Mesh(ringGeo, ringMat);
+  ringMesh.rotation.x = -Math.PI / 2;
+  ringMesh.position.y = 0.02;
+  g.add(ringMesh);
+
+  // 3. Four crosshair target ticks
+  const tickMat = new T.MeshBasicMaterial({
+    color: '#ffffff',
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+  });
+  for (const angle of [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]) {
+    const tick = new T.Mesh(new T.PlaneGeometry(0.045, 0.12), tickMat);
+    tick.rotation.x = -Math.PI / 2;
+    tick.rotation.z = angle;
+    tick.position.set(Math.cos(angle) * 0.38, 0.022, Math.sin(angle) * 0.38);
+    g.add(tick);
   }
 
-  return { mesh, update };
+  function update(x: number, z: number, ballY: number, clock = 0) {
+    g.position.x = x;
+    g.position.z = z;
+
+    // Contact shadow shrinks and darkens as ball descends to turf
+    const shadowScale = Math.max(0.4, Math.min(2.0, 0.6 + ballY * 0.2));
+    shadowMesh.scale.set(shadowScale, shadowScale, 1);
+    shadowMat.opacity = Math.max(0.12, 0.58 - ballY * 0.06);
+
+    // Reticle contracts tightly toward center for impact timing
+    const ringScale = Math.max(0.45, Math.min(2.2, ballY * 0.32 + 0.35));
+    ringMesh.scale.set(ringScale, ringScale, 1);
+    ringMesh.rotation.z = clock * 2.0;
+    ringMat.opacity = Math.max(0.2, 0.9 - ballY * 0.07);
+  }
+
+  return { mesh: g, update };
 }
