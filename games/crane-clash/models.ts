@@ -102,15 +102,15 @@ export function createCraneMesh(team: TeamId) {
   root.add(hook);
   root.userData.hook = hook;
 
-  // 5. Cable Line from trolley to hook
-  const cableGeom = new T.BufferGeometry().setFromPoints([
-    new T.Vector3(0, 0, 0),
-    new T.Vector3(0, -5, 0),
-  ]);
-  const cable = new T.Line(
-    cableGeom,
-    new T.LineBasicMaterial({ color: '#2b2a29', linewidth: 2 }),
-  );
+  // 5. Solid 3D Steel Cable from trolley to hook
+  const cableGeom = new T.CylinderGeometry(0.035, 0.035, 1, 8);
+  const cableMat = new T.MeshStandardMaterial({
+    color: '#222222',
+    roughness: 0.55,
+    metalness: 0.8,
+  });
+  const cable = new T.Mesh(cableGeom, cableMat);
+  cable.castShadow = true;
   root.add(cable);
   root.userData.cable = cable;
 

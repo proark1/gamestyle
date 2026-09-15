@@ -341,3 +341,45 @@ void test('cooperative 2-bot team settles over pad and stacks crate', () => {
   assert.equal(swinger.holdingCrateId, null, 'swinger released crate onto pad');
   assert.equal(crate.heldBy, null, 'crate is free to settle on pad');
 });
+
+void test('swinger deflection stays realistically bounded under continuous swing input', () => {
+  const w = freshClashWorld(1000);
+  const player = newPlayer(
+    'solo-p1',
+    'SoloPlayer',
+    0,
+    'orange',
+    'swinger',
+    false,
+  );
+  w.players.push(player);
+  reconcileClashBots(w);
+  w.phase = 'playing';
+  w.started = 1000;
+
+  // Simulate 3 seconds of continuous swing pumping
+  player.input = { x: 1, z: 0, seq: 1 };
+  player.seen = 1000;
+
+  let now = 1000;
+  for (let i = 0; i < 60; i++) {
+    now += 50;
+    player.seen = now;
+    advanceCraneClash(w, now);
+  }
+
+  const crane = w.cranes.orange;
+  const dx = crane.hookX - crane.trolleyX;
+  const dz = crane.hookZ - crane.trolleyZ;
+  const r = Math.hypot(dx, dz);
+  const maxAllowedRadius = crane.cableLength * 0.75; // ~45 degrees max
+
+  assert.ok(
+    r <= maxAllowedRadius,
+    `deflection ${r.toFixed(2)}m is within realistic limit ${maxAllowedRadius.toFixed(2)}m`,
+  );
+  assert.ok(
+    crane.hookY < CRANE_CONFIG.orange.boomY - 1.5,
+    'swinger height stays strictly below crane boom (no looping)',
+  );
+});

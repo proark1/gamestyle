@@ -17,8 +17,10 @@ export const STEP = 1 / 60;
 export const SWINGER_MASS = 75;
 export const SWINGER_RADIUS = 0.55;
 export const SWINGER_HEIGHT = 1.6;
-export const SWING_FORCE = 320;
-export const SWING_PUMP_BOOST = 280;
+export const SWING_FORCE = 250;
+export const SWING_PUMP_BOOST = 220;
+export const MAX_SWING_ANGLE = 0.73; // ~42 degrees max pendulum angle
+export const MAX_SWING_SPEED = 6.5; // meters per second
 export const SLEW_SPEED = 1.35; // radians per second
 export const TROLLEY_SPEED = 4.2; // meters per second
 export const HOIST_SPEED = 3.5; // meters per second
@@ -116,7 +118,7 @@ export class CraneClashPhysics {
       const swinger = new C.Body({
         mass: SWINGER_MASS,
         material: this.swingerMaterial,
-        linearDamping: 0.04,
+        linearDamping: 0.1,
         angularDamping: 0.3,
         allowSleep: false,
       });
@@ -222,15 +224,35 @@ export class CraneClashPhysics {
       if (cable) cable.distance = crane.cableLength;
     }
 
-    // Update hoist position
+    // Update hoist position and transfer kinematic velocity
+    const prevX = hoist.position.x;
+    const prevZ = hoist.position.z;
     crane.trolleyX = cfg.mast.x + Math.cos(crane.angle) * crane.trolleyDist;
     crane.trolleyZ = cfg.mast.z + Math.sin(crane.angle) * crane.trolleyDist;
     hoist.position.set(crane.trolleyX, cfg.boomY - 0.4, crane.trolleyZ);
+    if (dt > 0) {
+      hoist.velocity.set(
+        (crane.trolleyX - prevX) / dt,
+        0,
+        (crane.trolleyZ - prevZ) / dt,
+      );
+    }
   }
 
   driveSwinger(team: TeamId, input: PlayerInput) {
     const swinger = this.swingers.get(team);
-    if (!swinger) return;
+    const hoist = this.hoists.get(team);
+    const crane = this.state.cranes[team];
+    if (!swinger || !hoist || !crane) return;
+
+    // Displacement vector from hoist anchor down to swinger
+    const dx = swinger.position.x - hoist.position.x;
+    const dz = swinger.position.z - hoist.position.z;
+    const r = Math.hypot(dx, dz);
+    const L = Math.max(2.5, crane.cableLength);
+
+    // Realistic max horizontal swing deflection (at ~42 degrees)
+    const rMax = L * Math.sin(MAX_SWING_ANGLE);
 
     const ix = input.x;
     const iz = input.z;
@@ -239,33 +261,59 @@ export class CraneClashPhysics {
       const dirX = ix / inputLen;
       const dirZ = iz / inputLen;
 
-      // Base directional swing force
-      swinger.applyForce(
-        vec(dirX * SWING_FORCE, 0, dirZ * SWING_FORCE),
-        swinger.position,
-      );
+      // Determine if input is pushing outward (increasing swing amplitude)
+      const outward = r > 0.1 ? (dirX * dx + dirZ * dz) / r : 0;
+      let forceFactor = 1.0;
+      if (outward > 0) {
+        // Natural restoring drop-off as swing approaches max angle
+        const ratio = Math.min(1.0, r / rMax);
+        forceFactor = Math.max(0, 1.0 - ratio * ratio);
+      }
 
-      // Pumping momentum: check alignment with current horizontal velocity
+      // Base directional swing force
+      const effectiveForce = SWING_FORCE * forceFactor;
+      if (effectiveForce > 0) {
+        swinger.applyForce(
+          vec(dirX * effectiveForce, 0, dirZ * effectiveForce),
+          swinger.position,
+        );
+      }
+
+      // Pumping momentum: only when moving aligned with input
       const vx = swinger.velocity.x;
       const vz = swinger.velocity.z;
       const horizSpeed = Math.hypot(vx, vz);
-      if (horizSpeed > 0.4) {
+      if (horizSpeed > 0.3) {
         const velDirX = vx / horizSpeed;
         const velDirZ = vz / horizSpeed;
         const dot = dirX * velDirX + dirZ * velDirZ;
-        if (dot > 0.2) {
-          // Pumping in the direction of motion!
-          const pump = SWING_PUMP_BOOST * dot;
+        if (dot > 0.2 && forceFactor > 0) {
+          // Pumping in sync with swing motion, bounded by realistic limit
+          const pump = SWING_PUMP_BOOST * dot * forceFactor;
           swinger.applyForce(
             vec(velDirX * pump, 0, velDirZ * pump),
             swinger.position,
           );
         } else if (dot < -0.3) {
           // Braking against swing motion
-          swinger.velocity.x *= 0.96;
-          swinger.velocity.z *= 0.96;
+          swinger.velocity.x *= 0.94;
+          swinger.velocity.z *= 0.94;
         }
       }
+    }
+
+    // Upward ceiling & anti-looping barrier: rope must hang below hoist
+    if (swinger.position.y > hoist.position.y - 2.0) {
+      swinger.velocity.y = Math.min(swinger.velocity.y, 0);
+      swinger.applyForce(vec(0, -SWINGER_MASS * 25, 0), swinger.position);
+    }
+
+    // Clamp maximum horizontal speed to prevent physics explosions
+    const currentSpeed = Math.hypot(swinger.velocity.x, swinger.velocity.z);
+    if (currentSpeed > MAX_SWING_SPEED) {
+      const scale = MAX_SWING_SPEED / currentSpeed;
+      swinger.velocity.x *= scale;
+      swinger.velocity.z *= scale;
     }
   }
 

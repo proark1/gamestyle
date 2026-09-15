@@ -164,34 +164,46 @@ export class CraneClashScene {
       const cfg = CRANE_CONFIG[team];
 
       if (craneMesh.userData.jib) {
-        craneMesh.userData.jib.rotation.y = craneState.angle;
+        // Negative sign aligns Three.js Y-rotation with world (X, Z) trigonometry
+        craneMesh.userData.jib.rotation.y = -craneState.angle;
       }
       if (craneMesh.userData.trolley) {
         craneMesh.userData.trolley.position.x = craneState.trolleyDist;
       }
       if (craneMesh.userData.hook) {
-        // Transform hook position from world to crane root local
+        // Hook is the grabber/pulley block just above swinger's head
         craneMesh.userData.hook.position.set(
           craneState.hookX - cfg.mast.x,
-          craneState.hookY,
+          craneState.hookY + 0.65,
           craneState.hookZ - cfg.mast.z,
         );
       }
       if (craneMesh.userData.cable) {
-        // Line from trolley to hook
-        const tWorldX = craneState.trolleyX - cfg.mast.x;
-        const tWorldY = cfg.boomY - 0.22;
-        const tWorldZ = craneState.trolleyZ - cfg.mast.z;
+        // Position solid 3D cylinder from bottom of trolley to top of hook
+        const tLocalX = craneState.trolleyX - cfg.mast.x;
+        const tLocalY = cfg.boomY - 0.35;
+        const tLocalZ = craneState.trolleyZ - cfg.mast.z;
 
-        const hWorldX = craneState.hookX - cfg.mast.x;
-        const hWorldY = craneState.hookY + 0.3;
-        const hWorldZ = craneState.hookZ - cfg.mast.z;
+        const hLocalX = craneState.hookX - cfg.mast.x;
+        const hLocalY = craneState.hookY + 0.75;
+        const hLocalZ = craneState.hookZ - cfg.mast.z;
 
-        const cableGeom = craneMesh.userData.cable.geometry as T.BufferGeometry;
-        const posAttr = cableGeom.attributes.position;
-        posAttr.setXYZ(0, tWorldX, tWorldY, tWorldZ);
-        posAttr.setXYZ(1, hWorldX, hWorldY, hWorldZ);
-        posAttr.needsUpdate = true;
+        const pA = new T.Vector3(tLocalX, tLocalY, tLocalZ);
+        const pB = new T.Vector3(hLocalX, hLocalY, hLocalZ);
+        const delta = new T.Vector3().subVectors(pB, pA);
+        const len = Math.max(0.1, delta.length());
+
+        const cableMesh = craneMesh.userData.cable as T.Mesh;
+        cableMesh.position.set(
+          (tLocalX + hLocalX) * 0.5,
+          (tLocalY + hLocalY) * 0.5,
+          (tLocalZ + hLocalZ) * 0.5,
+        );
+        cableMesh.scale.set(1, len, 1);
+        cableMesh.quaternion.setFromUnitVectors(
+          new T.Vector3(0, 1, 0),
+          delta.normalize(),
+        );
       }
 
       // Update Laser heights
@@ -252,8 +264,23 @@ export class CraneClashScene {
         this.playerMeshes.set(p.id, mesh);
       }
 
-      mesh.position.set(p.x, p.y, p.z);
-      mesh.rotation.y = p.facing;
+      if (p.role === 'operator') {
+        const craneState = world.cranes[p.team];
+        const cfg = CRANE_CONFIG[p.team];
+        if (craneState) {
+          const ang = craneState.angle;
+          const cabX = cfg.mast.x + 1.1 * Math.cos(ang) + 0.9 * Math.sin(ang);
+          const cabZ = cfg.mast.z + 1.1 * Math.sin(ang) - 0.9 * Math.cos(ang);
+          mesh.position.set(cabX, cfg.cabinY - 0.4, cabZ);
+          mesh.rotation.y = -ang;
+        } else {
+          mesh.position.set(p.x, p.y, p.z);
+          mesh.rotation.y = p.facing;
+        }
+      } else {
+        mesh.position.set(p.x, p.y, p.z);
+        mesh.rotation.y = p.facing;
+      }
 
       poseCraneWorker(mesh, nowSec, {
         moving: Math.hypot(p.vx, p.vz) > 0.3,
