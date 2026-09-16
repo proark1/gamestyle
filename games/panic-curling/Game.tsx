@@ -215,18 +215,7 @@ export default function PanicCurlingGame() {
             if (audioRef.current && soundEnabledRef.current) {
               audioRef.current.playEvent(ev);
             }
-            if (ev.type === 'ice_break') {
-              if (reactionTimerRef.current)
-                clearTimeout(reactionTimerRef.current);
-              setReactionToast({
-                text: '🌊 ICE CRACKED THROUGH!',
-                id: Date.now(),
-              });
-              reactionTimerRef.current = setTimeout(
-                () => setReactionToast(null),
-                1800,
-              );
-            } else if (ev.type === 'banana_slip') {
+            if (ev.type === 'banana_slip') {
               if (reactionTimerRef.current)
                 clearTimeout(reactionTimerRef.current);
               setReactionToast({
@@ -242,17 +231,6 @@ export default function PanicCurlingGame() {
                 clearTimeout(reactionTimerRef.current);
               setReactionToast({
                 text: '💥 THUNDEROUS TAKEOUT!',
-                id: Date.now(),
-              });
-              reactionTimerRef.current = setTimeout(
-                () => setReactionToast(null),
-                1800,
-              );
-            } else if (ev.type === 'water_splash') {
-              if (reactionTimerRef.current)
-                clearTimeout(reactionTimerRef.current);
-              setReactionToast({
-                text: '🥶 FELL INTO FROZEN WATER!',
                 id: Date.now(),
               });
               reactionTimerRef.current = setTimeout(
@@ -314,7 +292,7 @@ export default function PanicCurlingGame() {
     return () => clearInterval(interval);
   }, [powerOscillating]);
 
-  const handleLaunch = () => {
+  const handleLaunch = useCallback(() => {
     setPowerOscillating(false);
     audioRef.current?.unlock();
     dispatchAction({
@@ -325,7 +303,7 @@ export default function PanicCurlingGame() {
       kind: stoneKindRef.current,
     });
     setTimeout(() => setPowerOscillating(true), 2500);
-  };
+  }, [dispatchAction]);
 
   const handleSwitchTeam = (newTeam: TeamId) => {
     setTeam(newTeam);
@@ -354,12 +332,78 @@ export default function PanicCurlingGame() {
     });
   };
 
+  // Keyboard shortcuts: Space to deliver or sweep, Arrow keys or A/D to aim or steer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        const current = localWorld.current;
+        if (
+          current?.phase === 'aiming' &&
+          role === 'deliverer' &&
+          current.turnTeam === teamRef.current
+        ) {
+          handleLaunch();
+        } else if (current?.phase === 'sliding') {
+          setIsSweeping(true);
+          isSweepingRef.current = true;
+        }
+      } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        const current = localWorld.current;
+        if (current?.phase === 'aiming') {
+          setAimAngle((a) => {
+            const next = Math.max(-0.35, a - 0.05);
+            aimAngleRef.current = next;
+            return next;
+          });
+        } else if (current?.phase === 'sliding') {
+          setSteerDir(-1);
+          steerDirRef.current = -1;
+        }
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        const current = localWorld.current;
+        if (current?.phase === 'aiming') {
+          setAimAngle((a) => {
+            const next = Math.min(0.35, a + 0.05);
+            aimAngleRef.current = next;
+            return next;
+          });
+        } else if (current?.phase === 'sliding') {
+          setSteerDir(1);
+          steerDirRef.current = 1;
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSweeping(false);
+        isSweepingRef.current = false;
+      } else if (
+        e.code === 'ArrowLeft' ||
+        e.code === 'KeyA' ||
+        e.code === 'ArrowRight' ||
+        e.code === 'KeyD'
+      ) {
+        setSteerDir(0);
+        steerDirRef.current = 0;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [role, handleLaunch]);
+
   const world = snapshot?.world;
   const isMyTurn = world?.turnTeam === team;
   const isDeliverPhase =
     world?.phase === 'aiming' && role === 'deliverer' && isMyTurn;
   const isSlidePhase = world?.phase === 'sliding';
-  const hasStressedIce = world?.iceTiles.some((t) => t.cracked || t.broken);
   const myPlayer = world?.players.find((p) => p.id === sessionRef.current.id);
 
   return (
@@ -509,11 +553,6 @@ export default function PanicCurlingGame() {
         <div key={reactionToast.id} className="curling-reaction-toast">
           {reactionToast.text}
         </div>
-      )}
-
-      {/* Thin Ice Hazard Warning Alert */}
-      {hasStressedIce && (
-        <div className="curling-ice-warning">{strings.thinIceWarning}</div>
       )}
 
       {/* Waiting Indicator during Opponent Turn */}
@@ -675,6 +714,41 @@ export default function PanicCurlingGame() {
       {/* Sweeper Cockpit & Gadget Dock */}
       {isSlidePhase && (role === 'sweeper' || isMyTurn) && (
         <div className="curling-sweeper-cockpit">
+          {/* Real-time Slide Telemetry */}
+          {(() => {
+            const activeStone = world?.stones.find(
+              (s) => s.id === world?.activeStoneId,
+            );
+            if (!activeStone) return null;
+            return (
+              <div className="curling-slide-telemetry">
+                <div className="curling-telemetry-item">
+                  <span className="curling-telemetry-label">SPEED</span>
+                  <span className="curling-telemetry-val">
+                    {Math.hypot(activeStone.vx, activeStone.vz).toFixed(1)} m/s
+                  </span>
+                </div>
+                <div className="curling-telemetry-item">
+                  <span className="curling-telemetry-label">TO TEE</span>
+                  <span className="curling-telemetry-val">
+                    {activeStone.distanceToTee.toFixed(1)} m
+                  </span>
+                </div>
+                <div className="curling-telemetry-item">
+                  <span className="curling-telemetry-label">SWEEP STATUS</span>
+                  <span
+                    className="curling-telemetry-val"
+                    style={{ color: isSweeping ? '#ffb703' : '#a8dadc' }}
+                  >
+                    {isSweeping
+                      ? `🔥 SWEEPING (-${Math.round(GADGET_CONFIGS[activeGadget].frictionCut * 100)}%)`
+                      : 'HOLD TO EXTEND'}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Tactile Gadget Selector */}
           <div className="curling-gadget-dock">
             {(['broom', 'hairdryer', 'blowtorch'] as GadgetId[]).map((g) => (

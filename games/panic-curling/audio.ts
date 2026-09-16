@@ -130,15 +130,6 @@ export class CurlingAudio {
         case 'sweep_burst':
           this.playSweepBurst();
           break;
-        case 'ice_creak':
-          this.playIceCreak();
-          break;
-        case 'ice_break':
-          this.playIceBreak();
-          break;
-        case 'water_splash':
-          this.playWaterSplash();
-          break;
         case 'banana_slip':
           this.playBananaSlip();
           break;

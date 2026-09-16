@@ -113,7 +113,7 @@ void test('sweeping ahead of the stone cuts friction and increases slide distanc
   );
 });
 
-void test('thin ice weakens under clustered weight and breaks into water hole', () => {
+void test('ice sheet remains solid and sweeper escorts stone down the sheet', () => {
   const tile: IceTile = {
     id: 'test-tile-1',
     x: 0,
@@ -126,29 +126,38 @@ void test('thin ice weakens under clustered weight and breaks into water hole', 
     broken: false,
   };
 
-  // 3 players standing together on the same tile
-  const p1 = newCurlingPlayer('p1', 'Player 1', 0, 'red', 'sweeper', false);
-  const p2 = newCurlingPlayer('p2', 'Player 2', 1, 'red', 'sweeper', false);
-  const p3 = newCurlingPlayer('p3', 'Player 3', 2, 'blue', 'defender', false);
-  p1.x = 0;
-  p1.z = 10;
-  p2.x = 0.2;
-  p2.z = 10.2;
-  p3.x = -0.2;
-  p3.z = 9.8;
+  const world = freshCurlingWorld(1000);
+  const sweeper = newCurlingPlayer(
+    'sw1',
+    'Sweeper',
+    0,
+    'red',
+    'sweeper',
+    false,
+  );
+  world.players.push(sweeper);
 
-  const players = [p1, p2, p3];
+  // Deliver stone
+  const stone = launchDelivery(world, 0.6, 0, 1, 'granite');
   const events: GameEvent[] = [];
 
-  for (let i = 0; i < 150; i++) {
-    stepCurlingPhysics([], players, [tile], [], 1 / 60, events);
+  // Step physics
+  for (let i = 0; i < 60; i++) {
+    stepCurlingPhysics([stone], [sweeper], [tile], [], 1 / 60, events);
   }
 
-  assert.ok(tile.cracked, 'Ice tile cracked under heavy clustered weight');
-  assert.ok(tile.broken, 'Ice tile fractured and collapsed into water hole');
+  // Ice remains solid
+  assert.equal(tile.broken, false, 'Ice tile never breaks');
+  assert.equal(tile.cracked, false, 'Ice tile never cracks');
+
+  // Sweeper stays ahead of the stone ready to sweep
   assert.ok(
-    players.some((p) => p.status === 'freezing'),
-    'At least one player plunged into freezing water',
+    sweeper.z >= stone.z,
+    `Sweeper stayed ahead of stone (sweeper Z: ${sweeper.z.toFixed(2)}, stone Z: ${stone.z.toFixed(2)})`,
+  );
+  assert.ok(
+    sweeper.vz > 0,
+    'Sweeper matches forward velocity of the active stone',
   );
 });
 

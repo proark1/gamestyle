@@ -818,3 +818,62 @@
 .wardrobe-toolbar-button:hover {
   background: #ffefc7;
 }
+
+/* Embedded / Admin Wardrobe view */
+.wardrobe-embedded-card {
+  width: 100%;
+  background: #fff8e8;
+  border: 1px solid #bfcfba;
+  border-radius: 20px;
+  box-shadow: 0 4px 18px rgba(18, 36, 26, 0.08);
+  display: flex;
+  flex-direction: column;
+  color: #294a43;
+  overflow: hidden;
+}
+
+.wardrobe-admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 22px;
+  background: #f4ede0;
+  border-bottom: 1px solid #e1dac6;
+  font-size: 12px;
+  color: #556c65;
+}
+
+.wardrobe-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wardrobe-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fffdf5;
+  border: 1px solid #c9c1af;
+  color: #38564e;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wardrobe-admin-btn:hover {
+  background: #2b5247;
+  color: #fff8e8;
+  border-color: #2b5247;
+}
+
+.wardrobe-admin-badge {
+  font-weight: 700;
+  color: #1f63c7;
+}

@@ -141,6 +141,32 @@ export function launchDelivery(
   world.phase = 'sliding';
   world.phaseTimer = 0;
 
+  // 1. Deliverer slides forward with the stone towards the hog line
+  const deliverer = world.players.find(
+    (p) => p.team === world.turnTeam && p.role === 'deliverer',
+  );
+  if (deliverer) {
+    deliverer.status = 'sliding';
+    deliverer.x = 0;
+    deliverer.z = HACK_Z;
+    deliverer.vx = vx * 0.95;
+    deliverer.vz = vz * 0.95;
+    deliverer.rotation = angle;
+  }
+
+  // 2. Position the active sweeper directly in front of the stone to escort it
+  const sweeper = world.players.find(
+    (p) => p.team === world.turnTeam && p.role === 'sweeper',
+  );
+  if (sweeper) {
+    sweeper.status = 'normal';
+    sweeper.x = stone.x + 0.45;
+    sweeper.z = stone.z + 1.2;
+    sweeper.vx = vx;
+    sweeper.vz = vz;
+    sweeper.rotation = 0;
+  }
+
   world.events.push({
     type: 'stone_delivered',
     stoneId: stone.id,
@@ -159,7 +185,7 @@ export function advancePanicCurling(world: PanicCurlingWorld, now: number) {
 
   // Update players input to state
   for (const p of world.players) {
-    if (p.status !== 'slipping' && p.status !== 'freezing') {
+    if (p.status !== 'slipping' && p.status !== 'sliding') {
       p.sweepIntensity = p.input.sweep ? 1.0 : 0;
       p.steerDir = p.input.steer;
       if (p.input.sweep) {
@@ -167,6 +193,26 @@ export function advancePanicCurling(world: PanicCurlingWorld, now: number) {
       } else if (p.status === 'sweeping') {
         p.status = 'normal';
       }
+    }
+  }
+
+  // When stone is sliding, sync human deliverer commands to active sweeper
+  if (world.phase === 'sliding') {
+    const humanDeliverer = world.players.find(
+      (p) => p.team === world.turnTeam && p.role === 'deliverer' && !p.bot,
+    );
+    const activeSweeper = world.players.find(
+      (p) => p.team === world.turnTeam && p.role === 'sweeper',
+    );
+    if (humanDeliverer && activeSweeper) {
+      if (humanDeliverer.input.sweep || humanDeliverer.sweepIntensity > 0) {
+        activeSweeper.sweepIntensity = 1.0;
+        activeSweeper.status = 'sweeping';
+      }
+      if (humanDeliverer.steerDir !== 0) {
+        activeSweeper.steerDir = humanDeliverer.steerDir;
+      }
+      activeSweeper.gadget = humanDeliverer.gadget;
     }
   }
 
@@ -297,9 +343,9 @@ function resetPlayerPositions(world: PanicCurlingWorld) {
       p.z = HACK_Z;
       p.rotation = 0;
     } else if (p.role === 'sweeper') {
-      // Sweepers wait at the near hog line ready to sweep
-      p.x = (p.team === 'red' ? -0.8 : 0.8) + (Math.random() - 0.5) * 0.4;
-      p.z = 5.5 + Math.random() * 0.8;
+      // Sweepers wait ready near delivery hack to escort rock
+      p.x = p.team === 'red' ? -0.7 : 0.7;
+      p.z = HACK_Z + 1.5;
       p.rotation = 0;
     } else {
       // Defenders wait near center ice
@@ -412,17 +458,7 @@ export function panicCurlingAction(
     }
 
     case 'rescue': {
-      if (player) {
-        const target = world.players.find(
-          (p) => p.id === action.targetPlayerId,
-        );
-        if (target && target.status === 'freezing') {
-          target.status = 'normal';
-          target.statusTimer = 0;
-          target.x = player.x;
-          target.z = player.z;
-        }
-      }
+      // No-op: ice sheet is solid and curlers do not freeze or fall into holes
       break;
     }
   }

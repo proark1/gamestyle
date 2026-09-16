@@ -61,3 +61,34 @@ void test('a look keeps only real items in their own slots', () => {
   ])
     assert.equal(parseLook(junk), undefined);
 });
+
+void test('admin wardrobe state helpers allow adding coins, unlocking all items, and reset', async () => {
+  const {
+    adminAddCoins,
+    adminUnlockAllItems,
+    adminResetWardrobe,
+    wardrobeSnapshot,
+    DEFAULT_UNLOCKED,
+  } = await import('./wardrobe-state');
+
+  adminResetWardrobe();
+  const initial = wardrobeSnapshot();
+  assert.equal(initial.unlockedItems.length, DEFAULT_UNLOCKED.length);
+
+  adminAddCoins(500);
+  assert.equal(wardrobeSnapshot().coins, initial.coins + 500);
+
+  adminUnlockAllItems();
+  const allUnlocked = wardrobeSnapshot();
+  for (const item of ITEMS) {
+    assert.ok(
+      allUnlocked.unlockedItems.includes(item.id),
+      `${item.id} is unlocked`,
+    );
+  }
+
+  adminResetWardrobe();
+  const reset = wardrobeSnapshot();
+  assert.equal(reset.coins, initial.coins);
+  assert.equal(reset.unlockedItems.length, DEFAULT_UNLOCKED.length);
+});

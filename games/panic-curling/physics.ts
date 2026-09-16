@@ -23,11 +23,11 @@ export function stepCurlingPhysics(
   dt: number,
   events: GameEvent[],
 ) {
-  // 1. Update thin ice stress and fracture states
+  // 1. Maintain pristine solid ice sheet (no cracking or water holes)
   updateThinIce(iceTiles, players, stones, dt, events);
 
-  // 2. Update players on ice (movement, sliding, hazards, rescues)
-  updatePlayers(players, iceTiles, hazards, dt, events);
+  // 2. Update players on ice (movement, deliverer slide, sweeper escort, banana slips)
+  updatePlayers(players, stones, hazards, dt, events);
 
   // 3. Update stones (friction, sweeping effects, curl forces, collisions)
   updateStones(stones, players, hazards, dt, events);
@@ -36,119 +36,36 @@ export function stepCurlingPhysics(
   resolveStoneCollisions(stones, events);
 }
 
-/** Computes dynamic thin-ice cracking and breaking from player weight and gadget heat. */
+/** Keeps the curling ice sheet pristine and solid (no cracking or water holes). */
 function updateThinIce(
   tiles: IceTile[],
-  players: CurlingPlayer[],
-  stones: Stone[],
-  dt: number,
-  events: GameEvent[],
+  _players: CurlingPlayer[],
+  _stones: Stone[],
+  _dt: number,
+  _events: GameEvent[],
 ) {
   for (const tile of tiles) {
-    if (tile.broken) continue;
-
-    let load = 0;
-
-    // Weight from players
-    for (const p of players) {
-      if (p.status === 'freezing') continue;
-      const dx = Math.abs(p.x - tile.x);
-      const dz = Math.abs(p.z - tile.z);
-      if (dx <= tile.w / 2 && dz <= tile.d / 2) {
-        load += 1.0;
-        // Sweeper thermal stress
-        if (p.status === 'sweeping' && p.sweepIntensity > 0) {
-          const cfg = GADGET_CONFIGS[p.gadget];
-          load += cfg.stressRate * p.sweepIntensity;
-        }
-      }
-    }
-
-    // Weight from stones
-    for (const s of stones) {
-      if (s.outOfBounds) continue;
-      const dx = Math.abs(s.x - tile.x);
-      const dz = Math.abs(s.z - tile.z);
-      if (dx <= tile.w / 2 && dz <= tile.d / 2) {
-        const cfg = STONE_CONFIGS[s.kind];
-        load += 0.8 * cfg.iceStressMultiplier;
-      }
-    }
-
-    tile.stress = load;
-
-    // Capacity threshold: > 1.6 load causes ice to weaken
-    if (load > 1.6) {
-      const damage = (load - 1.2) * 0.35 * dt;
-      tile.health = Math.max(0, tile.health - damage);
-
-      if (tile.health < 0.45 && !tile.cracked) {
-        tile.cracked = true;
-        events.push({ type: 'ice_creak', tileId: tile.id });
-      }
-
-      if (tile.health <= 0) {
-        tile.broken = true;
-        tile.cracked = true;
-        events.push({
-          type: 'ice_break',
-          tileId: tile.id,
-          x: tile.x,
-          z: tile.z,
-        });
-
-        // Plunge players on this tile into the freezing water
-        for (const p of players) {
-          const dx = Math.abs(p.x - tile.x);
-          const dz = Math.abs(p.z - tile.z);
-          if (dx <= tile.w / 2 + 0.2 && dz <= tile.d / 2 + 0.2) {
-            p.status = 'freezing';
-            p.statusTimer = 3.5;
-            p.vx = 0;
-            p.vz = 0;
-            events.push({
-              type: 'water_splash',
-              x: p.x,
-              z: p.z,
-              playerId: p.id,
-            });
-          }
-        }
-      }
-    } else if (load === 0 && tile.health < 1.0 && !tile.broken) {
-      // Natural slow refreeze if unburdened
-      tile.health = Math.min(1.0, tile.health + 0.04 * dt);
-      if (tile.health > 0.75) {
-        tile.cracked = false;
-      }
-    }
+    tile.health = 1.0;
+    tile.stress = 0;
+    tile.cracked = false;
+    tile.broken = false;
   }
 }
 
-/** Updates player movement on slick ice, slipping, and rescues. */
+/** Updates player movement on slick ice, deliverer lunges, sweeper tracking, and banana slips. */
 function updatePlayers(
   players: CurlingPlayer[],
-  iceTiles: IceTile[],
+  stones: Stone[],
   hazards: BananaHazard[],
   dt: number,
   events: GameEvent[],
 ) {
   const halfWidth = RINK_WIDTH / 2 - 0.4;
+  const activeStone = stones.find(
+    (s) => s.active && !s.stopped && !s.outOfBounds,
+  );
 
   for (const p of players) {
-    if (p.status === 'freezing') {
-      p.statusTimer -= dt;
-      // Teeth chatter wobble
-      p.rotation += Math.sin(p.statusTimer * 20) * 0.05;
-      if (p.statusTimer <= 0) {
-        p.status = 'normal';
-        p.statusTimer = 0;
-        // Scramble out of the hole
-        p.z = Math.min(p.z + 1.0, 36);
-      }
-      continue;
-    }
-
     if (p.status === 'slipping') {
       p.statusTimer -= dt;
       p.rotation += 15.0 * dt; // Rapid 360 spin
@@ -162,6 +79,58 @@ function updatePlayers(
         p.status = 'normal';
         p.statusTimer = 0;
       }
+      continue;
+    }
+
+    // Deliverer sliding lunge from hack towards hog line
+    if (p.status === 'sliding') {
+      p.x += p.vx * dt;
+      p.z += p.vz * dt;
+      p.x = Math.max(-halfWidth, Math.min(halfWidth, p.x));
+
+      // As deliverer reaches or passes release hog line (RELEASE_HOG_Z = 6.0),
+      // decelerate to a stop and stand up
+      if (p.z >= 6.0) {
+        p.vx *= Math.pow(0.75, dt * 60);
+        p.vz *= Math.pow(0.75, dt * 60);
+        if (Math.hypot(p.vx, p.vz) < 0.25) {
+          p.status = 'normal';
+          p.vx = 0;
+          p.vz = 0;
+        }
+      }
+      continue;
+    }
+
+    // Sweeper dynamic escorting: stay ahead of active stone along its travel path
+    if (activeStone && p.team === activeStone.team && p.role === 'sweeper') {
+      const targetZ = activeStone.z + 1.15;
+      const targetX =
+        activeStone.x + (p.steerDir !== 0 ? p.steerDir * 0.35 : 0.45);
+
+      // Match stone velocity so the sweeper is never outpaced
+      p.vz = activeStone.vz;
+      p.vx = activeStone.vx;
+
+      // Keep sweeper ahead of stone
+      p.z += (targetZ - p.z) * Math.min(1, dt * 14);
+      p.x += (targetX - p.x) * Math.min(1, dt * 10);
+
+      // Sweeper must never fall behind the rock
+      if (p.z < activeStone.z + 0.75) {
+        p.z = activeStone.z + 0.75;
+      }
+
+      if (p.sweepIntensity > 0) {
+        p.status = 'sweeping';
+        p.rotation = Math.PI; // Face the incoming rock while scrubbing
+      } else {
+        p.status = 'normal';
+        p.rotation = 0;
+      }
+
+      p.x = Math.max(-halfWidth, Math.min(halfWidth, p.x));
+      p.z = Math.max(-4.0, Math.min(38.0, p.z));
       continue;
     }
 
@@ -212,45 +181,6 @@ function updatePlayers(
         p.vz *= 1.4;
         events.push({ type: 'banana_slip', playerId: p.id });
         break;
-      }
-    }
-
-    // Check if stepped into already broken ice
-    for (const tile of iceTiles) {
-      if (!tile.broken) continue;
-      const dx = Math.abs(p.x - tile.x);
-      const dz = Math.abs(p.z - tile.z);
-      if (dx < tile.w / 2 + 0.1 && dz < tile.d / 2 + 0.1) {
-        p.status = 'freezing';
-        p.statusTimer = 3.5;
-        p.vx = 0;
-        p.vz = 0;
-        events.push({
-          type: 'water_splash',
-          x: p.x,
-          z: p.z,
-          playerId: p.id,
-        });
-        break;
-      }
-    }
-
-    // Teammate rescue: if standing next to freezing teammate and pressing rescue
-    if (p.input.rescue) {
-      for (const mate of players) {
-        if (
-          mate.id !== p.id &&
-          mate.team === p.team &&
-          mate.status === 'freezing'
-        ) {
-          const d = Math.hypot(p.x - mate.x, p.z - mate.z);
-          if (d < 2.0) {
-            mate.status = 'normal';
-            mate.statusTimer = 0;
-            mate.x = p.x;
-            mate.z = p.z;
-          }
-        }
       }
     }
   }

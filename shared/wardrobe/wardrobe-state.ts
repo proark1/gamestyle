@@ -261,3 +261,33 @@ export function recordPlayTime(seconds: number) {
   checkAndUnlockGoals();
   emit();
 }
+
+export function adminAddCoins(amount: number = 500) {
+  ensureInit();
+  currentState = {
+    ...currentState,
+    coins: currentState.coins + amount,
+  };
+  emit();
+}
+
+export function adminUnlockAllItems() {
+  ensureInit();
+  currentState = {
+    ...currentState,
+    unlockedItems: Array.from(
+      new Set([...DEFAULT_UNLOCKED, ...ITEMS.map((item) => item.id)]),
+    ),
+  };
+  emit();
+}
+
+export function adminResetWardrobe() {
+  ensureInit();
+  currentState = {
+    ...DEFAULT_STATE,
+    unlockedItems: [...DEFAULT_UNLOCKED],
+    look: { ...DEFAULT_STATE.look },
+  };
+  emit();
+}

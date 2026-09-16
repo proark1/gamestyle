@@ -642,6 +642,40 @@
   max-width: 480px;
 }
 
+/* Slide Telemetry Readout */
+.curling-slide-telemetry {
+  display: flex;
+  gap: 16px;
+  background: rgba(14, 26, 36, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  align-items: center;
+  justify-content: center;
+}
+
+.curling-telemetry-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.curling-telemetry-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.curling-telemetry-val {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
 /* Gadget Dock */
 .curling-gadget-dock {
   display: flex;

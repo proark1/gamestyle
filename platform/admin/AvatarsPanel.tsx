@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RotateCcw, RotateCw } from 'lucide-react';
+import { PersonStanding, RotateCcw, RotateCw, Shirt } from 'lucide-react';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { ITEMS, SLOTS, type Slot } from '../../shared/wardrobe/catalog';
 import type { Look } from '../../shared/wardrobe/look';
@@ -30,7 +30,11 @@ function difference(value: number, reference: number) {
 }
 
 /** Every game's player avatar side by side, at one scale, against a template. */
-export default function AvatarsPanel() {
+export default function AvatarsPanel({
+  onWardrobe,
+}: {
+  onWardrobe?: () => void;
+} = {}) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [stage, setStage] = useState<AvatarStage | null>(null);
   const [potential, setPotential] = useState<readonly AvatarCard[]>([]);
@@ -130,6 +134,32 @@ export default function AvatarsPanel() {
     <div className={admin.panel}>
       <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
       <section className={admin.card}>
+        <div
+          className={styles.subtabs}
+          role="tablist"
+          aria-label="Avatar views"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected="true"
+            className={styles.subtabBtn}
+            data-active="true"
+          >
+            <PersonStanding size={15} aria-hidden="true" /> Player Avatars
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected="false"
+            className={styles.subtabBtn}
+            data-active="false"
+            onClick={onWardrobe}
+          >
+            <Shirt size={15} aria-hidden="true" /> Wardrobe & Perks
+          </button>
+        </div>
+
         <h2>Player avatars</h2>
         <p className={admin.cardNote}>
           Each game&rsquo;s player character, built from the game&rsquo;s own

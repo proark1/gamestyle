@@ -169,32 +169,19 @@ export class PanicCurlingScene {
     for (const tile of world.iceTiles) {
       let mesh = this.tileMeshes.get(tile.id);
       if (!mesh) {
-        const geo = new T.PlaneGeometry(tile.w * 0.94, tile.d * 0.94);
+        const geo = new T.PlaneGeometry(tile.w * 0.96, tile.d * 0.96);
         const mat = new T.MeshStandardMaterial({
-          color: '#d6ecf5',
-          roughness: 0.2,
+          color: '#e2f4fd',
+          roughness: 0.15,
+          metalness: 0.1,
           transparent: true,
-          opacity: 0.0,
+          opacity: 0.2,
         });
         mesh = new T.Mesh(geo, mat);
         mesh.rotation.x = -Math.PI / 2;
         mesh.position.set(tile.x, 0.01, tile.z);
         this.scene.add(mesh);
         this.tileMeshes.set(tile.id, mesh);
-      }
-
-      const mat = mesh.material as T.MeshStandardMaterial;
-      if (tile.broken) {
-        mat.opacity = 0.98;
-        mat.color.set('#0b2432'); // Deep freezing hole
-      } else if (tile.cracked) {
-        mat.opacity = 0.65;
-        mat.color.set('#8ecae6'); // Fractured ice
-      } else if (tile.stress > 0.8) {
-        mat.opacity = 0.35;
-        mat.color.set('#bde0fe');
-      } else {
-        mat.opacity = 0.0;
       }
     }
   }
@@ -271,7 +258,7 @@ export class PanicCurlingScene {
 
       // Update gadget position and visibility
       if (gadgetGroup) {
-        if (p.role === 'sweeper' && p.status !== 'freezing') {
+        if (p.role === 'sweeper') {
           gadgetGroup.visible = true;
           // Position right in front of the curler's hands
           const fx = p.x + Math.sin(p.rotation) * 0.45;
@@ -477,13 +464,10 @@ export class PanicCurlingScene {
 
   private processEvents(world: PanicCurlingWorld) {
     for (const ev of world.events) {
-      if (ev.type === 'water_splash') {
-        this.spawnWaterSplashParticles(ev.x, ev.z);
-        this.addTrauma(0.35);
-      } else if (ev.type === 'ice_break') {
-        this.addTrauma(0.3);
-      } else if (ev.type === 'stone_clack') {
+      if (ev.type === 'stone_clack') {
         this.addTrauma(0.25);
+      } else if (ev.type === 'banana_slip') {
+        this.addTrauma(0.2);
       }
     }
   }

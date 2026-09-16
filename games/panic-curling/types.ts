@@ -152,12 +152,7 @@ export type Stone = {
   distanceToTee: number;
 };
 
-export type PlayerStatus =
-  | 'normal'
-  | 'sliding'
-  | 'sweeping'
-  | 'slipping'
-  | 'freezing';
+export type PlayerStatus = 'normal' | 'sliding' | 'sweeping' | 'slipping';
 
 export type CurlingPlayer = {
   id: string;
@@ -223,9 +218,6 @@ export type GamePhase =
 export type GameEvent =
   | { type: 'stone_delivered'; stoneId: string; speed: number }
   | { type: 'stone_clack'; x: number; z: number; volume: number }
-  | { type: 'ice_creak'; tileId: string }
-  | { type: 'ice_break'; tileId: string; x: number; z: number }
-  | { type: 'water_splash'; x: number; z: number; playerId?: string }
   | { type: 'banana_slip'; playerId: string }
   | { type: 'sweep_burst'; gadget: GadgetId; x: number; z: number }
   | { type: 'end_scored'; redPoints: number; bluePoints: number };

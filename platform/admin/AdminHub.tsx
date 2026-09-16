@@ -10,6 +10,7 @@ import {
   LogOut,
   PersonStanding,
   RefreshCw,
+  Shirt,
 } from 'lucide-react';
 import { GAMES } from '../analytics/catalog';
 import AvatarsPanel from './AvatarsPanel';
@@ -17,16 +18,24 @@ import GamePanel from './GamePanel';
 import OverviewPanel from './OverviewPanel';
 import SessionsPanel, { type SessionFilter } from './SessionsPanel';
 import SoundPanel from './SoundPanel';
+import WardrobePanel from './WardrobePanel';
 import type { Scope } from './request';
 import styles from './admin.module.css';
 
-type Tab = 'overview' | 'games' | 'sessions' | 'sound' | 'avatars';
-const TABS = [
+export type Tab =
+  | 'overview'
+  | 'games'
+  | 'sessions'
+  | 'sound'
+  | 'avatars'
+  | 'wardrobe';
+export const TABS = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
   { id: 'games', label: 'Games', Icon: Gamepad2 },
   { id: 'sessions', label: 'Sessions', Icon: ListTree },
   { id: 'sound', label: 'Sound', Icon: AudioLines },
   { id: 'avatars', label: 'Avatars', Icon: PersonStanding },
+  { id: 'wardrobe', label: 'Wardrobe', Icon: Shirt },
 ] as const;
 const PERIODS = [
   { id: 'today', label: 'Today' },
@@ -265,7 +274,12 @@ function Dashboard({
               signOut={signOut}
             />
           )}
-          {tab === 'avatars' && <AvatarsPanel />}
+          {tab === 'avatars' && (
+            <AvatarsPanel onWardrobe={() => setTab('wardrobe')} />
+          )}
+          {tab === 'wardrobe' && (
+            <WardrobePanel onAvatars={() => setTab('avatars')} />
+          )}
         </main>
       </div>
     </div>

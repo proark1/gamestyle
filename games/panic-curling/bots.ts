@@ -66,29 +66,8 @@ export function updateCurlingBots(world: PanicCurlingWorld, dt: number) {
     bot.input.steer = 0;
     bot.input.rescue = false;
 
-    // Freezing bots can't act
-    if (bot.status === 'freezing' || bot.status === 'slipping') continue;
-
-    // Check for freezing teammates to rescue
-    const freezingMate = world.players.find(
-      (p) =>
-        p.id !== bot.id &&
-        p.team === bot.team &&
-        p.status === 'freezing' &&
-        Math.hypot(p.x - bot.x, p.z - bot.z) < 5.0,
-    );
-    if (freezingMate) {
-      const dx = freezingMate.x - bot.x;
-      const dz = freezingMate.z - bot.z;
-      const dist = Math.hypot(dx, dz);
-      if (dist > 1.2) {
-        bot.input.x = dx / dist;
-        bot.input.z = dz / dist;
-      } else {
-        bot.input.rescue = true;
-      }
-      continue;
-    }
+    // Slipping bots can't act
+    if (bot.status === 'slipping') continue;
 
     // Role specific behavior
     if (world.phase === 'aiming') {
@@ -140,53 +119,31 @@ function botDeliverStone(world: PanicCurlingWorld, bot: CurlingPlayer) {
 }
 
 function updateSweeperBot(
-  world: PanicCurlingWorld,
+  _world: PanicCurlingWorld,
   bot: CurlingPlayer,
   stone: import('./types').Stone,
   _dt: number,
 ) {
   if (bot.team === stone.team) {
-    // Run ahead of stone and sweep
-    const targetZ = stone.z + 1.2;
-    const targetX = stone.x;
-
-    const dx = targetX - bot.x;
-    const dz = targetZ - bot.z;
-    const dist = Math.hypot(dx, dz);
-
-    if (dist > 0.4) {
-      bot.input.x = Math.max(-1, Math.min(1, dx * 2.0));
-      bot.input.z = Math.max(-1, Math.min(1, dz * 2.0));
-    }
-
     // Decide whether to sweep
     // Estimated stopping distance: z + v^2 / (2 * mu * g)
     const cfg = STONE_CONFIGS[stone.kind];
     const speed = Math.hypot(stone.vx, stone.vz);
     const estStopZ = stone.z + (speed * speed) / (2 * cfg.baseFriction * 9.81);
 
-    // If stone will stop short of tee, sweep hard!
-    if (estStopZ < TEE_Z + 1.0 && stone.z < TEE_Z) {
+    // If stone will stop short of tee, sweep hard to reduce friction and extend slide!
+    if (estStopZ < TEE_Z + 0.8 && stone.z < TEE_Z + 1.5) {
       bot.input.sweep = true;
+      bot.sweepIntensity = 1.0;
     }
 
-    // Steer if curling off-center
-    if (stone.x > 0.4) {
-      bot.input.steer = -1; // steer left
-    } else if (stone.x < -0.4) {
-      bot.input.steer = 1; // steer right
-    }
-
-    // Avoid broken ice holes
-    for (const tile of world.iceTiles) {
-      if (tile.broken || tile.health < 0.3) {
-        const tdx = tile.x - bot.x;
-        const tdz = tile.z - bot.z;
-        if (Math.hypot(tdx, tdz) < 1.5) {
-          // Push away from danger tile
-          bot.input.x -= Math.sign(tdx) * 1.5;
-        }
-      }
+    // Steer if stone is curling off-center
+    if (stone.x > 0.35) {
+      bot.input.steer = -1; // steer left toward button center
+      bot.steerDir = -1;
+    } else if (stone.x < -0.35) {
+      bot.input.steer = 1; // steer right toward button center
+      bot.steerDir = 1;
     }
   }
 }

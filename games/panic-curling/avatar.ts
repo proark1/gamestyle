@@ -64,18 +64,6 @@ export function poseCurler(
       break;
     }
 
-    case 'freezing': {
-      // Plunged into ice hole: shivering teeth chatter
-      const chattering = Math.sin(time * 36) * 0.06;
-      rig.body.position.y = -0.65 + chattering;
-      rig.body.rotation.set(0, 0, chattering);
-      rig.legL.rotation.set(0, 0, 0);
-      rig.legR.rotation.set(0, 0, 0);
-      rig.armL.rotation.set(-1.8, 0, 0.5 + chattering);
-      rig.armR.rotation.set(-1.8, 0, -0.5 - chattering);
-      break;
-    }
-
     case 'normal':
     default: {
       if (pose.moving) {
