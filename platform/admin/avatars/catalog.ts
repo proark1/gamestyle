@@ -21,6 +21,8 @@ import { craneClashAvatars } from '../../../games/crane-clash/avatar';
 import { basketballAvatars } from '../../../games/basketball/avatar';
 import { bungeeDoublesAvatars } from '../../../games/bungee-doubles/avatar';
 import { curlingAvatars } from '../../../games/panic-curling/avatar';
+import { carryOnCarnageAvatars } from '../../../games/carry-on-carnage/avatar';
+import { sampleStampedeAvatars } from '../../../games/sample-stampede/avatar';
 import { GAMES } from '../../analytics/catalog';
 
 export type AvatarCard = {
@@ -147,6 +149,14 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'panic-curling': {
     looks: curlingAvatars,
     note: 'The shared worker in winter parka and curling shoes.',
+  },
+  'carry-on-carnage': {
+    looks: carryOnCarnageAvatars,
+    note: 'The shared worker as an anxious tourist with bright shirt and denim jeans.',
+  },
+  'sample-stampede': {
+    looks: sampleStampedeAvatars,
+    note: 'The shared worker dressed in wholesale club apron and cap, operating carts and grabbers.',
   },
 };
 

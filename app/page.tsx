@@ -22,6 +22,7 @@ import {
   WifiOff,
   Snowflake,
   Zap,
+  Luggage,
 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
@@ -38,6 +39,8 @@ const PINNED = [
   'shelf-control',
 ] as const;
 const SHUFFLED = [
+  'sample-stampede',
+  'carry-on-carnage',
   'bungee-doubles',
   'basketball',
   'crane-clash',
@@ -64,6 +67,57 @@ function shuffle(slugs: readonly string[]) {
 }
 
 const CARDS: Record<string, ReactElement> = {
+  'carry-on-carnage': (
+    <a
+      key="carry-on-carnage"
+      className="game-card carry-on-carnage-card"
+      href="/carry-on-carnage"
+      aria-label="Carry-On Carnage: Gate Check Roulette in the Jumbleyard style"
+    >
+      <div className="game-card-art">
+        <img
+          src="/images/carry-on-carnage.png"
+          alt="Desperate travelers dogpiling to compress an overstuffed bulging suitcase before the gate agent's metal sizer box as a piñata burst launches rubber ducks and flamingos."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
+        <span className="game-card-tag">
+          <Luggage size={14} /> GATE CHECK ROULETTE
+        </span>
+        <span className="new-game-tag">NEU IN JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 Reisende
+          </span>
+          <span>
+            <Timer size={14} /> 3 Minuten · Boarding Call
+          </span>
+        </div>
+        <h2>
+          Carry-On <span>Carnage</span>
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Packt den absurden Urlaubsmüll in Handgepäck-Koffer, springt zu dritt
+          drauf, um die Reißverschlüsse zuzukriegen, schmuggelt Hummer an der
+          TSA vorbei und besteht den gnadenlosen Metall-Testkasten der
+          Fluglinie!
+        </p>
+        <div className="game-card-bottom">
+          <span>SQUISH IT! ZIP IT! DON&apos;T POP!</span>
+          <strong>
+            Carry-On Carnage spielen <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
   'bungee-doubles': (
     <a
       key="bungee-doubles"
@@ -905,6 +959,54 @@ const CARDS: Record<string, ReactElement> = {
           <span>Strap in. Bounce hard. Flip upside down.</span>
           <strong>
             Play Zorb Clash <ArrowUpRight size={17} />
+          </strong>
+        </div>
+      </div>
+    </a>
+  ),
+  'sample-stampede': (
+    <a
+      key="sample-stampede"
+      className="game-card sample-stampede-card"
+      href="/sample-stampede"
+      aria-label="Sample Stampede: Wholesale warehouse cart derby with squeaky-wheel drifting and free sample frenzy"
+    >
+      <div className="game-card-art">
+        <img
+          src="/images/sample-stampede.png"
+          alt="Overloaded shopping carts drift through industrial warehouse aisles as players race towards free food samples."
+          width="1536"
+          height="1024"
+          loading="lazy"
+        />
+        <span className="game-card-tag">
+          <Zap size={14} /> CART DERBY · WAREHOUSE CHAOS
+        </span>
+        <span className="new-game-tag">NEW TO JUMBLEYARD</span>
+        <span className="game-card-play" aria-hidden="true">
+          <ArrowUpRight size={27} />
+        </span>
+      </div>
+      <div className="game-card-content">
+        <div className="game-card-meta">
+          <span>
+            <Users size={14} /> 1–4 players
+          </span>
+          <span>Squeaky-wheel drift physics</span>
+        </div>
+        <h2>
+          Sample <span>Stampede</span>
+          <span className="game-title-dot">.</span>
+        </h2>
+        <p>
+          Push squeaky-wheel shopping carts through wholesale aisles! Pile on
+          50lb kibble bags to drift hard around corners, race for fresh taquito
+          samples, and survive the eagle-eyed exit receipt gauntlet.
+        </p>
+        <div className="game-card-bottom">
+          <span>Drift hard. Snag samples. Watch the receipt.</span>
+          <strong>
+            Play Sample Stampede <ArrowUpRight size={17} />
           </strong>
         </div>
       </div>

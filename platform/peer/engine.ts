@@ -15,6 +15,8 @@ import { createEngine as basketball } from '../../games/basketball/peer';
 import { createEngine as bungeeDoubles } from '../../games/bungee-doubles/peer';
 import { createEngine as panicCurling } from '../../games/panic-curling/peer';
 import { createEngine as zorbClash } from '../../games/zorb-clash/peer';
+import { createEngine as carryOnCarnage } from '../../games/carry-on-carnage/peer';
+import { createEngine as sampleStampede } from '../../games/sample-stampede/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
 const engines = {
   'wrong-floor': hotel,
@@ -32,6 +34,8 @@ const engines = {
   'bungee-doubles': bungeeDoubles,
   'panic-curling': panicCurling,
   'zorb-clash': zorbClash,
+  'carry-on-carnage': carryOnCarnage,
+  'sample-stampede': sampleStampede,
 };
 export function createPeerEngine(
   game: GameId,

@@ -1,0 +1,548 @@
+.stampede-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1a252f;
+  font-family:
+    Fredoka,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  user-select: none;
+}
+
+.stampede-canvas-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* TOP HEADER HUD */
+.stampede-hud-top {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.stampede-score-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  background: rgba(18, 30, 49, 0.92);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.15rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.stampede-score-pill.red {
+  border-color: rgba(231, 76, 60, 0.85);
+  color: #ff7675;
+}
+
+.stampede-score-pill.blue {
+  border-color: rgba(41, 128, 185, 0.85);
+  color: #74b9ff;
+}
+
+.stampede-score-num {
+  font-size: 1.45rem;
+  color: #ffffff;
+}
+
+.stampede-timer-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(18, 30, 49, 0.94);
+  backdrop-filter: blur(8px);
+  padding: 6px 20px;
+  border-radius: 18px;
+  border: 2px solid rgba(241, 196, 15, 0.7);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.stampede-timer {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #f1c40f;
+  letter-spacing: 0.04em;
+}
+
+.stampede-timer-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #bdc3c7;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* PA ANNOUNCEMENT TICKER BANNER */
+.stampede-announcement-banner {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, #e74c3c, #f39c12, #e74c3c);
+  background-size: 200% 100%;
+  animation: bannerGlow 2.5s infinite linear;
+  color: #ffffff;
+  padding: 8px 24px;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 0 6px 25px rgba(231, 76, 60, 0.6);
+  z-index: 25;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes bannerGlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* SHOPPING MANIFEST SIDEBAR CARD */
+.stampede-manifest-card {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: 250px;
+  background: rgba(18, 30, 49, 0.92);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 14px;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.stampede-manifest-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.stampede-manifest-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f1c40f;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stampede-manifest-items {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.stampede-manifest-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.stampede-manifest-row.complete {
+  background: rgba(39, 174, 96, 0.25);
+  color: #2ecc71;
+  text-decoration: line-through;
+}
+
+.stampede-manifest-row .count {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+/* CART WEIGHT & DRIFT METER */
+.stampede-weight-meter {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stampede-weight-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #bdc3c7;
+}
+
+.stampede-weight-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.stampede-weight-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+  transition: width 0.3s ease;
+}
+
+.stampede-contraband-alert {
+  margin-top: 8px;
+  background: rgba(231, 76, 60, 0.35);
+  border: 1px solid #e74c3c;
+  color: #ff7675;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 8px;
+  border-radius: 8px;
+  text-align: center;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* RADAR MINIMAP */
+.stampede-radar-box {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  background: rgba(18, 30, 49, 0.94);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.stampede-radar-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #bdc3c7;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.stampede-radar-svg {
+  display: block;
+}
+
+.stampede-radar-floor {
+  fill: #2c3e50;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+}
+
+.stampede-radar-shelf {
+  fill: #34495e;
+  stroke: #2980b9;
+  stroke-width: 1;
+}
+
+.stampede-radar-exit {
+  fill: rgba(241, 196, 15, 0.3);
+  stroke: #f1c40f;
+  stroke-width: 1.5;
+  stroke-dasharray: 2, 2;
+}
+
+.stampede-radar-kiosk {
+  fill: #e74c3c;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+}
+
+.stampede-radar-cart {
+  stroke-width: 1.5;
+}
+
+.stampede-radar-cart.red {
+  fill: #e74c3c;
+  stroke: #ffffff;
+}
+
+.stampede-radar-cart.blue {
+  fill: #2980b9;
+  stroke: #ffffff;
+}
+
+.stampede-radar-cart.self {
+  stroke: #f1c40f;
+  stroke-width: 2.5;
+}
+
+/* ACTION CONTROLS / OVERLAYS */
+.stampede-controls-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 12px;
+  z-index: 30;
+}
+
+.stampede-action-btn {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.1s ease,
+    filter 0.1s ease;
+}
+
+.stampede-action-btn:active {
+  transform: scale(0.95);
+}
+
+.stampede-action-btn.drift {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+  color: #ffffff;
+  border: 2px solid #f39c12;
+}
+
+.stampede-action-btn.grab {
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  color: #2c3e50;
+  border: 2px solid #ffffff;
+}
+
+.stampede-action-btn.restart {
+  background: rgba(18, 30, 49, 0.9);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* TOP RIGHT QUICK ACTIONS */
+.stampede-top-right {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  gap: 8px;
+  z-index: 30;
+}
+
+.stampede-icon-btn {
+  pointer-events: auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(18, 30, 49, 0.88);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease;
+}
+
+.stampede-icon-btn:hover {
+  border-color: #f1c40f;
+  color: #f1c40f;
+}
+
+.stampede-icon-btn:active {
+  transform: scale(0.94);
+}
+
+/* MODALS */
+dialog.stampede-modal-backdrop,
+.stampede-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(10, 16, 26, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.stampede-modal-card {
+  width: 90%;
+  max-width: 440px;
+  background: #1a252f;
+  border: 3px solid #f1c40f;
+  border-radius: 24px;
+  padding: 28px;
+  color: #ffffff;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.stampede-modal-card h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+  color: #f1c40f;
+}
+
+.stampede-modal-card p {
+  font-size: 1rem;
+  color: #bdc3c7;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+.stampede-modal-scores {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 14px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.stampede-modal-team-score {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stampede-modal-team-score .team-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stampede-modal-team-score .team-pts {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.stampede-modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: #1a252f;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 1.15rem;
+  padding: 14px 32px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(241, 196, 15, 0.4);
+  transition: transform 0.1s ease;
+}
+
+.stampede-modal-btn:hover {
+  transform: scale(1.04);
+}
+
+.stampede-modal-btn:active {
+  transform: scale(0.97);
+}
+
+/* MOBILE TOUCH JOYSTICK */
+.stampede-touch-zone {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  width: 140px;
+  height: 140px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  touch-action: none;
+}
+
+.stampede-touch-knob {
+  width: 54px;
+  height: 54px;
+  border-radius: 9999px;
+  background: rgba(241, 196, 15, 0.85);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .stampede-manifest-card {
+    width: 200px;
+    font-size: 0.8rem;
+  }
+  .stampede-hud-top {
+    gap: 8px;
+  }
+  .stampede-score-pill {
+    padding: 6px 12px;
+    font-size: 0.95rem;
+  }
+  .stampede-timer {
+    font-size: 1.3rem;
+  }
+  .stampede-radar-box {
+    transform: scale(0.85);
+    transform-origin: bottom right;
+  }
+}
