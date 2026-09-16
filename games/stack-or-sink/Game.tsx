@@ -60,6 +60,8 @@ import { TouchControls } from '../../shared/input/TouchControls';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
 import './style.css';
 import './mobile.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { STACK_OR_SINK_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -92,6 +94,8 @@ const tracker = new GameTracker(stackAnalytics);
 export default function Game() {
   'use no memo'; // This component bridges an imperative WebGL simulation.
   useGameTracker(tracker);
+  const { t } = useLanguage();
+  const strings = t(STACK_OR_SINK_TRANSLATIONS);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<GameScene | null>(null),
     network = useRef<Connection | null>(null),
@@ -600,7 +604,7 @@ export default function Game() {
         <>
           <section className="start-panel">
             <div className="eyebrow">
-              <span className="tiny-line" /> CO-OP SURVIVAL · 1–4 PLAYERS
+              <span className="tiny-line" /> {strings.survivalTagline}
             </div>
             <h1>
               STACK

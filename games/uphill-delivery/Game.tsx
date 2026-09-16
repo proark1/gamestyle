@@ -52,6 +52,8 @@ import {
 } from './camera';
 import { CrewSlots } from './CrewSlots';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { UPHILL_DELIVERY_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -78,6 +80,8 @@ const duration = (ms: number) => {
 const tracker = new GameTracker(deliveryAnalytics);
 
 export default function UphillDelivery() {
+  const { t } = useLanguage();
+  const strings = t(UPHILL_DELIVERY_TRANSLATIONS);
   useGameTracker(tracker);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<DeliveryScene | null>(null),
@@ -434,7 +438,7 @@ export default function UphillDelivery() {
         <>
           <section className="delivery-start">
             <div className="delivery-eyebrow">
-              <span className="live-dot" /> A CO-OP MOVING DISASTER
+              <span className="live-dot" /> {strings.movingDisaster}
             </div>
             <h1>
               Uphill

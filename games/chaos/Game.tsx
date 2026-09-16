@@ -92,6 +92,8 @@ import './saved-build.css';
 import { PartyPanel } from './PartyPanel';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import './mobile-play.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { CHAOS_TRANSLATIONS } from './translations';
 export type MobilePanel = 'crew' | 'social' | 'camera' | 'tools' | null;
 import { parseChallenge, CREW_JOBS } from './party';
 import {
@@ -133,6 +135,9 @@ const tracker = new GameTracker(chaosAnalytics);
 export default function Game() {
   'use no memo'; // This component bridges an imperative WebGL simulation.
   useGameTracker(tracker);
+  const { t } = useLanguage();
+  const strings = t(CHAOS_TRANSLATIONS);
+  void strings;
   const mount = useRef<HTMLDivElement>(null);
   const scene = useRef<GameScene | null>(null);
   const [ready, setReady] = useState(false);

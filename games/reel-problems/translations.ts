@@ -13,6 +13,8 @@ export interface ReelProblemsTranslation {
   pullAboard: string;
   boatCapsized: string;
   catchSuccess: string;
+  launchBoat: string;
+  joinFriends: string;
   playAgain: string;
 }
 
@@ -30,6 +32,8 @@ export const REEL_PROBLEMS_TRANSLATIONS: Localized<ReelProblemsTranslation> = {
     pullAboard: 'Net Catch into Boat [F]',
     boatCapsized: 'ROWBOAT CAPSIZED! FISH FEASTED! 🦈',
     catchSuccess: 'TROPHY MONSTER BOATED! RECORD WEIGH-IN! 🐟',
+    launchBoat: 'Launch a boat',
+    joinFriends: 'Join friends',
     playAgain: 'Fish Again',
   },
   de: {
@@ -45,6 +49,8 @@ export const REEL_PROBLEMS_TRANSLATIONS: Localized<ReelProblemsTranslation> = {
     pullAboard: 'Fang ins Boot keschern [F]',
     boatCapsized: 'BOOT GEKENTERT! DIE FISCHE LACHEN! 🦈',
     catchSuccess: 'MONSTERFISCH GELANDET! REKORD-FELDZUG! 🐟',
+    launchBoat: 'Boot zu Wasser lassen',
+    joinFriends: 'Freunden beitreten',
     playAgain: 'Nochmal auslaufen',
   },
 };

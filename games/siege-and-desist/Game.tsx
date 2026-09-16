@@ -562,7 +562,7 @@ export default function SiegeAndDesist() {
               onClick={() => setSelectedMode('clash2v2')}
             >
               <span className="sad-mode-title">
-                <Swords size={16} /> 2v2 Castle Clash
+                <Swords size={16} /> {strings.castleClash}
               </span>
               <span className="sad-mode-desc">
                 Two castles · Dual weapons · Rooster, Crown & Sacred Cheese
@@ -574,7 +574,7 @@ export default function SiegeAndDesist() {
               onClick={() => setSelectedMode('classic')}
             >
               <span className="sad-mode-title">
-                <Castle size={16} /> Classic Siege
+                <Castle size={16} /> {strings.classicSiege}
               </span>
               <span className="sad-mode-desc">
                 Co-op crew · Single keep · Topple the royal banner

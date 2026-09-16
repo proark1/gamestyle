@@ -497,7 +497,7 @@ export default function WrongFloor() {
               ) : (
                 <KeyRound size={19} />
               )}{' '}
-              Check in with friends <ArrowUpRight size={20} />
+              {strings.createParty} <ArrowUpRight size={20} />
             </button>
             <div className="hotel-secondary">
               <button

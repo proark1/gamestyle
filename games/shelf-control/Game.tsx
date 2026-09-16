@@ -442,7 +442,7 @@ export default function ShelfControl() {
         <section className="shelf-welcome">
           <div className="shelf-pitch">
             <p className="eyebrow">
-              <span className="tiny-line" /> A VERY SUSPICIOUS NIGHT SHIFT
+              <span className="tiny-line" /> {strings.propHunt}
             </p>
             <h1>
               SHELF

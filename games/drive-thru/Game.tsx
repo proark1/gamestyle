@@ -36,10 +36,15 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { driveThruAnalytics } from './analytics';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import { DRIVE_THRU_TRANSLATIONS } from './translations';
 
 const tracker = new GameTracker(driveThruAnalytics);
 
 export default function DriveThruGame() {
+  const { t } = useLanguage();
+  const strings = t(DRIVE_THRU_TRANSLATIONS);
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<DriveThruScene | null>(null);
   const audioRef = useRef<DriveThruAudio | null>(null);
@@ -180,6 +185,9 @@ export default function DriveThruGame() {
 
   return (
     <div className="drive-thru-container">
+      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 40 }}>
+        <LanguageSwitcher variant="header" />
+      </div>
       {/* 3D WebGL Canvas */}
       <div ref={containerRef} className="drive-thru-canvas-wrapper" />
 
@@ -188,16 +196,21 @@ export default function DriveThruGame() {
         <div className="drive-thru-ticket-banner">
           <div className="drive-thru-ticket-header">
             <span className="drive-thru-ticket-order-num">
-              ORDER #{snapshot.ticket.orderNumber}
+              {strings.orderNumber}
+              {snapshot.ticket.orderNumber}
             </span>
-            <span>TIME LEFT: {snapshot.phaseTimer}s</span>
-            <span>SCORE: {snapshot.score}</span>
+            <span>
+              {strings.timeLeft} {snapshot.phaseTimer}s
+            </span>
+            <span>
+              {strings.score} {snapshot.score}
+            </span>
           </div>
           <div className="drive-thru-ticket-scramble">
-            INTERCOM: {snapshot.ticket.scrambledText}
+            {strings.intercomLabel} {snapshot.ticket.scrambledText}
           </div>
           <div className="drive-thru-ticket-clear">
-            DECODED: {snapshot.ticket.clearText}
+            {strings.decodedLabel} {snapshot.ticket.clearText}
           </div>
         </div>
       )}
@@ -208,13 +221,13 @@ export default function DriveThruGame() {
           className={`drive-thru-role-btn ${selectedRole === 'driver' ? 'active' : ''}`}
           onClick={() => handleRoleChange('driver')}
         >
-          <Car size={16} /> Driver (Sedan)
+          <Car size={16} /> {strings.driverRole}
         </button>
         <button
           className={`drive-thru-role-btn ${selectedRole === 'passenger' ? 'active' : ''}`}
           onClick={() => handleRoleChange('passenger')}
         >
-          <User size={16} /> Passenger (Reach)
+          <User size={16} /> {strings.passengerRole}
         </button>
         <button
           className={`drive-thru-role-btn ${selectedRole === 'grill' ? 'active' : ''}`}
@@ -249,7 +262,7 @@ export default function DriveThruGame() {
 
         <div className="drive-thru-gauge-card">
           <div className="drive-thru-gauge-label">
-            <span>Fryer Temp</span>
+            <span>{strings.fryerTemp}</span>
             <span>
               {Math.round((snapshot?.kitchen.fryerTimer ?? 0) * 100)}%
             </span>
@@ -267,9 +280,7 @@ export default function DriveThruGame() {
 
       {/* Short Stop Reach Alert */}
       {snapshot?.phase === 'reaching' && (
-        <div className="drive-thru-reach-panel">
-          SHORT STOP REACH! EXTEND PASSENGER ARM TO GRAB TRAY!
-        </div>
+        <div className="drive-thru-reach-panel">{strings.shortStopReach}</div>
       )}
 
       {/* Windshield Milkshake Splat Effect */}
@@ -288,7 +299,7 @@ export default function DriveThruGame() {
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'honk' })}
             >
-              <Zap size={16} /> Honk Horn (H)
+              <Zap size={16} /> {strings.honkHorn}
             </button>
           </>
         )}
@@ -322,7 +333,7 @@ export default function DriveThruGame() {
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'flipPatty' })}
             >
-              <Utensils size={16} /> Flip Patty (Space)
+              <Utensils size={16} /> {strings.flipPatty}
             </button>
             <button
               className="drive-thru-action-btn"

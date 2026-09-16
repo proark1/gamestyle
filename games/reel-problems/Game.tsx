@@ -750,7 +750,7 @@ export default function ReelProblems() {
               ) : (
                 <Anchor size={19} />
               )}{' '}
-              Launch a boat <ArrowUpRight size={19} />
+              {strings.launchBoat} <ArrowUpRight size={19} />
             </button>
             <div className="reel-menu-secondary">
               <button

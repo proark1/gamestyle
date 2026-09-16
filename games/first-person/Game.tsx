@@ -40,6 +40,8 @@ import {
 } from './model';
 import type { Aim, FirstPersonScene } from './scene';
 import styles from './game.module.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { FIRST_PERSON_TRANSLATIONS } from './translations';
 import { bindJoystick } from './joystick';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import {
@@ -67,6 +69,9 @@ const tracker = new GameTracker(siteAnalytics);
 
 export default function Game() {
   useGameTracker(tracker);
+  const { t } = useLanguage();
+  const strings = t(FIRST_PERSON_TRANSLATIONS);
+  void strings;
   const mount = useRef<HTMLDivElement>(null),
     scene = useRef<FirstPersonScene | null>(null),
     connection = useRef<Connection | null>(null);
