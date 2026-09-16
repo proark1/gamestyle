@@ -27,10 +27,17 @@
     "pretest": "npm run check:architecture",
     "check": "npm run format:check && npm run typecheck && npm run lint && npm test",
     "format:check": "oxfmt --check app games shared platform db scripts hooks lib vite.config.ts package.json .oxlintrc.json",
+    "cap:sync": "node scripts/prepare-native.mjs && cap sync",
+    "cap:open:android": "cap open android",
+    "cap:open:ios": "cap open ios",
     "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@fontsource/dm-sans": "^5.3.0",
     "@fontsource/fredoka": "^5.3.0",
     "@shadcn/react": "0.3.0",

@@ -46,3 +46,18 @@ next-env.d.ts
 
 # Claude Code local session state, including the worktrees themselves
 /.claude/
+
+# Native Mobile (Capacitor / Android / iOS build artifacts)
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+ios/App/Pods/
+ios/App/build/
+ios/App/.build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/

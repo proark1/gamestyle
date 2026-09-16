@@ -18,6 +18,10 @@
   --font-sans: 'DM Sans', sans-serif;
 }
 :root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
   --background: #fff6df;
   --foreground: #294a43;
   --cream: #fff6df;
@@ -39,6 +43,12 @@ body {
   font-family: 'DM Sans', sans-serif;
   color: var(--ink);
   background: #b7d0c3;
+  overscroll-behavior-y: none;
+}
+canvas {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 button,
 input {

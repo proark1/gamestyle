@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jumbleyard</string>
+    <string name="title_activity_main">Jumbleyard</string>
+    <string name="package_name">com.jumbleyard.app</string>
+    <string name="custom_url_scheme">com.jumbleyard.app</string>
+</resources>
