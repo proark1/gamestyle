@@ -304,3 +304,58 @@ export function calculateRacketShot(
 
   return { vx, vy, vz };
 }
+
+/**
+ * Transforms screen-relative movement input (A/D = horizontal, W/S = forward/back)
+ * into world space (X, Z) based on camera orientation matrix.
+ *
+ * Screen coordinates:
+ * screenX: -1 for left (A), +1 for right (D)
+ * screenZ: +1 for forward/up (W), -1 for backward/down (S)
+ */
+export function computeCameraRelativeMovement(
+  screenX: number,
+  screenZ: number,
+  camMatrixElements: ArrayLike<number>,
+): { x: number; z: number } {
+  if (screenX === 0 && screenZ === 0) {
+    return { x: 0, z: 0 };
+  }
+
+  // Camera local right projected onto XZ ground plane
+  let rightX = camMatrixElements[0];
+  let rightZ = camMatrixElements[2];
+  const rightLen = Math.hypot(rightX, rightZ);
+  if (rightLen > 0.0001) {
+    rightX /= rightLen;
+    rightZ /= rightLen;
+  }
+
+  // Camera local forward projected onto XZ ground plane (-Z column of world matrix)
+  let fwdX = -camMatrixElements[8];
+  let fwdZ = -camMatrixElements[10];
+  const fwdLen = Math.hypot(fwdX, fwdZ);
+  if (fwdLen > 0.0001) {
+    fwdX /= fwdLen;
+    fwdZ /= fwdLen;
+  }
+
+  let worldX = screenX * rightX + screenZ * fwdX;
+  let worldZ = screenX * rightZ + screenZ * fwdZ;
+
+  const len = Math.hypot(worldX, worldZ);
+  if (len > 0.0001) {
+    worldX /= len;
+    worldZ /= len;
+  } else {
+    worldX = 0;
+    worldZ = 0;
+  }
+
+  return {
+    x: Math.abs(worldX) < 0.0001 ? 0 : worldX,
+    z: Math.abs(worldZ) < 0.0001 ? 0 : worldZ,
+  };
+}
+
+

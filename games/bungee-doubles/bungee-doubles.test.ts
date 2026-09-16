@@ -10,6 +10,7 @@ import {
 import { reconcileBungeeBots } from './bots';
 import {
   calculateRacketShot,
+  computeCameraRelativeMovement,
   getNetHeightAt,
   isInsideCourt,
   stepBallPhysics,
@@ -236,3 +237,108 @@ void test('bungeeDoublesAvatars exports valid dressable worker avatar', () => {
   assert.ok(preview.root);
   assert.ok(typeof preview.pose === 'function');
 });
+
+void test('computeCameraRelativeMovement: idle input produces zero movement', () => {
+  // Identity matrix elements
+  const identityMatrix = [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1,
+  ];
+  const res = computeCameraRelativeMovement(0, 0, identityMatrix);
+  assert.equal(res.x, 0);
+  assert.equal(res.z, 0);
+});
+
+void test('computeCameraRelativeMovement: looking down -Z (Behind Teal baseline)', () => {
+  // Camera looking down -Z: right is +X, forward is -Z
+  const camMatrix = [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 10, 20, 1,
+  ];
+
+  // A = screen left -> should move -X
+  const moveA = computeCameraRelativeMovement(-1, 0, camMatrix);
+  assert.equal(Math.round(moveA.x), -1);
+  assert.equal(Math.round(moveA.z), 0);
+
+  // D = screen right -> should move +X
+  const moveD = computeCameraRelativeMovement(1, 0, camMatrix);
+  assert.equal(Math.round(moveD.x), 1);
+  assert.equal(Math.round(moveD.z), 0);
+
+  // W = screen up/forward -> should move -Z (into screen away from camera)
+  const moveW = computeCameraRelativeMovement(0, 1, camMatrix);
+  assert.equal(Math.round(moveW.x), 0);
+  assert.equal(Math.round(moveW.z), -1);
+
+  // S = screen down/back -> should move +Z (towards camera)
+  const moveS = computeCameraRelativeMovement(0, -1, camMatrix);
+  assert.equal(Math.round(moveS.x), 0);
+  assert.equal(Math.round(moveS.z), 1);
+});
+
+void test('computeCameraRelativeMovement: looking down +Z (Behind Orange baseline, 180 deg)', () => {
+  // Camera looking down +Z (rotated 180° around Y): right is -X, forward is +Z
+  // Matrix col 0: [-1, 0, 0], col 2: [0, 0, -1]
+  const camMatrix = [
+    -1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, -1, 0,
+    0, 10, -20, 1,
+  ];
+
+  // A = screen left -> looking down +Z, left of screen is +X
+  const moveA = computeCameraRelativeMovement(-1, 0, camMatrix);
+  assert.equal(Math.round(moveA.x), 1);
+  assert.equal(Math.round(moveA.z), 0);
+
+  // D = screen right -> looking down +Z, right of screen is -X
+  const moveD = computeCameraRelativeMovement(1, 0, camMatrix);
+  assert.equal(Math.round(moveD.x), -1);
+  assert.equal(Math.round(moveD.z), 0);
+
+  // W = screen up/forward -> should move +Z (into screen away from camera)
+  const moveW = computeCameraRelativeMovement(0, 1, camMatrix);
+  assert.equal(Math.round(moveW.x), 0);
+  assert.equal(Math.round(moveW.z), 1);
+
+  // S = screen down/back -> should move -Z (towards camera)
+  const moveS = computeCameraRelativeMovement(0, -1, camMatrix);
+  assert.equal(Math.round(moveS.x), 0);
+  assert.equal(Math.round(moveS.z), -1);
+});
+
+void test('computeCameraRelativeMovement: sideline camera (looking down +X)', () => {
+  // Looking down +X: right is +Z, forward is +X
+  // Matrix col 0: [0, 0, 1], col 2: [-1, 0, 0]
+  const camMatrix = [
+    0, 0, 1, 0,
+    0, 1, 0, 0,
+    -1, 0, 0, 0,
+    -20, 10, 0, 1,
+  ];
+
+  // A = screen left -> looking towards +X, screen left is -Z
+  const moveA = computeCameraRelativeMovement(-1, 0, camMatrix);
+  assert.equal(Math.round(moveA.x), 0);
+  assert.equal(Math.round(moveA.z), -1);
+
+  // D = screen right -> looking towards +X, screen right is +Z
+  const moveD = computeCameraRelativeMovement(1, 0, camMatrix);
+  assert.equal(Math.round(moveD.x), 0);
+  assert.equal(Math.round(moveD.z), 1);
+
+  // W = screen forward -> into screen (+X)
+  const moveW = computeCameraRelativeMovement(0, 1, camMatrix);
+  assert.equal(Math.round(moveW.x), 1);
+  assert.equal(Math.round(moveW.z), 0);
+
+  // Diagonal W + D: normalized length 1
+  const moveWD = computeCameraRelativeMovement(1, 1, camMatrix);
+  assert.ok(Math.abs(Math.hypot(moveWD.x, moveWD.z) - 1.0) < 0.001);
+});
+

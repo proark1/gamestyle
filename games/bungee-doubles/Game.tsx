@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Flame, RotateCcw, Trophy, Users, Zap } from 'lucide-react';
+import { Camera, Flame, RotateCcw, Trophy, Users, Zap } from 'lucide-react';
 import type { PeerGameConnection } from '../../shared/peer/connection';
 import {
   advanceBungee,
@@ -184,6 +184,14 @@ export default function BungeeDoublesGame() {
     <div className="bungee-game">
       <div ref={container} className="bungee-canvas" />
 
+      {/* 360 Camera Orbit Helper Badge */}
+      <div className="bungee-camera-hint">
+        <Camera size={13} />
+        <span>Drag court to orbit 360°</span>
+        <kbd>Q/R</kbd>
+        <kbd>C</kbd>
+      </div>
+
       {/* Top HUD: Scoreboard */}
       <div className="bungee-hud">
         <div className={`bungee-team-score orange ${world?.serverTeam === 'orange' ? 'serving' : ''}`}>
@@ -302,6 +310,15 @@ export default function BungeeDoublesGame() {
         </button>
         <button
           className="bungee-btn"
+          onClick={() => scene.current?.cycleCameraView()}
+          title="Cycle camera angle (C)"
+        >
+          <Camera size={14} />
+          <span>Camera</span>
+          <kbd className="bungee-kbd">C</kbd>
+        </button>
+        <button
+          className="bungee-btn"
           onClick={() => dispatchAction({ type: 'restart' })}
         >
           <RotateCcw size={14} />
@@ -311,6 +328,16 @@ export default function BungeeDoublesGame() {
 
       {/* Touch Action Dock (for mobile) */}
       <div className="bungee-touch-controls">
+        <button
+          className="bungee-action-circle cam"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            scene.current?.cycleCameraView();
+          }}
+          title="Rotate Camera 360°"
+        >
+          CAM
+        </button>
         <button
           className="bungee-action-circle smash"
           onTouchStart={(e) => {

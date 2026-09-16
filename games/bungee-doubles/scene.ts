@@ -16,6 +16,7 @@ import {
   type PlayerInput,
   type TeamId,
 } from './types';
+import { computeCameraRelativeMovement } from './physics';
 
 type Callbacks = {
   input: (i: PlayerInput) => void;
@@ -43,7 +44,28 @@ export class BungeeScene {
   private shakeIntensity = 0;
   private lastHandledEventId = -1;
   private currentCamLook = new T.Vector3(0, 1.0, 0);
+
+  // 360 Orbit Camera state
+  private defaultYaw = Math.atan2(-14.2, -9.6);
+  private defaultPitch = 0.667;
+  private defaultDist = 21.82;
+  private currentYaw = this.defaultYaw;
+  private targetYaw = this.defaultYaw;
+  private currentPitch = this.defaultPitch;
+  private targetPitch = this.defaultPitch;
+  private currentDist = this.defaultDist;
+  private targetDist = this.defaultDist;
   private baseCamPos = new T.Vector3(-14.2, 13.5, -9.6);
+
+  private presetIndex = 0;
+  private readonly cameraPresets = [
+    { name: 'Broadcast 3/4', yaw: Math.atan2(-14.2, -9.6), pitch: 0.67, dist: 21.8 },
+    { name: 'Orange Baseline', yaw: -Math.PI, pitch: 0.48, dist: 20.5 },
+    { name: 'Sideline View', yaw: -Math.PI / 2, pitch: 0.60, dist: 22.0 },
+    { name: 'Teal Baseline', yaw: 0, pitch: 0.48, dist: 20.5 },
+    { name: 'Teal Corner', yaw: 0.98, pitch: 0.67, dist: 21.8 },
+  ];
+
 
   // Particle pool for racket hits, glass sparks & victory confetti
   private particlePool: {
@@ -109,9 +131,16 @@ export class BungeeScene {
     this.scene.add(this.ballMesh);
     this.scene.add(this.landingTarget.mesh);
 
-    // Elevated 3/4 broadcast camera position with cinematic depth
+    // Initialize 360 camera position looking at court center
+    const horizDist = this.currentDist * Math.cos(this.currentPitch);
+    const camX = this.currentCamLook.x + horizDist * Math.sin(this.currentYaw);
+    const camY =
+      this.currentCamLook.y + this.currentDist * Math.sin(this.currentPitch);
+    const camZ = this.currentCamLook.z + horizDist * Math.cos(this.currentYaw);
+    this.baseCamPos.set(camX, camY, camZ);
     this.camera.position.copy(this.baseCamPos);
-    this.camera.lookAt(0, 1.0, 0);
+    this.camera.lookAt(this.currentCamLook);
+    this.camera.updateMatrixWorld();
   }
 
   private setupLighting() {
@@ -243,6 +272,9 @@ export class BungeeScene {
           this.cb.action({ type: 'dive' });
         } else if (e.code === 'KeyW' && e.altKey) {
           this.cb.action({ type: 'jump' });
+        } else if (e.code === 'KeyC') {
+          e.preventDefault();
+          this.cycleCameraView();
         }
       },
       { signal },
@@ -256,44 +288,133 @@ export class BungeeScene {
       { signal },
     );
 
-    // Mouse click to swing racket
-    this.renderer.domElement.addEventListener(
+    const dom = this.renderer.domElement;
+    dom.style.touchAction = 'none';
+    dom.style.cursor = 'grab';
+
+    let isPointerDown = false;
+    let downButton = 0;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let hasDragged = false;
+
+    dom.addEventListener(
       'pointerdown',
       (e) => {
-        if (e.button === 0) {
-          this.cb.action({ type: 'swing' });
-        } else if (e.button === 2) {
-          this.cb.action({ type: 'smash' });
+        isPointerDown = true;
+        downButton = e.button;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        hasDragged = false;
+        dom.style.cursor = 'grabbing';
+        try {
+          dom.setPointerCapture(e.pointerId);
+        } catch {}
+      },
+      { signal },
+    );
+
+    dom.addEventListener(
+      'pointermove',
+      (e) => {
+        if (!isPointerDown) return;
+        const totalDist = Math.hypot(e.clientX - dragStartX, e.clientY - dragStartY);
+        if (totalDist > 4) {
+          hasDragged = true;
+        }
+        if (hasDragged) {
+          const dx = e.clientX - lastX;
+          const dy = e.clientY - lastY;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          const rotSpeed = 0.007;
+          this.targetYaw -= dx * rotSpeed;
+          this.targetPitch = Math.max(
+            0.18,
+            Math.min(1.30, this.targetPitch + dy * rotSpeed),
+          );
         }
       },
       { signal },
     );
 
-    this.renderer.domElement.addEventListener(
+    const endPointer = (e: PointerEvent) => {
+      if (!isPointerDown) return;
+      try {
+        dom.releasePointerCapture(e.pointerId);
+      } catch {}
+      dom.style.cursor = 'grab';
+      isPointerDown = false;
+
+      if (!hasDragged) {
+        // Quick click / tap triggers swing or smash
+        if (downButton === 0) {
+          this.cb.action({ type: 'swing' });
+        } else if (downButton === 2) {
+          this.cb.action({ type: 'smash' });
+        }
+      }
+      hasDragged = false;
+    };
+
+    dom.addEventListener('pointerup', endPointer, { signal });
+    dom.addEventListener('pointercancel', endPointer, { signal });
+
+    // Scroll wheel zoom
+    dom.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        this.targetDist = Math.max(
+          12,
+          Math.min(34, this.targetDist + e.deltaY * 0.015),
+        );
+      },
+      { signal, passive: false },
+    );
+
+    dom.addEventListener(
       'contextmenu',
       (e) => e.preventDefault(),
       { signal },
     );
   }
 
-  private pollInput() {
-    let x = 0;
-    let z = 0;
-
-    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) x -= 1;
-    if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) x += 1;
-    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) z += 1;
-    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) z -= 1;
-
-    const len = Math.hypot(x, z);
-    if (len > 0) {
-      x /= len;
-      z /= len;
+  private pollInput(dt: number) {
+    // Keyboard camera orbiting with Q and R
+    if (this.keys.has('KeyQ')) {
+      this.targetYaw -= 1.8 * dt;
+    }
+    if (this.keys.has('KeyR')) {
+      this.targetYaw += 1.8 * dt;
     }
 
+    let screenX = 0;
+    let screenZ = 0;
+
+    // A/Left Arrow is ALWAYS screen left (-1)
+    // D/Right Arrow is ALWAYS screen right (+1)
+    // W/Up Arrow is ALWAYS screen forward/into court (+1)
+    // S/Down Arrow is ALWAYS screen backward/toward viewer (-1)
+    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) screenX -= 1;
+    if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) screenX += 1;
+    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) screenZ += 1;
+    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) screenZ -= 1;
+
+    // Transform screen direction to world space using camera orientation matrix
+    const worldMove = computeCameraRelativeMovement(
+      screenX,
+      screenZ,
+      this.camera.matrixWorld.elements,
+    );
+
     const nextInput: PlayerInput = {
-      x,
-      z,
+      x: worldMove.x,
+      z: worldMove.z,
       swing: this.keys.has('Space'),
       smash: this.keys.has('KeyE'),
       dive: this.keys.has('ShiftLeft') || this.keys.has('ShiftRight'),
@@ -304,6 +425,7 @@ export class BungeeScene {
     this.currentInput = nextInput;
     this.cb.input(nextInput);
   }
+
 
   render(snap: BungeeSnapshot) {
     this.localId = snap.localId;
@@ -404,7 +526,25 @@ export class BungeeScene {
       new T.Vector3(targetCamLookX, 1.0, targetCamLookZ),
       0.06,
     );
-    this.camera.lookAt(this.currentCamLook);
+  }
+
+  cycleCameraView(): string {
+    this.presetIndex = (this.presetIndex + 1) % this.cameraPresets.length;
+    const preset = this.cameraPresets[this.presetIndex];
+
+    // Find shortest angular path to target preset yaw
+    let diff = preset.yaw - (this.targetYaw % (Math.PI * 2));
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+
+    this.targetYaw += diff;
+    this.targetPitch = preset.pitch;
+    this.targetDist = preset.dist;
+    return preset.name;
+  }
+
+  rotateCamera(deltaYaw: number) {
+    this.targetYaw += deltaYaw;
   }
 
   private triggerScreenShake(intensity: number, duration: number) {
@@ -418,21 +558,35 @@ export class BungeeScene {
     const dt = Math.min((now - this.lastTime) / 1000, 0.1);
     this.lastTime = now;
 
-    this.pollInput();
+    // Smoothly interpolate camera spherical coordinates
+    this.currentYaw += (this.targetYaw - this.currentYaw) * 0.14;
+    this.currentPitch += (this.targetPitch - this.currentPitch) * 0.14;
+    this.currentDist += (this.targetDist - this.currentDist) * 0.14;
 
-    // Subtle screen shake on top of broadcast camera position
+    const horizDist = this.currentDist * Math.cos(this.currentPitch);
+    const camX = this.currentCamLook.x + horizDist * Math.sin(this.currentYaw);
+    const camY =
+      this.currentCamLook.y + this.currentDist * Math.sin(this.currentPitch);
+    const camZ = this.currentCamLook.z + horizDist * Math.cos(this.currentYaw);
+    this.baseCamPos.set(camX, camY, camZ);
+
     if (this.shakeTimer > 0) {
       this.shakeTimer -= dt;
       const shakeOffsetX = (Math.random() - 0.5) * this.shakeIntensity;
       const shakeOffsetY = (Math.random() - 0.5) * this.shakeIntensity;
       this.camera.position.set(
-        this.baseCamPos.x + shakeOffsetX,
-        this.baseCamPos.y + shakeOffsetY,
-        this.baseCamPos.z,
+        camX + shakeOffsetX,
+        camY + shakeOffsetY,
+        camZ,
       );
     } else {
-      this.camera.position.copy(this.baseCamPos);
+      this.camera.position.set(camX, camY, camZ);
     }
+    this.camera.lookAt(this.currentCamLook);
+    this.camera.updateMatrixWorld();
+
+    this.pollInput(dt);
+
 
     // Update ball trails
     for (const t of this.trailPool) {
