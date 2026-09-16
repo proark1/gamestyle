@@ -672,49 +672,98 @@ dialog.stampede-modal-backdrop,
   transform: scale(0.97);
 }
 
-/* MOBILE TOUCH JOYSTICK */
-.stampede-touch-zone {
-  position: absolute;
-  bottom: 24px;
-  left: 24px;
-  width: 140px;
-  height: 140px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px dashed rgba(255, 255, 255, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 40;
-  touch-action: none;
+/* MOBILE TOUCH CONTROLS */
+.stampede-container .touch-controls {
+  display: none;
 }
 
-.stampede-touch-knob {
-  width: 54px;
-  height: 54px;
-  border-radius: 9999px;
-  background: rgba(241, 196, 15, 0.85);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  pointer-events: none;
+@media (pointer: coarse), (max-width: 900px) {
+  .stampede-container .touch-controls {
+    display: block;
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    z-index: 35;
+  }
+
+  .stampede-container .touch-controls[data-touch-controls] .joystick {
+    width: 114px;
+    height: 114px;
+    border: 2px solid rgba(241, 196, 15, 0.65);
+    border-radius: 50%;
+    background: rgba(26, 37, 47, 0.8);
+    backdrop-filter: blur(8px);
+    color: #f1c40f;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .stampede-container .joystick > span {
+    width: 44px;
+    height: 44px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: #f1c40f;
+    color: #1a252f;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .stampede-container .touch-controls[data-touch-controls] .touch-jump {
+    display: none; /* Dedicated action buttons handle grab and drift */
+  }
+
+  /* Right-hand thumb action buttons */
+  .stampede-controls-overlay {
+    left: auto;
+    right: 20px;
+    bottom: 24px;
+    flex-direction: column-reverse;
+    gap: 12px;
+    z-index: 35;
+  }
+
+  .stampede-action-btn {
+    padding: 14px 20px;
+    font-size: 0.95rem;
+    min-width: 105px;
+  }
+
+  /* Shift radar minimap above the right action buttons */
+  .stampede-radar-box {
+    bottom: 165px;
+    right: 20px;
+    transform: scale(0.85);
+    transform-origin: bottom right;
+  }
 }
 
 @media (max-width: 768px) {
   .stampede-manifest-card {
-    width: 200px;
-    font-size: 0.8rem;
+    width: 180px;
+    font-size: 0.78rem;
+    left: 12px;
+    top: 70px;
   }
   .stampede-hud-top {
     gap: 8px;
+    top: 10px;
   }
   .stampede-score-pill {
     padding: 6px 12px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
   .stampede-timer {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
   }
   .stampede-radar-box {
-    transform: scale(0.85);
+    bottom: 155px;
+    right: 14px;
+    transform: scale(0.75);
     transform-origin: bottom right;
+  }
+  .stampede-cockpit-hud {
+    bottom: 155px;
+    left: 14px;
+    transform: scale(0.85);
+    transform-origin: bottom left;
   }
 }

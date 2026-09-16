@@ -23,6 +23,7 @@ import {
   sampleStampedeSnapshot,
 } from './simulation';
 import { SampleStampedePhysics } from './physics';
+import { TouchControls } from '../../shared/input/TouchControls';
 import {
   ITEM_DEFS,
   type PlayerInput,
@@ -36,6 +37,9 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { sampleStampedeAnalytics } from './analytics';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import { SAMPLE_STAMPEDE_TRANSLATIONS } from './translations';
 
 const tracker = new GameTracker(sampleStampedeAnalytics);
 
@@ -158,6 +162,8 @@ function WarehouseRadar({
 
 export default function SampleStampede() {
   useGameTracker(tracker);
+  const { t } = useLanguage();
+  const strings = t(SAMPLE_STAMPEDE_TRANSLATIONS);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SampleStampedeScene | null>(null);
@@ -523,12 +529,12 @@ export default function SampleStampede() {
         <div className="stampede-cockpit-hud" aria-label="Cart Cockpit HUD">
           <div className="stampede-speed-dial">
             <span className="speed-val">{cartSpeedMph}</span>
-            <span className="speed-unit">MPH</span>
+            <span className="speed-unit">{strings.speedUnit}</span>
           </div>
 
           <div className="stampede-wobble-gauge">
             <div className="wobble-header">
-              <span>CASTER WOBBLE</span>
+              <span>{strings.casterWobble}</span>
               <span className="wobble-pct">{wobblePct}%</span>
             </div>
             <div className="wobble-bar-bg">
@@ -541,7 +547,8 @@ export default function SampleStampede() {
 
           {myCart.sugarRushTimer > 0 && (
             <div className="stampede-sugar-boost-pill">
-              <Zap size={14} /> NITROUS {myCart.sugarRushTimer.toFixed(1)}s
+              <Zap size={14} /> {strings.nitrous}{' '}
+              {myCart.sugarRushTimer.toFixed(1)}s
             </div>
           )}
         </div>
@@ -562,7 +569,7 @@ export default function SampleStampede() {
           onTouchEnd={handleDriftRelease}
           aria-label="Drift Handbrake"
         >
-          <Zap size={16} /> DRIFT [SHIFT]
+          <Zap size={16} /> {strings.drift}
         </button>
 
         <button
@@ -570,16 +577,35 @@ export default function SampleStampede() {
           onClick={handleGrabberTrigger}
           aria-label="Use Grabber Pole"
         >
-          <ShoppingBag size={16} /> GRAB / SWAT [SPACE]
+          <ShoppingBag size={16} /> {strings.grab}
         </button>
       </div>
 
+      {/* MOBILE TOUCH VIRTUAL JOYSTICK */}
+      <TouchControls
+        disabled={isGameOver || showHelp}
+        move={(vector) => {
+          const steer = -vector.x;
+          const throttle = -vector.z;
+          sceneRef.current?.setCustomInput({
+            steer,
+            throttle,
+            x: steer,
+            z: throttle,
+          });
+        }}
+        jump={() => {
+          handleGrabberTrigger();
+        }}
+      />
+
       {/* TOP RIGHT TOOLBAR */}
       <div className="stampede-top-right">
+        <LanguageSwitcher variant="header" />
         <button
           className="stampede-icon-btn"
           onClick={() => setSoundEnabled(!soundEnabled)}
-          title={soundEnabled ? 'Mute Audio' : 'Unmute Audio'}
+          title={soundEnabled ? strings.muteAudio : strings.unmuteAudio}
           aria-label="Toggle Sound"
         >
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -588,7 +614,7 @@ export default function SampleStampede() {
         <button
           className="stampede-icon-btn"
           onClick={() => setShowHelp(true)}
-          title="Game Rules"
+          title={strings.rules}
           aria-label="Show Help"
         >
           <HelpCircle size={18} />
@@ -597,7 +623,7 @@ export default function SampleStampede() {
         <button
           className="stampede-icon-btn"
           onClick={handleRestart}
-          title="Restart Derby"
+          title={strings.restartDerby}
           aria-label="Restart Derby"
         >
           <RotateCcw size={18} />
@@ -614,20 +640,17 @@ export default function SampleStampede() {
           }}
         >
           <div className="stampede-modal-card">
-            <h2>BULK CLUB DERBY</h2>
+            <h2>{strings.rulesTitle}</h2>
             <p>
-              Welcome to the wholesale warehouse shopping derby!
+              {strings.rulesWelcome}
               <br />
               <br />
-              <strong>🛒 Squeaky-Wheel Drifting:</strong> Your front-left caster
-              wobbles and pulls hard to the left. The more giant 50lb kibble
-              bags and 80-pack sodas you pack, the more momentum your cart
-              carries into long drift slides!
+              <strong>{strings.rulesDriftingTitle}</strong>{' '}
+              {strings.rulesDriftingDesc}
               <br />
               <br />
-              <strong>🥨 Free Sample Frenzy:</strong> When the store bell dings,
-              race to the active kiosk for a nitrous sugar rush speed boost!
-              Watch out for slippery paper plates on the floor.
+              <strong>{strings.rulesSampleTitle}</strong>{' '}
+              {strings.rulesSampleDesc}
               <br />
               <br />
               <strong>🧲 Grabber Pole:</strong> Press <strong>SPACE</strong> or{' '}
@@ -635,15 +658,14 @@ export default function SampleStampede() {
               tumble cereal towers!
               <br />
               <br />
-              <strong>🧾 Exit Receipt Gauntlet:</strong> Check out at the front
-              exit with your shopping list complete. If someone tosses an
-              unauthorized 10-foot giant teddy into your cart, you get REJECTED!
+              <strong>{strings.rulesReceiptTitle}</strong>{' '}
+              {strings.rulesReceiptDesc}
             </p>
             <button
               className="stampede-modal-btn"
               onClick={() => setShowHelp(false)}
             >
-              LET’S SHOP!
+              {strings.letsShop}
             </button>
           </div>
         </dialog>
@@ -658,17 +680,17 @@ export default function SampleStampede() {
               color="#f1c40f"
               style={{ margin: '0 auto 12px auto' }}
             />
-            <h2>STORE CLOSED!</h2>
+            <h2>{strings.storeClosed}</h2>
             <p>
               {snapshot.world.winnerTeam === 'red'
-                ? 'RED TEAM WINS THE BULK DERBY!'
-                : 'BLUE TEAM WINS THE BULK DERBY!'}
+                ? strings.redWinsDerby
+                : strings.blueWinsDerby}
             </p>
 
             <div className="stampede-modal-scores">
               <div className="stampede-modal-team-score">
                 <span className="team-name" style={{ color: '#ff7675' }}>
-                  RED TEAM
+                  {strings.redTeam}
                 </span>
                 <span className="team-pts">
                   {snapshot.world.teamScores.red}
@@ -676,7 +698,7 @@ export default function SampleStampede() {
               </div>
               <div className="stampede-modal-team-score">
                 <span className="team-name" style={{ color: '#74b9ff' }}>
-                  BLUE TEAM
+                  {strings.blueTeam}
                 </span>
                 <span className="team-pts">
                   {snapshot.world.teamScores.blue}
@@ -685,7 +707,7 @@ export default function SampleStampede() {
             </div>
 
             <button className="stampede-modal-btn" onClick={handleRestart}>
-              PLAY AGAIN
+              {strings.playAgain}
             </button>
           </div>
         </dialog>

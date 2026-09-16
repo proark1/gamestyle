@@ -282,11 +282,13 @@ export class SampleStampedeScene {
 
         // Add Driver Avatar
         const driver = createShopperWorker(cart.team === 'red' ? 0 : 1);
+        driver.rotation.y = Math.PI / 2; // Face forward (+X) toward cart handle!
         rig.driverAnchor.add(driver);
         this.driverMeshes.set(cart.id, driver);
 
         // Add Basket Rider Avatar
         const rider = createShopperWorker(cart.team === 'red' ? 2 : 3);
+        rider.rotation.y = Math.PI / 2; // Face forward (+X) inside the basket!
         rig.riderAnchor.add(rider);
         this.riderMeshes.set(cart.id, rider);
       }
@@ -489,8 +491,8 @@ export class SampleStampedeScene {
       }
 
       // Camera sits behind and slightly above the cart
-      const followDist = 8.5;
-      const followH = 5.2;
+      const followDist = 9.6;
+      const followH = 5.6;
       const targetCamX = myCart.x - Math.cos(myCart.rotY) * followDist;
       const targetCamZ = myCart.z + Math.sin(myCart.rotY) * followDist;
       const targetCamY = followH;

@@ -47,8 +47,8 @@ export class SampleStampedePhysics {
     // Concrete vs Cart: slick polished floor with controlled lateral grip
     this.world.addContactMaterial(
       new C.ContactMaterial(this.groundMaterial, this.cartMaterial, {
-        friction: 0.15,
-        restitution: 0.05,
+        friction: 0.0,
+        restitution: 0.0,
       }),
     );
 
@@ -131,15 +131,16 @@ export class SampleStampedePhysics {
 
   private setupCarts() {
     for (const cart of this.state.carts) {
-      const shape = new C.Box(new C.Vec3(0.65, 0.45, 0.55));
+      const shape = new C.Box(new C.Vec3(0.78, 0.52, 0.62));
       const body = new C.Body({
         mass: cart.totalMass,
         material: this.cartMaterial,
-        position: new C.Vec3(cart.x, 0.45, cart.z),
-        linearDamping: 0.12,
-        angularDamping: 0.35,
+        position: new C.Vec3(cart.x, 0.52, cart.z),
+        linearDamping: 0.38,
+        angularDamping: 0.55,
       });
       body.addShape(shape);
+      body.angularFactor = new C.Vec3(0, 1, 0);
       body.quaternion.setFromAxisAngle(new C.Vec3(0, 1, 0), cart.rotY);
       this.world.addBody(body);
       this.cartBodies.set(cart.id, body);
@@ -197,13 +198,6 @@ export class SampleStampedePhysics {
         grabberAction: false,
       };
 
-      // Also support single player controlling both steer & grabber
-      const grabberPlayer = this.state.players.find(
-        (p) => p.cartId === cart.id && p.role === 'grabber',
-      );
-      const grabberInput =
-        (grabberPlayer && inputs.get(grabberPlayer.id)) || input;
-
       // Squeaky front-left wheel wobble dynamics:
       // Wobble speed scales with cart linear velocity
       const forwardSpeed = body.velocity.dot(
@@ -218,58 +212,71 @@ export class SampleStampedePhysics {
         cart.wobbleIntensity = Math.max(0, cart.wobbleIntensity - dt * 3);
       }
 
-      // Squeaky wheel pulls hard to the left periodically!
-      const squeakPull = Math.sin(cart.wobblePhase) * 0.18 + 0.12; // Net bias to the left
+      // Squeaky caster wheel shimmy flutter
+      const squeakPull =
+        Math.sin(cart.wobblePhase) * 0.04 * cart.wobbleIntensity;
 
       // Slip Spin hazard countdown
       if (cart.slipSpinTimer > 0) {
         cart.slipSpinTimer -= dt;
         body.angularVelocity.y = 8.5; // Rapid spin out!
       } else {
-        // Steering
-        const effectiveSteer = input.steer - squeakPull * cart.wobbleIntensity;
-        const turnSpeed = 3.2 - (cart.totalMass / 350) * 1.2; // Heavier carts turn slower
-        body.angularVelocity.y = -effectiveSteer * turnSpeed;
+        // Steering: agile and responsive, slightly sharper when drifting
+        const effectiveSteer = input.steer + squeakPull;
+        const turnSpeed =
+          (input.drift ? 4.6 : 3.6) - (cart.totalMass / 350) * 0.8;
+        body.angularVelocity.y = effectiveSteer * turnSpeed;
       }
 
       // Acceleration / Throttle
-      let thrust = 750 + cart.totalMass * 4; // Scales with mass for authentic momentum
+      let thrust = 620 + cart.totalMass * 5.0; // Responsive punchy thrust
       if (cart.sugarRushTimer > 0) {
         cart.sugarRushTimer -= dt;
-        thrust *= 1.8; // Nitrous sugar rush speed boost!
+        thrust *= 1.85; // Nitrous sugar rush speed boost!
       }
 
       const forwardDir = body.quaternion.vmult(new C.Vec3(1, 0, 0));
       const rightDir = body.quaternion.vmult(new C.Vec3(0, 0, 1));
 
       if (cart.slipSpinTimer <= 0) {
-        const driveForce = forwardDir.scale(input.throttle * thrust);
-        body.applyForce(driveForce, body.position);
+        const throttleForce =
+          input.throttle >= 0 ? input.throttle : input.throttle * 0.75;
+        const driveForce = forwardDir.scale(throttleForce * thrust);
+        body.applyForce(driveForce);
       }
 
       // Lateral Friction & Drifting:
       // Calculate lateral velocity component
       const lateralVel = body.velocity.dot(rightDir);
-      let lateralGrip = input.drift ? 0.08 : 0.82; // Handbrake drift reduces lateral grip
+      let lateralGrip = input.drift ? 0.22 : 0.88; // Handbrake drift breaks lateral grip
 
       // Heavily loaded carts gain massive drift momentum
       if (cart.totalMass > 100) {
-        lateralGrip *= Math.max(0.35, 1 - (cart.totalMass - 100) / 300);
+        lateralGrip *= Math.max(0.4, 1 - (cart.totalMass - 100) / 320);
       }
 
       if (cart.slipSpinTimer > 0) {
-        lateralGrip = 0.01; // Zero friction on slip
+        lateralGrip = 0.02; // Zero friction on slip
       }
 
       const lateralImpulse = rightDir.scale(
-        -lateralVel * body.mass * (1 - lateralGrip) * 0.15,
+        -lateralVel * body.mass * lateralGrip,
       );
-      body.applyImpulse(lateralImpulse, body.position);
+      body.applyImpulse(lateralImpulse);
 
       cart.driftSlip = Math.abs(lateralVel);
+    }
+
+    // Step the Cannon-es simulation
+    this.world.step(STEP, dt, 3);
+
+    // Post-step: keep upright, sync state, and check collisions
+    for (const cart of this.state.carts) {
+      const body = this.cartBodies.get(cart.id);
+      if (!body) continue;
 
       // Keep cart upright on floor
-      body.position.y = 0.45;
+      body.position.y = 0.52;
       body.velocity.y = 0;
       const euler = new C.Vec3();
       body.quaternion.toEuler(euler);
@@ -289,14 +296,27 @@ export class SampleStampedePhysics {
       this.checkSlipHazards(cart, events);
 
       // Handle Grabber Pole Action (snag items, swat rivals)
+      const grabberPlayer = this.state.players.find(
+        (p) => p.cartId === cart.id && p.role === 'grabber',
+      );
+      const driverPlayer = this.state.players.find(
+        (p) => p.cartId === cart.id && p.role === 'driver',
+      );
+      const input = (driverPlayer && inputs.get(driverPlayer.id)) || {
+        x: 0,
+        z: 0,
+        steer: 0,
+        throttle: 0,
+        drift: false,
+        grabberAction: false,
+      };
+      const grabberInput =
+        (grabberPlayer && inputs.get(grabberPlayer.id)) || input;
       this.handleGrabberAction(cart, grabberInput, dt, events);
 
       // High-speed collision check: risk of dropping items if rammed hard
       this.checkCartCollisions(cart, events);
     }
-
-    // Step the Cannon-es simulation
-    this.world.step(STEP, dt, 3);
 
     // Sync dynamic ground item bodies
     for (const item of this.state.groundItems) {

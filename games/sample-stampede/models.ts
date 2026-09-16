@@ -354,8 +354,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   // Main chassis bars
   box(
     chassis,
-    [1.1, 0.06, 0.06],
-    [0, 0.22, 0.42],
+    [1.34, 0.07, 0.07],
+    [0, 0.25, 0.5],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -363,8 +363,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   );
   box(
     chassis,
-    [1.1, 0.06, 0.06],
-    [0, 0.22, -0.42],
+    [1.34, 0.07, 0.07],
+    [0, 0.25, -0.5],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -372,8 +372,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   );
   box(
     chassis,
-    [0.06, 0.06, 0.88],
-    [0.52, 0.22, 0],
+    [0.07, 0.07, 1.04],
+    [0.64, 0.25, 0],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -381,8 +381,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   );
   box(
     chassis,
-    [0.06, 0.06, 0.88],
-    [-0.52, 0.22, 0],
+    [0.07, 0.07, 1.04],
+    [-0.64, 0.25, 0],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -392,8 +392,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   // Bottom wire tray
   box(
     chassis,
-    [0.96, 0.02, 0.76],
-    [0, 0.24, 0],
+    [1.18, 0.02, 0.92],
+    [0, 0.27, 0],
     WAREHOUSE_COLORS.wireDeck,
     true,
     0.8,
@@ -404,21 +404,21 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
     color: teamColor,
     roughness: 0.35,
   });
-  const bumperGeo = new RoundedBoxGeometry(1.26, 0.1, 1.02, 2, 0.04);
+  const bumperGeo = new RoundedBoxGeometry(1.52, 0.12, 1.22, 2, 0.05);
   const bumperMesh = new THREE.Mesh(bumperGeo, bumperMat);
-  bumperMesh.position.set(0, 0.28, 0);
+  bumperMesh.position.set(0, 0.3, 0);
   bumperMesh.castShadow = true;
   root.add(bumperMesh);
 
   // Upper Basket wire cage
   const basket = new THREE.Group();
-  basket.position.set(0, 0.35, 0);
+  basket.position.set(0, 0.38, 0);
   root.add(basket);
 
   // Basket bottom
   box(
     basket,
-    [1.14, 0.03, 0.9],
+    [1.38, 0.03, 1.08],
     [0, 0, 0],
     WAREHOUSE_COLORS.wireDeck,
     true,
@@ -434,38 +434,38 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   });
 
   const frontWire = new THREE.Mesh(
-    new THREE.BoxGeometry(0.02, 0.65, 0.9),
+    new THREE.BoxGeometry(0.02, 0.78, 1.08),
     wireMat,
   );
-  frontWire.position.set(0.57, 0.32, 0);
+  frontWire.position.set(0.69, 0.39, 0);
   basket.add(frontWire);
 
   const backWire = new THREE.Mesh(
-    new THREE.BoxGeometry(0.02, 0.65, 0.9),
+    new THREE.BoxGeometry(0.02, 0.78, 1.08),
     wireMat,
   );
-  backWire.position.set(-0.57, 0.32, 0);
+  backWire.position.set(-0.69, 0.39, 0);
   basket.add(backWire);
 
   const leftWire = new THREE.Mesh(
-    new THREE.BoxGeometry(1.14, 0.65, 0.02),
+    new THREE.BoxGeometry(1.38, 0.78, 0.02),
     wireMat,
   );
-  leftWire.position.set(0, 0.32, 0.45);
+  leftWire.position.set(0, 0.39, 0.54);
   basket.add(leftWire);
 
   const rightWire = new THREE.Mesh(
-    new THREE.BoxGeometry(1.14, 0.65, 0.02),
+    new THREE.BoxGeometry(1.38, 0.78, 0.02),
     wireMat,
   );
-  rightWire.position.set(0, 0.32, -0.45);
+  rightWire.position.set(0, 0.39, -0.54);
   basket.add(rightWire);
 
   // Top rim tubular lip
   box(
     basket,
-    [1.16, 0.05, 0.05],
-    [0, 0.65, 0.45],
+    [1.4, 0.06, 0.06],
+    [0, 0.78, 0.54],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -473,8 +473,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   );
   box(
     basket,
-    [1.16, 0.05, 0.05],
-    [0, 0.65, -0.45],
+    [1.4, 0.06, 0.06],
+    [0, 0.78, -0.54],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -482,8 +482,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   );
   box(
     basket,
-    [0.05, 0.05, 0.92],
-    [0.57, 0.65, 0],
+    [0.06, 0.06, 1.1],
+    [0.69, 0.78, 0],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -491,8 +491,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   );
   box(
     basket,
-    [0.05, 0.05, 0.92],
-    [-0.57, 0.65, 0],
+    [0.06, 0.06, 1.1],
+    [-0.69, 0.78, 0],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -502,8 +502,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   // Push handle at the back
   box(
     root,
-    [0.05, 0.55, 0.05],
-    [-0.65, 0.9, 0.4],
+    [0.06, 0.65, 0.06],
+    [-0.78, 1.0, 0.48],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -511,8 +511,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   );
   box(
     root,
-    [0.05, 0.55, 0.05],
-    [-0.65, 0.9, -0.4],
+    [0.06, 0.65, 0.06],
+    [-0.78, 1.0, -0.48],
     WAREHOUSE_COLORS.cartSteel,
     true,
     0.3,
@@ -521,8 +521,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   // Red/Team plastic grip bar
   const grip = roundedBox(
     root,
-    [0.08, 0.08, 0.88],
-    [-0.72, 1.15, 0],
+    [0.08, 0.08, 1.06],
+    [-0.86, 1.28, 0],
     teamColor,
     0.03,
   );
@@ -531,14 +531,14 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   // 4 Wheels:
   // Rear fixed wheels (sturdy, black rubber with chrome hub)
   const rearWheels: THREE.Mesh[] = [];
-  for (const zSide of [-0.38, 0.38]) {
+  for (const zSide of [-0.46, 0.46]) {
     const w = cylinder(
       root,
-      0.11,
-      0.11,
-      0.08,
+      0.13,
+      0.13,
+      0.09,
       16,
-      [-0.46, 0.11, zSide],
+      [-0.56, 0.13, zSide],
       0x2d3436,
       true,
     );
@@ -549,11 +549,11 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   // Front-right caster wheel (smooth rotating)
   const rightFrontWheel = cylinder(
     root,
-    0.09,
-    0.09,
-    0.07,
+    0.11,
+    0.11,
+    0.08,
     16,
-    [0.46, 0.09, -0.38],
+    [0.56, 0.11, -0.46],
     0x2d3436,
     true,
   );
@@ -562,11 +562,11 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
   // Front-left wobbly squeaky wheel (crooked pivot, off-center, red taped hubcap)
   const wobblyWheel = cylinder(
     root,
-    0.09,
-    0.09,
-    0.07,
+    0.11,
+    0.11,
+    0.08,
     16,
-    [0.46, 0.09, 0.38],
+    [0.56, 0.11, 0.46],
     0x718093,
     true,
   );
@@ -575,37 +575,37 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
 
   // Oversized Trash-Grabber Pole held by basket rider
   const grabberAssembly = new THREE.Group();
-  grabberAssembly.position.set(0.1, 0.85, 0);
+  grabberAssembly.position.set(0.15, 0.95, 0);
   root.add(grabberAssembly);
 
   // Extendable scissor/rod shaft
   box(
     grabberAssembly,
-    [1.4, 0.06, 0.06],
-    [0.7, 0, 0],
+    [1.55, 0.06, 0.06],
+    [0.78, 0, 0],
     WAREHOUSE_COLORS.safetyYellow,
     true,
     0.5,
   );
   // Articulated mechanical grabber claw head
   const grabberClaws = new THREE.Group();
-  grabberClaws.position.set(1.4, 0, 0);
+  grabberClaws.position.set(1.55, 0, 0);
   grabberAssembly.add(grabberClaws);
 
   // Central hinge bracket
-  box(grabberClaws, [0.12, 0.12, 0.14], [0, 0, 0], 0x2c3e50, true);
+  box(grabberClaws, [0.14, 0.14, 0.16], [0, 0, 0], 0x2c3e50, true);
 
   // Left pincer jaw
   const grabberJawLeft = new THREE.Group();
-  grabberJawLeft.position.set(0.06, 0, 0.07);
-  box(grabberJawLeft, [0.18, 0.06, 0.04], [0.09, 0, 0], 0xd63031, true);
+  grabberJawLeft.position.set(0.07, 0, 0.08);
+  box(grabberJawLeft, [0.2, 0.07, 0.05], [0.1, 0, 0], 0xd63031, true);
   cylinder(
     grabberJawLeft,
-    0.035,
-    0.035,
     0.04,
+    0.04,
+    0.05,
     8,
-    [0.18, 0, -0.02],
+    [0.2, 0, -0.02],
     0x1e272e,
     true,
   );
@@ -613,37 +613,37 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
 
   // Right pincer jaw
   const grabberJawRight = new THREE.Group();
-  grabberJawRight.position.set(0.06, 0, -0.07);
-  box(grabberJawRight, [0.18, 0.06, 0.04], [0.09, 0, 0], 0xd63031, true);
+  grabberJawRight.position.set(0.07, 0, -0.08);
+  box(grabberJawRight, [0.2, 0.07, 0.05], [0.1, 0, 0], 0xd63031, true);
   cylinder(
     grabberJawRight,
-    0.035,
-    0.035,
     0.04,
+    0.04,
+    0.05,
     8,
-    [0.18, 0, 0.02],
+    [0.2, 0, 0.02],
     0x1e272e,
     true,
   );
   grabberClaws.add(grabberJawRight);
 
   // Team Flag
-  cylinder(root, 0.02, 0.02, 1.6, 8, [-0.56, 1.6, 0.42], 0x718093, true);
+  cylinder(root, 0.02, 0.02, 1.8, 8, [-0.68, 1.8, 0.5], 0x718093, true);
   const flagMesh = box(
     root,
-    [0.45, 0.3, 0.02],
-    [-0.34, 2.25, 0.42],
+    [0.52, 0.35, 0.02],
+    [-0.42, 2.45, 0.5],
     teamColor,
     true,
   );
 
   // Avatar anchors
   const driverAnchor = new THREE.Object3D();
-  driverAnchor.position.set(-1.05, 0, 0); // Behind the cart pushing
+  driverAnchor.position.set(-1.22, 0, 0); // Behind the cart pushing
   root.add(driverAnchor);
 
   const riderAnchor = new THREE.Object3D();
-  riderAnchor.position.set(0, 0.4, 0); // Sitting inside the basket
+  riderAnchor.position.set(0.05, 0.45, 0); // Sitting inside the basket
   root.add(riderAnchor);
 
   return {

@@ -78,9 +78,9 @@ export function newShoppingCart(
     driverId: null,
     grabberId: null,
     x,
-    y: 0.45,
+    y: 0.52,
     z,
-    rotY: -Math.PI / 2, // Facing North towards aisles
+    rotY: Math.PI / 2, // Facing North towards aisles
     vx: 0,
     vy: 0,
     vz: 0,
