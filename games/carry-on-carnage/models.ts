@@ -306,8 +306,20 @@ export function createSizerBoxMesh(): T.Group {
   );
 
   // Intermediate vertical security grid bars (back and sides)
-  beam(root, [-w / 4, yBase, -d / 2], [-w / 4, yBase + h, -d / 2], barR * 0.8, cageCol);
-  beam(root, [w / 4, yBase, -d / 2], [w / 4, yBase + h, -d / 2], barR * 0.8, cageCol);
+  beam(
+    root,
+    [-w / 4, yBase, -d / 2],
+    [-w / 4, yBase + h, -d / 2],
+    barR * 0.8,
+    cageCol,
+  );
+  beam(
+    root,
+    [w / 4, yBase, -d / 2],
+    [w / 4, yBase + h, -d / 2],
+    barR * 0.8,
+    cageCol,
+  );
   beam(root, [-w / 2, yBase, 0], [-w / 2, yBase + h, 0], barR * 0.8, cageCol);
   beam(root, [w / 2, yBase, 0], [w / 2, yBase + h, 0], barR * 0.8, cageCol);
 
@@ -320,7 +332,12 @@ export function createSizerBoxMesh(): T.Group {
     PALETTE.neonRed,
   );
   // Hinged lid handle
-  box(root, [0.35, 0.05, 0.05], [0, yBase + h + 0.04, 0], PALETTE.warningYellow);
+  box(
+    root,
+    [0.35, 0.05, 0.05],
+    [0, yBase + h + 0.04, 0],
+    PALETTE.warningYellow,
+  );
 
   // Internal Holographic Measurement Volume
   const holoGeo = new T.BoxGeometry(w - 0.04, h - 0.02, d - 0.04);
@@ -350,7 +367,12 @@ export function createSizerBoxMesh(): T.Group {
   root.add(sirenPost);
 
   // Bold "MAX 55 x 40 x 25 CM · BUDGET-AIR" dimension plate
-  box(root, [0.75, 0.18, 0.03], [0, yBase + h * 0.5, d / 2 + 0.025], PALETTE.metalDark);
+  box(
+    root,
+    [0.75, 0.18, 0.03],
+    [0, yBase + h * 0.5, d / 2 + 0.025],
+    PALETTE.metalDark,
+  );
   box(
     root,
     [0.7, 0.12, 0.01],
@@ -461,15 +483,43 @@ export function createSuitcaseMesh(sc: Suitcase): T.Group {
   );
 
   // Soft rubberized carry handles (top & side)
-  box(lid, [0.26, 0.04, 0.06], [0, h * 0.48 + 0.02, 0], PALETTE.metalDark, true);
-  box(lid, [0.04, 0.06, 0.22], [-w / 2 - 0.02, h * 0.24, 0], PALETTE.metalDark, true);
+  box(
+    lid,
+    [0.26, 0.04, 0.06],
+    [0, h * 0.48 + 0.02, 0],
+    PALETTE.metalDark,
+    true,
+  );
+  box(
+    lid,
+    [0.04, 0.06, 0.22],
+    [-w / 2 - 0.02, h * 0.24, 0],
+    PALETTE.metalDark,
+    true,
+  );
 
   // Travel Decal stickers
-  box(lid, [0.16, 0.08, 0.005], [-w * 0.22, h * 0.35, d / 2 + 0.006], PALETTE.warningYellow);
-  box(lid, [0.12, 0.07, 0.005], [w * 0.24, h * 0.16, d / 2 + 0.006], PALETTE.neonRed);
+  box(
+    lid,
+    [0.16, 0.08, 0.005],
+    [-w * 0.22, h * 0.35, d / 2 + 0.006],
+    PALETTE.warningYellow,
+  );
+  box(
+    lid,
+    [0.12, 0.07, 0.005],
+    [w * 0.24, h * 0.16, d / 2 + 0.006],
+    PALETTE.neonRed,
+  );
 
   // Hanging paper baggage barcode tag with cord
-  beam(lid, [0.14, h * 0.48 + 0.02, 0], [0.16, h * 0.48 - 0.05, 0.07], 0.014, '#ffffff');
+  beam(
+    lid,
+    [0.14, h * 0.48 + 0.02, 0],
+    [0.16, h * 0.48 - 0.05, 0.07],
+    0.014,
+    '#ffffff',
+  );
   box(lid, [0.09, 0.14, 0.005], [0.16, h * 0.48 - 0.12, 0.07], '#fef08a');
 
   // Peek-through clothing edges that reveal when bulging

@@ -52,7 +52,12 @@ export const TERMINAL_BOX_COLLIDERS: BoxCollider[] = [
   // Gate Agent counter desk
   { minX: 7.6, maxX: 9.4, minZ: -3.6, maxZ: -0.8 },
   // Sizer Box Station
-  { minX: SIZER_X - 0.75, maxX: SIZER_X + 0.75, minZ: SIZER_Z - 0.45, maxZ: SIZER_Z + 0.45 },
+  {
+    minX: SIZER_X - 0.75,
+    maxX: SIZER_X + 0.75,
+    minZ: SIZER_Z - 0.45,
+    maxZ: SIZER_Z + 0.45,
+  },
   // Jetway doorway boundary walls
   { minX: 10.0, maxX: 11.2, minZ: -5.0, maxZ: -1.4 },
   { minX: 10.0, maxX: 11.2, minZ: 1.4, maxZ: 5.0 },
@@ -199,8 +204,9 @@ export function computeSuitcaseBulge(
   const uncompressedExcess = Math.max(0, totalVol - 1.0);
   const strain = uncompressedExcess * (1.0 - compressionRatio * 0.85);
 
-  // Can zip if bulge is low enough (< 0.15) or heavily compressed
-  const canZip = bulge <= 0.15 || compressionRatio >= 0.7;
+  // Can zip if bulge is low enough (< 0.15) or compressed, provided bag is not bursting/overflowing (> 2.2 vol)
+  const canZip =
+    (bulge <= 0.15 || compressionRatio >= 0.7) && squishedVol <= 2.2;
 
   return {
     rawVolume: totalVol,
@@ -383,8 +389,12 @@ export function stepPhysics(
     }
     sc.sittingCount = Math.round(sitters);
 
-    // Dynamic spring compression
-    const targetComp = Math.min(1.0, sitters * 0.65);
+    // Dynamic spring compression: 1 player provides 88% compression (enough to zip),
+    // 2+ players reach 100% max compression, jumping/stomping provides dynamic weight surges
+    const targetComp = Math.min(
+      1.0,
+      sitters >= 1 ? 0.88 + (sitters - 1) * 0.12 : sitters * 0.88,
+    );
     sc.compression += (targetComp - sc.compression) * 0.2;
 
     // Recalculate bulge and strain

@@ -290,7 +290,13 @@ export default function CarryOnCarnageGame() {
               </span>
             ) : nearbySc.zipped >= 0.98 ? (
               <span className="text-emerald-300 font-bold">
-                🔒 FULLY ZIPPED · CARRY TO SIZER BOX (E)
+                {me?.sittingOn === nearbySc.id
+                  ? '🔒 FULLY ZIPPED · HOP OFF [R] & CARRY TO SIZER'
+                  : '🔒 FULLY ZIPPED · CARRY TO SIZER BOX (E)'}
+              </span>
+            ) : me?.sittingOn === nearbySc.id ? (
+              <span className="text-emerald-300 font-bold">
+                🧳 SITTING & COMPRESSING ({Math.round(nearbySc.compression * 100)}%) · PULL ZIPPER (F)
               </span>
             ) : nearbySc.bulge > 0.15 ? (
               <span className="text-amber-300 font-bold">
@@ -320,8 +326,9 @@ export default function CarryOnCarnageGame() {
 
           <div className="carryon-gauge-row">
             <span>Compression Weight (Sit/Stomp):</span>
-            <span className="text-amber-300">
+            <span className="text-amber-300 font-semibold">
               {Math.round(nearbySc.compression * 100)}%
+              {nearbySc.sittingCount > 0 ? ` (${nearbySc.sittingCount} sitting)` : ''}
             </span>
           </div>
           <div className="carryon-bar-bg">
@@ -359,7 +366,15 @@ export default function CarryOnCarnageGame() {
               ? 'Pack into Bag'
               : me?.holdingSuitcase
                 ? 'Insert in Sizer'
-                : 'Grab / Open'}
+                : me?.sittingOn === nearbySc?.id
+                  ? nearbySc && nearbySc.items.length > 0
+                    ? 'Remove Item'
+                    : 'Hop Off (R)'
+                  : nearbySc && nearbySc.zipped >= 0.95
+                    ? 'Pick Up Suitcase'
+                    : nearbySc && nearbySc.items.length > 0
+                      ? 'Remove Item'
+                      : 'Grab Item'}
           </span>
         </button>
 

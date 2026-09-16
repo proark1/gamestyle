@@ -361,26 +361,36 @@ export function carryOnAction(
           }
         }
 
-        // Check nearby suitcase
-        const nearbySc = world.suitcases.find(
-          (sc) =>
-            !sc.heldBy &&
-            Math.hypot(sc.x - player.x, sc.z - player.z) < REACH_DISTANCE,
-        );
-
-        if (nearbySc) {
-          if (nearbySc.zipped >= 0.95) {
-            // Zipped suitcase can be picked up and carried
-            nearbySc.heldBy = player.id;
-            player.holdingSuitcase = nearbySc.id;
-          } else {
-            // Unzipped suitcase lid toggles open/close
-            nearbySc.open = !nearbySc.open;
+        // Check if sitting on a suitcase to unpack top item
+        if (player.sittingOn) {
+          const sc = world.suitcases.find((s) => s.id === player.sittingOn);
+          if (sc && sc.items.length > 0 && sc.zipped < 0.95) {
+            const removedItemId = sc.items.pop()!;
+            const item = world.items.find((it) => it.id === removedItemId);
+            if (item) {
+              item.packedIn = null;
+              item.heldBy = player.id;
+              item.x = player.x;
+              item.y = 0.5;
+              item.z = player.z;
+              player.holdingItem = item.id;
+              if (item.kind === 'shoes') {
+                player.wearingTinFoil = true;
+              }
+              const cfg = ITEM_CONFIGS[item.kind];
+              world.events.push({
+                id: ++eventIdRef.current,
+                type: 'pack',
+                text: `Removed ${cfg.name} from luggage!`,
+                pos: [sc.x, sc.y + 0.6, sc.z],
+                color: '#f59e0b',
+              });
+            }
           }
           return;
         }
 
-        // Check nearby item
+        // Check nearby loose item first
         const nearbyItem = world.items.find(
           (it) =>
             !it.packedIn &&
@@ -394,6 +404,46 @@ export function carryOnAction(
           if (nearbyItem.kind === 'shoes') {
             player.wearingTinFoil = true;
           }
+          return;
+        }
+
+        // Check nearby suitcase (pick up if zipped, or unpack item if open with items)
+        const nearbySc = world.suitcases.find(
+          (sc) =>
+            !sc.heldBy &&
+            Math.hypot(sc.x - player.x, sc.z - player.z) < REACH_DISTANCE,
+        );
+
+        if (nearbySc) {
+          if (nearbySc.zipped >= 0.95) {
+            // Zipped suitcase can be picked up and carried
+            nearbySc.heldBy = player.id;
+            player.holdingSuitcase = nearbySc.id;
+          } else if (nearbySc.items.length > 0) {
+            // Unpack the last packed item
+            const removedItemId = nearbySc.items.pop()!;
+            const item = world.items.find((it) => it.id === removedItemId);
+            if (item) {
+              item.packedIn = null;
+              item.heldBy = player.id;
+              item.x = player.x;
+              item.y = 0.5;
+              item.z = player.z;
+              player.holdingItem = item.id;
+              if (item.kind === 'shoes') {
+                player.wearingTinFoil = true;
+              }
+              const cfg = ITEM_CONFIGS[item.kind];
+              world.events.push({
+                id: ++eventIdRef.current,
+                type: 'pack',
+                text: `Removed ${cfg.name} from luggage!`,
+                pos: [nearbySc.x, nearbySc.y + 0.6, nearbySc.z],
+                color: '#f59e0b',
+              });
+            }
+          }
+          return;
         }
         break;
       }
@@ -425,12 +475,15 @@ export function carryOnAction(
       }
 
       case 'zip': {
-        // Zip up the nearest suitcase
-        const sc = world.suitcases.find(
+        // Zip up the nearest suitcase or the suitcase the player is sitting on
+        let sc = world.suitcases.find(
           (s) =>
             !s.burst &&
             Math.hypot(s.x - player.x, s.z - player.z) < REACH_DISTANCE,
         );
+        if (!sc && player.sittingOn) {
+          sc = world.suitcases.find((s) => s.id === player.sittingOn);
+        }
 
         if (sc) {
           player.zippingSuitcase = sc.id;
@@ -448,12 +501,23 @@ export function carryOnAction(
                 pos: [sc.x, sc.y + 0.6, sc.z],
                 color: '#10b981',
               });
+            } else {
+              world.events.push({
+                id: ++eventIdRef.current,
+                type: 'zip',
+                text: `Zipping... ${Math.round(sc.zipped * 100)}% closed!`,
+                pos: [sc.x, sc.y + 0.6, sc.z],
+                color: '#38bdf8',
+              });
             }
           } else {
+            const isComp = sc.sittingCount > 0 || player.sittingOn === sc.id;
             world.events.push({
               id: ++eventIdRef.current,
               type: 'zip',
-              text: '⚠️ Zipper jammed! Bulging too much—someone must SIT on it!',
+              text: isComp
+                ? '⚠️ Zipper jammed! Bag is overflowing—press [E] to remove an item or stomp harder!'
+                : '⚠️ Zipper jammed! Bulging too much—someone must SIT on it [R]!',
               pos: [sc.x, sc.y + 0.6, sc.z],
               color: '#f97316',
             });

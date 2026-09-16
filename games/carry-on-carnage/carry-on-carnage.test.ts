@@ -3,7 +3,12 @@ import { test } from 'node:test';
 import { carryOnCarnageAvatars } from './avatar';
 import { createEngine } from './peer';
 import { burstSuitcase, checkSizerFit, computeSuitcaseBulge } from './physics';
-import { advanceCarryOn, freshCarryOnWorld, newTraveler } from './simulation';
+import {
+  advanceCarryOn,
+  carryOnAction,
+  freshCarryOnWorld,
+  newTraveler,
+} from './simulation';
 import { ITEM_CONFIGS, type LuggageItem, type Suitcase } from './types';
 
 function makeTestSuitcase(): Suitcase {
@@ -217,7 +222,11 @@ void test('physical collision stops players from walking through sizer box and b
   // Player must be ejected from inside the sizer box
   const insideSizer =
     player.x > 8.0 && player.x < 9.0 && player.z > -0.3 && player.z < 0.3;
-  assert.equal(insideSizer, false, 'Player should be blocked from phasing through sizer box');
+  assert.equal(
+    insideSizer,
+    false,
+    'Player should be blocked from phasing through sizer box',
+  );
 
   // Attempt to walk into the left lounge bench at [-6.5, -2.4]
   player.x = -6.5;
@@ -226,6 +235,75 @@ void test('physical collision stops players from walking through sizer box and b
 
   const insideBench =
     player.x > -7.5 && player.x < -5.5 && player.z > -2.8 && player.z < -2.0;
-  assert.equal(insideBench, false, 'Player should be blocked from phasing through bench');
+  assert.equal(
+    insideBench,
+    false,
+    'Player should be blocked from phasing through bench',
+  );
 });
 
+void test('single player sitting on suitcase compresses to >= 0.85 and enables zipping', () => {
+  const world = freshCarryOnWorld(1000);
+  const sc = world.suitcases[0];
+  const player = newTraveler('p1', 'Tester', 0, 1000);
+  world.players.push(player);
+
+  // Pack items to create bulging excess
+  const it1 = world.items[0];
+  const it2 = world.items[1];
+  it1.packedIn = sc.id;
+  it2.packedIn = sc.id;
+  sc.items = [it1.id, it2.id];
+
+  // Sit on suitcase
+  player.sittingOn = sc.id;
+  const eventIdRef = { current: 100 };
+
+  // Step world several frames to allow spring compression to converge
+  for (let i = 0; i < 30; i++) {
+    advanceCarryOn(world, 0.016, eventIdRef);
+  }
+
+  assert.ok(
+    sc.compression >= 0.84,
+    `Compression should reach at least 0.84 for a single sitter, got ${sc.compression}`,
+  );
+
+  const stats = computeSuitcaseBulge(sc, world.items);
+  assert.equal(
+    stats.canZip,
+    true,
+    'Single player sitting must enable canZip for standard luggage',
+  );
+});
+
+void test('player can unpack / remove an item from an open suitcase', () => {
+  const world = freshCarryOnWorld(1000);
+  const sc = world.suitcases[0];
+  const player = newTraveler('p1', 'Tester', 0, 1000);
+  player.x = sc.x + 0.3;
+  player.z = sc.z + 0.3;
+  world.players.push(player);
+
+  const it1 = world.items[0];
+  it1.packedIn = sc.id;
+  sc.items = [it1.id];
+
+  const eventIdRef = { current: 100 };
+
+  // Trigger grab while hands are empty near suitcase
+  carryOnAction(
+    world,
+    player.id,
+    { type: 'interact', action: 'grab' },
+    eventIdRef,
+  );
+
+  assert.equal(
+    player.holdingItem,
+    it1.id,
+    'Player should now be holding the unpacked item',
+  );
+  assert.equal(it1.packedIn, null, 'Item should no longer be packed in suitcase');
+  assert.equal(sc.items.length, 0, 'Suitcase items array should be empty');
+});
