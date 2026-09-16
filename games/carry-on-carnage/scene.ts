@@ -332,9 +332,9 @@ export class CarryOnScene {
       mesh.position.set(sc.x + jX, sc.y, sc.z + jZ);
       mesh.rotation.y = sc.yaw;
 
-      // Dynamic bulging and compression mesh update
+      // Dynamic bulging, expansion, compression and zipping
       const lid = mesh.getObjectByName('suitcase-lid') as T.Group | undefined;
-      const bulgeBelly = mesh.getObjectByName('bulge-belly') as
+      const gusset = mesh.getObjectByName('fabric-gusset') as
         | T.Mesh
         | undefined;
       const zipperTab = mesh.getObjectByName('zipper-tab') as
@@ -348,46 +348,67 @@ export class CarryOnScene {
         | T.Mesh
         | undefined;
 
-      if (lid && bulgeBelly) {
-        // Compute current bulging scale
+      if (lid) {
         const stats = computeSuitcaseBulge(sc, world.items);
-        const lidShell = lid.getObjectByName('lid-shell');
+        const baseH = 0.6;
+        const closedY = baseH * 0.48;
 
-        // Compression squash & stretch
-        if (sc.sittingCount > 0) {
-          const sitBounce = Math.sin(this.clock * 12) * 0.03;
-          bulgeBelly.scale.set(
-            1.0 + stats.bulge * 0.6 + 0.15,
-            Math.max(0.08, 0.45 + sitBounce),
-            1.0 + stats.bulge * 0.6 + 0.15,
-          );
-          if (lidShell) lidShell.position.y = 0.14 + sitBounce;
+        if (sc.zipped >= 0.98) {
+          // 1. ZIPPED SHUT: Sleek, compact, closed carry-on!
+          lid.position.y = closedY;
+          mesh.scale.set(1.0, 1.0, 1.0);
+          if (gusset) {
+            gusset.scale.set(1.0, 0.1, 1.0);
+            gusset.position.y = closedY;
+          }
+          if (peekSock) peekSock.visible = false;
+          if (peekShirt) peekShirt.visible = false;
+        } else if (sc.sittingCount > 0) {
+          // 2. SITTING ON IT: Squashed down flat by player weight!
+          const sitBounce = Math.sin(this.clock * 12) * 0.025;
+          const squashY = closedY + 0.04 + sitBounce;
+          lid.position.y = squashY;
+          mesh.scale.set(1.04, 0.94 + sitBounce, 1.04);
+          if (gusset) {
+            gusset.scale.set(1.04, 0.4, 1.04);
+            gusset.position.y = closedY + 0.02;
+          }
+          if (peekSock) peekSock.visible = true;
+          if (peekShirt) peekShirt.visible = true;
         } else {
-          const bulgeScaleY = 1.0 + stats.bulge * 2.8;
-          const bulgeScaleXZ = 1.0 + stats.bulge * 0.45;
-          bulgeBelly.scale.set(
-            bulgeScaleXZ,
-            Math.max(0.1, bulgeScaleY),
-            bulgeScaleXZ,
+          // 3. PACKED & BULGING: Visibly gets big, thick, and expands!
+          const liftY = stats.bulge * 0.7;
+          lid.position.y = closedY + liftY;
+          // Suitcase body expands fatter
+          mesh.scale.set(
+            1.0 + stats.bulge * 0.1,
+            1.0 + stats.bulge * 0.22,
+            1.0 + stats.bulge * 0.32,
           );
-          if (lidShell) lidShell.position.y = 0.24 + stats.bulge * 0.45;
-        }
-
-        // Peek-through clothing edges when unzipped and bulging
-        if (peekSock && peekShirt) {
-          const showPeek = sc.zipped < 0.95 && stats.bulge > 0.04;
-          peekSock.visible = showPeek;
-          peekShirt.visible = showPeek;
-          if (showPeek) {
-            peekSock.scale.set(1, 1 + stats.bulge * 3.5, 1);
-            peekShirt.scale.set(1, 1 + stats.bulge * 3.5, 1);
+          if (gusset) {
+            gusset.scale.set(
+              1.0 + stats.bulge * 0.12,
+              Math.max(0.2, 1.0 + stats.bulge * 4.5),
+              1.0 + stats.bulge * 0.25,
+            );
+            gusset.position.y = closedY + liftY * 0.5;
+          }
+          // Peek clothes pop out when overstuffed
+          if (peekSock && peekShirt) {
+            const showPeek = stats.bulge > 0.04;
+            peekSock.visible = showPeek;
+            peekShirt.visible = showPeek;
+            if (showPeek) {
+              peekSock.scale.set(1, 1 + stats.bulge * 3.0, 1);
+              peekShirt.scale.set(1, 1 + stats.bulge * 3.0, 1);
+            }
           }
         }
 
-        // Move zipper tab along rectangular perimeter (w = 0.4, d = 0.24)
+        // Move zipper tab along rectangular perimeter (w = 0.90, d = 0.45)
         if (zipperTab) {
-          const wSide = 0.4;
-          const dSide = 0.24;
+          const wSide = 0.9;
+          const dSide = 0.45;
           const totalP = 2 * (wSide + dSide);
           const dist = (sc.zipped % 1.0) * totalP;
           if (dist < wSide) {

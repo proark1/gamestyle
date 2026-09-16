@@ -315,7 +315,7 @@ export function carryOnAction(
             // Insert bag into sizer cage
             sc.heldBy = null;
             sc.x = SIZER_X;
-            sc.y = 0.05;
+            sc.y = 0.24;
             sc.z = SIZER_Z;
             player.holdingSuitcase = null;
             world.sizer.insertedSuitcase = sc.id;

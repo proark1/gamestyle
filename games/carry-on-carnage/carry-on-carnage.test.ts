@@ -202,3 +202,30 @@ void test('carry-on-carnage avatar creates dressable worker with proper dimensio
   assert.ok(instance.root);
   assert.ok(typeof instance.pose === 'function');
 });
+
+void test('physical collision stops players from walking through sizer box and benches', () => {
+  const world = freshCarryOnWorld(1000);
+  const player = newTraveler('p1', 'Tester', 0, 1000);
+  world.players.push(player);
+
+  // Attempt to place player directly inside the sizer box cage at [8.5, 0.0]
+  player.x = 8.5;
+  player.z = 0.0;
+  const eventIdRef = { current: 100 };
+  advanceCarryOn(world, 0.016, eventIdRef);
+
+  // Player must be ejected from inside the sizer box
+  const insideSizer =
+    player.x > 8.0 && player.x < 9.0 && player.z > -0.3 && player.z < 0.3;
+  assert.equal(insideSizer, false, 'Player should be blocked from phasing through sizer box');
+
+  // Attempt to walk into the left lounge bench at [-6.5, -2.4]
+  player.x = -6.5;
+  player.z = -2.4;
+  advanceCarryOn(world, 0.016, eventIdRef);
+
+  const insideBench =
+    player.x > -7.5 && player.x < -5.5 && player.z > -2.8 && player.z < -2.0;
+  assert.equal(insideBench, false, 'Player should be blocked from phasing through bench');
+});
+

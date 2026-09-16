@@ -1,11 +1,13 @@
 import {
   BURST_THRESHOLD,
   ITEM_CONFIGS,
+  PLAYER_RADIUS,
   SIZER_MAX_H,
   SUITCASE_BASE_H,
   type CarryOnWorld,
   type LuggageItem,
   type Suitcase,
+  type Traveler,
 } from './types';
 
 export const STEP = 1 / 60;
@@ -23,6 +25,133 @@ export const TSA_GATE_HALF_WIDTH = 1.4;
 
 export const SIZER_X = 8.5;
 export const SIZER_Z = 0.0;
+
+export type BoxCollider = {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+};
+
+export type CircleCollider = {
+  x: number;
+  z: number;
+  radius: number;
+};
+
+export const TERMINAL_BOX_COLLIDERS: BoxCollider[] = [
+  // Left benches (2 lounge benches)
+  { minX: -8.3, maxX: -4.7, minZ: -3.0, maxZ: -1.8 },
+  { minX: -8.3, maxX: -4.7, minZ: 1.8, maxZ: 3.0 },
+  // Luggage scale in packing area
+  { minX: -3.7, maxX: -1.9, minZ: -3.7, maxZ: -1.9 },
+  // TSA X-ray scanner conveyor & tunnel
+  { minX: 2.5, maxX: 4.5, minZ: -4.0, maxZ: -0.7 },
+  // TSA Guard Desk
+  { minX: 2.8, maxX: 4.2, minZ: 1.6, maxZ: 2.8 },
+  // Gate Agent counter desk
+  { minX: 7.6, maxX: 9.4, minZ: -3.6, maxZ: -0.8 },
+  // Sizer Box Station
+  { minX: SIZER_X - 0.75, maxX: SIZER_X + 0.75, minZ: SIZER_Z - 0.45, maxZ: SIZER_Z + 0.45 },
+  // Jetway doorway boundary walls
+  { minX: 10.0, maxX: 11.2, minZ: -5.0, maxZ: -1.4 },
+  { minX: 10.0, maxX: 11.2, minZ: 1.4, maxZ: 5.0 },
+];
+
+export const TERMINAL_CIRCLE_COLLIDERS: CircleCollider[] = [
+  // TSA Metal Detector portal side arch pillars
+  { x: 3.5, z: -0.9, radius: 0.28 },
+  { x: 3.5, z: 0.9, radius: 0.28 },
+  // Stanchion posts
+  { x: 5.0, z: 1.4, radius: 0.2 },
+  { x: 6.6, z: 1.4, radius: 0.2 },
+  { x: 8.2, z: 1.4, radius: 0.2 },
+  { x: 5.0, z: -1.4, radius: 0.2 },
+  { x: 6.6, z: -1.4, radius: 0.2 },
+];
+
+/** Resolve player collisions against terminal furniture, suitcases, and boundaries */
+export function resolvePlayerCollisions(p: Traveler, world: CarryOnWorld) {
+  const pr = PLAYER_RADIUS;
+
+  // 1. Static Box Colliders (benches, desks, conveyor, sizer box, walls)
+  for (const b of TERMINAL_BOX_COLLIDERS) {
+    const clampX = Math.max(b.minX, Math.min(b.maxX, p.x));
+    const clampZ = Math.max(b.minZ, Math.min(b.maxZ, p.z));
+    const dx = p.x - clampX;
+    const dz = p.z - clampZ;
+    const distSq = dx * dx + dz * dz;
+
+    if (distSq < pr * pr) {
+      const dist = Math.sqrt(distSq);
+      if (dist > 0.001) {
+        const pen = pr - dist;
+        p.x += (dx / dist) * pen;
+        p.z += (dz / dist) * pen;
+      } else {
+        const dMinX = Math.abs(p.x - b.minX);
+        const dMaxX = Math.abs(p.x - b.maxX);
+        const dMinZ = Math.abs(p.z - b.minZ);
+        const dMaxZ = Math.abs(p.z - b.maxZ);
+        const minD = Math.min(dMinX, dMaxX, dMinZ, dMaxZ);
+        if (minD === dMinX) p.x = b.minX - pr;
+        else if (minD === dMaxX) p.x = b.maxX + pr;
+        else if (minD === dMinZ) p.z = b.minZ - pr;
+        else p.z = b.maxZ + pr;
+      }
+    }
+  }
+
+  // 2. Static Circle Colliders (TSA portal posts, queue stanchions)
+  for (const c of TERMINAL_CIRCLE_COLLIDERS) {
+    const dx = p.x - c.x;
+    const dz = p.z - c.z;
+    const dist = Math.hypot(dx, dz);
+    const minDist = pr + c.radius;
+    if (dist < minDist && dist > 0.001) {
+      const pen = minDist - dist;
+      p.x += (dx / dist) * pen;
+      p.z += (dz / dist) * pen;
+    }
+  }
+
+  // 3. Suitcases on the floor (solid obstacles unless being sat on or held)
+  if (!p.sittingOn && p.y < 0.35) {
+    for (const sc of world.suitcases) {
+      if (sc.heldBy || world.sizer.insertedSuitcase === sc.id) continue;
+      const sDx = p.x - sc.x;
+      const sDz = p.z - sc.z;
+      const sDist = Math.hypot(sDx, sDz);
+      const scRadius = 0.52;
+      const minDist = pr + scRadius;
+      if (sDist < minDist && sDist > 0.001) {
+        const pen = minDist - sDist;
+        p.x += (sDx / sDist) * pen;
+        p.z += (sDz / sDist) * pen;
+      }
+    }
+  }
+
+  // 4. Other players (mutual capsule collision)
+  for (const other of world.players) {
+    if (other.id === p.id) continue;
+    const pDx = p.x - other.x;
+    const pDz = p.z - other.z;
+    const pDist = Math.hypot(pDx, pDz);
+    const minDist = pr * 2;
+    if (pDist < minDist && pDist > 0.001) {
+      const pen = (minDist - pDist) * 0.5;
+      p.x += (pDx / pDist) * pen;
+      p.z += (pDz / pDist) * pen;
+      other.x -= (pDx / pDist) * pen;
+      other.z -= (pDz / pDist) * pen;
+    }
+  }
+
+  // 5. Terminal boundary clamp
+  p.x = Math.max(TERMINAL_MIN_X + pr, Math.min(TERMINAL_MAX_X - pr, p.x));
+  p.z = Math.max(TERMINAL_MIN_Z + pr, Math.min(TERMINAL_MAX_Z - pr, p.z));
+}
 
 /** Calculate luggage fullness, squished height, and bulging tension */
 export function computeSuitcaseBulge(
@@ -230,9 +359,8 @@ export function stepPhysics(
         p.grounded = true;
       }
 
-      // Terminal bounds
-      p.x = Math.max(TERMINAL_MIN_X, Math.min(TERMINAL_MAX_X, p.x));
-      p.z = Math.max(TERMINAL_MIN_Z, Math.min(TERMINAL_MAX_Z, p.z));
+      // Physical collisions with furniture, suitcases, other players, and boundaries
+      resolvePlayerCollisions(p, world);
     }
   }
 

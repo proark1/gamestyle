@@ -15,7 +15,8 @@ export type GameId =
   | 'panic-curling'
   | 'zorb-clash'
   | 'carry-on-carnage'
-  | 'sample-stampede';
+  | 'sample-stampede'
+  | 'drive-thru';
 export type AudioCategory =
   | 'material'
   | 'speech'
@@ -79,6 +80,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'zorb-clash': 'Zorb Clash',
   'carry-on-carnage': 'Carry-On Carnage',
   'sample-stampede': 'Sample Stampede',
+  'drive-thru': 'Drive-Thru Static',
 };
 export const isGameId = (v: unknown): v is GameId =>
   v === 'wrong-floor' ||
@@ -97,7 +99,8 @@ export const isGameId = (v: unknown): v is GameId =>
   v === 'panic-curling' ||
   v === 'zorb-clash' ||
   v === 'carry-on-carnage' ||
-  v === 'sample-stampede';
+  v === 'sample-stampede' ||
+  v === 'drive-thru';
 /** Reused clips keep their original immutable storage path. */
 export function audioFileUrl(file: string) {
   const [game, name] = file.split('/');

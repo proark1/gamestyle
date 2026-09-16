@@ -233,100 +233,128 @@ export function createSizerBoxMesh(): T.Group {
   const w = SIZER_MAX_W;
   const h = SIZER_MAX_H;
   const d = SIZER_MAX_D;
-  const barR = 0.025;
-  const cageCol = '#e5e7eb'; // Steel cage bars
+  const barR = 0.032;
+  const cageCol = '#f1f5f9'; // Heavy industrial steel bars
   const baseCol = PALETTE.metalDark;
 
-  // Solid base plate with hazard stripes
-  box(root, [w + 0.1, 0.08, d + 0.1], [0, 0.04, 0], baseCol);
-  box(root, [w + 0.08, 0.01, d + 0.08], [0, 0.085, 0], PALETTE.warningYellow);
+  // 1. Raised Sturdy Diamond-Plate Platform Stand (0.22m elevated platform)
+  const standH = 0.22;
+  box(root, [w + 0.4, standH, d + 0.4], [0, standH * 0.5, 0], baseCol);
+  // Caution yellow & black hazard warning front stripe
+  box(
+    root,
+    [w + 0.38, 0.05, 0.02],
+    [0, standH * 0.75, (d + 0.4) * 0.5 + 0.005],
+    PALETTE.warningYellow,
+  );
+  // Metal weighing bed plate
+  box(root, [w + 0.16, 0.03, d + 0.16], [0, standH + 0.015, 0], '#475569');
 
-  // 4 vertical corner steel bars
+  // Digital inspection LED screen on stand front
+  box(
+    root,
+    [0.45, 0.1, 0.02],
+    [0, standH * 0.45, (d + 0.4) * 0.5 + 0.012],
+    PALETTE.metalDark,
+  );
+  box(
+    root,
+    [0.4, 0.06, 0.01],
+    [0, standH * 0.45, (d + 0.4) * 0.5 + 0.022],
+    PALETTE.neonGreen,
+  );
+
+  // 2. Heavy Welded Steel Sizer Cage
+  const yBase = standH + 0.03;
+  // 4 Main corner vertical steel uprights
   for (const bx of [-w / 2, w / 2]) {
     for (const bz of [-d / 2, d / 2]) {
-      beam(root, [bx, 0.08, bz], [bx, h + 0.08, bz], barR, cageCol);
+      beam(root, [bx, yBase, bz], [bx, yBase + h, bz], barR, cageCol);
+      // Heavy base mounting gusset
+      box(root, [0.09, 0.04, 0.09], [bx, yBase + 0.02, bz], '#64748b');
     }
   }
 
-  // Top perimeter boundary frame
+  // Top perimeter boundary frame bars
   beam(
     root,
-    [-w / 2, h + 0.08, -d / 2],
-    [w / 2, h + 0.08, -d / 2],
+    [-w / 2, yBase + h, -d / 2],
+    [w / 2, yBase + h, -d / 2],
     barR,
     cageCol,
   );
   beam(
     root,
-    [-w / 2, h + 0.08, d / 2],
-    [w / 2, h + 0.08, d / 2],
+    [-w / 2, yBase + h, d / 2],
+    [w / 2, yBase + h, d / 2],
     barR,
     cageCol,
   );
   beam(
     root,
-    [-w / 2, h + 0.08, -d / 2],
-    [-w / 2, h + 0.08, d / 2],
+    [-w / 2, yBase + h, -d / 2],
+    [-w / 2, yBase + h, d / 2],
     barR,
     cageCol,
   );
   beam(
     root,
-    [w / 2, h + 0.08, -d / 2],
-    [w / 2, h + 0.08, d / 2],
+    [w / 2, yBase + h, -d / 2],
+    [w / 2, yBase + h, d / 2],
     barR,
     cageCol,
   );
 
-  // Intermediate vertical grid slats (back and sides)
-  beam(root, [-w / 4, 0.08, -d / 2], [-w / 4, h + 0.08, -d / 2], barR, cageCol);
-  beam(root, [w / 4, 0.08, -d / 2], [w / 4, h + 0.08, -d / 2], barR, cageCol);
-  beam(root, [-w / 2, 0.08, 0], [-w / 2, h + 0.08, 0], barR, cageCol);
-  beam(root, [w / 2, 0.08, 0], [w / 2, h + 0.08, 0], barR, cageCol);
+  // Intermediate vertical security grid bars (back and sides)
+  beam(root, [-w / 4, yBase, -d / 2], [-w / 4, yBase + h, -d / 2], barR * 0.8, cageCol);
+  beam(root, [w / 4, yBase, -d / 2], [w / 4, yBase + h, -d / 2], barR * 0.8, cageCol);
+  beam(root, [-w / 2, yBase, 0], [-w / 2, yBase + h, 0], barR * 0.8, cageCol);
+  beam(root, [w / 2, yBase, 0], [w / 2, yBase + h, 0], barR * 0.8, cageCol);
 
-  // Rigid test lid bracket
+  // Rigid test drop-lid bracket with red grab bar
   beam(
     root,
-    [-w / 2, h + 0.08, 0],
-    [w / 2, h + 0.08, 0],
-    barR * 1.3,
+    [-w / 2, yBase + h, 0],
+    [w / 2, yBase + h, 0],
+    barR * 1.4,
     PALETTE.neonRed,
   );
+  // Hinged lid handle
+  box(root, [0.35, 0.05, 0.05], [0, yBase + h + 0.04, 0], PALETTE.warningYellow);
 
   // Internal Holographic Measurement Volume
-  const holoGeo = new T.BoxGeometry(w - 0.02, h, d - 0.02);
+  const holoGeo = new T.BoxGeometry(w - 0.04, h - 0.02, d - 0.04);
   const holoMat = new T.MeshStandardMaterial({
     color: '#06b6d4',
     transparent: true,
-    opacity: 0.15,
+    opacity: 0.18,
     roughness: 0.1,
     metalness: 0.2,
   });
   const holoMesh = new T.Mesh(holoGeo, holoMat);
-  holoMesh.position.set(0, h * 0.5 + 0.08, 0);
+  holoMesh.position.set(0, yBase + h * 0.5, 0);
   holoMesh.name = 'sizer-hologram';
   root.add(holoMesh);
 
-  // Siren / Beacon on top post
+  // Siren / Beacon on tall top post
   const sirenPost = new T.Group();
-  sirenPost.position.set(0, h + 0.12, -d / 2);
-  beam(sirenPost, [0, 0, 0], [0, 0.35, 0], 0.03, PALETTE.metalDark);
-  // Dome light
+  sirenPost.position.set(0, yBase + h + 0.02, -d / 2);
+  beam(sirenPost, [0, 0, 0], [0, 0.38, 0], 0.035, PALETTE.metalDark);
   const sirenDome = ball(
     sirenPost,
-    [0.1, 0.12, 0.1],
-    [0, 0.45, 0],
+    [0.12, 0.15, 0.12],
+    [0, 0.48, 0],
     PALETTE.neonRed,
   );
   sirenDome.name = 'siren-light';
   root.add(sirenPost);
 
-  // "55 x 40 x 20 CM" dimension plate
-  box(root, [0.45, 0.18, 0.04], [0, h * 0.5, d / 2 + 0.02], PALETTE.metalDark);
+  // Bold "MAX 55 x 40 x 25 CM · BUDGET-AIR" dimension plate
+  box(root, [0.75, 0.18, 0.03], [0, yBase + h * 0.5, d / 2 + 0.025], PALETTE.metalDark);
   box(
     root,
-    [0.4, 0.12, 0.01],
-    [0, h * 0.5, d / 2 + 0.045],
+    [0.7, 0.12, 0.01],
+    [0, yBase + h * 0.5, d / 2 + 0.045],
     PALETTE.warningYellow,
   );
 
@@ -335,7 +363,7 @@ export function createSizerBoxMesh(): T.Group {
 
 const SHELL_GROOVE_COLORS = ['#1d4ed8', '#b91c1c', '#047857', '#6d28d9'];
 
-/** Build an interactive suitcase 3D model with dynamic bulging lid */
+/** Build an interactive suitcase 3D model with realistic expanding/squashing shell */
 export function createSuitcaseMesh(sc: Suitcase): T.Group {
   const root = new T.Group();
   root.name = `suitcase-${sc.id}`;
@@ -346,187 +374,147 @@ export function createSuitcaseMesh(sc: Suitcase): T.Group {
   const col = SUITCASE_COLORS[sc.color % SUITCASE_COLORS.length];
   const grooveCol = SHELL_GROOVE_COLORS[sc.color % SHELL_GROOVE_COLORS.length];
 
-  // 1. Lower shell body (hard polycarbonate)
-  box(root, [w, h * 0.52, d], [0, h * 0.26, 0], col, true);
+  // 1. Lower shell body (hard molded polycarbonate)
+  box(root, [w, h * 0.48, d], [0, h * 0.24, 0], col, true);
 
-  // Horizontal corrugated ribbed grooves (classic spinner suitcase styling)
-  for (const ry of [h * 0.12, h * 0.26, h * 0.4]) {
-    // Front face rib
-    box(root, [w * 0.82, 0.02, 0.01], [0, ry, d / 2 + 0.005], grooveCol);
-    // Back face rib
-    box(root, [w * 0.82, 0.02, 0.01], [0, ry, -d / 2 - 0.005], grooveCol);
+  // Horizontal corrugated ribbed grooves
+  for (const ry of [h * 0.1, h * 0.24, h * 0.38]) {
+    box(root, [w * 0.84, 0.025, 0.012], [0, ry, d / 2 + 0.005], grooveCol);
+    box(root, [w * 0.84, 0.025, 0.012], [0, ry, -d / 2 - 0.005], grooveCol);
   }
 
   // 4 Bottom Corner guards (black reinforced protective bumpers)
-  for (const cx of [-w / 2 + 0.04, w / 2 - 0.04]) {
-    for (const cz of [-d / 2 + 0.04, d / 2 - 0.04]) {
-      box(root, [0.1, 0.12, 0.1], [cx, 0.08, cz], PALETTE.metalDark, true);
+  for (const cx of [-w / 2 + 0.05, w / 2 - 0.05]) {
+    for (const cz of [-d / 2 + 0.05, d / 2 - 0.05]) {
+      box(root, [0.12, 0.12, 0.12], [cx, 0.08, cz], PALETTE.metalDark, true);
     }
   }
 
   // 4 Dual-Spinner caster wheels
-  for (const wx of [-w / 2 + 0.09, w / 2 - 0.09]) {
-    for (const wz of [-d / 2 + 0.07, d / 2 - 0.07]) {
-      // Caster fork bracket
-      taper(root, 0.035, 0.045, 0.04, [wx, 0.045, wz], PALETTE.metalDark);
-      // Dual mini rubber tires
-      taper(root, 0.03, 0.03, 0.03, [wx - 0.015, 0.025, wz], '#111827');
-      taper(root, 0.03, 0.03, 0.03, [wx + 0.015, 0.025, wz], '#111827');
-      // Silver center axle nut
-      ball(root, [0.012, 0.012, 0.012], [wx, 0.025, wz], PALETTE.metalChrome);
+  for (const wx of [-w / 2 + 0.1, w / 2 - 0.1]) {
+    for (const wz of [-d / 2 + 0.08, d / 2 - 0.08]) {
+      taper(root, 0.04, 0.05, 0.05, [wx, 0.05, wz], PALETTE.metalDark);
+      taper(root, 0.035, 0.035, 0.035, [wx - 0.02, 0.03, wz], '#111827');
+      taper(root, 0.035, 0.035, 0.035, [wx + 0.02, 0.03, wz], '#111827');
+      ball(root, [0.015, 0.015, 0.015], [wx, 0.03, wz], PALETTE.metalChrome);
     }
   }
 
-  // Bottom protective resting studs (when laid flat)
-  for (const sz of [-d / 3, d / 3]) {
-    box(
-      root,
-      [0.015, 0.03, 0.03],
-      [-w / 2 - 0.01, h * 0.26, sz],
-      PALETTE.metalDark,
-    );
-  }
+  // 2. Expandable Fabric Accordion Gusset (stretches tall when overpacked, flattens when sat on/zipped)
+  const gusset = box(
+    root,
+    [w * 0.95, 0.08, d * 0.95],
+    [0, h * 0.48, 0],
+    '#1e293b',
+  );
+  gusset.name = 'fabric-gusset';
 
-  // 2. Bulging Upper Lid assembly (dynamically scaled on render)
+  // 3. Bulging Upper Lid Assembly (raises when full, squashes down when sat on, locks shut when zipped)
   const lid = new T.Group();
   lid.name = 'suitcase-lid';
-  lid.position.set(0, h * 0.52, 0);
+  lid.position.set(0, h * 0.48, 0);
 
-  // Upper hard shell
+  // Upper hard shell lid
   const upperMesh = box(lid, [w, h * 0.48, d], [0, h * 0.24, 0], col, true);
   upperMesh.name = 'lid-shell';
 
-  // Upper horizontal corrugated ribs
+  // Upper corrugated ribs
   for (const ry of [h * 0.1, h * 0.24, h * 0.38]) {
-    box(lid, [w * 0.82, 0.02, 0.01], [0, ry, d / 2 + 0.005], grooveCol);
-    box(lid, [w * 0.82, 0.02, 0.01], [0, ry, -d / 2 - 0.005], grooveCol);
+    box(lid, [w * 0.84, 0.025, 0.012], [0, ry, d / 2 + 0.005], grooveCol);
+    box(lid, [w * 0.84, 0.025, 0.012], [0, ry, -d / 2 - 0.005], grooveCol);
   }
 
   // 4 Top Corner guards
-  for (const cx of [-w / 2 + 0.04, w / 2 - 0.04]) {
-    for (const cz of [-d / 2 + 0.04, d / 2 - 0.04]) {
-      box(lid, [0.1, 0.1, 0.1], [cx, h * 0.44, cz], PALETTE.metalDark, true);
+  for (const cx of [-w / 2 + 0.05, w / 2 - 0.05]) {
+    for (const cz of [-d / 2 + 0.05, d / 2 - 0.05]) {
+      box(lid, [0.12, 0.12, 0.12], [cx, h * 0.42, cz], PALETTE.metalDark, true);
     }
   }
 
   // Telescopic trolley handle with brushed-aluminum twin tubes
   box(
     lid,
-    [0.035, 0.42, 0.035],
-    [-0.16, h * 0.48 + 0.2, -d / 2 + 0.05],
+    [0.04, 0.48, 0.04],
+    [-0.18, h * 0.48 + 0.24, -d / 2 + 0.06],
     '#e2e8f0',
   );
   box(
     lid,
-    [0.035, 0.42, 0.035],
-    [0.16, h * 0.48 + 0.2, -d / 2 + 0.05],
+    [0.04, 0.48, 0.04],
+    [0.18, h * 0.48 + 0.24, -d / 2 + 0.06],
     '#e2e8f0',
   );
   // Ergonomic top grip bar
   box(
     lid,
-    [0.42, 0.06, 0.06],
-    [0, h * 0.48 + 0.41, -d / 2 + 0.05],
+    [0.48, 0.07, 0.07],
+    [0, h * 0.48 + 0.48, -d / 2 + 0.06],
     PALETTE.metalDark,
     true,
   );
   // Red handle release button
   box(
     lid,
-    [0.08, 0.02, 0.03],
-    [0, h * 0.48 + 0.445, -d / 2 + 0.05],
+    [0.09, 0.02, 0.035],
+    [0, h * 0.48 + 0.52, -d / 2 + 0.06],
     PALETTE.neonRed,
   );
 
   // Soft rubberized carry handles (top & side)
-  box(
-    lid,
-    [0.22, 0.035, 0.05],
-    [0, h * 0.48 + 0.02, 0],
-    PALETTE.metalDark,
-    true,
-  );
-  box(
-    lid,
-    [0.035, 0.05, 0.18],
-    [-w / 2 - 0.02, h * 0.24, 0],
-    PALETTE.metalDark,
-    true,
-  );
+  box(lid, [0.26, 0.04, 0.06], [0, h * 0.48 + 0.02, 0], PALETTE.metalDark, true);
+  box(lid, [0.04, 0.06, 0.22], [-w / 2 - 0.02, h * 0.24, 0], PALETTE.metalDark, true);
 
-  // Travel Decal stickers on suitcase shell
-  box(
-    lid,
-    [0.14, 0.07, 0.005],
-    [-w * 0.2, h * 0.35, d / 2 + 0.006],
-    PALETTE.warningYellow,
-  ); // "B12" badge
-  box(
-    lid,
-    [0.1, 0.06, 0.005],
-    [w * 0.22, h * 0.15, d / 2 + 0.006],
-    PALETTE.neonRed,
-  ); // "HEAVY" sticker
+  // Travel Decal stickers
+  box(lid, [0.16, 0.08, 0.005], [-w * 0.22, h * 0.35, d / 2 + 0.006], PALETTE.warningYellow);
+  box(lid, [0.12, 0.07, 0.005], [w * 0.24, h * 0.16, d / 2 + 0.006], PALETTE.neonRed);
 
   // Hanging paper baggage barcode tag with cord
-  beam(
-    lid,
-    [0.12, h * 0.48 + 0.02, 0],
-    [0.14, h * 0.48 - 0.04, 0.06],
-    0.012,
-    '#ffffff',
-  );
-  box(lid, [0.07, 0.12, 0.005], [0.14, h * 0.48 - 0.1, 0.06], '#fef08a');
+  beam(lid, [0.14, h * 0.48 + 0.02, 0], [0.16, h * 0.48 - 0.05, 0.07], 0.014, '#ffffff');
+  box(lid, [0.09, 0.14, 0.005], [0.16, h * 0.48 - 0.12, 0.07], '#fef08a');
 
-  // Bulging elastic fabric belly in middle
-  const bulgeMesh = ball(
-    lid,
-    [w * 0.48, 0.1, d * 0.48],
-    [0, 0.02, 0],
-    '#1e293b',
-  );
-  bulgeMesh.name = 'bulge-belly';
-
-  // Peek-through clothing edges that reveal when overstuffed & bulging
+  // Peek-through clothing edges that reveal when bulging
   const peekSock = box(
     lid,
-    [0.1, 0.05, 0.08],
-    [w * 0.2, 0.02, d * 0.46],
+    [0.14, 0.06, 0.1],
+    [w * 0.22, 0.02, d * 0.46],
     '#f97316',
     true,
   );
   peekSock.name = 'peek-sock';
+  peekSock.visible = false;
+
   const peekShirt = box(
     lid,
-    [0.14, 0.04, 0.08],
-    [-w * 0.18, 0.02, d * 0.46],
+    [0.18, 0.05, 0.1],
+    [-w * 0.2, 0.02, d * 0.46],
     '#06b6d4',
     true,
   );
   peekShirt.name = 'peek-shirt';
+  peekShirt.visible = false;
 
   // Zipper seam track around perimeter & golden teeth line
   box(lid, [w + 0.03, 0.03, d + 0.03], [0, 0, 0], PALETTE.metalDark);
-  box(lid, [w + 0.035, 0.01, d + 0.035], [0, 0, 0], '#f59e0b');
+  box(lid, [w + 0.035, 0.012, d + 0.035], [0, 0, 0], '#f59e0b');
 
   // Zipper pull tab with ribbon
   const zipperTab = box(
     lid,
-    [0.05, 0.07, 0.04],
+    [0.06, 0.08, 0.045],
     [w * 0.4, 0, d * 0.5 + 0.02],
     '#fbbf24',
     true,
   );
   zipperTab.name = 'zipper-tab';
-  box(zipperTab, [0.025, 0.09, 0.005], [0, -0.06, 0], '#ef4444'); // Red pull ribbon
+  box(zipperTab, [0.03, 0.11, 0.005], [0, -0.07, 0], '#ef4444');
 
   root.add(lid);
 
-  // Approved green sticker tag or rejected red tag
+  // Status tag
   const tag = box(
     root,
-    [0.2, 0.13, 0.02],
-    [0, h * 0.38, d / 2 + 0.018],
+    [0.24, 0.15, 0.02],
+    [0, h * 0.36, d / 2 + 0.02],
     sc.approved ? PALETTE.neonGreen : sc.rejected ? PALETTE.neonRed : '#ffffff',
   );
   tag.name = 'status-tag';

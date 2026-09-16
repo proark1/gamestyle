@@ -9,12 +9,12 @@ export const PLAYER_RADIUS = 0.42;
 export const PLAYER_HEIGHT = 1.68;
 export const REACH_DISTANCE = 2.0;
 
-export const SUITCASE_BASE_W = 0.85;
-export const SUITCASE_BASE_H = 0.55;
-export const SUITCASE_BASE_D = 0.4;
-export const SIZER_MAX_W = 0.92;
-export const SIZER_MAX_H = 0.62;
-export const SIZER_MAX_D = 0.46;
+export const SUITCASE_BASE_W = 0.9;
+export const SUITCASE_BASE_H = 0.6;
+export const SUITCASE_BASE_D = 0.45;
+export const SIZER_MAX_W = 1.1;
+export const SIZER_MAX_H = 0.75;
+export const SIZER_MAX_D = 0.55;
 
 export const BURST_THRESHOLD = 3.2; // Maximum volume before bulging luggage explodes
 
