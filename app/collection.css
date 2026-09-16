@@ -590,3 +590,12 @@
   background: #c7d3b6;
   overflow: hidden;
 }
+
+/* Drive-Thru Static card accents */
+.drive-thru-card .game-card-tag {
+  background: #fef08a;
+  color: #b91c1c;
+}
+.drive-thru-card .game-title-dot {
+  color: #dc2626;
+}

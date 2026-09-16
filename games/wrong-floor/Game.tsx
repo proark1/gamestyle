@@ -55,6 +55,8 @@ import { HotelSound } from './audio';
 import type { HotelScene } from './scene';
 import type { HotelCameraMode } from './camera';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { WRONG_FLOOR_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -69,6 +71,8 @@ const countdown = (ms: number) =>
 const tracker = new GameTracker(hotelAnalytics);
 
 export default function WrongFloor() {
+  const { t } = useLanguage();
+  const strings = t(WRONG_FLOOR_TRANSLATIONS);
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<HotelScene | null>(null),

@@ -54,6 +54,8 @@ import type { BreakfastScene } from './scene';
 import { isNpcAction, type NpcAction } from '../../shared/rooms/npc-slots';
 import { CrewSlots } from './CrewSlots';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { FOUR_BRAIN_CELLS_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -112,6 +114,8 @@ function Hold({
 const tracker = new GameTracker(breakfastAnalytics);
 
 export default function FourBrainCells() {
+  const { t } = useLanguage();
+  const strings = t(FOUR_BRAIN_CELLS_TRANSLATIONS);
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<BreakfastScene | null>(null),
@@ -510,7 +514,7 @@ export default function FourBrainCells() {
               ) : (
                 <ChefHat size={20} />
               )}{' '}
-              Start a kitchen <ArrowUpRight size={20} />
+              {strings.startKitchen} <ArrowUpRight size={20} />
             </button>
             <div className="brain-menu-secondary">
               <button
@@ -536,8 +540,8 @@ export default function FourBrainCells() {
               fetchPriority="high"
             />
             <figcaption>
-              <span>FIRST ASSIGNMENT</span>
-              <strong>How hard can breakfast be?</strong>
+              <span>{strings.firstAssignment}</span>
+              <strong>{strings.howHardBreakfast}</strong>
               <div>
                 {LIMBS.map((l) => (
                   <i key={l.short} style={{ background: l.color }} />
@@ -551,9 +555,9 @@ export default function FourBrainCells() {
           <section className="brain-order" aria-label="Breakfast order">
             <div>
               <span>
-                <Utensils size={15} /> TABLE ONE
+                <Utensils size={15} /> {strings.tableOne}
               </span>
-              <strong>Breakfast, please.</strong>
+              <strong>{strings.breakfastPlease}</strong>
               <div className="brain-order-items">
                 <span className={w?.pancakes === 3 ? 'complete' : ''}>
                   <Check size={15} /> {w?.pancakes ?? 0}/3 pancakes

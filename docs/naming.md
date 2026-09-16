@@ -13,16 +13,18 @@ Approved on 2026-09-07:
 
 Added 2026-09-09:
 
-| Game                                  | Display name     | Route / internal ID |
-| ------------------------------------- | ---------------- | ------------------- |
-| Cooperative medieval siege            | Siege and Desist | `/siege-and-desist` |
-| Competitive crane stacking party game | Crane Clash      | `/crane-clash`      |
-| 2v2 street basketball party game      | Court Clash      | `/basketball`       |
-| 2v2 tethered tennis doubles mayhem    | Bungee Doubles   | `/bungee-doubles`   |
+| Game                                  | Display name      | Route / internal ID |
+| ------------------------------------- | ----------------- | ------------------- |
+| Cooperative medieval siege            | Siege and Desist  | `/siege-and-desist` |
+| Competitive crane stacking party game | Crane Clash       | `/crane-clash`      |
+| 2v2 street basketball party game      | Court Clash       | `/basketball`       |
+| 2v2 tethered tennis doubles mayhem    | Bungee Doubles    | `/bungee-doubles`   |
+| Fast-food drive-thru co-op mayhem     | Drive-Thru Static | `/drive-thru`       |
 
 Crane Clash is a 2v2 physics party game where 2 cranes and 4 players swing, grab, and stack crates as high as possible. The display name, route, game identifier, and room namespace are `crane-clash`.
 Court Clash is a 2v2 street basketball party game in the Stack or Sink style with super jumps and combo dunks. The display name is `Court Clash`, the route and game identifier are `basketball`.
 Bungee Doubles is a 2v2 tethered tennis doubles party game where teammates are linked by an elastic bungee cord for slingshot smashes and slapstick collisions. The display name, route, and game identifier are `bungee-doubles`.
+Drive-Thru Static is a frantic fast-food drive-thru co-op and party game featuring a scrambled intercom speaker box, chaotic kitchen grill assembly, clumsy sedan driving, and the ragdoll Short Stop window reach. The display name is `Drive-Thru Static`, and the route and game identifier are `drive-thru`.
 
 The platform is **Jumbleyard**, with this exact spelling. Blend Business and
 Tiptoe Thieves are deliberately independent of a particular animal, disguise,

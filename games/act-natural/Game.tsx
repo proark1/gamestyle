@@ -55,6 +55,8 @@ import {
 } from './types';
 import type { FarmHud, FarmScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { ACT_NATURAL_TRANSLATIONS } from './translations';
 import './mobile.css';
 import {
   GameTracker,
@@ -75,6 +77,8 @@ const initialHud: FarmHud = {
 const tracker = new GameTracker(farmAnalytics);
 
 export default function ActNatural() {
+  const { t } = useLanguage();
+  const strings = t(ACT_NATURAL_TRANSLATIONS);
   useGameTracker(tracker);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<FarmScene | null>(null),
@@ -512,7 +516,7 @@ export default function ActNatural() {
         <>
           <section className="farm-menu">
             <div className="eyebrow">
-              <span className="tiny-line" /> A VERY SUSPICIOUS PARTY GAME
+              <span className="tiny-line" /> {strings.suspiciousPartyGame}
             </div>
             <h1>
               ACT
@@ -547,7 +551,7 @@ export default function ActNatural() {
                 {busy
                   ? 'Opening the farm…'
                   : ready
-                    ? 'Create a farm'
+                    ? strings.createFarm
                     : 'Loading the pasture…'}
                 {!ready || busy ? (
                   <LoaderCircle size={18} className="spin" />
@@ -560,14 +564,14 @@ export default function ActNatural() {
                 disabled={!ready || busy}
                 onClick={() => setModal('join')}
               >
-                Join with a room code <Users size={17} />
+                {strings.joinCode} <Users size={17} />
               </button>
               <button
                 className="practice-link"
                 disabled={!ready || busy}
                 onClick={solo}
               >
-                Solo practice · outsmart the computer <ArrowUpRight size={14} />
+                {strings.soloPractice} <ArrowUpRight size={14} />
               </button>
             </div>
             <div className="farm-menu-meta">

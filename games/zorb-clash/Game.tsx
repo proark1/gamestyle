@@ -24,6 +24,9 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { zorbClashAnalytics } from './analytics';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import { ZORB_CLASH_TRANSLATIONS } from './translations';
 
 const tracker = new GameTracker(zorbClashAnalytics);
 
@@ -158,6 +161,8 @@ function PitchRadar({
 
 export default function ZorbClash() {
   useGameTracker(tracker);
+  const { t } = useLanguage();
+  const strings = t(ZORB_CLASH_TRANSLATIONS);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<ZorbClashScene | null>(null);
@@ -329,12 +334,15 @@ export default function ZorbClash() {
 
   return (
     <main className="zorb-container">
+      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 40 }}>
+        <LanguageSwitcher variant="header" />
+      </div>
       <div ref={containerRef} className="zorb-canvas-wrapper" />
 
       {/* Top Header HUD */}
       <div className="zorb-hud-top">
         <div className="zorb-team-score red">
-          <span>Red</span>
+          <span>{strings.red}</span>
           <span className="zorb-score-num">
             {snapshot?.world.score.red ?? 0}
           </span>
@@ -345,7 +353,7 @@ export default function ZorbClash() {
             {formatTime(snapshot?.world.timeRemaining ?? 180)}
           </div>
           <div className="zorb-bonk-count">
-            <Flame size={13} /> {snapshot?.world.bonkCount ?? 0} BONKS
+            <Flame size={13} /> {snapshot?.world.bonkCount ?? 0} {strings.bonks}
           </div>
         </div>
 
@@ -353,7 +361,7 @@ export default function ZorbClash() {
           <span className="zorb-score-num">
             {snapshot?.world.score.blue ?? 0}
           </span>
-          <span>Blue</span>
+          <span>{strings.blue}</span>
         </div>
       </div>
 
@@ -369,22 +377,22 @@ export default function ZorbClash() {
       {/* Comical Upside-Down Turtle Alert */}
       {isTurtle && (
         <div className="zorb-turtle-banner">
-          TURTLE&apos;D! 🐢
-          <small>Wiggle WASD to roll over or get rammed by a teammate!</small>
+          {strings.turtled}
+          <small>{strings.turtledSub}</small>
         </div>
       )}
 
       {/* Goal Banner */}
       {isGoalScored && lastGoal && (
         <div className="zorb-goal-banner">
-          <h1 className="zorb-goal-title">GOOOAL! ⚽</h1>
+          <h1 className="zorb-goal-title">{strings.goal}</h1>
           <div className="zorb-goal-subtitle">
-            {lastGoal.scorerName} scored for {lastGoal.team.toUpperCase()}!
+            {strings.goalSub
+              .replace('{scorer}', lastGoal.scorerName)
+              .replace('{team}', lastGoal.team.toUpperCase())}
           </div>
           {lastGoal.isTurtleGoal && (
-            <div className="zorb-goal-turtle-badge">
-              🔥 TURTLE GOAL! BONUS STYLE POINTS! 🔥
-            </div>
+            <div className="zorb-goal-turtle-badge">{strings.turtleGoal}</div>
           )}
         </div>
       )}
@@ -397,14 +405,14 @@ export default function ZorbClash() {
             <span className="zorb-key-tag">A</span>
             <span className="zorb-key-tag">S</span>
             <span className="zorb-key-tag">D</span>
-            <span className="zorb-hint-label">Roll</span>
+            <span className="zorb-hint-label">{strings.roll}</span>
           </div>
         )}
 
         <div className="zorb-dash-container">
           <div className="zorb-dash-label">
             <Zap size={15} color="#ffd166" />
-            <span>Bumper Dash</span>
+            <span>{strings.bumperDash}</span>
             <span className="zorb-dash-key">Space</span>
           </div>
           <div className="zorb-dash-bar-bg">
@@ -417,7 +425,7 @@ export default function ZorbClash() {
 
         <div className={`zorb-brace-badge ${isBraced ? 'active' : ''}`}>
           <Shield size={14} />
-          <span>Brace Anchor</span>
+          <span>{strings.braceAnchor}</span>
           <span className="zorb-dash-key">Shift</span>
         </div>
       </div>
@@ -460,26 +468,26 @@ export default function ZorbClash() {
       {isEnded && (
         <div className="zorb-modal-overlay">
           <div className="zorb-modal">
-            <h2>MATCH OVER!</h2>
+            <h2>{strings.matchOver}</h2>
             <p>
               {snapshot?.world.score.red === snapshot?.world.score.blue
-                ? "It's an explosive draw!"
+                ? strings.explosiveDraw
                 : snapshot?.world.score.red! > snapshot?.world.score.blue!
-                  ? 'Red Team Takes the Trophy! 🏆'
-                  : 'Blue Team Takes the Trophy! 🏆'}
+                  ? strings.redTrophy
+                  : strings.blueTrophy}
             </p>
 
             <div className="zorb-stats-grid">
               <div className="zorb-stat-card">
                 <strong>{snapshot?.world.bonkCount ?? 0}</strong>
-                <span>Explosive Bonks</span>
+                <span>{strings.explosiveBonks}</span>
               </div>
               <div className="zorb-stat-card">
                 <strong>
                   {snapshot?.world.score.red ?? 0} -{' '}
                   {snapshot?.world.score.blue ?? 0}
                 </strong>
-                <span>Final Score</span>
+                <span>{strings.finalScore}</span>
               </div>
             </div>
 
@@ -488,7 +496,7 @@ export default function ZorbClash() {
                 size={18}
                 style={{ display: 'inline', marginRight: '6px' }}
               />
-              Rematch!
+              {strings.rematch}
             </button>
           </div>
         </div>

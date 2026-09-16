@@ -46,10 +46,14 @@ import {
   idleInput,
 } from './types';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { PANIC_CURLING_TRANSLATIONS } from './translations';
 
 const tracker = new GameTracker(panicCurlingAnalytics);
 
 export default function PanicCurlingGame() {
+  const { t } = useLanguage();
+  const strings = t(PANIC_CURLING_TRANSLATIONS);
   useGameTracker(tracker);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -384,7 +388,9 @@ export default function PanicCurlingGame() {
 
         {showTactics && (
           <div className="curling-tactics-menu">
-            <span className="curling-tactics-section-title">Select Team</span>
+            <span className="curling-tactics-section-title">
+              {strings.selectTeam}
+            </span>
             <div className="curling-btn-group">
               <button
                 className={`curling-toggle-btn ${team === 'red' ? 'active' : ''}`}
@@ -406,7 +412,9 @@ export default function PanicCurlingGame() {
               </button>
             </div>
 
-            <span className="curling-tactics-section-title">Select Role</span>
+            <span className="curling-tactics-section-title">
+              {strings.selectRole}
+            </span>
             <div className="curling-btn-group">
               <button
                 className={`curling-toggle-btn ${role === 'deliverer' ? 'active' : ''}`}
@@ -505,16 +513,12 @@ export default function PanicCurlingGame() {
 
       {/* Thin Ice Hazard Warning Alert */}
       {hasStressedIce && (
-        <div className="curling-ice-warning">
-          ⚠️ DANGER: THIN ICE IS CRACKING! SPREAD OUT!
-        </div>
+        <div className="curling-ice-warning">{strings.thinIceWarning}</div>
       )}
 
       {/* Waiting Indicator during Opponent Turn */}
       {world?.phase === 'aiming' && !isMyTurn && (
-        <div className="curling-waiting-banner">
-          ⏳ Opponent is lining up their throw...
-        </div>
+        <div className="curling-waiting-banner">{strings.waitingOpponent}</div>
       )}
 
       {/* Deliverer Aim & Power Controls */}
@@ -531,8 +535,8 @@ export default function PanicCurlingGame() {
               }}
             >
               <span className="curling-stone-icon">🪨</span>
-              <span className="curling-stone-name">Granite</span>
-              <span className="curling-stone-sub">Balanced Curler</span>
+              <span className="curling-stone-name">{strings.graniteName}</span>
+              <span className="curling-stone-sub">{strings.graniteSub}</span>
             </button>
             <button
               className={`curling-stone-card ${stoneKind === 'anvil' ? 'active' : ''}`}
@@ -543,8 +547,8 @@ export default function PanicCurlingGame() {
               }}
             >
               <span className="curling-stone-icon">⚓</span>
-              <span className="curling-stone-name">Anvil</span>
-              <span className="curling-stone-sub">Cracks Ice • Smash</span>
+              <span className="curling-stone-name">{strings.anvilName}</span>
+              <span className="curling-stone-sub">{strings.anvilSub}</span>
             </button>
             <button
               className={`curling-stone-card ${stoneKind === 'basket' ? 'active' : ''}`}
@@ -555,8 +559,8 @@ export default function PanicCurlingGame() {
               }}
             >
               <span className="curling-stone-icon">🧺</span>
-              <span className="curling-stone-name">Teammate</span>
-              <span className="curling-stone-sub">Agile • Wild Spin</span>
+              <span className="curling-stone-name">{strings.teammateName}</span>
+              <span className="curling-stone-sub">{strings.teammateSub}</span>
             </button>
           </div>
 
@@ -574,7 +578,7 @@ export default function PanicCurlingGame() {
                   spinRef.current = -1;
                 }}
               >
-                ⟲ Curl Left
+                {strings.curlLeft}
               </button>
               <button
                 className={`curling-toggle-btn ${spin > 0 ? 'active' : ''}`}
@@ -584,7 +588,7 @@ export default function PanicCurlingGame() {
                   spinRef.current = 1;
                 }}
               >
-                ⟳ Curl Right
+                {strings.curlRight}
               </button>
             </div>
           </div>
@@ -592,13 +596,15 @@ export default function PanicCurlingGame() {
           {/* Power Meter with Labeled Zones */}
           <div className="curling-power-meter">
             <div className="curling-power-label">
-              <span>Launch Power: {Math.round(power * 100)}%</span>
+              <span>
+                {strings.launchPower}: {Math.round(power * 100)}%
+              </span>
               <span className="curling-power-zone-tag">
                 {power < 0.35
-                  ? '🛡️ Guard Shot'
+                  ? strings.guardShot
                   : power < 0.72
-                    ? '🎯 Draw to House (Tee)'
-                    : '💥 High Takeout!'}
+                    ? strings.drawToHouse
+                    : strings.highTakeout}
               </span>
             </div>
             <div className="curling-power-bar-bg">
@@ -608,9 +614,11 @@ export default function PanicCurlingGame() {
               />
             </div>
             <div className="curling-power-zones">
-              <span className="curling-zone-guard">Guard (0-35%)</span>
-              <span className="curling-zone-draw">House Draw (35-72%)</span>
-              <span className="curling-zone-takeout">Takeout (72-100%)</span>
+              <span className="curling-zone-guard">{strings.zoneGuard}</span>
+              <span className="curling-zone-draw">{strings.zoneDraw}</span>
+              <span className="curling-zone-takeout">
+                {strings.zoneTakeout}
+              </span>
             </div>
           </div>
 
@@ -626,7 +634,7 @@ export default function PanicCurlingGame() {
                 })
               }
             >
-              ◀ Aim Left
+              {strings.aimLeft}
             </button>
             <span className="curling-aim-display">
               {aimAngle === 0
@@ -640,7 +648,7 @@ export default function PanicCurlingGame() {
                 aimAngleRef.current = 0;
               }}
             >
-              Reset
+              {strings.reset}
             </button>
             <button
               className="curling-aim-btn"
@@ -652,16 +660,14 @@ export default function PanicCurlingGame() {
                 })
               }
             >
-              Aim Right ▶
+              {strings.aimRight}
             </button>
           </div>
 
           {/* Juicy Deliver Button */}
           <button className="curling-launch-btn" onClick={handleLaunch}>
-            <span>DELIVER STONE! 🚀</span>
-            <span className="curling-launch-sub">
-              Release at peak power to shoot
-            </span>
+            <span>{strings.deliverStone}</span>
+            <span className="curling-launch-sub">{strings.releaseAtPeak}</span>
           </button>
         </div>
       )}
@@ -710,7 +716,7 @@ export default function PanicCurlingGame() {
                 steerDirRef.current = 0;
               }}
             >
-              ⇦ Steer Left
+              {strings.steerLeft}
             </button>
 
             <button
@@ -732,7 +738,7 @@ export default function PanicCurlingGame() {
                 isSweepingRef.current = false;
               }}
             >
-              <Sparkles size={24} /> SWEEP HARDER!
+              <Sparkles size={24} /> {strings.sweepHarder}
             </button>
 
             <button
@@ -754,7 +760,7 @@ export default function PanicCurlingGame() {
                 steerDirRef.current = 0;
               }}
             >
-              Steer Right ⇨
+              {strings.steerRight}
             </button>
           </div>
         </div>
@@ -763,7 +769,7 @@ export default function PanicCurlingGame() {
       {/* Banana Sabotage Button */}
       {myPlayer && myPlayer.bananasLeft > 0 && (
         <button className="curling-banana-btn" onClick={handleTossBanana}>
-          🍌 Toss Banana ({myPlayer.bananasLeft} left)
+          {strings.tossBanana.replace('{count}', String(myPlayer.bananasLeft))}
         </button>
       )}
 
@@ -771,10 +777,10 @@ export default function PanicCurlingGame() {
       {world?.phase === 'end_summary' && (
         <div className="curling-modal-overlay">
           <div className="curling-modal-card">
-            <h2 className="curling-modal-title">END {world.round} COMPLETE!</h2>
-            <p className="curling-modal-desc">
-              The stones have settled in the House. Here are the round scores:
-            </p>
+            <h2 className="curling-modal-title">
+              {strings.endComplete.replace('{round}', String(world.round))}
+            </h2>
+            <p className="curling-modal-desc">{strings.endDesc}</p>
             <div className="curling-modal-scores">
               <div className="curling-modal-team-score">
                 <span className="curling-modal-team-name">
@@ -794,7 +800,7 @@ export default function PanicCurlingGame() {
               </div>
             </div>
             <p style={{ color: '#8ed6ff', fontWeight: 700 }}>
-              Preparing next end on fresh ice...
+              {strings.freshIce}
             </p>
           </div>
         </div>
@@ -808,13 +814,13 @@ export default function PanicCurlingGame() {
               color="#f1c40f"
               style={{ margin: '0 auto 14px' }}
             />
-            <h2 className="curling-modal-title">MATCH FINISHED!</h2>
+            <h2 className="curling-modal-title">{strings.matchFinished}</h2>
             <p className="curling-modal-desc">
               {world.scores.red > world.scores.blue
-                ? '🏆 RED ROVERS WIN THE TOURNAMENT!'
+                ? strings.redWins
                 : world.scores.blue > world.scores.red
-                  ? '🏆 BLUE BLAZERS WIN THE TOURNAMENT!'
-                  : '🤝 IT’S A FROZEN DRAW!'}
+                  ? strings.blueWins
+                  : strings.draw}
             </p>
             <div className="curling-modal-scores">
               <div className="curling-modal-team-score">
@@ -842,7 +848,7 @@ export default function PanicCurlingGame() {
                 size={18}
                 style={{ display: 'inline', marginRight: '6px' }}
               />
-              PLAY AGAIN
+              {strings.playAgain}
             </button>
           </div>
         </div>

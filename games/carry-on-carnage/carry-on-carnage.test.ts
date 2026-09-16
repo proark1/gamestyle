@@ -304,6 +304,10 @@ void test('player can unpack / remove an item from an open suitcase', () => {
     it1.id,
     'Player should now be holding the unpacked item',
   );
-  assert.equal(it1.packedIn, null, 'Item should no longer be packed in suitcase');
+  assert.equal(
+    it1.packedIn,
+    null,
+    'Item should no longer be packed in suitcase',
+  );
   assert.equal(sc.items.length, 0, 'Suitcase items array should be empty');
 });

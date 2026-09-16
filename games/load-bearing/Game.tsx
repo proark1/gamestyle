@@ -46,6 +46,8 @@ import {
 import { LoadBearingSound } from './audio';
 import type { LoadBearingScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { LOAD_BEARING_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -62,6 +64,8 @@ const clock = (ms: number) => {
 const tracker = new GameTracker(loadBearingAnalytics);
 
 export default function LoadBearing() {
+  const { t } = useLanguage();
+  const strings = t(LOAD_BEARING_TRANSLATIONS);
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<LoadBearingScene | null>(null),
@@ -438,7 +442,7 @@ export default function LoadBearing() {
       {!session && (
         <section className="lb-welcome">
           <p className="eyebrow">
-            <span className="tiny-line" /> A THREE-MINUTE DEMOLITION JOB
+            <span className="tiny-line" /> {strings.demolitionJob}
           </p>
           <h1>
             LOAD
@@ -476,7 +480,7 @@ export default function LoadBearing() {
                 <LoaderCircle className="spin" size={18} />
               ) : (
                 <>
-                  Start a crew <ArrowRight size={18} />
+                  {strings.startCrew} <ArrowRight size={18} />
                 </>
               )}
             </button>
@@ -486,7 +490,7 @@ export default function LoadBearing() {
               disabled={!ready || busy}
               onClick={() => setModal('join')}
             >
-              Join with a room code <Users size={17} />
+              {strings.joinCode} <Users size={17} />
             </button>
             <div className="lb-practice">
               <button
@@ -495,7 +499,7 @@ export default function LoadBearing() {
                 disabled={!ready || busy}
                 onClick={() => startPractice(1)}
               >
-                Just me? Try it solo <HardHat size={14} />
+                {strings.trySolo} <HardHat size={14} />
               </button>
               <button
                 className="practice-link"
@@ -503,7 +507,7 @@ export default function LoadBearing() {
                 disabled={!ready || busy}
                 onClick={() => startPractice(4)}
               >
-                Practice with a crew <Users size={14} />
+                {strings.practiceCrew} <Users size={14} />
               </button>
             </div>
             <p className="start-tip">

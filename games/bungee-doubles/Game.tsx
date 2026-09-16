@@ -22,6 +22,9 @@ import {
 import { BungeeDoublesSound } from './audio';
 import { BungeeScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import { BUNGEE_DOUBLES_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -31,6 +34,8 @@ import { bungeeDoublesAnalytics } from './analytics';
 const tracker = new GameTracker(bungeeDoublesAnalytics);
 
 export default function BungeeDoublesGame() {
+  const { t } = useLanguage();
+  const strings = t(BUNGEE_DOUBLES_TRANSLATIONS);
   useGameTracker(tracker);
 
   const container = useRef<HTMLDivElement>(null);
@@ -182,12 +187,15 @@ export default function BungeeDoublesGame() {
 
   return (
     <div className="bungee-game">
+      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 30 }}>
+        <LanguageSwitcher variant="header" />
+      </div>
       <div ref={container} className="bungee-canvas" />
 
       {/* 360 Camera Orbit Helper Badge */}
       <div className="bungee-camera-hint">
         <Camera size={13} />
-        <span>Drag court to orbit 360°</span>
+        <span>{strings.orbitHint}</span>
         <kbd>Q/R</kbd>
         <kbd>C</kbd>
       </div>
@@ -198,20 +206,20 @@ export default function BungeeDoublesGame() {
           className={`bungee-team-score orange ${world?.serverTeam === 'orange' ? 'serving' : ''}`}
         >
           <div className="bungee-score-meta">
-            <span>Orange</span>
-            <span>Team</span>
+            <span>{strings.orange}</span>
+            <span>{strings.team}</span>
           </div>
           <span className="bungee-score-val">{world?.scores.orange ?? 0}</span>
           {world?.serverTeam === 'orange' && (
-            <span className="bungee-serve-indicator" title="Serving" />
+            <span className="bungee-serve-indicator" title={strings.serving} />
           )}
         </div>
 
         <div className="bungee-center-badge">
-          <span className="bungee-center-label">RALLY</span>
+          <span className="bungee-center-label">{strings.rally}</span>
           <span className="bungee-rally-val">{world?.rallyCount ?? 0}</span>
           {world && world.rallyCount >= 5 && (
-            <span className="bungee-rally-streak">HOT STREAK!</span>
+            <span className="bungee-rally-streak">{strings.hotStreak}</span>
           )}
         </div>
 
@@ -219,12 +227,12 @@ export default function BungeeDoublesGame() {
           className={`bungee-team-score teal ${world?.serverTeam === 'teal' ? 'serving' : ''}`}
         >
           {world?.serverTeam === 'teal' && (
-            <span className="bungee-serve-indicator" title="Serving" />
+            <span className="bungee-serve-indicator" title={strings.serving} />
           )}
           <span className="bungee-score-val">{world?.scores.teal ?? 0}</span>
           <div className="bungee-score-meta">
-            <span>Teal</span>
-            <span>Team</span>
+            <span>{strings.teal}</span>
+            <span>{strings.team}</span>
           </div>
         </div>
       </div>
@@ -234,7 +242,7 @@ export default function BungeeDoublesGame() {
         <div className={`bungee-tension-card ${tensionClass}`}>
           <div className="bungee-tension-header">
             <Zap size={13} className="bungee-zap-icon" />
-            <span className="bungee-tension-title">BUNGEE STRAIN</span>
+            <span className="bungee-tension-title">{strings.bungeeStrain}</span>
             <span className="bungee-tension-pct">{tensionVal}%</span>
           </div>
           <div className="bungee-tension-bar">
@@ -245,7 +253,7 @@ export default function BungeeDoublesGame() {
           </div>
           {tensionVal >= 55 && (
             <span className="bungee-tension-hint">
-              {tensionVal >= 80 ? 'CRITICAL SNAP DANGER!' : 'SLINGSHOT READY'}
+              {tensionVal >= 80 ? strings.criticalSnap : strings.slingshotReady}
             </span>
           )}
         </div>
@@ -254,7 +262,7 @@ export default function BungeeDoublesGame() {
       {/* Point Banner */}
       {banner && (
         <div className="bungee-banner">
-          <span className="bungee-banner-pill">RALLY UPDATE</span>
+          <span className="bungee-banner-pill">{strings.rallyUpdate}</span>
           <h2>{banner.text}</h2>
           <p>{banner.subtext}</p>
         </div>
@@ -264,14 +272,16 @@ export default function BungeeDoublesGame() {
       {world?.phase === 'ended' && world.winner && (
         <div className="bungee-banner win">
           <Trophy size={48} color="#f1c40f" />
-          <h2>{world.winner.toUpperCase()} WINS!</h2>
-          <p>Championship Match Complete</p>
+          <h2>
+            {world.winner.toUpperCase()} {strings.wins}
+          </h2>
+          <p>{strings.matchComplete}</p>
           <button
             className="bungee-btn primary"
             style={{ marginTop: 14 }}
             onClick={() => dispatchAction({ type: 'restart' })}
           >
-            Play Again
+            {strings.playAgain}
           </button>
         </div>
       )}
@@ -283,7 +293,7 @@ export default function BungeeDoublesGame() {
           onClick={() => dispatchAction({ type: 'swing' })}
         >
           <Flame size={14} />
-          <span>Volley</span>
+          <span>{strings.volley}</span>
           <kbd className="bungee-kbd">SPACE</kbd>
         </button>
         <button
@@ -291,14 +301,14 @@ export default function BungeeDoublesGame() {
           onClick={() => dispatchAction({ type: 'smash' })}
         >
           <Zap size={14} />
-          <span>Smash</span>
+          <span>{strings.smash}</span>
           <kbd className="bungee-kbd">E</kbd>
         </button>
         <button
           className="bungee-btn"
           onClick={() => dispatchAction({ type: 'dive' })}
         >
-          <span>Dive</span>
+          <span>{strings.dive}</span>
           <kbd className="bungee-kbd">SHIFT</kbd>
         </button>
         <button
@@ -310,7 +320,7 @@ export default function BungeeDoublesGame() {
           }}
         >
           <Users size={14} />
-          <span>Switch Team</span>
+          <span>{strings.switchTeam}</span>
         </button>
         <button
           className="bungee-btn"
@@ -318,7 +328,7 @@ export default function BungeeDoublesGame() {
           title="Cycle camera angle (C)"
         >
           <Camera size={14} />
-          <span>Camera</span>
+          <span>{strings.camera}</span>
           <kbd className="bungee-kbd">C</kbd>
         </button>
         <button
@@ -326,7 +336,7 @@ export default function BungeeDoublesGame() {
           onClick={() => dispatchAction({ type: 'restart' })}
         >
           <RotateCcw size={14} />
-          <span>Reset</span>
+          <span>{strings.reset}</span>
         </button>
       </div>
 

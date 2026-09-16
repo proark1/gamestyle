@@ -52,6 +52,8 @@ import { GiantSound } from './sound';
 import { escapeWarning, GIANT_SHOUT, untilGiantWakes } from './urgency';
 import { wakePose } from './giant-motion';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { DONT_WAKE_THE_GIANT_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -66,6 +68,8 @@ const duration = (ms: number) => {
 const tracker = new GameTracker(giantAnalytics);
 
 export default function GiantGame() {
+  const { t } = useLanguage();
+  const strings = t(DONT_WAKE_THE_GIANT_TRANSLATIONS);
   useGameTracker(tracker);
   const canvas = useRef<HTMLDivElement>(null),
     scene = useRef<GiantScene | null>(null),
@@ -424,7 +428,7 @@ export default function GiantGame() {
               ) : (
                 <Users size={18} />
               )}{' '}
-              Create a crew <ArrowRight size={18} />
+              {strings.createCrew} <ArrowRight size={18} />
             </button>
             <button
               className="giant-secondary"
@@ -441,7 +445,7 @@ export default function GiantGame() {
               disabled={!ready || busy}
               onClick={solo}
             >
-              Sneak in solo <ArrowRight size={15} />
+              {strings.sneakSolo} <ArrowRight size={15} />
             </button>
           </div>
           <div className="giant-start-meta">

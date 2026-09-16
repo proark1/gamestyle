@@ -35,6 +35,8 @@ import {
 import type { ShelfScene } from './scene';
 import type { ShelfAudio } from './audio';
 import './shelf-control.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { SHELF_CONTROL_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -132,6 +134,8 @@ function Joystick({ move }: { move: (p: Point) => void }) {
 const tracker = new GameTracker(shelfAnalytics);
 
 export default function ShelfControl() {
+  const { t } = useLanguage();
+  const strings = t(SHELF_CONTROL_TRANSLATIONS);
   useGameTracker(tracker);
   const [readShelfState] = useState(() => shelfStateReader());
   const [name, setName] = useState(''),

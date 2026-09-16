@@ -151,6 +151,8 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     'chaos:worker',
     'crane-clash:crane-crew',
     'dont-wake-the-giant:thief',
+    'drive-thru:cook',
+    'drive-thru:driver',
     'load-bearing:wrecker',
     'one-more-button:contestant',
     'panic-curling:curler',

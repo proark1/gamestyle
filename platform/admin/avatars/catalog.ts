@@ -23,6 +23,7 @@ import { bungeeDoublesAvatars } from '../../../games/bungee-doubles/avatar';
 import { curlingAvatars } from '../../../games/panic-curling/avatar';
 import { carryOnCarnageAvatars } from '../../../games/carry-on-carnage/avatar';
 import { sampleStampedeAvatars } from '../../../games/sample-stampede/avatar';
+import { driveThruAvatars } from '../../../games/drive-thru/avatar';
 import { GAMES } from '../../analytics/catalog';
 
 export type AvatarCard = {
@@ -157,6 +158,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'sample-stampede': {
     looks: sampleStampedeAvatars,
     note: 'The shared worker dressed in wholesale club apron and cap, operating carts and grabbers.',
+  },
+  'drive-thru': {
+    looks: driveThruAvatars,
+    note: 'The shared worker as drive-thru driver with cap and kitchen cook with paper hat and apron.',
   },
 };
 

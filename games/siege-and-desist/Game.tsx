@@ -65,6 +65,8 @@ import {
 import { SiegeSound } from './audio';
 import type { SiegeScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { SIEGE_AND_DESIST_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -92,6 +94,8 @@ const MASCOTS = [
 ] as const;
 
 export default function SiegeAndDesist() {
+  const { t } = useLanguage();
+  const strings = t(SIEGE_AND_DESIST_TRANSLATIONS);
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<SiegeScene | null>(null),

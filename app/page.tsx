@@ -9,6 +9,7 @@ const PINNED = [
 ] as const;
 
 const SHUFFLED = [
+  'drive-thru',
   'sample-stampede',
   'carry-on-carnage',
   'bungee-doubles',

@@ -38,6 +38,8 @@ import {
   type Suitcase,
 } from './types';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { CARRY_ON_TRANSLATIONS } from './translations';
 
 const tracker = new GameTracker(carryOnCarnageAnalytics);
 
@@ -49,6 +51,8 @@ const formatTime = (ms: number) => {
 };
 
 export default function CarryOnCarnageGame() {
+  const { t } = useLanguage();
+  const strings = t(CARRY_ON_TRANSLATIONS);
   useGameTracker(tracker);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -220,7 +224,7 @@ export default function CarryOnCarnageGame() {
       {world && (
         <div className="carryon-target-hud">
           <Luggage size={18} className="text-sky-400" />
-          <span>Bags Approved:</span>
+          <span>{strings.bagsApproved}</span>
           <span className="carryon-target-count">
             {world.approvedCount} / {world.targetBags}
           </span>
@@ -231,17 +235,13 @@ export default function CarryOnCarnageGame() {
       {world && (
         <div className="carryon-fids">
           <div className="carryon-fids-flight">
-            <span className="carryon-fids-label">
-              BUDGET-AIR · FLIGHT 707 TO IBIZA
-            </span>
+            <span className="carryon-fids-label">{strings.flightToIbiza}</span>
             <div className="carryon-fids-status-row">
               <span
                 className={`carryon-fids-dot ${isUrgent ? 'urgent' : ''}`}
               />
               <span className="carryon-fids-code">
-                {isUrgent
-                  ? 'FINAL CALL · GATE CLOSING'
-                  : 'NOW BOARDING · GATE B12'}
+                {isUrgent ? strings.finalCall : strings.nowBoarding}
               </span>
             </div>
           </div>
@@ -262,12 +262,16 @@ export default function CarryOnCarnageGame() {
         <div className="carryon-score-hud">
           <div className="carryon-score-badge">
             <Sparkles size={16} />
-            <span>{world.totalScore} PTS</span>
+            <span>
+              {world.totalScore} {strings.pts}
+            </span>
           </div>
           {world.feesPaid > 0 && (
             <div className="carryon-fee-badge">
               <AlertTriangle size={14} />
-              <span>-${world.feesPaid} GATE FEES</span>
+              <span>
+                -${world.feesPaid} {strings.gateFees}
+              </span>
             </div>
           )}
         </div>
@@ -282,35 +286,36 @@ export default function CarryOnCarnageGame() {
           <div className="carryon-luggage-status-pill">
             {nearbySc.approved ? (
               <span className="text-emerald-400 font-bold">
-                ✅ SIZER APPROVED (PASSED CAGE TEST)
+                {strings.sizerApproved}
               </span>
             ) : nearbySc.burst ? (
               <span className="text-rose-400 font-bold">
-                💥 PIÑATA BURST! GATHER ITEMS & REPACK!
+                {strings.pinataBurst}
               </span>
             ) : nearbySc.zipped >= 0.98 ? (
               <span className="text-emerald-300 font-bold">
                 {me?.sittingOn === nearbySc.id
-                  ? '🔒 FULLY ZIPPED · HOP OFF [R] & CARRY TO SIZER'
-                  : '🔒 FULLY ZIPPED · CARRY TO SIZER BOX (E)'}
+                  ? strings.fullyZippedHopOff
+                  : strings.fullyZippedCarry}
               </span>
             ) : me?.sittingOn === nearbySc.id ? (
               <span className="text-emerald-300 font-bold">
-                🧳 SITTING & COMPRESSING ({Math.round(nearbySc.compression * 100)}%) · PULL ZIPPER (F)
+                {strings.sittingCompressing.replace(
+                  '{pct}',
+                  String(Math.round(nearbySc.compression * 100)),
+                )}
               </span>
             ) : nearbySc.bulge > 0.15 ? (
               <span className="text-amber-300 font-bold">
-                ⚠️ OVERSTUFFED! SIT/STOMP TO COMPRESS BEFORE ZIPPING (R)
+                {strings.overstuffed}
               </span>
             ) : (
-              <span className="text-sky-300 font-bold">
-                🧳 PACK MORE VACATION JUNK OR PULL ZIPPER (F)
-              </span>
+              <span className="text-sky-300 font-bold">{strings.packMore}</span>
             )}
           </div>
 
           <div className="carryon-gauge-row">
-            <span>Luggage Bulge & Seam Strain:</span>
+            <span>{strings.luggageBulge}</span>
             <span
               className={nearbySc.strain > 0.7 ? 'text-red-400 font-bold' : ''}
             >
@@ -325,10 +330,15 @@ export default function CarryOnCarnageGame() {
           </div>
 
           <div className="carryon-gauge-row">
-            <span>Compression Weight (Sit/Stomp):</span>
+            <span>{strings.compressionWeight}</span>
             <span className="text-amber-300 font-semibold">
               {Math.round(nearbySc.compression * 100)}%
-              {nearbySc.sittingCount > 0 ? ` (${nearbySc.sittingCount} sitting)` : ''}
+              {nearbySc.sittingCount > 0
+                ? strings.sittingCount.replace(
+                    '{count}',
+                    String(nearbySc.sittingCount),
+                  )
+                : ''}
             </span>
           </div>
           <div className="carryon-bar-bg">
@@ -339,7 +349,7 @@ export default function CarryOnCarnageGame() {
           </div>
 
           <div className="carryon-gauge-row">
-            <span>Zipper Closure:</span>
+            <span>{strings.zipperClosure}</span>
             <span className="text-emerald-400 font-bold">
               {Math.round(nearbySc.zipped * 100)}%
             </span>
@@ -363,18 +373,18 @@ export default function CarryOnCarnageGame() {
           <span className="carryon-key-badge">E</span>
           <span>
             {me?.holdingItem
-              ? 'Pack into Bag'
+              ? strings.packIntoBag
               : me?.holdingSuitcase
-                ? 'Insert in Sizer'
+                ? strings.insertInSizer
                 : me?.sittingOn === nearbySc?.id
                   ? nearbySc && nearbySc.items.length > 0
-                    ? 'Remove Item'
-                    : 'Hop Off (R)'
+                    ? strings.removeItem
+                    : strings.hopOffKey
                   : nearbySc && nearbySc.zipped >= 0.95
-                    ? 'Pick Up Suitcase'
+                    ? strings.pickUpSuitcase
                     : nearbySc && nearbySc.items.length > 0
-                      ? 'Remove Item'
-                      : 'Grab Item'}
+                      ? strings.removeItem
+                      : strings.grabItem}
           </span>
         </button>
 
@@ -386,7 +396,7 @@ export default function CarryOnCarnageGame() {
           }
         >
           <span className="carryon-key-badge">R</span>
-          <span>{me?.sittingOn ? 'Hop Off' : 'Sit & Compress'}</span>
+          <span>{me?.sittingOn ? strings.hopOff : strings.sitCompress}</span>
         </button>
 
         <button
@@ -395,7 +405,7 @@ export default function CarryOnCarnageGame() {
           onClick={() => dispatchAction({ type: 'interact', action: 'zip' })}
         >
           <span className="carryon-key-badge">F</span>
-          <span>Pull Zipper</span>
+          <span>{strings.pullZipper}</span>
         </button>
 
         <button
@@ -404,7 +414,7 @@ export default function CarryOnCarnageGame() {
           onClick={() => dispatchAction({ type: 'interact', action: 'drop' })}
         >
           <span className="carryon-key-badge">Q</span>
-          <span>Drop / Release</span>
+          <span>{strings.dropRelease}</span>
         </button>
       </div>
 
@@ -415,25 +425,27 @@ export default function CarryOnCarnageGame() {
             <Plane size={48} className="text-amber-400" />
             <h2 className="carryon-end-title">
               {world.approvedCount >= world.targetBags
-                ? 'Boarding Complete!'
-                : 'Flight Departed!'}
+                ? strings.boardingComplete
+                : strings.flightDeparted}
             </h2>
             <p className="text-slate-300 text-sm">
               {world.approvedCount >= world.targetBags
-                ? 'Your crew successfully squeezed and sized all carry-ons into the metal box!'
-                : 'The jetway closed! Any unapproved luggage was slapped with a $150 penalty fee.'}
+                ? strings.successDesc
+                : strings.failDesc}
             </p>
 
             <div className="carryon-end-stats">
               <div className="carryon-stat-box">
-                <span className="text-slate-400 text-xs">Approved Bags</span>
+                <span className="text-slate-400 text-xs">
+                  {strings.approvedBagsStat}
+                </span>
                 <span className="text-xl font-bold text-emerald-400">
                   {world.approvedCount} / {world.targetBags}
                 </span>
               </div>
               <div className="carryon-stat-box">
                 <span className="text-slate-400 text-xs">
-                  Contraband Smuggled
+                  {strings.contrabandStat}
                 </span>
                 <span className="text-xl font-bold text-sky-400">
                   {world.contrabandCount}
@@ -441,14 +453,16 @@ export default function CarryOnCarnageGame() {
               </div>
               <div className="carryon-stat-box">
                 <span className="text-slate-400 text-xs">
-                  Gate Fees Charged
+                  {strings.gateFeesStat}
                 </span>
                 <span className="text-xl font-bold text-rose-400">
                   -${world.feesPaid}
                 </span>
               </div>
               <div className="carryon-stat-box">
-                <span className="text-slate-400 text-xs">Net Score</span>
+                <span className="text-slate-400 text-xs">
+                  {strings.netScoreStat}
+                </span>
                 <span className="text-xl font-bold text-amber-400">
                   {world.totalScore} PTS
                 </span>
@@ -461,7 +475,7 @@ export default function CarryOnCarnageGame() {
               onClick={() => dispatchAction({ type: 'restart' })}
             >
               <RotateCcw size={18} />
-              <span>Catch Next Flight</span>
+              <span>{strings.catchNextFlight}</span>
             </button>
           </div>
         </div>

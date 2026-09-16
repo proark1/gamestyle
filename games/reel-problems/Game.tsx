@@ -56,6 +56,8 @@ import { paddleSide } from './paddles';
 import { WEATHER_LABELS } from './chaos';
 import type { ReelScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { REEL_PROBLEMS_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -239,6 +241,8 @@ function HoldButton({
 const tracker = new GameTracker(reelAnalytics);
 
 export default function ReelProblems() {
+  const { t } = useLanguage();
+  const strings = t(REEL_PROBLEMS_TRANSLATIONS);
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<ReelScene | null>(null),

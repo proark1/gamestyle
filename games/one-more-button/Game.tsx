@@ -53,6 +53,8 @@ import {
 import { ButtonSound } from './audio';
 import type { ButtonScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import { ONE_MORE_BUTTON_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -66,6 +68,8 @@ const time = (ms: number) => {
 const tracker = new GameTracker(buttonAnalytics);
 
 export default function OneMoreButton() {
+  const { t } = useLanguage();
+  const strings = t(ONE_MORE_BUTTON_TRANSLATIONS);
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<ButtonScene | null>(null),
@@ -435,7 +439,7 @@ export default function OneMoreButton() {
         <section className="omb-menu">
           <div className="omb-menu-copy">
             <span className="omb-kicker">
-              <span /> THE JUMBLEYARD GAME SHOW
+              <span /> {strings.gameShow}
             </span>
             <h1>
               We were rich
@@ -477,22 +481,20 @@ export default function OneMoreButton() {
               ) : (
                 <CircleDot size={20} />
               )}{' '}
-              Create a show <ArrowUpRight size={20} />
+              {strings.createShow} <ArrowUpRight size={20} />
             </button>
             <div className="omb-menu-secondary">
               <button
                 disabled={!ready || busy}
                 onClick={() => setModal('join')}
               >
-                Join friends
+                {strings.joinFriends}
               </button>
               <button disabled={!ready || busy} onClick={startPractice}>
-                Try solo
+                {strings.trySolo}
               </button>
             </div>
-            <small className="omb-menu-note">
-              No download. No actual money. Plenty of blame.
-            </small>
+            <small className="omb-menu-note">{strings.noDownloadNote}</small>
           </div>
           <figure className="omb-menu-art">
             <img
@@ -503,8 +505,8 @@ export default function OneMoreButton() {
               fetchPriority="high"
             />
             <figcaption>
-              <span>THE LAST WORDS OF A RICH TEAM</span>
-              <strong>“Okay, but just one more.”</strong>
+              <span>{strings.quoteTitle}</span>
+              <strong>{strings.quoteText}</strong>
             </figcaption>
           </figure>
         </section>
@@ -512,7 +514,7 @@ export default function OneMoreButton() {
         <>
           <section className="omb-scoreboard" aria-label="Prize pot">
             <div>
-              <span>SHARED PRIZE POT</span>
+              <span>{strings.prizePot}</span>
               <strong>
                 <Coins size={24} />
                 {money(w?.pot ?? 0)}
@@ -527,7 +529,9 @@ export default function OneMoreButton() {
                 w?.phase === 'escape' ? 'omb-clock urgent' : 'omb-clock'
               }
             >
-              <span>{w?.phase === 'escape' ? 'GET OUT!' : 'SHOW TIME'}</span>
+              <span>
+                {w?.phase === 'escape' ? strings.getOut : strings.showTime}
+              </span>
               <strong>
                 {w?.phase === 'lobby'
                   ? '3:00'
@@ -542,7 +546,7 @@ export default function OneMoreButton() {
           <aside className="omb-crew" aria-label="Contestants">
             <div className="omb-crew-title">
               <span>
-                <Users size={15} /> {w?.players.length ?? 0}/4 ON STAGE
+                <Users size={15} /> {w?.players.length ?? 0}/4 {strings.onStage}
               </span>
               <button
                 disabled={practice}

@@ -23,6 +23,7 @@ import {
   Snowflake,
   Zap,
   Luggage,
+  Utensils,
 } from 'lucide-react';
 import type { ElementType, ReactElement } from 'react';
 import AccountButton from '@/shared/accounts/AccountButton';
@@ -285,6 +286,18 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
       'Four oversized shopping carts race through a warehouse store aisle, loaded with bags of pet food and toilet paper.',
     loading: 'lazy',
     tagIcon: Gamepad2,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
+  'drive-thru': {
+    slug: 'drive-thru',
+    href: '/drive-thru',
+    cardClass: 'drive-thru-card',
+    imgSrc: '/images/drive-thru.png',
+    imgAlt:
+      'A beat-up sedan parked at a chaotic fast-food drive-thru window as a passenger leans out to grab a burger tray over the curb gap while the kitchen smokes.',
+    loading: 'lazy',
+    tagIcon: Utensils,
     metaIcon1: Users,
     metaIcon2: Timer,
   },

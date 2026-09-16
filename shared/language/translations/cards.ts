@@ -554,4 +554,33 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
       cta: 'Sample Stampede spielen',
     },
   },
+
+  'drive-thru': {
+    en: {
+      tag: 'THE INTERCOM MELTDOWN',
+      isNew: true,
+      newTag: 'NEW TO JUMBLEYARD',
+      players: '1–4 players (Co-op & 2v2)',
+      duration: '60-second rush',
+      titleMain: 'Drive-Thru ',
+      titleHighlight: 'Static',
+      titleSuffix: '.',
+      desc: 'Fast-food drive-thru slapstick chaos! Decipher distorted orders through a crackling intercom, flip burgers under grease-fire panic, vent violent milkshake machines, and ragdoll lean across the curb gap for the Short Stop reach!',
+      tagline: 'SCREAM THE ORDER. WATCH THE CURB GAP.',
+      cta: 'Play Drive-Thru Static',
+    },
+    de: {
+      tag: 'DIE SPRECHANLAGEN-ESKALATION',
+      isNew: true,
+      newTag: 'NEU IN JUMBLEYARD',
+      players: '1–4 Spieler (Koop & 2v2)',
+      duration: '60-Sekunden Ansturm',
+      titleMain: 'Drive-Thru ',
+      titleHighlight: 'Static',
+      titleSuffix: '.',
+      desc: 'Chaotischer Fast-Food-Drive-Thru Wahnsinn! Entziffert verzerrte Bestellungen aus der knisternden Sprechanlage, bratet Burger im Fettbrand-Alarm, bändigt explodierende Milchshake-Maschinen und wagt den halsbrecherischen Fenster-Sprung über den Bordstein!',
+      tagline: 'BRÜLL DIE BESTELLUNG. PASS AUF DIE LÜCKE AUF.',
+      cta: 'Drive-Thru Static spielen',
+    },
+  },
 };
