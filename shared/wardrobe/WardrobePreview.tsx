@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import * as T from 'three';
 import { dressedWorker } from '../rendering/cosmetics/dress';
 import { buildStandaloneItem } from '../rendering/cosmetics/standalone-item';

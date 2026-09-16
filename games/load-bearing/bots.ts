@@ -66,7 +66,8 @@ function chooseTarget(world: LoadWorld, bot: Wrecker) {
   const pool = marked.length ? marked : options;
   return pool.sort(
     (a, b) =>
-      Math.hypot(a.x - bot.x, a.z - bot.z) - Math.hypot(b.x - bot.x, b.z - bot.z),
+      Math.hypot(a.x - bot.x, a.z - bot.z) -
+      Math.hypot(b.x - bot.x, b.z - bot.z),
   )[0];
 }
 

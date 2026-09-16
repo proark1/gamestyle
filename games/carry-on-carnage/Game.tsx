@@ -231,12 +231,23 @@ export default function CarryOnCarnageGame() {
       {world && (
         <div className="carryon-fids">
           <div className="carryon-fids-flight">
-            <span className="carryon-fids-label">BudgetAir · Gate B12</span>
-            <span className="carryon-fids-code">FLIGHT 707 TO IBIZA</span>
+            <span className="carryon-fids-label">
+              BUDGET-AIR · FLIGHT 707 TO IBIZA
+            </span>
+            <div className="carryon-fids-status-row">
+              <span
+                className={`carryon-fids-dot ${isUrgent ? 'urgent' : ''}`}
+              />
+              <span className="carryon-fids-code">
+                {isUrgent
+                  ? 'FINAL CALL · GATE CLOSING'
+                  : 'NOW BOARDING · GATE B12'}
+              </span>
+            </div>
           </div>
           <div className={`carryon-fids-timer ${isUrgent ? 'urgent' : ''}`}>
             <Timer
-              size={16}
+              size={18}
               className={isUrgent ? 'text-red-400' : 'text-amber-400'}
             />
             <span className="carryon-fids-clock">
@@ -268,20 +279,50 @@ export default function CarryOnCarnageGame() {
       {/* Luggage Strain & Compression Gauge HUD */}
       {nearbySc && (
         <div className="carryon-luggage-hud">
+          <div className="carryon-luggage-status-pill">
+            {nearbySc.approved ? (
+              <span className="text-emerald-400 font-bold">
+                ✅ SIZER APPROVED (PASSED CAGE TEST)
+              </span>
+            ) : nearbySc.burst ? (
+              <span className="text-rose-400 font-bold">
+                💥 PIÑATA BURST! GATHER ITEMS & REPACK!
+              </span>
+            ) : nearbySc.zipped >= 0.98 ? (
+              <span className="text-emerald-300 font-bold">
+                🔒 FULLY ZIPPED · CARRY TO SIZER BOX (E)
+              </span>
+            ) : nearbySc.bulge > 0.15 ? (
+              <span className="text-amber-300 font-bold">
+                ⚠️ OVERSTUFFED! SIT/STOMP TO COMPRESS BEFORE ZIPPING (R)
+              </span>
+            ) : (
+              <span className="text-sky-300 font-bold">
+                🧳 PACK MORE VACATION JUNK OR PULL ZIPPER (F)
+              </span>
+            )}
+          </div>
+
           <div className="carryon-gauge-row">
             <span>Luggage Bulge & Seam Strain:</span>
-            <span>{Math.round(nearbySc.strain * 50)}%</span>
+            <span
+              className={nearbySc.strain > 0.7 ? 'text-red-400 font-bold' : ''}
+            >
+              {Math.round(nearbySc.strain * 50)}%
+            </span>
           </div>
           <div className="carryon-bar-bg">
             <div
-              className="carryon-bar-fill strain"
+              className={`carryon-bar-fill strain ${nearbySc.strain > 0.7 ? 'danger' : ''}`}
               style={{ width: `${Math.min(100, nearbySc.strain * 50)}%` }}
             />
           </div>
 
           <div className="carryon-gauge-row">
             <span>Compression Weight (Sit/Stomp):</span>
-            <span>{Math.round(nearbySc.compression * 100)}%</span>
+            <span className="text-amber-300">
+              {Math.round(nearbySc.compression * 100)}%
+            </span>
           </div>
           <div className="carryon-bar-bg">
             <div
@@ -292,7 +333,9 @@ export default function CarryOnCarnageGame() {
 
           <div className="carryon-gauge-row">
             <span>Zipper Closure:</span>
-            <span>{Math.round(nearbySc.zipped * 100)}%</span>
+            <span className="text-emerald-400 font-bold">
+              {Math.round(nearbySc.zipped * 100)}%
+            </span>
           </div>
           <div className="carryon-bar-bg">
             <div

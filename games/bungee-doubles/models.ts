@@ -88,19 +88,13 @@ export function createTennisRacket(team: TeamId): T.Group {
   g.add(grip);
 
   // Safety wrist lanyard cord at bottom of handle
-  const cord = new T.Mesh(
-    new T.TorusGeometry(0.035, 0.007, 6, 16),
-    accentMat,
-  );
+  const cord = new T.Mesh(new T.TorusGeometry(0.035, 0.007, 6, 16), accentMat);
   cord.position.set(0, 0.01, 0);
   cord.rotation.x = Math.PI / 2;
   g.add(cord);
 
   // Bat Throat / Heart
-  const throat = new T.Mesh(
-    new T.BoxGeometry(0.1, 0.12, 0.05),
-    carbonMat,
-  );
+  const throat = new T.Mesh(new T.BoxGeometry(0.1, 0.12, 0.05), carbonMat);
   throat.position.set(0, 0.36, 0);
   throat.castShadow = true;
   g.add(throat);
@@ -110,7 +104,7 @@ export function createTennisRacket(team: TeamId): T.Group {
     new T.CylinderGeometry(0.22, 0.22, 0.06, 16),
     carbonMat,
   );
-  faceMesh.position.set(0, 0.60, 0);
+  faceMesh.position.set(0, 0.6, 0);
   faceMesh.rotation.x = Math.PI / 2;
   faceMesh.scale.set(1.0, 0.7, 1.2);
   faceMesh.castShadow = true;
@@ -121,17 +115,27 @@ export function createTennisRacket(team: TeamId): T.Group {
     new T.TorusGeometry(0.22, 0.018, 8, 24),
     accentMat,
   );
-  rimMesh.position.set(0, 0.60, 0);
+  rimMesh.position.set(0, 0.6, 0);
   rimMesh.scale.set(1.0, 1.2, 0.7);
   rimMesh.castShadow = true;
   g.add(rimMesh);
 
   // Signature Padel perforations / drill holes pattern on face
   const holePositions: [number, number][] = [
-    [-0.08, 0.54], [0, 0.54], [0.08, 0.54],
-    [-0.10, 0.60], [-0.04, 0.60], [0.04, 0.60], [0.10, 0.60],
-    [-0.10, 0.65], [-0.04, 0.65], [0.04, 0.65], [0.10, 0.65],
-    [-0.07, 0.70], [0, 0.70], [0.07, 0.70],
+    [-0.08, 0.54],
+    [0, 0.54],
+    [0.08, 0.54],
+    [-0.1, 0.6],
+    [-0.04, 0.6],
+    [0.04, 0.6],
+    [0.1, 0.6],
+    [-0.1, 0.65],
+    [-0.04, 0.65],
+    [0.04, 0.65],
+    [0.1, 0.65],
+    [-0.07, 0.7],
+    [0, 0.7],
+    [0.07, 0.7],
   ];
 
   for (const [hx, hy] of holePositions) {
@@ -432,7 +436,10 @@ export function tennisCourt(): T.Group {
     // Rows of stadium fold-down seats
     const numSeats = 14;
     for (let s = 0; s < numSeats; s++) {
-      const sz = -bleacherLength / 2 + 1.2 + (s * (bleacherLength - 2.4)) / (numSeats - 1);
+      const sz =
+        -bleacherLength / 2 +
+        1.2 +
+        (s * (bleacherLength - 2.4)) / (numSeats - 1);
       const seatColor = (s + tier) % 2 === 0 ? '#264653' : '#2a9d8f';
       // Seat cushion
       box(g, [0.45, 0.08, 0.45], [tierX, tierH + 0.04, sz], seatColor);
@@ -456,7 +463,10 @@ export function tennisCourt(): T.Group {
 
     const numSeats = 14;
     for (let s = 0; s < numSeats; s++) {
-      const sz = -bleacherLength / 2 + 1.2 + (s * (bleacherLength - 2.4)) / (numSeats - 1);
+      const sz =
+        -bleacherLength / 2 +
+        1.2 +
+        (s * (bleacherLength - 2.4)) / (numSeats - 1);
       const seatColor = (s + tier) % 2 === 0 ? '#e76f51' : '#f4a261';
       box(g, [0.45, 0.08, 0.45], [tierX, tierH + 0.04, sz], seatColor);
       box(g, [0.08, 0.35, 0.45], [tierX + 0.2, tierH + 0.22, sz], seatColor);

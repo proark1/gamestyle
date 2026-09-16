@@ -52,17 +52,30 @@ function loadFromStorage(): WardrobeState {
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw) as Partial<WardrobeState>;
     const look = parseLook(parsed.look) ?? DEFAULT_STATE.look;
-    const coins = typeof parsed.coins === 'number' ? Math.max(0, parsed.coins) : DEFAULT_STATE.coins;
+    const coins =
+      typeof parsed.coins === 'number'
+        ? Math.max(0, parsed.coins)
+        : DEFAULT_STATE.coins;
     const unlockedItems = Array.isArray(parsed.unlockedItems)
-      ? Array.from(new Set([...DEFAULT_UNLOCKED, ...parsed.unlockedItems.filter((id): id is string => typeof id === 'string')]))
+      ? Array.from(
+          new Set([
+            ...DEFAULT_UNLOCKED,
+            ...parsed.unlockedItems.filter(
+              (id): id is string => typeof id === 'string',
+            ),
+          ]),
+        )
       : [...DEFAULT_UNLOCKED];
     const stats: WardrobeStats = {
       gamesPlayed: Array.isArray(parsed.stats?.gamesPlayed)
-        ? parsed.stats!.gamesPlayed.filter((g): g is string => typeof g === 'string')
+        ? parsed.stats!.gamesPlayed.filter(
+            (g): g is string => typeof g === 'string',
+          )
         : [],
-      playTimeSeconds: typeof parsed.stats?.playTimeSeconds === 'number'
-        ? Math.max(0, parsed.stats!.playTimeSeconds)
-        : 0,
+      playTimeSeconds:
+        typeof parsed.stats?.playTimeSeconds === 'number'
+          ? Math.max(0, parsed.stats!.playTimeSeconds)
+          : 0,
     };
     return { look, coins, unlockedItems, stats };
   } catch {

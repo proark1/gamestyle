@@ -14,28 +14,28 @@ Ausgangspunkt für die Verhaltensabstimmung: NPCs planen aktiv mit und übernehm
 
 Die Befunde stammen aus dem aktuellen Quellcode.
 
-| Grundlage | Konsequenz für NPCs |
-| --- | --- |
-| `games/uphill-delivery/Game.tsx` zeigt die anwesende Crew und einen gemeinsamen Lobby-Startknopf. | Vier feste Platzkarten ergänzen den vorhandenen Ablauf; NPC-Verwaltung bleibt beim Host. Die bestehende englische Oberfläche wird beibehalten. |
-| `types.ts` kennt bislang nur normale Spieler, Eingaben und sechs Spielaktionen. | NPC-Kennzeichnung, stabile Platzzuordnung, Aufgabenstatus und serialisierbarer Steuerzustand müssen ausdrücklich modelliert werden. |
-| `connection.ts` erstellt Browser-Lobbys über WebRTC; `rooms.ts` betreut zusätzlich direkte HTTP-Räume. | Beide Wege benötigen dieselben Regeln für NPC-Belegung und dieselbe Simulation. Nur die HTTP-API zu ändern würde das normale Browser-Spiel verfehlen. |
-| `shared/peer/coordinator.ts` zählt nur menschliche Mitglieder und vergibt darüber Farben/Plätze. | NPC-Plätze müssen bei der zentralen Vergabe mitgezählt werden; ein verschlüsselter Welt-Checkpoint allein kann Beitrittskonflikte nicht verhindern. |
-| `shared/peer/engine.ts` entfernt bei jedem Abgleich Figuren ohne Netzwerkmitglied und setzt veraltete Eingaben auf Leerlauf. | Eine ausdrücklich optionale Adapter-Erweiterung muss simulationsgesteuerte Figuren erhalten und von menschlichem Verbindungsstatus unterscheiden. |
-| HTTP-Räume entfernen Figuren nach 30 Sekunden ohne Lebenszeichen und wählen den ersten verbleibenden Spieler als Host. | NPCs brauchen keine Lebenszeichen, Mitgliedstoken oder Hostberechtigung. Hostnachfolge berücksichtigt ausschließlich Menschen. |
-| `simulation.ts` baut beim Start/Neustart alle Figuren neu auf. | NPC-Kennzeichnung und Platzbelegung bleiben erhalten; Rundenziele und Bewegungszustand werden neu initialisiert. |
-| `physics.ts` simuliert mit 60 Schritten pro Sekunde. Greifen, Kräfte, Kollisionen, Stolpern und Springen sind bereits vorhanden. | Die NPC-Steuerung erzeugt normale Eingaben und Aktionen vor dem jeweiligen Physikschritt. |
-| Nur ein echter Einzelspieler erhält zusätzliche Tragekraft. Im Team tragen mindestens zwei Figuren. | Bots zählen als volle Crewmitglieder und nutzen dieselben Kräfte wie Menschen. Toraufgaben müssen die tatsächlich verbleibenden Träger berücksichtigen. |
-| Die bestehenden Tests prüfen einzelne Streckenabschnitte teilweise aus vorbereiteten Positionen. | Sie beweisen noch keine vollständige autonome Lieferung vom Depot bis ins Kundenhaus. Dafür sind zusätzliche durchgehende Tests nötig. |
+| Grundlage                                                                                                                        | Konsequenz für NPCs                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `games/uphill-delivery/Game.tsx` zeigt die anwesende Crew und einen gemeinsamen Lobby-Startknopf.                                | Vier feste Platzkarten ergänzen den vorhandenen Ablauf; NPC-Verwaltung bleibt beim Host. Die bestehende englische Oberfläche wird beibehalten.          |
+| `types.ts` kennt bislang nur normale Spieler, Eingaben und sechs Spielaktionen.                                                  | NPC-Kennzeichnung, stabile Platzzuordnung, Aufgabenstatus und serialisierbarer Steuerzustand müssen ausdrücklich modelliert werden.                     |
+| `connection.ts` erstellt Browser-Lobbys über WebRTC; `rooms.ts` betreut zusätzlich direkte HTTP-Räume.                           | Beide Wege benötigen dieselben Regeln für NPC-Belegung und dieselbe Simulation. Nur die HTTP-API zu ändern würde das normale Browser-Spiel verfehlen.   |
+| `shared/peer/coordinator.ts` zählt nur menschliche Mitglieder und vergibt darüber Farben/Plätze.                                 | NPC-Plätze müssen bei der zentralen Vergabe mitgezählt werden; ein verschlüsselter Welt-Checkpoint allein kann Beitrittskonflikte nicht verhindern.     |
+| `shared/peer/engine.ts` entfernt bei jedem Abgleich Figuren ohne Netzwerkmitglied und setzt veraltete Eingaben auf Leerlauf.     | Eine ausdrücklich optionale Adapter-Erweiterung muss simulationsgesteuerte Figuren erhalten und von menschlichem Verbindungsstatus unterscheiden.       |
+| HTTP-Räume entfernen Figuren nach 30 Sekunden ohne Lebenszeichen und wählen den ersten verbleibenden Spieler als Host.           | NPCs brauchen keine Lebenszeichen, Mitgliedstoken oder Hostberechtigung. Hostnachfolge berücksichtigt ausschließlich Menschen.                          |
+| `simulation.ts` baut beim Start/Neustart alle Figuren neu auf.                                                                   | NPC-Kennzeichnung und Platzbelegung bleiben erhalten; Rundenziele und Bewegungszustand werden neu initialisiert.                                        |
+| `physics.ts` simuliert mit 60 Schritten pro Sekunde. Greifen, Kräfte, Kollisionen, Stolpern und Springen sind bereits vorhanden. | Die NPC-Steuerung erzeugt normale Eingaben und Aktionen vor dem jeweiligen Physikschritt.                                                               |
+| Nur ein echter Einzelspieler erhält zusätzliche Tragekraft. Im Team tragen mindestens zwei Figuren.                              | Bots zählen als volle Crewmitglieder und nutzen dieselben Kräfte wie Menschen. Toraufgaben müssen die tatsächlich verbleibenden Träger berücksichtigen. |
+| Die bestehenden Tests prüfen einzelne Streckenabschnitte teilweise aus vorbereiteten Positionen.                                 | Sie beweisen noch keine vollständige autonome Lieferung vom Depot bis ins Kundenhaus. Dafür sind zusätzliche durchgehende Tests nötig.                  |
 
 Andere Spiele dürfen nicht aus Uphill Delivery importiert werden. Vorhandene NPC-Muster in Blend Business sind lediglich eine Referenz für Kennzeichnung und Persistenz; die Steuerung bleibt in diesem Spiel.
 
 ## Wahl des Ansatzes
 
-| Ansatz | Nutzen | Grenze |
-| --- | --- | --- |
-| **Gemeinsame Aufgabenplanung, Navigation und lokale Bewegungsregelung** | Rollen können wechseln; Sofa, Hindernisse und menschliche Eingaben fließen laufend in die Entscheidung ein. Zustand und Fehlerfälle sind gezielt prüfbar. | Erfordert echte Strecken- und Physiktests. **Empfehlung.** |
-| Festes Ablaufen von Wegpunkten | Kleine erste Implementierung für eine unveränderte Strecke. | Reicht nach Stürzen, bei blockierten Griffen und beim gemeinsamen Drehen nicht als vollständige Steuerung. |
-| Ein externes Sprachmodell entscheidet die Spielhandlungen | Könnte zusätzlich sprachliche Absprachen formulieren. | Würde eine weitere Dienstabhängigkeit einführen und ersetzt weder Navigation noch die Regelung der Tragephysik. Für diese Umsetzung nicht erforderlich. |
+| Ansatz                                                                  | Nutzen                                                                                                                                                    | Grenze                                                                                                                                                  |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gemeinsame Aufgabenplanung, Navigation und lokale Bewegungsregelung** | Rollen können wechseln; Sofa, Hindernisse und menschliche Eingaben fließen laufend in die Entscheidung ein. Zustand und Fehlerfälle sind gezielt prüfbar. | Erfordert echte Strecken- und Physiktests. **Empfehlung.**                                                                                              |
+| Festes Ablaufen von Wegpunkten                                          | Kleine erste Implementierung für eine unveränderte Strecke.                                                                                               | Reicht nach Stürzen, bei blockierten Griffen und beim gemeinsamen Drehen nicht als vollständige Steuerung.                                              |
+| Ein externes Sprachmodell entscheidet die Spielhandlungen               | Könnte zusätzlich sprachliche Absprachen formulieren.                                                                                                     | Würde eine weitere Dienstabhängigkeit einführen und ersetzt weder Navigation noch die Regelung der Tragephysik. Für diese Umsetzung nicht erforderlich. |
 
 „Intelligent“ wird an erfolgreicher Zusammenarbeit und nachvollziehbaren Entscheidungen gemessen. Ein späterer menschlicher Spieltest bewertet, wie natürlich sich die Crew anfühlt; das lässt sich nicht allein durch Unit-Tests nachweisen.
 
@@ -118,14 +118,14 @@ Unterschiedliche stabile Präferenzen für Griffwahl, Reaktionszeit und Helferro
 
 ## Implementierungsgrenzen
 
-| Bereich | Verantwortung |
-| --- | --- |
-| `games/uphill-delivery/types.ts` | NPC-Kennzeichnung, Belegung, Aufgaben- und Steuerzustand. |
-| Neue spielinterne Module für Belegung, Navigation und NPC-Planung | Jeweils validierte Platzoperationen, Geometrie/Wege und Aufgaben/Eingaben; keine React- oder Netzwerkschnittstellen. |
-| `simulation.ts`, `physics.ts` | Integration vor Physikschritten und kleine lesende Hilfsfunktionen für Unterstützung/Kollision; gleiche Kräfte und Aktionsregeln für alle Figuren. |
-| `rooms.ts`, `peer.ts`, `connection.ts` | Anbindung beider Raumtypen, Wiederaufnahme und öffentliche Snapshots. |
+| Bereich                                                                | Verantwortung                                                                                                                                                   |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `games/uphill-delivery/types.ts`                                       | NPC-Kennzeichnung, Belegung, Aufgaben- und Steuerzustand.                                                                                                       |
+| Neue spielinterne Module für Belegung, Navigation und NPC-Planung      | Jeweils validierte Platzoperationen, Geometrie/Wege und Aufgaben/Eingaben; keine React- oder Netzwerkschnittstellen.                                            |
+| `simulation.ts`, `physics.ts`                                          | Integration vor Physikschritten und kleine lesende Hilfsfunktionen für Unterstützung/Kollision; gleiche Kräfte und Aktionsregeln für alle Figuren.              |
+| `rooms.ts`, `peer.ts`, `connection.ts`                                 | Anbindung beider Raumtypen, Wiederaufnahme und öffentliche Snapshots.                                                                                           |
 | `shared/peer/types.ts`, `coordinator.ts`, `engine.ts`, `connection.ts` | Optionale Belegungsmetadaten und Adapter-Erweiterung, atomare Kapazitätsprüfung, Startreihenfolge und menschliche Autorität. Keine importierte Spielsimulation. |
-| Lobby-Komponente und vorhandene Crew-Anzeige | Slotverwaltung, verständliche Statusanzeige, Tastatur und Touch. |
+| Lobby-Komponente und vorhandene Crew-Anzeige                           | Slotverwaltung, verständliche Statusanzeige, Tastatur und Touch.                                                                                                |
 
 Die riskanteste Stelle ist die durchgehende Beförderung über Kurven und die Weglücke. Deshalb zuerst die reale Physiksteuerung durch diese Abschnitte nachweisen und anschließend die vollständige Runde prüfen. Eine fertige Lobby mit anschließend blockierten Bots erfüllt diesen Entwurf nicht.
 

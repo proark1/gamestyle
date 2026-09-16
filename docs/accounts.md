@@ -10,16 +10,16 @@ Players can sign in with Google or with a 6-digit code sent by email. Guests sti
 
 ## Endpoints
 
-| Request | Purpose |
-| --- | --- |
-| `GET /api/account/session` | The signed-in account's summary and the configured sign-in methods. Renews the session at most once a day. |
-| `GET /api/account/google/start?return=/path&popup=1` | Starts Google sign-in. |
-| `GET /api/account/google/callback` | Google returns here. |
-| `POST /api/account/email/start` `{email}` | Sends a code (202). |
-| `POST /api/account/email/verify` `{email, code}` | Signs in. |
-| `POST /api/account/profile` `{displayName}` | Saves an optional name. |
-| `POST /api/account/sign-out` `{everywhere}` | Signs out on this device or on every device. |
-| `POST /api/account/delete` `{confirm: "delete"}` | Deletes the account and everything saved with it. |
+| Request                                              | Purpose                                                                                                    |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `GET /api/account/session`                           | The signed-in account's summary and the configured sign-in methods. Renews the session at most once a day. |
+| `GET /api/account/google/start?return=/path&popup=1` | Starts Google sign-in.                                                                                     |
+| `GET /api/account/google/callback`                   | Google returns here.                                                                                       |
+| `POST /api/account/email/start` `{email}`            | Sends a code (202).                                                                                        |
+| `POST /api/account/email/verify` `{email, code}`     | Signs in.                                                                                                  |
+| `POST /api/account/profile` `{displayName}`          | Saves an optional name.                                                                                    |
+| `POST /api/account/sign-out` `{everywhere}`          | Signs out on this device or on every device.                                                               |
+| `POST /api/account/delete` `{confirm: "delete"}`     | Deletes the account and everything saved with it.                                                          |
 
 ## What is stored
 
@@ -47,12 +47,12 @@ Every table with an `account_id` column must reference `accounts(id)` with `ON D
 
 Set these on the Railway service. Sign-in stays off until `AUTH_SECRET` and at least one method are set and, over HTTPS, until `OPERATOR` in `shared/accounts/operator.ts` names who runs the site, because the privacy page sends account holders there for access and export requests.
 
-| Variable | Purpose |
-| --- | --- |
-| `AUTH_SECRET` | At least 32 characters, for example from `openssl rand -hex 32`. Keys email fingerprints, codes and signed cookies. Back it up and never change it: a new secret makes every email account unreachable. |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in. |
-| `RESEND_API_KEY`, `EMAIL_FROM` | Email codes, for example `EMAIL_FROM="Jumbleyard <sign-in@jumbleyard.com>"`. |
-| `PUBLIC_GAME_ORIGIN` | Already set; it must include `https://www.jumbleyard.com`. |
+| Variable                                   | Purpose                                                                                                                                                                                                 |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_SECRET`                              | At least 32 characters, for example from `openssl rand -hex 32`. Keys email fingerprints, codes and signed cookies. Back it up and never change it: a new secret makes every email account unreachable. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in.                                                                                                                                                                                         |
+| `RESEND_API_KEY`, `EMAIL_FROM`             | Email codes, for example `EMAIL_FROM="Jumbleyard <sign-in@jumbleyard.com>"`.                                                                                                                            |
+| `PUBLIC_GAME_ORIGIN`                       | Already set; it must include `https://www.jumbleyard.com`.                                                                                                                                              |
 
 `.railway/railway.ts` lists each of these as `preserve()`, so `railway config apply` keeps the values set in Railway. Applying the config deletes any variable the file doesn't list, so add a new one there too.
 

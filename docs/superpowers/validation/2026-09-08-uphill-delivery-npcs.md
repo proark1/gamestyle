@@ -14,13 +14,13 @@ Das ist ein Nachweis für diese fünf Startaufstellungen, keine Garantie für be
 
 Varianten 1–4 verändern nur vor dem ersten Physikschritt die Startpositionen um höchstens 12 cm und die Sofaausrichtung um höchstens etwa 7 Grad. Variante 0 ist unverändert. Exitcode 0 erfordert die reguläre Phase delivered; ein Zeitüberschreiten ergibt Exitcode 1.
 
-| Variante | Ergebnis | Simulationszeit |
-| --- | --- | ---: |
-| 0 | geliefert | 278,58 s |
-| 1 | geliefert | 588,00 s |
-| 2 | geliefert | 199,58 s |
-| 3 | geliefert | 345,45 s |
-| 4 | geliefert | 326,28 s |
+| Variante | Ergebnis  | Simulationszeit |
+| -------- | --------- | --------------: |
+| 0        | geliefert |        278,58 s |
+| 1        | geliefert |        588,00 s |
+| 2        | geliefert |        199,58 s |
+| 3        | geliefert |        345,45 s |
+| 4        | geliefert |        326,28 s |
 
 Die maschinenlesbaren Ergebnisse liegen in [uphill-delivery-npcs](uphill-delivery-npcs/). Jede Datei autonomous-0.json bis autonomous-4.json enthält Ergebnis, Zeitlimit, aktivierte Ziegen, Startvariante, Endpositionen und einen SHA-256-Wert der neun maßgeblichen Simulationsdateien. Alle fünf müssen denselben Wert tragen. Die Option --report schreibt einen solchen Bericht; --resume und --no-goats sind ausdrücklich nur Diagnoseoptionen und wurden für die Abschlussserie nicht benutzt. Ein aus einem Checkpoint fortgesetzter Lauf ist kein vollständiger Depotstart.
 
@@ -65,13 +65,13 @@ Das Matrixwerkzeug führt alle sechs Besetzungen mit fünf Varianten aus. Varian
 Der Pilot greift nach einem Sturz nicht sofort von einer tieferen Straße wieder zu, wenn seine eigene nächste Entscheidung diesen Griff ohnehin lösen würde. Nach einer längeren Blockade mit mehreren Trägern versucht er eine neue Standposition. Wenn die gesamte Unterstützung an der Lücke verloren geht, wartet er nicht unbegrenzt auf der anderen Seite. Diese Korrekturen betreffen das Prüfwerkzeug und geben den NPCs keine zusätzlichen Fähigkeiten.
 
 | Menschen + NPCs | Variante 0 | Variante 1 | Variante 2 | Variante 3 | Variante 4 | Geliefert |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 + 1 | — | — | — | — | — | 0/5 |
-| 1 + 2 | — | — | 419,52 s | — | 524,85 s | 2/5 |
-| 1 + 3 | 439,92 s | 668,70 s | — | — | 236,32 s | 3/5 |
-| 2 + 1 | — | — | — | 385,63 s | — | 1/5 |
-| 2 + 2 | 248,12 s | — | — | — | — | 1/5 |
-| 3 + 1 | — | 332,73 s | — | — | 195,80 s | 2/5 |
+| --------------- | ---------: | ---------: | ---------: | ---------: | ---------: | --------: |
+| 1 + 1           |          — |          — |          — |          — |          — |       0/5 |
+| 1 + 2           |          — |          — |   419,52 s |          — |   524,85 s |       2/5 |
+| 1 + 3           |   439,92 s |   668,70 s |          — |          — |   236,32 s |       3/5 |
+| 2 + 1           |          — |          — |          — |   385,63 s |          — |       1/5 |
+| 2 + 2           |   248,12 s |          — |          — |          — |          — |       1/5 |
+| 3 + 1           |          — |   332,73 s |          — |          — |   195,80 s |       2/5 |
 
 Ein Strich bedeutet: beim Zeitlimit von 900 Sekunden noch in der Spielphase. Alle 30 Läufe benutzten denselben Spielcode und denselben Treiber. In 17 Unterbrechungen hielt mindestens ein menschlicher Platz einen Griff; über zusammen 51 Sekunden gab es **keinen missachteten Halteframe**. Rohdaten einschließlich Fehlschlägen: [matrix.json](uphill-delivery-npcs/mixed/matrix.json). Diese vollständige Matrix gehört zum Prüfstand `da9c1bba822be84cf8e8ac502df3923919790699b28e77220ce12b9b20747d1a`.
 
@@ -98,10 +98,10 @@ Bereits im selben Implementierungsauftrag geprüft; die Lobby-/Netzwerkdateien w
 
 Windows x64, AMD Ryzen 7 5800H, Node 24.14.0. Beide abschließenden Messungen liefen nacheinander, nachdem die hier gestarteten Langläufe und Builds beendet waren. Je Szenario wurden in 120 simulierten Sekunden 7.200 aktive NPC-Planungsframes vor dem normalen Physikschritt gemessen. Beide Berichte tragen die aktuelle Spielcode-Kennung.
 
-| Szenario | Median | 95. Perzentil | Maximum |
-| --- | ---: | ---: | ---: |
-| Untätiger Mensch + drei NPCs | 0,377 ms | **0,802 ms** | 23,983 ms |
-| Synthetischer Testpilot + drei NPCs | 0,427 ms | **0,968 ms** | 22,638 ms |
+| Szenario                            |   Median | 95. Perzentil |   Maximum |
+| ----------------------------------- | -------: | ------------: | --------: |
+| Untätiger Mensch + drei NPCs        | 0,377 ms |  **0,802 ms** | 23,983 ms |
+| Synthetischer Testpilot + drei NPCs | 0,427 ms |  **0,968 ms** | 22,638 ms |
 
 Beide Messungen erreichen das Ziel von weniger als 2 ms im 95. Perzentil. Der Testpilot hielt in 5.149 Frames einen Griff; seine eigene Rechenzeit ist nicht in der NPC-Messung enthalten. Rohdaten: [performance.json](uphill-delivery-npcs/performance.json) und [performance-mixed.json](uphill-delivery-npcs/performance-mixed.json).
 
@@ -111,15 +111,15 @@ Das misst die NPC-Planung, nicht die gesamte Browser-Framerate oder Mobilhardwar
 
 ## Repository und Builds
 
-| Prüfung | Ergebnis |
-| --- | --- |
-| npm test | **650/650 bestanden**, einschließlich Architekturprüfung |
-| npm run typecheck | bestanden |
-| Betroffener Uphill-/Peer-Lint | bestanden |
-| Projektweite Formatprüfung | bestanden, 542 Dateien |
-| Worker-Build | bestanden |
-| Node-/Railway-Build | bestanden |
-| Projektweites npm run check | **bestanden**, einschließlich Formatierung, Typprüfung, Lint und Tests |
+| Prüfung                       | Ergebnis                                                               |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| npm test                      | **650/650 bestanden**, einschließlich Architekturprüfung               |
+| npm run typecheck             | bestanden                                                              |
+| Betroffener Uphill-/Peer-Lint | bestanden                                                              |
+| Projektweite Formatprüfung    | bestanden, 542 Dateien                                                 |
+| Worker-Build                  | bestanden                                                              |
+| Node-/Railway-Build           | bestanden                                                              |
+| Projektweites npm run check   | **bestanden**, einschließlich Formatierung, Typprüfung, Lint und Tests |
 
 Die zuvor außerhalb von Uphill Delivery beobachteten Lint-, Typ- und Formatfehler waren in der abschließenden Gesamtprüfung behoben. Die Gesamtzahl enthält auch parallel hinzugekommene Tests anderer Module.
 

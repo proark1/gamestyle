@@ -103,7 +103,15 @@ export default function AccountDialog({
               type="button"
               className="account-secondary"
               onClick={() => setWardrobeOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', borderColor: '#d0b370', background: '#fdf7e8' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                width: '100%',
+                borderColor: '#d0b370',
+                background: '#fdf7e8',
+              }}
             >
               <Sparkles size={16} color="#8c5b08" /> Wardrobe & Perks
             </button>
@@ -125,7 +133,10 @@ export default function AccountDialog({
             </button>
           </div>
           {wardrobeOpen && (
-            <WardrobeDialog open={wardrobeOpen} onClose={() => setWardrobeOpen(false)} />
+            <WardrobeDialog
+              open={wardrobeOpen}
+              onClose={() => setWardrobeOpen(false)}
+            />
           )}
           <div className="account-danger-zone">
             {confirming ? (

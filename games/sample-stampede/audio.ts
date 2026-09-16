@@ -98,6 +98,30 @@ export const sampleStampedeCatalog: Cue[] = [
     loop: false,
     volume: 0.85,
   },
+  {
+    id: 'stampede.receipt_print',
+    name: 'Dot Matrix Printer Rattle',
+    group: 'stampede',
+    category: 'material',
+    prompt:
+      'Fast mechanical dot matrix receipt printer buzz, paper feeding and cutter ratchet click',
+    text: 'bzzz-chk',
+    duration: 0.8,
+    loop: false,
+    volume: 0.7,
+  },
+  {
+    id: 'stampede.store_muzak',
+    name: 'Supermarket Elevator Muzak',
+    group: 'stampede',
+    category: 'music',
+    prompt:
+      'Cheerful easy listening retail store elevator muzak with gentle electric piano chords and walking bass',
+    text: 'la-la',
+    duration: 8.0,
+    loop: true,
+    volume: 0.4,
+  },
 ];
 
 export class SampleStampedeAudio {
@@ -105,6 +129,10 @@ export class SampleStampedeAudio {
   private squeakOsc: OscillatorNode | null = null;
   private squeakGain: GainNode | null = null;
   private squeakTimer = 0;
+  private muzakInterval: ReturnType<typeof setInterval> | null = null;
+  private muzakStep = 0;
+  private muzakGain: GainNode | null = null;
+  private isMuted = false;
 
   public unlock() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -119,10 +147,113 @@ export class SampleStampedeAudio {
     if (this.ctx && this.ctx.state === 'suspended') {
       void this.ctx.resume();
     }
+    if (this.ctx && !this.muzakInterval) {
+      this.startMuzak();
+    }
+  }
+
+  public setMuted(muted: boolean) {
+    this.isMuted = muted;
+    if (this.muzakGain && this.ctx) {
+      this.muzakGain.gain.setValueAtTime(
+        muted ? 0 : 0.045,
+        this.ctx.currentTime,
+      );
+    }
+  }
+
+  public startMuzak() {
+    if (this.muzakInterval || !this.ctx) return;
+    this.muzakGain = this.ctx.createGain();
+    this.muzakGain.gain.setValueAtTime(
+      this.isMuted ? 0 : 0.045,
+      this.ctx.currentTime,
+    );
+    this.muzakGain.connect(this.ctx.destination);
+
+    // Chords progression (Fmaj7, Gm7, Am7, Bbmaj7)
+    const chords = [
+      [349.23, 440.0, 523.25, 659.25], // F4, A4, C5, E5
+      [392.0, 466.16, 587.33, 698.46], // G4, Bb4, D5, F5
+      [440.0, 523.25, 659.25, 783.99], // A4, C5, E5, G5
+      [466.16, 587.33, 698.46, 880.0], // Bb4, D5, F5, A5
+    ];
+    const bass = [174.61, 196.0, 220.0, 233.08]; // F3, G3, A3, Bb3
+
+    this.muzakInterval = setInterval(() => {
+      if (!this.ctx || this.ctx.state !== 'running' || this.isMuted) return;
+      const now = this.ctx.currentTime;
+      const chordIdx = Math.floor(this.muzakStep / 4) % chords.length;
+      const chord = chords[chordIdx];
+      const rootBass = bass[chordIdx];
+
+      // Bass note on downbeats
+      if (this.muzakStep % 2 === 0) {
+        const bOsc = this.ctx.createOscillator();
+        const bGain = this.ctx.createGain();
+        bOsc.type = 'sine';
+        bOsc.frequency.setValueAtTime(rootBass, now);
+        bGain.gain.setValueAtTime(0.06, now);
+        bGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        bOsc.connect(bGain);
+        bGain.connect(this.muzakGain!);
+        bOsc.start(now);
+        bOsc.stop(now + 0.38);
+      }
+
+      // Gentle electric piano arpeggio note
+      const noteFreq = chord[this.muzakStep % chord.length];
+      const pOsc = this.ctx.createOscillator();
+      const pFilter = this.ctx.createBiquadFilter();
+      const pGain = this.ctx.createGain();
+
+      pOsc.type = 'triangle';
+      pOsc.frequency.setValueAtTime(noteFreq, now);
+
+      pFilter.type = 'lowpass';
+      pFilter.frequency.setValueAtTime(1400, now);
+
+      pGain.gain.setValueAtTime(0.04, now);
+      pGain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+      pOsc.connect(pFilter);
+      pFilter.connect(pGain);
+      pGain.connect(this.muzakGain!);
+
+      pOsc.start(now);
+      pOsc.stop(now + 0.35);
+
+      this.muzakStep = (this.muzakStep + 1) % 16;
+    }, 450);
+  }
+
+  public stopMuzak() {
+    if (this.muzakInterval) {
+      clearInterval(this.muzakInterval);
+      this.muzakInterval = null;
+    }
+  }
+
+  public playReceiptPrint() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    for (let i = 0; i < 6; i++) {
+      const t = now + i * 0.05;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1200 + (i % 2) * 400, t);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.04);
+    }
   }
 
   public updateSqueak(speed: number, wobbleIntensity: number, dt: number) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (this.isMuted || !this.ctx || this.ctx.state !== 'running') return;
 
     // Squeak chirps periodically based on wheel rotation speed
     this.squeakTimer += dt * (10 + speed * 2.5);
@@ -270,6 +401,8 @@ export class SampleStampedeAudio {
       osc.start(now + idx * 0.08);
       osc.stop(now + idx * 0.08 + 0.5);
     });
+
+    this.playReceiptPrint();
   }
 
   public playReceiptRejected() {
@@ -291,6 +424,8 @@ export class SampleStampedeAudio {
 
     osc.start(now);
     osc.stop(now + 0.48);
+
+    this.playReceiptPrint();
   }
 
   public playGrabber() {
@@ -314,6 +449,7 @@ export class SampleStampedeAudio {
   }
 
   public playEvent(event: StampedeEvent) {
+    if (this.isMuted) return;
     switch (event.type) {
       case 'sample_announcement':
         this.playAnnouncementBell();
@@ -344,6 +480,7 @@ export class SampleStampedeAudio {
   }
 
   public destroy() {
+    this.stopMuzak();
     if (this.ctx) {
       void this.ctx.close();
       this.ctx = null;

@@ -65,21 +65,45 @@ export function createAirportTerminal(): T.Group {
 
   // Outside tarmac & runway lights
   box(root, [floorW + 10, 0.1, 14], [1, -0.1, -12], PALETTE.tarmac);
-  // Runway lights
+  // Runway edge lights
   for (let x = -10; x <= 12; x += 4) {
     taper(root, 0.08, 0.08, 0.3, [x, 0.15, -10], PALETTE.warningYellow);
   }
 
-  // Simplified airliner tail visible through window
+  // Floating background clouds outside window
+  const clouds = new T.Group();
+  clouds.name = 'window-clouds';
+  clouds.position.set(0, 4.2, -14);
+  for (let ci = -12; ci <= 14; ci += 7) {
+    ball(clouds, [1.4, 0.6, 0.8], [ci, 0, 0], '#ffffff', 8);
+    ball(clouds, [0.9, 0.5, 0.6], [ci + 0.9, 0.15, 0], '#ffffff', 8);
+    ball(clouds, [0.8, 0.4, 0.5], [ci - 0.8, -0.1, 0], '#ffffff', 8);
+  }
+  root.add(clouds);
+
+  // Animated airliner on runway outside window
   const airplane = new T.Group();
+  airplane.name = 'window-airplane';
   airplane.position.set(-2, 1.5, -13);
   box(airplane, [9, 2.4, 2.4], [0, 1.2, 0], '#ffffff', true);
-  // Cockpit nose
+  // Cockpit nose cone
   taper(airplane, 1.0, 0.2, 2.5, [5.5, 1.1, 0], '#ffffff');
-  // Jet engine
+  // Jet engines under wings
   taper(airplane, 0.6, 0.6, 1.8, [1, 0.6, -2.2], '#e5e7eb');
-  // Fin / Tail with budget airline stripe
+  taper(airplane, 0.6, 0.6, 1.8, [1, 0.6, 2.2], '#e5e7eb');
+  // Wings
+  box(airplane, [3.2, 0.15, 8.5], [0.8, 1.1, 0], '#e2e8f0');
+  // Tail fin with bright budget airline stripe
   box(airplane, [1.8, 3.2, 0.3], [-3.8, 3.2, 0], '#ef4444');
+  // Flashing amber beacon light on tail
+  const beacon = ball(
+    airplane,
+    [0.12, 0.12, 0.12],
+    [-3.8, 4.85, 0],
+    '#f59e0b',
+    8,
+  );
+  beacon.name = 'airplane-beacon';
   root.add(airplane);
 
   // 3. Waiting lounge benches (left side, where players can sit or stomp)
@@ -95,6 +119,42 @@ export function createAirportTerminal(): T.Group {
     }
     root.add(bench);
   }
+
+  // Floor Decals: Boarding lane queue & footprints
+  // Yellow footprint decals at TSA Arch
+  box(root, [0.25, 0.015, 0.12], [3.5, 0.01, -0.2], PALETTE.warningYellow);
+  box(root, [0.25, 0.015, 0.12], [3.5, 0.01, 0.2], PALETTE.warningYellow);
+  // Footprints at Sizer Box
+  box(root, [0.25, 0.015, 0.12], [7.8, 0.01, -0.2], PALETTE.warningYellow);
+  box(root, [0.25, 0.015, 0.12], [7.8, 0.01, 0.2], PALETTE.warningYellow);
+  // Boarding lane directional arrow pointing to Gate B12
+  box(root, [0.8, 0.015, 0.25], [5.8, 0.01, 0], PALETTE.neonGreen);
+  beam(root, [6.2, 0.015, -0.3], [6.6, 0.015, 0], 0.06, PALETTE.neonGreen);
+  beam(root, [6.2, 0.015, 0.3], [6.6, 0.015, 0], 0.06, PALETTE.neonGreen);
+
+  // Queue Stanchions leading into Gate B12
+  const stanchions = [
+    [5.0, 1.4],
+    [6.6, 1.4],
+    [8.2, 1.4],
+    [5.0, -1.4],
+    [6.6, -1.4],
+  ];
+  for (const [sx, sz] of stanchions) {
+    const post = new T.Group();
+    post.position.set(sx, 0, sz);
+    // Heavy circular chrome base
+    taper(post, 0.18, 0.2, 0.05, [0, 0.025, 0], PALETTE.metalChrome);
+    // Vertical chrome post
+    beam(post, [0, 0.05, 0], [0, 0.95, 0], 0.04, PALETTE.metalChrome);
+    // Post topper ball
+    ball(post, [0.06, 0.06, 0.06], [0, 0.98, 0], PALETTE.metalChrome);
+    root.add(post);
+  }
+  // Red nylon retractable belt ribbons between stanchions
+  beam(root, [5.0, 0.88, 1.4], [6.6, 0.88, 1.4], 0.05, '#dc2626');
+  beam(root, [6.6, 0.88, 1.4], [8.2, 0.88, 1.4], 0.05, '#dc2626');
+  beam(root, [5.0, 0.88, -1.4], [6.6, 0.88, -1.4], 0.05, '#dc2626');
 
   // Luggage scale in packing area
   const scale = new T.Group();
@@ -233,6 +293,20 @@ export function createSizerBoxMesh(): T.Group {
     PALETTE.neonRed,
   );
 
+  // Internal Holographic Measurement Volume
+  const holoGeo = new T.BoxGeometry(w - 0.02, h, d - 0.02);
+  const holoMat = new T.MeshStandardMaterial({
+    color: '#06b6d4',
+    transparent: true,
+    opacity: 0.15,
+    roughness: 0.1,
+    metalness: 0.2,
+  });
+  const holoMesh = new T.Mesh(holoGeo, holoMat);
+  holoMesh.position.set(0, h * 0.5 + 0.08, 0);
+  holoMesh.name = 'sizer-hologram';
+  root.add(holoMesh);
+
   // Siren / Beacon on top post
   const sirenPost = new T.Group();
   sirenPost.position.set(0, h + 0.12, -d / 2);
@@ -259,6 +333,8 @@ export function createSizerBoxMesh(): T.Group {
   return root;
 }
 
+const SHELL_GROOVE_COLORS = ['#1d4ed8', '#b91c1c', '#047857', '#6d28d9'];
+
 /** Build an interactive suitcase 3D model with dynamic bulging lid */
 export function createSuitcaseMesh(sc: Suitcase): T.Group {
   const root = new T.Group();
@@ -268,83 +344,189 @@ export function createSuitcaseMesh(sc: Suitcase): T.Group {
   const h = SUITCASE_BASE_H;
   const d = SUITCASE_BASE_D;
   const col = SUITCASE_COLORS[sc.color % SUITCASE_COLORS.length];
+  const grooveCol = SHELL_GROOVE_COLORS[sc.color % SHELL_GROOVE_COLORS.length];
 
-  // Lower shell body
-  box(root, [w, h * 0.55, d], [0, h * 0.275, 0], col, true);
+  // 1. Lower shell body (hard polycarbonate)
+  box(root, [w, h * 0.52, d], [0, h * 0.26, 0], col, true);
 
-  // Corner guards (black reinforced plastic)
+  // Horizontal corrugated ribbed grooves (classic spinner suitcase styling)
+  for (const ry of [h * 0.12, h * 0.26, h * 0.4]) {
+    // Front face rib
+    box(root, [w * 0.82, 0.02, 0.01], [0, ry, d / 2 + 0.005], grooveCol);
+    // Back face rib
+    box(root, [w * 0.82, 0.02, 0.01], [0, ry, -d / 2 - 0.005], grooveCol);
+  }
+
+  // 4 Bottom Corner guards (black reinforced protective bumpers)
   for (const cx of [-w / 2 + 0.04, w / 2 - 0.04]) {
     for (const cz of [-d / 2 + 0.04, d / 2 - 0.04]) {
       box(root, [0.1, 0.12, 0.1], [cx, 0.08, cz], PALETTE.metalDark, true);
     }
   }
 
-  // 4 Spinner wheels
-  for (const wx of [-w / 2 + 0.1, w / 2 - 0.1]) {
-    for (const wz of [-d / 2 + 0.08, d / 2 - 0.08]) {
-      taper(root, 0.05, 0.05, 0.06, [wx, 0.03, wz], PALETTE.metalDark);
+  // 4 Dual-Spinner caster wheels
+  for (const wx of [-w / 2 + 0.09, w / 2 - 0.09]) {
+    for (const wz of [-d / 2 + 0.07, d / 2 - 0.07]) {
+      // Caster fork bracket
+      taper(root, 0.035, 0.045, 0.04, [wx, 0.045, wz], PALETTE.metalDark);
+      // Dual mini rubber tires
+      taper(root, 0.03, 0.03, 0.03, [wx - 0.015, 0.025, wz], '#111827');
+      taper(root, 0.03, 0.03, 0.03, [wx + 0.015, 0.025, wz], '#111827');
+      // Silver center axle nut
+      ball(root, [0.012, 0.012, 0.012], [wx, 0.025, wz], PALETTE.metalChrome);
     }
   }
 
-  // Telescopic handle on the top/side
+  // Bottom protective resting studs (when laid flat)
+  for (const sz of [-d / 3, d / 3]) {
+    box(
+      root,
+      [0.015, 0.03, 0.03],
+      [-w / 2 - 0.01, h * 0.26, sz],
+      PALETTE.metalDark,
+    );
+  }
+
+  // 2. Bulging Upper Lid assembly (dynamically scaled on render)
+  const lid = new T.Group();
+  lid.name = 'suitcase-lid';
+  lid.position.set(0, h * 0.52, 0);
+
+  // Upper hard shell
+  const upperMesh = box(lid, [w, h * 0.48, d], [0, h * 0.24, 0], col, true);
+  upperMesh.name = 'lid-shell';
+
+  // Upper horizontal corrugated ribs
+  for (const ry of [h * 0.1, h * 0.24, h * 0.38]) {
+    box(lid, [w * 0.82, 0.02, 0.01], [0, ry, d / 2 + 0.005], grooveCol);
+    box(lid, [w * 0.82, 0.02, 0.01], [0, ry, -d / 2 - 0.005], grooveCol);
+  }
+
+  // 4 Top Corner guards
+  for (const cx of [-w / 2 + 0.04, w / 2 - 0.04]) {
+    for (const cz of [-d / 2 + 0.04, d / 2 - 0.04]) {
+      box(lid, [0.1, 0.1, 0.1], [cx, h * 0.44, cz], PALETTE.metalDark, true);
+    }
+  }
+
+  // Telescopic trolley handle with brushed-aluminum twin tubes
   box(
-    root,
-    [0.04, 0.4, 0.04],
-    [-0.18, h * 0.55 + 0.2, -d / 2 + 0.05],
-    '#cccccc',
+    lid,
+    [0.035, 0.42, 0.035],
+    [-0.16, h * 0.48 + 0.2, -d / 2 + 0.05],
+    '#e2e8f0',
   );
   box(
-    root,
-    [0.04, 0.4, 0.04],
-    [0.18, h * 0.55 + 0.2, -d / 2 + 0.05],
-    '#cccccc',
+    lid,
+    [0.035, 0.42, 0.035],
+    [0.16, h * 0.48 + 0.2, -d / 2 + 0.05],
+    '#e2e8f0',
+  );
+  // Ergonomic top grip bar
+  box(
+    lid,
+    [0.42, 0.06, 0.06],
+    [0, h * 0.48 + 0.41, -d / 2 + 0.05],
+    PALETTE.metalDark,
+    true,
+  );
+  // Red handle release button
+  box(
+    lid,
+    [0.08, 0.02, 0.03],
+    [0, h * 0.48 + 0.445, -d / 2 + 0.05],
+    PALETTE.neonRed,
+  );
+
+  // Soft rubberized carry handles (top & side)
+  box(
+    lid,
+    [0.22, 0.035, 0.05],
+    [0, h * 0.48 + 0.02, 0],
+    PALETTE.metalDark,
+    true,
   );
   box(
-    root,
-    [0.44, 0.06, 0.06],
-    [0, h * 0.55 + 0.4, -d / 2 + 0.05],
+    lid,
+    [0.035, 0.05, 0.18],
+    [-w / 2 - 0.02, h * 0.24, 0],
     PALETTE.metalDark,
     true,
   );
 
-  // Bulging Upper Lid assembly (dynamically scaled on render)
-  const lid = new T.Group();
-  lid.name = 'suitcase-lid';
-  lid.position.set(0, h * 0.55, 0);
+  // Travel Decal stickers on suitcase shell
+  box(
+    lid,
+    [0.14, 0.07, 0.005],
+    [-w * 0.2, h * 0.35, d / 2 + 0.006],
+    PALETTE.warningYellow,
+  ); // "B12" badge
+  box(
+    lid,
+    [0.1, 0.06, 0.005],
+    [w * 0.22, h * 0.15, d / 2 + 0.006],
+    PALETTE.neonRed,
+  ); // "HEAVY" sticker
 
-  // Upper hard shell
-  const upperMesh = box(lid, [w, h * 0.45, d], [0, h * 0.225, 0], col, true);
-  upperMesh.name = 'lid-shell';
+  // Hanging paper baggage barcode tag with cord
+  beam(
+    lid,
+    [0.12, h * 0.48 + 0.02, 0],
+    [0.14, h * 0.48 - 0.04, 0.06],
+    0.012,
+    '#ffffff',
+  );
+  box(lid, [0.07, 0.12, 0.005], [0.14, h * 0.48 - 0.1, 0.06], '#fef08a');
 
   // Bulging elastic fabric belly in middle
   const bulgeMesh = ball(
     lid,
     [w * 0.48, 0.1, d * 0.48],
     [0, 0.02, 0],
-    '#2563eb',
+    '#1e293b',
   );
   bulgeMesh.name = 'bulge-belly';
 
-  // Zipper seam track around perimeter
-  box(lid, [w + 0.03, 0.03, d + 0.03], [0, 0, 0], PALETTE.metalDark);
+  // Peek-through clothing edges that reveal when overstuffed & bulging
+  const peekSock = box(
+    lid,
+    [0.1, 0.05, 0.08],
+    [w * 0.2, 0.02, d * 0.46],
+    '#f97316',
+    true,
+  );
+  peekSock.name = 'peek-sock';
+  const peekShirt = box(
+    lid,
+    [0.14, 0.04, 0.08],
+    [-w * 0.18, 0.02, d * 0.46],
+    '#06b6d4',
+    true,
+  );
+  peekShirt.name = 'peek-shirt';
 
-  // Zipper pull tab
+  // Zipper seam track around perimeter & golden teeth line
+  box(lid, [w + 0.03, 0.03, d + 0.03], [0, 0, 0], PALETTE.metalDark);
+  box(lid, [w + 0.035, 0.01, d + 0.035], [0, 0, 0], '#f59e0b');
+
+  // Zipper pull tab with ribbon
   const zipperTab = box(
     lid,
-    [0.05, 0.08, 0.03],
+    [0.05, 0.07, 0.04],
     [w * 0.4, 0, d * 0.5 + 0.02],
     '#fbbf24',
     true,
   );
   zipperTab.name = 'zipper-tab';
+  box(zipperTab, [0.025, 0.09, 0.005], [0, -0.06, 0], '#ef4444'); // Red pull ribbon
 
   root.add(lid);
 
   // Approved green sticker tag or rejected red tag
   const tag = box(
     root,
-    [0.18, 0.12, 0.02],
-    [0, h * 0.4, d / 2 + 0.015],
+    [0.2, 0.13, 0.02],
+    [0, h * 0.38, d / 2 + 0.018],
     sc.approved ? PALETTE.neonGreen : sc.rejected ? PALETTE.neonRed : '#ffffff',
   );
   tag.name = 'status-tag';
@@ -433,6 +615,8 @@ export function createItemMesh(item: LuggageItem): T.Group {
           cfg.color,
         );
         ball(root, [0.08, 0.04, 0.14], [side * 0.24, 0.12, 0.34], '#b91c1c', 8);
+        // Rubber bands around claws (standard live lobster travel attire)
+        box(root, [0.09, 0.03, 0.04], [side * 0.24, 0.12, 0.34], '#fbbf24');
       }
       // Feelers / Antennae
       beam(root, [0.03, 0.15, 0.15], [0.1, 0.22, 0.36], 0.015, '#7f1d1d');
@@ -442,6 +626,8 @@ export function createItemMesh(item: LuggageItem): T.Group {
     case 'shampoo': {
       // 2-Liter giant translucent shampoo bottle
       box(root, [0.24, 0.38, 0.16], [0, 0.2, 0], cfg.color, true);
+      // Blue sloshing liquid block inside
+      box(root, [0.22, 0.26, 0.14], [0, 0.14, 0], '#0284c7');
       taper(root, 0.06, 0.08, 0.1, [0, 0.44, 0], '#ffffff');
       // Pump dispenser nozzle
       box(root, [0.04, 0.08, 0.1], [0, 0.52, 0.04], '#ffffff');
@@ -455,6 +641,8 @@ export function createItemMesh(item: LuggageItem): T.Group {
       const glass = ball(root, [0.2, 0.2, 0.2], [0, 0.24, 0], cfg.color);
       (glass.material as T.MeshStandardMaterial).transparent = true;
       (glass.material as T.MeshStandardMaterial).opacity = 0.45;
+      // White snow drifts at base of globe
+      ball(root, [0.16, 0.04, 0.16], [0, 0.09, 0], '#ffffff', 8);
       // Miniature green pine tree inside
       taper(root, 0.01, 0.09, 0.16, [0, 0.18, 0], '#15803d');
       break;

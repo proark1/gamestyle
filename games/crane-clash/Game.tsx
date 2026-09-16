@@ -25,6 +25,9 @@ import {
 import { CraneClashSound } from './audio';
 import { CraneClashScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import { CRANE_CLASH_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -42,6 +45,8 @@ const formatTime = (ms: number) => {
 
 export default function CraneClash() {
   useGameTracker(tracker);
+  const { t } = useLanguage();
+  const strings = t(CRANE_CLASH_TRANSLATIONS);
 
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<CraneClashScene | null>(null);
@@ -204,14 +209,19 @@ export default function CraneClash() {
   return (
     <main className="cc-game">
       <div ref={container} className="cc-canvas" />
+      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 20 }}>
+        <LanguageSwitcher variant="header" />
+      </div>
 
       {/* Top HUD with Scores & Timer */}
       <div className="cc-hud">
         <div className="cc-team-score orange">
           <div className="cc-score-val">{orangeScore.toFixed(1)}m</div>
           <div className="cc-score-meta">
-            <span>Team Orange</span>
-            <span>{world?.scores.orange.crates || 0} Kisten</span>
+            <span>{strings.teamOrange}</span>
+            <span>
+              {world?.scores.orange.crates || 0} {strings.crates}
+            </span>
           </div>
         </div>
 
@@ -222,8 +232,10 @@ export default function CraneClash() {
 
         <div className="cc-team-score teal">
           <div className="cc-score-meta" style={{ textAlign: 'right' }}>
-            <span>Team Teal</span>
-            <span>{world?.scores.teal.crates || 0} Kisten</span>
+            <span>{strings.teamTeal}</span>
+            <span>
+              {world?.scores.teal.crates || 0} {strings.crates}
+            </span>
           </div>
           <div className="cc-score-val">{tealScore.toFixed(1)}m</div>
         </div>
@@ -235,14 +247,8 @@ export default function CraneClash() {
           <h1>
             Crane <span>Clash</span>.
           </h1>
-          <div className="cc-tagline">
-            ZWEI KRÄNE. VIER SPIELER. BAUSTELLEN-CHAOS.
-          </div>
-          <p className="cc-desc">
-            Schwinge am Seil durch die Luft, greife Holzkisten und Steinblöcke
-            und baue mit deinem Kranführer den höchsten Turm vor Ablauf der
-            Zeit!
-          </p>
+          <div className="cc-tagline">{strings.tagline}</div>
+          <p className="cc-desc">{strings.desc}</p>
 
           <div className="cc-role-selector">
             <span
@@ -281,9 +287,7 @@ export default function CraneClash() {
                 marginTop: 4,
               }}
             >
-              {isSolo
-                ? 'Solo-Modus: Du steuerst Kran & Seil gleichzeitig!'
-                : 'Deine Rolle'}
+              {isSolo ? strings.soloPrompt : strings.yourRole}
             </span>
             <div className="cc-role-row">
               <button
@@ -291,14 +295,14 @@ export default function CraneClash() {
                 className={`cc-btn ${role === 'swinger' ? 'active' : ''}`}
                 onClick={() => handleRoleChange('swinger')}
               >
-                {isSolo ? 'Kamera: Seil-Akrobat' : 'Seil-Akrobat (Hängt)'}
+                {isSolo ? strings.swingerSolo : strings.swingerRole}
               </button>
               <button
                 type="button"
                 className={`cc-btn ${role === 'operator' ? 'active' : ''}`}
                 onClick={() => handleRoleChange('operator')}
               >
-                {isSolo ? 'Kamera: Kranführer' : 'Kranführer (Kabine)'}
+                {isSolo ? strings.operatorSolo : strings.operatorRole}
               </button>
             </div>
           </div>
@@ -308,7 +312,7 @@ export default function CraneClash() {
             className="cc-btn primary"
             onClick={handleStart}
           >
-            Match starten <ArrowRight size={18} />
+            {strings.startMatch} <ArrowRight size={18} />
           </button>
         </div>
       )}
@@ -316,13 +320,13 @@ export default function CraneClash() {
       {/* Match Ended Announcement */}
       {isEnded && (
         <div className="cc-ended-banner">
-          <h2>Match Vorbei!</h2>
+          <h2>{strings.matchOver}</h2>
           <div className={`cc-ended-winner ${world?.winner || ''}`}>
             {world?.winner === 'orange'
-              ? 'Team Orange gewinnt!'
+              ? strings.orangeWins
               : world?.winner === 'teal'
-                ? 'Team Teal gewinnt!'
-                : 'Unentschieden!'}
+                ? strings.tealWins
+                : strings.draw}
           </div>
           <p style={{ margin: '0 0 20px', color: '#666' }}>
             Orange: {orangeScore.toFixed(1)}m | Teal: {tealScore.toFixed(1)}m
@@ -332,7 +336,7 @@ export default function CraneClash() {
             className="cc-btn primary"
             onClick={handleRestart}
           >
-            <RotateCcw size={18} /> Nochmal spielen
+            <RotateCcw size={18} /> {strings.playAgain}
           </button>
         </div>
       )}
@@ -342,36 +346,36 @@ export default function CraneClash() {
         {isSolo ? (
           <>
             <span>
-              <span className="cc-hint-key">WASD</span> Schaukeln
+              <span className="cc-hint-key">WASD</span> {strings.hintSwing}
             </span>
             <span>
-              <span className="cc-hint-key">Pfeiltasten</span> Kran drehen &
-              Katze
+              <span className="cc-hint-key">Pfeiltasten</span>{' '}
+              {strings.hintCraneRotate}
             </span>
             <span>
               <span className="cc-hint-key">Q</span> /{' '}
-              <span className="cc-hint-key">Z</span> Winde
+              <span className="cc-hint-key">Z</span> {strings.hintHoist}
             </span>
             <span>
               <span className="cc-hint-key">Space</span> /{' '}
-              <span className="cc-hint-key">E</span> Greifen / Werfen
+              <span className="cc-hint-key">E</span> {strings.hintGrabRelease}
             </span>
             <span>
-              <span className="cc-hint-key">Tab</span> Tasten tauschen
+              <span className="cc-hint-key">Tab</span> {strings.hintSwapKeys}
             </span>
             <span>
-              <span className="cc-hint-key">V</span> Kamera
+              <span className="cc-hint-key">V</span> {strings.hintCamera}
             </span>
           </>
         ) : role === 'swinger' ? (
           <>
             <span>
-              <span className="cc-hint-key">WASD / Pfeile</span> Schaukeln &
-              Schwung
+              <span className="cc-hint-key">WASD / Pfeile</span>{' '}
+              {strings.hintSwingMomentum}
             </span>
             <span>
-              <span className="cc-hint-key">Space / E</span> Kiste Greifen /
-              Werfen
+              <span className="cc-hint-key">Space / E</span>{' '}
+              {strings.hintGrabTossCrate}
             </span>
             <span>
               <span className="cc-hint-key">V</span> Kamera
@@ -380,10 +384,11 @@ export default function CraneClash() {
         ) : (
           <>
             <span>
-              <span className="cc-hint-key">WASD / Pfeile</span> Kran steuern
+              <span className="cc-hint-key">WASD / Pfeile</span>{' '}
+              {strings.hintCraneControl}
             </span>
             <span>
-              <span className="cc-hint-key">Q / Z</span> Seilwinde
+              <span className="cc-hint-key">Q / Z</span> {strings.hintWinch}
             </span>
             <span>
               <span className="cc-hint-key">V</span> Kamera

@@ -7,6 +7,7 @@ import {
   createPaperPlateHazard,
   createSampleKiosk,
   createShoppingCart,
+  createWarehouseLightFixture,
   type CartMeshRig,
   WAREHOUSE_COLORS,
 } from './models';
@@ -39,6 +40,12 @@ type ComicPopup = {
   maxLife: number;
 };
 
+type SkidMark = {
+  mesh: THREE.Mesh;
+  life: number;
+  maxLife: number;
+};
+
 export class SampleStampedeScene {
   renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -59,6 +66,8 @@ export class SampleStampedeScene {
 
   private particles: Particle[] = [];
   private comicPopups: ComicPopup[] = [];
+  private skidMarks: SkidMark[] = [];
+  private screenShake = 0;
   private activeSteamSources: { x: number; y: number; z: number }[] = [];
 
   private currentInput: PlayerInput = {
@@ -222,6 +231,39 @@ export class SampleStampedeScene {
     const gauntlet = createExitGauntlet();
     gauntlet.position.set(0, 0, 28);
     this.scene.add(gauntlet);
+
+    // High-bay pendant warehouse lamps
+    const lightPositions: [number, number][] = [
+      [-14, -12],
+      [0, -12],
+      [14, -12],
+      [-14, 0],
+      [0, 0],
+      [14, 0],
+      [-14, 12],
+      [0, 12],
+      [14, 12],
+      [0, 26],
+    ];
+    for (const [lx, lz] of lightPositions) {
+      const fixture = createWarehouseLightFixture();
+      fixture.position.set(lx, 7.6, lz);
+      this.scene.add(fixture);
+    }
+
+    // Overhead dark steel roof girders
+    const girderMat = new THREE.MeshStandardMaterial({
+      color: 0x1e272e,
+      roughness: 0.9,
+    });
+    for (const gz of [-18, -2, 14, 28]) {
+      const girder = new THREE.Mesh(
+        new THREE.BoxGeometry(62, 0.4, 0.4),
+        girderMat,
+      );
+      girder.position.set(0, 8.8, gz);
+      this.scene.add(girder);
+    }
   }
 
   public render(snapshot: SampleStampedeSnapshot) {
@@ -268,6 +310,21 @@ export class SampleStampedeScene {
       rig.grabberAssembly.rotation.y = cart.grabberAngle || 0;
       rig.grabberAssembly.scale.x = 1.0 + cart.grabberReach * 0.85;
 
+      // Articulated grabber claw pinch animation
+      if (rig.grabberJawLeft && rig.grabberJawRight) {
+        const pinch = cart.grabberSwatting ? 0.48 : 0;
+        rig.grabberJawLeft.rotation.y = pinch;
+        rig.grabberJawRight.rotation.y = -pinch;
+      }
+
+      // Dynamic centrifugal basket lean
+      const lateralImpulse =
+        cart.vx * Math.sin(cart.rotY) + cart.vz * Math.cos(cart.rotY);
+      rig.basket.rotation.z = Math.max(
+        -0.14,
+        Math.min(0.14, lateralImpulse * 0.04),
+      );
+
       // Animate Driver Avatar
       const driver = this.driverMeshes.get(cart.id);
       if (driver) {
@@ -296,6 +353,14 @@ export class SampleStampedeScene {
       // Emit drift sparks when skidding hard
       if (cart.driftSlip > 1.2 && Math.random() < 0.6) {
         this.emitSparks(cart.x, 0.15, cart.z, 4);
+      }
+
+      // Spawn rubber skid marks on floor when skidding or spinning
+      if (
+        (cart.driftSlip > 1.25 || cart.slipSpinTimer > 0) &&
+        Math.random() < 0.45
+      ) {
+        this.spawnSkidMark(cart.x, cart.z, cart.rotY);
       }
 
       // Emit flames when in sugar rush turbo mode
@@ -384,22 +449,45 @@ export class SampleStampedeScene {
       });
     }
 
-    // 6. Update Visual Particles & Comic Popups
+    // 6. Update Visual Particles, Skid Marks & Comic Popups
     this.updateParticles(dt);
+    this.updateSkidMarks(dt);
     this.updateComicPopups(dt);
 
-    // Process new events for comic text popups
+    // Process new events for camera shake, particle effects and comic text popups
     for (const ev of world.events) {
+      if (ev.type === 'cart_crash' || ev.type === 'shelf_tumble') {
+        this.screenShake = Math.max(this.screenShake, 0.48);
+        this.emitImpactDust(ev.x, ev.y, ev.z, 10);
+        this.emitSparks(ev.x, ev.y, ev.z, 8);
+      } else if (ev.type === 'plate_slip') {
+        this.screenShake = Math.max(this.screenShake, 0.35);
+        this.spawnSkidMark(ev.x, ev.z, 0);
+      } else if (ev.type === 'sugar_rush') {
+        this.emitSugarFlames(ev.x, ev.y, ev.z, 8);
+      } else if (ev.type === 'receipt_approved') {
+        this.emitConfetti(ev.x, ev.y + 1, ev.z);
+      } else if (ev.type === 'receipt_rejected') {
+        this.screenShake = Math.max(this.screenShake, 0.4);
+      }
+
       if (ev.text) {
         this.spawnComicPopup(ev.x, ev.y + 1.2, ev.z, ev.text);
       }
     }
     world.events.length = 0; // Clear processed events
 
-    // 7. Smooth Dynamic Third-Person Camera Follow
+    // 7. Smooth Dynamic Third-Person Camera Follow with FOV Zoom & Screen Shake
     const myCart =
       world.carts.find((c) => c.id === localCartId) || world.carts[0];
     if (myCart) {
+      // Dynamic FOV Zoom during Sugar Rush sprint mode
+      const targetFov = myCart.sugarRushTimer > 0 ? 64 : 52;
+      if (Math.abs(this.camera.fov - targetFov) > 0.05) {
+        this.camera.fov += (targetFov - this.camera.fov) * 0.12;
+        this.camera.updateProjectionMatrix();
+      }
+
       // Camera sits behind and slightly above the cart
       const followDist = 8.5;
       const followH = 5.2;
@@ -410,6 +498,14 @@ export class SampleStampedeScene {
       this.camera.position.x += (targetCamX - this.camera.position.x) * 0.12;
       this.camera.position.z += (targetCamZ - this.camera.position.z) * 0.12;
       this.camera.position.y += (targetCamY - this.camera.position.y) * 0.12;
+
+      // Apply camera screen shake
+      if (this.screenShake > 0.01) {
+        this.camera.position.x += (Math.random() - 0.5) * this.screenShake;
+        this.camera.position.y += (Math.random() - 0.5) * this.screenShake;
+        this.camera.position.z += (Math.random() - 0.5) * this.screenShake;
+        this.screenShake *= Math.pow(0.04, dt);
+      }
 
       // Look slightly ahead of the cart
       const lookX = myCart.x + Math.cos(myCart.rotY) * 2.5;
@@ -538,6 +634,65 @@ export class SampleStampedeScene {
         life: 0,
         maxLife: 1.5,
       });
+    }
+  }
+
+  public emitImpactDust(x: number, y: number, z: number, count = 8) {
+    for (let i = 0; i < count; i++) {
+      const geo = new THREE.BoxGeometry(0.12, 0.08, 0.12);
+      const mat = new THREE.MeshBasicMaterial({
+        color: Math.random() < 0.5 ? 0xc49a6c : 0xdfe6e9,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      this.scene.add(mesh);
+      this.particles.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 5,
+        vy: Math.random() * 3 + 1.2,
+        vz: (Math.random() - 0.5) * 5,
+        life: 0,
+        maxLife: 0.5 + Math.random() * 0.25,
+      });
+    }
+  }
+
+  public spawnSkidMark(x: number, z: number, rotY: number) {
+    const geo = new THREE.PlaneGeometry(0.32, 0.85);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x1e272e,
+      transparent: true,
+      opacity: 0.45,
+      depthWrite: false,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.rotation.z = -rotY;
+    mesh.position.set(x, 0.008, z);
+    this.scene.add(mesh);
+    this.skidMarks.push({ mesh, life: 0, maxLife: 5.0 });
+
+    if (this.skidMarks.length > 70) {
+      const old = this.skidMarks.shift();
+      if (old) {
+        this.scene.remove(old.mesh);
+        old.mesh.geometry.dispose();
+      }
+    }
+  }
+
+  private updateSkidMarks(dt: number) {
+    for (let i = this.skidMarks.length - 1; i >= 0; i--) {
+      const sm = this.skidMarks[i];
+      sm.life += dt;
+      if (sm.life >= sm.maxLife) {
+        this.scene.remove(sm.mesh);
+        sm.mesh.geometry.dispose();
+        this.skidMarks.splice(i, 1);
+        continue;
+      }
+      const alpha = (1 - sm.life / sm.maxLife) * 0.45;
+      (sm.mesh.material as THREE.MeshBasicMaterial).opacity = alpha;
     }
   }
 
@@ -675,6 +830,10 @@ export class SampleStampedeScene {
     this.resizeObserver.disconnect();
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    for (const sm of this.skidMarks) {
+      this.scene.remove(sm.mesh);
+      sm.mesh.geometry.dispose();
+    }
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(
         this.renderer.domElement,

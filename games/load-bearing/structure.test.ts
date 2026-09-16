@@ -1,12 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  HALF_W,
-  buildHouse,
-  grounded,
-  restsOn,
-  supported,
-} from './structure';
+import { HALF_W, buildHouse, grounded, restsOn, supported } from './structure';
 import { alive, partBottom, partTop, type Part } from './types';
 
 const house = () => buildHouse();

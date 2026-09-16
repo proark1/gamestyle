@@ -357,5 +357,3 @@ export function computeCameraRelativeMovement(
     z: Math.abs(worldZ) < 0.0001 ? 0 : worldZ,
   };
 }
-
-

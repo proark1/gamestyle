@@ -42,6 +42,12 @@ void test('worker poses update limbs and body without detaching joints', () => {
 
   // Test 'hero' pose: hands on hips, wide stance
   poseWorker(model, 1.0, 'hero');
-  assert.ok(rig.legL.rotation.z > 0 && rig.legR.rotation.z < 0, 'legs are apart');
-  assert.ok(rig.armL.rotation.z > 0.4 && rig.armR.rotation.z < -0.4, 'hands are on hips');
+  assert.ok(
+    rig.legL.rotation.z > 0 && rig.legR.rotation.z < 0,
+    'legs are apart',
+  );
+  assert.ok(
+    rig.armL.rotation.z > 0.4 && rig.armR.rotation.z < -0.4,
+    'hands are on hips',
+  );
 });

@@ -40,9 +40,7 @@
       "indexes": {
         "idx_rooms_updated": {
           "name": "idx_rooms_updated",
-          "columns": [
-            "updated"
-          ],
+          "columns": ["updated"],
           "isUnique": false
         }
       },

@@ -12,19 +12,19 @@ Audited 9 September 2026. Public manifest snapshot: 2026-09-09T02:10:01.340Z. Sc
 
 “Files” counts distinct published playback URLs per game, including selected bundled defaults and explicitly used shared cues. A cue is a named sound event/slot, not necessarily a separate recording. Procedural audio is listed separately and counts as zero files.
 
-| Game | Files | Recorded / bundled | Covered / current cues | NPC player slots | Assessment |
-| --- | --- | --- | --- | --- | --- |
-| Wrong Floor | 0 | 0 / 0 | 0 / 26 | Yes — automatic fill, up to 3 | Functional synthesized coverage; recorded library empty |
-| One More Button | 28 | 0 / 28 | 28 / 28 | No | Enough for the current core design |
-| Four Brain Cells | 0 exposed* | 0 / 0 | 0 / 11 | Yes — add/remove/fill, up to 3 | Thin fallback; live audio library unavailable |
-| Reel Problems | 0 | 0 / 0 | 0 / 13 | No | Basic fallback; audio needs expansion |
-| Stack or Sink | 121 | 121 / 0 | 121 / 121 | No | Broad coverage; enough assets on paper |
-| Blend Business | 77 | 76 / 1 | 77 / 77 | Yes — add/remove/fill, up to 3 cows | Broad coverage; enough assets on paper |
-| Shelf Control | 15 | 10 / 5 | 15 / 15† | Yes — add/remove; fill-and-start, up to 3 | Core covered, but small and shared |
-| Uphill Delivery | 74 | 74 / 0 | 74 / 74 | Yes — add/remove/fill, up to 3 | Broad coverage; enough assets on paper |
-| Tiptoe Thieves | 70 | 65 / 5 | 70 / 70 | No NPC thief teammates | Broad coverage; enough assets on paper |
-| Permit Pending | 344 | 344 / 0 | 344 / 344 | No NPC builder teammates | Broadest library; enough assets on paper |
-| Brick by Hand | 0 | 0 / 0 | 0 / 61 | No | Critical audio gap |
+| Game             | Files      | Recorded / bundled | Covered / current cues | NPC player slots                          | Assessment                                              |
+| ---------------- | ---------- | ------------------ | ---------------------- | ----------------------------------------- | ------------------------------------------------------- |
+| Wrong Floor      | 0          | 0 / 0              | 0 / 26                 | Yes — automatic fill, up to 3             | Functional synthesized coverage; recorded library empty |
+| One More Button  | 28         | 0 / 28             | 28 / 28                | No                                        | Enough for the current core design                      |
+| Four Brain Cells | 0 exposed* | 0 / 0              | 0 / 11                 | Yes — add/remove/fill, up to 3            | Thin fallback; live audio library unavailable           |
+| Reel Problems    | 0          | 0 / 0              | 0 / 13                 | No                                        | Basic fallback; audio needs expansion                   |
+| Stack or Sink    | 121        | 121 / 0            | 121 / 121              | No                                        | Broad coverage; enough assets on paper                  |
+| Blend Business   | 77         | 76 / 1             | 77 / 77                | Yes — add/remove/fill, up to 3 cows       | Broad coverage; enough assets on paper                  |
+| Shelf Control    | 15         | 10 / 5             | 15 / 15†               | Yes — add/remove; fill-and-start, up to 3 | Core covered, but small and shared                      |
+| Uphill Delivery  | 74         | 74 / 0             | 74 / 74                | Yes — add/remove/fill, up to 3            | Broad coverage; enough assets on paper                  |
+| Tiptoe Thieves   | 70         | 65 / 5             | 70 / 70                | No NPC thief teammates                    | Broad coverage; enough assets on paper                  |
+| Permit Pending   | 344        | 344 / 0            | 344 / 344              | No NPC builder teammates                  | Broadest library; enough assets on paper                |
+| Brick by Hand    | 0          | 0 / 0              | 0 / 61                 | No                                        | Critical audio gap                                      |
 
 *Four Brain Cells returned **404 “Game not found”** for its live audio endpoint. Its 11-cue catalog exists locally; storage contents cannot be inferred from that failure. Wrong Floor, Reel Problems and Brick by Hand returned successful but empty manifests.
 
@@ -36,19 +36,19 @@ There are **719 distinct published audio URLs across the collection**. Per-game 
 
 These are available cue slots by the catalog’s categories, with material and event combined as effects. Farm/giant footsteps and some physical sounds are classified as events in the code. Zeros here refer to published files, not synthesized audio.
 
-| Game | Effects | Ambience | Music | Speech | Procedural sound when files are absent |
-| --- | --- | --- | --- | --- | --- |
-| Wrong Floor | 0 | 0 | 0 | 0 | 26 layered Foley recipes + room ambience |
-| One More Button | 22 | 3 | 3 | 0 | No general procedural fallback identified |
-| Four Brain Cells | 0 | 0 | 0 | 0 | 11 event kinds; short synthesized tones |
-| Reel Problems | 0 | 0 | 0 | 0 | 13 event kinds; tones and weather/wildlife noise |
-| Stack or Sink | 102 | 4 | 8 | 7 | No general procedural fallback identified |
-| Blend Business | 61 | 4 | 5 | 7 | No general procedural fallback identified |
-| Shelf Control | 14 | 0 | 1 | 0 | No general procedural fallback identified |
-| Uphill Delivery | 62 | 4 | 5 | 3 | No general procedural fallback identified |
-| Tiptoe Thieves | 45 | 3 | 6 | 16 | No general procedural fallback identified |
-| Permit Pending | 285 | 8 | 15 | 36 | No general procedural fallback identified |
-| Brick by Hand | 0 | 0 | 0 | 0 | No general procedural fallback identified |
+| Game             | Effects | Ambience | Music | Speech | Procedural sound when files are absent           |
+| ---------------- | ------- | -------- | ----- | ------ | ------------------------------------------------ |
+| Wrong Floor      | 0       | 0        | 0     | 0      | 26 layered Foley recipes + room ambience         |
+| One More Button  | 22      | 3        | 3     | 0      | No general procedural fallback identified        |
+| Four Brain Cells | 0       | 0        | 0     | 0      | 11 event kinds; short synthesized tones          |
+| Reel Problems    | 0       | 0        | 0     | 0      | 13 event kinds; tones and weather/wildlife noise |
+| Stack or Sink    | 102     | 4        | 8     | 7      | No general procedural fallback identified        |
+| Blend Business   | 61      | 4        | 5     | 7      | No general procedural fallback identified        |
+| Shelf Control    | 14      | 0        | 1     | 0      | No general procedural fallback identified        |
+| Uphill Delivery  | 62      | 4        | 5     | 3      | No general procedural fallback identified        |
+| Tiptoe Thieves   | 45      | 3        | 6     | 16     | No general procedural fallback identified        |
+| Permit Pending   | 285     | 8        | 15    | 36     | No general procedural fallback identified        |
+| Brick by Hand    | 0       | 0        | 0     | 0      | No general procedural fallback identified        |
 
 ## Per-game findings
 
@@ -78,19 +78,19 @@ These are available cue slots by the catalog’s categories, with material and e
 
 All 11 game components use the same [shared/ui/GameToolbar.tsx](../../../shared/ui/GameToolbar.tsx): Voice, sound toggle, help, All games and Sound workshop. All implement room creation/joining and an invite link/code. That gives the collection a common foundation, but the complete flow and functionality are not uniform.
 
-| Game | Lobby / invite / start behavior | NPCs beyond human players | Voice support in source |
-| --- | --- | --- | --- |
-| Wrong Floor | Check in → share code/link → host enters elevator; empty seats fill automatically | Computer guests and the pursuing apparition | Yes; no speaking-to-game-audio ducking hook |
-| One More Button | Create a show → invite → host starts; separate solo shortcut | No NPC player or character simulation found; automated hazards and audience sounds | Yes; game loops duck for voice |
-| Four Brain Cells | Start a kitchen → choose limbs/add NPCs → invite → host starts; practice also opens a lobby | NPCs control unfilled robot limbs | Implemented for peer rooms; no speaking-to-game-audio ducking hook |
-| Reel Problems | Launch a boat → invite → captain starts; separate solo shortcut | Fish plus shark and jellyfish hazards | Yes; no speaking-to-game-audio ducking hook |
-| Stack or Sink | Create crew → invite/explore yard → host starts flood; solo practice available | No NPC player or character simulation found | Yes; game loops duck for voice |
-| Blend Business | Create farm → choose player/computer farmer → invite/NPC cows → host starts | NPC cow players, background herd and optional computer farmer | Yes in supported room modes; game loops duck for voice |
-| Shelf Control | Create room → invite/add NPCs → exactly four seats → start; fill-and-start is combined | NPC guards/mannequins and background mannequins | Unavailable; toolbar opens an explanation |
-| Uphill Delivery | Create crew → invite/add NPCs → host starts delivery; solo shortcut starts immediately | NPC carriers and moving goats | Yes; game loops duck for voice |
-| Tiptoe Thieves | Create crew → invite → host starts heist; solo practice available | The giant is a reactive enemy character | Yes; game loops duck for voice |
-| Permit Pending | Mode-dependent; Crew Jobs has its own lobby/readiness flow, building modes differ | Scripted customer/inspector walks and inspects in Crew Jobs | Crew Jobs only; separate voice panel and ducking |
-| Brick by Hand | Open/join saved building site → invite → each player enters the site; no common host-start lobby | No NPC player or character simulation found | Unavailable; toolbar opens an explanation |
+| Game             | Lobby / invite / start behavior                                                                  | NPCs beyond human players                                                          | Voice support in source                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Wrong Floor      | Check in → share code/link → host enters elevator; empty seats fill automatically                | Computer guests and the pursuing apparition                                        | Yes; no speaking-to-game-audio ducking hook                        |
+| One More Button  | Create a show → invite → host starts; separate solo shortcut                                     | No NPC player or character simulation found; automated hazards and audience sounds | Yes; game loops duck for voice                                     |
+| Four Brain Cells | Start a kitchen → choose limbs/add NPCs → invite → host starts; practice also opens a lobby      | NPCs control unfilled robot limbs                                                  | Implemented for peer rooms; no speaking-to-game-audio ducking hook |
+| Reel Problems    | Launch a boat → invite → captain starts; separate solo shortcut                                  | Fish plus shark and jellyfish hazards                                              | Yes; no speaking-to-game-audio ducking hook                        |
+| Stack or Sink    | Create crew → invite/explore yard → host starts flood; solo practice available                   | No NPC player or character simulation found                                        | Yes; game loops duck for voice                                     |
+| Blend Business   | Create farm → choose player/computer farmer → invite/NPC cows → host starts                      | NPC cow players, background herd and optional computer farmer                      | Yes in supported room modes; game loops duck for voice             |
+| Shelf Control    | Create room → invite/add NPCs → exactly four seats → start; fill-and-start is combined           | NPC guards/mannequins and background mannequins                                    | Unavailable; toolbar opens an explanation                          |
+| Uphill Delivery  | Create crew → invite/add NPCs → host starts delivery; solo shortcut starts immediately           | NPC carriers and moving goats                                                      | Yes; game loops duck for voice                                     |
+| Tiptoe Thieves   | Create crew → invite → host starts heist; solo practice available                                | The giant is a reactive enemy character                                            | Yes; game loops duck for voice                                     |
+| Permit Pending   | Mode-dependent; Crew Jobs has its own lobby/readiness flow, building modes differ                | Scripted customer/inspector walks and inspects in Crew Jobs                        | Crew Jobs only; separate voice panel and ducking                   |
+| Brick by Hand    | Open/join saved building site → invite → each player enters the site; no common host-start lobby | No NPC player or character simulation found                                        | Unavailable; toolbar opens an explanation                          |
 
 The five games with NPC player slots are **Wrong Floor, Four Brain Cells, Blend Business, Shelf Control and Uphill Delivery**. Each supports up to three computer players alongside one human, subject to its game mode. Four provide manual NPC management; Wrong Floor fills automatically at start and replaces departed witnesses during a round. Shelf Control requires four occupied seats and combines fill with start. Four Brain Cells permits NPC management in local practice; Uphill Delivery’s solo shortcut starts immediately without its multiplayer crew setup. Sources: [games/wrong-floor/simulation.ts](../../../games/wrong-floor/simulation.ts), [games/four-brain-cells/npcs.ts](../../../games/four-brain-cells/npcs.ts), [games/reel-problems/chaos.ts](../../../games/reel-problems/chaos.ts), [games/act-natural/bots.ts](../../../games/act-natural/bots.ts), [games/shelf-control/bots.ts](../../../games/shelf-control/bots.ts), [games/uphill-delivery/npcs.ts](../../../games/uphill-delivery/npcs.ts), [games/dont-wake-the-giant/giant-motion.ts](../../../games/dont-wake-the-giant/giant-motion.ts), [games/chaos/party-view.ts](../../../games/chaos/party-view.ts).
 
@@ -107,15 +107,15 @@ Specific consistency gaps:
 
 ## Recommended work, in order
 
-| Priority | Work | Completion criterion |
-| --- | --- | --- |
-| 1 | Restore Brick by Hand’s sound coverage | The 61 intended cues have playable sources or explicit substitutes; brick placement, footsteps, mixer and error feedback are audible in a real round. |
-| 1 | Resolve Four Brain Cells’ live audio namespace | Its public manifest recognizes the game; all 11 essential event cues can load and play. |
-| 2 | Improve Reel Problems and Four Brain Cells beyond beeps | Distinct physical action sounds, a quiet environmental bed, and clear success/failure feedback; optional music chosen for each game. |
-| 2 | Unify lobby, NPC and voice behavior | The same invite/copy feedback, human/NPC seat presentation and predictable start flow; resolve or clearly communicate the two missing voice implementations and mode restrictions. |
-| 2 | Verify published-file delivery and device playback | Repeat file availability checks under normal site conditions, then test unlock, mute, background tabs, reconnect, transitions and four-player speech intelligibility. |
-| 3 | Give Shelf Control more independent audio identity | Dedicated showroom/security ambience and end-of-shift feedback, plus independent editing for its own sounds. |
-| 3 | Listen before expanding strong libraries or Wrong Floor | Use repeated play to identify masking, harsh peaks, bad loop seams and repetitive footsteps; generate only sounds that address a demonstrated gap. |
+| Priority | Work                                                    | Completion criterion                                                                                                                                                               |
+| -------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1        | Restore Brick by Hand’s sound coverage                  | The 61 intended cues have playable sources or explicit substitutes; brick placement, footsteps, mixer and error feedback are audible in a real round.                              |
+| 1        | Resolve Four Brain Cells’ live audio namespace          | Its public manifest recognizes the game; all 11 essential event cues can load and play.                                                                                            |
+| 2        | Improve Reel Problems and Four Brain Cells beyond beeps | Distinct physical action sounds, a quiet environmental bed, and clear success/failure feedback; optional music chosen for each game.                                               |
+| 2        | Unify lobby, NPC and voice behavior                     | The same invite/copy feedback, human/NPC seat presentation and predictable start flow; resolve or clearly communicate the two missing voice implementations and mode restrictions. |
+| 2        | Verify published-file delivery and device playback      | Repeat file availability checks under normal site conditions, then test unlock, mute, background tabs, reconnect, transitions and four-player speech intelligibility.              |
+| 3        | Give Shelf Control more independent audio identity      | Dedicated showroom/security ambience and end-of-shift feedback, plus independent editing for its own sounds.                                                                       |
+| 3        | Listen before expanding strong libraries or Wrong Floor | Use repeated play to identify masking, harsh peaks, bad loop seams and repetitive footsteps; generate only sounds that address a demonstrated gap.                                 |
 
 “Enough audio” should mean that important actions are distinguishable, hazards and outcomes communicate clearly, the environment supports the game’s identity, repetition is tolerable, and friend voice remains understandable. A common minimum file count would penalize procedural games and reward oversized libraries without establishing quality.
 

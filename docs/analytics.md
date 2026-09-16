@@ -26,14 +26,14 @@ A session records its device class (touch or mouse), how it arrived (invite link
 
 Each game keeps `games/<id>/analytics.ts` beside its code, holding only data and type imports: the milestones a round can reach in their usual order, the reasons rounds end, the actions worth counting, and a function that maps the game's snapshot to a `PlayState`.
 
-| Field              | Meaning                                                                                                                                                         |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stage`            | `menu`, `lobby`, `playing` or `finished`                                                                                                                        |
-| `mode`, `room`     | How this visit entered the room. Only the first report for a room counts, so a host handover never turns a guest into a host.                                  |
-| `humans`, `npcs`   | People in the room, and computer-controlled seats or roles. A computer farmer counts as an NPC; the background herd does not.                                  |
-| `round`            | Changes when a new round starts, so rematches that skip the lobby still count, while a round restored from a checkpoint after a host handover is counted once. |
-| `milestones`       | The milestone keys the current round has reached.                                                                                                              |
-| `result`           | `won`, `lost` or `ended`, with an optional reason and score, once the stage is `finished`.                                                                     |
+| Field            | Meaning                                                                                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stage`          | `menu`, `lobby`, `playing` or `finished`                                                                                                                       |
+| `mode`, `room`   | How this visit entered the room. Only the first report for a room counts, so a host handover never turns a guest into a host.                                  |
+| `humans`, `npcs` | People in the room, and computer-controlled seats or roles. A computer farmer counts as an NPC; the background herd does not.                                  |
+| `round`          | Changes when a new round starts, so rematches that skip the lobby still count, while a round restored from a checkpoint after a host handover is counted once. |
+| `milestones`     | The milestone keys the current round has reached.                                                                                                              |
+| `result`         | `won`, `lost` or `ended`, with an optional reason and score, once the stage is `finished`.                                                                     |
 
 The game module creates `const tracker = new GameTracker(definition)` once, outside the component, so callbacks that report never become hook dependencies. The component calls `useGameTracker(tracker)`, then `tracker.observe(...)` wherever it accepts a snapshot, `tracker.action(type)` in its action function, and `tracker.observe({ stage: 'menu' })` when it leaves a room. Mounting again after the game was left starts a new visit. The tracker works out rounds, results, rounds left or called off, time per stage and exits by itself. Register the definition in `platform/analytics/catalog.ts`; `platform/analytics/catalog.test.ts` checks that every game has a route, a workshop and well-formed keys.
 

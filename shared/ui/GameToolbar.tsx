@@ -1,17 +1,12 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import {
-  AudioLines,
-  CircleHelp,
-  Radio,
-  Volume2,
-  VolumeX,
-} from 'lucide-react';
+import { AudioLines, CircleHelp, Radio, Volume2, VolumeX } from 'lucide-react';
 import VoicePanel from '../voice/VoicePanel';
 import HostNotice from '../peer/HostNotice';
 import AccountButton from '../accounts/AccountButton';
 import WardrobeButton from '../wardrobe/WardrobeButton';
+import LanguageSwitcher from '../language/LanguageSwitcher';
 import type { VoiceSession, VoiceSnapshot } from '../voice/types';
 import {
   applyAudioPreferences,
@@ -117,6 +112,7 @@ export default function GameToolbar({
       </button>
       <WardrobeButton variant="toolbar" />
       <AccountButton variant="toolbar" />
+      <LanguageSwitcher variant="toolbar" />
       <button
         className="game-toolbar-button"
         onClick={onHelp}

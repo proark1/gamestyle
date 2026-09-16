@@ -168,8 +168,15 @@ export class CarryOnScene {
     this.callbacks.input(this.activeInput);
   }
 
+  shake = 0;
+
+  addShake(amount: number) {
+    this.shake = Math.min(1.0, this.shake + amount);
+  }
+
   /** Spawn colourful piñata bursting confetti */
   spawnBurstParticles(pos: [number, number, number]) {
+    this.addShake(0.4);
     const colors = [
       '#f43f5e',
       '#fbbf24',
@@ -180,7 +187,7 @@ export class CarryOnScene {
     ];
     const geom = new T.BoxGeometry(0.12, 0.12, 0.12);
 
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 32; i++) {
       const mat = new T.MeshStandardMaterial({
         color: colors[i % colors.length],
         roughness: 0.4,
@@ -190,13 +197,40 @@ export class CarryOnScene {
       this.scene.add(mesh);
 
       const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 5;
+      const speed = 2.5 + Math.random() * 5.5;
       this.particles.push({
         mesh,
         vx: Math.cos(angle) * speed,
-        vy: 3 + Math.random() * 5,
+        vy: 3.5 + Math.random() * 5.5,
         vz: Math.sin(angle) * speed,
-        life: 1.0,
+        life: 1.2,
+      });
+    }
+  }
+
+  /** Spawn white air compression puffs when squashed */
+  spawnPuffParticles(pos: [number, number, number]) {
+    const geom = new T.BoxGeometry(0.08, 0.08, 0.08);
+    for (let i = 0; i < 6; i++) {
+      const mat = new T.MeshStandardMaterial({
+        color: '#f1f5f9',
+        transparent: true,
+        opacity: 0.8,
+        roughness: 0.8,
+      });
+      const mesh = new T.Mesh(geom, mat);
+      mesh.position.set(
+        pos[0] + (Math.random() - 0.5) * 0.3,
+        pos[1],
+        pos[2] + (Math.random() - 0.5) * 0.3,
+      );
+      this.scene.add(mesh);
+      this.particles.push({
+        mesh,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: 0.8 + Math.random() * 1.2,
+        vz: (Math.random() - 0.5) * 1.5,
+        life: 0.5,
       });
     }
   }
@@ -239,8 +273,9 @@ export class CarryOnScene {
         mesh.rotation.x = -Math.PI / 2;
         mesh.position.y = 0.2;
       } else if (p.sittingOn) {
-        // Sitting on suitcase to compress it
+        // Sitting on suitcase to compress it: rhythmic squeezing bounce
         mesh.rotation.x = 0;
+        mesh.position.y = 0.4 + Math.sin(this.clock * 12) * 0.05;
         if (rig.legL && rig.legR && rig.armL && rig.armR) {
           rig.legL.rotation.set(-1.4, 0, -0.2);
           rig.legR.rotation.set(-1.4, 0, 0.2);
@@ -248,8 +283,8 @@ export class CarryOnScene {
           rig.armR.rotation.set(-0.6, 0, -0.4);
         }
       } else if (p.zippingSuitcase) {
-        // Zipping posture: crouching forward, hands pulling zipper seam
-        mesh.rotation.x = 0.2;
+        // Zipping posture: crouching forward, hands pulling zipper seam with effort
+        mesh.rotation.x = 0.22 + Math.sin(this.clock * 20) * 0.02;
         if (rig.armL && rig.armR) {
           rig.armL.rotation.set(-1.2, 0.3, 0.2);
           rig.armR.rotation.set(-1.2, -0.3, -0.2);
@@ -290,7 +325,11 @@ export class CarryOnScene {
         this.suitcaseMeshes.set(sc.id, mesh);
       }
 
-      mesh.position.set(sc.x, sc.y, sc.z);
+      // Add high tension jitter when strain is high
+      const jitter = sc.strain > 0.45 ? (sc.strain - 0.45) * 0.025 : 0;
+      const jX = jitter ? Math.sin(this.clock * 65 + sc.color) * jitter : 0;
+      const jZ = jitter ? Math.cos(this.clock * 65 + sc.color) * jitter : 0;
+      mesh.position.set(sc.x + jX, sc.y, sc.z + jZ);
       mesh.rotation.y = sc.yaw;
 
       // Dynamic bulging and compression mesh update
@@ -304,29 +343,74 @@ export class CarryOnScene {
       const statusTag = mesh.getObjectByName('status-tag') as
         | T.Mesh
         | undefined;
+      const peekSock = mesh.getObjectByName('peek-sock') as T.Mesh | undefined;
+      const peekShirt = mesh.getObjectByName('peek-shirt') as
+        | T.Mesh
+        | undefined;
 
       if (lid && bulgeBelly) {
         // Compute current bulging scale
         const stats = computeSuitcaseBulge(sc, world.items);
-        const bulgeScaleY = 1.0 + stats.bulge * 2.8;
-        const bulgeScaleXZ = 1.0 + stats.bulge * 0.45;
-        bulgeBelly.scale.set(
-          bulgeScaleXZ,
-          Math.max(0.1, bulgeScaleY),
-          bulgeScaleXZ,
-        );
-
-        // Raise upper lid shell
         const lidShell = lid.getObjectByName('lid-shell');
-        if (lidShell) {
-          lidShell.position.y = 0.225 + stats.bulge * 0.45;
+
+        // Compression squash & stretch
+        if (sc.sittingCount > 0) {
+          const sitBounce = Math.sin(this.clock * 12) * 0.03;
+          bulgeBelly.scale.set(
+            1.0 + stats.bulge * 0.6 + 0.15,
+            Math.max(0.08, 0.45 + sitBounce),
+            1.0 + stats.bulge * 0.6 + 0.15,
+          );
+          if (lidShell) lidShell.position.y = 0.14 + sitBounce;
+        } else {
+          const bulgeScaleY = 1.0 + stats.bulge * 2.8;
+          const bulgeScaleXZ = 1.0 + stats.bulge * 0.45;
+          bulgeBelly.scale.set(
+            bulgeScaleXZ,
+            Math.max(0.1, bulgeScaleY),
+            bulgeScaleXZ,
+          );
+          if (lidShell) lidShell.position.y = 0.24 + stats.bulge * 0.45;
         }
 
-        // Move zipper tab along perimeter based on zipped ratio
+        // Peek-through clothing edges when unzipped and bulging
+        if (peekSock && peekShirt) {
+          const showPeek = sc.zipped < 0.95 && stats.bulge > 0.04;
+          peekSock.visible = showPeek;
+          peekShirt.visible = showPeek;
+          if (showPeek) {
+            peekSock.scale.set(1, 1 + stats.bulge * 3.5, 1);
+            peekShirt.scale.set(1, 1 + stats.bulge * 3.5, 1);
+          }
+        }
+
+        // Move zipper tab along rectangular perimeter (w = 0.4, d = 0.24)
         if (zipperTab) {
-          const zipAngle = sc.zipped * Math.PI * 2;
-          zipperTab.position.x = Math.cos(zipAngle) * 0.42;
-          zipperTab.position.z = Math.sin(zipAngle) * 0.22;
+          const wSide = 0.4;
+          const dSide = 0.24;
+          const totalP = 2 * (wSide + dSide);
+          const dist = (sc.zipped % 1.0) * totalP;
+          if (dist < wSide) {
+            zipperTab.position.set(-wSide / 2 + dist, 0, dSide / 2 + 0.02);
+          } else if (dist < wSide + dSide) {
+            zipperTab.position.set(
+              wSide / 2 + 0.02,
+              0,
+              dSide / 2 - (dist - wSide),
+            );
+          } else if (dist < 2 * wSide + dSide) {
+            zipperTab.position.set(
+              wSide / 2 - (dist - wSide - dSide),
+              0,
+              -dSide / 2 - 0.02,
+            );
+          } else {
+            zipperTab.position.set(
+              -wSide / 2 - 0.02,
+              0,
+              -dSide / 2 + (dist - 2 * wSide - dSide),
+            );
+          }
         }
       }
 
@@ -379,14 +463,13 @@ export class CarryOnScene {
       }
     }
 
-    // 4. Update Sizer Box Siren
+    // 4. Update Sizer Box Siren & Hologram
     const sirenDome = this.sizerMesh.getObjectByName('siren-light') as
       | T.Mesh
       | undefined;
     if (sirenDome) {
       const mat = sirenDome.material as T.MeshStandardMaterial;
       if (world.sizer.status === 'rejected') {
-        // Flash bright red
         const flash = Math.sin(this.clock * 20) > 0;
         mat.color.set(flash ? '#ff0000' : '#450a0a');
       } else if (world.sizer.status === 'approved') {
@@ -396,7 +479,48 @@ export class CarryOnScene {
       }
     }
 
-    // 5. Update Particles
+    const sizerHolo = this.sizerMesh.getObjectByName('sizer-hologram') as
+      | T.Mesh
+      | undefined;
+    if (sizerHolo) {
+      const mat = sizerHolo.material as T.MeshStandardMaterial;
+      if (world.sizer.status === 'testing') {
+        const inserted = world.suitcases.find(
+          (s) => s.id === world.sizer.insertedSuitcase,
+        );
+        const isApproved = inserted?.approved;
+        mat.color.set(isApproved ? '#10b981' : '#ef4444');
+        mat.opacity = 0.35 + Math.sin(this.clock * 20) * 0.15;
+      } else if (world.sizer.status === 'approved') {
+        mat.color.set('#10b981');
+        mat.opacity = 0.25;
+      } else if (world.sizer.status === 'rejected') {
+        mat.color.set('#ef4444');
+        mat.opacity = 0.28;
+      } else {
+        mat.color.set('#06b6d4');
+        mat.opacity = 0.12 + Math.sin(this.clock * 3) * 0.04;
+      }
+    }
+
+    // 5. Update Runway & Terminal Background Animations
+    const clouds = this.terminalRoot.getObjectByName('window-clouds');
+    if (clouds) {
+      clouds.position.x = ((this.clock * 0.35) % 28) - 14;
+    }
+    const plane = this.terminalRoot.getObjectByName('window-airplane');
+    if (plane) {
+      plane.position.x = 18 - ((this.clock * 1.8) % 40);
+    }
+    const beacon = this.terminalRoot.getObjectByName('airplane-beacon') as
+      | T.Mesh
+      | undefined;
+    if (beacon) {
+      const bMat = beacon.material as T.MeshStandardMaterial;
+      bMat.color.set(Math.sin(this.clock * 5) > 0.6 ? '#f59e0b' : '#374151');
+    }
+
+    // 6. Update Particles
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= 0.02;
@@ -413,7 +537,7 @@ export class CarryOnScene {
       }
     }
 
-    // 6. Camera smooth follow local player
+    // 6. Camera smooth follow local player & screen shake
     const me = world.players.find((p) => p.id === localPlayerId);
     if (me) {
       const targetCamX = me.x * 0.45 + 1.5;
@@ -421,6 +545,12 @@ export class CarryOnScene {
       this.camera.position.x += (targetCamX - this.camera.position.x) * 0.08;
       this.camera.position.z += (targetCamZ - this.camera.position.z) * 0.08;
       this.camera.lookAt(me.x * 0.5 + 1.5, 0.8, me.z * 0.2);
+    }
+
+    if (this.shake > 0.001) {
+      this.camera.position.x += (Math.random() - 0.5) * this.shake * 0.5;
+      this.camera.position.y += (Math.random() - 0.5) * this.shake * 0.5;
+      this.shake *= 0.92;
     }
 
     this.renderer.render(this.scene, this.camera);

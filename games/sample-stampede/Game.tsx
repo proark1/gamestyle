@@ -169,16 +169,27 @@ export default function SampleStampede() {
   const [selfId] = useState('player-local');
   const [selfCartId] = useState('cart-red');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(soundEnabled);
+  const [receiptStatus, setReceiptStatus] = useState<
+    'approved' | 'rejected' | null
+  >(null);
+  const receiptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showHelp, setShowHelp] = useState(false);
 
   const lastFrameTime = useRef(0);
   const animId = useRef(0);
 
   useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+    audioRef.current?.setMuted(!soundEnabled);
+  }, [soundEnabled]);
+
+  useEffect(() => {
     if (!containerRef.current) return;
 
     const audio = new SampleStampedeAudio();
     audioRef.current = audio;
+    audio.setMuted(!soundEnabledRef.current);
 
     const unlockAudio = () => {
       audio.unlock();
@@ -261,16 +272,43 @@ export default function SampleStampede() {
 
         // Process audio events & squeaky wheel
         const meCart = worldRef.current.carts.find((c) => c.id === selfCartId);
-        if (meCart && soundEnabled) {
+        if (meCart && soundEnabledRef.current) {
           const speed = Math.sqrt(
             meCart.vx * meCart.vx + meCart.vz * meCart.vz,
           );
           audio.updateSqueak(speed, meCart.wobbleIntensity, dt);
         }
 
-        if (soundEnabled) {
+        if (soundEnabledRef.current) {
           for (const ev of events) {
             audio.playEvent(ev);
+          }
+        }
+
+        // Check for receipt approval/rejection events for local player's cart/team
+        for (const ev of events) {
+          if (
+            ev.type === 'receipt_approved' &&
+            meCart &&
+            ev.team === meCart.team
+          ) {
+            setReceiptStatus('approved');
+            if (receiptTimerRef.current) clearTimeout(receiptTimerRef.current);
+            receiptTimerRef.current = setTimeout(
+              () => setReceiptStatus(null),
+              3200,
+            );
+          } else if (
+            ev.type === 'receipt_rejected' &&
+            meCart &&
+            ev.team === meCart.team
+          ) {
+            setReceiptStatus('rejected');
+            if (receiptTimerRef.current) clearTimeout(receiptTimerRef.current);
+            receiptTimerRef.current = setTimeout(
+              () => setReceiptStatus(null),
+              3800,
+            );
           }
         }
 
@@ -290,13 +328,14 @@ export default function SampleStampede() {
 
     return () => {
       cancelAnimationFrame(animId.current);
+      if (receiptTimerRef.current) clearTimeout(receiptTimerRef.current);
       window.removeEventListener('pointerdown', unlockAudio);
       window.removeEventListener('keydown', unlockAudio);
       scene.destroy();
       audio.destroy();
       physics.destroy();
     };
-  }, [selfId, selfCartId, soundEnabled]);
+  }, [selfId, selfCartId]);
 
   const handleRestart = () => {
     if (!worldRef.current || !physicsRef.current) return;
@@ -330,6 +369,18 @@ export default function SampleStampede() {
   );
   const isGameOver = snapshot?.world.status === 'finished';
 
+  const cartSpeedMph = myCart
+    ? Math.round(
+        Math.sqrt(myCart.vx * myCart.vx + myCart.vz * myCart.vz) * 2.236,
+      )
+    : 0;
+  const wobblePct = myCart
+    ? Math.min(100, Math.round(myCart.wobbleIntensity * 100))
+    : 0;
+
+  const displayReceiptStamp =
+    receiptStatus || (hasContraband ? 'rejected' : null);
+
   // Counts of carried items
   const carriedCounts: Record<string, number> = {};
   if (myCart) {
@@ -341,6 +392,11 @@ export default function SampleStampede() {
   return (
     <main className="stampede-container">
       <div ref={containerRef} className="stampede-canvas-wrapper" />
+
+      {/* SPEED LINES OVERLAY (DURING SUGAR RUSH) */}
+      {myCart && myCart.sugarRushTimer > 0 && (
+        <div className="stampede-speed-lines" aria-hidden="true" />
+      )}
 
       {/* TOP HEADER HUD */}
       <div className="stampede-hud-top">
@@ -374,80 +430,118 @@ export default function SampleStampede() {
         </div>
       )}
 
-      {/* SHOPPING MANIFEST CARD */}
+      {/* WHOLESALE PAPER RECEIPT MANIFEST */}
       {myManifest && (
-        <div className="stampede-manifest-card">
-          <div className="stampede-manifest-header">
-            <div className="stampede-manifest-title">
-              <ShoppingBag size={16} /> SHOPPING LIST
-            </div>
-            <span
-              style={{ fontSize: '0.75rem', color: '#f1c40f', fontWeight: 800 }}
-            >
-              +{myManifest.rewardPoints} PTS
-            </span>
-          </div>
+        <div
+          className="stampede-manifest-receipt"
+          aria-label="Shopping List Receipt"
+        >
+          <div className="receipt-perforated-top" />
+          <div className="receipt-inner">
+            <div className="receipt-barcode">||| | |||| | || |||</div>
+            <div className="receipt-store-name">WHOLESALE CLUB</div>
+            <div className="receipt-subhead">OFFICIAL MANIFEST RECEIPT</div>
+            <div className="receipt-divider" />
 
-          <div className="stampede-manifest-items">
-            {myManifest.targetItems.map((ti) => {
-              const def = ITEM_DEFS[ti.kind];
-              const collected = carriedCounts[ti.kind] || 0;
-              const isDone = collected >= ti.required;
-              return (
-                <div
-                  key={ti.kind}
-                  className={`stampede-manifest-row ${isDone ? 'complete' : ''}`}
-                >
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
+            <div className="stampede-manifest-items">
+              {myManifest.targetItems.map((ti) => {
+                const def = ITEM_DEFS[ti.kind];
+                const collected = carriedCounts[ti.kind] || 0;
+                const isDone = collected >= ti.required;
+                return (
+                  <div
+                    key={ti.kind}
+                    className={`stampede-receipt-row ${isDone ? 'complete' : ''}`}
                   >
-                    {isDone ? <CheckSquare size={14} /> : <Square size={14} />}
-                    {def.name}
-                  </span>
-                  <span className="count">
-                    {collected}/{ti.required}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                    <span
+                      className="item-name"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {isDone ? (
+                        <CheckSquare size={13} />
+                      ) : (
+                        <Square size={13} />
+                      )}
+                      {ti.required}x {def.name}
+                    </span>
+                    <span className="count">
+                      {collected}/{ti.required}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
-          {/* Weight & Momentum Gauge */}
-          {myCart && (
-            <div className="stampede-weight-meter">
-              <div className="stampede-weight-labels">
-                <span>CART MASS: {myCart.totalMass} KG</span>
-                <span>
+            <div className="receipt-divider" />
+
+            {/* Mass / payload readout */}
+            {myCart && (
+              <div className="receipt-mass-section">
+                <div className="receipt-mass-row">
+                  <span>CART MASS</span>
+                  <span>{myCart.totalMass} KG</span>
+                </div>
+                <div className="receipt-mass-status">
                   {myCart.totalMass > 140
-                    ? 'EXTREME DRIFT!'
+                    ? 'EXTREME DRIFT'
                     : myCart.totalMass > 80
                       ? 'HEAVY INERTIA'
-                      : 'LIGHT'}
-                </span>
+                      : 'LIGHT RUN'}
+                </div>
               </div>
-              <div className="stampede-weight-bar-bg">
-                <div
-                  className="stampede-weight-bar-fill"
-                  style={{
-                    width: `${Math.min(100, ((myCart.totalMass - 45) / 200) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Contraband Teddy Bear Alert */}
-          {hasContraband && (
-            <div className="stampede-contraband-alert">
-              <AlertTriangle
-                size={13}
-                style={{ display: 'inline', marginRight: '4px' }}
+            {/* Contraband Alert */}
+            {hasContraband && (
+              <div className="stampede-contraband-alert">
+                <AlertTriangle
+                  size={12}
+                  style={{ display: 'inline', marginRight: '4px' }}
+                />
+                CONTRABAND: 10-FT GIANT TEDDY!
+              </div>
+            )}
+
+            {/* Rubber Stamp */}
+            {displayReceiptStamp === 'approved' && (
+              <div className="receipt-stamp approved">★ APPROVED ★</div>
+            )}
+            {displayReceiptStamp === 'rejected' && (
+              <div className="receipt-stamp rejected">⚠ REJECTED ⚠</div>
+            )}
+          </div>
+          <div className="receipt-perforated-bottom" />
+        </div>
+      )}
+
+      {/* RETRO COCKPIT HUD (SPEED & WOBBLE HEAT) */}
+      {myCart && (
+        <div className="stampede-cockpit-hud" aria-label="Cart Cockpit HUD">
+          <div className="stampede-speed-dial">
+            <span className="speed-val">{cartSpeedMph}</span>
+            <span className="speed-unit">MPH</span>
+          </div>
+
+          <div className="stampede-wobble-gauge">
+            <div className="wobble-header">
+              <span>CASTER WOBBLE</span>
+              <span className="wobble-pct">{wobblePct}%</span>
+            </div>
+            <div className="wobble-bar-bg">
+              <div
+                className="wobble-bar-fill"
+                style={{ width: `${wobblePct}%` }}
               />
-              10-FT GIANT TEDDY IN CART! REJECTED AT EXIT!
+            </div>
+          </div>
+
+          {myCart.sugarRushTimer > 0 && (
+            <div className="stampede-sugar-boost-pill">
+              <Zap size={14} /> NITROUS {myCart.sugarRushTimer.toFixed(1)}s
             </div>
           )}
         </div>

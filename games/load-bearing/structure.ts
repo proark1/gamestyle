@@ -59,7 +59,16 @@ export function buildHouse(): Part[] {
   for (const x of columnXs)
     for (const z of columnZs)
       parts.push(
-        part(`col-${x}-${z}`, 'column', x, GROUND_TOP / 2, z, 0.5, GROUND_TOP, 0.5),
+        part(
+          `col-${x}-${z}`,
+          'column',
+          x,
+          GROUND_TOP / 2,
+          z,
+          0.5,
+          GROUND_TOP,
+          0.5,
+        ),
       );
   // Ground walls fill the bays between columns, front, back and both sides.
   for (const z of columnZs)
@@ -174,7 +183,9 @@ export function supported(parts: Part[]): Set<string> {
     let added = false;
     for (const upper of standing) {
       if (held.has(upper.id)) continue;
-      if (standing.some((lower) => held.has(lower.id) && restsOn(lower, upper))) {
+      if (
+        standing.some((lower) => held.has(lower.id) && restsOn(lower, upper))
+      ) {
         held.add(upper.id);
         added = true;
       }
@@ -216,7 +227,7 @@ export function strainOf(parts: Part[], target: Part) {
     (p) => alive(p) && !p.falling && restsOn(target, p),
   ).length;
   if (!below) return 1;
-  return Math.min(1, Math.max(0, (above + 1) / (below * 2)) );
+  return Math.min(1, Math.max(0, (above + 1) / (below * 2)));
 }
 
 export function pianoSupport(world: LoadWorld) {

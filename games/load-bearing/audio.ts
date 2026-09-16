@@ -40,7 +40,8 @@ export class LoadBearingSound extends SiteAudio {
       if (event.id <= this.lastEvent) continue;
       this.lastEvent = event.id;
       const cue = CUES[event.kind];
-      if (cue) this.play(cue, 1, me ?? { x: 0, y: 1.6, z: 0 }, String(event.id));
+      if (cue)
+        this.play(cue, 1, me ?? { x: 0, y: 1.6, z: 0 }, String(event.id));
     }
     if (world.phase !== this.lastPhase) {
       if (world.phase === 'won') this.play('event.win', 1);

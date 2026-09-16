@@ -59,13 +59,17 @@ export class BungeeScene {
 
   private presetIndex = 0;
   private readonly cameraPresets = [
-    { name: 'Broadcast 3/4', yaw: Math.atan2(-14.2, -9.6), pitch: 0.67, dist: 21.8 },
+    {
+      name: 'Broadcast 3/4',
+      yaw: Math.atan2(-14.2, -9.6),
+      pitch: 0.67,
+      dist: 21.8,
+    },
     { name: 'Orange Baseline', yaw: -Math.PI, pitch: 0.48, dist: 20.5 },
-    { name: 'Sideline View', yaw: -Math.PI / 2, pitch: 0.60, dist: 22.0 },
+    { name: 'Sideline View', yaw: -Math.PI / 2, pitch: 0.6, dist: 22.0 },
     { name: 'Teal Baseline', yaw: 0, pitch: 0.48, dist: 20.5 },
     { name: 'Teal Corner', yaw: 0.98, pitch: 0.67, dist: 21.8 },
   ];
-
 
   // Particle pool for racket hits, glass sparks & victory confetti
   private particlePool: {
@@ -231,7 +235,13 @@ export class BungeeScene {
   }
 
   private spawnConfetti(pos: [number, number, number]) {
-    const confettiColors = ['#ff3366', '#ffd166', '#06d6a0', '#118ab2', '#ffffff'];
+    const confettiColors = [
+      '#ff3366',
+      '#ffd166',
+      '#06d6a0',
+      '#118ab2',
+      '#ffffff',
+    ];
     for (let i = 0; i < 24; i++) {
       const col = confettiColors[i % confettiColors.length];
       this.spawnHitPuff(pos, col, 1, 8);
@@ -322,7 +332,10 @@ export class BungeeScene {
       'pointermove',
       (e) => {
         if (!isPointerDown) return;
-        const totalDist = Math.hypot(e.clientX - dragStartX, e.clientY - dragStartY);
+        const totalDist = Math.hypot(
+          e.clientX - dragStartX,
+          e.clientY - dragStartY,
+        );
         if (totalDist > 4) {
           hasDragged = true;
         }
@@ -335,7 +348,7 @@ export class BungeeScene {
           this.targetYaw -= dx * rotSpeed;
           this.targetPitch = Math.max(
             0.18,
-            Math.min(1.30, this.targetPitch + dy * rotSpeed),
+            Math.min(1.3, this.targetPitch + dy * rotSpeed),
           );
         }
       },
@@ -377,11 +390,7 @@ export class BungeeScene {
       { signal, passive: false },
     );
 
-    dom.addEventListener(
-      'contextmenu',
-      (e) => e.preventDefault(),
-      { signal },
-    );
+    dom.addEventListener('contextmenu', (e) => e.preventDefault(), { signal });
   }
 
   private pollInput(dt: number) {
@@ -425,7 +434,6 @@ export class BungeeScene {
     this.currentInput = nextInput;
     this.cb.input(nextInput);
   }
-
 
   render(snap: BungeeSnapshot) {
     this.localId = snap.localId;
@@ -574,11 +582,7 @@ export class BungeeScene {
       this.shakeTimer -= dt;
       const shakeOffsetX = (Math.random() - 0.5) * this.shakeIntensity;
       const shakeOffsetY = (Math.random() - 0.5) * this.shakeIntensity;
-      this.camera.position.set(
-        camX + shakeOffsetX,
-        camY + shakeOffsetY,
-        camZ,
-      );
+      this.camera.position.set(camX + shakeOffsetX, camY + shakeOffsetY, camZ);
     } else {
       this.camera.position.set(camX, camY, camZ);
     }
@@ -586,7 +590,6 @@ export class BungeeScene {
     this.camera.updateMatrixWorld();
 
     this.pollInput(dt);
-
 
     // Update ball trails
     for (const t of this.trailPool) {

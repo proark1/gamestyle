@@ -192,7 +192,14 @@ void test('an unknown or misplaced item builds the plain worker', () => {
     hat: 'retired-item',
     top: 'top-hat',
   } as Look);
-  assert.deepEqual(Object.values(worn), [false, false, false, false, false, false]);
+  assert.deepEqual(Object.values(worn), [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
   assert.deepEqual(meshes(model).map(colour), meshes(plain).map(colour));
   assert.equal(meshes(model).filter(inLook).length, 0);
 });

@@ -69,10 +69,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "audio_cues_game_cue_pk": {
-          "columns": [
-            "game",
-            "cue"
-          ],
+          "columns": ["game", "cue"],
           "name": "audio_cues_game_cue_pk"
         }
       },
@@ -116,10 +113,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "audio_generation_jobs_game_request_pk": {
-          "columns": [
-            "game",
-            "request"
-          ],
+          "columns": ["game", "request"],
           "name": "audio_generation_jobs_game_request_pk"
         }
       },
@@ -209,9 +203,7 @@
       "indexes": {
         "idx_rooms_updated": {
           "name": "idx_rooms_updated",
-          "columns": [
-            "updated"
-          ],
+          "columns": ["updated"],
           "isUnique": false
         }
       },

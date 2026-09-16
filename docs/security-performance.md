@@ -25,11 +25,11 @@ The initial mixed-game run after statement caching but before shared group commi
 
 With shared group commit, the same 112-player / 28-room workload completed 9,104 requests in 30.05 seconds with zero errors: 303 requests/second, p50 165 ms and p95 321 ms. Relative to the initial run, throughput increased by 53% and p95 latency decreased by 55%. The reduced 56-player / 14-room workload completed 6,490 requests in 30.09 seconds with zero errors: 216 requests/second, p50 44 ms and p95 150 ms. These are individual local runs, not statistical capacity estimates. The 112-player result remains too slow to promise consistently smooth server-authoritative play on this machine.
 
-| Workload | Rooms | Simulated players | Requests/s | p50 | p95 | HTTP errors |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Before shared group commit | 28 | 112 | 198 | 342 ms | 713 ms | 0 |
-| After shared group commit | 28 | 112 | 303 | 165 ms | 321 ms | 0 |
-| Lower load after group commit | 14 | 56 | 216 | 44 ms | 150 ms | 0 |
+| Workload                      | Rooms | Simulated players | Requests/s |    p50 |    p95 | HTTP errors |
+| ----------------------------- | ----: | ----------------: | ---------: | -----: | -----: | ----------: |
+| Before shared group commit    |    28 |               112 |        198 | 342 ms | 713 ms |           0 |
+| After shared group commit     |    28 |               112 |        303 | 165 ms | 321 ms |           0 |
+| Lower load after group commit |    14 |                56 |        216 |  44 ms | 150 ms |           0 |
 
 The HTTP security probe verifies streaming limits and origin rejection for eleven mutation endpoints, administrator access for all six workshop libraries, and public playback manifests. It makes no paid provider calls. Regression coverage includes durable acknowledgement, failed-batch isolation, stale-version rejection, independent bindings in cached statements, stalled/chunked uploads, signal-field sanitization, queue limits and manifest-cache invalidation. Dependency verification reports zero known vulnerabilities in the installed lockfile.
 

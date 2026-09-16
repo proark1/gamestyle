@@ -538,7 +538,9 @@ export default function WardrobeDialog({
                           data-completed={progress.complete}
                         >
                           <div className="wardrobe-goal-title-wrap">
-                            <h4 className="wardrobe-goal-label">{goal.label}</h4>
+                            <h4 className="wardrobe-goal-label">
+                              {goal.label}
+                            </h4>
                             <span
                               className="wardrobe-goal-badge"
                               data-completed={progress.complete}

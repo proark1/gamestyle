@@ -70,7 +70,11 @@ export function poseTennisWorker(
     rig.armL.rotation.set(-swing * 0.6, 0, 0.2);
     rig.armR.rotation.set(swing * 0.35 - 0.7, -0.2, -0.25);
     rig.body.position.y = Math.abs(Math.sin(stride)) * 0.06;
-    rig.body.rotation.set(0.12, Math.sin(stride) * 0.05, Math.sin(stride) * 0.03);
+    rig.body.rotation.set(
+      0.12,
+      Math.sin(stride) * 0.05,
+      Math.sin(stride) * 0.03,
+    );
   } else {
     // Ready athletic stance
     rig.body.position.y = -0.06;

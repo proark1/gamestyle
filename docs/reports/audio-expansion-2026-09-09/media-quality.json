@@ -123,7 +123,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -21.49,
-    "nearFullScale": 6.2e-05
+    "nearFullScale": 6.2e-5
   },
   {
     "game": "four-brain-cells",
@@ -501,7 +501,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -18.18,
-    "nearFullScale": 3.7e-05
+    "nearFullScale": 3.7e-5
   },
   {
     "game": "first-person",
@@ -529,7 +529,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -24.51,
-    "nearFullScale": 6e-06
+    "nearFullScale": 6e-6
   },
   {
     "game": "first-person",
@@ -669,7 +669,7 @@
     "sampleRate": 44100,
     "peak": 0.99997,
     "rmsDb": -24.98,
-    "nearFullScale": 7e-06
+    "nearFullScale": 7e-6
   },
   {
     "game": "first-person",
@@ -1285,7 +1285,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -27.21,
-    "nearFullScale": 4e-05
+    "nearFullScale": 4e-5
   },
   {
     "game": "reel-problems",
@@ -1299,7 +1299,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -17.88,
-    "nearFullScale": 2.8e-05
+    "nearFullScale": 2.8e-5
   },
   {
     "game": "reel-problems",
@@ -1355,7 +1355,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -24.53,
-    "nearFullScale": 7.4e-05
+    "nearFullScale": 7.4e-5
   },
   {
     "game": "reel-problems",
@@ -1411,7 +1411,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -12.07,
-    "nearFullScale": 1.1e-05
+    "nearFullScale": 1.1e-5
   },
   {
     "game": "reel-problems",
@@ -1425,7 +1425,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -12.88,
-    "nearFullScale": 9.6e-05
+    "nearFullScale": 9.6e-5
   },
   {
     "game": "reel-problems",
@@ -1845,7 +1845,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -15.93,
-    "nearFullScale": 9.6e-05
+    "nearFullScale": 9.6e-5
   },
   {
     "game": "wrong-floor",
@@ -2069,7 +2069,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -18.48,
-    "nearFullScale": 1.1e-05
+    "nearFullScale": 1.1e-5
   },
   {
     "game": "wrong-floor",
@@ -2195,7 +2195,7 @@
     "sampleRate": 44100,
     "peak": 1.0,
     "rmsDb": -24.73,
-    "nearFullScale": 5.7e-05
+    "nearFullScale": 5.7e-5
   },
   {
     "game": "wrong-floor",

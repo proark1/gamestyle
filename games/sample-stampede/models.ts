@@ -334,7 +334,9 @@ export type CartMeshRig = {
   rightFrontWheel: THREE.Mesh;
   rearWheels: THREE.Mesh[];
   grabberAssembly: THREE.Group;
-  grabberClaws: THREE.Mesh;
+  grabberClaws: THREE.Object3D;
+  grabberJawLeft: THREE.Group;
+  grabberJawRight: THREE.Group;
   bumperMesh: THREE.Mesh;
   flagMesh: THREE.Mesh;
   driverAnchor: THREE.Object3D;
@@ -585,14 +587,45 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
     true,
     0.5,
   );
-  // Mechanical grabber claws at the end
-  const grabberClaws = box(
-    grabberAssembly,
-    [0.2, 0.22, 0.25],
-    [1.45, 0, 0],
-    0xd63031,
+  // Articulated mechanical grabber claw head
+  const grabberClaws = new THREE.Group();
+  grabberClaws.position.set(1.4, 0, 0);
+  grabberAssembly.add(grabberClaws);
+
+  // Central hinge bracket
+  box(grabberClaws, [0.12, 0.12, 0.14], [0, 0, 0], 0x2c3e50, true);
+
+  // Left pincer jaw
+  const grabberJawLeft = new THREE.Group();
+  grabberJawLeft.position.set(0.06, 0, 0.07);
+  box(grabberJawLeft, [0.18, 0.06, 0.04], [0.09, 0, 0], 0xd63031, true);
+  cylinder(
+    grabberJawLeft,
+    0.035,
+    0.035,
+    0.04,
+    8,
+    [0.18, 0, -0.02],
+    0x1e272e,
     true,
   );
+  grabberClaws.add(grabberJawLeft);
+
+  // Right pincer jaw
+  const grabberJawRight = new THREE.Group();
+  grabberJawRight.position.set(0.06, 0, -0.07);
+  box(grabberJawRight, [0.18, 0.06, 0.04], [0.09, 0, 0], 0xd63031, true);
+  cylinder(
+    grabberJawRight,
+    0.035,
+    0.035,
+    0.04,
+    8,
+    [0.18, 0, 0.02],
+    0x1e272e,
+    true,
+  );
+  grabberClaws.add(grabberJawRight);
 
   // Team Flag
   cylinder(root, 0.02, 0.02, 1.6, 8, [-0.56, 1.6, 0.42], 0x718093, true);
@@ -621,6 +654,8 @@ export function createShoppingCart(team: TeamId): CartMeshRig {
     rearWheels,
     grabberAssembly,
     grabberClaws,
+    grabberJawLeft,
+    grabberJawRight,
     bumperMesh,
     flagMesh,
     driverAnchor,
@@ -832,7 +867,7 @@ export function createPaperPlateHazard(kind: 'plate' | 'spill'): THREE.Group {
 }
 
 /**
- * Exit Receipt Gauntlet Checkout Counter & Gate
+ * Exit Receipt Gauntlet Checkout Counter & Gate with overhead LED gantry
  */
 export function createExitGauntlet(): THREE.Group {
   const group = new THREE.Group();
@@ -848,6 +883,47 @@ export function createExitGauntlet(): THREE.Group {
   box(group, [0.35, 0.03, 0.45], [0, 1.08, 0], 0xd35400);
   // Big Red Marker
   cylinder(group, 0.02, 0.02, 0.16, 8, [0.22, 1.1, 0], 0xe74c3c);
+
+  // Overhead Steel Gantry Columns & Truss Beam
+  box(
+    group,
+    [0.22, 4.4, 0.22],
+    [-4.5, 2.2, 0],
+    WAREHOUSE_COLORS.rackBlue,
+    true,
+  );
+  box(group, [0.22, 4.4, 0.22], [4.5, 2.2, 0], WAREHOUSE_COLORS.rackBlue, true);
+  box(group, [9.2, 0.25, 0.25], [0, 4.3, 0], WAREHOUSE_COLORS.rackOrange, true);
+
+  // Flashing Status Beacon Lights (Green checkout ready, Red alarm)
+  const beaconGreenGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.18, 12);
+  const beaconGreenMat = new THREE.MeshBasicMaterial({ color: 0x2ecc71 });
+  const beaconG1 = new THREE.Mesh(beaconGreenGeo, beaconGreenMat);
+  beaconG1.position.set(-2.2, 4.5, 0);
+  group.add(beaconG1);
+
+  const beaconG2 = new THREE.Mesh(beaconGreenGeo, beaconGreenMat);
+  beaconG2.position.set(2.2, 4.5, 0);
+  group.add(beaconG2);
+
+  const beaconRedGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.18, 12);
+  const beaconRedMat = new THREE.MeshBasicMaterial({ color: 0xe74c3c });
+  const beaconR = new THREE.Mesh(beaconRedGeo, beaconRedMat);
+  beaconR.position.set(0, 4.5, 0);
+  group.add(beaconR);
+
+  // Red barcode scanner laser line projector across the floor
+  const laserGeo = new THREE.PlaneGeometry(8.0, 0.04);
+  const laserMat = new THREE.MeshBasicMaterial({
+    color: 0xff3838,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const laser = new THREE.Mesh(laserGeo, laserMat);
+  laser.rotation.x = -Math.PI / 2;
+  laser.position.set(0, 0.02, 0);
+  group.add(laser);
 
   // Hanging Illuminated Sign
   const canvas = document.createElement('canvas');
@@ -867,11 +943,56 @@ export function createExitGauntlet(): THREE.Group {
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.6, 0.9),
+    new THREE.PlaneGeometry(3.8, 0.95),
     new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide }),
   );
-  signMesh.position.set(0, 3.2, 0);
+  signMesh.position.set(0, 3.4, 0);
   group.add(signMesh);
+
+  return group;
+}
+
+/**
+ * High-bay industrial warehouse pendant lamp
+ */
+export function createWarehouseLightFixture(): THREE.Group {
+  const group = new THREE.Group();
+
+  // Suspension rod / cable
+  cylinder(group, 0.02, 0.02, 3.0, 6, [0, 1.5, 0], 0x34495e, false);
+
+  // Aluminum bell reflector shade
+  const shadeGeo = new THREE.CylinderGeometry(0.18, 0.65, 0.45, 16, 1, true);
+  const shadeMat = new THREE.MeshStandardMaterial({
+    color: 0x95a5a6,
+    metalness: 0.6,
+    roughness: 0.35,
+    side: THREE.DoubleSide,
+  });
+  const shade = new THREE.Mesh(shadeGeo, shadeMat);
+  shade.position.set(0, 0, 0);
+  shade.castShadow = true;
+  group.add(shade);
+
+  // Glowing bulb inside
+  const bulbGeo = new THREE.SphereGeometry(0.16, 8, 8);
+  const bulbMat = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
+  const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+  bulb.position.set(0, 0.08, 0);
+  group.add(bulb);
+
+  // Soft translucent downlight disc on the lamp rim
+  const diskGeo = new THREE.CircleGeometry(0.62, 16);
+  const diskMat = new THREE.MeshBasicMaterial({
+    color: 0xfffae6,
+    transparent: true,
+    opacity: 0.7,
+    side: THREE.DoubleSide,
+  });
+  const disk = new THREE.Mesh(diskGeo, diskMat);
+  disk.rotation.x = Math.PI / 2;
+  disk.position.set(0, -0.22, 0);
+  group.add(disk);
 
   return group;
 }

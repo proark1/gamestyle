@@ -6,13 +6,13 @@ The three expanded games gained **71 sound slots**. Brick by Hand received recor
 
 ## The four requested libraries
 
-| Game | Previous catalog | Expanded catalog | Generated files | Effects / materials | Ambience | Music | Speech | Missing / stale |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Four Brain Cells | 11 | 36 | **36** | 24 | 4 | 5 | 3 | 0 / 0 |
-| Reel Problems | 13 | 39 | **39** | 24 | 7 | 5 | 3 | 0 / 0 |
-| Wrong Floor | 26 | 46 | **46** | 39 | 2 | 5 | 0 | 0 / 0 |
-| Brick by Hand | 61 | 61 | **61** | 36 | 3 | 5 | 17 | 0 / 0 |
-| **Total** | **111** | **182** | **182** | **123** | **16** | **20** | **23** | **0 / 0** |
+| Game             | Previous catalog | Expanded catalog | Generated files | Effects / materials | Ambience |  Music | Speech | Missing / stale |
+| ---------------- | ---------------: | ---------------: | --------------: | ------------------: | -------: | -----: | -----: | --------------: |
+| Four Brain Cells |               11 |               36 |          **36** |                  24 |        4 |      5 |      3 |           0 / 0 |
+| Reel Problems    |               13 |               39 |          **39** |                  24 |        7 |      5 |      3 |           0 / 0 |
+| Wrong Floor      |               26 |               46 |          **46** |                  39 |        2 |      5 |      0 |           0 / 0 |
+| Brick by Hand    |               61 |               61 |          **61** |                  36 |        3 |      5 |     17 |           0 / 0 |
+| **Total**        |          **111** |          **182** |         **182** |             **123** |   **16** | **20** | **23** |       **0 / 0** |
 
 All four had zero published recordings before this work. Previous catalog counts refer to the audited local source; the deployed Four Brain Cells audio namespace was missing and Reel Problems exposed an older catalog. The release brought those workshops up to date before generation.
 
@@ -30,19 +30,19 @@ The three expanded games now lower background audio when friends speak. Their so
 
 “Files” counts distinct playback URLs used by that game. It includes bundled files and explicitly used shared sounds. A complete catalog measures asset coverage; judging the final mix also requires listening during play.
 
-| Game | Audio files | Catalog / used slots | NPC player slots? | Other non-player characters | Coverage assessment |
-| --- | ---: | ---: | --- | --- | --- |
-| Wrong Floor | **46** | 46 | Yes | Pursuing apparition | Expanded and fully recorded; private clues, surfaces, atmosphere and score covered |
-| One More Button | 28 | 28 | No | None found in character simulation | Complete compact core library |
-| Four Brain Cells | **36** | 36 | Yes | NPCs control robot limbs | Expanded and fully recorded; kitchen actions, movement and round feedback covered |
-| Reel Problems | **39** | 39 | No | Fish, shark, jellyfish | Expanded and fully recorded; boat actions, weather and wildlife events covered |
-| Stack or Sink | 121 | 121 | No | None found in character simulation | Broad recorded coverage |
-| Blend Business | 77 | 77 | Yes | Herd and optional computer farmer | Broad recorded coverage |
-| Shelf Control | 15 | 15 | Yes | Background mannequins | Complete compact used set; five bundled files plus ten shared farm recordings |
-| Uphill Delivery | 74 | 74 | Yes | Goats | Broad recorded coverage |
-| Tiptoe Thieves | 70 | 70 | No | Reactive giant | Broad recorded coverage |
-| Permit Pending | 344 | 344 | No | Scripted customer/inspector | Broad coverage across construction and multiple modes |
-| Brick by Hand | **61** | 61 | No | None found in character simulation | Previously empty library is now fully recorded |
+| Game             | Audio files | Catalog / used slots | NPC player slots? | Other non-player characters        | Coverage assessment                                                                |
+| ---------------- | ----------: | -------------------: | ----------------- | ---------------------------------- | ---------------------------------------------------------------------------------- |
+| Wrong Floor      |      **46** |                   46 | Yes               | Pursuing apparition                | Expanded and fully recorded; private clues, surfaces, atmosphere and score covered |
+| One More Button  |          28 |                   28 | No                | None found in character simulation | Complete compact core library                                                      |
+| Four Brain Cells |      **36** |                   36 | Yes               | NPCs control robot limbs           | Expanded and fully recorded; kitchen actions, movement and round feedback covered  |
+| Reel Problems    |      **39** |                   39 | No                | Fish, shark, jellyfish             | Expanded and fully recorded; boat actions, weather and wildlife events covered     |
+| Stack or Sink    |         121 |                  121 | No                | None found in character simulation | Broad recorded coverage                                                            |
+| Blend Business   |          77 |                   77 | Yes               | Herd and optional computer farmer  | Broad recorded coverage                                                            |
+| Shelf Control    |          15 |                   15 | Yes               | Background mannequins              | Complete compact used set; five bundled files plus ten shared farm recordings      |
+| Uphill Delivery  |          74 |                   74 | Yes               | Goats                              | Broad recorded coverage                                                            |
+| Tiptoe Thieves   |          70 |                   70 | No                | Reactive giant                     | Broad recorded coverage                                                            |
+| Permit Pending   |         344 |                  344 | No                | Scripted customer/inspector        | Broad coverage across construction and multiple modes                              |
+| Brick by Hand    |      **61** |                   61 | No                | None found in character simulation | Previously empty library is now fully recorded                                     |
 
 **NPC totals: 5 of 11 games have computer-controlled player slots.** Counting reactive enemies, wildlife, and the scripted inspector, **8 of 11 games contain NPCs**. These source-based classifications are unchanged by the audio release.
 

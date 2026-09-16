@@ -260,15 +260,8 @@ export class ShelfScene {
       palette.clay,
     );
     sign(this.scene, 'HATCH · LADDER', HATCH.x, 1.8, HATCH.z, 3, isDark);
-    sign(
-      this.scene,
-      'STAFF ONLY',
-      0,
-      0.2,
-      10.5,
-      3.2,
-      isDark,
-    ).rotation.x = -Math.PI / 2;
+    sign(this.scene, 'STAFF ONLY', 0, 0.2, 10.5, 3.2, isDark).rotation.x =
+      -Math.PI / 2;
     const intercomStation = intercomModel();
     intercomStation.position.set(INTERCOM.x, 0, INTERCOM.z);
     this.scene.add(intercomStation);
@@ -678,11 +671,7 @@ export class ShelfScene {
 
       this.guardSpotLight.visible = true;
       this.guardSpotLight.position.set(lensX, lensY, lensZ);
-      this.guardSpotTarget.position.set(
-        gx + sinA * 8.5,
-        0.3,
-        gz + cosA * 8.5,
-      );
+      this.guardSpotTarget.position.set(gx + sinA * 8.5, 0.3, gz + cosA * 8.5);
 
       this.guardBeamMesh.visible = true;
       this.guardBeamMesh.position.set(lensX, lensY, lensZ);

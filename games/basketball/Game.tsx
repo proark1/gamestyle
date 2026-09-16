@@ -32,6 +32,9 @@ import {
 import { BasketballSound } from './audio';
 import { BasketballScene } from './scene';
 import './style.css';
+import { useLanguage } from '../../shared/language/useLanguage';
+import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import { BASKETBALL_TRANSLATIONS } from './translations';
 import {
   GameTracker,
   useGameTracker,
@@ -42,6 +45,8 @@ const tracker = new GameTracker(basketballAnalytics);
 
 export default function BasketballGame() {
   useGameTracker(tracker);
+  const { t } = useLanguage();
+  const strings = t(BASKETBALL_TRANSLATIONS);
   const touchMode = useMediaQuery(TOUCH_CONTROLS_QUERY);
 
   const container = useRef<HTMLDivElement>(null);
@@ -256,6 +261,9 @@ export default function BasketballGame() {
   return (
     <div className="bb-game">
       <div ref={container} className="bb-canvas" />
+      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 20 }}>
+        <LanguageSwitcher variant="header" />
+      </div>
 
       {/* Topbar HUD */}
       {world && world.phase !== 'lobby' && (
@@ -292,7 +300,7 @@ export default function BasketballGame() {
                   size={10}
                   style={{ display: 'inline', marginRight: 4 }}
                 />
-                Ball klären (3er)
+                {strings.clearBall}
               </div>
             )}
           </div>
@@ -455,15 +463,8 @@ export default function BasketballGame() {
           <h1>
             Court <span>Clash</span>
           </h1>
-          <div className="bb-tagline">
-            2v2 Street Basketball im Jumbleyard-Stil
-          </div>
-          <div className="bb-desc">
-            Tritt im 2-gegen-2 Match an! Dribble, breche Knöchel mit Crossovern,
-            wirf Step-Backs, passe spektakuläre Alley-Oops und lade die
-            Combo-Leiste für <strong>spektakuläre Super-Jumps</strong> und Slam
-            Dunks auf!
-          </div>
+          <div className="bb-tagline">{strings.tagline}</div>
+          <div className="bb-desc">{strings.desc}</div>
 
           <div className="bb-team-selector">
             <button
@@ -487,7 +488,7 @@ export default function BasketballGame() {
             className="bb-btn primary"
             onClick={handleStart}
           >
-            Match starten (bis 15 Pkt.)
+            {strings.startMatch}
           </button>
         </div>
       )}
@@ -496,16 +497,20 @@ export default function BasketballGame() {
       {world?.phase === 'ended' && (
         <div className="bb-ended-banner">
           <Trophy size={48} color="#e58e38" style={{ margin: '0 auto 12px' }} />
-          <h2>Match Beendet!</h2>
+          <h2>{strings.matchEnded}</h2>
           <div className={`bb-ended-winner ${world.winner ?? 'orange'}`}>
-            Team {world.winner?.toUpperCase()} gewinnt das Spiel!
+            {strings.teamWins.replace(
+              '{team}',
+              (world.winner ?? 'orange').toUpperCase(),
+            )}
           </div>
           <button
             type="button"
             className="bb-btn primary"
             onClick={handleRestart}
           >
-            <RotateCcw size={18} style={{ marginRight: 6 }} /> Rematch spielen
+            <RotateCcw size={18} style={{ marginRight: 6 }} />{' '}
+            {strings.playRematch}
           </button>
         </div>
       )}
@@ -513,31 +518,31 @@ export default function BasketballGame() {
       {/* Controls Hint Bar */}
       <div className="bb-hint-bar">
         <span>
-          <span className="bb-hint-key">WASD</span> Bewegen
+          <span className="bb-hint-key">WASD</span> {strings.hintMove}
         </span>
         <span>
-          <span className="bb-hint-key">Space</span> Werfen / Dunken
+          <span className="bb-hint-key">Space</span> {strings.hintShootDunk}
         </span>
         <span>
-          <span className="bb-hint-key">F</span> Crossover
+          <span className="bb-hint-key">F</span> {strings.hintCrossover}
         </span>
         <span>
-          <span className="bb-hint-key">C</span> 360° Spin
+          <span className="bb-hint-key">C</span> {strings.hintSpin}
         </span>
         <span>
-          <span className="bb-hint-key">S+Space</span> Step-Back
+          <span className="bb-hint-key">S+Space</span> {strings.hintStepBack}
         </span>
         <span>
-          <span className="bb-hint-key">E</span> Pass / Alley-Oop
+          <span className="bb-hint-key">E</span> {strings.hintPass}
         </span>
         <span>
-          <span className="bb-hint-key">Shift</span> Sprint
+          <span className="bb-hint-key">Shift</span> {strings.hintSprint}
         </span>
         <span>
-          <span className="bb-hint-key">Space x2</span> Super Jump
+          <span className="bb-hint-key">Space x2</span> {strings.hintSuperJump}
         </span>
         <span>
-          <span className="bb-hint-key">V</span> Kamera
+          <span className="bb-hint-key">V</span> {strings.hintCamera}
         </span>
       </div>
     </div>

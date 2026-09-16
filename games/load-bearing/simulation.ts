@@ -175,7 +175,11 @@ export function strike(w: LoadWorld, by: Wrecker, part: Part) {
   by.hits += 1;
   if (part.hits <= 0) breakPart(w, part, by.name);
   else
-    emit(w, 'hit', `${by.name} is working on a ${PART_NAMES[part.kind].toLowerCase()}.`);
+    emit(
+      w,
+      'hit',
+      `${by.name} is working on a ${PART_NAMES[part.kind].toLowerCase()}.`,
+    );
 }
 
 export function syncNpcs(w: LoadWorld, slots: NpcSlot[]) {
@@ -214,7 +218,11 @@ export function advanceSite(w: LoadWorld, now: number) {
     if (damage > 0) {
       w.piano.integrity = Math.max(0, w.piano.integrity - damage);
       if (w.piano.integrity > 0)
-        emit(w, 'piano', `The piano took a hit. ${Math.round(w.piano.integrity)}% left.`);
+        emit(
+          w,
+          'piano',
+          `The piano took a hit. ${Math.round(w.piano.integrity)}% left.`,
+        );
     }
     for (const id of destroyed) {
       const part = w.parts.find((p) => p.id === id);
@@ -257,7 +265,11 @@ export function siteAction(
 ) {
   const p = w.players.find((p) => p.id === id);
   if (!p) throw new Error('Join the crew first.');
-  if (action.type === 'start' || action.type === 'restart' || action.type === 'practice') {
+  if (
+    action.type === 'start' ||
+    action.type === 'restart' ||
+    action.type === 'practice'
+  ) {
     if (id !== host) throw new Error('Only the site foreman can start a job.');
     if (action.type === 'start' && w.phase !== 'lobby')
       throw new Error('This job has already started.');
@@ -283,7 +295,8 @@ export function siteAction(
     );
     return;
   }
-  if (w.phase !== 'playing') throw new Error('Start a job to swing at anything.');
+  if (w.phase !== 'playing')
+    throw new Error('Start a job to swing at anything.');
   if (p.down && action.type !== 'wave')
     throw new Error('You are pinned. A teammate can free you with F.');
 
@@ -303,7 +316,11 @@ export function siteAction(
     if (part.markedBy) delete part.markedBy;
     else {
       part.markedBy = p.id;
-      emit(w, 'mark', `${p.name} marked a ${PART_NAMES[part.kind].toLowerCase()}.`);
+      emit(
+        w,
+        'mark',
+        `${p.name} marked a ${PART_NAMES[part.kind].toLowerCase()}.`,
+      );
     }
     return;
   }

@@ -124,7 +124,11 @@ export class CarryOnAudio {
     try {
       switch (event.type) {
         case 'pack':
-          this.playPackThump();
+          if (event.text?.toLowerCase().includes('duck')) {
+            this.playDuckSqueak();
+          } else {
+            this.playPackThump();
+          }
           break;
         case 'compress':
           this.playCompressGroan();
@@ -223,6 +227,23 @@ export class CarryOnAudio {
     gain.connect(this.ctx.destination);
     osc.start(now);
     osc.stop(now + 0.18);
+  }
+
+  /** Squeaky rubber duck sound */
+  private playDuckSqueak() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1400, now);
+    osc.frequency.exponentialRampToValueAtTime(850, now + 0.12);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.16);
   }
 
   /** Suitcase springy compression groan */

@@ -86,7 +86,8 @@ export class SiteMotion {
       before = sample;
     }
     const span = last.world.clock - before.world.clock;
-    const t = span <= 0 ? 1 : clamp((this.cursor - before.world.clock) / span, 0, 1);
+    const t =
+      span <= 0 ? 1 : clamp((this.cursor - before.world.clock) / span, 0, 1);
     return { a: before, b: last, t };
   }
 

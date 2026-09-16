@@ -69,10 +69,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "audio_cues_game_cue_pk": {
-          "columns": [
-            "game",
-            "cue"
-          ],
+          "columns": ["game", "cue"],
           "name": "audio_cues_game_cue_pk"
         }
       },
@@ -116,10 +113,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "audio_generation_jobs_game_request_pk": {
-          "columns": [
-            "game",
-            "request"
-          ],
+          "columns": ["game", "request"],
           "name": "audio_generation_jobs_game_request_pk"
         }
       },
@@ -264,10 +258,7 @@
       "indexes": {
         "handwerker_fp_players_room_slot": {
           "name": "handwerker_fp_players_room_slot",
-          "columns": [
-            "room",
-            "slot"
-          ],
+          "columns": ["room", "slot"],
           "isUnique": true
         }
       },
@@ -276,12 +267,8 @@
           "name": "handwerker_fp_players_room_handwerker_fp_rooms_code_fk",
           "tableFrom": "handwerker_fp_players",
           "tableTo": "handwerker_fp_rooms",
-          "columnsFrom": [
-            "room"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["room"],
+          "columnsTo": ["code"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -421,17 +408,12 @@
       "indexes": {
         "handwerker_players_room_idx": {
           "name": "handwerker_players_room_idx",
-          "columns": [
-            "room"
-          ],
+          "columns": ["room"],
           "isUnique": false
         },
         "handwerker_players_room_slot_idx": {
           "name": "handwerker_players_room_slot_idx",
-          "columns": [
-            "room",
-            "slot"
-          ],
+          "columns": ["room", "slot"],
           "isUnique": true
         }
       },
@@ -440,12 +422,8 @@
           "name": "handwerker_players_room_handwerker_rooms_code_fk",
           "tableFrom": "handwerker_players",
           "tableTo": "handwerker_rooms",
-          "columnsFrom": [
-            "room"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["room"],
+          "columnsTo": ["code"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -556,10 +534,7 @@
       "indexes": {
         "handwerker_saved_builds_owner_created_idx": {
           "name": "handwerker_saved_builds_owner_created_idx",
-          "columns": [
-            "owner_hash",
-            "created"
-          ],
+          "columns": ["owner_hash", "created"],
           "isUnique": false
         }
       },
@@ -604,9 +579,7 @@
       "indexes": {
         "idx_rooms_updated": {
           "name": "idx_rooms_updated",
-          "columns": [
-            "updated"
-          ],
+          "columns": ["updated"],
           "isUnique": false
         }
       },

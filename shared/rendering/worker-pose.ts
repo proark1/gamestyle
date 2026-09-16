@@ -31,7 +31,11 @@ export function poseWorker(
       rig.armL.rotation.set(-swing * 0.6, 0, 0.08);
       rig.armR.rotation.set(swing * 0.6, 0, -0.08);
       rig.body.position.y = Math.abs(Math.sin(stride)) * 0.035;
-      rig.body.rotation.set(0, Math.sin(stride) * 0.025, Math.sin(stride) * 0.02);
+      rig.body.rotation.set(
+        0,
+        Math.sin(stride) * 0.025,
+        Math.sin(stride) * 0.02,
+      );
       break;
     }
     case 'wave': {

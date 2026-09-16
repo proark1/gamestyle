@@ -1,4 +1,4 @@
-import { defineRailway, preserve, project, service, volume } from "railway/iac";
+import { defineRailway, preserve, project, service, volume } from 'railway/iac';
 
 /**
  * Imported from the live project with `railway config pull`, then extended with
@@ -17,17 +17,17 @@ import { defineRailway, preserve, project, service, volume } from "railway/iac";
  * at /data, and a second replica would split it.
  */
 export default defineRailway(() => {
-  const stackOrSinkVolume = volume("stack-or-sink-volume", {
-    alerts: { usage: { "80": {}, "95": {}, "100": {} } },
+  const stackOrSinkVolume = volume('stack-or-sink-volume', {
+    alerts: { usage: { '80': {}, '95': {}, '100': {} } },
     allowOnlineResize: true,
-    region: "europe-west4-drams3a",
+    region: 'europe-west4-drams3a',
     sizeMB: 5000,
   });
-  const jumbleyard = service("jumbleyard", {
-    replicas: { "europe-west4-drams3a": 1 },
-    domains: ["www.jumbleyard.com"],
-    networking: { privateNetworkEndpoint: "stack-or-sink" },
-    volumeMounts: { "/data": stackOrSinkVolume },
+  const jumbleyard = service('jumbleyard', {
+    replicas: { 'europe-west4-drams3a': 1 },
+    domains: ['www.jumbleyard.com'],
+    networking: { privateNetworkEndpoint: 'stack-or-sink' },
+    volumeMounts: { '/data': stackOrSinkVolume },
     env: {
       AUDIO_ADMIN_PASSWORD: preserve(),
       AUTH_SECRET: preserve(),
@@ -37,11 +37,11 @@ export default defineRailway(() => {
       PUBLIC_GAME_ORIGIN: preserve(),
       RESEND_API_KEY: preserve(),
     },
-    healthcheck: "/api/health",
+    healthcheck: '/api/health',
     healthcheckTimeout: 120,
   });
 
-  return project("jumbleyard", {
+  return project('jumbleyard', {
     resources: [jumbleyard, stackOrSinkVolume],
   });
 });

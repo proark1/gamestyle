@@ -430,13 +430,13 @@ Coastal cooperative survival. Warm muted plucked guitar, felt piano, low brushed
 
 ID: `music.win` · music · 8s · one-shot · cue volume 65%
 
-Coastal cooperative survival. Warm muted plucked guitar, felt piano, low brushed hand percussion, spacious acoustic texture. A warm earned resolution, brief rising acoustic motif and natural final chord. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass. 
+Coastal cooperative survival. Warm muted plucked guitar, felt piano, low brushed hand percussion, spacious acoustic texture. A warm earned resolution, brief rising acoustic motif and natural final chord. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass.
 
 ### Round lost
 
 ID: `music.fail` · music · 7s · one-shot · cue volume 65%
 
-Coastal cooperative survival. Warm muted plucked guitar, felt piano, low brushed hand percussion, spacious acoustic texture. Gentle sympathetic descending phrase, hopeful final chord. Never punitive or tragic. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass. 
+Coastal cooperative survival. Warm muted plucked guitar, felt piano, low brushed hand percussion, spacious acoustic texture. Gentle sympathetic descending phrase, hopeful final chord. Never punitive or tragic. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass.
 
 ### Distant gull · 1
 
@@ -742,7 +742,7 @@ Coastal cooperative survival film score. The same hopeful coastal adventure moti
 
 ID: `music.cinematic.rescue` · music · 5s · one-shot · cue volume 70%
 
-Coastal cooperative survival film score. One short uplifting acoustic and string accent for helping a teammate to safety. A warm rising phrase resolving naturally, no big fanfare or drum hit. Begin promptly and finish cleanly. D major, 104 BPM, 4/4. Instrumental only, no singing, speech or sound effects. Broad warm dynamics, clear midrange and controlled bass. 
+Coastal cooperative survival film score. One short uplifting acoustic and string accent for helping a teammate to safety. A warm rising phrase resolving naturally, no big fanfare or drum hit. Begin promptly and finish cleanly. D major, 104 BPM, 4/4. Instrumental only, no singing, speech or sound effects. Broad warm dynamics, clear midrange and controlled bass.
 
 ## Blend Business — 76 cues
 
@@ -1208,13 +1208,13 @@ Quiet countryside hide-and-seek. Muted pizzicato strings, wooden marimba, breath
 
 ID: `music.win` · music · 8s · one-shot · cue volume 65%
 
-Quiet countryside hide-and-seek. Muted pizzicato strings, wooden marimba, breathy low flute, soft brushed percussion, subtle mischievous warmth. A warm earned resolution, brief rising acoustic motif and natural final chord. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass. 
+Quiet countryside hide-and-seek. Muted pizzicato strings, wooden marimba, breathy low flute, soft brushed percussion, subtle mischievous warmth. A warm earned resolution, brief rising acoustic motif and natural final chord. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass.
 
 ### Round lost
 
 ID: `music.fail` · music · 7s · one-shot · cue volume 65%
 
-Quiet countryside hide-and-seek. Muted pizzicato strings, wooden marimba, breathy low flute, soft brushed percussion, subtle mischievous warmth. Gentle sympathetic descending phrase, hopeful final chord. Never punitive or tragic. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass. 
+Quiet countryside hide-and-seek. Muted pizzicato strings, wooden marimba, breathy low flute, soft brushed percussion, subtle mischievous warmth. Gentle sympathetic descending phrase, hopeful final chord. Never punitive or tragic. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass.
 
 ## Uphill Delivery — 74 cues
 
@@ -1660,13 +1660,13 @@ Alpine cooperative furniture delivery. Warm plucked acoustic strings, soft clari
 
 ID: `music.win` · music · 8s · one-shot · cue volume 65%
 
-Alpine cooperative furniture delivery. Warm plucked acoustic strings, soft clarinet, restrained brushed percussion and an amiable lopsided walking rhythm. Playful human teamwork, never slapstick. A warm earned resolution, brief rising acoustic motif and natural final chord. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass. 
+Alpine cooperative furniture delivery. Warm plucked acoustic strings, soft clarinet, restrained brushed percussion and an amiable lopsided walking rhythm. Playful human teamwork, never slapstick. A warm earned resolution, brief rising acoustic motif and natural final chord. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass.
 
 ### Round lost
 
 ID: `music.fail` · music · 7s · one-shot · cue volume 65%
 
-Alpine cooperative furniture delivery. Warm plucked acoustic strings, soft clarinet, restrained brushed percussion and an amiable lopsided walking rhythm. Playful human teamwork, never slapstick. Gentle sympathetic descending phrase, hopeful final chord. Never punitive or tragic. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass. 
+Alpine cooperative furniture delivery. Warm plucked acoustic strings, soft clarinet, restrained brushed percussion and an amiable lopsided walking rhythm. Playful human teamwork, never slapstick. Gentle sympathetic descending phrase, hopeful final chord. Never punitive or tragic. End cleanly, no looping. Instrumental only, no singing, speech or sound effects. Clear soft dynamics, no harsh high frequencies, modest bass.
 
 ## Tiptoe Thieves — 65 cues
 

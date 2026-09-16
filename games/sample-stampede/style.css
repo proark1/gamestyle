@@ -124,90 +124,256 @@
   }
 }
 
-/* SHOPPING MANIFEST SIDEBAR CARD */
-.stampede-manifest-card {
+/* SPEED LINES OVERLAY (DURING SUGAR RUSH) */
+.stampede-speed-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(241, 196, 15, 0.16) 80%,
+    rgba(231, 76, 60, 0.35) 100%
+  );
+  box-shadow: inset 0 0 90px rgba(243, 156, 18, 0.45);
+  animation: speedStreak 0.12s infinite alternate;
+  z-index: 15;
+}
+
+@keyframes speedStreak {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.012);
+  }
+}
+
+/* WHOLESALE PAPER RECEIPT MANIFEST */
+.stampede-manifest-receipt {
   position: absolute;
   top: 18px;
   left: 18px;
   width: 250px;
+  background: #fdfbf7;
+  border-radius: 4px;
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  color: #2c3e50;
+  font-family: 'Courier New', Courier, monospace;
+  z-index: 25;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+  transform: rotate(-0.5deg);
+}
+
+.receipt-perforated-top,
+.receipt-perforated-bottom {
+  height: 10px;
+  background: radial-gradient(
+      circle,
+      transparent,
+      transparent 50%,
+      #fdfbf7 50%,
+      #fdfbf7 100%
+    )
+    -7px -5px / 14px 14px repeat-x;
+}
+
+.receipt-perforated-bottom {
+  transform: rotate(180deg);
+}
+
+.receipt-inner {
+  padding: 8px 14px 12px 14px;
+  position: relative;
+}
+
+.receipt-barcode {
+  font-size: 1.15rem;
+  letter-spacing: 4px;
+  text-align: center;
+  color: #2c3e50;
+  line-height: 1;
+  margin-bottom: 4px;
+  user-select: none;
+}
+
+.receipt-store-name {
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 1px;
+  color: #1a252f;
+}
+
+.receipt-subhead {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-align: center;
+  color: #7f8c8d;
+  margin-top: 2px;
+}
+
+.receipt-divider {
+  border-top: 1px dashed #bdc3c7;
+  margin: 7px 0;
+}
+
+.stampede-receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.stampede-receipt-row.complete {
+  color: #27ae60;
+}
+
+.stampede-receipt-row.complete .item-name {
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+
+.receipt-mass-section {
+  font-size: 0.72rem;
+  margin-top: 4px;
+}
+
+.receipt-mass-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
+}
+
+.receipt-mass-status {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #e67e22;
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* RUBBER STAMPS */
+.receipt-stamp {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  font-size: 0.95rem;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 1.5px;
+  pointer-events: none;
+}
+
+.receipt-stamp.approved {
+  color: #27ae60;
+  border: 3px solid #27ae60;
+  background: rgba(46, 204, 113, 0.12);
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.4);
+  animation: stampPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.receipt-stamp.rejected {
+  color: #e74c3c;
+  border: 3px solid #e74c3c;
+  background: rgba(231, 76, 60, 0.18);
+  box-shadow: 0 0 16px rgba(231, 76, 60, 0.6);
+  animation: stampPulse 0.8s infinite alternate;
+}
+
+@keyframes stampPop {
+  0% {
+    transform: translate(-50%, -50%) rotate(-25deg) scale(2);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-12deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes stampPulse {
+  0% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) rotate(-12deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-12deg) scale(1.06);
+  }
+}
+
+/* RETRO COCKPIT HUD (SPEED & WOBBLE HEAT) */
+.stampede-cockpit-hud {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
   background: rgba(18, 30, 49, 0.92);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  padding: 10px 22px;
+  border-radius: 24px;
   border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  padding: 14px;
-  color: #ffffff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
   z-index: 20;
   pointer-events: none;
 }
 
-.stampede-manifest-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  padding-bottom: 8px;
-  margin-bottom: 10px;
-}
-
-.stampede-manifest-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #f1c40f;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.stampede-manifest-items {
+.stampede-speed-dial {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-}
-
-.stampede-manifest-row {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  min-width: 54px;
 }
 
-.stampede-manifest-row.complete {
-  background: rgba(39, 174, 96, 0.25);
-  color: #2ecc71;
-  text-decoration: line-through;
+.stampede-speed-dial .speed-val {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #f1c40f;
+  line-height: 1;
 }
 
-.stampede-manifest-row .count {
+.stampede-speed-dial .speed-unit {
+  font-size: 0.65rem;
   font-weight: 800;
-  font-size: 0.9rem;
+  color: #bdc3c7;
+  letter-spacing: 1px;
 }
 
-/* CART WEIGHT & DRIFT METER */
-.stampede-weight-meter {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+.stampede-wobble-gauge {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 130px;
 }
 
-.stampede-weight-labels {
+.wobble-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #bdc3c7;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #ecf0f1;
 }
 
-.stampede-weight-bar-bg {
+.wobble-pct {
+  color: #e74c3c;
+}
+
+.wobble-bar-bg {
   width: 100%;
   height: 8px;
   background: rgba(255, 255, 255, 0.15);
@@ -215,33 +381,39 @@
   overflow: hidden;
 }
 
-.stampede-weight-bar-fill {
+.wobble-bar-fill {
   height: 100%;
-  border-radius: 9999px;
   background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
-  transition: width 0.3s ease;
+  border-radius: 9999px;
+  transition: width 0.15s ease-out;
 }
 
-.stampede-contraband-alert {
-  margin-top: 8px;
-  background: rgba(231, 76, 60, 0.35);
+.stampede-sugar-boost-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(
+    135deg,
+    rgba(231, 76, 60, 0.3),
+    rgba(243, 156, 18, 0.3)
+  );
   border: 1px solid #e74c3c;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
   color: #ff7675;
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 6px 8px;
-  border-radius: 8px;
-  text-align: center;
-  animation: pulse 1s infinite;
+  animation: boostGlow 0.4s infinite alternate;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
+@keyframes boostGlow {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(231, 76, 60, 0.4);
   }
-  50% {
-    opacity: 0.6;
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 0 14px rgba(231, 76, 60, 0.8);
   }
 }
 

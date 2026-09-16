@@ -194,7 +194,9 @@ export default function BungeeDoublesGame() {
 
       {/* Top HUD: Scoreboard */}
       <div className="bungee-hud">
-        <div className={`bungee-team-score orange ${world?.serverTeam === 'orange' ? 'serving' : ''}`}>
+        <div
+          className={`bungee-team-score orange ${world?.serverTeam === 'orange' ? 'serving' : ''}`}
+        >
           <div className="bungee-score-meta">
             <span>Orange</span>
             <span>Team</span>
@@ -213,7 +215,9 @@ export default function BungeeDoublesGame() {
           )}
         </div>
 
-        <div className={`bungee-team-score teal ${world?.serverTeam === 'teal' ? 'serving' : ''}`}>
+        <div
+          className={`bungee-team-score teal ${world?.serverTeam === 'teal' ? 'serving' : ''}`}
+        >
           {world?.serverTeam === 'teal' && (
             <span className="bungee-serve-indicator" title="Serving" />
           )}

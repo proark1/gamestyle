@@ -240,12 +240,7 @@ void test('bungeeDoublesAvatars exports valid dressable worker avatar', () => {
 
 void test('computeCameraRelativeMovement: idle input produces zero movement', () => {
   // Identity matrix elements
-  const identityMatrix = [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
-  ];
+  const identityMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
   const res = computeCameraRelativeMovement(0, 0, identityMatrix);
   assert.equal(res.x, 0);
   assert.equal(res.z, 0);
@@ -253,12 +248,7 @@ void test('computeCameraRelativeMovement: idle input produces zero movement', ()
 
 void test('computeCameraRelativeMovement: looking down -Z (Behind Teal baseline)', () => {
   // Camera looking down -Z: right is +X, forward is -Z
-  const camMatrix = [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 10, 20, 1,
-  ];
+  const camMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 10, 20, 1];
 
   // A = screen left -> should move -X
   const moveA = computeCameraRelativeMovement(-1, 0, camMatrix);
@@ -284,12 +274,7 @@ void test('computeCameraRelativeMovement: looking down -Z (Behind Teal baseline)
 void test('computeCameraRelativeMovement: looking down +Z (Behind Orange baseline, 180 deg)', () => {
   // Camera looking down +Z (rotated 180° around Y): right is -X, forward is +Z
   // Matrix col 0: [-1, 0, 0], col 2: [0, 0, -1]
-  const camMatrix = [
-    -1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, -1, 0,
-    0, 10, -20, 1,
-  ];
+  const camMatrix = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 10, -20, 1];
 
   // A = screen left -> looking down +Z, left of screen is +X
   const moveA = computeCameraRelativeMovement(-1, 0, camMatrix);
@@ -315,12 +300,7 @@ void test('computeCameraRelativeMovement: looking down +Z (Behind Orange baselin
 void test('computeCameraRelativeMovement: sideline camera (looking down +X)', () => {
   // Looking down +X: right is +Z, forward is +X
   // Matrix col 0: [0, 0, 1], col 2: [-1, 0, 0]
-  const camMatrix = [
-    0, 0, 1, 0,
-    0, 1, 0, 0,
-    -1, 0, 0, 0,
-    -20, 10, 0, 1,
-  ];
+  const camMatrix = [0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0, -20, 10, 0, 1];
 
   // A = screen left -> looking towards +X, screen left is -Z
   const moveA = computeCameraRelativeMovement(-1, 0, camMatrix);
@@ -341,4 +321,3 @@ void test('computeCameraRelativeMovement: sideline camera (looking down +X)', ()
   const moveWD = computeCameraRelativeMovement(1, 1, camMatrix);
   assert.ok(Math.abs(Math.hypot(moveWD.x, moveWD.z) - 1.0) < 0.001);
 });
-
