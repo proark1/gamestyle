@@ -1,0 +1,266 @@
+/* Party Mode In-Game Tournament Styles */
+
+/* 1. Complete Suppression of Game Start Screens in Party Mode */
+body.jumbleyard-party-mode .start-panel,
+body.jumbleyard-party-mode .hotel-menu,
+body.jumbleyard-party-mode .omb-menu,
+body.jumbleyard-party-mode .giant-menu,
+body.jumbleyard-party-mode .giant-setup,
+body.jumbleyard-party-mode .brain-menu,
+body.jumbleyard-party-mode .setup-card,
+body.jumbleyard-party-mode .reel-menu,
+body.jumbleyard-party-mode .delivery-setup,
+body.jumbleyard-party-mode .farm-menu,
+body.jumbleyard-party-mode .cc-welcome,
+body.jumbleyard-party-mode .bb-welcome,
+body.jumbleyard-party-mode .shelf-entry,
+body.jumbleyard-party-mode .sad-mode-selector,
+body.jumbleyard-party-mode .scene-caption,
+body.jumbleyard-party-mode .start-footer,
+body.jumbleyard-party-mode .hotel-menu-art,
+body.jumbleyard-party-mode .omb-menu-art,
+body.jumbleyard-party-mode .brain-menu-art,
+body.jumbleyard-party-mode .reel-menu-art,
+body.jumbleyard-party-mode .giant-scene-caption,
+body.jumbleyard-party-mode .farm-menu-meta,
+body.jumbleyard-party-mode .hotel-menu-note,
+body.jumbleyard-party-mode .omb-menu-note,
+body.jumbleyard-party-mode .brain-menu-note,
+body.jumbleyard-party-mode .reel-menu-note {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* 2. Top In-Game Tournament Ribbon */
+.party-ribbon-bar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99990;
+  background: rgba(22, 43, 38, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  border: 1px solid rgba(243, 191, 80, 0.35);
+  border-radius: 24px;
+  padding: 6px 14px 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: auto;
+  user-select: none;
+  animation: partyRibbonSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes partyRibbonSlideDown {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.party-ribbon-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f3bf50;
+  font-family: Fredoka, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.party-ribbon-round-pill {
+  background: rgba(243, 191, 80, 0.2);
+  color: #f3bf50;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.party-ribbon-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.party-ribbon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.party-ribbon-btn-standings {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.party-ribbon-btn-standings:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.party-ribbon-btn-finish {
+  background: #ca8038;
+  color: #fff;
+}
+
+.party-ribbon-btn-finish:hover {
+  background: #de9044;
+  transform: translateY(-1px);
+}
+
+/* 3. Tournament Round Loading & Intro Overlay */
+.party-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99995;
+  background: radial-gradient(circle at center, #1b3630 0%, #0c1815 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+.party-intro-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.party-intro-card {
+  background: rgba(25, 48, 43, 0.9);
+  border: 2px solid rgba(243, 191, 80, 0.4);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  border-radius: 28px;
+  padding: 36px 44px;
+  text-align: center;
+  max-width: 440px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: partyCardPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes partyCardPop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.party-intro-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f3bf50;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.party-intro-title {
+  font-family: Fredoka, sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.party-intro-player-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #c9e2dc;
+}
+
+.party-intro-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #f3bf50;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.party-spin {
+  animation: partySpin 1s linear infinite;
+}
+
+@keyframes partySpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 4. Match Completion Toast / Overlay */
+.party-completion-card {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99992;
+  background: rgba(22, 43, 38, 0.96);
+  border: 2px solid #f3bf50;
+  border-radius: 20px;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  animation: partySlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes partySlideUp {
+  from {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}

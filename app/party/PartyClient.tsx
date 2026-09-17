@@ -86,13 +86,20 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   useEffect(() => {
     if (room?.code && playerId) {
       try {
+        const me = room.players.find((p) => p.id === playerId);
         sessionStorage.setItem(
           SESSION_KEY,
-          JSON.stringify({ code: room.code, playerId }),
+          JSON.stringify({
+            code: room.code,
+            playerId,
+            name: me?.name ?? name,
+            color: me?.color ?? color,
+            isHost: room.hostId === playerId,
+          }),
         );
       } catch {}
     }
-  }, [room?.code, playerId]);
+  }, [room?.code, room?.players, room?.hostId, playerId, name, color]);
 
   // Polling loop to sync state across all 4 players
   useEffect(() => {
