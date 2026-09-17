@@ -498,9 +498,31 @@ export class GameScene {
       );
       return p && !p.heldBy;
     });
-    return hit
-      ? { id: hit.object.userData.pieceId as string, point: hit.point }
-      : null;
+    if (hit) {
+      return { id: hit.object.userData.pieceId as string, point: hit.point };
+    }
+    if (this.world && this.pieces.size > 0) {
+      let closestId: string | null = null;
+      let closestDist = 0.14;
+      const v = new T.Vector3();
+      for (const [id, mesh] of this.pieces) {
+        const p = this.world.world.pieces.find((x) => x.id === id);
+        if (!p || p.heldBy) continue;
+        mesh.getWorldPosition(v);
+        v.project(this.camera);
+        const d = Math.hypot(v.x - this.pointer.x, v.y - this.pointer.y);
+        if (d < closestDist) {
+          closestDist = d;
+          closestId = id;
+        }
+      }
+      if (closestId) {
+        const mesh = this.pieces.get(closestId);
+        mesh?.getWorldPosition(v);
+        return { id: closestId, point: v };
+      }
+    }
+    return null;
   }
   currentTarget() {
     if (!this.world || !this.predicted) return;
@@ -662,7 +684,7 @@ export class GameScene {
           : this.overview || this.craneView
             ? Math.max(22, 22 / aspect)
             : aspect < 1
-              ? 12
+              ? Math.max(14, 8.5 / aspect)
               : 10.5) * this.zoom;
       Object.assign(this.camera, {
         left: -size * aspect,
@@ -680,7 +702,11 @@ export class GameScene {
       ? new T.Vector3(aspect > 1.1 ? -5 : 0, 4, 0)
       : this.overview || this.craneView
         ? new T.Vector3(0, 7, 0)
-        : new T.Vector3(p?.x || 0, (p?.y || 0) + 2.2, p?.z || 0);
+        : new T.Vector3(
+            p?.x || 0,
+            (p?.y || 0) + 2.2,
+            (p?.z || 0) + (aspect < 1 ? -1.8 : 0),
+          );
     if (this.menu || !p) this.target.copy(desired);
     else {
       this.target.x = desired.x;

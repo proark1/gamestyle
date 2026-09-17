@@ -259,7 +259,7 @@ export function nearestPiece(world: World, p: Player) {
     .filter(
       (item) =>
         !item.heldBy &&
-        Math.hypot(item.x - p.x, item.z - p.z) < 3.8 &&
+        Math.hypot(item.x - p.x, item.z - p.z) < 4.8 &&
         item.y < p.y + 2.8 &&
         topOf(item) > p.y - 1.4,
     )
@@ -337,8 +337,7 @@ export function act(world: World, id: string, action: Action, host: string) {
   }
   if (world.phase === 'won' || world.phase === 'lost')
     throw new Error('Start another round to keep building.');
-  if (p.down)
-    throw new Error('Call a teammate over. They can rescue you with F.');
+  if (p.down) throw new Error('Call a teammate over. They can rescue you.');
   const held = world.pieces.find((item) => item.heldBy === id);
   if (action.type === 'grab') {
     if (held) throw new Error('Place what you are carrying first.');
@@ -347,9 +346,9 @@ export function act(world: World, id: string, action: Action, host: string) {
       ? world.pieces.find((s) => s.id === action.target)
       : nearestPiece(world, p);
     if (!item || item.heldBy)
-      throw new Error('Move close to a piece of junk and press E.');
+      throw new Error('Move close to a piece of junk to pick it up.');
     if (
-      Math.hypot(item.x - p.x, item.z - p.z) > 4.3 ||
+      Math.hypot(item.x - p.x, item.z - p.z) > 4.8 ||
       item.y > p.y + 2.8 ||
       topOf(item) < p.y - 1.4
     )
