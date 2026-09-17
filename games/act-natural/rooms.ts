@@ -1,4 +1,4 @@
-import { playerName, hashToken } from '../../shared/rooms/identity';
+import { hashToken, isRoomCode, playerName } from '../../shared/rooms/identity';
 import { RoomError, type RoomStore } from '../../shared/rooms/types';
 import {
   advanceFarm,
@@ -70,7 +70,7 @@ export async function handleFarmRoom(
   if (!['join', 'sync', 'action', 'leave'].includes(String(body.op)))
     throw new RoomError('Unknown farm operation.');
   const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
-  if (!/^[A-Z2-9]{6}$/.test(code))
+  if (!isRoomCode(code))
     throw new RoomError('Enter the six-character farm code.');
   const joining = body.op === 'join',
     id = joining ? crypto.randomUUID() : body.id,

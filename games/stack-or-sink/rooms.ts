@@ -1,6 +1,7 @@
 import {
-  playerName,
   hashToken as tokenHash,
+  isRoomCode,
+  playerName,
 } from '../../shared/rooms/identity';
 import { RoomError, type RoomStore } from '../../shared/rooms/types';
 import {
@@ -73,7 +74,7 @@ export async function handleRoom(
     throw new RoomError('The yard is busy. Try creating a crew again.', 503);
   }
   const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
-  if (!/^[A-Z2-9]{6}$/.test(code))
+  if (!isRoomCode(code))
     throw new RoomError('Enter the six-character room code.');
   const joining = body.op === 'join';
   const id = joining

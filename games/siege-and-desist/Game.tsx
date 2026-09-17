@@ -72,8 +72,13 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { siegeAnalytics, siegePlayState } from './analytics';
+import {
+  ROOM_CODE_PATTERN,
+  looksLikeRoomCode,
+} from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
 
-const SESSION_KEY = 'siege-and-desist-session-v1';
+const sessions = sessionStore('siege-and-desist-session-v1');
 const PREFS_KEY = 'siege-and-desist-prefs-v1';
 const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -159,11 +164,7 @@ export default function SiegeAndDesist() {
     setStatus('reconnecting');
     sound.current?.reset();
     scene.current?.setSession(s.id);
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {
-      /* Storage may be disabled. */
-    }
+    sessions.save(s);
     network.current = new PeerGameConnection(
       'siege-and-desist',
       s,
@@ -199,7 +200,7 @@ export default function SiegeAndDesist() {
         if (!disposed) setSelectedMode(urlMode);
       });
     }
-    if (invite && /^[A-Z2-9]{6}$/i.test(invite))
+    if (invite && looksLikeRoomCode(invite))
       queueMicrotask(() => {
         if (!disposed) {
           setCode(invite.toUpperCase());
@@ -235,21 +236,10 @@ export default function SiegeAndDesist() {
             },
           });
           setReady(true);
-          if (!invite)
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (
-                saved?.peer === true &&
-                /^[A-Z2-9]{6}$/.test(saved.code) &&
-                typeof saved.id === 'string' &&
-                typeof saved.token === 'string'
-              )
-                attach(saved);
-            } catch {
-              /* A new session can always be created. */
-            }
+          if (!invite) {
+            const saved = sessions.loadPeer();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The siege field could not load. Enable hardware acceleration and reload to play.',
@@ -417,7 +407,7 @@ export default function SiegeAndDesist() {
       sound.current?.update(null);
       setBusy(false);
       try {
-        sessionStorage.removeItem(SESSION_KEY);
+        sessions.clear();
       } catch {
         /* Storage is optional. */
       }
@@ -1362,7 +1352,7 @@ export default function SiegeAndDesist() {
                   autoComplete="off"
                   spellCheck={false}
                   required
-                  pattern="[A-Z2-9]{6}"
+                  pattern={ROOM_CODE_PATTERN}
                 />
               </label>
               <button

@@ -61,8 +61,10 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { breakfastAnalytics, breakfastPlayState } from './analytics';
+import { looksLikeRoomCode } from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
 
-const SESSION_KEY = 'four-brain-cells-session-v1';
+const sessions = sessionStore('four-brain-cells-session-v1');
 const PREFS_KEY = 'four-brain-cells-prefs-v1';
 const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -176,11 +178,7 @@ export default function FourBrainCells() {
     setStatus('reconnecting');
     sound.current?.reset();
     scene.current?.setSession(s.id);
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {
-      /* Optional session recovery. */
-    }
+    sessions.save(s);
     network.current = new PeerGameConnection(
       'four-brain-cells',
       s,
@@ -209,7 +207,7 @@ export default function FourBrainCells() {
       /* Preferences are optional. */
     }
     const invite = new URL(location.href).searchParams.get('room');
-    if (invite && /^[A-Z2-9]{6}$/i.test(invite))
+    if (invite && looksLikeRoomCode(invite))
       queueMicrotask(() => {
         if (!disposed) {
           setCode(invite.toUpperCase());
@@ -247,21 +245,10 @@ export default function FourBrainCells() {
             },
           });
           setReady(true);
-          if (!invite)
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (
-                saved?.peer === true &&
-                /^[A-Z2-9]{6}$/.test(saved.code) &&
-                typeof saved.id === 'string' &&
-                typeof saved.token === 'string'
-              )
-                attach(saved);
-            } catch {
-              /* A fresh kitchen is always available. */
-            }
+          if (!invite) {
+            const saved = sessions.loadPeer();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The kitchen could not load. Enable hardware acceleration and reload.',
@@ -406,7 +393,7 @@ export default function FourBrainCells() {
       sound.current?.reset();
       setBusy(false);
       try {
-        sessionStorage.removeItem(SESSION_KEY);
+        sessions.clear();
       } catch {
         /* Optional session storage. */
       }

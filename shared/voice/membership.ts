@@ -1,14 +1,17 @@
 import type { RoomStore } from '../rooms/types';
 import { isGameId, type GameId } from '../audio/types';
 import type { VoiceSession } from './types';
+import { ROOM_CODE_PATTERN, isRoomCode } from '../rooms/identity';
 export type VoiceRoom = {
   members: Record<string, string>;
   world: { players: { id: string; name: string; seen: number }[] };
 };
 export const voiceRoomName = (game: GameId, code: string) =>
   `gamestyle-${game}-${code}`;
+// The game id is greedy-matched, so the code shape is what terminates the name.
+const VOICE_ROOM_NAME = new RegExp(`^gamestyle-(.+)-(${ROOM_CODE_PATTERN})$`);
 export function parseVoiceRoomName(name: string) {
-  const match = /^gamestyle-(.+)-([A-Z2-9]{6})$/.exec(name);
+  const match = VOICE_ROOM_NAME.exec(name);
   return match && isGameId(match[1])
     ? { game: match[1], code: match[2] }
     : null;
@@ -30,7 +33,7 @@ export async function authorizeVoice(
     !body ||
     !isGameId(body.game) ||
     typeof body.code !== 'string' ||
-    !/^[A-Z2-9]{6}$/.test(body.code) ||
+    !isRoomCode(body.code) ||
     typeof body.id !== 'string' ||
     body.id.length > 100 ||
     typeof body.token !== 'string' ||

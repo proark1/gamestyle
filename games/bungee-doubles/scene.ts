@@ -17,6 +17,7 @@ import {
   type TeamId,
 } from './types';
 import { computeCameraRelativeMovement } from './physics';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 type Callbacks = {
   input: (i: PlayerInput) => void;
@@ -94,17 +95,10 @@ export class BungeeScene {
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.22;
-
-    this.container.appendChild(this.renderer.domElement);
+    this.renderer = createRenderer(this.container, {
+      exposure: 1.22,
+      focusable: false,
+    }).renderer;
 
     // Bungee cords for both teams
     this.bungeeCords = {

@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trophy, ArrowRight, LoaderCircle, Sparkles } from 'lucide-react';
 import { COLORS } from '../rendering/palette';
+import { looksLikeRoomCode } from '../rooms/identity';
 import './party-ribbon.css';
 
 const GAME_TITLES: Record<string, string> = {
@@ -63,7 +64,7 @@ export default function PartyRibbon() {
     const p = params.get('party');
     const r = params.get('round');
 
-    if (!p || !/^[A-Z2-9]{6}$/i.test(p)) {
+    if (!p || !looksLikeRoomCode(p)) {
       return;
     }
 

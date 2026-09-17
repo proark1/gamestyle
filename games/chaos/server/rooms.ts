@@ -4,7 +4,11 @@ import {
   budgetError,
 } from '@/shared/http/request-budget';
 import { RoomError } from '@/shared/rooms/types';
-import { playerName, hashToken as hash } from '../../../shared/rooms/identity';
+import {
+  hashToken as hash,
+  isRoomCode,
+  playerName,
+} from '../../../shared/rooms/identity';
 import { isRoomOriginAllowed } from '@/shared/http/request-origin';
 import {
   DISASTER_RULES,
@@ -302,7 +306,7 @@ async function handleRequest(request: Request) {
       return json({ error: 'The site is busy. Try again.' }, 503);
     }
     const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
-    if (!/^[A-Z2-9]{6}$/.test(code))
+    if (!isRoomCode(code))
       return json(
         { error: 'The room code contains 6 letters or digits.' },
         400,

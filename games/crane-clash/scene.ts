@@ -17,6 +17,7 @@ import {
   type Role,
   type TeamId,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 export type SceneCallbacks = {
   input: (input: PlayerInput) => void;
@@ -67,12 +68,8 @@ export class CraneClashScene {
     private container: HTMLElement,
     private cb: SceneCallbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
+    this.renderer = createRenderer(container, { focusable: false }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    container.appendChild(this.renderer.domElement);
 
     this.scene.background = new T.Color('#dce7e9');
 

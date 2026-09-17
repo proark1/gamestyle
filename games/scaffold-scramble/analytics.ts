@@ -1,5 +1,5 @@
 import {
-  modeOf,
+  crewOf,
   type GameAnalytics,
   type PlayState,
 } from '../../shared/analytics/protocol';
@@ -24,8 +24,8 @@ export const scaffoldScrambleAnalytics: GameAnalytics = {
     start: 'Started the window cleaning shift',
     restart: 'Restarted the shift',
     crank: 'Cranked suspension winch',
-    useTool: 'Applied soap foam or wiped with squeegee',
-    switchTool: 'Switched between sponge and squeegee',
+    'use-tool': 'Applied soap foam or wiped with squeegee',
+    'switch-tool': 'Switched between sponge and squeegee',
     shoo: 'Shooed away cable pigeon',
     climb: 'Climbed back onto deck from safety tether',
   },
@@ -36,14 +36,7 @@ export function scaffoldScramblePlayState(
   session: { code: string; id: string },
 ): PlayState {
   const { world } = snapshot;
-  const bots = world.players.filter((p) => p.bot).length;
-  const base = {
-    mode: modeOf(session, snapshot.host),
-    room: session.code,
-    humans: world.players.length - bots,
-    npcs: bots,
-    round: world.seed,
-  };
+  const base = crewOf(session, snapshot.host, world.players, world.seed);
 
   if (world.phase === 'lobby') return { stage: 'lobby', ...base };
 

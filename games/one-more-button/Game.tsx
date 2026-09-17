@@ -60,7 +60,12 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { buttonAnalytics, buttonPlayState } from './analytics';
-const SESSION_KEY = 'one-more-button-session-v1';
+import {
+  ROOM_CODE_PATTERN,
+  looksLikeRoomCode,
+} from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
+const sessions = sessionStore('one-more-button-session-v1');
 const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -129,11 +134,7 @@ export default function OneMoreButton() {
     setStatus('reconnecting');
     sound.current?.reset();
     scene.current?.setSession(s.id);
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {
-      /* Storage may be disabled. */
-    }
+    sessions.save(s);
     network.current = new PeerGameConnection(
       'one-more-button',
       s,
@@ -164,7 +165,7 @@ export default function OneMoreButton() {
       /* Preferences are optional. */
     }
     const invite = new URL(location.href).searchParams.get('room');
-    if (invite && /^[A-Z2-9]{6}$/i.test(invite))
+    if (invite && looksLikeRoomCode(invite))
       queueMicrotask(() => {
         if (!disposed) {
           setCode(invite.toUpperCase());
@@ -200,21 +201,10 @@ export default function OneMoreButton() {
             },
           });
           setReady(true);
-          if (!invite)
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (
-                saved?.peer === true &&
-                /^[A-Z2-9]{6}$/.test(saved.code) &&
-                typeof saved.id === 'string' &&
-                typeof saved.token === 'string'
-              )
-                attach(saved);
-            } catch {
-              /* A new session can always be created. */
-            }
+          if (!invite) {
+            const saved = sessions.loadPeer();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The stage could not load. Enable hardware acceleration and reload to play.',
@@ -360,7 +350,7 @@ export default function OneMoreButton() {
       sound.current?.update(null);
       setBusy(false);
       try {
-        sessionStorage.removeItem(SESSION_KEY);
+        sessions.clear();
       } catch {
         /* Storage is optional. */
       }
@@ -879,7 +869,7 @@ export default function OneMoreButton() {
                   autoComplete="off"
                   spellCheck={false}
                   required
-                  pattern="[A-Z2-9]{6}"
+                  pattern={ROOM_CODE_PATTERN}
                 />
               </label>
               <button

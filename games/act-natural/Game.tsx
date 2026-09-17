@@ -63,7 +63,10 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { farmAnalytics, farmPlayState } from './analytics';
-const SESSION_KEY = 'act-natural-session-v1';
+import { looksLikeRoomCode } from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
+import { TOUCH_QUERY } from '../../shared/browser/device';
+const sessions = sessionStore('act-natural-session-v1');
 const clock = (seconds: number) => {
   const whole = Math.ceil(Math.max(0, seconds));
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
@@ -135,9 +138,7 @@ export default function ActNatural() {
     setSession(s);
     setStatus('online');
     lastEvent.current = 0;
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {}
+    sessions.save(s);
     const connection = new FarmConnection(s, accept, setStatus);
     network.current = connection;
     if (snapshot) connection.accept(snapshot);
@@ -159,7 +160,7 @@ export default function ActNatural() {
       audio.enabled = !prefs.muted;
     } catch {}
     const room = new URL(location.href).searchParams.get('room');
-    if (room && /^[A-Z2-9]{6}$/i.test(room)) {
+    if (room && looksLikeRoomCode(room)) {
       queueMicrotask(() => {
         if (disposed) return;
         setCode(room.toUpperCase());
@@ -186,13 +187,10 @@ export default function ActNatural() {
               ),
           });
           setReady(true);
-          if (!room)
-            try {
-              const s = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (s?.code && s?.id && s?.token) attach(s);
-            } catch {}
+          if (!room) {
+            const saved = sessions.load();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The 3D pasture could not start. Enable hardware acceleration and reload.',
@@ -243,7 +241,7 @@ export default function ActNatural() {
   }, [modal]);
   useEffect(() => {
     if (!optionsOpen) return;
-    const mobile = matchMedia('(max-width: 900px), (pointer: coarse)');
+    const mobile = matchMedia(TOUCH_QUERY);
     const closeOnDesktop = () => {
       if (!mobile.matches) options.current?.hidePopover();
     };
@@ -338,7 +336,7 @@ export default function ActNatural() {
     setNotice('');
     accept(farmSnapshot(farm, s.code, id, id, now));
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessions.clear();
     } catch {}
   }
   function leave() {
@@ -355,7 +353,7 @@ export default function ActNatural() {
     sound.current?.menu();
     scene.current?.reset();
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessions.clear();
     } catch {}
   }
   async function copy() {

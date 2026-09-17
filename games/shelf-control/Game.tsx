@@ -42,8 +42,10 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { shelfAnalytics, shelfStateReader } from './analytics';
+import { isRoomCode } from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
 
-const SESSION_KEY = 'jumbleyard:shelf-control';
+const sessions = sessionStore('jumbleyard:shelf-control');
 const prettyTime = (ms: number) =>
   `${Math.floor(Math.ceil(ms / 1000) / 60)}:${String(Math.ceil(ms / 1000) % 60).padStart(2, '0')}`;
 function hint(s: Snapshot) {
@@ -177,25 +179,18 @@ export default function ShelfControl() {
     const restore = requestAnimationFrame(() => {
       const invite =
         new URLSearchParams(location.search).get('room')?.toUpperCase() ?? '';
-      if (/^[A-Z2-9]{6}$/.test(invite)) {
+      if (isRoomCode(invite)) {
         setCode(invite);
         setJoining(true);
       }
       try {
         setName(localStorage.getItem('jumbleyard:shelf-name') ?? '');
-        const saved = JSON.parse(
-          sessionStorage.getItem(SESSION_KEY) ?? 'null',
-        ) as Session | null;
-        if (
-          saved?.id &&
-          saved.token &&
-          /^[A-Z2-9]{6}$/.test(saved.code) &&
-          (!invite || saved.code === invite)
-        )
-          setSession(saved);
       } catch {
         /* Storage is optional. */
       }
+      const saved = sessions.load();
+      // An invite link wins: it names the room this tab was asked to join.
+      if (saved && (!invite || saved.code === invite)) setSession(saved);
     });
     return () => {
       cancelAnimationFrame(restore);
@@ -207,11 +202,7 @@ export default function ShelfControl() {
     const client = new ShelfConnection(session, receive, setStatus);
     connection.current = client;
     void client.poll();
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    } catch {
-      /* Private browsers can still play. */
-    }
+    sessions.save(session);
     return () => {
       client.stop();
       if (connection.current === client) connection.current = null;
@@ -372,7 +363,7 @@ export default function ShelfControl() {
     setHelp(false);
     setJoining(false);
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessions.clear();
     } catch {
       /* Optional. */
     }

@@ -26,6 +26,11 @@ import {
   type DeliveryInput,
   type DeliverySnapshot,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  isTouchDevice,
+  prefersReducedMotion,
+} from '../../shared/browser/device';
 
 export class DeliveryScene {
   renderer: T.WebGLRenderer;
@@ -102,7 +107,7 @@ export class DeliveryScene {
   snapshot: DeliverySnapshot;
   active = false;
   readyPose = false;
-  reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  reduced = prefersReducedMotion();
   constructor(
     public host: HTMLElement,
     public callbacks: {
@@ -117,23 +122,15 @@ export class DeliveryScene {
       deliveryPlayer(`demo-${i}`, '', i, w.clock),
     );
     this.snapshot = deliverySnapshot(w, '', '', '', 0);
-    const mobile = matchMedia('(pointer:coarse)').matches;
-    this.renderer = new T.WebGLRenderer({
-      antialias: !mobile,
-      powerPreference: 'high-performance',
+    const mobile = isTouchDevice();
+    const view = createRenderer(host, {
+      shadows: mobile ? 'off' : 'soft',
+      exposure: 1.22,
+      label:
+        'Uphill Delivery mountain. WASD moves, Space jumps, E grabs or releases, F opens gates, R turns the sofa, V changes camera. Drag to orbit and scroll to zoom. In first person, click for mouse look, Escape releases the mouse, or drag or use IJKL to look.',
     });
-    this.basePixelRatio = Math.min(devicePixelRatio, mobile ? 1.3 : 1.8);
-    this.renderer.setPixelRatio(this.basePixelRatio);
-    this.renderer.shadowMap.enabled = !mobile;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.22;
-    this.renderer.domElement.tabIndex = 0;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Uphill Delivery mountain. WASD moves, Space jumps, E grabs or releases, F opens gates, R turns the sofa, V changes camera. Drag to orbit and scroll to zoom. In first person, click for mouse look, Escape releases the mouse, or drag or use IJKL to look.',
-    );
-    host.appendChild(this.renderer.domElement);
+    this.renderer = view.renderer;
+    this.basePixelRatio = view.quality.pixelRatio;
     this.scene.background = new T.Color('#c7d3b6');
     this.scene.fog = new T.Fog('#c7d3b6', 100, 180);
     this.scene.add(new T.HemisphereLight('#fff2d4', '#8fa282', 3));

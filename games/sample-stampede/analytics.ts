@@ -1,5 +1,5 @@
 import {
-  modeOf,
+  crewOf,
   type GameAnalytics,
   type PlayState,
 } from '../../shared/analytics/protocol';
@@ -39,14 +39,7 @@ export function sampleStampedePlayState(
   session: { code: string; id: string },
 ): PlayState {
   const { world } = snapshot;
-  const bots = world.players.filter((p) => p.bot).length;
-  const base = {
-    mode: modeOf(session, snapshot.localPlayerId),
-    room: session.code,
-    humans: world.players.length - bots,
-    npcs: bots,
-    round: 1,
-  };
+  const base = crewOf(session, snapshot.localPlayerId, world.players);
 
   if (world.status === 'warmup') return { stage: 'lobby', ...base };
 

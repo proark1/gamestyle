@@ -59,8 +59,10 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { deliveryAnalytics, deliveryPlayState } from './analytics';
+import { looksLikeRoomCode } from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
 
-const SESSION_KEY = 'uphill-delivery-session-v1';
+const sessions = sessionStore('uphill-delivery-session-v1');
 type ModelContext = {
   registerTool: (
     tool: {
@@ -157,9 +159,7 @@ export default function UphillDelivery() {
     setSession(s);
     setStatus('online');
     latest.current = null;
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {}
+    sessions.save(s);
     const network = new DeliveryConnection(s, accept, setStatus);
     connection.current = network;
     if (state) network.accept(state);
@@ -208,7 +208,7 @@ export default function UphillDelivery() {
       sound.enabled = !prefs.muted;
     } catch {}
     const invite = new URL(location.href).searchParams.get('room');
-    if (invite && /^[A-Z2-9]{6}$/i.test(invite))
+    if (invite && looksLikeRoomCode(invite))
       queueMicrotask(() => {
         if (disposed) return;
         setCode(invite.toUpperCase());
@@ -254,19 +254,10 @@ export default function UphillDelivery() {
             },
           });
           setReady(true);
-          if (!invite)
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (
-                saved?.code &&
-                saved?.id &&
-                saved?.token &&
-                saved.code !== 'PRACTICE'
-              )
-                attach(saved);
-            } catch {}
+          if (!invite) {
+            const saved = sessions.load();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The mountain could not load. Enable hardware acceleration and reload to play.',
@@ -385,7 +376,7 @@ export default function UphillDelivery() {
     local.current = null;
     sessionRef.current = null;
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessions.clear();
     } catch {}
     location.href = destination;
   }

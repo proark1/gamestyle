@@ -1,27 +1,37 @@
 # Jumbleyard
 
-**Jumbleyard** is a collection of twelve matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
+**Jumbleyard** is a collection of twenty-two matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
 
-## The twelve games
+## The twenty-two games
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
-| Game             | Play at                | Game code                    | Route                            |
-| ---------------- | ---------------------- | ---------------------------- | -------------------------------- |
-| Siege and Desist | `/siege-and-desist`    | `games/siege-and-desist/`    | `app/siege-and-desist/`          |
-| Stack or Sink    | `/stack-or-sink`       | `games/stack-or-sink/`       | `app/stack-or-sink/`             |
-| Blend Business   | `/act-natural`         | `games/act-natural/`         | `app/act-natural/`               |
-| Uphill Delivery  | `/uphill-delivery`     | `games/uphill-delivery/`     | `app/uphill-delivery/`           |
-| Tiptoe Thieves   | `/dont-wake-the-giant` | `games/dont-wake-the-giant/` | `app/dont-wake-the-giant/`       |
-| Permit Pending   | `/chaos`               | `games/chaos/`               | `app/(handwerker)/chaos/`        |
-| Brick by Hand    | `/first-person`        | `games/first-person/`        | `app/(handwerker)/first-person/` |
-| Wrong Floor      | `/wrong-floor`         | `games/wrong-floor/`         | `app/wrong-floor/`               |
-| One More Button  | `/one-more-button`     | `games/one-more-button/`     | `app/one-more-button/`           |
-| Four Brain Cells | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
-| Reel Problems    | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
-| Shelf Control    | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
+| Game              | Play at                | Game code                    | Route                            |
+| ----------------- | ---------------------- | ---------------------------- | -------------------------------- |
+| Siege and Desist  | `/siege-and-desist`    | `games/siege-and-desist/`    | `app/siege-and-desist/`          |
+| Stack or Sink     | `/stack-or-sink`       | `games/stack-or-sink/`       | `app/stack-or-sink/`             |
+| Blend Business    | `/act-natural`         | `games/act-natural/`         | `app/act-natural/`               |
+| Uphill Delivery   | `/uphill-delivery`     | `games/uphill-delivery/`     | `app/uphill-delivery/`           |
+| Tiptoe Thieves    | `/dont-wake-the-giant` | `games/dont-wake-the-giant/` | `app/dont-wake-the-giant/`       |
+| Permit Pending    | `/chaos`               | `games/chaos/`               | `app/(handwerker)/chaos/`        |
+| Brick by Hand     | `/first-person`        | `games/first-person/`        | `app/(handwerker)/first-person/` |
+| Wrong Floor       | `/wrong-floor`         | `games/wrong-floor/`         | `app/wrong-floor/`               |
+| One More Button   | `/one-more-button`     | `games/one-more-button/`     | `app/one-more-button/`           |
+| Four Brain Cells  | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
+| Reel Problems     | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
+| Shelf Control     | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
+| Load Bearing      | `/load-bearing`        | `games/load-bearing/`        | `app/load-bearing/`              |
+| Crane Clash       | `/crane-clash`         | `games/crane-clash/`         | `app/crane-clash/`               |
+| Court Clash       | `/basketball`          | `games/basketball/`          | `app/basketball/`                |
+| Bungee Doubles    | `/bungee-doubles`      | `games/bungee-doubles/`      | `app/bungee-doubles/`            |
+| Panic Curling     | `/panic-curling`       | `games/panic-curling/`       | `app/panic-curling/`             |
+| Zorb Clash        | `/zorb-clash`          | `games/zorb-clash/`          | `app/zorb-clash/`                |
+| Carry-On Carnage  | `/carry-on-carnage`    | `games/carry-on-carnage/`    | `app/carry-on-carnage/`          |
+| Sample Stampede   | `/sample-stampede`     | `games/sample-stampede/`     | `app/sample-stampede/`           |
+| Drive-Thru Static | `/drive-thru`          | `games/drive-thru/`          | `app/drive-thru/`                |
+| Scaffold Scramble | `/scaffold-scramble`   | `games/scaffold-scramble/`   | `app/scaffold-scramble/`         |
 
-Eleven of the twelve have a sound workshop at `<route>/admin`; Shelf Control has none. See [naming](docs/naming.md) for the approved display names.
+Every game but Shelf Control has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
 
 The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, all of the sound workshops, and every game's player avatar walking side by side against a chosen template. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
 
@@ -85,7 +95,7 @@ Run `node games/shelf-control/scripts/shelf-control-integration.mjs` for the fou
 
 ## Code structure
 
-All eleven games live in their own folder under `games/`, listed in the table above. Reusable infrastructure lives in `shared/` (audio, browser, http, input, math, peer, physics, rendering, rooms, styles, ui, voice); `platform/` composes game catalogs, and `app/` contains thin routes. Permit Pending and Brick by Hand sit in the `app/(handwerker)/` route group, which does not change their public URLs. See the [architecture and contributor guide](docs/architecture.md) for ownership rules, shared interfaces, and how to add a game. Run `npm run check` for types, lint, dependency boundaries, and the complete test suite.
+All twenty-two games live in their own folder under `games/`, listed in the table above. Reusable infrastructure lives in `shared/` (audio, browser, http, input, math, peer, physics, rendering, rooms, styles, ui, voice); `platform/` composes game catalogs, and `app/` contains thin routes. Permit Pending and Brick by Hand sit in the `app/(handwerker)/` route group, which does not change their public URLs. See the [architecture and contributor guide](docs/architecture.md) for ownership rules, shared interfaces, and how to add a game. Run `npm run check` for types, lint, dependency boundaries, and the complete test suite.
 
 ## Handwerker: Permit Pending and Brick by Hand
 
@@ -121,7 +131,7 @@ A browser game for one to four players. Stack a limited supply of salvage, climb
 
 ## Local development
 
-Ten of the eleven games include an ElevenLabs sound workshop. Generate and preview sounds, tune their volume, or regenerate outdated clips without replacing working files on failure. New multiplayer rooms use player-hosted simulation and direct WebRTC voice, with the same top-right Voice menu everywhere. The earliest-joined connected player takes over if the host leaves. Voice includes microphone selection, push-to-talk and participant volume. See [sound and voice setup](docs/audio-setup.md), [host handover](docs/host-handover.md) and the [complete prompt catalog](docs/audio-prompts.md). Generated game sounds require a provider key; peer voice does not require LiveKit.
+Every game except Shelf Control includes an ElevenLabs sound workshop, and the two Handwerker titles use the construction variant. Generate and preview sounds, tune their volume, or regenerate outdated clips without replacing working files on failure. New multiplayer rooms use player-hosted simulation and direct WebRTC voice, with the same top-right Voice menu everywhere. The earliest-joined connected player takes over if the host leaves. Voice includes microphone selection, push-to-talk and participant volume. See [sound and voice setup](docs/audio-setup.md), [host handover](docs/host-handover.md) and the [complete prompt catalog](docs/audio-prompts.md). Generated game sounds require a provider key; peer voice does not require LiveKit.
 
 Node 22.13+ and npm are required.
 

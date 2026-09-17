@@ -33,6 +33,7 @@ import {
   type SnapshotTiming,
 } from './types';
 import { ShelfMotion } from './motion';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 export class ShelfScene {
   private scene = new THREE.Scene();
@@ -72,19 +73,11 @@ export class ShelfScene {
     private preview = false,
   ) {
     const isDark = !preview;
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer = createRenderer(container, {
+      exposure: isDark ? 1.15 : 1.25,
+      focusable: false,
+    }).renderer;
     this.renderer.setClearColor(isDark ? 0x0c1522 : palette.background);
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = isDark ? 1.15 : 1.25;
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    container.appendChild(this.renderer.domElement);
     this.renderer.domElement.setAttribute(
       'aria-label',
       preview

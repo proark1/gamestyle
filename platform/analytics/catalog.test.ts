@@ -1,6 +1,5 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
 import { stepOrder, toKey } from '../../shared/analytics/protocol';
 import { GAMES } from './catalog';
 import { routeStage } from '../../games/uphill-delivery/level';
@@ -12,17 +11,12 @@ import type { Snapshot as ShelfSnapshot } from '../../games/shelf-control/types'
 import type { GiantSnapshot } from '../../games/dont-wake-the-giant/types';
 import type { Snapshot as ChaosSnapshot } from '../../games/chaos/model';
 
-const page = (route: string) =>
-  existsSync(`app/${route}/page.tsx`) ||
-  existsSync(`app/(handwerker)/${route}/page.tsx`);
-
-void test('every game has its route, a sound workshop and well-formed report keys', () => {
-  assert.equal(GAMES.length, 20);
-  assert.equal(new Set(GAMES.map((game) => game.id)).size, GAMES.length);
+// Coverage — that every game under games/ is registered here at all, with a route
+// and a workshop — is asserted by platform/games/registry.test.ts against the
+// collection list, so no count is hardcoded in this file.
+void test('every registered game has well-formed report keys', () => {
   for (const game of GAMES) {
     assert.equal(game.analytics.game, game.id);
-    assert.ok(page(game.id), `${game.id} has a route`);
-    assert.ok(page(`${game.workshop.game}/admin`), `${game.id} has a workshop`);
     const steps = stepOrder(game.analytics);
     assert.equal(new Set(steps).size, steps.length, `${game.id} steps repeat`);
     for (const key of [

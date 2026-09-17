@@ -59,8 +59,10 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { giantAnalytics, giantPlayState } from './analytics';
+import { looksLikeRoomCode } from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
 
-const SESSION_KEY = 'dont-wake-the-giant-session-v1';
+const sessions = sessionStore('dont-wake-the-giant-session-v1');
 const duration = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -118,9 +120,7 @@ export default function GiantGame() {
     setSession(s);
     setStatus('online');
     latest.current = null;
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {}
+    sessions.save(s);
     const c = new GiantConnection(s, accept, setStatus);
     connection.current = c;
     if (next) c.accept(next);
@@ -141,7 +141,7 @@ export default function GiantGame() {
       });
     } catch {}
     const invite = new URL(location.href).searchParams.get('room');
-    if (invite && /^[A-Z2-9]{6}$/i.test(invite))
+    if (invite && looksLikeRoomCode(invite))
       queueMicrotask(() => {
         if (!disposed) {
           setCode(invite.toUpperCase());
@@ -168,13 +168,10 @@ export default function GiantGame() {
             action: (a) => actionRef.current(a),
           });
           setReady(true);
-          if (!invite)
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (saved?.code && saved?.id && saved?.token) attach(saved);
-            } catch {}
+          if (!invite) {
+            const saved = sessions.load();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The cottage could not load. Enable hardware acceleration and reload to play.',
@@ -322,7 +319,7 @@ export default function GiantGame() {
     setStatus('online');
     setNotice('');
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessions.clear();
     } catch {}
     scene.current?.menu();
     sound.current?.menu();

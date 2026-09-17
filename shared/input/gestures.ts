@@ -1,5 +1,7 @@
 // Shared by the touch UI and scene so narrow windows offer the same controls.
-export const TOUCH_CONTROLS_QUERY = '(pointer: coarse), (max-width: 900px)';
+// The query itself lives in shared/browser/device.ts, which is also what the
+// render tier reads, so the controls and the quality can never disagree.
+export { TOUCH_QUERY as TOUCH_CONTROLS_QUERY } from '../browser/device';
 
 export function joystickVector(x: number, y: number, radius = 35) {
   const distance = Math.hypot(x, y);

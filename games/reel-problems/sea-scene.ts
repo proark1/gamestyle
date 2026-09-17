@@ -7,6 +7,7 @@ import {
   createShark,
 } from './models';
 import { GULL_DIVE_MS, type ReelWorld } from './types';
+import { REDUCED_MOTION_QUERY } from '../../shared/browser/device';
 
 /** Fixed buffers keep storm effects cheap on touch devices. */
 export class SeaScene {
@@ -36,8 +37,7 @@ export class SeaScene {
   private stormSky = new THREE.Color('#536b85');
   private calmWater = new THREE.Color('#5baeb0');
   private stormWater = new THREE.Color('#315c7c');
-  private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    .matches;
+  private reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
 
   constructor(
     private scene: THREE.Scene,

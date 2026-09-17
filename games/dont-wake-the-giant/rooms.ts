@@ -1,4 +1,4 @@
-import { playerName, hashToken } from '../../shared/rooms/identity';
+import { hashToken, isRoomCode, playerName } from '../../shared/rooms/identity';
 import { RoomError, type RoomStore } from '../../shared/rooms/types';
 import {
   advanceGiant,
@@ -60,7 +60,7 @@ export async function handleGiantRoom(
   if (!['join', 'sync', 'action', 'leave'].includes(String(body.op)))
     throw new RoomError('Unknown giant operation.');
   const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
-  if (!/^[A-Z2-9]{6}$/.test(code))
+  if (!isRoomCode(code))
     throw new RoomError('Enter the six-character giant code.');
   const joining = body.op === 'join',
     id = joining ? crypto.randomUUID() : body.id,
