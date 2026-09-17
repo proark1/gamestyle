@@ -58,6 +58,7 @@ import { Sound } from './sound';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { TouchControls } from '../../shared/input/TouchControls';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
+import { triggerHaptic } from '../../shared/browser/haptics';
 import './style.css';
 import './mobile.css';
 import { useLanguage } from '../../shared/language/useLanguage';
@@ -939,24 +940,29 @@ export default function Game() {
                   </span>
                 </div>
                 <button
-                  onClick={() =>
-                    void action({ type: 'crane-move', x: 0, z: 0, y: 1 })
-                  }
+                  onClick={() => {
+                    void triggerHaptic('light');
+                    void action({ type: 'crane-move', x: 0, z: 0, y: 1 });
+                  }}
                   aria-label="Raise crane"
                 >
                   <ArrowUp size={19} />
                 </button>
                 <button
-                  onClick={() =>
-                    void action({ type: 'crane-move', x: 0, z: 0, y: -1 })
-                  }
+                  onClick={() => {
+                    void triggerHaptic('light');
+                    void action({ type: 'crane-move', x: 0, z: 0, y: -1 });
+                  }}
                   aria-label="Lower crane"
                 >
                   <ArrowDown size={19} />
                 </button>
                 <button
                   className="crane-release"
-                  onClick={() => void action({ type: 'crane-drop' })}
+                  onClick={() => {
+                    void triggerHaptic('medium');
+                    void action({ type: 'crane-drop' });
+                  }}
                 >
                   Release
                 </button>
@@ -1000,7 +1006,10 @@ export default function Game() {
                   controlsPaused || (!!hud.carrying && !!hud.placementError)
                 }
                 className={hud.carrying ? 'active' : ''}
-                onClick={() => scene.current?.interact()}
+                onClick={() => {
+                  void triggerHaptic('light');
+                  scene.current?.interact();
+                }}
               >
                 <Hand size={19} />
                 <span>
@@ -1010,7 +1019,10 @@ export default function Game() {
               </button>
               <button
                 disabled={!hud.carrying && !hud.crane}
-                onClick={() => void action({ type: 'rotate' })}
+                onClick={() => {
+                  void triggerHaptic('selection');
+                  void action({ type: 'rotate' });
+                }}
               >
                 <RotateCw size={18} />
                 <span>Rotate</span>
@@ -1019,19 +1031,32 @@ export default function Game() {
               <i />
               <button
                 className={hud.crane ? 'active' : ''}
-                onClick={() => scene.current?.crane()}
+                onClick={() => {
+                  void triggerHaptic('light');
+                  scene.current?.crane();
+                }}
               >
                 <Construction size={20} />
                 <span>Crane</span>
                 <kbd>C</kbd>
               </button>
-              <button onClick={() => void action({ type: 'rescue' })}>
+              <button
+                onClick={() => {
+                  void triggerHaptic('medium');
+                  void action({ type: 'rescue' });
+                }}
+              >
                 <LifeBuoy size={19} />
                 <span>Rescue</span>
                 <kbd>F</kbd>
               </button>
               <i />
-              <button onClick={() => void action({ type: 'wave' })}>
+              <button
+                onClick={() => {
+                  void triggerHaptic('light');
+                  void action({ type: 'wave' });
+                }}
+              >
                 <Flag size={18} />
                 <span>{touchMode ? 'Wave' : 'Over here!'}</span>
                 <kbd>G</kbd>

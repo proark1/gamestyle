@@ -461,8 +461,10 @@ export class GameScene {
     if (this.paused || this.menu) return;
     this.jumpSeq++;
     this.jumpHeld = true;
+    this.publishInput();
     setTimeout(() => {
       this.jumpHeld = false;
+      this.publishInput();
     }, 180);
   }
   input(): Input {

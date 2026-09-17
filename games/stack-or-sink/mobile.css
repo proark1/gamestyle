@@ -76,7 +76,9 @@
   .game-shell:not(.is-playing) {
     height: auto;
     min-height: 100svh;
-    overflow: clip;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .game-shell .topbar,
   .game-shell.is-playing .topbar {
@@ -599,7 +601,7 @@
   }
 }
 
-@media (max-width: 900px) and (max-height: 540px) and (orientation: landscape),
+@media (max-width: 1024px) and (max-height: 540px) and (orientation: landscape),
   (pointer: coarse) and (max-height: 540px) and (orientation: landscape) {
   .game-shell:not(.is-playing) .start-panel {
     max-width: 670px;
@@ -642,7 +644,8 @@
   }
   .game-shell .room-panel {
     top: calc(4px + var(--edge-top));
-    right: calc(104px + var(--edge-right));
+    left: calc(230px + var(--edge-left));
+    right: auto;
   }
   .game-shell .mission-panel {
     top: calc(60px + var(--edge-top));
