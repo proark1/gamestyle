@@ -7,8 +7,23 @@ import {
   ROOF_ALTITUDE,
 } from './types';
 
+export type TrafficCar = {
+  mesh: T.Group;
+  speed: number;
+  dir: number;
+  minX: number;
+  maxX: number;
+};
+
+export type SkyscraperAssembly = {
+  root: T.Group;
+  windsock: T.Group;
+  cars: TrafficCar[];
+};
+
 /**
- * Creates the suspended window-cleaning cradle (scaffold)
+ * Creates the suspended window-cleaning cradle (scaffold) with
+ * rotating winch drums, hand crank handles, and strobe warning beacon.
  */
 export function createCradleMesh(): T.Group {
   const root = new T.Group();
@@ -131,7 +146,7 @@ export function createCradleMesh(): T.Group {
     box(winchTower, [0.7, 0.85, 0.7], [0, 0.45, 0], '#2563eb', true);
 
     // Cable drum spool
-    const drumGeo = new T.CylinderGeometry(0.22, 0.22, 0.5, 12);
+    const drumGeo = new T.CylinderGeometry(0.22, 0.22, 0.48, 12);
     drumGeo.rotateZ(Math.PI / 2);
     const drumMat = new T.MeshStandardMaterial({
       color: '#475569',
@@ -139,13 +154,14 @@ export function createCradleMesh(): T.Group {
       roughness: 0.3,
     });
     const drum = new T.Mesh(drumGeo, drumMat);
+    drum.name = side === -1 ? 'drumLeft' : 'drumRight';
     drum.position.set(0, 0.5, 0);
     winchTower.add(drum);
 
     // Hand crank arm and handle
     const crankArm = new T.Group();
     crankArm.name = side === -1 ? 'crankArmLeft' : 'crankArmRight';
-    crankArm.position.set(side * 0.35, 0.5, 0);
+    crankArm.position.set(side * 0.38, 0.5, 0);
     box(crankArm, [0.04, 0.38, 0.06], [0, 0.15, 0], '#d97706');
     ball(crankArm, [0.12, 0.12, 0.12], [0, 0.32, 0.08], '#dc2626');
     winchTower.add(crankArm);
@@ -157,25 +173,145 @@ export function createCradleMesh(): T.Group {
     root.add(winchTower);
   }
 
+  // Industrial Strobe Warning Beacon on Top Railing
+  const beaconGroup = new T.Group();
+  beaconGroup.name = 'cradleBeacon';
+  beaconGroup.position.set(0, RAILING_HEIGHT + 0.04, CRADLE_DEPTH / 2);
+  box(beaconGroup, [0.22, 0.08, 0.22], [0, 0.04, 0], '#1e293b');
+  const beaconBulbMat = new T.MeshStandardMaterial({
+    color: '#eab308',
+    emissive: '#eab308',
+    emissiveIntensity: 0.3,
+    roughness: 0.1,
+  });
+  const beaconBulb = new T.Mesh(
+    new T.CylinderGeometry(0.09, 0.1, 0.18, 12),
+    beaconBulbMat,
+  );
+  beaconBulb.name = 'beaconBulb';
+  beaconBulb.position.set(0, 0.15, 0);
+  beaconGroup.add(beaconBulb);
+  root.add(beaconGroup);
+
   return root;
 }
 
 /**
- * Creates the 80-story skyscraper facade with glass grid
+ * Creates low-poly puffy cloud cluster for high-altitude depth & parallax
  */
-export function createSkyscraperMesh(): T.Group {
+export function createCloudMesh(): T.Group {
+  const root = new T.Group();
+  const puffMat = new T.MeshStandardMaterial({
+    color: '#ffffff',
+    roughness: 0.95,
+    metalness: 0.02,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const puffGeo = new T.SphereGeometry(1, 8, 6);
+  const cluster = [
+    { s: [3.2, 1.6, 2.4], p: [0, 0, 0] },
+    { s: [2.2, 1.3, 1.9], p: [-2.0, -0.1, 0.3] },
+    { s: [2.4, 1.4, 2.0], p: [1.9, -0.1, -0.2] },
+    { s: [1.7, 1.1, 1.5], p: [-0.6, 0.6, 0.4] },
+    { s: [1.9, 1.2, 1.7], p: [0.8, 0.5, -0.3] },
+  ];
+  for (const c of cluster) {
+    const m = new T.Mesh(puffGeo, puffMat);
+    m.scale.set(c.s[0], c.s[1], c.s[2]);
+    m.position.set(c.p[0], c.p[1], c.p[2]);
+    m.castShadow = true;
+    root.add(m);
+  }
+  return root;
+}
+
+/**
+ * Creates animated fabric windsock on roof helipad
+ */
+export function createWindsockMesh(): { root: T.Group; sock: T.Group } {
+  const root = new T.Group();
+  // Support pole
+  box(root, [0.08, 2.4, 0.08], [0, 1.2, 0], '#64748b');
+  // Swivel hinge
+  ball(root, [0.14, 0.14, 0.14], [0, 2.38, 0], '#e2e8f0');
+
+  // Swivel arm and sock assembly
+  const sock = new T.Group();
+  sock.position.set(0, 2.38, 0);
+
+  // Horizontal bracket
+  box(sock, [0.35, 0.06, 0.06], [0.18, 0, 0], '#94a3b8');
+
+  // 5 Tapered fabric cone segments (alternating international orange & white)
+  const colors = ['#ea580c', '#ffffff', '#ea580c', '#ffffff', '#ea580c'];
+  for (let i = 0; i < colors.length; i++) {
+    const rTop = 0.22 - i * 0.028;
+    const rBot = 0.19 - i * 0.028;
+    const len = 0.28;
+    const segGeo = new T.CylinderGeometry(rTop, rBot, len, 8, 1, true);
+    segGeo.rotateZ(-Math.PI / 2);
+    const segMat = new T.MeshStandardMaterial({
+      color: colors[i],
+      roughness: 0.8,
+      side: T.DoubleSide,
+    });
+    const seg = new T.Mesh(segGeo, segMat);
+    seg.position.set(0.35 + i * len + len / 2, 0, 0);
+    sock.add(seg);
+  }
+  root.add(sock);
+  return { root, sock };
+}
+
+/**
+ * Creates the 80-story skyscraper facade with floor spandrels, stamped floor plates,
+ * helipad safety perimeter, animated windsock, and ground street traffic with moving cars.
+ */
+export function createSkyscraperMesh(): SkyscraperAssembly {
   const root = new T.Group();
 
   // Skyscraper main tower body
   const towerGeo = new T.BoxGeometry(38, 125, 45);
   const towerMat = new T.MeshStandardMaterial({
     color: '#0f172a',
-    roughness: 0.1,
+    roughness: 0.15,
     metalness: 0.85,
   });
   const tower = new T.Mesh(towerGeo, towerMat);
   tower.position.set(0, 55, -23);
   root.add(tower);
+
+  // Structural Corner Columns (Architectural definition)
+  for (const cx of [-18.5, 18.5]) {
+    box(root, [1.2, 125, 1.6], [cx, 55, -0.6], '#1e293b');
+  }
+
+  // Floor Spandrel bands across the glass facade every 4 meters
+  for (let r = 0; r < 20; r++) {
+    const fy = 18 + r * 4.0;
+    box(root, [36, 0.45, 0.2], [0, fy, -0.4], '#334155');
+  }
+
+  // Floor Marker Plates along the left and right columns
+  const floorLevels = [
+    { floor: 'FL 80', y: 82 },
+    { floor: 'FL 70', y: 70 },
+    { floor: 'FL 60', y: 58 },
+    { floor: 'FL 50', y: 46 },
+    { floor: 'FL 40', y: 34 },
+    { floor: 'FL 30', y: 22 },
+  ];
+
+  for (const fl of floorLevels) {
+    for (const side of [-1, 1]) {
+      const px = side * (CRADLE_WIDTH / 2 + 2.2);
+      // Backing plate
+      box(root, [1.4, 0.75, 0.15], [px, fl.y, -0.2], '#f59e0b');
+      // Dark border trim
+      box(root, [1.46, 0.82, 0.08], [px, fl.y, -0.25], '#0f172a');
+    }
+  }
 
   // Roof structure & Helipad
   const roof = new T.Group();
@@ -202,6 +338,40 @@ export function createSkyscraperMesh(): T.Group {
   hBar2.receiveShadow = true;
   hCross.receiveShadow = true;
 
+  // Helipad safety perimeter nets (slanted outward 45 degrees)
+  const netMat = new T.MeshStandardMaterial({
+    color: '#475569',
+    wireframe: true,
+  });
+  const netSides = [
+    { p: [0, 0.1, 11.4], r: [-0.6, 0, 0], s: [22, 1.6, 0.1] },
+    { p: [0, 0.1, -11.4], r: [0.6, 0, 0], s: [22, 1.6, 0.1] },
+    { p: [11.4, 0.1, 0], r: [0, 0, -0.6], s: [0.1, 1.6, 22] },
+    { p: [-11.4, 0.1, 0], r: [0, 0, 0.6], s: [0.1, 1.6, 22] },
+  ];
+  for (const n of netSides) {
+    const netMesh = new T.Mesh(
+      new T.BoxGeometry(n.s[0], n.s[1], n.s[2]),
+      netMat,
+    );
+    netMesh.position.set(n.p[0], n.p[1], n.p[2]);
+    netMesh.rotation.set(n.r[0], n.r[1], n.r[2]);
+    roof.add(netMesh);
+  }
+
+  // Helipad green perimeter beacon lights
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const lx = Math.cos(angle) * 10.2;
+    const lz = Math.sin(angle) * 10.2;
+    box(roof, [0.15, 0.25, 0.15], [lx, 0.45, lz], '#22c55e');
+  }
+
+  // Helipad Windsock
+  const windsockData = createWindsockMesh();
+  windsockData.root.position.set(9.2, 0.35, -9.2);
+  roof.add(windsockData.root);
+
   // Roof suspension davit arms (where cables hang down)
   box(roof, [0.4, 3.5, 0.4], [-CRADLE_WIDTH / 2, 1.8, 9.8], '#f59e0b');
   box(roof, [0.4, 0.4, 3.2], [-CRADLE_WIDTH / 2, 3.4, 11.2], '#f59e0b');
@@ -216,26 +386,116 @@ export function createSkyscraperMesh(): T.Group {
   // Ground level street vertigo props far below (Y = 0)
   const street = new T.Group();
   street.position.set(0, 0, 10);
-  box(street, [60, 0.2, 60], [0, 0, 0], '#1e293b');
-  // Tiny toy cars on street
-  const carColors = ['#ef4444', '#3b82f6', '#eab308', '#ffffff', '#10b981'];
-  for (let i = 0; i < 18; i++) {
-    const cx = -22 + (i % 6) * 8.5 + Math.random() * 2;
-    const cz = -10 + Math.floor(i / 6) * 10;
-    box(
-      street,
-      [1.6, 0.8, 3.2],
-      [cx, 0.45, cz],
-      carColors[i % carColors.length],
-    );
+  box(street, [90, 0.2, 70], [0, 0, 0], '#1e293b');
+
+  // Sidewalks & curbs
+  box(street, [90, 0.35, 5], [0, 0.1, 0], '#64748b');
+  box(street, [90, 0.35, 5], [0, 0.1, 20], '#64748b');
+
+  // Miniature roadside trees
+  for (let i = -6; i <= 6; i++) {
+    box(street, [0.18, 0.8, 0.18], [i * 6.5, 0.5, 0], '#78350f');
+    ball(street, [0.65, 0.75, 0.65], [i * 6.5, 1.1, 0], '#15803d');
   }
+
+  // Adjacent lower building rooftops in the distance with AC chillers & water towers
+  const neighbors = [
+    { x: -35, z: -15, w: 22, h: 22, d: 24, c: '#334155' },
+    { x: 35, z: -15, w: 22, h: 26, d: 24, c: '#1e293b' },
+    { x: -32, z: 25, w: 18, h: 14, d: 18, c: '#475569' },
+    { x: 32, z: 25, w: 18, h: 16, d: 18, c: '#334155' },
+  ];
+  for (const b of neighbors) {
+    box(street, [b.w, b.h, b.d], [b.x, b.h / 2, b.z], b.c);
+    // Rooftop AC chiller
+    box(street, [3, 1.2, 2.5], [b.x - 2, b.h + 0.6, b.z], '#94a3b8');
+    // Rooftop wooden water tower
+    box(street, [0.4, 2.0, 0.4], [b.x + 3, b.h + 1.0, b.z + 2], '#78350f');
+    ball(street, [1.1, 1.3, 1.1], [b.x + 3, b.h + 2.4, b.z + 2], '#a16207');
+  }
+
+  // Low-altitude ground depth haze layer
+  const hazeGeo = new T.PlaneGeometry(100, 80);
+  hazeGeo.rotateX(-Math.PI / 2);
+  const hazeMat = new T.MeshBasicMaterial({
+    color: '#94a3b8',
+    transparent: true,
+    opacity: 0.35,
+  });
+  const haze = new T.Mesh(hazeGeo, hazeMat);
+  haze.position.set(0, 3.5, 10);
+  street.add(haze);
+
+  // Moving miniature toy cars on street lanes
+  const cars: TrafficCar[] = [];
+  const carColors = [
+    '#ef4444',
+    '#3b82f6',
+    '#eab308',
+    '#ffffff',
+    '#10b981',
+    '#f97316',
+  ];
+  const lanes = [6, 9, 12, 15];
+
+  for (let i = 0; i < 16; i++) {
+    const carGroup = new T.Group();
+    const laneIndex = i % lanes.length;
+    const laneZ = lanes[laneIndex];
+    const dir = laneIndex % 2 === 0 ? 1 : -1;
+    const speed = 4.5 + (i % 4) * 1.5;
+    const initialX = -38 + ((i * 5.2) % 76);
+
+    // Car chassis
+    box(
+      carGroup,
+      [1.8, 0.65, 0.95],
+      [0, 0.38, 0],
+      carColors[i % carColors.length],
+      true,
+    );
+    // Cabin
+    box(carGroup, [1.0, 0.45, 0.85], [-0.1 * dir, 0.8, 0], '#0f172a', true);
+
+    // Headlights (yellow)
+    const hlMat = new T.MeshBasicMaterial({ color: '#fef08a' });
+    const hl = new T.Mesh(new T.BoxGeometry(0.08, 0.12, 0.18), hlMat);
+    hl.position.set(0.95 * dir, 0.38, 0.28);
+    carGroup.add(hl);
+    const hl2 = hl.clone();
+    hl2.position.z = -0.28;
+    carGroup.add(hl2);
+
+    // Taillights (red)
+    const tlMat = new T.MeshBasicMaterial({ color: '#ef4444' });
+    const tl = new T.Mesh(new T.BoxGeometry(0.08, 0.12, 0.18), tlMat);
+    tl.position.set(-0.95 * dir, 0.38, 0.28);
+    carGroup.add(tl);
+    const tl2 = tl.clone();
+    tl2.position.z = -0.28;
+    carGroup.add(tl2);
+
+    carGroup.position.set(initialX, 0.35, laneZ);
+    street.add(carGroup);
+
+    cars.push({
+      mesh: carGroup,
+      speed,
+      dir,
+      minX: -42,
+      maxX: 42,
+    });
+  }
+
   root.add(street);
 
-  return root;
+  return { root, windsock: windsockData.sock, cars };
 }
 
 /**
- * Creates procedural meshes for individual window panes
+ * Creates procedural meshes for individual window panes with
+ * detailed mullion frame, cozy office interior vignette, spotless glass,
+ * rich soap foam clumps, and 4-point sparkle stars.
  */
 export function createWindowMesh(): {
   group: T.Group;
@@ -249,16 +509,37 @@ export function createWindowMesh(): {
   const height = 3.2;
 
   // Window frame / mullion
-  box(group, [width + 0.12, height + 0.12, 0.08], [0, 0, 0], '#334155');
+  box(group, [width + 0.12, height + 0.12, 0.08], [0, 0, 0], '#1e293b');
+
+  // Interior Office Vignette behind glass (visible depth)
+  const interior = new T.Group();
+  interior.position.set(0, 0, -0.22);
+  // Back office wall
+  box(interior, [width - 0.06, height - 0.06, 0.05], [0, 0, -0.1], '#1e293b');
+  // Desk
+  box(interior, [0.75, 0.06, 0.32], [0, -0.65, 0.05], '#b45309');
+  // Computer monitor with bright glowing screen
+  const screenMat = new T.MeshStandardMaterial({
+    color: '#38bdf8',
+    emissive: '#0284c7',
+    emissiveIntensity: 0.55,
+  });
+  const screen = new T.Mesh(new T.BoxGeometry(0.3, 0.2, 0.03), screenMat);
+  screen.position.set(0, -0.46, 0.08);
+  interior.add(screen);
+  // Potted indoor succulent
+  box(interior, [0.1, 0.12, 0.1], [-0.38, -0.56, 0.08], '#ea580c');
+  ball(interior, [0.12, 0.14, 0.12], [-0.38, -0.42, 0.08], '#16a34a');
+  group.add(interior);
 
   // Spotless glass (clear, reflective, cyan-tinted)
   const glassGeo = new T.PlaneGeometry(width, height);
   const spotlessMat = new T.MeshStandardMaterial({
     color: '#38bdf8',
-    roughness: 0.05,
-    metalness: 0.9,
+    roughness: 0.04,
+    metalness: 0.92,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.82,
   });
   const spotlessMesh = new T.Mesh(glassGeo, spotlessMat);
   spotlessMesh.position.set(0, 0, 0.045);
@@ -266,44 +547,66 @@ export function createWindowMesh(): {
 
   // Dirty overlay (brown/grey grime layer)
   const dirtyMat = new T.MeshStandardMaterial({
-    color: '#785b3b',
+    color: '#6b4f2c',
     roughness: 0.95,
-    metalness: 0.1,
+    metalness: 0.05,
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.9,
   });
   const dirtyMesh = new T.Mesh(glassGeo, dirtyMat);
   dirtyMesh.position.set(0, 0, 0.047);
   group.add(dirtyMesh);
 
-  // Soapy foam overlay (rich white suds and bubbles)
+  // Soapy foam overlay (rich white suds with 3D bubble clumps)
+  const foamMesh = new T.Group() as unknown as T.Mesh;
   const foamMat = new T.MeshStandardMaterial({
-    color: '#f8fafc',
-    roughness: 0.8,
+    color: '#ffffff',
+    roughness: 0.65,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.94,
   });
-  const foamMesh = new T.Mesh(glassGeo, foamMat);
-  foamMesh.position.set(0, 0, 0.049);
-  foamMesh.visible = false;
-  group.add(foamMesh);
+  const foamBase = new T.Mesh(glassGeo, foamMat);
+  foamBase.position.set(0, 0, 0.049);
+  (foamMesh as unknown as T.Group).add(foamBase);
 
-  // Sparkle stars group
+  // Fluffy soap bubble mounds
+  for (let i = 0; i < 5; i++) {
+    const clump = new T.Mesh(new T.SphereGeometry(0.22, 8, 6), foamMat);
+    clump.scale.set(1.1, 0.8, 0.4);
+    clump.position.set(Math.sin(i * 2.3) * 0.45, Math.cos(i * 1.8) * 0.9, 0.08);
+    (foamMesh as unknown as T.Group).add(clump);
+  }
+  foamMesh.visible = false;
+  group.add(foamMesh as unknown as T.Object3D);
+
+  // Sparkle stars group: 4-pointed sparkle stars
   const sparkleMesh = new T.Group();
-  sparkleMesh.position.set(0, 0, 0.1);
-  for (let i = 0; i < 3; i++) {
-    const star = ball(
-      sparkleMesh,
-      [0.12, 0.12, 0.04],
-      [(i - 1) * 0.45, i % 2 === 0 ? 0.4 : -0.4, 0],
-      '#ffffff',
+  sparkleMesh.position.set(0, 0, 0.12);
+  for (let i = 0; i < 4; i++) {
+    const star = new T.Group();
+    const starMat = new T.MeshBasicMaterial({ color: '#facc15' });
+    const starH = new T.Mesh(new T.BoxGeometry(0.36, 0.06, 0.02), starMat);
+    const starV = new T.Mesh(new T.BoxGeometry(0.06, 0.36, 0.02), starMat);
+    star.add(starH);
+    star.add(starV);
+    star.position.set(
+      (i % 2 === 0 ? -0.45 : 0.45) + (i > 1 ? 0.1 : -0.1),
+      i < 2 ? 0.75 : -0.75,
+      0,
     );
-    star.castShadow = false;
+    star.scale.set(0.65, 0.65, 0.65);
+    sparkleMesh.add(star);
   }
   sparkleMesh.visible = false;
   group.add(sparkleMesh);
 
-  return { group, dirtyMesh, foamMesh, spotlessMesh, sparkleMesh };
+  return {
+    group,
+    dirtyMesh,
+    foamMesh: foamMesh as unknown as T.Mesh,
+    spotlessMesh,
+    sparkleMesh,
+  };
 }
 
 /**

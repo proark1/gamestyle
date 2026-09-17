@@ -19,6 +19,9 @@ export interface ScaffoldTranslations {
   hudCleaned: string;
   hudDeadline: string;
   hudStory: string;
+  hudWind: string;
+  windCalm: string;
+  windGust: string;
   tiltWarning: string;
   slipHazard: string;
 
@@ -59,7 +62,10 @@ export const SCAFFOLD_TRANSLATIONS: Localized<ScaffoldTranslations> = {
     hudTilt: 'Cradle Tilt',
     hudCleaned: 'Windows Cleaned',
     hudDeadline: 'Helicopter Landing',
-    hudStory: 'Story',
+    hudStory: 'Floor',
+    hudWind: 'Wind Telemetry',
+    windCalm: 'Calm Breeze',
+    windGust: 'High-Altitude Gust',
     tiltWarning: 'CAUTION: TILT > 15°',
     slipHazard: 'DANGER: SLIP & SLIDE ACTIVE (> 20°)!',
 
@@ -101,6 +107,9 @@ export const SCAFFOLD_TRANSLATIONS: Localized<ScaffoldTranslations> = {
     hudCleaned: 'Saubere Fenster',
     hudDeadline: 'Helikopter-Landezeit',
     hudStory: 'Stockwerk',
+    hudWind: 'Wind-Telemetrie',
+    windCalm: 'Leichte Brise',
+    windGust: 'Höhenwind-Böe',
     tiltWarning: 'ACHTUNG: NEIGUNG > 15°',
     slipHazard: 'GEFAHR: RUTSCHBAHN AKTIV (> 20°)!',
 

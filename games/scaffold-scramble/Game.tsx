@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Sparkles,
   Timer,
+  Wind,
 } from 'lucide-react';
 import {
   GameTracker,
@@ -18,10 +19,7 @@ import {
 import type { PeerGameConnection } from '../../shared/peer/connection';
 import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
 import { useLanguage } from '../../shared/language/useLanguage';
-import {
-  scaffoldScrambleAnalytics,
-  scaffoldScramblePlayState,
-} from './analytics';
+import { scaffoldScrambleAnalytics } from './analytics';
 import { ScaffoldScrambleSound } from './audio';
 import { reconcileScaffoldBots, stepScaffoldBot } from './bots';
 import { ScaffoldScene } from './scene';
@@ -57,6 +55,16 @@ const formatTime = (ms: number) => {
   return `${m}:${s < 10 ? '0' : ''}${s}`;
 };
 
+const triggerHaptic = (pattern: number | number[]) => {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      // ignore
+    }
+  }
+};
+
 export default function ScaffoldScrambleGame() {
   const { t } = useLanguage();
   const strings = t(SCAFFOLD_TRANSLATIONS);
@@ -84,6 +92,16 @@ export default function ScaffoldScrambleGame() {
   const dispatchAction = useCallback((act: ScaffoldAction) => {
     tracker.action(act.type);
     sound.current?.unlock();
+
+    // Haptic feedback
+    if (act.type === 'crank') {
+      triggerHaptic(15);
+    } else if (act.type === 'useTool') {
+      triggerHaptic(35);
+    } else if (act.type === 'switchTool') {
+      triggerHaptic(20);
+    }
+
     if (network.current) {
       void network.current.action(act);
     } else if (localWorld.current) {
@@ -143,98 +161,96 @@ export default function ScaffoldScrambleGame() {
       'SOLO',
       sessionRef.current.id,
       sessionRef.current.id,
-      1,
+      now,
     );
     setSnapshot(initialSnap);
+    scene.current.render(initialSnap);
 
-    // Solo game simulation loop
-    let lastTime = performance.now();
-    let animId = 0;
+    let lastTick = performance.now();
+    const ticker = setInterval(() => {
+      const currentTick = performance.now();
+      const dt = Math.min(0.1, (currentTick - lastTick) * 0.001);
+      lastTick = currentTick;
 
-    const tick = () => {
-      animId = requestAnimationFrame(tick);
-      if (!localWorld.current || network.current) return;
+      if (!network.current && localWorld.current) {
+        const timeNow = Date.now();
 
-      const currentTime = performance.now();
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
-      lastTime = currentTime;
-
-      const world = localWorld.current;
-      const stepNow = Date.now();
-
-      // Step AI bot crewmates
-      for (const p of world.players) {
-        if (p.bot) {
-          stepScaffoldBot(p, world, dt);
+        // Step bots
+        for (const p of localWorld.current.players) {
+          if (p.bot) {
+            stepScaffoldBot(p, localWorld.current, dt);
+          }
         }
+
+        // Advance simulation
+        advanceScaffoldScramble(localWorld.current, timeNow, dt);
+
+        const snap = scaffoldScrambleSnapshot(
+          localWorld.current,
+          'SOLO',
+          sessionRef.current.id,
+          sessionRef.current.id,
+          timeNow,
+        );
+        setSnapshot(snap);
+        scene.current?.render(snap);
+        sound.current?.update(snap.world, sessionRef.current.id);
       }
-
-      advanceScaffoldScramble(world, stepNow, dt);
-
-      const snap = scaffoldScrambleSnapshot(
-        world,
-        'SOLO',
-        sessionRef.current.id,
-        sessionRef.current.id,
-        stepNow,
-      );
-
-      setSnapshot(snap);
-      scene.current?.render(snap);
-      sound.current?.update(snap.world, sessionRef.current.id);
-    };
-
-    animId = requestAnimationFrame(tick);
+    }, 1000 / 60);
 
     return () => {
-      cancelAnimationFrame(animId);
+      clearInterval(ticker);
+      sound.current?.dispose();
       scene.current?.destroy();
-      scene.current = null;
-      sound.current?.reset();
-      sound.current = null;
-      network.current?.stop();
-      network.current = null;
     };
   }, [dispatchAction]);
-
-  // Report analytics state
-  useEffect(() => {
-    if (snapshot) {
-      tracker.observe(scaffoldScramblePlayState(snapshot, sessionRef.current));
-    }
-  }, [snapshot]);
-
-  // Update role
-  useEffect(() => {
-    sessionRef.current.role = role;
-    scene.current?.setLocalPlayer(sessionRef.current.id, role);
-  }, [role]);
 
   const world = snapshot?.world;
   const isPlaying = world?.phase === 'playing';
   const isEnded = world?.phase === 'ended';
 
-  const tiltDeg = world ? world.cradle.tiltDeg : 0;
+  const currentStory = Math.max(
+    1,
+    Math.min(
+      80,
+      Math.round(((world?.cradle.centerHeight ?? 50) - 10) / 1.05) + 10,
+    ),
+  );
+
+  const tiltDeg = world?.cradle.tiltDeg ?? 0;
   const absTilt = Math.abs(tiltDeg);
-  const tiltClass =
-    absTilt >= TILT_SLIP_DEG
-      ? 'danger'
-      : absTilt >= TILT_WARNING_DEG
-        ? 'warning'
-        : 'safe';
+  let tiltClass = 'safe';
+  if (absTilt >= TILT_SLIP_DEG) {
+    tiltClass = 'danger';
+  } else if (absTilt >= TILT_WARNING_DEG) {
+    tiltClass = 'warning';
+  }
 
-  // Map needle from -45 deg (left 0%) to +45 deg (left 100%)
-  const needlePercent = Math.max(0, Math.min(100, 50 - (tiltDeg / 45) * 50));
+  // Bubble position inside the spirit level: 0 deg = 50%
+  // Bubble moves towards the higher side (opposite of downhill slide)
+  const bubblePercent = Math.max(8, Math.min(92, 50 - tiltDeg * 1.5));
 
-  const msLeft = world ? timeLeft(world) : ROUND_TIME_MS;
-  const currentStory = world
-    ? Math.max(1, Math.round(world.cradle.centerHeight / 1.15))
-    : 45;
+  const msLeft = isPlaying && world ? timeLeft(world) : ROUND_TIME_MS;
 
   const localPlayer = world?.players.find(
     (p) => p.id === sessionRef.current.id,
   );
-  const activeTool = localPlayer?.tool ?? 'squeegee';
+  const activeTool = localPlayer?.tool ?? 'sponge';
+
+  const windStrength = world?.wind.strength ?? 0;
+  const windKnots = Math.round(Math.abs(windStrength) * 28);
+  const windActive = world?.wind.active;
+
+  // Helicopter descent progress toward roof (0% = sky, 100% = touched down)
+  const heliProgress = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        (1.0 - Math.max(0, (world?.helicopter.y ?? 130) - 95.0) / 35.0) * 100,
+      ),
+    ),
+  );
 
   const handleStart = () => {
     dispatchAction({ type: 'start' });
@@ -242,11 +258,11 @@ export default function ScaffoldScrambleGame() {
 
   const handleRestart = () => {
     dispatchAction({ type: 'restart' });
-    dispatchAction({ type: 'start' });
   };
 
   const handleRoleChange = (newRole: Role) => {
     setRole(newRole);
+    sessionRef.current.role = newRole;
     dispatchAction({ type: 'switchRole', role: newRole });
   };
 
@@ -262,40 +278,75 @@ export default function ScaffoldScrambleGame() {
         <LanguageSwitcher variant="header" />
       </div>
 
-      {/* Top HUD */}
+      {/* Top HUD Telemetry */}
       <div className="sc-hud">
-        {/* Story / Altitude Badge */}
+        {/* Floor Altitude Ticker */}
         <div className="sc-hud-badge">
           <Building2 size={22} color="#0284c7" />
           <div>
-            <div className="sc-score-val">{currentStory}</div>
+            <div className="sc-score-val flex items-center gap-1">
+              <span>{currentStory}</span>
+              <span style={{ fontSize: 13, color: '#94a3b8' }}>/ 80</span>
+            </div>
             <div className="sc-hud-meta">{strings.hudStory}</div>
           </div>
         </div>
 
-        {/* Center Tilt Gauge */}
+        {/* Industrial Spirit Level Attitude Indicator */}
         <div className={`sc-hud-badge tilt ${tiltClass}`}>
           <div className="sc-tilt-val">
             {absTilt >= TILT_WARNING_DEG && (
               <AlertTriangle
                 size={18}
                 color={absTilt >= TILT_SLIP_DEG ? '#ef4444' : '#eab308'}
+                className={absTilt >= TILT_SLIP_DEG ? 'sc-pulse-icon' : ''}
               />
             )}
             <span>{tiltDeg.toFixed(1)}°</span>
           </div>
-          <div className="sc-tilt-meter">
+
+          {/* Curved Glass Spirit Level Capsule */}
+          <div className="sc-spirit-level">
+            <div className="sc-spirit-tick neg20" />
+            <div className="sc-spirit-tick neg15" />
+            <div className="sc-spirit-tick zero" />
+            <div className="sc-spirit-tick pos15" />
+            <div className="sc-spirit-tick pos20" />
             <div
-              className="sc-tilt-needle"
-              style={{ left: `${needlePercent}%` }}
+              className="sc-spirit-bubble"
+              style={{ left: `${bubblePercent}%` }}
             />
           </div>
+
           <div className="sc-hud-meta">
             {absTilt >= TILT_SLIP_DEG
               ? strings.slipHazard
               : absTilt >= TILT_WARNING_DEG
                 ? strings.tiltWarning
                 : strings.hudTilt}
+          </div>
+        </div>
+
+        {/* Live Wind Telemetry Widget */}
+        <div className={`sc-hud-badge ${windActive ? 'wind-gust' : ''}`}>
+          <Wind
+            size={22}
+            color={windActive ? '#f59e0b' : '#38bdf8'}
+            style={{
+              transform: `scaleX(${windStrength >= 0 ? 1 : -1})`,
+              transition: 'transform 0.3s',
+            }}
+          />
+          <div>
+            <div
+              className="sc-score-val"
+              style={{ color: windActive ? '#d97706' : '#0284c7' }}
+            >
+              {windKnots} <span style={{ fontSize: 12 }}>kt</span>
+            </div>
+            <div className="sc-hud-meta">
+              {windActive ? strings.windGust : strings.windCalm}
+            </div>
           </div>
         </div>
 
@@ -310,12 +361,14 @@ export default function ScaffoldScrambleGame() {
           </div>
         </div>
 
-        {/* Helicopter Deadline Timer */}
+        {/* Helicopter Deadline Timer with Descent Radar */}
         <div className="sc-hud-badge">
           <Timer size={22} color="#0f172a" />
           <div>
             <div className="sc-timer-val">{formatTime(msLeft)}</div>
-            <div className="sc-hud-meta">{strings.hudDeadline}</div>
+            <div className="sc-hud-meta">
+              {strings.hudDeadline} ({heliProgress}%)
+            </div>
           </div>
         </div>
       </div>
@@ -445,6 +498,7 @@ export default function ScaffoldScrambleGame() {
       {/* Mobile Touch Controls */}
       <div className="sc-mobile-controls">
         <div className="sc-touch-group">
+          {/* Left Winch Rocker */}
           <div className="sc-touch-row">
             <button
               type="button"
@@ -453,7 +507,7 @@ export default function ScaffoldScrambleGame() {
                 dispatchAction({ type: 'crank', winch: 'left', dir: 'up' })
               }
             >
-              L ▲
+              L ▲ (Q)
             </button>
             <button
               type="button"
@@ -462,14 +516,16 @@ export default function ScaffoldScrambleGame() {
                 dispatchAction({ type: 'crank', winch: 'left', dir: 'down' })
               }
             >
-              L ▼
+              L ▼ (Z)
             </button>
           </div>
+          {/* Move Deck */}
           <div className="sc-touch-row">
             <button
               type="button"
               className="sc-touch-btn"
               onPointerDown={() => {
+                triggerHaptic(15);
                 if (localWorld.current) {
                   const me = localWorld.current.players.find(
                     (p) => p.id === sessionRef.current.id,
@@ -486,12 +542,13 @@ export default function ScaffoldScrambleGame() {
                 }
               }}
             >
-              ◀
+              ◀ A
             </button>
             <button
               type="button"
               className="sc-touch-btn"
               onPointerDown={() => {
+                triggerHaptic(15);
                 if (localWorld.current) {
                   const me = localWorld.current.players.find(
                     (p) => p.id === sessionRef.current.id,
@@ -508,12 +565,13 @@ export default function ScaffoldScrambleGame() {
                 }
               }}
             >
-              ▶
+              D ▶
             </button>
           </div>
         </div>
 
         <div className="sc-touch-group">
+          {/* Right Winch Rocker */}
           <div className="sc-touch-row">
             <button
               type="button"
@@ -522,7 +580,7 @@ export default function ScaffoldScrambleGame() {
                 dispatchAction({ type: 'crank', winch: 'right', dir: 'up' })
               }
             >
-              R ▲
+              R ▲ (E)
             </button>
             <button
               type="button"
@@ -531,16 +589,17 @@ export default function ScaffoldScrambleGame() {
                 dispatchAction({ type: 'crank', winch: 'right', dir: 'down' })
               }
             >
-              R ▼
+              R ▼ (R)
             </button>
           </div>
+          {/* Action & Tool Switch */}
           <div className="sc-touch-row">
             <button
               type="button"
               className="sc-touch-btn wide"
               onClick={() => dispatchAction({ type: 'useTool' })}
             >
-              Action
+              Clean / Space
             </button>
             <button
               type="button"

@@ -403,11 +403,16 @@ function emitCrankEvent(
   winch: 'left' | 'right',
   eventIdRef: { current: number },
 ) {
-  // Rate-limit crank events to avoid spamming
-  const lastCrank = world.events.find(
-    (e) => e.type === 'crank' && e.playerId === playerId,
-  );
-  if (!lastCrank || Math.random() < 0.15) {
+  // Deterministic rate-limiting: allow at most one crank event every 6 event IDs
+  let lastEventId = -1;
+  for (let i = world.events.length - 1; i >= 0; i--) {
+    const e = world.events[i];
+    if (e.type === 'crank' && e.playerId === playerId) {
+      lastEventId = e.id;
+      break;
+    }
+  }
+  if (lastEventId === -1 || eventIdRef.current - lastEventId >= 6) {
     world.events.push({
       id: ++eventIdRef.current,
       type: 'crank',

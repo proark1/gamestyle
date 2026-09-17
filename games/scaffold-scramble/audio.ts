@@ -72,7 +72,24 @@ export class ScaffoldScrambleSound extends SiteAudio {
       this.lastEvent = event.id;
       const cue = CUES[event.type];
       if (cue) {
-        this.play(cue, 1, centerPos, String(event.id));
+        const player = world.players.find((p) => p.id === event.playerId);
+        const eventPos = player
+          ? {
+              x: player.deckX,
+              y: world.cradle.centerHeight + player.deckY,
+              z: 2.0,
+            }
+          : centerPos;
+
+        // Subtle pitch variation for mechanical clicks and suds slathers
+        const pitch =
+          event.type === 'crank'
+            ? 0.94 + (event.id % 5) * 0.03
+            : event.type === 'soap_apply'
+              ? 0.96 + (event.id % 4) * 0.025
+              : 1.0;
+
+        this.play(cue, pitch, eventPos, String(event.id));
       }
     }
 
