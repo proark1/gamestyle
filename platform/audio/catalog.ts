@@ -17,6 +17,7 @@ import { zorbClashCatalog } from '../../games/zorb-clash/audio';
 import { carryOnCarnageCatalog } from '../../games/carry-on-carnage/audio';
 import { sampleStampedeCatalog } from '../../games/sample-stampede/audio';
 import { driveThruCatalog } from '../../games/drive-thru/audio';
+import { scaffoldScrambleCatalog } from '../../games/scaffold-scramble/audio';
 
 const catalogs: Record<GameId, Cue[]> = {
   'wrong-floor': hotelCatalog,
@@ -37,6 +38,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'carry-on-carnage': carryOnCarnageCatalog,
   'sample-stampede': sampleStampedeCatalog,
   'drive-thru': driveThruCatalog,
+  'scaffold-scramble': scaffoldScrambleCatalog,
 };
 
 export function getCatalog(game: GameId): Cue[] {

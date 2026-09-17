@@ -214,6 +214,9 @@
 .delivery-card .game-title-dot {
   color: #bc8950;
 }
+.scaffold-scramble-card .game-title-dot {
+  color: #0284c7;
+}
 @media (min-width: 1001px) {
   .game-shelf {
     max-width: 1440px;

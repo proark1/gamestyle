@@ -583,4 +583,33 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
       cta: 'Drive-Thru Static spielen',
     },
   },
+
+  'scaffold-scramble': {
+    en: {
+      tag: '80-STORY SLAPSTICK',
+      isNew: true,
+      newTag: 'NEW TO JUMBLEYARD',
+      players: '1–4 window cleaners',
+      duration: '2.5 min · Helicopter Deadline',
+      titleMain: 'Scaffold ',
+      titleHighlight: 'Scramble',
+      titleSuffix: '.',
+      desc: 'Crew a suspended window-cleaning cradle eighty stories up! Two manual winches control your height—crank unevenly and the cradle tilts violently into a slip-and-slide. Wipe 30 dirty windows spotless before the CEO’s helicopter lands on the roof!',
+      tagline: "HOLD ON TIGHT. DON'T TILT PAST 20°.",
+      cta: 'Play Scaffold Scramble',
+    },
+    de: {
+      tag: '80-STOCKWERKE SLAPSTICK',
+      isNew: true,
+      newTag: 'NEU IN JUMBLEYARD',
+      players: '1–4 Fensterputzer',
+      duration: '2,5 Min · Helikopter-Frist',
+      titleMain: 'Scaffold ',
+      titleHighlight: 'Scramble',
+      titleSuffix: '.',
+      desc: 'Steuert eine hängende Fensterputz-Gondel im 80. Stockwerk! Zwei Handwinden tragen euch – kurbelt ihr ungleichmäßig, wird das Deck zur 45-Grad-Rutschbahn. Putzt 30 schmutzige Scheiben blitzblank, bevor der Helikopter des Chefs landet!',
+      tagline: 'FESTHALTEN. BLOSS NICHT ÜBER 20° KIPPEN.',
+      cta: 'Scaffold Scramble spielen',
+    },
+  },
 };

@@ -25,6 +25,7 @@ import {
   Luggage,
   Utensils,
   Trophy,
+  Building2,
 } from 'lucide-react';
 import type { ElementType, ReactElement } from 'react';
 import AccountButton from '@/shared/accounts/AccountButton';
@@ -299,6 +300,18 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
       'A beat-up sedan parked at a chaotic fast-food drive-thru window as a passenger leans out to grab a burger tray over the curb gap while the kitchen smokes.',
     loading: 'lazy',
     tagIcon: Utensils,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
+  'scaffold-scramble': {
+    slug: 'scaffold-scramble',
+    href: '/scaffold-scramble',
+    cardClass: 'scaffold-scramble-card',
+    imgSrc: '/images/scaffold-scramble.png',
+    imgAlt:
+      'Window cleaners in hard hats clinging to a violently tilted 45-degree suspended scaffold 80 stories up a skyscraper as soap buckets slide off and workers dangle by safety tethers.',
+    loading: 'lazy',
+    tagIcon: Building2,
     metaIcon1: Users,
     metaIcon2: Timer,
   },

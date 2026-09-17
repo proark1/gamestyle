@@ -25,6 +25,7 @@ const GAME_TITLES: Record<string, string> = {
   'carry-on-carnage': 'Carry-On Carnage',
   basketball: 'Court Clash',
   'bungee-doubles': 'Bungee Doubles',
+  'scaffold-scramble': 'Scaffold Scramble',
 };
 
 const PREF_KEYS = [
@@ -162,7 +163,7 @@ export default function PartyRibbon() {
 
       // 1. Direct class matches
       const directButtons = document.querySelectorAll<HTMLButtonElement>(
-        'button.practice-link, button.giant-text-button, button.cc-btn.primary, button.bb-btn.primary',
+        'button.practice-link, button.giant-text-button, button.cc-btn.primary, button.bb-btn.primary, button.sc-btn.primary',
       );
       for (const btn of directButtons) {
         if (!btn.disabled && !btn.hasAttribute('disabled')) {
@@ -205,10 +206,10 @@ export default function PartyRibbon() {
 
       // 4. If game starts immediately without start panel (e.g. Curling, Bungee, Zorb, Stampede, CarryOn)
       const hasActiveCanvas = !!document.querySelector(
-        'canvas, .bb-canvas, .cc-canvas, .curling-viewport, .stampede-canvas-wrapper, .zorb-radar',
+        'canvas, .bb-canvas, .cc-canvas, .sc-canvas, .curling-viewport, .stampede-canvas-wrapper, .zorb-radar',
       );
       const startPanelExists = !!document.querySelector(
-        '.start-panel, .hotel-menu, .omb-menu, .giant-menu, .giant-setup, .brain-menu, .setup-card, .reel-menu, .delivery-setup, .farm-menu, .cc-welcome, .bb-welcome',
+        '.start-panel, .hotel-menu, .omb-menu, .giant-menu, .giant-setup, .brain-menu, .setup-card, .reel-menu, .delivery-setup, .farm-menu, .cc-welcome, .bb-welcome, .sc-welcome',
       );
 
       if (
@@ -243,7 +244,7 @@ export default function PartyRibbon() {
 
     const checkEnded = () => {
       const endedEl = document.querySelector(
-        '.cc-ended-banner, .bb-celebration-banner, .bungee-banner.win, .sos-win-dialog, .sos-lost-dialog, .hotel-gameover, .omb-gameover, .giant-gameover, .brain-gameover, .lb-gameover, .reel-gameover, .delivery-gameover, .farm-gameover, .curling-winner-banner, .zorb-win-banner, .stampede-receipt-overlay',
+        '.cc-ended-banner, .bb-celebration-banner, .sc-ended-banner, .bungee-banner.win, .sos-win-dialog, .sos-lost-dialog, .hotel-gameover, .omb-gameover, .giant-gameover, .brain-gameover, .lb-gameover, .reel-gameover, .delivery-gameover, .farm-gameover, .curling-winner-banner, .zorb-win-banner, .stampede-receipt-overlay',
       );
       if (endedEl && !roundCompleted) {
         setRoundCompleted(true);

@@ -102,6 +102,11 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
     name: 'Uphill Delivery',
     tagline: 'Haul an enormous sofa up a mountain trail',
   },
+  {
+    id: 'scaffold-scramble',
+    name: 'Scaffold Scramble',
+    tagline: 'Crank winches & wipe windows 80 stories up',
+  },
 ];
 
 export function getPartyGameInfo(id: GameId): PartyGameInfo | undefined {

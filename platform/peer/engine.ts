@@ -18,6 +18,7 @@ import { createEngine as zorbClash } from '../../games/zorb-clash/peer';
 import { createEngine as carryOnCarnage } from '../../games/carry-on-carnage/peer';
 import { createEngine as sampleStampede } from '../../games/sample-stampede/peer';
 import { createEngine as driveThru } from '../../games/drive-thru/peer';
+import { createEngine as scaffoldScramble } from '../../games/scaffold-scramble/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
 const engines = {
   'wrong-floor': hotel,
@@ -38,6 +39,7 @@ const engines = {
   'carry-on-carnage': carryOnCarnage,
   'sample-stampede': sampleStampede,
   'drive-thru': driveThru,
+  'scaffold-scramble': scaffoldScramble,
 };
 export function createPeerEngine(
   game: GameId,
