@@ -1,0 +1,567 @@
+.party-root {
+  min-height: 100dvh;
+  background: #e7e9d6;
+  color: #294a43;
+  padding: 0 4%;
+  font-family:
+    'DM Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.party-header {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(41, 74, 67, 0.12);
+}
+
+.party-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font:
+    600 24px 'Fredoka',
+    sans-serif;
+  color: #294a43;
+  text-decoration: none;
+}
+
+.party-brand-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 36px;
+  border-radius: 12px;
+  background: #f3bf50;
+  transform: rotate(-5deg);
+}
+
+.party-badge {
+  background: #ca8038;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.party-main {
+  max-width: 1000px;
+  width: 100%;
+  margin: 40px auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.party-card {
+  background: #f4f5ea;
+  border: 2px solid rgba(41, 74, 67, 0.12);
+  border-radius: 24px;
+  padding: 36px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.party-title-wrap {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.party-title {
+  font:
+    700 36px 'Fredoka',
+    sans-serif;
+  color: #294a43;
+  margin: 0 0 8px;
+}
+
+.party-subtitle {
+  font-size: 16px;
+  color: #6b805f;
+  margin: 0;
+}
+
+/* Join & Create Form */
+.party-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 768px) {
+  .party-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.party-panel {
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid rgba(41, 74, 67, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.party-panel h2 {
+  font:
+    600 22px 'Fredoka',
+    sans-serif;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.party-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.party-input-group label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #557065;
+}
+
+.party-input {
+  background: #f9faf4;
+  border: 2px solid #e1e4d0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #294a43;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.party-input:focus {
+  border-color: #ca8038;
+}
+
+.party-color-picker {
+  display: flex;
+  gap: 10px;
+}
+
+.party-color-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    border-color 0.15s;
+}
+
+.party-color-dot.selected {
+  border-color: #294a43;
+  transform: scale(1.15);
+}
+
+.party-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition:
+    transform 0.15s,
+    background-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.party-btn:active {
+  transform: scale(0.98);
+}
+
+.party-btn-primary {
+  background: #ca8038;
+  color: white;
+  box-shadow: 0 4px 12px rgba(202, 128, 56, 0.3);
+}
+
+.party-btn-primary:hover {
+  background: #b5702c;
+}
+
+.party-btn-secondary {
+  background: #d8dec3;
+  color: #294a43;
+}
+
+.party-btn-secondary:hover {
+  background: #c8cfb0;
+}
+
+.party-btn-ghost {
+  background: transparent;
+  color: #557065;
+}
+
+.party-btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Waiting Room / Lobby */
+.party-code-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fdfef9;
+  border: 2px dashed #ca8038;
+  border-radius: 16px;
+  padding: 16px 24px;
+  margin-bottom: 28px;
+}
+
+.party-code-meta span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #71806b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.party-code-val {
+  font:
+    700 28px 'Fredoka',
+    monospace;
+  color: #ca8038;
+  letter-spacing: 4px;
+}
+
+.party-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 900px) {
+  .party-slots-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .party-slots-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.party-slot-card {
+  background: white;
+  border-radius: 18px;
+  border: 2px solid #e1e4d0;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.party-slot-card.occupied {
+  border-color: rgba(41, 74, 67, 0.2);
+}
+
+.party-slot-card.empty {
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.5);
+  justify-content: center;
+  min-height: 180px;
+}
+
+.party-slot-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.party-slot-crown {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: #f3bf50;
+  color: #294a43;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  border: 2px solid white;
+}
+
+.party-slot-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: #294a43;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.party-slot-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.party-slot-badge.ready {
+  background: #d4edda;
+  color: #155724;
+}
+
+.party-slot-badge.waiting {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.party-slot-kick {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+/* Playlist preview */
+.party-playlist-preview {
+  background: #f0f2e4;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.party-playlist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #557065;
+}
+
+.party-games-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .party-games-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.party-game-pill {
+  background: white;
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #294a43;
+  border: 1px solid rgba(41, 74, 67, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.party-game-pill .pill-round {
+  font-size: 10px;
+  color: #ca8038;
+}
+
+.party-game-pill.active {
+  border-color: #ca8038;
+  background: #fff8f0;
+  box-shadow: 0 0 0 2px #ca8038;
+}
+
+/* Countdown View */
+.party-countdown-wrap {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.party-countdown-number {
+  font:
+    800 96px 'Fredoka',
+    sans-serif;
+  color: #ca8038;
+  line-height: 1;
+  margin-bottom: 20px;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+
+/* Standings / Intermission */
+.party-standings-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  margin-bottom: 28px;
+}
+
+.party-standings-table tr {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.party-standings-table td {
+  padding: 16px 20px;
+}
+
+.party-standings-table td:first-child {
+  border-radius: 14px 0 0 14px;
+}
+
+.party-standings-table td:last-child {
+  border-radius: 0 14px 14px 0;
+  text-align: right;
+}
+
+.party-rank-badge {
+  font:
+    700 20px 'Fredoka',
+    sans-serif;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  color: white;
+}
+
+.party-rank-badge.rank-1 {
+  background: #f3bf50;
+  color: #294a43;
+}
+.party-rank-badge.rank-2 {
+  background: #adb5bd;
+}
+.party-rank-badge.rank-3 {
+  background: #cd7f32;
+}
+.party-rank-badge.rank-4 {
+  background: #6c757d;
+}
+
+.party-player-name-cell {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.party-score-cell {
+  font:
+    700 24px 'Fredoka',
+    sans-serif;
+  color: #ca8038;
+}
+
+/* Podium Finale */
+.party-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  height: 280px;
+  margin: 40px 0;
+}
+
+.party-podium-step {
+  width: 140px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 16px 8px;
+  color: white;
+  text-align: center;
+  font-weight: 700;
+}
+
+.party-podium-step.step-1 {
+  height: 240px;
+  background: linear-gradient(180deg, #f3bf50 0%, #e5a420 100%);
+  order: 2;
+}
+
+.party-podium-step.step-2 {
+  height: 180px;
+  background: linear-gradient(180deg, #adb5bd 0%, #868e96 100%);
+  order: 1;
+}
+
+.party-podium-step.step-3 {
+  height: 130px;
+  background: linear-gradient(180deg, #cd7f32 0%, #ad631e 100%);
+  order: 3;
+}
+
+.party-podium-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  margin-bottom: 8px;
+  border: 3px solid white;
+}
+
+.party-podium-label {
+  font:
+    700 22px 'Fredoka',
+    sans-serif;
+}

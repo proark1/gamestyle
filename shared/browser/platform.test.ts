@@ -35,10 +35,10 @@ void test('requestWakeLock and releaseWakeLock operate safely when API is unavai
   await releaseWakeLock();
 });
 
-void test('triggerHaptic operates safely when vibration API is unavailable', () => {
-  assert.doesNotThrow(() => {
-    triggerHaptic('light');
-    triggerHaptic('medium');
-    triggerHaptic('heavy');
+void test('triggerHaptic operates safely when vibration API is unavailable', async () => {
+  await assert.doesNotReject(async () => {
+    await triggerHaptic('light');
+    await triggerHaptic('medium');
+    await triggerHaptic('heavy');
   });
 });

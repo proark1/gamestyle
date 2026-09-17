@@ -17,6 +17,14 @@ const config: CapacitorConfig = {
     cleartext: process.env.NODE_ENV !== 'production',
     androidScheme: 'https',
     iosScheme: 'capacitor',
+    allowNavigation: [
+      'www.jumbleyard.com',
+      'jumbleyard.up.railway.app',
+      '*.railway.app',
+      '10.0.2.2',
+      'localhost',
+      '*.local',
+    ],
   },
   plugins: {
     SplashScreen: {

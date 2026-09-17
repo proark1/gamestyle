@@ -15,6 +15,7 @@ import {
   subscribeAudioPreferences,
   type AudioPreferences,
 } from '../audio/preferences';
+import { useWakeLock } from '../browser/wake-lock';
 import './toolbar.css';
 
 export default function GameToolbar({
@@ -40,6 +41,7 @@ export default function GameToolbar({
   onLeave?: () => void;
   workshop?: string;
 }) {
+  useWakeLock();
   // Stored preferences are external state: the server and the hydrating client
   // both see the defaults, then React re-reads once hydration finishes.
   const audio = useSyncExternalStore(

@@ -24,6 +24,7 @@ import {
   Zap,
   Luggage,
   Utensils,
+  Trophy,
 } from 'lucide-react';
 import type { ElementType, ReactElement } from 'react';
 import AccountButton from '@/shared/accounts/AccountButton';
@@ -420,6 +421,24 @@ export default function CollectionClient({ order }: { order: string[] }) {
           </li>
         </ul>
       </section>
+
+      <aside className="party-mode-lead" aria-label="Party mode tournament">
+        <div className="party-lead-info">
+          <div className="party-lead-icon">
+            <Trophy size={28} />
+          </div>
+          <div className="party-lead-text">
+            <h3>Party Mode: 4 Players • 6 Random Games</h3>
+            <p>
+              Assemble your crew in a waiting room, battle across 6 mini-games,
+              and crown the overall champion!
+            </p>
+          </div>
+        </div>
+        <a className="party-lead-btn" href="/party">
+          Play Party Mode <ArrowUpRight size={18} />
+        </a>
+      </aside>
 
       <div className="shelf-lead">
         <h2>{strings.shelfLeadTitle}</h2>

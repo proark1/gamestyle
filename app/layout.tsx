@@ -6,6 +6,8 @@ import '@fontsource/dm-sans/latin-600.css';
 import '@fontsource/dm-sans/latin-700.css';
 import './globals.css';
 import '../shared/styles/game-ui.css';
+import NativeProvider from '@/shared/browser/NativeProvider';
+import PartyRibbon from '@/shared/ui/PartyRibbon';
 export const metadata: Metadata = {
   title: 'Jumbleyard — Bring your friends. Make a little chaos.',
   description:
@@ -22,6 +24,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
   themeColor: '#315e53',
 };
@@ -30,7 +34,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NativeProvider />
+        <PartyRibbon />
+        {children}
+      </body>
     </html>
   );
 }

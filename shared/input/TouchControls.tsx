@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { JoystickGesture } from './gestures';
+import { triggerHaptic } from '../browser/haptics';
 import './touch-controls.css';
 
 type Vector = { x: number; z: number };
@@ -159,6 +160,7 @@ export function TouchControls({
           event.currentTarget.dataset.engaged = 'true';
           keys.current.clear();
           event.currentTarget.setPointerCapture(event.pointerId);
+          void triggerHaptic('selection');
           publish({ x: 0, z: 0 });
         }}
         onPointerMove={(event) => {
@@ -190,10 +192,16 @@ export function TouchControls({
         onContextMenu={(event) => event.preventDefault()}
         onPointerDown={(event) => {
           stop(event);
-          if (event.button === 0 && !disabledRef.current) jump();
+          if (event.button === 0 && !disabledRef.current) {
+            void triggerHaptic('light');
+            jump();
+          }
         }}
         onClick={(event) => {
-          if (event.detail === 0 && !disabledRef.current) jump();
+          if (event.detail === 0 && !disabledRef.current) {
+            void triggerHaptic('light');
+            jump();
+          }
         }}
         aria-label="Jump"
       >

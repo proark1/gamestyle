@@ -599,3 +599,78 @@
 .drive-thru-card .game-title-dot {
   color: #dc2626;
 }
+
+/* Party Mode Feature Lead */
+.party-mode-lead {
+  max-width: 1440px;
+  margin: 0 auto 36px;
+  background: linear-gradient(135deg, #fbfcf4 0%, #f0f3df 100%);
+  border: 2px solid rgba(202, 128, 56, 0.4);
+  border-radius: 24px;
+  padding: 26px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: 0 8px 24px rgba(41, 74, 67, 0.06);
+}
+.party-lead-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.party-lead-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: #f3bf50;
+  display: grid;
+  place-items: center;
+  color: #294a43;
+  transform: rotate(-6deg);
+  flex-shrink: 0;
+}
+.party-lead-text h3 {
+  font:
+    700 24px 'Fredoka',
+    sans-serif;
+  color: #294a43;
+  margin: 0 0 4px;
+}
+.party-lead-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #557065;
+  font-weight: 500;
+}
+.party-lead-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ca8038;
+  color: white;
+  text-decoration: none;
+  padding: 14px 24px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(202, 128, 56, 0.3);
+  transition:
+    background-color 0.15s,
+    transform 0.15s;
+}
+.party-lead-btn:hover {
+  background: #b5702c;
+  transform: translateY(-1px);
+}
+@media (max-width: 768px) {
+  .party-mode-lead {
+    flex-direction: column;
+    text-align: center;
+    padding: 22px;
+  }
+  .party-lead-info {
+    flex-direction: column;
+  }
+}

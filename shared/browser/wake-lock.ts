@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 /**
  * Screen Wake Lock Utility
  * Keeps the device screen awake during active gameplay.
@@ -52,4 +54,24 @@ export async function releaseWakeLock(): Promise<void> {
       activeSentinel = null;
     }
   }
+}
+
+/**
+ * React hook to automatically keep screen awake while a component (e.g. GameToolbar) is mounted.
+ */
+export function useWakeLock(enabled = true): void {
+  useEffect(() => {
+    if (!enabled) return;
+    void requestWakeLock();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      void releaseWakeLock();
+    };
+  }, [enabled]);
 }
