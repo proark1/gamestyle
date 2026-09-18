@@ -1,5 +1,6 @@
 import type { Session } from '../../shared/rooms/session';
 import type { NpcAction } from '../../shared/rooms/npc-slots';
+import { COLORS } from '../../shared/rendering/palette';
 
 export const ROUND_MS = 300_000;
 export const LAKE_RADIUS = 42;
@@ -120,7 +121,8 @@ export const STING_STUN_MS = 1600;
 /** Pulled under. The crew hauls you out, and the boat pays for the delay. */
 export const DOWNED_MS = 6000;
 export const DOWNED_PENALTY = 15;
-export const ANGLER_COLORS = ['#edac39', '#56a6a0', '#e9745b', '#807dcc'];
+/** The collection's four player colours, in join order. */
+export const ANGLER_COLORS = COLORS;
 export const CATCHES = {
   perch: {
     name: 'Pocket perch',

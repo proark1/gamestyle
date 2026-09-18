@@ -2,8 +2,8 @@ import type { Localized } from '../../shared/language/types';
 
 export interface BungeeDoublesTranslation {
   orbitHint: string;
-  orange: string;
-  teal: string;
+  red: string;
+  blue: string;
   team: string;
   serving: string;
   rally: string;
@@ -31,8 +31,8 @@ export const BUNGEE_DOUBLES_TRANSLATIONS: Localized<BungeeDoublesTranslation> =
   {
     en: {
       orbitHint: 'Drag court to orbit 360°',
-      orange: 'Orange',
-      teal: 'Teal',
+      red: 'Red',
+      blue: 'Blue',
       team: 'Team',
       serving: 'Serving',
       rally: 'RALLY',
@@ -57,8 +57,8 @@ export const BUNGEE_DOUBLES_TRANSLATIONS: Localized<BungeeDoublesTranslation> =
     },
     de: {
       orbitHint: 'Spielfeld ziehen für 360°-Drehung',
-      orange: 'Orange',
-      teal: 'Türkis',
+      red: 'Rot',
+      blue: 'Blau',
       team: 'Team',
       serving: 'Aufschlag',
       rally: 'BALLWECHSEL',

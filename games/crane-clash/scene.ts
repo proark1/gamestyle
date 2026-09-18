@@ -1,12 +1,11 @@
 import * as T from 'three';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 import {
   createCraneMesh,
   createCrateMesh,
   createLaserLine,
   createPlatformMesh,
 } from './models';
-import { poseCraneWorker } from './avatar';
+import { craneWorker, poseCraneWorker } from './avatar';
 import {
   CRANE_CONFIG,
   PAD_Y,
@@ -46,7 +45,7 @@ export class CraneClashScene {
   private cameraMode: 'overview' | 'follow' = 'overview';
   private keys = new Set<string>();
   private localId = '';
-  private localTeam: TeamId = 'orange';
+  private localTeam: TeamId = 'red';
   private localRole: Role = 'swinger';
   private isSoloTeam = true;
   private swappedControls = false;
@@ -111,27 +110,27 @@ export class CraneClashScene {
 
     // Build platform pads
     this.platforms = {
-      orange: createPlatformMesh('orange'),
-      teal: createPlatformMesh('teal'),
+      red: createPlatformMesh('red'),
+      blue: createPlatformMesh('blue'),
     };
-    this.scene.add(this.platforms.orange);
-    this.scene.add(this.platforms.teal);
+    this.scene.add(this.platforms.red);
+    this.scene.add(this.platforms.blue);
 
     // Laser height lines
     this.lasers = {
-      orange: createLaserLine('orange'),
-      teal: createLaserLine('teal'),
+      red: createLaserLine('red'),
+      blue: createLaserLine('blue'),
     };
-    this.scene.add(this.lasers.orange);
-    this.scene.add(this.lasers.teal);
+    this.scene.add(this.lasers.red);
+    this.scene.add(this.lasers.blue);
 
     // 2 Cranes
     this.cranes = {
-      orange: createCraneMesh('orange'),
-      teal: createCraneMesh('teal'),
+      red: createCraneMesh('red'),
+      blue: createCraneMesh('blue'),
     };
-    this.scene.add(this.cranes.orange);
-    this.scene.add(this.cranes.teal);
+    this.scene.add(this.cranes.red);
+    this.scene.add(this.cranes.blue);
 
     // Event listeners
     window.addEventListener('resize', this.onResize);
@@ -255,8 +254,15 @@ export class CraneClashScene {
     const nowSec = performance.now() / 1000;
     for (const p of world.players) {
       let mesh = this.playerMeshes.get(p.id);
+      // The crew wears its team's shirt, so a player who switches team in
+      // the lobby needs a fresh worker.
+      if (mesh && mesh.userData.team !== p.team) {
+        this.scene.remove(mesh);
+        mesh = undefined;
+      }
       if (!mesh) {
-        mesh = dressedWorker(p.color).model;
+        mesh = craneWorker(p.team, p.color);
+        mesh.userData.team = p.team;
         this.scene.add(mesh);
         this.playerMeshes.set(p.id, mesh);
       }

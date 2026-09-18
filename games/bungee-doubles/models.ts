@@ -1,18 +1,27 @@
 import * as T from 'three';
 import { box, material } from '../../shared/rendering/primitives';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import { WORKER_HAND_Y, WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
-import { BALL_RADIUS, COURT, type TeamId } from './types';
+import { BALL_RADIUS, COURT, TEAM_COLORS, type TeamId } from './types';
+
+/** A team colour made lighter or darker, for gear and scenery, never clothes. */
+function teamShade(team: TeamId, lightness: number) {
+  const colour = new T.Color(TEAM_COLORS[team]).offsetHSL(0, 0, lightness);
+  return `#${colour.getHexString()}`;
+}
 
 /**
- * Creates a tennis doubles player using the shared worker avatar.
- * Dressed in team-colored polo shirt, athletic shorts and tennis sneakers.
+ * Creates a tennis doubles player using the shared worker avatar, the same
+ * one in the game and in the admin preview. Dressed in a team polo shirt,
+ * sneakers and sweatband, with white shorts, collar and visor.
  */
-export function tennisPlayer(color: string, team: TeamId, look?: Look) {
-  const shortsColor = '#ffffff';
-  const shirtColor = color;
-  const shoesColor = team === 'orange' ? '#ff9045' : '#45b5aa';
+export function tennisPlayer(team: TeamId, look?: Look) {
+  const teamColor = TEAM_COLORS[team];
+  const shortsColor = CLOTH.white;
+  const shirtColor = teamColor;
+  const shoesColor = teamColor;
 
   const { model: g, worn } = dressedWorker(
     0,
@@ -38,19 +47,19 @@ export function tennisPlayer(color: string, team: TeamId, look?: Look) {
       true,
     );
     // Sweatband around forehead
+    box(body, [0.55, 0.08, 0.53], [0, WORKER_HEAD_TOP - 0.04, 0], teamColor);
+    // Visor brim extending forward
     box(
       body,
-      [0.55, 0.08, 0.53],
-      [0, WORKER_HEAD_TOP - 0.04, 0],
-      team === 'orange' ? '#ffa266' : '#69d2c6',
+      [0.48, 0.03, 0.22],
+      [0, WORKER_HEAD_TOP - 0.02, 0.32],
+      CLOTH.white,
     );
-    // Visor brim extending forward
-    box(body, [0.48, 0.03, 0.22], [0, WORKER_HEAD_TOP - 0.02, 0.32], '#ffffff');
   }
 
   // Polo shirt collar and button placket
-  box(body, [0.26, 0.18, 0.03], [0, 1.05, 0.22], '#ffffff');
-  box(body, [0.06, 0.14, 0.04], [0, 0.95, 0.22], '#ffffff');
+  box(body, [0.26, 0.18, 0.03], [0, 1.05, 0.22], CLOTH.white);
+  box(body, [0.06, 0.14, 0.04], [0, 0.95, 0.22], CLOTH.white);
 
   // Padel bat firmly gripped in player's right hand
   const racket = createTennisRacket(team);
@@ -72,7 +81,8 @@ export function tennisPlayer(color: string, team: TeamId, look?: Look) {
 export function createTennisRacket(team: TeamId): T.Group {
   const g = new T.Group();
 
-  const accentColor = team === 'orange' ? '#ff7700' : '#00b4d8';
+  // A brighter shade of the team colour, so the rim reads against the carbon
+  const accentColor = teamShade(team, 0.1);
   const accentMat = material(accentColor);
   const carbonMat = material('#202226');
   const gripMat = material('#ffffff');
@@ -198,8 +208,9 @@ export function tennisCourt(): T.Group {
   outerMesh.receiveShadow = true;
   g.add(outerMesh);
 
-  // Playing court surface (vibrant cobalt blue padel turf)
-  const courtMat = material('#1a68a5');
+  // Playing court surface: green padel turf, so both the red and the blue
+  // team stand out on it (blue players vanished on the old cobalt court).
+  const courtMat = material('#5e8a63');
   const courtGeo = new T.PlaneGeometry(COURT.width, COURT.length);
   const courtMesh = new T.Mesh(courtGeo, courtMat);
   courtMesh.position.y = 0.005;
@@ -409,14 +420,14 @@ export function tennisCourt(): T.Group {
       box(g, [0.08, wallH, 0.08], [x, wallH / 2, z], postColor);
     }
 
-    // Entrance doorway padding protectors (Orange on west, Teal on east)
-    const padColor = x < 0 ? '#ff8c38' : '#2aa89b';
+    // Entrance doorway padding protectors (Red on west, Blue on east)
+    const padColor = x < 0 ? TEAM_COLORS.red : TEAM_COLORS.blue;
     box(g, [0.14, 2.0, 0.14], [x, 1.0, -1.0], padColor);
     box(g, [0.14, 2.0, 0.14], [x, 1.0, 1.0], padColor);
   }
 
   // --- Spectator Grandstand Bleachers ---
-  // West Grandstand (behind x = -6.5)
+  // West Grandstand (behind x = -6.5), in red by the red bench
   const standZ = 0;
   const standX = -10.2;
   const bleacherLength = 22;
@@ -440,7 +451,8 @@ export function tennisCourt(): T.Group {
         -bleacherLength / 2 +
         1.2 +
         (s * (bleacherLength - 2.4)) / (numSeats - 1);
-      const seatColor = (s + tier) % 2 === 0 ? '#264653' : '#2a9d8f';
+      const seatColor =
+        (s + tier) % 2 === 0 ? teamShade('red', -0.1) : TEAM_COLORS.red;
       // Seat cushion
       box(g, [0.45, 0.08, 0.45], [tierX, tierH + 0.04, sz], seatColor);
       // Seat backrest
@@ -448,7 +460,7 @@ export function tennisCourt(): T.Group {
     }
   }
 
-  // East Grandstand (behind x = +6.5)
+  // East Grandstand (behind x = +6.5), in blue by the blue bench
   const eastStandX = 10.2;
   for (let tier = 0; tier < 3; tier++) {
     const tierH = 0.5 + tier * 0.45;
@@ -467,7 +479,8 @@ export function tennisCourt(): T.Group {
         -bleacherLength / 2 +
         1.2 +
         (s * (bleacherLength - 2.4)) / (numSeats - 1);
-      const seatColor = (s + tier) % 2 === 0 ? '#e76f51' : '#f4a261';
+      const seatColor =
+        (s + tier) % 2 === 0 ? teamShade('blue', -0.1) : TEAM_COLORS.blue;
       box(g, [0.45, 0.08, 0.45], [tierX, tierH + 0.04, sz], seatColor);
       box(g, [0.08, 0.35, 0.45], [tierX + 0.2, tierH + 0.22, sz], seatColor);
     }
@@ -475,10 +488,10 @@ export function tennisCourt(): T.Group {
 
   // --- Sideline Team Benches & Gear by Court Entrance ---
   for (const [bx, bTeam] of [
-    [-8.0, 'orange'],
-    [8.0, 'teal'],
+    [-8.0, 'red'],
+    [8.0, 'blue'],
   ] as const) {
-    const bColor = bTeam === 'orange' ? '#e58e38' : '#349387';
+    const bColor = TEAM_COLORS[bTeam];
     // Bench seat
     box(g, [0.6, 0.45, 2.4], [bx, 0.22, 0], '#243444');
     box(g, [0.65, 0.06, 2.5], [bx, 0.48, 0], '#334756');
@@ -559,6 +572,15 @@ export function tennisCourt(): T.Group {
   return g;
 }
 
+/**
+ * How a cord shows strain. Red and blue are team colours now, so the warning
+ * is amber and the near-snap state strobes gold to white: colours neither
+ * team's cord wears.
+ */
+const STRAIN_AMBER = new T.Color('#ffaa00');
+const SNAP_GOLD = new T.Color(CLOTH.gold);
+const SNAP_WHITE = new T.Color('#ffffff');
+
 /** Dynamic Bungee Cord 3D Mesh connecting two players with tension vibration and carabiners */
 export function createBungeeCord(team: TeamId): {
   group: T.Group;
@@ -573,7 +595,8 @@ export function createBungeeCord(team: TeamId): {
   const numSegments = 12;
   const segments: T.Mesh[] = [];
 
-  const teamColor = team === 'orange' ? '#ff7700' : '#00b4d8';
+  // A brighter shade of the team colour, so the thin cord reads on the court
+  const teamColor = teamShade(team, 0.1);
   const cordMat = new T.MeshStandardMaterial({
     color: teamColor,
     roughness: 0.3,
@@ -616,12 +639,14 @@ export function createBungeeCord(team: TeamId): {
 
     // Dynamic color & emissive glow based on tension
     if (tension > 0.82) {
-      cordMat.color.set('#ff1a1a'); // Critical snap red
-      cordMat.emissive.set('#ff0033');
-      cordMat.emissiveIntensity = 0.5 + Math.sin(clock * 20) * 0.4;
+      // About to snap: a bright gold-to-white strobe
+      const flash = 0.5 + Math.sin(clock * 20) * 0.5;
+      cordMat.color.copy(SNAP_GOLD).lerp(SNAP_WHITE, flash);
+      cordMat.emissive.copy(SNAP_GOLD);
+      cordMat.emissiveIntensity = 0.4 + flash * 0.5;
     } else if (tension > 0.52) {
-      cordMat.color.set('#ffaa00'); // Warning amber
-      cordMat.emissive.set('#ff6600');
+      cordMat.color.copy(STRAIN_AMBER); // Warning amber
+      cordMat.emissive.copy(STRAIN_AMBER);
       cordMat.emissiveIntensity = 0.25;
     } else {
       cordMat.color.set(teamColor);

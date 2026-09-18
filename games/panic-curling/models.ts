@@ -5,6 +5,7 @@ import {
   RINK_LENGTH,
   RINK_WIDTH,
   STONE_CONFIGS,
+  TEAM_COLORS,
   TEE_Z,
   type GadgetId,
   type StoneKind,
@@ -15,7 +16,7 @@ import {
 export function createStoneMesh(kind: StoneKind, team: TeamId): T.Group {
   const g = new T.Group();
   const cfg = STONE_CONFIGS[kind];
-  const teamColor = team === 'red' ? '#d94b38' : '#3277b3';
+  const teamColor = TEAM_COLORS[team];
 
   if (kind === 'granite') {
     // Polished stone body
@@ -143,13 +144,13 @@ export function createCurlingRinkMesh(): T.Group {
   // Hack line (z = -2)
   box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, -0.07, -2.0], '#1b3a4b');
   // Near Hog line (z = 6)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, -0.07, 6.0], '#d94b38');
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, -0.07, 6.0], TEAM_COLORS.red);
   // Far Hog line (z = 22)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, -0.07, 22.0], '#d94b38');
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, -0.07, 22.0], TEAM_COLORS.red);
   // Tee line (crosswise through center of house, z = 31)
   box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, -0.07, TEE_Z], '#1b3a4b');
   // Back line (z = 35.5)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, -0.07, 35.5], '#3277b3');
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, -0.07, 35.5], TEAM_COLORS.blue);
 
   // Hack footrests at the starting end
   for (const x of [-0.4, 0.4]) {
@@ -267,7 +268,7 @@ function createClubhouse(g: T.Group) {
 
   // Carved wooden club sign
   box(g, [4.8, 0.6, 0.1], [0, 3.3, cz + 3.82], '#2c180a', true);
-  box(g, [4.5, 0.4, 0.08], [0, 3.3, cz + 3.84], '#d94b38'); // Red banner strip
+  box(g, [4.5, 0.4, 0.08], [0, 3.3, cz + 3.84], TEAM_COLORS.red); // Red banner strip
 }
 
 /** Stepped wooden spectator bleachers populated by toy workers and cute snowmen. */
@@ -293,7 +294,7 @@ function createSpectatorBleachers(g: T.Group, halfW: number) {
           bx,
           0.4,
           z,
-          side === -1 ? '#d94b38' : '#3277b3',
+          side === -1 ? TEAM_COLORS.red : TEAM_COLORS.blue,
         );
       } else {
         // Toy worker fan on Tier 2
@@ -302,7 +303,7 @@ function createSpectatorBleachers(g: T.Group, halfW: number) {
           bx + side * 0.75,
           0.75,
           z,
-          z % 2 === 0 ? '#d94b38' : '#3277b3',
+          z % 2 === 0 ? TEAM_COLORS.red : TEAM_COLORS.blue,
           z % 3 === 0 ? '#f39c12' : '#2ecc71',
         );
       }

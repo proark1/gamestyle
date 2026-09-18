@@ -109,7 +109,7 @@ function finish(world: World, now: number, unproven = false) {
       ? 'Prove your puzzle before challenging your friends.'
       : winner < 0
         ? 'A perfectly questionable tie.'
-        : `${winner ? 'Turquoise' : 'Yellow'} crew wins!`,
+        : `${winner ? 'Blue' : 'Red'} crew wins!`,
     comments: unproven
       ? [
           'Each pair must complete its own delivery first.',
@@ -118,8 +118,8 @@ function finish(world: World, now: number, unproven = false) {
         ]
       : [
           'Both puzzles were proven by their builders.',
-          `Yellow crew: ${a === null ? 'delivery unfinished' : (a / 1000).toFixed(1) + ' seconds'}.`,
-          `Turquoise crew: ${b === null ? 'delivery unfinished' : (b / 1000).toFixed(1) + ' seconds'}.`,
+          `Red crew: ${a === null ? 'delivery unfinished' : (a / 1000).toFixed(1) + ' seconds'}.`,
+          `Blue crew: ${b === null ? 'delivery unfinished' : (b / 1000).toFixed(1) + ' seconds'}.`,
         ],
     awards: unproven
       ? []
@@ -260,6 +260,6 @@ export function swapEditError(
     bounds.minZ < -4 ||
     bounds.maxZ > 3.8
   )
-    return `Build inside the ${team ? 'turquoise' : 'yellow'} plot. Keep the collection lane clear.`;
+    return `Build inside the ${team ? 'blue' : 'red'} plot. Keep the collection lane clear.`;
   return null;
 }

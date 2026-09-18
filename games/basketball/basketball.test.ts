@@ -20,25 +20,25 @@ import { basketballAvatars } from './avatar';
 void test('world initializes with court, ball, and scores', () => {
   const w = freshBasketballWorld(1000);
   assert.equal(w.phase, 'lobby');
-  assert.equal(w.scores.orange, 0);
-  assert.equal(w.scores.teal, 0);
+  assert.equal(w.scores.red, 0);
+  assert.equal(w.scores.blue, 0);
   assert.equal(w.targetScore, TARGET_SCORE);
   assert.ok(w.ball.y > 0, 'ball is above ground');
 });
 
 void test('bot reconciliation maintains 4 players in 2v2 setup', () => {
   const w = freshBasketballWorld(1000);
-  w.players.push(newPlayer('human-1', 'Player 1', 0, 'orange', false, 0));
+  w.players.push(newPlayer('human-1', 'Player 1', 0, 'red', false, 0));
   reconcileBasketballBots(w);
 
   assert.equal(w.players.length, 4, '4 players on court for 2v2');
   const bots = w.players.filter((p) => p.bot);
   assert.equal(bots.length, 3, '3 bots fill the remaining seats');
 
-  const orange = w.players.filter((p) => p.team === 'orange');
-  const teal = w.players.filter((p) => p.team === 'teal');
-  assert.equal(orange.length, 2, '2 players on Team Orange');
-  assert.equal(teal.length, 2, '2 players on Team Teal');
+  const red = w.players.filter((p) => p.team === 'red');
+  const blue = w.players.filter((p) => p.team === 'blue');
+  assert.equal(red.length, 2, '2 players on Team Red');
+  assert.equal(blue.length, 2, '2 players on Team Blue');
 });
 
 void test('ball physics bounces off floor and reflects from backboard', () => {
@@ -68,13 +68,13 @@ void test('scoring detects basket through hoop cylinder', () => {
   ball.z = HOOP.z;
   ball.y = HOOP.y + 0.1;
   ball.vy = -3.0;
-  ball.shotTeam = 'orange';
+  ball.shotTeam = 'red';
 
   const eventRef = { current: 0 };
   const res = stepBallPhysics(ball, 0.1, eventRef);
 
   assert.equal(res.scored, true, 'scored through hoop');
-  assert.equal(res.shooterTeam, 'orange');
+  assert.equal(res.shooterTeam, 'red');
   assert.ok(
     eventRef.current > 0 &&
       res.events.some((e) => e.type === 'swish' || e.type === 'dunk'),
@@ -95,7 +95,7 @@ void test('three point distance calculation correctly distinguishes 2s and 3s', 
 });
 
 void test('super jump combo charges and activates', () => {
-  const p = newPlayer('p1', 'Baller', 0, 'orange', false, 0);
+  const p = newPlayer('p1', 'Baller', 0, 'red', false, 0);
   assert.equal(canSuperJump(p), false, 'cannot super jump without combo');
 
   p.combo = 80;
@@ -150,12 +150,12 @@ void test('crossover breaks defender ankles and triggers anklebreaker event', ()
   const w = freshBasketballWorld(1000);
   w.phase = 'playing';
 
-  const p1 = newPlayer('p1', 'Baller', 0, 'orange', false, 0);
+  const p1 = newPlayer('p1', 'Baller', 0, 'red', false, 0);
   p1.hasBall = true;
   p1.x = 0;
   p1.z = 0;
 
-  const def = newPlayer('def1', 'Defender', 1, 'teal', false, 1);
+  const def = newPlayer('def1', 'Defender', 1, 'blue', false, 1);
   def.x = 0.5;
   def.z = -1.2;
 
@@ -181,11 +181,11 @@ void test('360 spin move grants forward boost and evades steals', () => {
   const w = freshBasketballWorld(1000);
   w.phase = 'playing';
 
-  const p1 = newPlayer('p1', 'Baller', 0, 'orange', false, 0);
+  const p1 = newPlayer('p1', 'Baller', 0, 'red', false, 0);
   p1.hasBall = true;
   p1.facing = 0;
 
-  const def = newPlayer('def1', 'Defender', 1, 'teal', false, 1);
+  const def = newPlayer('def1', 'Defender', 1, 'blue', false, 1);
   def.x = p1.x + 0.5;
   def.z = p1.z;
 
@@ -210,12 +210,12 @@ void test('alley-oop lob launches high pass and teammate slam', () => {
   const w = freshBasketballWorld(1000);
   w.phase = 'playing';
 
-  const passer = newPlayer('p1', 'PointGuard', 0, 'orange', false, 0);
+  const passer = newPlayer('p1', 'PointGuard', 0, 'red', false, 0);
   passer.hasBall = true;
   passer.x = 0;
   passer.z = 3.0;
 
-  const dunker = newPlayer('p2', 'Center', 0, 'orange', false, 1);
+  const dunker = newPlayer('p2', 'Center', 0, 'red', false, 1);
   dunker.x = HOOP.x;
   dunker.z = HOOP.z + 2.0;
 

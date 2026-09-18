@@ -3,6 +3,7 @@ import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
 import { PLAYER_COLORS, type ItemKind } from './model';
@@ -177,17 +178,17 @@ export function worker(color = 0, look?: Look) {
   const c = PLAYER_COLORS[color % 4];
   const { model: g, worn } = dressedWorker(
     color,
-    { shirt: c, overalls: '#355565', boots: '#384440', cap: false },
+    { shirt: c, overalls: CLOTH.teal, boots: CLOTH.charcoal, cap: false },
     look,
   );
   const body = g.userData.body as T.Group;
   if (!worn.hat) {
     box(body, 0.74, 0.1, 0.72, c, 0, WORKER_HEAD_TOP + 0.02, 0.04, true);
     box(body, 0.6, 0.28, 0.56, c, 0, WORKER_HEAD_TOP + 0.18, 0, true);
-    box(body, 0.1, 0.32, 0.58, '#ffe6a0', 0, WORKER_HEAD_TOP + 0.2, 0, true);
+    box(body, 0.1, 0.32, 0.58, CLOTH.sand, 0, WORKER_HEAD_TOP + 0.2, 0, true);
   }
-  box(body, 0.7, 0.1, 0.52, '#91623f', 0, 0.68, 0.035);
-  box(body, 0.2, 0.2, 0.14, '#bc854f', 0.3, 0.58, 0.3, true);
+  box(body, 0.7, 0.1, 0.52, CLOTH.leather, 0, 0.68, 0.035);
+  box(body, 0.2, 0.2, 0.14, CLOTH.tan, 0.3, 0.58, 0.3, true);
   return g;
 }
 /**

@@ -63,13 +63,13 @@
 }
 
 .curling-team-badge.red {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 0 12px rgba(231, 76, 60, 0.8);
+  background: linear-gradient(135deg, var(--team-red), var(--team-red-deep));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--team-red) 80%, transparent);
 }
 
 .curling-team-badge.blue {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  box-shadow: 0 0 12px rgba(52, 152, 219, 0.8);
+  background: linear-gradient(135deg, var(--team-blue), var(--team-blue-deep));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--team-blue) 80%, transparent);
 }
 
 .curling-team-name {
@@ -164,15 +164,15 @@
 }
 
 .curling-round-turn.red-turn {
-  background: rgba(231, 76, 60, 0.3);
-  border: 1px solid rgba(231, 76, 60, 0.5);
-  color: #ff9d92;
+  background: color-mix(in srgb, var(--team-red) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--team-red) 50%, transparent);
+  color: var(--team-red-glow);
 }
 
 .curling-round-turn.blue-turn {
-  background: rgba(52, 152, 219, 0.3);
-  border: 1px solid rgba(52, 152, 219, 0.5);
-  color: #a9d9ff;
+  background: color-mix(in srgb, var(--team-blue) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--team-blue) 50%, transparent);
+  color: var(--team-blue-glow);
 }
 
 .curling-hammer-badge {
@@ -936,13 +936,13 @@
 }
 
 .curling-modal-team-val.red {
-  color: #e74c3c;
-  text-shadow: 0 0 12px rgba(231, 76, 60, 0.6);
+  color: var(--team-red-glow);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--team-red) 60%, transparent);
 }
 
 .curling-modal-team-val.blue {
-  color: #3498db;
-  text-shadow: 0 0 12px rgba(52, 152, 219, 0.6);
+  color: var(--team-blue-glow);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--team-blue) 60%, transparent);
 }
 
 .curling-action-btn {

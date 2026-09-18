@@ -47,12 +47,12 @@
   pointer-events: auto;
 }
 
-.cc-team-score.orange {
-  border-left: 6px solid #e58e38;
+.cc-team-score.red {
+  border-left: 6px solid var(--team-red);
 }
 
-.cc-team-score.teal {
-  border-right: 6px solid #349387;
+.cc-team-score.blue {
+  border-right: 6px solid var(--team-blue);
 }
 
 .cc-score-val {
@@ -61,12 +61,12 @@
   font-family: 'Fredoka', sans-serif;
 }
 
-.cc-team-score.orange .cc-score-val {
-  color: #d97438;
+.cc-team-score.red .cc-score-val {
+  color: var(--team-red-deep);
 }
 
-.cc-team-score.teal .cc-score-val {
-  color: #2f877c;
+.cc-team-score.blue .cc-score-val {
+  color: var(--team-blue-deep);
 }
 
 .cc-score-meta {
@@ -165,21 +165,21 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.cc-btn.orange {
-  background: #faeade;
-  color: #a64b18;
+.cc-btn.red {
+  background: var(--team-red-soft);
+  color: var(--team-red-deep);
 }
-.cc-btn.orange.active {
-  background: #e58e38;
+.cc-btn.red.active {
+  background: var(--team-red);
   color: #fff;
 }
 
-.cc-btn.teal {
-  background: #def0ee;
-  color: #1a5e55;
+.cc-btn.blue {
+  background: var(--team-blue-soft);
+  color: var(--team-blue-deep);
 }
-.cc-btn.teal.active {
-  background: #349387;
+.cc-btn.blue.active {
+  background: var(--team-blue);
   color: #fff;
 }
 
@@ -254,9 +254,9 @@
   margin-bottom: 22px;
 }
 
-.cc-ended-winner.orange {
-  color: #d97438;
+.cc-ended-winner.red {
+  color: var(--team-red-deep);
 }
-.cc-ended-winner.teal {
-  color: #2f877c;
+.cc-ended-winner.blue {
+  color: var(--team-blue-deep);
 }

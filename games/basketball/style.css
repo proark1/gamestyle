@@ -56,18 +56,18 @@
   transform: scale(1.04);
 }
 
-.bb-team-score.orange {
-  border-left: 6px solid #e58e38;
+.bb-team-score.red {
+  border-left: 6px solid var(--team-red);
 }
-.bb-team-score.orange.has-possession {
-  box-shadow: 0 6px 24px rgba(229, 142, 56, 0.35);
+.bb-team-score.red.has-possession {
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--team-red) 35%, transparent);
 }
 
-.bb-team-score.teal {
-  border-right: 6px solid #349387;
+.bb-team-score.blue {
+  border-right: 6px solid var(--team-blue);
 }
-.bb-team-score.teal.has-possession {
-  box-shadow: 0 6px 24px rgba(52, 147, 135, 0.35);
+.bb-team-score.blue.has-possession {
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--team-blue) 35%, transparent);
 }
 
 .bb-score-val {
@@ -78,12 +78,12 @@
   text-align: center;
 }
 
-.bb-team-score.orange .bb-score-val {
-  color: #d97438;
+.bb-team-score.red .bb-score-val {
+  color: var(--team-red-deep);
 }
 
-.bb-team-score.teal .bb-score-val {
-  color: #2f877c;
+.bb-team-score.blue .bb-score-val {
+  color: var(--team-blue-deep);
 }
 
 .bb-score-meta {
@@ -103,14 +103,14 @@
   margin-top: 2px;
 }
 
-.bb-team-score.orange .bb-poss-dot {
-  background: #e58e38;
-  box-shadow: 0 0 8px #e58e38;
+.bb-team-score.red .bb-poss-dot {
+  background: var(--team-red);
+  box-shadow: 0 0 8px var(--team-red);
 }
 
-.bb-team-score.teal .bb-poss-dot {
-  background: #349387;
-  box-shadow: 0 0 8px #349387;
+.bb-team-score.blue .bb-poss-dot {
+  background: var(--team-blue);
+  box-shadow: 0 0 8px var(--team-blue);
 }
 
 .bb-center-clock-group {
@@ -322,21 +322,21 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.bb-btn.orange {
-  background: #faeade;
-  color: #a64b18;
+.bb-btn.red {
+  background: var(--team-red-soft);
+  color: var(--team-red-deep);
 }
-.bb-btn.orange.active {
-  background: #e58e38;
+.bb-btn.red.active {
+  background: var(--team-red);
   color: #fff;
 }
 
-.bb-btn.teal {
-  background: #def0ee;
-  color: #1a5e55;
+.bb-btn.blue {
+  background: var(--team-blue-soft);
+  color: var(--team-blue-deep);
 }
-.bb-btn.teal.active {
-  background: #349387;
+.bb-btn.blue.active {
+  background: var(--team-blue);
   color: #fff;
 }
 
@@ -411,11 +411,11 @@
   margin-bottom: 22px;
 }
 
-.bb-ended-winner.orange {
-  color: #d97438;
+.bb-ended-winner.red {
+  color: var(--team-red-deep);
 }
-.bb-ended-winner.teal {
-  color: #2f877c;
+.bb-ended-winner.blue {
+  color: var(--team-blue-deep);
 }
 
 /* On Fire Badge */
@@ -473,17 +473,19 @@
   line-height: 1;
   font-weight: 700;
   letter-spacing: 1px;
-  background: linear-gradient(135deg, #e58e38, #ff471a);
+  /* Red team by default; the blue team's banner overrides it below. */
+  background: linear-gradient(135deg, var(--team-red), var(--team-red-deep));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 4px 20px rgba(229, 142, 56, 0.3);
+  text-shadow: 0 4px 20px color-mix(in srgb, var(--team-red) 30%, transparent);
   margin-bottom: 4px;
 }
 
-.bb-celebration-banner.teal .bb-celebration-title {
-  background: linear-gradient(135deg, #349387, #10ac84);
+.bb-celebration-banner.blue .bb-celebration-title {
+  background: linear-gradient(135deg, var(--team-blue), var(--team-blue-deep));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 20px color-mix(in srgb, var(--team-blue) 30%, transparent);
 }
 
 .bb-celebration-subtitle {

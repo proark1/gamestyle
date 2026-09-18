@@ -10,7 +10,6 @@ import {
 import { poseTennisWorker } from './avatar';
 import {
   idleInput,
-  TEAM_COLORS,
   type BungeeAction,
   type BungeeSnapshot,
   type PlayerInput,
@@ -66,10 +65,10 @@ export class BungeeScene {
       pitch: 0.67,
       dist: 21.8,
     },
-    { name: 'Orange Baseline', yaw: -Math.PI, pitch: 0.48, dist: 20.5 },
+    { name: 'Red Baseline', yaw: -Math.PI, pitch: 0.48, dist: 20.5 },
     { name: 'Sideline View', yaw: -Math.PI / 2, pitch: 0.6, dist: 22.0 },
-    { name: 'Teal Baseline', yaw: 0, pitch: 0.48, dist: 20.5 },
-    { name: 'Teal Corner', yaw: 0.98, pitch: 0.67, dist: 21.8 },
+    { name: 'Blue Baseline', yaw: 0, pitch: 0.48, dist: 20.5 },
+    { name: 'Blue Corner', yaw: 0.98, pitch: 0.67, dist: 21.8 },
   ];
 
   // Particle pool for racket hits, glass sparks & victory confetti
@@ -102,11 +101,11 @@ export class BungeeScene {
 
     // Bungee cords for both teams
     this.bungeeCords = {
-      orange: createBungeeCord('orange'),
-      teal: createBungeeCord('teal'),
+      red: createBungeeCord('red'),
+      blue: createBungeeCord('blue'),
     };
-    this.scene.add(this.bungeeCords.orange.group);
-    this.scene.add(this.bungeeCords.teal.group);
+    this.scene.add(this.bungeeCords.red.group);
+    this.scene.add(this.bungeeCords.blue.group);
 
     this.setupScene();
     this.setupLighting();
@@ -466,10 +465,16 @@ export class BungeeScene {
 
     for (const p of world.players) {
       let mesh = this.playerMeshes.get(p.id);
+      // Players wear their team's kit, so switching team needs a fresh model.
+      if (mesh && mesh.userData.team !== p.team) {
+        this.scene.remove(mesh);
+        mesh = undefined;
+      }
       if (!mesh) {
         const isLocal = p.id === snap.localId;
         const look = isLocal ? getEquippedLook() : undefined;
-        mesh = tennisPlayer(TEAM_COLORS[p.team], p.team, look);
+        mesh = tennisPlayer(p.team, look);
+        mesh.userData.team = p.team;
         this.scene.add(mesh);
         this.playerMeshes.set(p.id, mesh);
       }
@@ -485,7 +490,7 @@ export class BungeeScene {
     }
 
     // Update bungee cords between teammates with tension vibration and clock
-    for (const team of ['orange', 'teal'] as const) {
+    for (const team of ['red', 'blue'] as const) {
       const teamPlayers = world.players.filter((p) => p.team === team);
       const tether = world.tethers[team];
       if (teamPlayers.length >= 2 && tether) {

@@ -1,9 +1,7 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 import { poseWorker } from '../../shared/rendering/worker-pose';
-import { box } from '../../shared/rendering/primitives';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { createDriveThruWorker } from './models';
 
 export function poseDriver(
   model: T.Object3D,
@@ -54,16 +52,7 @@ export const driveThruAvatars: readonly AvatarLook[] = [
     label: 'Drive-Thru Driver',
     dressable: true,
     create(look) {
-      const root = dressedWorker(
-        0,
-        {
-          shirt: '#b91c1c', // Diner red shirt
-          overalls: '#1f2937', // Dark slacks
-          boots: '#111827', // Sneaker soles
-          cap: true,
-        },
-        look,
-      ).model;
+      const root = createDriveThruWorker('driver', 0, look);
       return {
         root,
         pose: (time, walking) => poseDriver(root, time, walking),
@@ -75,33 +64,7 @@ export const driveThruAvatars: readonly AvatarLook[] = [
     label: 'Kitchen Grill Cook',
     dressable: true,
     create(look) {
-      const { model: root, worn } = dressedWorker(
-        1,
-        {
-          shirt: '#ffffff', // Crisp white cook shirt
-          overalls: '#f59e0b', // Fast-food mustard yellow apron
-          boots: '#4b5563', // Non-slip kitchen clogs
-          cap: false,
-        },
-        look,
-      );
-      if (!worn.hat) {
-        const body = root.userData.body as T.Group;
-        if (body) {
-          box(
-            body,
-            [0.55, 0.22, 0.32],
-            [0, WORKER_HEAD_TOP + 0.11, 0],
-            '#ffffff',
-          );
-          box(
-            body,
-            [0.56, 0.05, 0.33],
-            [0, WORKER_HEAD_TOP + 0.02, 0],
-            '#b91c1c',
-          );
-        }
-      }
+      const root = createDriveThruWorker('grill', 1, look);
       return {
         root,
         pose: (time, walking) => poseCook(root, time, walking),

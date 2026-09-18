@@ -39,13 +39,13 @@ const adapter: GameAdapter<CraneClashWorld, CraneClashSnapshot> = {
   },
   add: (w, m) => {
     // Determine team with fewer humans
-    const orangeHumans = w.players.filter(
-      (p) => !p.bot && p.team === 'orange',
+    const redHumans = w.players.filter(
+      (p) => !p.bot && p.team === 'red',
     ).length;
-    const tealHumans = w.players.filter(
-      (p) => !p.bot && p.team === 'teal',
+    const blueHumans = w.players.filter(
+      (p) => !p.bot && p.team === 'blue',
     ).length;
-    const team: TeamId = orangeHumans <= tealHumans ? 'orange' : 'teal';
+    const team: TeamId = redHumans <= blueHumans ? 'red' : 'blue';
 
     // Determine role (prefer operator if empty, else swinger)
     const operatorTaken = w.players.some(

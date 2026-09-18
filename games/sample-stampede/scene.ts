@@ -276,13 +276,13 @@ export class SampleStampedeScene {
         this.cartRigs.set(cart.id, rig);
 
         // Add Driver Avatar
-        const driver = createShopperWorker(cart.team === 'red' ? 0 : 1);
+        const driver = createShopperWorker(cart.team);
         driver.rotation.y = Math.PI / 2; // Face forward (+X) toward cart handle!
         rig.driverAnchor.add(driver);
         this.driverMeshes.set(cart.id, driver);
 
         // Add Basket Rider Avatar
-        const rider = createShopperWorker(cart.team === 'red' ? 2 : 3);
+        const rider = createShopperWorker(cart.team);
         rider.rotation.y = Math.PI / 2; // Face forward (+X) inside the basket!
         rig.riderAnchor.add(rider);
         this.riderMeshes.set(cart.id, rider);
@@ -430,7 +430,7 @@ export class SampleStampedeScene {
     for (const npc of world.npcShoppers) {
       let mesh = this.npcMeshes.get(npc.id);
       if (!mesh) {
-        mesh = createShopperWorker(2); // Yellow/Orange wholesale club vest
+        mesh = createShopperWorker(null);
         this.scene.add(mesh);
         this.npcMeshes.set(npc.id, mesh);
       }

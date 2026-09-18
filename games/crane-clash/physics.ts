@@ -141,9 +141,7 @@ export class CraneClashPhysics {
       // Listener for mid-air player bonks
       swinger.addEventListener('collide', (event: { body: C.Body }) => {
         const otherSwinger =
-          team === 'orange'
-            ? this.swingers.get('teal')
-            : this.swingers.get('orange');
+          team === 'red' ? this.swingers.get('blue') : this.swingers.get('red');
         if (event.body === otherSwinger) {
           this.collisions.push({ type: 'bonk', team });
         }
@@ -470,8 +468,8 @@ export class CraneClashPhysics {
   /** Calculate current stable tower heights on each team's pad */
   calculateHeights(): Record<TeamId, { height: number; crates: number }> {
     const result: Record<TeamId, { height: number; crates: number }> = {
-      orange: { height: 0, crates: 0 },
-      teal: { height: 0, crates: 0 },
+      red: { height: 0, crates: 0 },
+      blue: { height: 0, crates: 0 },
     };
 
     for (const team of TEAMS) {

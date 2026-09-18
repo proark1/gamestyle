@@ -50,12 +50,12 @@ export default function BungeeDoublesGame() {
   const hud = useRef(
     hudPacer<BungeeSnapshot>(
       ({ world: w }) =>
-        `${w.phase}:${w.eventId}:${w.scores.orange}:${w.scores.teal}`,
+        `${w.phase}:${w.eventId}:${w.scores.red}:${w.scores.blue}`,
     ),
   );
 
   const [snapshot, setSnapshot] = useState<BungeeSnapshot | null>(null);
-  const [team, setTeam] = useState<TeamId>('orange');
+  const [team, setTeam] = useState<TeamId>('red');
   const [banner, setBanner] = useState<{
     text: string;
     subtext: string;
@@ -67,7 +67,7 @@ export default function BungeeDoublesGame() {
     token: 'solo-token',
     code: 'SOLO',
     name: 'Player',
-    team: 'orange',
+    team: 'red',
   });
 
   const dispatchAction = useCallback((act: BungeeAction) => {
@@ -114,9 +114,7 @@ export default function BungeeDoublesGame() {
     // Initialize local world with bots
     const now = Date.now();
     const w = freshBungeeWorld(now);
-    w.players.push(
-      newPlayer(sessionRef.current.id, 'You', 0, 'orange', false, 0),
-    );
+    w.players.push(newPlayer(sessionRef.current.id, 'You', 0, 'red', false, 0));
     reconcileBungeeBots(w);
     localWorld.current = w;
 
@@ -212,14 +210,14 @@ export default function BungeeDoublesGame() {
       {/* Top HUD: Scoreboard */}
       <div className="bungee-hud">
         <div
-          className={`bungee-team-score orange ${world?.serverTeam === 'orange' ? 'serving' : ''}`}
+          className={`bungee-team-score red ${world?.serverTeam === 'red' ? 'serving' : ''}`}
         >
           <div className="bungee-score-meta">
-            <span>{strings.orange}</span>
+            <span>{strings.red}</span>
             <span>{strings.team}</span>
           </div>
-          <span className="bungee-score-val">{world?.scores.orange ?? 0}</span>
-          {world?.serverTeam === 'orange' && (
+          <span className="bungee-score-val">{world?.scores.red ?? 0}</span>
+          {world?.serverTeam === 'red' && (
             <span className="bungee-serve-indicator" title={strings.serving} />
           )}
         </div>
@@ -233,14 +231,14 @@ export default function BungeeDoublesGame() {
         </div>
 
         <div
-          className={`bungee-team-score teal ${world?.serverTeam === 'teal' ? 'serving' : ''}`}
+          className={`bungee-team-score blue ${world?.serverTeam === 'blue' ? 'serving' : ''}`}
         >
-          {world?.serverTeam === 'teal' && (
+          {world?.serverTeam === 'blue' && (
             <span className="bungee-serve-indicator" title={strings.serving} />
           )}
-          <span className="bungee-score-val">{world?.scores.teal ?? 0}</span>
+          <span className="bungee-score-val">{world?.scores.blue ?? 0}</span>
           <div className="bungee-score-meta">
-            <span>{strings.teal}</span>
+            <span>{strings.blue}</span>
             <span>{strings.team}</span>
           </div>
         </div>
@@ -282,7 +280,7 @@ export default function BungeeDoublesGame() {
         <div className="bungee-banner win">
           <Trophy size={48} color="#f1c40f" />
           <h2>
-            {world.winner.toUpperCase()} {strings.wins}
+            {strings[world.winner].toUpperCase()} {strings.wins}
           </h2>
           <p>{strings.matchComplete}</p>
           <button
@@ -323,7 +321,7 @@ export default function BungeeDoublesGame() {
         <button
           className="bungee-btn"
           onClick={() => {
-            const next = team === 'orange' ? 'teal' : 'orange';
+            const next = team === 'red' ? 'blue' : 'red';
             setTeam(next);
             dispatchAction({ type: 'switchTeam' });
           }}

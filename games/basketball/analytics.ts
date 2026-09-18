@@ -45,7 +45,7 @@ export function basketballPlayState(
   if (world.phase === 'lobby') return { stage: 'lobby', ...base };
 
   const milestones: string[] = [];
-  const maxScore = Math.max(world.scores.orange, world.scores.teal);
+  const maxScore = Math.max(world.scores.red, world.scores.blue);
   if (maxScore > 0) milestones.push('first-basket');
   if (world.players.some((p) => p.dunks > 0)) milestones.push('first-dunk');
   if (world.players.some((p) => p.score >= 3)) milestones.push('first-three');

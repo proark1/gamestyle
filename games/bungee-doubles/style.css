@@ -56,12 +56,12 @@
     box-shadow 0.2s ease;
 }
 
-.bungee-team-score.orange {
-  border-left: 5px solid #ff7700;
+.bungee-team-score.red {
+  border-left: 5px solid var(--team-red);
 }
 
-.bungee-team-score.teal {
-  border-right: 5px solid #00a896;
+.bungee-team-score.blue {
+  border-right: 5px solid var(--team-blue);
 }
 
 .bungee-team-score.serving {
@@ -97,12 +97,12 @@
   letter-spacing: -0.5px;
 }
 
-.bungee-team-score.orange .bungee-score-val {
-  color: #e65c00;
+.bungee-team-score.red .bungee-score-val {
+  color: var(--team-red-deep);
 }
 
-.bungee-team-score.teal .bungee-score-val {
-  color: #008775;
+.bungee-team-score.blue .bungee-score-val {
+  color: var(--team-blue-deep);
 }
 
 .bungee-score-meta {

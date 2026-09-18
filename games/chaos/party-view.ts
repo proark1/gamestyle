@@ -1,3 +1,4 @@
+import { COLORS } from '../../shared/rendering/palette';
 import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { makePiece, worker, label, disposePiece } from './objects';
@@ -58,7 +59,7 @@ export class PartyView {
         ring = new T.Mesh(
           new T.RingGeometry(0.42, 0.53, 28),
           new T.MeshBasicMaterial({
-            color: i ? '#62c9c9' : '#ffba32',
+            color: COLORS[i],
             side: T.DoubleSide,
           }),
         );

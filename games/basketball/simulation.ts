@@ -47,8 +47,8 @@ export function newPlayer(
   slot = 0,
 ): Player {
   // Spawn positions on court for 2v2
-  // Orange starts left, Teal starts right
-  const side = team === 'orange' ? -1 : 1;
+  // Red starts left, Blue starts right
+  const side = team === 'red' ? -1 : 1;
   const startX = side * (2.2 + slot * 1.8);
   const startZ = -1.0 + slot * 2.0;
 
@@ -95,8 +95,8 @@ export function freshBasketballWorld(now: number): BasketballWorld {
     phase: 'lobby',
     started: 0,
     endedAt: 0,
-    scores: { orange: 0, teal: 0 },
-    possession: 'orange',
+    scores: { red: 0, blue: 0 },
+    possession: 'red',
     needsClearance: false,
     shotClockRemaining: SHOT_CLOCK_SEC,
     targetScore: TARGET_SCORE,
@@ -181,7 +181,7 @@ export function advanceBasketball(w: BasketballWorld, dt: number): void {
   if (w.shotClockRemaining <= 0) {
     emitEvent(w, 'buzzer', 'Shot Clock Violation!', w.possession);
     // Turnover to other team
-    const nextTeam: TeamId = w.possession === 'orange' ? 'teal' : 'orange';
+    const nextTeam: TeamId = w.possession === 'red' ? 'blue' : 'red';
     resetPossession(w, nextTeam);
     return;
   }
@@ -357,7 +357,7 @@ export function advanceBasketball(w: BasketballWorld, dt: number): void {
       }
 
       // Turnover to other team after basket
-      const nextTeam: TeamId = scoringTeam === 'orange' ? 'teal' : 'orange';
+      const nextTeam: TeamId = scoringTeam === 'red' ? 'blue' : 'red';
       resetPossession(w, nextTeam);
       return;
     }
@@ -488,7 +488,7 @@ export function basketballAction(
     if (w.phase === 'lobby') {
       w.phase = 'playing';
       w.started = w.clock;
-      resetPossession(w, 'orange');
+      resetPossession(w, 'red');
       emitEvent(w, 'whistle', 'Game Started! Tip off!');
     }
     return;
@@ -503,7 +503,7 @@ export function basketballAction(
       w.players = players;
       w.phase = 'playing';
       w.started = w.clock;
-      resetPossession(w, 'orange');
+      resetPossession(w, 'red');
       emitEvent(w, 'whistle', 'Rematch started!');
     }
     return;
@@ -513,7 +513,7 @@ export function basketballAction(
 
   if (action.type === 'switchTeam') {
     if (w.phase === 'lobby') {
-      p.team = p.team === 'orange' ? 'teal' : 'orange';
+      p.team = p.team === 'red' ? 'blue' : 'red';
     }
     return;
   }

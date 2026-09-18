@@ -40,7 +40,7 @@ export function craneClashPlayState(
   if (world.players.some((p) => p.holdingCrateId)) {
     milestones.push('first-grab');
   }
-  const maxH = Math.max(world.scores.orange.height, world.scores.teal.height);
+  const maxH = Math.max(world.scores.red.height, world.scores.blue.height);
   if (maxH > 1.0) milestones.push('first-stack');
   if (maxH >= 5.0) milestones.push('height-5m');
   if (maxH >= 10.0) milestones.push('height-10m');

@@ -1,7 +1,25 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import { poseWorker } from '../../shared/rendering/worker-pose';
+import type { Look } from '../../shared/wardrobe/look';
+
+/**
+ * A traveller: the worker in the player's shirt, jeans and walking boots. Tin
+ * foil turns the shirt silver.
+ */
+export function traveler(color: number, look?: Look, tinFoil = false) {
+  return dressedWorker(
+    color,
+    {
+      shirt: tinFoil ? CLOTH.silver : undefined,
+      overalls: CLOTH.denim,
+      boots: CLOTH.brown,
+    },
+    look,
+  ).model;
+}
 
 export function poseTraveler(
   model: T.Object3D,
@@ -31,15 +49,7 @@ export const carryOnCarnageAvatars: readonly AvatarLook[] = [
     label: 'Desperate Traveler',
     dressable: true,
     create(look) {
-      const root = dressedWorker(
-        0,
-        {
-          shirt: '#ea580c', // Vibrant tourist shirt
-          overalls: '#1e3a8a', // Denim trousers
-          boots: '#78350f', // Travel boots
-        },
-        look,
-      ).model;
+      const root = traveler(0, look);
       return {
         root,
         pose: (time, walking) => poseTraveler(root, time, walking),

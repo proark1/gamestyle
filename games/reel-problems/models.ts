@@ -1,5 +1,6 @@
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
 import * as THREE from 'three';
@@ -273,12 +274,12 @@ const ROD_LENGTH = 2.25;
 export function createAngler(color: string, look?: Look) {
   const { model: g, worn } = dressedWorker(
     0,
-    { shirt: color, overalls: '#344d4d', boots: '#2b3b3b', cap: false },
+    { shirt: color, overalls: CLOTH.teal, boots: CLOTH.charcoal, cap: false },
     look,
   );
   const body = g.userData.body as THREE.Group;
   if (!worn.top)
-    box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material('#ffb75f'));
+    box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material(CLOTH.hivis));
   if (!worn.hat) {
     const hat = material(color);
     const brim = cylinder(

@@ -1,6 +1,6 @@
 import * as T from 'three';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
-import { poseScaffoldWorker } from './avatar';
+import { CLOTH } from '../../shared/rendering/palette';
+import { cleaner, poseScaffoldWorker } from './avatar';
 import {
   createCloudMesh,
   createCradleMesh,
@@ -844,16 +844,7 @@ export class ScaffoldScene {
     for (const player of world.players) {
       let pObj = this.playerMeshes.get(player.id);
       if (!pObj) {
-        const char = dressedWorker(player.color, {
-          shirt:
-            player.color === 0
-              ? '#ea580c'
-              : player.color === 1
-                ? '#0284c7'
-                : '#16a34a',
-          overalls: '#334155',
-        });
-        const root = char.model;
+        const root = cleaner(player.color);
         root.scale.set(0.92, 0.92, 0.92);
 
         // Tool models
@@ -868,7 +859,7 @@ export class ScaffoldScene {
           new T.Vector3(0, 0, 0),
         ]);
         const tetherMat = new T.LineBasicMaterial({
-          color: '#ea580c',
+          color: CLOTH.hivis,
           linewidth: 3,
         });
         const tetherLine = new T.Line(tetherGeo, tetherMat);

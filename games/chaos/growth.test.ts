@@ -116,7 +116,7 @@ void test('both puzzles must be proven; race uses opposing targets, equal clocks
   p.task.phase = 'done';
   advance(now + 155000);
   assert.deepEqual(p.swap!.times, [20000, 25000]);
-  assert.match(p.result!.title, /Yellow/);
+  assert.match(p.result!.title, /Red/);
   const other = fixture();
   other.advance(now + 90000);
   other.advance(now + 150000);

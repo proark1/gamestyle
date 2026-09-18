@@ -1,3 +1,4 @@
+import { TEAM } from '../../shared/rendering/palette';
 import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { label } from './objects';
@@ -7,8 +8,8 @@ export class SwapView {
   constructor(scene: T.Scene) {
     scene.add(this.root);
     for (const [x, color, name] of [
-      [-3, '#edb83e', 'YELLOW CREW'],
-      [3, '#36aeb7', 'TURQUOISE CREW'],
+      [-3, TEAM.red, 'RED CREW'],
+      [3, TEAM.blue, 'BLUE CREW'],
     ] as const) {
       const points = [
         [-3, -4],

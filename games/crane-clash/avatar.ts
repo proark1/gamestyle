@@ -1,6 +1,13 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import type { Look } from '../../shared/wardrobe/look';
+import { TEAM_COLORS, type TeamId } from './types';
+
+/** A crane crew member: the worker in their team's shirt and cap. */
+export function craneWorker(team: TeamId, color: number, look?: Look) {
+  return dressedWorker(color, { shirt: TEAM_COLORS[team] }, look).model;
+}
 
 export function poseCraneWorker(
   model: T.Object3D,
@@ -44,7 +51,7 @@ export const craneClashAvatars: readonly AvatarLook[] = [
     label: 'Crane Crew',
     dressable: true,
     create(look) {
-      const root = dressedWorker(0, {}, look).model;
+      const root = craneWorker('red', 0, look);
       return {
         root,
         pose: (time, walking) =>

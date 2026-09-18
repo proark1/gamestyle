@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { COLORS, TEAM } from '../../shared/rendering/palette';
 import type { ItemKind, TeamId } from './types';
+
+/** A palette colour as the number three.js materials here take. */
+const hex = (colour: string) => new THREE.Color(colour).getHex();
 
 // Palette matching wholesale warehouse club aesthetic
 export const WAREHOUSE_COLORS = {
@@ -12,10 +16,13 @@ export const WAREHOUSE_COLORS = {
   wireDeck: 0xbdc3c7,
   cartSteel: 0xd6dbdf,
   cartGrip: 0x2c3e50,
-  redTeam: 0xe74c3c,
-  blueTeam: 0x2980b9,
-  yellowTeam: 0xf39c12,
-  greenTeam: 0x27ae60,
+  // Carts race red against blue, in the collection's team colours. Yellow and
+  // green are in the type but no cart uses them; they take player colours.
+  redTeam: hex(TEAM.red),
+  blueTeam: hex(TEAM.blue),
+  yellowTeam: hex(COLORS[0]),
+  greenTeam: hex(COLORS[1]),
+  heatLamp: 0xe74c3c,
   woodPallet: 0xc49a6c,
   kioskBody: 0x34495e,
   kioskSneezeGuard: 0xecf0f1,
@@ -282,7 +289,7 @@ export function createSampleKiosk(
     0.25,
     12,
     [0, 1.65, 0],
-    WAREHOUSE_COLORS.redTeam,
+    WAREHOUSE_COLORS.heatLamp,
     true,
   );
   box(group, [0.05, 0.65, 0.05], [0, 1.35, -0.4], 0x7f8c8d);

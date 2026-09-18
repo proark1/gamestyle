@@ -64,14 +64,14 @@ export default function CraneClash() {
   );
 
   const [snapshot, setSnapshot] = useState<CraneClashSnapshot | null>(null);
-  const [team, setTeam] = useState<TeamId>('orange');
+  const [team, setTeam] = useState<TeamId>('red');
   const [role, setRole] = useState<Role>('swinger');
 
   const sessionRef = useRef<CraneClashSession>({
     id: 'p-local',
     token: 'solo-token',
     code: 'SOLO',
-    team: 'orange',
+    team: 'red',
     role: 'swinger',
     name: 'Bauarbeiter',
   });
@@ -191,8 +191,8 @@ export default function CraneClash() {
     world?.players.filter((p) => !p.bot && p.team === team).length ?? 1;
   const isSolo = humansOnMyTeam <= 1;
 
-  const orangeScore = world?.scores.orange.height ?? 0;
-  const tealScore = world?.scores.teal.height ?? 0;
+  const redScore = world?.scores.red.height ?? 0;
+  const blueScore = world?.scores.blue.height ?? 0;
   const msLeft = world ? timeLeft(world) : ROUND_MS;
 
   const handleStart = () => {
@@ -223,12 +223,12 @@ export default function CraneClash() {
 
       {/* Top HUD with Scores & Timer */}
       <div className="cc-hud">
-        <div className="cc-team-score orange">
-          <div className="cc-score-val">{orangeScore.toFixed(1)}m</div>
+        <div className="cc-team-score red">
+          <div className="cc-score-val">{redScore.toFixed(1)}m</div>
           <div className="cc-score-meta">
-            <span>{strings.teamOrange}</span>
+            <span>{strings.teamRed}</span>
             <span>
-              {world?.scores.orange.crates || 0} {strings.crates}
+              {world?.scores.red.crates || 0} {strings.crates}
             </span>
           </div>
         </div>
@@ -238,14 +238,14 @@ export default function CraneClash() {
           <span>{formatTime(msLeft)}</span>
         </div>
 
-        <div className="cc-team-score teal">
+        <div className="cc-team-score blue">
           <div className="cc-score-meta" style={{ textAlign: 'right' }}>
-            <span>{strings.teamTeal}</span>
+            <span>{strings.teamBlue}</span>
             <span>
-              {world?.scores.teal.crates || 0} {strings.crates}
+              {world?.scores.blue.crates || 0} {strings.crates}
             </span>
           </div>
-          <div className="cc-score-val">{tealScore.toFixed(1)}m</div>
+          <div className="cc-score-val">{blueScore.toFixed(1)}m</div>
         </div>
       </div>
 
@@ -272,17 +272,17 @@ export default function CraneClash() {
             <div className="cc-role-row">
               <button
                 type="button"
-                className={`cc-btn orange ${team === 'orange' ? 'active' : ''}`}
-                onClick={() => handleTeamChange('orange')}
+                className={`cc-btn red ${team === 'red' ? 'active' : ''}`}
+                onClick={() => handleTeamChange('red')}
               >
-                {strings.teamOrange}
+                {strings.teamRed}
               </button>
               <button
                 type="button"
-                className={`cc-btn teal ${team === 'teal' ? 'active' : ''}`}
-                onClick={() => handleTeamChange('teal')}
+                className={`cc-btn blue ${team === 'blue' ? 'active' : ''}`}
+                onClick={() => handleTeamChange('blue')}
               >
-                {strings.teamTeal}
+                {strings.teamBlue}
               </button>
             </div>
 
@@ -291,7 +291,7 @@ export default function CraneClash() {
                 fontSize: 11,
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                color: isSolo ? '#e58e38' : '#777',
+                color: isSolo ? `var(--team-${team}-deep)` : '#777',
                 marginTop: 4,
               }}
             >
@@ -330,14 +330,15 @@ export default function CraneClash() {
         <div className="cc-ended-banner">
           <h2>{strings.matchOver}</h2>
           <div className={`cc-ended-winner ${world?.winner || ''}`}>
-            {world?.winner === 'orange'
-              ? strings.orangeWins
-              : world?.winner === 'teal'
-                ? strings.tealWins
+            {world?.winner === 'red'
+              ? strings.redWins
+              : world?.winner === 'blue'
+                ? strings.blueWins
                 : strings.draw}
           </div>
           <p style={{ margin: '0 0 20px', color: '#666' }}>
-            Orange: {orangeScore.toFixed(1)}m | Teal: {tealScore.toFixed(1)}m
+            {strings.red}: {redScore.toFixed(1)}m | {strings.blue}:{' '}
+            {blueScore.toFixed(1)}m
           </p>
           <button
             type="button"

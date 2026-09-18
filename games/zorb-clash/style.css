@@ -44,11 +44,11 @@
 }
 
 .zorb-team-score.red {
-  color: #ff6b4a;
+  color: var(--team-red-glow);
 }
 
 .zorb-team-score.blue {
-  color: #38bdf8;
+  color: var(--team-blue-glow);
 }
 
 .zorb-score-num {
@@ -488,13 +488,13 @@
 }
 
 .zorb-radar-box.blue {
-  stroke: rgba(56, 189, 248, 0.75);
-  fill: rgba(56, 189, 248, 0.12);
+  stroke: color-mix(in srgb, var(--team-blue-glow) 75%, transparent);
+  fill: color-mix(in srgb, var(--team-blue) 12%, transparent);
 }
 
 .zorb-radar-box.red {
-  stroke: rgba(255, 107, 74, 0.75);
-  fill: rgba(255, 107, 74, 0.12);
+  stroke: color-mix(in srgb, var(--team-red-glow) 75%, transparent);
+  fill: color-mix(in srgb, var(--team-red) 12%, transparent);
 }
 
 .zorb-radar-self-ring {
@@ -522,13 +522,13 @@
 }
 
 .zorb-radar-player.red {
-  fill: #ff4757;
-  filter: drop-shadow(0 0 4px #ff4757);
+  fill: var(--team-red);
+  filter: drop-shadow(0 0 4px var(--team-red-glow));
 }
 
 .zorb-radar-player.blue {
-  fill: #00d2d3;
-  filter: drop-shadow(0 0 4px #00d2d3);
+  fill: var(--team-blue);
+  filter: drop-shadow(0 0 4px var(--team-blue-glow));
 }
 
 .zorb-radar-player.self {

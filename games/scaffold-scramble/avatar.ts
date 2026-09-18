@@ -2,7 +2,14 @@ import * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { box } from '../../shared/rendering/primitives';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
+import type { Look } from '../../shared/wardrobe/look';
 import type { PlayerState } from './types';
+
+/** A window cleaner: the worker in the player's shirt and slate trousers. */
+export function cleaner(color: number, look?: Look) {
+  return dressedWorker(color, { overalls: CLOTH.slate }, look).model;
+}
 
 /**
  * Attaches high-visibility fall-arrest safety harness webbing and back D-ring
@@ -18,7 +25,7 @@ function ensureHarness(model: T.Object3D) {
   >;
   if (!rig?.body) return;
 
-  const harnessColor = '#ea580c'; // International Safety Orange
+  const harnessColor = CLOTH.hivis;
 
   // Chest cross straps
   box(rig.body, [0.46, 0.07, 0.05], [0, 0.96, 0.24], harnessColor);
@@ -34,7 +41,7 @@ function ensureHarness(model: T.Object3D) {
   // Steel D-ring on the upper back where lanyard connects
   const dRingGeo = new T.TorusGeometry(0.08, 0.02, 6, 16);
   const dRingMat = new T.MeshStandardMaterial({
-    color: '#cbd5e1',
+    color: CLOTH.silver,
     metalness: 0.9,
     roughness: 0.2,
   });
@@ -185,7 +192,7 @@ export const scaffoldAvatars: readonly AvatarLook[] = [
     label: 'High-Rise Cleaner',
     dressable: true,
     create(look) {
-      const root = dressedWorker(0, {}, look).model;
+      const root = cleaner(0, look);
       return {
         root,
         pose: (time, walking) =>

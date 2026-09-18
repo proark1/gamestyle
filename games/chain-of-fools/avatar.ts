@@ -1,6 +1,7 @@
 import * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import { box, taper } from '../../shared/rendering/primitives';
 import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
@@ -9,8 +10,8 @@ import type { PlayerState } from './types';
 /** Where the safety line clips onto the harness, in the worker's own frame. */
 export const D_RING = new T.Vector3(0, 1.05, -0.27);
 
-const HARNESS = '#f08a24';
-const HARD_HAT = '#f2c230';
+const HARNESS = CLOTH.hivis;
+const HARD_HAT = CLOTH.gold;
 
 type Rig = Record<'body' | 'legL' | 'legR' | 'armL' | 'armR', T.Group>;
 
@@ -21,7 +22,7 @@ type Rig = Record<'body' | 'legL' | 'legR' | 'armL' | 'armR', T.Group>;
 export function chainWorker(color: number, look?: Look) {
   const { model, worn } = dressedWorker(
     color,
-    { overalls: '#44525a', boots: '#3b342c', cap: false },
+    { overalls: CLOTH.slate, boots: CLOTH.charcoal, cap: false },
     look,
   );
   const body = model.userData.body as T.Group;
@@ -29,7 +30,7 @@ export function chainWorker(color: number, look?: Look) {
   if (!worn.hat) {
     box(body, [0.62, 0.2, 0.6], [0, WORKER_HEAD_TOP + 0.08, 0], HARD_HAT, true);
     box(body, [0.72, 0.05, 0.72], [0, WORKER_HEAD_TOP - 0.02, 0.03], HARD_HAT);
-    box(body, [0.1, 0.1, 0.62], [0, WORKER_HEAD_TOP + 0.2, 0], '#d9a91f');
+    box(body, [0.1, 0.1, 0.62], [0, WORKER_HEAD_TOP + 0.2, 0], CLOTH.sand);
   }
 
   // Harness webbing, front and back, and the steel ring the line clips to.
@@ -45,7 +46,7 @@ export function chainWorker(color: number, look?: Look) {
     0.09,
     0.04,
     [0, D_RING.y, -0.28],
-    '#c9d1d6',
+    CLOTH.silver,
     10,
   );
   ring.rotation.x = Math.PI / 2;
@@ -57,7 +58,8 @@ export function chainWorker(color: number, look?: Look) {
     const sleeve = new T.Group();
     sleeve.name = 'chain-sleeve';
     arm.add(sleeve);
-    box(sleeve, [0.23, 0.06, 0.29], [0, -0.2, 0], '#f4f1e4').castShadow = false;
+    box(sleeve, [0.23, 0.06, 0.29], [0, -0.2, 0], CLOTH.cream).castShadow =
+      false;
   }
 
   return model;

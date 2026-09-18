@@ -50,13 +50,13 @@
 }
 
 .stampede-score-pill.red {
-  border-color: rgba(231, 76, 60, 0.85);
-  color: #ff7675;
+  border-color: var(--team-red);
+  color: var(--team-red-glow);
 }
 
 .stampede-score-pill.blue {
-  border-color: rgba(41, 128, 185, 0.85);
-  color: #74b9ff;
+  border-color: var(--team-blue);
+  color: var(--team-blue-glow);
 }
 
 .stampede-score-num {
@@ -475,12 +475,12 @@
 }
 
 .stampede-radar-cart.red {
-  fill: #e74c3c;
+  fill: var(--team-red);
   stroke: #ffffff;
 }
 
 .stampede-radar-cart.blue {
-  fill: #2980b9;
+  fill: var(--team-blue);
   stroke: #ffffff;
 }
 
