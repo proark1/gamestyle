@@ -63,6 +63,7 @@ import {
 import { breakfastAnalytics, breakfastPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const sessions = sessionStore('four-brain-cells-session-v1');
 const PREFS_KEY = 'four-brain-cells-prefs-v1';
@@ -128,7 +129,12 @@ export default function FourBrainCells() {
     latest = useRef<BrainSnapshot | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: BrainAction) => void>(() => {}),
-    hudAt = useRef(0);
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<BrainSnapshot>(
+        (snapshot) => `${snapshot.world.phase}:${snapshot.world.eventId}`,
+      ),
+    );
   const [snapshot, setSnapshot] = useState<BrainSnapshot | null>(null),
     [session, setSession] = useState<BrainSession | null>(null),
     [name, setName] = useState(''),
@@ -154,19 +160,10 @@ export default function FourBrainCells() {
   function accept(next: BrainSnapshot) {
     if (!active.current) return;
     tracker.observe(breakfastPlayState(next, active.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next.world);
-    if (
-      !previous ||
-      previous.world.phase !== next.world.phase ||
-      previous.world.eventId !== next.world.eventId ||
-      performance.now() - hudAt.current > 90
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
   function attach(s: BrainSession, state?: BrainSnapshot) {
     network.current?.stop();

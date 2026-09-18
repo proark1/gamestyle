@@ -55,6 +55,7 @@ import {
 import { loadBearingAnalytics, loadBearingPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const sessions = sessionStore('load-bearing-session-v1');
 const PREFS_KEY = 'load-bearing-prefs-v1';
@@ -78,7 +79,12 @@ export default function LoadBearing() {
     latest = useRef<LoadSnapshot | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: LoadAction) => void>(() => {}),
-    hudAt = useRef(0);
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<LoadSnapshot>(
+        (snapshot) => `${snapshot.world.phase}:${snapshot.world.eventId}`,
+      ),
+    );
   const [snapshot, setSnapshot] = useState<LoadSnapshot | null>(null),
     [session, setSession] = useState<LoadSession | null>(null),
     [name, setName] = useState(''),
@@ -106,19 +112,10 @@ export default function LoadBearing() {
   function accept(next: LoadSnapshot) {
     if (!activeSession.current) return;
     tracker.observe(loadBearingPlayState(next, activeSession.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next.world, activeSession.current.id);
-    if (
-      !previous ||
-      previous.world.phase !== next.world.phase ||
-      previous.world.eventId !== next.world.eventId ||
-      performance.now() - hudAt.current > 90
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
 
   function attach(s: LoadSession, state?: LoadSnapshot) {

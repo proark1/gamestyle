@@ -77,6 +77,7 @@ import {
   looksLikeRoomCode,
 } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const sessions = sessionStore('siege-and-desist-session-v1');
 const PREFS_KEY = 'siege-and-desist-prefs-v1';
@@ -111,7 +112,12 @@ export default function SiegeAndDesist() {
     latest = useRef<SiegeSnapshot | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: SiegeAction) => void>(() => {}),
-    hudAt = useRef(0);
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<SiegeSnapshot>(
+        (snapshot) => `${snapshot.world.phase}:${snapshot.world.eventId}`,
+      ),
+    );
   const [snapshot, setSnapshot] = useState<SiegeSnapshot | null>(null),
     [session, setSession] = useState<SiegeSession | null>(null),
     [name, setName] = useState(''),
@@ -139,19 +145,10 @@ export default function SiegeAndDesist() {
     if (!activeSession.current) return;
     hydrateSiege(next.world);
     tracker.observe(siegePlayState(next, activeSession.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next.world, activeSession.current.id);
-    if (
-      !previous ||
-      previous.world.phase !== next.world.phase ||
-      previous.world.eventId !== next.world.eventId ||
-      performance.now() - hudAt.current > 90
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
 
   function attach(s: SiegeSession, state?: SiegeSnapshot) {

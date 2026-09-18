@@ -61,6 +61,7 @@ import {
 import { giantAnalytics, giantPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const sessions = sessionStore('dont-wake-the-giant-session-v1');
 const duration = (ms: number) => {
@@ -105,11 +106,16 @@ export default function GiantGame() {
     done = w?.phase === 'ended',
     item = w && session ? heldItem(w, session.id) : undefined;
   const inRoom = !!session;
+  // The scene is handed every snapshot directly; the HUD is paced. Banked gold
+  // and the phase are what a thief is watching, so they show at once.
+  const hud = useRef(
+    hudPacer<GiantSnapshot>(({ world: w }) => `${w.phase}:${w.banked}`),
+  );
   function accept(next: GiantSnapshot) {
     if (!sessionRef.current) return;
     tracker.observe(giantPlayState(next, sessionRef.current));
     latest.current = next;
-    setSnapshot(next);
+    if (hud.current.due(next)) setSnapshot(next);
     scene.current?.setSnapshot(next);
     sound.current?.update(next, scene.current?.yaw);
   }

@@ -40,6 +40,7 @@ import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
 import { SAMPLE_STAMPEDE_TRANSLATIONS } from './translations';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(sampleStampedeAnalytics);
 
@@ -170,6 +171,13 @@ export default function SampleStampede() {
   const audioRef = useRef<SampleStampedeAudio | null>(null);
   const physicsRef = useRef<SampleStampedePhysics | null>(null);
   const worldRef = useRef<SampleStampedeWorld | null>(null);
+  // The scene is handed every snapshot directly; the HUD is paced, so a
+  // 20Hz feed does not rebuild it twenty times a second.
+  const hud = useRef(
+    hudPacer<SampleStampedeSnapshot>(
+      ({ world: w }) => `${w.status}:${w.phase}`,
+    ),
+  );
 
   const [snapshot, setSnapshot] = useState<SampleStampedeSnapshot | null>(null);
   const [selfId] = useState('player-local');
@@ -325,7 +333,7 @@ export default function SampleStampede() {
           selfId,
           1,
         );
-        setSnapshot(snap);
+        if (hud.current.due(snap)) setSnapshot(snap);
         scene.render(snap);
       }
     };

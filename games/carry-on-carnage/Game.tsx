@@ -40,6 +40,7 @@ import {
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { CARRY_ON_TRANSLATIONS } from './translations';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(carryOnCarnageAnalytics);
 
@@ -63,6 +64,9 @@ export default function CarryOnCarnageGame() {
   const currentInput = useRef<PlayerInput>(idleInput());
   const eventIdRef = useRef(100);
   const lastEventSeenRef = useRef(0);
+  // The scene is handed every snapshot directly; the HUD is paced, so a
+  // 20Hz feed does not rebuild it twenty times a second.
+  const hud = useRef(hudPacer<CarryOnSnapshot>(({ world: w }) => `${w.phase}`));
 
   const [snapshot, setSnapshot] = useState<CarryOnSnapshot | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -179,7 +183,7 @@ export default function CarryOnCarnageGame() {
           sessionRef.current.id,
           sessionRef.current.id,
         );
-        setSnapshot(snap);
+        if (hud.current.due(snap)) setSnapshot(snap);
         sceneRef.current?.render(snap, sessionRef.current.id);
       }
 

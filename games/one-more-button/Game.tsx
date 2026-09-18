@@ -65,6 +65,7 @@ import {
   looksLikeRoomCode,
 } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 const sessions = sessionStore('one-more-button-session-v1');
 const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -85,7 +86,12 @@ export default function OneMoreButton() {
     latest = useRef<ButtonSnapshot | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: ButtonAction) => void>(() => {}),
-    hudAt = useRef(0);
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<ButtonSnapshot>(
+        (snapshot) => `${snapshot.world.phase}:${snapshot.world.eventId}`,
+      ),
+    );
   const [snapshot, setSnapshot] = useState<ButtonSnapshot | null>(null),
     [session, setSession] = useState<ButtonSession | null>(null),
     [name, setName] = useState(''),
@@ -110,19 +116,10 @@ export default function OneMoreButton() {
   function accept(next: ButtonSnapshot) {
     if (!activeSession.current) return;
     tracker.observe(buttonPlayState(next, activeSession.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next.world, activeSession.current.id);
-    if (
-      !previous ||
-      previous.world.phase !== next.world.phase ||
-      previous.world.eventId !== next.world.eventId ||
-      performance.now() - hudAt.current > 90
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
   function attach(s: ButtonSession, state?: ButtonSnapshot) {
     network.current?.stop();

@@ -44,6 +44,7 @@ import {
 import { shelfAnalytics, shelfStateReader } from './analytics';
 import { isRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const sessions = sessionStore('jumbleyard:shelf-control');
 const prettyTime = (ms: number) =>
@@ -168,9 +169,14 @@ export default function ShelfControl() {
     clearTimeout(errorTimer.current);
     errorTimer.current = setTimeout(() => setError(''), 6500);
   }, []);
+  // The scene is handed every snapshot directly; the HUD is paced. A round or
+  // a change to this player's own fate is what the panel is showing.
+  const hud = useRef(
+    hudPacer<Snapshot>((s) => `${s.phase}:${s.round}:${s.you.status}`),
+  );
   const receive = useCallback((s: Snapshot, timing?: SnapshotTiming) => {
     latest.current = s;
-    setSnapshot(s);
+    if (hud.current.due(s)) setSnapshot(s);
     scene.current?.update(s, timing);
     audio.current?.update(s);
   }, []);

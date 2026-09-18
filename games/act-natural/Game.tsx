@@ -66,6 +66,7 @@ import { farmAnalytics, farmPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { TOUCH_QUERY } from '../../shared/browser/device';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 const sessions = sessionStore('act-natural-session-v1');
 const clock = (seconds: number) => {
   const whole = Math.ceil(Math.max(0, seconds));
@@ -119,11 +120,18 @@ export default function ActNatural() {
     practice = session?.code === 'PRACTICE',
     ended = w?.phase === 'farmer-win' || w?.phase === 'cows-win',
     spectating = !!me && (me.captured || me.escaped);
+  // The scene is handed every snapshot directly; the HUD is paced. A round
+  // ending or a new event is what the farmhands are watching for.
+  const hudRate = useRef(
+    hudPacer<FarmSnapshot>(
+      ({ world: w }) => `${w.phase}:${w.round}:${w.events.at(-1)?.id ?? 0}`,
+    ),
+  );
   function accept(next: FarmSnapshot) {
     if (!sessionRef.current) return;
     tracker.observe(farmPlayState(next, sessionRef.current));
     sound.current?.farmSnapshot(next);
-    setState(next);
+    if (hudRate.current.due(next)) setState(next);
     scene.current?.setSnapshot(next);
     const event = next.world.events.at(-1);
     if (event && event.id > lastEvent.current) {

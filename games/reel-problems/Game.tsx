@@ -65,6 +65,7 @@ import {
 import { reelAnalytics, reelPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const sessions = sessionStore('reel-problems-session-v1');
 const time = (ms: number) => {
@@ -255,7 +256,12 @@ export default function ReelProblems() {
     latest = useRef<ReelSnapshot | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: ReelAction) => void>(() => {}),
-    hudAt = useRef(0);
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<ReelSnapshot>(
+        (snapshot) => `${snapshot.world.phase}:${snapshot.world.eventId}`,
+      ),
+    );
   const [snapshot, setSnapshot] = useState<ReelSnapshot | null>(null),
     [session, setSession] = useState<ReelSession | null>(null),
     [name, setName] = useState(''),
@@ -281,19 +287,10 @@ export default function ReelProblems() {
   function accept(next: ReelSnapshot) {
     if (!activeSession.current) return;
     tracker.observe(reelPlayState(next, activeSession.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next.world, activeSession.current?.id);
-    if (
-      !previous ||
-      previous.world.phase !== next.world.phase ||
-      previous.world.eventId !== next.world.eventId ||
-      performance.now() - hudAt.current > 90
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
   function attach(s: ReelSession, state?: ReelSnapshot) {
     network.current?.stop();

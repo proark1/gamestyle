@@ -67,6 +67,7 @@ import {
   looksLikeRoomCode,
 } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const sessions = sessionStore('wrong-floor-session-v1');
 const PREFS_KEY = 'wrong-floor-prefs-v1';
@@ -88,7 +89,12 @@ export default function WrongFloor() {
     latest = useRef<HotelSnapshot | null>(null);
   const input = useRef(idleInput()),
     actionRef = useRef<(a: HotelAction) => void>(() => {}),
-    hudAt = useRef(0),
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<HotelSnapshot>(
+        (snapshot) => `${snapshot.world.eventId}:${snapshot.you.inspected}`,
+      ),
+    ),
     localTick = useRef(0);
   const [snapshot, setSnapshot] = useState<HotelSnapshot | null>(null),
     [session, setSession] = useState<HotelSession | null>(null);
@@ -126,19 +132,10 @@ export default function WrongFloor() {
   function accept(next: HotelSnapshot) {
     if (!active.current) return;
     tracker.observe(hotelPlayState(next, active.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next, active.current.id);
-    if (
-      !previous ||
-      next.world.eventId !== previous.world.eventId ||
-      next.you.inspected !== previous.you.inspected ||
-      performance.now() - hudAt.current > 100
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
   function attach(s: HotelSession, state?: HotelSnapshot) {
     network.current?.stop();
