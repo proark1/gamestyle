@@ -78,7 +78,7 @@ import {
 } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyRound, partyVersus } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('siege-and-desist-session-v1');
 const PREFS_KEY = 'siege-and-desist-prefs-v1';
@@ -495,7 +495,7 @@ export default function SiegeAndDesist() {
   return (
     <main
       className={`sad-game${session ? ' in-session' : ''}`}
-      {...partyRound(!!session && done)}
+      {...partyRound(!!session && done, partyVersus(playerTeam, w?.winner))}
     >
       <div className="sad-canvas" ref={container} />
       <header className="sad-header">

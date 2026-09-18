@@ -26,7 +26,7 @@ import {
 import { TouchControls } from '../../shared/input/TouchControls';
 import { COLORS } from '../../shared/rendering/palette';
 import GameToolbar from '../../shared/ui/GameToolbar';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 import { DeliverySound } from './audio';
 import {
   advanceDelivery,
@@ -394,7 +394,12 @@ export default function UphillDelivery() {
   return (
     <main
       className={`delivery-shell ${session ? 'delivery-playing' : ''}`}
-      {...partyRound(done)}
+      {...partyRound(
+        done,
+        // Every delivery clears it, so the faster one wins. The clock runs on
+        // afterwards; the ribbon keeps the first ended frame.
+        w ? partyGoal(true, -(w.clock - w.started) / 1000) : null,
+      )}
     >
       <div className="delivery-canvas" ref={canvas} />
       <header className="delivery-topbar">

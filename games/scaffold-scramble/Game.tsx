@@ -52,7 +52,7 @@ import {
 } from './types';
 import './style.css';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(scaffoldScrambleAnalytics);
 
@@ -304,7 +304,19 @@ export default function ScaffoldScrambleGame() {
   ] as const;
 
   return (
-    <main className="sc-game" {...partyRound(isEnded)}>
+    <main
+      className="sc-game"
+      {...partyRound(
+        isEnded,
+        world
+          ? world.winner === 'crew'
+            ? // The clock runs on after the whistle; the ribbon keeps the
+              // first ended frame, where it still reads the finishing time.
+              partyGoal(true, Math.max(0, world.endsAt - world.clock) / 1000)
+            : partyGoal(false, world.cleanedCount)
+          : null,
+      )}
+    >
       <div ref={container} className="sc-canvas" />
 
       <header className="topbar sc-topbar">

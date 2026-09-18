@@ -39,7 +39,7 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { bungeeDoublesAnalytics } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyRound, partyVersus } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(bungeeDoublesAnalytics);
 
@@ -214,7 +214,13 @@ export default function BungeeDoublesGame() {
   };
 
   return (
-    <div className="bungee-game" {...partyRound(world?.phase === 'ended')}>
+    <div
+      className="bungee-game"
+      {...partyRound(
+        world?.phase === 'ended',
+        partyVersus(team, world?.winner),
+      )}
+    >
       <div ref={container} className="bungee-canvas" />
       <header className="topbar bungee-topbar">
         <a href="/" className="wordmark">

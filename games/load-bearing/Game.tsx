@@ -56,7 +56,7 @@ import { loadBearingAnalytics, loadBearingPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('load-bearing-session-v1');
 const PREFS_KEY = 'load-bearing-prefs-v1';
@@ -390,7 +390,14 @@ export default function LoadBearing() {
   return (
     <main
       className={`lb-game${session ? ' in-session' : ''}`}
-      {...partyRound(!!session && done)}
+      {...partyRound(
+        !!session && done,
+        w
+          ? w.phase === 'won'
+            ? partyGoal(true, w.piano.integrity)
+            : partyGoal(false, w.parts.length - w.standing)
+          : null,
+      )}
     >
       <div className="lb-canvas" ref={container} />
       <header className="topbar">

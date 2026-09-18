@@ -39,7 +39,11 @@ import { useLanguage } from '../../shared/language/useLanguage';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { SAMPLE_STAMPEDE_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import {
+  leadingSide,
+  partyRound,
+  partyVersus,
+} from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(sampleStampedeAnalytics);
 
@@ -416,7 +420,16 @@ export default function SampleStampede() {
   }
 
   return (
-    <main className="stampede-container" {...partyRound(isGameOver)}>
+    <main
+      className="stampede-container"
+      {...partyRound(
+        isGameOver,
+        // The store's own winner goes to red on a tie, so read the tills.
+        snapshot
+          ? partyVersus(snapshot.myTeam, leadingSide(snapshot.world.teamScores))
+          : null,
+      )}
+    >
       <div ref={containerRef} className="stampede-canvas-wrapper" />
 
       {/* SPEED LINES OVERLAY (DURING SUGAR RUSH) */}

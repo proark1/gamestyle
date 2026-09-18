@@ -1,3 +1,5 @@
+import type { PartyOutcome, PartyResult } from '../../shared/ui/party-round';
+
 export const TOURNAMENT_POINTS = [10, 6, 3, 1] as const;
 
 export type PlayerScoreEntry = {
@@ -67,4 +69,84 @@ export function calculateRoundPoints(
   }
 
   return points;
+}
+
+/** A human's report for the round; null when they gave up or never sent one. */
+export type RoundReports = Record<string, PartyResult | null>;
+
+/**
+ * The two sides of a team round. Partners rotate with the round, so over a
+ * tournament everyone gets a turn alongside everyone else.
+ */
+export function roundTeams(
+  playerIds: readonly string[],
+  round: number,
+): [string[], string[]] {
+  if (playerIds.length < 4) {
+    return [
+      playerIds.filter((_, i) => i % 2 === 0),
+      playerIds.filter((_, i) => i % 2 === 1),
+    ];
+  }
+  const [first, ...rest] = playerIds;
+  const partner = rest[round % rest.length];
+  return [[first, partner], rest.filter((id) => id !== partner)];
+}
+
+const LEG_VALUE: Record<PartyOutcome, number> = { won: 1, draw: 0.5, lost: 0 };
+
+/**
+ * Scores a team round. Each human played their own match, with NPCs standing
+ * in for everyone else, so each human's match is one leg of the round, won or
+ * lost for that human's side. A side scores the share of legs it took, which
+ * gives both teammates the same score. A human who gave up loses their leg.
+ *
+ * `reports` has an entry for every human in the party.
+ */
+export function scoreTeamRound(
+  teams: [string[], string[]],
+  reports: RoundReports,
+): Record<string, number> {
+  const [first, second] = teams;
+  let taken = 0;
+  let legs = 0;
+  for (const [id, report] of Object.entries(reports)) {
+    const value = report?.kind === 'versus' ? LEG_VALUE[report.outcome] : 0;
+    taken += first.includes(id) ? value : 1 - value;
+    legs++;
+  }
+  const share = legs ? taken / legs : 0.5;
+  const scores: Record<string, number> = {};
+  for (const id of first) scores[id] = share;
+  for (const id of second) scores[id] = 1 - share;
+  return scores;
+}
+
+/**
+ * Scores a goal round, where every human played alone or with NPC crewmates
+ * against the game's own goal or clock. The bots stand in for that goal: a
+ * human who cleared it finishes above them, one who failed finishes below
+ * them, and one who gave up finishes last. Humans on the same side of the goal
+ * are ranked by their score.
+ *
+ * `reports` has an entry for every human; every other player is a bot. Each
+ * player's score is the number of players they beat.
+ */
+export function scoreGoalRound(
+  playerIds: readonly string[],
+  reports: RoundReports,
+): Record<string, number> {
+  const standing = playerIds.map((id) => {
+    if (!(id in reports)) return { id, tier: 2, score: 0 };
+    const report = reports[id];
+    if (report?.kind !== 'goal') return { id, tier: 0, score: 0 };
+    return { id, tier: report.cleared ? 3 : 1, score: report.score };
+  });
+  const beats = (a: (typeof standing)[number], b: (typeof standing)[number]) =>
+    a.tier > b.tier || (a.tier === b.tier && a.score > b.score);
+  const scores: Record<string, number> = {};
+  for (const entry of standing) {
+    scores[entry.id] = standing.filter((other) => beats(entry, other)).length;
+  }
+  return scores;
 }

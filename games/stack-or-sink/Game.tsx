@@ -56,7 +56,7 @@ import { type Session, sessionStore } from '../../shared/rooms/session';
 import type { GameScene, Hud } from './scene';
 import { Sound } from './sound';
 import GameToolbar from '../../shared/ui/GameToolbar';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 import { TouchControls } from '../../shared/input/TouchControls';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
 import { triggerHaptic } from '../../shared/browser/haptics';
@@ -520,7 +520,19 @@ export default function Game() {
   return (
     <main
       className={`game-shell ${session ? 'is-playing' : ''}`}
-      {...partyRound(ended)}
+      {...partyRound(
+        ended,
+        world
+          ? world.phase === 'won'
+            ? // Faster is better: the rescue is the last thing the tick logs.
+              partyGoal(
+                true,
+                -((world.events.at(-1)?.at ?? world.clock) - world.started) /
+                  1000,
+              )
+            : partyGoal(false, world.bestHeight)
+          : null,
+      )}
     >
       <div className="world-canvas" ref={canvas} />
       <header className="topbar">

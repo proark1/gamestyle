@@ -39,7 +39,7 @@ import { useLanguage } from '../../shared/language/useLanguage';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { DRIVE_THRU_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(driveThruAnalytics);
 
@@ -209,6 +209,9 @@ export default function DriveThruGame() {
       className="drive-thru-container"
       {...partyRound(
         snapshot?.phase === 'meltdown' || snapshot?.phase === 'completed',
+        snapshot
+          ? partyGoal(snapshot.phase === 'completed', snapshot.score)
+          : null,
       )}
     >
       {/* 3D WebGL Canvas */}

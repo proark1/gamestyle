@@ -2,10 +2,15 @@
 /* oxlint-disable react/react-compiler, typescript/unbound-method */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Trophy, ArrowRight, LoaderCircle, Sparkles } from 'lucide-react';
+import { Trophy, ArrowRight, Flag, LoaderCircle, Sparkles } from 'lucide-react';
 import { COLORS } from '../rendering/palette';
 import { looksLikeRoomCode } from '../rooms/identity';
-import { PARTY_ROUND_ENDED_SELECTOR } from './party-round';
+import {
+  PARTY_RESULT_ATTRIBUTE,
+  PARTY_ROUND_ATTRIBUTE,
+  readPartyResult,
+  type PartyResult,
+} from './party-round';
 import './party-ribbon.css';
 
 const GAME_TITLES: Record<string, string> = {
@@ -51,14 +56,20 @@ export default function PartyRibbon() {
   const [gameTitle, setGameTitle] = useState<string>('Party Game');
   const [playerName, setPlayerName] = useState<string>('Player 1');
   const [playerColor, setPlayerColor] = useState<number>(0);
-  const [hostId, setHostId] = useState<string>('');
+  const [playerId, setPlayerId] = useState<string>('');
   const [introVisible, setIntroVisible] = useState<boolean>(true);
   const [introFading, setIntroFading] = useState<boolean>(false);
-  const [roundCompleted, setRoundCompleted] = useState<boolean>(false);
-  const [advancing, setAdvancing] = useState<boolean>(false);
+  // The first result the game publishes; the round's result from then on.
+  const [result, setResult] = useState<PartyResult | null>(null);
+  const [report, setReport] = useState<'idle' | 'saving' | 'saved' | 'failed'>(
+    'idle',
+  );
+  const [confirmGiveUp, setConfirmGiveUp] = useState<boolean>(false);
+  const [leaving, setLeaving] = useState<boolean>(false);
 
   const autoStarted = useRef<boolean>(false);
   const attempts = useRef<number>(0);
+  const reporting = useRef<Promise<boolean> | null>(null);
 
   // 1. Initialize party parameters from URL & sessionStorage
   useEffect(() => {
@@ -87,10 +98,11 @@ export default function PartyRibbon() {
     // Read cached player identity from sessionStorage
     let resolvedName = 'Player 1';
     let resolvedColor = 0;
+    // Written by the party page (app/party/PartyClient.tsx).
     try {
-      const raw = sessionStorage.getItem('jumbleyard-party-session');
-      if (raw) {
-        const parsed = JSON.parse(raw);
+      const raw = sessionStorage.getItem('jumbleyard-party-session-v1');
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed?.code === code) {
         if (parsed.name) {
           resolvedName = parsed.name;
           setPlayerName(parsed.name);
@@ -99,8 +111,8 @@ export default function PartyRibbon() {
           resolvedColor = parsed.color;
           setPlayerColor(parsed.color);
         }
-        if (parsed.playerId) {
-          setHostId(parsed.playerId);
+        if (typeof parsed.playerId === 'string') {
+          setPlayerId(parsed.playerId);
         }
       }
     } catch {}
@@ -119,20 +131,6 @@ export default function PartyRibbon() {
         );
       } catch {}
     }
-
-    // Also fetch latest room state from server in background
-    void fetch('/api/party', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ op: 'get', code }),
-    })
-      .then((res) => res.json())
-      .then((state) => {
-        if (state && state.hostId) {
-          setHostId(state.hostId);
-        }
-      })
-      .catch(() => {});
 
     return () => {
       document.body.classList.remove('jumbleyard-party-mode');
@@ -243,60 +241,82 @@ export default function PartyRibbon() {
   }, [partyCode, playerName]);
 
   // 3. Listen for round completion: every party game marks its root
-  // `data-party-round="ended"` once its match is over (see party-round.ts).
+  // `data-party-round="ended"` and publishes its result once its match is over
+  // (see party-round.ts). Scores such as time left keep drifting after the
+  // whistle, so the result is caught the moment it appears, and kept.
   useEffect(() => {
     if (!partyCode) return;
 
-    const checkEnded = () => {
-      const endedEl = document.querySelector(PARTY_ROUND_ENDED_SELECTOR);
-      if (endedEl && !roundCompleted) {
-        setRoundCompleted(true);
-      }
+    const check = () => {
+      const found = readPartyResult(document);
+      if (found) setResult(found);
+      return !!found;
     };
+    if (check()) return;
+    const observer = new MutationObserver(() => {
+      if (check()) observer.disconnect();
+    });
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: [PARTY_ROUND_ATTRIBUTE, PARTY_RESULT_ATTRIBUTE],
+    });
+    return () => observer.disconnect();
+  }, [partyCode]);
 
-    const timer = setInterval(checkEnded, 1000);
-    return () => clearInterval(timer);
-  }, [partyCode, roundCompleted]);
-
-  // 4. Advance to Standings / Next Round
-  const handleFinishRound = useCallback(async () => {
-    if (!partyCode || advancing) return;
-    setAdvancing(true);
-
-    try {
-      const res = await fetch('/api/party', {
+  // 4. Report this player's result; null gives the round up. The party
+  // scores the round once every human has reported.
+  const sendReport = useCallback(
+    (value: PartyResult | null): Promise<boolean> => {
+      if (!partyCode || !playerId) return Promise.resolve(false);
+      if (reporting.current) return reporting.current;
+      setReport('saving');
+      const sent = fetch('/api/party', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ op: 'get', code: partyCode }),
-      });
-      const room = await res.json();
-
-      if (room?.players) {
-        const scores: Record<string, number> = {};
-        room.players.forEach(
-          (p: { id: string; isBot?: boolean }, idx: number) => {
-            scores[p.id] = p.isBot
-              ? Math.floor(Math.random() * 40) + (3 - idx) * 15
-              : Math.floor(Math.random() * 30) + 70;
-          },
-        );
-
-        await fetch('/api/party', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            op: 'record_result',
-            code: partyCode,
-            round,
-            scores,
-            hostId: hostId || room.hostId,
-          }),
+        body: JSON.stringify({
+          op: 'report_result',
+          code: partyCode,
+          round,
+          playerId,
+          result: value,
+        }),
+      })
+        .then((res) => res.ok)
+        .catch(() => false)
+        .then((ok) => {
+          setReport(ok ? 'saved' : 'failed');
+          if (!ok) reporting.current = null;
+          return ok;
         });
-      }
-    } catch {}
+      reporting.current = sent;
+      return sent;
+    },
+    [partyCode, playerId, round],
+  );
 
+  useEffect(() => {
+    if (result) void sendReport(result);
+  }, [result, sendReport]);
+
+  useEffect(() => {
+    if (!confirmGiveUp) return;
+    const timer = setTimeout(() => setConfirmGiveUp(false), 4000);
+    return () => clearTimeout(timer);
+  }, [confirmGiveUp]);
+
+  // 5. Head back to the standings, giving the round up if it isn't over
+  const handleLeaveRound = useCallback(async () => {
+    if (!partyCode || leaving) return;
+    if (!result && !confirmGiveUp) {
+      setConfirmGiveUp(true);
+      return;
+    }
+    setLeaving(true);
+    await sendReport(result);
     window.location.href = `/party?room=${partyCode}`;
-  }, [partyCode, round, hostId, advancing]);
+  }, [partyCode, leaving, result, confirmGiveUp, sendReport]);
 
   if (!partyCode) return null;
 
@@ -366,30 +386,45 @@ export default function PartyRibbon() {
           <button
             type="button"
             className="party-ribbon-btn party-ribbon-btn-finish"
-            onClick={() => void handleFinishRound()}
-            disabled={advancing}
+            onClick={() => void handleLeaveRound()}
+            disabled={leaving}
           >
-            {advancing ? (
+            {leaving ? (
               <LoaderCircle size={14} className="party-spin" />
-            ) : (
+            ) : result ? (
               <ArrowRight size={14} />
+            ) : (
+              <Flag size={14} />
             )}
-            {advancing ? 'Saving…' : 'Finish Round'}
+            {leaving
+              ? 'Saving…'
+              : result
+                ? 'View Standings'
+                : confirmGiveUp
+                  ? 'Tap again to give up'
+                  : 'Give Up Round'}
           </button>
         </div>
       </aside>
 
       {/* In-Game Round Complete Toast */}
-      {roundCompleted && !advancing && (
+      {result && !leaving && (
         <div className="party-completion-card">
           <Sparkles size={20} color="#f3bf50" />
-          <span>Round {round + 1} complete! Ready for standings?</span>
+          <span>
+            {report === 'saving'
+              ? `Round ${round + 1} complete! Saving your result…`
+              : report === 'failed'
+                ? `Round ${round + 1} complete, but your result didn't save.`
+                : `Round ${round + 1} complete! Ready for standings?`}
+          </span>
           <button
             type="button"
             className="party-ribbon-btn party-ribbon-btn-finish"
-            onClick={() => void handleFinishRound()}
+            onClick={() => void handleLeaveRound()}
           >
-            View Standings <ArrowRight size={14} />
+            {report === 'failed' ? 'Retry & View Standings' : 'View Standings'}{' '}
+            <ArrowRight size={14} />
           </button>
         </div>
       )}

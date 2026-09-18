@@ -41,7 +41,7 @@ import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { CARRY_ON_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(carryOnCarnageAnalytics);
 
@@ -215,7 +215,12 @@ export default function CarryOnCarnageGame() {
   return (
     <div
       className="carryon-container"
-      {...partyRound(world?.phase === 'flight_departed')}
+      {...partyRound(
+        world?.phase === 'flight_departed',
+        world
+          ? partyGoal(world.approvedCount >= world.targetBags, world.totalScore)
+          : null,
+      )}
     >
       {/* 3D Canvas */}
       <div ref={containerRef} className="carryon-canvas" />

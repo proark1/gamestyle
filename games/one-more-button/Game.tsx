@@ -66,7 +66,7 @@ import {
 } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 const sessions = sessionStore('one-more-button-session-v1');
 const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -384,7 +384,10 @@ export default function OneMoreButton() {
   return (
     <main
       className={`omb-game${session ? ' in-session' : ''}`}
-      {...partyRound(!!session && done)}
+      {...partyRound(
+        !!session && done,
+        partyGoal((me?.winnings ?? 0) > 0, me?.winnings ?? 0),
+      )}
     >
       <div className="omb-canvas" ref={container} />
       <header className="omb-header">
