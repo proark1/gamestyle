@@ -64,7 +64,7 @@ import { breakfastAnalytics, breakfastPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('four-brain-cells-session-v1');
 const PREFS_KEY = 'four-brain-cells-prefs-v1';
@@ -418,7 +418,21 @@ export default function FourBrainCells() {
   return (
     <main
       className={`brain-game${session ? ' brain-in-session' : ''}`}
-      {...partyRound(!!session && done)}
+      {...partyRound(
+        !!session && done,
+        w
+          ? w.phase === 'won'
+            ? // Faster is better, timed by the finish event.
+              partyGoal(
+                true,
+                -(
+                  (w.events.findLast((e) => e.kind === 'finish')?.at ??
+                    w.clock) - w.started
+                ) / 1000,
+              )
+            : partyGoal(false, w.pancakes / 3 + w.coffee)
+          : null,
+      )}
     >
       <div className="brain-canvas" ref={container} />
       <header className="brain-header">

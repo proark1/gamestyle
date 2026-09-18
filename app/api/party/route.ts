@@ -15,6 +15,8 @@ import {
   removePlayerFromParty,
   startPartyTournament,
   recordRoundResult,
+  reportRoundResult,
+  closePartyRound,
   advanceToNextRound,
   rematchParty,
   getPartyRoom,
@@ -107,6 +109,27 @@ async function handleRequest(request: Request) {
           body.code,
           body.round,
           body.scores,
+          body.hostId,
+        );
+        return json({ state });
+      }
+
+      case 'report_result': {
+        const state = await reportRoundResult(
+          store,
+          body.code,
+          body.round,
+          body.playerId,
+          body.result,
+        );
+        return json({ state });
+      }
+
+      case 'close_round': {
+        const state = await closePartyRound(
+          store,
+          body.code,
+          body.round,
           body.hostId,
         );
         return json({ state });

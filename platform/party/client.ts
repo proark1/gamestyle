@@ -1,3 +1,4 @@
+import type { PartyResult } from '../../shared/ui/party-round';
 import type { PartyAction, PartyRoomState } from './types';
 
 async function partyRequest<T>(action: PartyAction): Promise<T> {
@@ -105,6 +106,36 @@ export async function recordPartyResult(
     code,
     round,
     scores,
+    hostId,
+  });
+  return data.state;
+}
+
+export async function reportPartyResult(
+  code: string,
+  round: number,
+  playerId: string,
+  result: PartyResult | null,
+): Promise<PartyRoomState> {
+  const data = await partyRequest<{ state: PartyRoomState }>({
+    op: 'report_result',
+    code,
+    round,
+    playerId,
+    result,
+  });
+  return data.state;
+}
+
+export async function closePartyRound(
+  code: string,
+  round: number,
+  hostId: string,
+): Promise<PartyRoomState> {
+  const data = await partyRequest<{ state: PartyRoomState }>({
+    op: 'close_round',
+    code,
+    round,
     hostId,
   });
   return data.state;

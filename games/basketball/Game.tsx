@@ -42,7 +42,7 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { basketballAnalytics } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyRound, partyVersus } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(basketballAnalytics);
 // Below this width the controls card starts hidden; style.css matches it.
@@ -292,7 +292,13 @@ export default function BasketballGame() {
     );
 
   return (
-    <div className="bb-game" {...partyRound(world?.phase === 'ended')}>
+    <div
+      className="bb-game"
+      {...partyRound(
+        world?.phase === 'ended',
+        partyVersus(localPlayer?.team, world?.winner),
+      )}
+    >
       <div ref={container} className="bb-canvas" />
       <header className="topbar bb-topbar">
         <a href="/" className="wordmark">

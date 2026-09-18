@@ -67,7 +67,7 @@ import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { TOUCH_QUERY } from '../../shared/browser/device';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 const sessions = sessionStore('act-natural-session-v1');
 const clock = (seconds: number) => {
   const whole = Math.ceil(Math.max(0, seconds));
@@ -388,7 +388,19 @@ export default function ActNatural() {
   return (
     <main
       className={`farm-shell ${session ? 'farm-active' : ''} ${w && farmMode(w) === 'human' && w.phase !== 'lobby' ? 'farm-night' : ''} ${w?.phase === 'lobby' ? 'farm-in-lobby' : ''} ${spectating ? 'farm-spectating' : ''}`}
-      {...partyRound(ended)}
+      {...partyRound(
+        ended,
+        w
+          ? w.phase === (farmer ? 'farmer-win' : 'cows-win')
+            ? // A quick escape (or catch) wins; the ribbon keeps the first
+              // ended frame, before the clock runs the seconds down.
+              partyGoal(true, seconds)
+            : partyGoal(
+                false,
+                w.keysDelivered + Number(w.powerOff) + Number(w.ladderPlaced),
+              )
+          : null,
+      )}
     >
       <div className="farm-canvas" ref={canvas} />
       <header className="farm-topbar">

@@ -31,7 +31,11 @@ import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { ZORB_CLASH_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import {
+  leadingSide,
+  partyRound,
+  partyVersus,
+} from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(zorbClashAnalytics);
 
@@ -352,7 +356,15 @@ export default function ZorbClash() {
   const isEnded = snapshot?.world.status === 'ended';
 
   return (
-    <main className="zorb-container" {...partyRound(isEnded)}>
+    <main
+      className="zorb-container"
+      {...partyRound(
+        isEnded,
+        snapshot
+          ? partyVersus(me?.team, leadingSide(snapshot.world.score))
+          : null,
+      )}
+    >
       <div ref={containerRef} className="zorb-canvas-wrapper" />
       <header className="topbar">
         <a href="/" className="wordmark">

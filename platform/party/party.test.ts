@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { generatePlaylist, PARTY_GAMES } from './playlist';
-import { calculateRoundPoints } from './scoring';
+import {
+  calculateRoundPoints,
+  roundTeams,
+  scoreGoalRound,
+  scoreTeamRound,
+} from './scoring';
 import {
   createPartyRoom,
   joinPartyRoom,
@@ -10,12 +15,21 @@ import {
   toggleReady,
   startPartyTournament,
   recordRoundResult,
+  reportRoundResult,
+  closePartyRound,
+  leavePartyRoom,
   advanceToNextRound,
   rematchParty,
   getPartyRoom,
   partyStorageKey,
 } from './coordinator';
+import type { GameId } from '../../shared/audio/types';
 import type { RoomStore, Row } from '../../shared/rooms/types';
+import {
+  partyGoal,
+  partyVersus,
+  type PartyResult,
+} from '../../shared/ui/party-round';
 
 function createMockRoomStore(): RoomStore {
   const store = new Map<string, Row>();
@@ -63,6 +77,27 @@ void test('every party game tells the ribbon when its match is over', () => {
       /\{\.\.\.partyRound\(/,
       `games/${id}/Game.tsx does not spread partyRound() onto its root, so a ` +
         `party playlist never advances past it`,
+    );
+  }
+});
+
+void test('every party game reports the kind of result its round is scored by', () => {
+  // Team rounds are scored from who won; every other party game is played
+  // against its own goal or clock. The server refuses the other kind.
+  for (const { id, teams } of PARTY_GAMES) {
+    const source = readFileSync(`games/${id}/Game.tsx`, 'utf8');
+    const [reports, never] = teams
+      ? ['partyVersus', 'partyGoal']
+      : ['partyGoal', 'partyVersus'];
+    assert.match(
+      source,
+      new RegExp(`\\b${reports}\\(`),
+      `games/${id}/Game.tsx must report its result with ${reports}()`,
+    );
+    assert.doesNotMatch(
+      source,
+      new RegExp(`\\b${never}\\(`),
+      `games/${id}/Game.tsx reports ${never}(), which its round refuses`,
     );
   }
 });
@@ -239,4 +274,302 @@ void test('Party Room Lifecycle: create -> join -> start -> score -> next round 
   assert.equal(rematched.currentRound, 0);
   assert.equal(rematched.roundResults.length, 0);
   assert(rematched.players.every((p) => p.score === 0));
+});
+
+const won = partyVersus('red', 'red');
+const lost = partyVersus('red', 'blue');
+const drew = partyVersus('red', 'draw');
+
+void test('team rounds rotate partners so everyone pairs up with everyone', () => {
+  const ids = ['a', 'b', 'c', 'd'];
+  const pairings = [0, 1, 2].map((round) => roundTeams(ids, round));
+  assert.deepEqual(pairings, [
+    [
+      ['a', 'b'],
+      ['c', 'd'],
+    ],
+    [
+      ['a', 'c'],
+      ['b', 'd'],
+    ],
+    [
+      ['a', 'd'],
+      ['b', 'c'],
+    ],
+  ]);
+  assert.deepEqual(roundTeams(ids, 3), pairings[0]);
+  // Someone left mid-tournament: the rest still split into two sides.
+  assert.deepEqual(roundTeams(['a', 'b', 'c'], 1), [['a', 'c'], ['b']]);
+});
+
+void test('a team round counts every human match as a leg for that side', () => {
+  const teams: [string[], string[]] = [
+    ['host', 'bot1'],
+    ['guest', 'bot2'],
+  ];
+  const round = (reports: Record<string, PartyResult | null>) => {
+    const scores = scoreTeamRound(teams, reports);
+    const points = calculateRoundPoints(
+      Object.entries(scores).map(([playerId, score]) => ({ playerId, score })),
+      true,
+    );
+    return { scores, points };
+  };
+
+  // Each human played their own match with NPCs standing in for the rest;
+  // both legs went to the host's side, and both teammates share the win.
+  assert.deepEqual(round({ host: won, guest: lost }), {
+    scores: { host: 1, bot1: 1, guest: 0, bot2: 0 },
+    points: { host: 10, bot1: 10, guest: 3, bot2: 3 },
+  });
+  // Both sides won a leg: the round is drawn.
+  assert.deepEqual(round({ host: won, guest: won }).points, {
+    host: 6,
+    bot1: 6,
+    guest: 6,
+    bot2: 6,
+  });
+  // Giving up loses the leg; a drawn match splits it.
+  assert.deepEqual(round({ host: null, guest: drew }), {
+    scores: { host: 0.25, bot1: 0.25, guest: 0.75, bot2: 0.75 },
+    points: { host: 3, bot1: 3, guest: 10, bot2: 10 },
+  });
+  // A lone human's match decides the round for both sides.
+  assert.deepEqual(
+    scoreTeamRound(
+      [
+        ['host', 'bot1'],
+        ['bot2', 'bot3'],
+      ],
+      { host: lost },
+    ),
+    { host: 0, bot1: 0, bot2: 1, bot3: 1 },
+  );
+});
+
+void test('in a goal round the bots stand for the goal itself', () => {
+  const ids = ['host', 'guest', 'bot1', 'bot2'];
+  // Cleared beats the bots, failing loses to them, however big the score.
+  const scores = scoreGoalRound(ids, {
+    host: partyGoal(true, 40),
+    guest: partyGoal(false, 900),
+  });
+  const points = calculateRoundPoints(
+    ids.map((playerId) => ({ playerId, score: scores[playerId] })),
+  );
+  assert.deepEqual(scores, { host: 3, guest: 0, bot1: 1, bot2: 1 });
+  assert.deepEqual(points, { host: 10, bot1: 5, bot2: 5, guest: 1 });
+
+  // Humans on the same side of the goal are ranked by score; giving up is
+  // last of all.
+  assert.deepEqual(
+    scoreGoalRound(['a', 'b', 'c', 'd', 'bot'], {
+      a: partyGoal(true, 10),
+      b: partyGoal(true, 30),
+      c: null,
+      d: partyGoal(true, 10),
+    }),
+    { a: 2, b: 4, c: 0, d: 2, bot: 1 },
+  );
+  // A lone human who fails the goal comes in behind the bots.
+  assert.deepEqual(
+    scoreGoalRound(['host', 'bot1', 'bot2', 'bot3'], {
+      host: partyGoal(false, 5),
+    }),
+    { host: 0, bot1: 1, bot2: 1, bot3: 1 },
+  );
+});
+
+/** A started party whose every round is `game`, with `guests` joined humans. */
+async function startParty(game: GameId, guests: number) {
+  const store = createMockRoomStore();
+  const { state, playerId: hostId } = await createPartyRoom(store, 'Host', 0);
+  const row = (await store.get(partyStorageKey(state.code)))!;
+  await store.compareAndSwap(
+    {
+      ...row,
+      state: JSON.stringify({ ...state, playlist: Array(6).fill(game) }),
+      version: row.version + 1,
+    },
+    row.version,
+  );
+  const guestIds: string[] = [];
+  for (let i = 0; i < guests; i++) {
+    const joined = await joinPartyRoom(store, state.code, `Guest ${i}`, i + 1);
+    guestIds.push(joined.playerId);
+  }
+  const started = await startPartyTournament(store, state.code, hostId);
+  const bots = started.players.filter((p) => p.isBot).map((p) => p.id);
+  return { store, code: state.code, hostId, guestIds, bots };
+}
+
+void test('a goal round waits for every human, then scores their reports', async () => {
+  const {
+    store,
+    code,
+    hostId,
+    guestIds: [guestId],
+    bots,
+  } = await startParty('chain-of-fools', 1);
+
+  const waiting = await reportRoundResult(
+    store,
+    code,
+    0,
+    hostId,
+    partyGoal(true, 1200),
+  );
+  assert.equal(waiting.status, 'countdown');
+  assert.deepEqual(waiting.reports, { [hostId]: partyGoal(true, 1200) });
+
+  // The first report stands, so a better rematch changes nothing.
+  const again = await reportRoundResult(
+    store,
+    code,
+    0,
+    hostId,
+    partyGoal(true, 9999),
+  );
+  assert.deepEqual(again.reports, waiting.reports);
+
+  const scored = await reportRoundResult(
+    store,
+    code,
+    0,
+    guestId,
+    partyGoal(false, 300),
+  );
+  assert.equal(scored.status, 'intermission');
+  assert.equal(scored.reports, undefined);
+  const [result] = scored.roundResults;
+  assert.deepEqual(result.pointsAwarded, {
+    [hostId]: 10,
+    [guestId]: 1,
+    [bots[0]]: 5,
+    [bots[1]]: 5,
+  });
+  assert.deepEqual(result.reports, {
+    [hostId]: partyGoal(true, 1200),
+    [guestId]: partyGoal(false, 300),
+  });
+  assert.equal(result.winnerId, hostId);
+
+  // A late report once the round is scored is ignored.
+  const late = await reportRoundResult(
+    store,
+    code,
+    0,
+    guestId,
+    partyGoal(true, 1),
+  );
+  assert.deepEqual(late.roundResults, scored.roundResults);
+});
+
+void test('a team round scores both teammates alike from the human legs', async () => {
+  const {
+    store,
+    code,
+    hostId,
+    guestIds: [guestId],
+    bots,
+  } = await startParty('crane-clash', 1);
+
+  // Round 0 pairs the host with the guest against the two bots.
+  await reportRoundResult(store, code, 0, hostId, won);
+  const round0 = await reportRoundResult(store, code, 0, guestId, won);
+  assert.deepEqual(round0.roundResults[0].teams, [
+    [hostId, guestId],
+    [bots[0], bots[1]],
+  ]);
+  assert.deepEqual(round0.roundResults[0].pointsAwarded, {
+    [hostId]: 10,
+    [guestId]: 10,
+    [bots[0]]: 3,
+    [bots[1]]: 3,
+  });
+
+  // Round 1 puts the two humans on opposite sides.
+  await advanceToNextRound(store, code, hostId);
+  await reportRoundResult(store, code, 1, hostId, won);
+  const round1 = await reportRoundResult(store, code, 1, guestId, lost);
+  const [, result] = round1.roundResults;
+  assert.deepEqual(result.teams, [
+    [hostId, bots[0]],
+    [guestId, bots[1]],
+  ]);
+  assert.deepEqual(result.pointsAwarded, {
+    [hostId]: 10,
+    [guestId]: 3,
+    [bots[0]]: 10,
+    [bots[1]]: 3,
+  });
+});
+
+void test('a report is refused unless it is a real result for this round', async () => {
+  const { store, code, hostId, bots } = await startParty('crane-clash', 1);
+  await assert.rejects(
+    reportRoundResult(store, code, 0, hostId, partyGoal(true, 1)),
+    /does not belong to this round/,
+  );
+  await assert.rejects(
+    reportRoundResult(store, code, 0, hostId, { kind: 'versus', outcome: 1 }),
+    /could not be read/,
+  );
+  await assert.rejects(
+    reportRoundResult(store, code, 0, bots[0], won),
+    /Only a player in this party/,
+  );
+  await assert.rejects(
+    reportRoundResult(store, code, 0, 'stranger', won),
+    /Only a player in this party/,
+  );
+  // A report for another round is ignored.
+  const other = await reportRoundResult(store, code, 3, hostId, won);
+  assert.equal(other.reports, undefined);
+});
+
+void test('the host can score the round without the players still out', async () => {
+  const {
+    store,
+    code,
+    hostId,
+    guestIds: [guestId],
+  } = await startParty('reel-problems', 1);
+  await reportRoundResult(store, code, 0, hostId, partyGoal(false, 90));
+  await assert.rejects(
+    closePartyRound(store, code, 0, guestId),
+    /Only the party host/,
+  );
+  const closed = await closePartyRound(store, code, 0, hostId);
+  assert.equal(closed.status, 'intermission');
+  const [result] = closed.roundResults;
+  assert.equal(result.reports?.[guestId], null);
+  assert.equal(result.pointsAwarded[guestId], 1);
+});
+
+void test('a round is scored once the last player still out leaves', async () => {
+  const {
+    store,
+    code,
+    hostId,
+    guestIds: [guestId],
+  } = await startParty('wrong-floor', 1);
+  await reportRoundResult(store, code, 0, hostId, partyGoal(true, 0));
+  const left = await leavePartyRoom(store, code, guestId);
+  assert.equal(left.status, 'intermission');
+  assert.equal(left.roundResults[0].pointsAwarded[hostId], 10);
+});
+
+void test('a round is only ever scored once', async () => {
+  const {
+    store,
+    code,
+    hostId,
+    guestIds: [guestId],
+  } = await startParty('reel-problems', 1);
+  const scores = { [hostId]: 5, [guestId]: 3 };
+  await recordRoundResult(store, code, 0, scores, hostId);
+  const twice = await recordRoundResult(store, code, 0, scores, hostId);
+  assert.equal(twice.roundResults.length, 1);
+  assert.equal(twice.players.find((p) => p.id === hostId)!.score, 10);
 });

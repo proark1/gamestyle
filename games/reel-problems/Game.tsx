@@ -66,7 +66,7 @@ import { reelAnalytics, reelPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('reel-problems-session-v1');
 const time = (ms: number) => {
@@ -599,7 +599,10 @@ export default function ReelProblems() {
   return (
     <main
       className={`reel-game${session ? ' in-session' : ''}`}
-      {...partyRound(!!session && done)}
+      {...partyRound(
+        !!session && done,
+        w ? partyGoal(w.phase === 'won', w.score) : null,
+      )}
     >
       <div className="reel-canvas" ref={container} />
       {playing && (me?.line?.tension ?? 0) > 0.85 && (

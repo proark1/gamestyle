@@ -1,7 +1,14 @@
 import type { RoomStore } from '../../shared/rooms/types';
 import { newRoomCode, playerName } from '../../shared/rooms/identity';
+import { parsePartyResult } from '../../shared/ui/party-round';
 import { generatePlaylist, getPartyGameInfo } from './playlist';
-import { calculateRoundPoints } from './scoring';
+import {
+  calculateRoundPoints,
+  roundTeams,
+  scoreGoalRound,
+  scoreTeamRound,
+  type RoundReports,
+} from './scoring';
 import type { PartyPlayer, PartyRoomState, RoundResult } from './types';
 
 export const partyStorageKey = (code: string) => `party:${code}`;
@@ -162,11 +169,11 @@ export async function leavePartyRoom(
         nextHuman.ready = true;
         hostId = nextHuman.id;
       }
-      return {
+      return finishIfAllReported({
         ...room,
         hostId,
         players: remaining,
-      };
+      });
     },
     now,
   );
@@ -257,10 +264,10 @@ export async function removePlayerFromParty(
       if (targetId === hostId) {
         throw new Error('Host cannot kick themselves.');
       }
-      return {
+      return finishIfAllReported({
         ...room,
         players: room.players.filter((p) => p.id !== targetId),
-      };
+      });
     },
     now,
   );
@@ -317,6 +324,7 @@ export async function startPartyTournament(
         players,
         playlist,
         currentRound: 0,
+        reports: undefined,
         status: 'countdown',
         countdownUntil: now + 4000,
       };
@@ -325,6 +333,112 @@ export async function startPartyTournament(
   );
 }
 
+/**
+ * Scores a round from explicit per-player scores and moves on to the
+ * standings. A round is only ever scored once.
+ */
+function finishRound(
+  room: PartyRoomState,
+  round: number,
+  scores: Record<string, number>,
+  detail: Pick<RoundResult, 'reports' | 'teams'> = {},
+): PartyRoomState {
+  if (
+    room.currentRound !== round ||
+    room.roundResults.some((result) => result.round === round)
+  ) {
+    return room; // Already recorded or out of sync
+  }
+
+  const currentGameId = room.playlist[round];
+  const gameInfo = currentGameId ? getPartyGameInfo(currentGameId) : undefined;
+  const isTeam = gameInfo?.teams ?? false;
+
+  const scoreEntries = room.players.map((p) => ({
+    playerId: p.id,
+    score: scores[p.id] ?? 0,
+  }));
+
+  const pointsAwarded = calculateRoundPoints(scoreEntries, isTeam);
+
+  // Find round winner
+  let highestPts = -1;
+  let winnerId: string | undefined;
+  for (const [pId, pts] of Object.entries(pointsAwarded)) {
+    if (pts > highestPts) {
+      highestPts = pts;
+      winnerId = pId;
+    }
+  }
+
+  const result: RoundResult = {
+    round,
+    game: currentGameId,
+    scores,
+    pointsAwarded,
+    winnerId,
+    ...detail,
+  };
+
+  // Accumulate scores
+  const updatedPlayers = room.players.map((p) => ({
+    ...p,
+    score: p.score + (pointsAwarded[p.id] ?? 0),
+  }));
+
+  const isLastRound = round >= 5;
+
+  return {
+    ...room,
+    players: updatedPlayers,
+    roundResults: [...room.roundResults, result],
+    reports: undefined,
+    status: isLastRound ? 'finished' : 'intermission',
+  };
+}
+
+/** Players are off playing the current round and may report results. */
+const roundInPlay = (room: PartyRoomState) =>
+  room.status === 'countdown' || room.status === 'in_game';
+
+const humansOf = (room: PartyRoomState) => room.players.filter((p) => !p.isBot);
+
+/**
+ * Scores the current round from the humans' reports. A human who has not
+ * reported yet counts as having given up.
+ */
+function scoreReportedRound(room: PartyRoomState): PartyRoomState {
+  const round = room.currentRound;
+  const reports: RoundReports = {};
+  for (const human of humansOf(room)) {
+    reports[human.id] = room.reports?.[human.id] ?? null;
+  }
+  const ids = room.players.map((p) => p.id);
+  const game = getPartyGameInfo(room.playlist[round]);
+  if (game?.teams) {
+    const teams = roundTeams(ids, round);
+    return finishRound(room, round, scoreTeamRound(teams, reports), {
+      reports,
+      teams,
+    });
+  }
+  return finishRound(room, round, scoreGoalRound(ids, reports), { reports });
+}
+
+/** Scores the round as soon as the last human still playing has reported. */
+function finishIfAllReported(room: PartyRoomState): PartyRoomState {
+  const humans = humansOf(room);
+  if (
+    !roundInPlay(room) ||
+    !humans.length ||
+    humans.some((p) => room.reports?.[p.id] === undefined)
+  ) {
+    return room;
+  }
+  return scoreReportedRound(room);
+}
+
+/** The host submits every player's score for the round directly. */
 export async function recordRoundResult(
   store: RoomStore,
   code: string,
@@ -340,55 +454,76 @@ export async function recordRoundResult(
       if (room.hostId !== hostId) {
         throw new Error('Only the party host can submit round results.');
       }
-      if (room.currentRound !== round) {
-        return room; // Already recorded or out of sync
+      return finishRound(room, round, scores);
+    },
+    now,
+  );
+}
+
+/**
+ * A human reports how their own match went, or gives up with a null result.
+ * The first report stands, so a rematch after the round cannot improve it.
+ */
+export async function reportRoundResult(
+  store: RoomStore,
+  code: string,
+  round: number,
+  playerId: string,
+  result: unknown,
+  now = Date.now(),
+): Promise<PartyRoomState> {
+  const parsed = result === null ? null : parsePartyResult(result);
+  if (result !== null && !parsed) {
+    throw new Error('That round result could not be read.');
+  }
+  return updatePartyRoom(
+    store,
+    code,
+    (room) => {
+      const player = room.players.find((p) => p.id === playerId);
+      if (!player || player.isBot) {
+        throw new Error('Only a player in this party can report a result.');
       }
-
-      const currentGameId = room.playlist[round];
-      const gameInfo = currentGameId
-        ? getPartyGameInfo(currentGameId)
-        : undefined;
-      const isTeam = gameInfo?.teams ?? false;
-
-      const scoreEntries = room.players.map((p) => ({
-        playerId: p.id,
-        score: scores[p.id] ?? 0,
-      }));
-
-      const pointsAwarded = calculateRoundPoints(scoreEntries, isTeam);
-
-      // Find round winner
-      let highestPts = -1;
-      let winnerId: string | undefined;
-      for (const [pId, pts] of Object.entries(pointsAwarded)) {
-        if (pts > highestPts) {
-          highestPts = pts;
-          winnerId = pId;
-        }
+      if (
+        room.currentRound !== round ||
+        !roundInPlay(room) ||
+        room.reports?.[playerId] !== undefined
+      ) {
+        return room; // Late, early or already reported
       }
-
-      const result: RoundResult = {
-        round,
-        game: currentGameId,
-        scores,
-        pointsAwarded,
-        winnerId,
-      };
-
-      // Accumulate scores
-      const updatedPlayers = room.players.map((p) => ({
-        ...p,
-        score: p.score + (pointsAwarded[p.id] ?? 0),
-      }));
-
-      const isLastRound = round >= 5;
-
-      return {
+      const teams = getPartyGameInfo(room.playlist[round])?.teams ?? false;
+      if (parsed && parsed.kind !== (teams ? 'versus' : 'goal')) {
+        throw new Error('That result does not belong to this round.');
+      }
+      return finishIfAllReported({
         ...room,
-        players: updatedPlayers,
-        roundResults: [...room.roundResults, result],
-        status: isLastRound ? 'finished' : 'intermission',
-      };
+        reports: { ...room.reports, [playerId]: parsed },
+      });
+    },
+    now,
+  );
+}
+
+/**
+ * The host stops waiting and scores the round; anyone who has not reported
+ * counts as having given up.
+ */
+export async function closePartyRound(
+  store: RoomStore,
+  code: string,
+  round: number,
+  hostId: string,
+  now = Date.now(),
+): Promise<PartyRoomState> {
+  return updatePartyRoom(
+    store,
+    code,
+    (room) => {
+      if (room.hostId !== hostId) {
+        throw new Error('Only the party host can close the round.');
+      }
+      if (room.currentRound !== round || !roundInPlay(room)) return room;
+      return scoreReportedRound(room);
     },
     now,
   );
@@ -414,6 +549,7 @@ export async function advanceToNextRound(
       return {
         ...room,
         currentRound: nextRound,
+        reports: undefined,
         status: 'countdown',
         countdownUntil: now + 4000,
       };
@@ -446,6 +582,7 @@ export async function rematchParty(
         playlist: generatePlaylist(6),
         currentRound: 0,
         roundResults: [],
+        reports: undefined,
         status: 'lobby',
         countdownUntil: undefined,
       };

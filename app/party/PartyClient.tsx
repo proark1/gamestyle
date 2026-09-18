@@ -31,6 +31,7 @@ import {
   rematchParty,
   leaveParty,
   recordPartyResult,
+  closePartyRound,
 } from '@/platform/party/client';
 import type { PartyPlayer, PartyRoomState } from '@/platform/party/types';
 import './party.css';
@@ -120,9 +121,15 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     };
   }, [room?.code]);
 
+  // This player has already reported their result for the round in play.
+  const reported =
+    !!playerId &&
+    room?.status === 'countdown' &&
+    room.reports?.[playerId] !== undefined;
+
   // Countdown handler
   useEffect(() => {
-    if (room?.status !== 'countdown' || !room.countdownUntil) {
+    if (room?.status !== 'countdown' || !room.countdownUntil || reported) {
       return;
     }
     const interval = setInterval(() => {
@@ -147,6 +154,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     room?.playlist,
     room?.currentRound,
     room?.code,
+    reported,
   ]);
 
   const isHost = room?.hostId === playerId;
@@ -244,6 +252,20 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
       setError(
         err instanceof Error ? err.message : 'Could not advance to next round.',
       );
+    }
+  };
+
+  const handleCloseRound = async () => {
+    if (!room || !playerId || !isHost) return;
+    try {
+      const next = await closePartyRound(
+        room.code,
+        room.currentRound,
+        playerId,
+      );
+      setRoom(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not close round.');
     }
   };
 
@@ -416,7 +438,149 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     );
   }
 
-  // 2. COUNTDOWN VIEW
+  // 2. WAITING FOR THE OTHERS TO FINISH THE ROUND
+  if (reported) {
+    const currentGameId = room.playlist[room.currentRound];
+    const info = currentGameId ? getPartyGameInfo(currentGameId) : undefined;
+    const humans = room.players.filter((p) => !p.isBot);
+    return (
+      <div className="party-root">
+        <header className="party-header">
+          <span className="party-brand">
+            <span className="party-brand-icon">
+              <Gamepad2 size={22} color="#294a43" />
+            </span>
+            JUMBLEYARD
+          </span>
+          <span className="party-badge">
+            ROUND {room.currentRound + 1} OF 6
+          </span>
+        </header>
+
+        <main className="party-main">
+          <div className="party-title-wrap">
+            <h1 className="party-title">
+              {room.reports?.[playerId] === null
+                ? 'You gave up this round'
+                : 'Your result is in'}
+            </h1>
+            <p className="party-subtitle">
+              {info?.name ?? 'This round'} is scored as soon as everyone has
+              finished.
+            </p>
+          </div>
+
+          <div className="party-card">
+            {error && (
+              <div
+                style={{
+                  color: '#c0392b',
+                  fontWeight: 700,
+                  marginBottom: 20,
+                  textAlign: 'center',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            <table className="party-standings-table">
+              <tbody>
+                {humans.map((player) => {
+                  const report = room.reports?.[player.id];
+                  return (
+                    <tr key={player.id}>
+                      <td>
+                        <div
+                          className="party-player-name-cell"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 14,
+                              height: 14,
+                              borderRadius: '50%',
+                              backgroundColor: COLORS[player.color] ?? '#999',
+                              display: 'inline-block',
+                            }}
+                          />
+                          {player.name}
+                          {player.id === playerId && (
+                            <span style={{ color: '#ca8038', fontSize: 12 }}>
+                              (You)
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ color: '#557065', fontWeight: 700 }}>
+                        {report === undefined
+                          ? 'Still playing…'
+                          : report === null
+                            ? 'Gave up'
+                            : '✓ Finished'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                marginTop: 20,
+                gap: 12,
+              }}
+            >
+              <button
+                type="button"
+                className="party-btn party-btn-ghost"
+                onClick={handleLeave}
+              >
+                <LogOut size={18} /> Leave Party
+              </button>
+
+              {isHost ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                  }}
+                >
+                  <span style={{ color: '#71806b', fontSize: 13 }}>
+                    Anyone still playing counts as giving up.
+                  </span>
+                  <button
+                    type="button"
+                    className="party-btn party-btn-primary"
+                    onClick={handleCloseRound}
+                  >
+                    Score the Round Now <ArrowRight size={18} />
+                  </button>
+                </div>
+              ) : (
+                <span style={{ color: '#71806b', fontWeight: 600 }}>
+                  Waiting for the others to finish…
+                </span>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 3. COUNTDOWN VIEW
   if (room.status === 'countdown') {
     const currentGameId = room.playlist[room.currentRound];
     const info = currentGameId ? getPartyGameInfo(currentGameId) : undefined;
@@ -453,7 +617,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     );
   }
 
-  // 3. INTERMISSION / STANDINGS VIEW
+  // 4. INTERMISSION / STANDINGS VIEW
   if (room.status === 'intermission') {
     const lastResult = room.roundResults[room.roundResults.length - 1];
     const lastGameInfo = lastResult
@@ -462,6 +626,8 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
     const nextGameId = room.playlist[room.currentRound + 1];
     const nextGameInfo = nextGameId ? getPartyGameInfo(nextGameId) : undefined;
+    const nameOf = (id: string) =>
+      room.players.find((p) => p.id === id)?.name ?? 'Someone';
 
     return (
       <div className="party-root">
@@ -484,6 +650,12 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
               <p className="party-subtitle">
                 {lastGameInfo.name} complete! Here is how the leaderboard
                 stands:
+              </p>
+            )}
+            {lastResult?.teams && (
+              <p className="party-subtitle" style={{ fontSize: 15 }}>
+                Teams this round: {lastResult.teams[0].map(nameOf).join(' & ')}{' '}
+                vs {lastResult.teams[1].map(nameOf).join(' & ')}
               </p>
             )}
           </div>
@@ -544,7 +716,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
                 <div className="party-playlist-header">
                   <span>Up Next: Round {room.currentRound + 2} of 6</span>
                   <span>
-                    {nextGameInfo.teams ? '2v2 Team Match' : 'Free-for-All'}
+                    {nextGameInfo.teams ? '2v2 Team Match' : 'Beat the Game'}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -594,7 +766,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     );
   }
 
-  // 4. GRAND FINALE / WINNER PODIUM
+  // 5. GRAND FINALE / WINNER PODIUM
   if (room.status === 'finished') {
     const podium = [...room.players].sort((a, b) => b.score - a.score);
     const champion = podium[0];
@@ -727,7 +899,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     );
   }
 
-  // 5. WAITING ROOM / LOBBY (Default)
+  // 6. WAITING ROOM / LOBBY (Default)
   const slots: (PartyPlayer | null)[] = [null, null, null, null];
   room.players.forEach((p, i) => {
     if (i < 4) slots[i] = p;

@@ -35,7 +35,7 @@ import { TOUCH_QUERY } from '../../shared/browser/device';
 import { TouchControls } from '../../shared/input/TouchControls';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { hudPacer } from '../../shared/ui/hud-pacer';
-import { partyRound } from '../../shared/ui/party-round';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { COLORS } from '../../shared/rendering/palette';
 import { chainOfFoolsAnalytics, chainPlayState } from './analytics';
@@ -400,7 +400,15 @@ export default function ChainOfFoolsGame() {
   };
 
   return (
-    <main className="cof-game" {...partyRound(ended)}>
+    <main
+      className="cof-game"
+      {...partyRound(
+        ended,
+        // The time bonus keeps shrinking after the whistle; the ribbon keeps
+        // the first ended frame, where it is still the finishing score.
+        w ? partyGoal(w.winner === 'crew', crewScore(w)) : null,
+      )}
+    >
       <div ref={container} className="cof-canvas" />
 
       <header className="topbar cof-topbar">
