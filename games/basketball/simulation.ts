@@ -3,6 +3,7 @@ import {
   HOOP,
   SHOT_CLOCK_SEC,
   TARGET_SCORE,
+  TEAMS,
   idleInput,
   type Ball,
   type BasketballAction,
@@ -18,6 +19,7 @@ import {
   stepBallPhysics,
   stepPlayerMovement,
 } from './physics';
+import { reconcileBasketballBots } from './bots';
 
 export function freshBall(): Ball {
   return {
@@ -46,11 +48,7 @@ export function newPlayer(
   bot = false,
   slot = 0,
 ): Player {
-  // Spawn positions on court for 2v2
-  // Red starts left, Blue starts right
-  const side = team === 'red' ? -1 : 1;
-  const startX = side * (2.2 + slot * 1.8);
-  const startZ = -1.0 + slot * 2.0;
+  const start = spawnPoint(team, slot);
 
   return {
     id,
@@ -58,9 +56,9 @@ export function newPlayer(
     color,
     team,
     bot,
-    x: startX,
+    x: start.x,
     y: 0,
-    z: startZ,
+    z: start.z,
     vx: 0,
     vy: 0,
     vz: 0,
@@ -87,6 +85,46 @@ export function newPlayer(
     input: idleInput(),
     seen: 0,
   };
+}
+
+/** Where a seat stands at tip-off: red on the left, blue on the right. */
+function spawnPoint(team: TeamId, slot: number): { x: number; z: number } {
+  const side = team === 'red' ? -1 : 1;
+  return { x: side * (2.2 + slot * 1.8), z: -1.0 + slot * 2.0 };
+}
+
+/**
+ * The lowest seat on a team's side that nobody stands on. Seats are not
+ * stored, so a count of the players already there can name a taken one once
+ * somebody has left or switched; looking at the court cannot.
+ */
+export function openSlot(w: BasketballWorld, team: TeamId): number {
+  for (let slot = 0; ; slot++) {
+    const spot = spawnPoint(team, slot);
+    const taken = w.players.some(
+      (p) => Math.hypot(p.x - spot.x, p.z - spot.z) < 0.5,
+    );
+    if (!taken) return slot;
+  }
+}
+
+/**
+ * Puts a human on a team: they take a bot's place there and a free seat on
+ * that side, and the bots refill whichever team the move left short.
+ */
+export function seatHuman(
+  w: BasketballWorld,
+  player: Player,
+  team: TeamId,
+): void {
+  const botIdx = w.players.findIndex((p) => p.bot && p.team === team);
+  if (botIdx >= 0) w.players.splice(botIdx, 1);
+  const spot = spawnPoint(team, openSlot(w, team));
+  player.team = team;
+  player.x = spot.x;
+  player.z = spot.z;
+  if (!w.players.includes(player)) w.players.push(player);
+  reconcileBasketballBots(w);
 }
 
 export function freshBasketballWorld(now: number): BasketballWorld {
@@ -512,9 +550,10 @@ export function basketballAction(
   if (!p) return;
 
   if (action.type === 'switchTeam') {
-    if (w.phase === 'lobby') {
-      p.team = p.team === 'red' ? 'blue' : 'red';
-    }
+    // The action names the team to join. An unknown id (a stale or hand-made
+    // message) changes nothing, and neither does picking your own team.
+    if (!TEAMS.includes(action.team) || action.team === p.team) return;
+    if (w.phase === 'lobby') seatHuman(w, p, action.team);
     return;
   }
 

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { RotateCcw, Shield, Zap, Flame, Volleyball } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { useMediaQuery } from '../../shared/browser/use-media-query';
+import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
 import { ZorbClashScene } from './scene';
 import { ZorbClashAudio } from './audio';
 import {
@@ -181,11 +183,9 @@ export default function ZorbClash() {
   );
 
   const [snapshot, setSnapshot] = useState<ZorbClashSnapshot | null>(null);
-  const [touchActive] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      ('ontouchstart' in window || navigator.maxTouchPoints > 0),
-  );
+  // Decided after hydration: the server snapshot is false, so a touch phone's
+  // first client render matches the server's and only then shows the stick.
+  const touchActive = useMediaQuery(TOUCH_CONTROLS_QUERY);
   const [selfId] = useState('local-player');
   const [muted, setMuted] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -482,7 +482,7 @@ export default function ZorbClash() {
               onTouchStart={() => setPlayerInput({ brace: true })}
               onTouchEnd={() => setPlayerInput({ brace: false })}
             >
-              Brace
+              {strings.brace}
             </button>
 
             <button
@@ -491,7 +491,7 @@ export default function ZorbClash() {
               onTouchStart={() => setPlayerInput({ dash: true })}
               onTouchEnd={() => setPlayerInput({ dash: false })}
             >
-              Dash
+              {strings.dash}
             </button>
           </div>
         </div>
