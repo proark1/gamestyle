@@ -1,7 +1,7 @@
 import * as T from 'three';
 import { box, material } from '../../shared/rendering/primitives';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { WORKER_HAND_Y, WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
 import { BALL_RADIUS, COURT, type TeamId } from './types';
 
@@ -57,7 +57,7 @@ export function tennisPlayer(color: string, team: TeamId, look?: Look) {
   racket.name = 'tennis-racket';
   const armR = g.userData.armR as T.Group | undefined;
   if (armR) {
-    racket.position.set(0, -0.36, 0.12);
+    racket.position.set(0, WORKER_HAND_Y + 0.01, 0.12);
     racket.rotation.set(Math.PI / 2 + 0.15, 0, 0);
     armR.add(racket);
   } else {
