@@ -1,5 +1,5 @@
 import {
-  modeOf,
+  crewOf,
   type GameAnalytics,
   type PlayState,
 } from '../../shared/analytics/protocol';
@@ -47,14 +47,7 @@ export function chainPlayState(
   session: { code: string; id: string },
 ): PlayState {
   const { world } = snapshot;
-  const npcs = world.players.filter((p) => p.bot).length;
-  const base = {
-    mode: modeOf(session, snapshot.host),
-    room: session.code,
-    humans: world.players.length - npcs,
-    npcs,
-    round: world.startedAt,
-  };
+  const base = crewOf(session, snapshot.host, world.players, world.startedAt);
 
   if (world.phase === 'lobby') return { stage: 'lobby', ...base };
 

@@ -30,6 +30,7 @@ import {
   type SiegeSnapshot,
   type SiegeWorld,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 /** The camera's resting angle above the ground, and the limits a drag may take
  *  it to. The default reproduces the framing it had before it could be moved. */
@@ -156,29 +157,18 @@ export class SiegeScene {
   ) {
     // A hundred rigid bodies plus soft shadows is a lot for a handset GPU, so
     // touch devices and small screens render leaner rather than dropping frames.
-    const lean =
-      matchMedia('(pointer: coarse)').matches ||
-      Math.min(innerWidth, innerHeight) < 820;
-    this.renderer = new T.WebGLRenderer({
-      antialias: !lean,
-      powerPreference: 'high-performance',
+    const { renderer, quality } = createRenderer(container, {
+      label:
+        'Siege and Desist field. WASD moves, hold R to wind the counterweight, F looses, Q and E swing the aim, C rides the sling.',
     });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, lean ? 1.3 : 1.7));
+    this.renderer = renderer;
     this.renderer.setClearColor('#d9bb8a');
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Siege and Desist field. WASD moves, hold R to wind the counterweight, F looses, Q and E swing the aim, C rides the sling.',
-    );
-    this.renderer.domElement.tabIndex = 0;
-    container.appendChild(this.renderer.domElement);
     this.scene.fog = new T.Fog('#d9bb8a', 70, 190);
     this.scene.add(new T.HemisphereLight('#ffe6bc', '#5f6a45', 2.5));
     const sun = new T.DirectionalLight('#ffdca8', 2.7);
     sun.position.set(-24, 34, 26);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(lean ? 1024 : 2048, lean ? 1024 : 2048);
+    sun.shadow.mapSize.set(quality.shadowMapSize, quality.shadowMapSize);
     Object.assign(sun.shadow.camera, {
       left: -38,
       right: 38,

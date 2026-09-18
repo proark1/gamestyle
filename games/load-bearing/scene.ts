@@ -27,6 +27,8 @@ import {
   type LoadInput,
   type LoadSnapshot,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import { prefersReducedMotion } from '../../shared/browser/device';
 
 type Callbacks = {
   input: (i: LoadInput) => void;
@@ -100,23 +102,12 @@ export class LoadBearingScene {
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+    this.renderer = createRenderer(container, {
+      exposure: 1.25,
+      label:
+        'Load Bearing demolition site. WASD moves, E swings the hammer, C takes the crane, Q marks a part, F helps a teammate.',
+    }).renderer;
     this.renderer.setClearColor(palette.sky);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
-    this.renderer.outputColorSpace = T.SRGBColorSpace;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Load Bearing demolition site. WASD moves, E swings the hammer, C takes the crane, Q marks a part, F helps a teammate.',
-    );
-    this.renderer.domElement.tabIndex = 0;
-    container.appendChild(this.renderer.domElement);
     this.scene.fog = new T.Fog(palette.sky, 65, 175);
     this.scene.add(new T.HemisphereLight('#fff2d4', palette.sage, 3));
     const sun = new T.DirectionalLight('#fff1d2', 3.2);
@@ -162,9 +153,7 @@ export class LoadBearingScene {
     dom.addEventListener('pointermove', this.onPointerMove, { signal });
     addEventListener('pointerup', () => (this.dragging = false), { signal });
     dom.addEventListener('wheel', this.onWheel, { signal, passive: false });
-    this.reduceMotion =
-      typeof matchMedia === 'function' &&
-      matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.reduceMotion = prefersReducedMotion();
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(container);
     this.resize();

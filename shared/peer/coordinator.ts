@@ -1,4 +1,9 @@
-import { playerName, hashToken as hash } from '../rooms/identity';
+import {
+  hashToken as hash,
+  isRoomCode,
+  newRoomCode,
+  playerName,
+} from '../rooms/identity';
 import type { RoomStore } from '../rooms/types';
 import { isGameId } from '../audio/types';
 import { newCheckpointKey } from './crypto';
@@ -193,11 +198,7 @@ export async function handlePeerRoom(
     const id = crypto.randomUUID(),
       token = crypto.randomUUID() + crypto.randomUUID();
     for (let attempt = 0; attempt < 8; attempt++) {
-      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      const code = Array.from(
-        crypto.getRandomValues(new Uint8Array(6)),
-        (b) => alphabet[b % alphabet.length],
-      ).join('');
+      const code = newRoomCode();
       const color = Number.isInteger(body.color)
         ? Math.max(0, Math.min(3, Number(body.color)))
         : 0;
@@ -238,7 +239,7 @@ export async function handlePeerRoom(
     throw new PeerError('Could not create a room. Try again.', 503);
   }
   const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
-  if (!/^[A-Z2-9]{6}$/.test(code))
+  if (!isRoomCode(code))
     throw new PeerError('Enter the six-character room code.');
   const joining = op === 'join';
   const id = joining ? crypto.randomUUID() : body.id,

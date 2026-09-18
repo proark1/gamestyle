@@ -32,6 +32,8 @@ import {
 import { placementAtSurface, previewShape } from './placement';
 import { blocksWalker, insideSolid } from './site-layout';
 import { makeHeldRig } from './detailed-props';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import { isTouchDevice } from '../../shared/browser/device';
 
 export type Aim = {
   label: string;
@@ -120,22 +122,14 @@ export class FirstPersonScene {
     private mount: HTMLElement,
     private callbacks: Callbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
+    const view = createRenderer(this.mount, {
+      shadows: 'hard',
+      exposure: 1.15,
+      label: 'Three-dimensional Brick by Hand building site',
     });
+    this.renderer = view.renderer;
+    this.fullPixelRatio = view.quality.pixelRatio;
     this.renderer.info.autoReset = false;
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Three-dimensional Brick by Hand building site',
-    );
-    this.renderer.domElement.tabIndex = 0;
-    this.mount.appendChild(this.renderer.domElement);
     this.scene.background = new T.Color(0xaccbd1);
     this.scene.fog = new T.FogExp2(0xc7d0be, 0.012);
     const sky = new T.Mesh(
@@ -382,11 +376,7 @@ export class FirstPersonScene {
     if (this.pointer?.id === e.pointerId) this.pointer = null;
   };
   captureMouse() {
-    if (
-      !this.playing ||
-      matchMedia('(pointer: coarse), (max-width: 900px)').matches
-    )
-      return;
+    if (!this.playing || isTouchDevice()) return;
     try {
       const result = this.renderer.domElement.requestPointerLock?.();
       result?.catch(() => this.lockerror());
@@ -520,8 +510,10 @@ export class FirstPersonScene {
     }
     this.swing = 1;
   }
+  /** The device tier's ceiling, restored when the player leaves low quality. */
+  private fullPixelRatio = 1;
   quality(low: boolean) {
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, low ? 1 : 1.75));
+    this.renderer.setPixelRatio(low ? 1 : this.fullPixelRatio);
     this.renderer.shadowMap.enabled = !low;
     this.resizePending = true;
   }

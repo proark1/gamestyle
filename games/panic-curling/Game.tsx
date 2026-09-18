@@ -48,6 +48,7 @@ import {
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { PANIC_CURLING_TRANSLATIONS } from './translations';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(panicCurlingAnalytics);
 
@@ -64,6 +65,14 @@ export default function PanicCurlingGame() {
   );
   const localWorld = useRef<PanicCurlingWorld | null>(null);
   const currentInput = useRef<PlayerInput>(idleInput());
+  // The scene is handed every snapshot directly; the HUD is paced, so a
+  // 20Hz feed does not rebuild it twenty times a second.
+  const hud = useRef(
+    hudPacer<PanicCurlingSnapshot>(
+      ({ world: w }) =>
+        `${w.phase}:${w.round}:${Object.values(w.scores).join()}`,
+    ),
+  );
 
   const [snapshot, setSnapshot] = useState<PanicCurlingSnapshot | null>(null);
   const [team, setTeam] = useState<TeamId>('red');
@@ -129,7 +138,7 @@ export default function PanicCurlingGame() {
         sessionRef.current.id,
         Date.now(),
       );
-      setSnapshot(snap);
+      if (hud.current.due(snap)) setSnapshot(snap);
     }
   }, []);
 
@@ -248,7 +257,7 @@ export default function PanicCurlingGame() {
           sessionRef.current.id,
           Date.now(),
         );
-        setSnapshot(snap);
+        if (hud.current.due(snap)) setSnapshot(snap);
         sceneRef.current?.render(snap);
       }
 

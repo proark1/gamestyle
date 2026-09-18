@@ -2,22 +2,10 @@
 
 Each game owns its implementation in `games/<id>/`. The folder identifiers match existing routes and saved room identifiers, so the displayed names can change without invalidating invitations, recordings, or database rows.
 
-| Folder                      | Game             | Route                  |
-| --------------------------- | ---------------- | ---------------------- |
-| `games/stack-or-sink`       | Stack or Sink    | `/stack-or-sink`       |
-| `games/reel-problems`       | Reel Problems    | `/reel-problems`       |
-| `games/wrong-floor`         | Wrong Floor      | `/wrong-floor`         |
-| `games/four-brain-cells`    | Four Brain Cells | `/four-brain-cells`    |
-| `games/act-natural`         | Blend Business   | `/act-natural`         |
-| `games/shelf-control`       | Shelf Control    | `/shelf-control`       |
-| `games/uphill-delivery`     | Uphill Delivery  | `/uphill-delivery`     |
-| `games/dont-wake-the-giant` | Tiptoe Thieves   | `/dont-wake-the-giant` |
-| `games/one-more-button`     | One More Button  | `/one-more-button`     |
-| `games/load-bearing`        | Load Bearing     | `/load-bearing`        |
-| `games/siege-and-desist`    | Siege and Desist | `/siege-and-desist`    |
-| `games/chaos`               | Permit Pending   | `/chaos`               |
-| `games/first-person`        | Brick by Hand    | `/first-person`        |
-| `games/basketball`          | Court Clash      | `/basketball`          |
+`shared/games/identity.ts` is the single list of which games exist, checked against the
+folders under `games/` by its own test. `platform/games/registry.test.ts` then checks that
+list against every registry a game has to appear in, so a game cannot ship half-wired. The
+[README table](../README.md) maps folder to display name and route, and is checked too.
 
 ## Ownership and dependencies
 
@@ -37,16 +25,17 @@ shared/               Reusable code independent of game implementations
   analytics/          Session tracker, report protocol and validation
   audio/              Playback, sound workshop UI, provider and storage adapters
     construction/     Shared construction-game audio contract and playback
-  browser/            Browser subscriptions
+  browser/            Browser subscriptions, device tier and render quality
+  games/              Which games exist, and what lets one skip a registry
   http/               Origin checks, bounded JSON reading, room route handling
   input/              Touch controls, pointer ownership, gestures
   math/               Common numeric contracts and helpers
   peer/               WebRTC transport, coordination, generic simulation host
   physics/            Geometry reused by multiple games
-  rendering/          Primitive meshes, common models, rendering instrumentation
+  rendering/          Renderer factory, primitive meshes, models, instrumentation
     avatars/          Potential player avatars on the shared worker rig
     cosmetics/        Wardrobe item models, dressing the shared worker
-  rooms/              Persistence contracts, sessions, token hashing
+  rooms/              Room lifecycle, persistence contracts, codes, sessions, tokens
   styles/             Shared game UI and construction theme
   ui/                 Common toolbar
   voice/              Shared voice clients and membership authorization
@@ -72,18 +61,42 @@ The audio player accepts an `AudioProfile`. Game-specific acoustics, preload pol
 
 The two audio contracts remain separate because the construction games support variations, recording capture, and different storage/API conventions. Their common encryption, cancellation handling, errors, and prompt limits are consolidated. Combining their public APIs or persistent data would require a separate compatibility migration.
 
-Room routes share origin validation, streaming request-size enforcement, JSON-object validation, error translation, and no-store responses. Game rules remain in each game's room handler. Game-specific membership lifetimes and action behavior are intentionally preserved.
+Room routes share origin validation, streaming request-size enforcement, JSON-object validation, error translation, and no-store responses. Server-run rooms also share their lifecycle: `handleRoomRequest` in `shared/rooms/lifecycle.ts` owns validation order, the pass check, expiry, seat release, host election, request de-duplication and the compare-and-swap loop, and each game supplies a `RoomAdapter` with its own seating rules, controls, actions and wording. Game-specific membership lifetimes and action behavior are intentionally preserved. The stored room shape is fixed, because rooms stay live across deploys.
 
 Public assets retain their existing URLs. Game assets already have directories such as `public/first-person` and `public/audio/act-natural`; collection illustrations belong to the site collection. Runtime SQLite files and generated recordings are data, not source modules, and must never move with a source refactor.
+
+### Decisions that belong to the collection
+
+A few things must be identical across games, because a player moving between them would
+otherwise meet a different answer to the same question. These live in `shared/` and are
+enforced by tests that read every game's source:
+
+- **The device tier.** `shared/browser/device.ts` owns `TOUCH_QUERY`, `COMPACT_QUERY`,
+  `REDUCED_MOTION_QUERY` and `renderQuality()`. A game never writes its own media query or
+  pixel-ratio cap. Scenes build their renderer with `createRenderer` from
+  `shared/rendering/create-renderer.ts`, passing only what is genuinely theirs: shadow
+  style, tone-mapping exposure, the accessible label, and `weight: 'heavy'` for a scene
+  that cannot afford the standard budget.
+- **The room code.** `shared/rooms/identity.ts` owns the alphabet, the shape, the guards
+  and `newRoomCode()`. Nothing else spells out the code's pattern.
+- **Per-tab session storage.** `sessionStore(key)` in `shared/rooms/session.ts` reads,
+  validates, saves and clears the session a reload rejoins. The key stays per game, because
+  it names sessions live players hold.
+- **Crew counting.** `crewOf()` in `shared/analytics/protocol.ts` reports who is in a room.
+  A seat the game plays that is not in `world.players` is passed as `extraNpcs`.
+- **Server rooms.** A game that keeps server authority (for hidden roles, as Shelf Control
+  does) implements `RoomAdapter` from `shared/rooms/lifecycle.ts` rather than writing its own
+  handler, and joins `shared/rooms/host-succession.test.ts`, the server-side counterpart of
+  `platform/peer/invariants.test.ts`.
 
 ## Adding or changing a game
 
 1. Create `games/<id>/` and keep its simulation, types, scene, UI, styles, tests, and game tools together.
 2. Add a thin `app/<route>/page.tsx` importing that game's component. Add API route re-exports only when needed.
-3. Extract a helper to `shared/` when multiple callers actually need the same behavior. Pass differing policies as explicit parameters; preserve each game's rules.
-4. For peer play, implement the local adapter contract in `shared/peer/engine.ts` and pass a lazy loader to the shared connection. Hidden-role games should retain server authority when a player host would reveal secrets.
-5. For generated audio, keep the catalog and profile inside the game and register the catalog in the appropriate platform registry.
-6. For play analytics, add `games/<id>/analytics.ts` with the game's milestones, result reasons, counted actions and snapshot mapping, report through a module-level `GameTracker`, and register the definition in `platform/analytics/catalog.ts`. See [play analytics](analytics.md).
+3. Extract a helper to `shared/` when multiple callers actually need the same behavior. Pass differing policies as explicit parameters; preserve each game's rules. The decisions listed above are not per-game: take them from `shared/` rather than re-deciding them.
+4. For peer play, implement the local adapter contract in `shared/peer/engine.ts` and pass a lazy loader to the shared connection. Hidden-role games should retain server authority when a player host would reveal secrets. `advance(world, now)` receives an **absolute time in milliseconds**, not a step. A simulation that steps by elapsed seconds must recover the step as `(now - world.clock) / 1000`; passing `now` straight through made three games' clocks grow to `Infinity` and broke host handover. Run any bots the way the solo loop does, since the simulation does not. Add the game to `platform/peer/invariants.test.ts`, which checks this contract through the same entry point handover uses.
+5. For server-authoritative play, implement `RoomAdapter` from `shared/rooms/lifecycle.ts` and export a thin handler around `handleRoomRequest`; keep the storage key stable once rooms exist. For generated audio, keep the catalog and profile inside the game and register the catalog in the appropriate platform registry.
+6. For play analytics, add `games/<id>/analytics.ts` with the game's milestones, result reasons, counted actions and snapshot mapping, report through a module-level `GameTracker`, and register the definition in `platform/analytics/catalog.ts`. Report keys are kebab-case: the tracker normalises an action name before matching it, so a camelCase key silently counts nothing. Open the state with `crewOf()`. See [play analytics](analytics.md).
 7. Build player characters from the shared worker with `dressedWorker` from `shared/rendering/cosmetics/dress.ts`, and change only their clothes and hat through `WorkerOutfit`, so players look alike across the collection. The same call puts on a player's wardrobe items from `shared/wardrobe/`: leave off the game's own hat, vest or mask for any slot the look fills, and mark the avatar `dressable`. For the admin avatar lineup, add `games/<id>/avatar.ts` exporting the player's looks as `AvatarLook`s from `shared/rendering/avatar-preview.ts`. Pose them with the same functions the scene calls, so the lineup cannot drift from the game, and register them in `platform/admin/avatars/catalog.ts`; a catalog test fails for any game left out.
 8. Run `npm run check` and the relevant production build. Tests are discovered recursively, so new game tests do not need another glob in `package.json`.
 

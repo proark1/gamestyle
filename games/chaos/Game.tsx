@@ -94,6 +94,9 @@ import GameToolbar from '../../shared/ui/GameToolbar';
 import './mobile-play.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { CHAOS_TRANSLATIONS } from './translations';
+import { sessionStore } from '../../shared/rooms/session';
+
+const sessions = sessionStore('pfusch-session');
 export type MobilePanel = 'crew' | 'social' | 'camera' | 'tools' | null;
 import { parseChallenge, CREW_JOBS } from './party';
 import {
@@ -337,7 +340,7 @@ export default function Game() {
     conn.accept(initial);
     void conn.poll();
     try {
-      sessionStorage.setItem('pfusch-session', JSON.stringify(s));
+      sessions.save(s);
       localStorage.setItem('pfusch-name', name || player.name);
       localStorage.setItem('pfusch-color', String(color));
     } catch {}
@@ -404,9 +407,7 @@ export default function Game() {
       scene.current.setMenu(true);
       scene.current.setState({ ...preview, now: Date.now() });
     }
-    try {
-      sessionStorage.removeItem('pfusch-session');
-    } catch {}
+    sessions.clear();
     history.replaceState(null, '', location.pathname);
   }
   async function share(native = false) {
@@ -472,8 +473,7 @@ export default function Game() {
     try {
       setName(localStorage.getItem('pfusch-name') || '');
       setColor(Number(localStorage.getItem('pfusch-color')) || 0);
-      const saved = sessionStorage.getItem('pfusch-session');
-      if (saved) setResumeSession(JSON.parse(saved));
+      setResumeSession(sessions.load());
     } catch {}
     try {
       const value = parseChallenge(new URLSearchParams(location.search));

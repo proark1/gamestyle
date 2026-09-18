@@ -19,6 +19,8 @@ import { panicCurlingAnalytics } from '../../games/panic-curling/analytics';
 import { carryOnCarnageAnalytics } from '../../games/carry-on-carnage/analytics';
 import { sampleStampedeAnalytics } from '../../games/sample-stampede/analytics';
 import { driveThruAnalytics } from '../../games/drive-thru/analytics';
+import { zorbClashAnalytics } from '../../games/zorb-clash/analytics';
+import { scaffoldScrambleAnalytics } from '../../games/scaffold-scramble/analytics';
 import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
 
 export type CatalogGame = {
@@ -59,6 +61,8 @@ export const GAMES: readonly CatalogGame[] = [
   ['carry-on-carnage', 'Carry-On Carnage', carryOnCarnageAnalytics],
   ['sample-stampede', 'Sample Stampede', sampleStampedeAnalytics],
   ['drive-thru', 'Drive-Thru Static', driveThruAnalytics],
+  ['zorb-clash', 'Zorb Clash', zorbClashAnalytics],
+  ['scaffold-scramble', 'Scaffold Scramble', scaffoldScrambleAnalytics],
   ['chain-of-fools', 'Chain of Fools', chainOfFoolsAnalytics],
 ].map(([id, name, analytics]) => {
   const game = id as string;

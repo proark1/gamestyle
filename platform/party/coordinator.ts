@@ -1,18 +1,12 @@
 import type { RoomStore } from '../../shared/rooms/types';
-import { playerName } from '../../shared/rooms/identity';
+import { newRoomCode, playerName } from '../../shared/rooms/identity';
 import { generatePlaylist, getPartyGameInfo } from './playlist';
 import { calculateRoundPoints } from './scoring';
 import type { PartyPlayer, PartyRoomState, RoundResult } from './types';
 
 export const partyStorageKey = (code: string) => `party:${code}`;
 
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-export function newPartyCode(): string {
-  const bytes = new Uint8Array(6);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (v) => ALPHABET[v % ALPHABET.length]).join('');
-}
+export const newPartyCode = newRoomCode;
 
 const safeName = (val: unknown, fallback: string) => playerName(val, fallback);
 const safeColor = (val: unknown) => {

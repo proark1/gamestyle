@@ -15,6 +15,8 @@ import {
   type BrainInput,
   type BrainSnapshot,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import { REDUCED_MOTION_QUERY } from '../../shared/browser/device';
 
 type Callbacks = {
   input: (i: BrainInput) => void;
@@ -50,27 +52,17 @@ export class BreakfastScene {
   private lastInput = 0;
   private lastFrame = 0;
   private current = idleInput();
-  private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  private reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
   private v1 = new T.Vector3();
   constructor(
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+    this.renderer = createRenderer(container, {
+      label:
+        'Breakfast kitchen. WASD controls your limb. E grabs, Space uses or kicks.',
+    }).renderer;
     this.renderer.setClearColor('#c5d6bf');
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.outputColorSpace = T.SRGBColorSpace;
-    this.renderer.domElement.tabIndex = 0;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Breakfast kitchen. WASD controls your limb. E grabs, Space uses or kicks.',
-    );
-    container.appendChild(this.renderer.domElement);
     this.scene.add(new T.HemisphereLight('#fff8dc', '#789b88', 2.8));
     const sun = new T.DirectionalLight('#fff0d1', 3.2);
     sun.position.set(-5, 18, 10);

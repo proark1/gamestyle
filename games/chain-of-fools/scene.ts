@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 import { label, material } from '../../shared/rendering/primitives';
 import { COLORS } from '../../shared/rendering/palette';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
@@ -97,17 +98,14 @@ export class ChainScene {
     private container: HTMLElement,
     private cb: SceneCallbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
+    const { renderer, quality } = createRenderer(container, {
+      exposure: 1.15,
+      focusable: false,
+      label:
+        'Chain of Fools. WASD moves, Space jumps, Shift braces, F hauls, E clips to a ring.',
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer = renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
-    container.appendChild(this.renderer.domElement);
 
     this.scene.background = new T.Color(SITE.sky);
     this.scene.fog = new T.Fog(SITE.fog, 28, 110);
@@ -123,7 +121,7 @@ export class ChainScene {
     const sun = new T.DirectionalLight('#fff0d0', 1.9);
     sun.position.set(-30, 60, 40);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.mapSize.set(quality.shadowMapSize, quality.shadowMapSize);
     sun.shadow.camera.near = 5;
     sun.shadow.camera.far = 160;
     sun.shadow.camera.left = -30;

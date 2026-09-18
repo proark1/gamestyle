@@ -516,7 +516,8 @@
   display: none;
 }
 
-@media (pointer: coarse) {
+/* The collection's touch query, TOUCH_QUERY in shared/browser/device.ts. */
+@media (pointer: coarse), (max-width: 900px) {
   .cof-hint-bar {
     display: none;
   }

@@ -24,6 +24,8 @@ import { curlingAvatars } from '../../../games/panic-curling/avatar';
 import { carryOnCarnageAvatars } from '../../../games/carry-on-carnage/avatar';
 import { sampleStampedeAvatars } from '../../../games/sample-stampede/avatar';
 import { driveThruAvatars } from '../../../games/drive-thru/avatar';
+import { zorbAvatars } from '../../../games/zorb-clash/avatar';
+import { scaffoldAvatars } from '../../../games/scaffold-scramble/avatar';
 import { chainOfFoolsAvatars } from '../../../games/chain-of-fools/avatar';
 import { GAMES } from '../../analytics/catalog';
 
@@ -163,6 +165,14 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'drive-thru': {
     looks: driveThruAvatars,
     note: 'The shared worker as drive-thru driver with cap and kitchen cook with paper hat and apron.',
+  },
+  'zorb-clash': {
+    looks: zorbAvatars,
+    note: 'The shared worker strapped inside a transparent bumper sphere, one per team.',
+  },
+  'scaffold-scramble': {
+    looks: scaffoldAvatars,
+    note: 'The shared worker in high-rise cleaning gear on a suspended platform.',
   },
   'chain-of-fools': {
     looks: chainOfFoolsAvatars,

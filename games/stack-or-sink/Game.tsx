@@ -52,7 +52,7 @@ import {
   type Snapshot,
   type World,
 } from './types';
-import { type Session } from '../../shared/rooms/session';
+import { type Session, sessionStore } from '../../shared/rooms/session';
 import type { GameScene, Hud } from './scene';
 import { Sound } from './sound';
 import GameToolbar from '../../shared/ui/GameToolbar';
@@ -68,6 +68,9 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { stackAnalytics, stackPlayState } from './analytics';
+import { looksLikeRoomCode } from '../../shared/rooms/identity';
+
+const sessions = sessionStore('stack-or-sink-session-v1');
 
 const INITIAL_HUD: Hud = {
   target: '',
@@ -159,7 +162,7 @@ export default function Game() {
     setStatus('online');
     events.current.clear();
     try {
-      sessionStorage.setItem('stack-or-sink-session-v1', JSON.stringify(s));
+      sessions.save(s);
     } catch {}
     if (next) accept(next, s);
     const connection = new Connection(
@@ -190,7 +193,7 @@ export default function Game() {
     } catch {}
     const url = new URL(location.href);
     const room = url.searchParams.get('room');
-    if (room && /^[A-Z2-9]{6}$/i.test(room)) {
+    if (room && looksLikeRoomCode(room)) {
       setCode(room.toUpperCase());
       setJoin(true);
     }
@@ -246,18 +249,8 @@ export default function Game() {
           });
           setReady(true);
           if (!room) {
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem('stack-or-sink-session-v1') || 'null',
-              );
-              if (
-                saved?.code &&
-                saved?.id &&
-                saved?.token &&
-                saved.code !== 'PRACTICE'
-              )
-                attach(saved);
-            } catch {}
+            const saved = sessions.load();
+            if (saved) attach(saved);
           }
         } catch {
           notify(
@@ -408,9 +401,7 @@ export default function Game() {
       { code: s.code, host: id, world: structuredClone(w), version: now },
       s,
     );
-    try {
-      sessionStorage.removeItem('stack-or-sink-session-v1');
-    } catch {}
+    sessions.clear();
   }
   async function leave() {
     void network.current?.leave();
@@ -427,9 +418,7 @@ export default function Game() {
     setStatus('online');
     sound.current?.menu();
     scene.current?.resetMenu();
-    try {
-      sessionStorage.removeItem('stack-or-sink-session-v1');
-    } catch {}
+    sessions.clear();
   }
   async function copyInvite() {
     if (!session) return;

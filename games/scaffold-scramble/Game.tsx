@@ -45,6 +45,7 @@ import {
   type ScaffoldScrambleWorld,
 } from './types';
 import './style.css';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(scaffoldScrambleAnalytics);
 
@@ -76,6 +77,11 @@ export default function ScaffoldScrambleGame() {
   const network = useRef<PeerGameConnection<ScaffoldSnapshot> | null>(null);
   const localWorld = useRef<ScaffoldScrambleWorld | null>(null);
   const currentInput = useRef(idleInput());
+  // The scene is handed every snapshot directly; the HUD is paced, so a
+  // 20Hz feed does not rebuild it twenty times a second.
+  const hud = useRef(
+    hudPacer<ScaffoldSnapshot>(({ world: w }) => `${w.phase}:${w.winner}`),
+  );
 
   const [snapshot, setSnapshot] = useState<ScaffoldSnapshot | null>(null);
   const [role, setRole] = useState<Role>('cleaner');
@@ -113,7 +119,7 @@ export default function ScaffoldScrambleGame() {
         sessionRef.current.id,
         Date.now(),
       );
-      setSnapshot(snap);
+      if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(snap.world, sessionRef.current.id);
     }
@@ -192,7 +198,7 @@ export default function ScaffoldScrambleGame() {
           sessionRef.current.id,
           timeNow,
         );
-        setSnapshot(snap);
+        if (hud.current.due(snap)) setSnapshot(snap);
         scene.current?.render(snap);
         sound.current?.update(snap.world, sessionRef.current.id);
       }

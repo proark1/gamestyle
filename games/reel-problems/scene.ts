@@ -33,6 +33,7 @@ import {
 } from './models';
 import { SeaScene } from './sea-scene';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 type Callbacks = {
   input: (input: ReelInput) => void;
@@ -129,22 +130,11 @@ export class ReelScene {
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer = createRenderer(container, {
+      label:
+        'Fishing lake. Click the water to cast; WASD moves, J jumps and P takes a paddle.',
+    }).renderer;
     this.renderer.setClearColor('#cee4d5');
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Fishing lake. Click the water to cast; WASD moves, J jumps and P takes a paddle.',
-    );
-    this.renderer.domElement.tabIndex = 0;
-    container.appendChild(this.renderer.domElement);
     this.scene.fog = new THREE.Fog('#cee4d5', 75, 145);
     this.scene.add(new THREE.HemisphereLight('#fff6dd', '#5c9597', 2.5));
     const sun = new THREE.DirectionalLight('#fff4d9', 3.2);

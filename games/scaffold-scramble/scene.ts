@@ -22,6 +22,7 @@ import {
   type ScaffoldAction,
   type ScaffoldSnapshot,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 export type SceneCallbacks = {
   input: (input: PlayerInput) => void;
@@ -139,18 +140,11 @@ export class ScaffoldScene {
     private container: HTMLElement,
     private cb: SceneCallbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
+    this.renderer = createRenderer(container, {
+      exposure: 1.25,
+      focusable: false,
+    }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
-    container.appendChild(this.renderer.domElement);
 
     // High altitude vibrant sky with atmospheric haze
     this.scene.background = new T.Color('#7ec3f2');

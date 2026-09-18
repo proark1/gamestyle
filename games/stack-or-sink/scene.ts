@@ -7,7 +7,7 @@ import { poseStacker } from './avatar';
 import { previewPieces } from './preview';
 import { emptyInput, movePlayer, nearestPiece, placement } from './simulation';
 import { orientation, topOf } from './physics';
-import { TOUCH_CONTROLS_QUERY, YardGesture } from '../../shared/input/gestures';
+import { YardGesture } from '../../shared/input/gestures';
 import { IslandSea, disposeCoastalMaterials } from './coast';
 import { FrameStats } from '../../shared/rendering/frame-stats';
 import { PlayerCorrection, SnapshotMotion } from './motion';
@@ -22,6 +22,11 @@ import {
   type Snapshot,
 } from './types';
 import { clamp } from '../../shared/math/clamp';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  isTouchDevice,
+  prefersReducedMotion,
+} from '../../shared/browser/device';
 
 export type Hud = {
   target: string;
@@ -97,7 +102,7 @@ export class GameScene {
   );
   loadCrane = new LoadCrane();
   craneView = false;
-  reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  reduceMotion = prefersReducedMotion();
   projectionDirty = true;
   localSimulation = false;
   motion = new SnapshotMotion();
@@ -112,22 +117,13 @@ export class GameScene {
     public host: HTMLElement,
     public callbacks: Callbacks,
   ) {
-    const mobile = matchMedia(TOUCH_CONTROLS_QUERY).matches;
-    this.renderer = new T.WebGLRenderer({
-      antialias: !mobile,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.3 : 1.8));
-    this.renderer.shadowMap.enabled = !mobile;
-    this.renderer.shadowMap.type = T.PCFShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Stack or Sink 3D island surrounded by rising water. Tap a surface to aim, drag to orbit, pinch to zoom. Use the movement, Jump and action buttons, or WASD, Space and E.',
-    );
-    this.renderer.domElement.tabIndex = 0;
-    host.appendChild(this.renderer.domElement);
+    const mobile = isTouchDevice();
+    this.renderer = createRenderer(host, {
+      shadows: mobile ? 'off' : 'hard',
+      exposure: 1.3,
+      label:
+        'Stack or Sink 3D island surrounded by rising water. Tap a surface to aim, drag to orbit, pinch to zoom. Use the movement, Jump and action buttons, or WASD, Space and E.',
+    }).renderer;
     this.scene.background = new T.Color('#b5d4ca');
     this.scene.fog = new T.Fog('#b5d4ca', 65, 120);
     this.scene.add(new T.HemisphereLight('#fff2d4', '#7fa497', 3));
@@ -388,9 +384,7 @@ export class GameScene {
     this.callbacks.input(input);
   }
   usesTouchControls(e: PointerEvent) {
-    return (
-      e.pointerType === 'touch' || matchMedia(TOUCH_CONTROLS_QUERY).matches
-    );
+    return e.pointerType === 'touch' || isTouchDevice();
   }
   setPointer(e: PointerEvent) {
     const r = this.host.getBoundingClientRect();

@@ -21,6 +21,7 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { TouchControls } from '../../shared/input/TouchControls';
 import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { COLORS } from '../../shared/rendering/palette';
 import { chainOfFoolsAnalytics, chainPlayState } from './analytics';
@@ -64,7 +65,21 @@ const tracker = new GameTracker(chainOfFoolsAnalytics);
 /** Local practice, by the collection's convention. */
 const SESSION = { id: 'me', code: 'PRACTICE', name: 'You', color: 0 };
 const TRACK_START = CHECKPOINTS[0].x;
-const HUD_EVERY_MS = 1000 / 15;
+
+/**
+ * What the HUD must show the moment it changes: the phase, a banked
+ * checkpoint, a wipe, and anyone going over, getting up, clipping or bracing.
+ * Everything else, such as the timer and the track dots, waits for the interval.
+ */
+const pacer = hudPacer<ChainWorld>(
+  (w) =>
+    `${w.phase}|${w.checkpoint}|${w.wipes}|${w.players
+      .map(
+        (p) =>
+          `${p.state[0]}${p.anchorId ? 'c' : ''}${p.braced ? 'b' : ''}${p.braceCooldown > 0 ? 'x' : ''}`,
+      )
+      .join('')}`,
+);
 
 const formatTime = (ms: number) => {
   const total = Math.max(0, Math.ceil(ms / 1000));
@@ -153,7 +168,6 @@ export default function ChainOfFoolsGame() {
   const scene = useRef<ChainScene | null>(null);
   const sound = useRef<ChainOfFoolsSound | null>(null);
   const world = useRef<ChainWorld | null>(null);
-  const lastHud = useRef(0);
   const lastHaptic = useRef(0);
 
   const [snapshot, setSnapshot] = useState<ChainSnapshot | null>(null);
@@ -173,9 +187,7 @@ export default function ChainOfFoolsGame() {
     scene.current?.update(snap);
     sound.current?.update(current, SESSION.id);
 
-    const now = performance.now();
-    if (force || now - lastHud.current >= HUD_EVERY_MS) {
-      lastHud.current = now;
+    if (pacer.due(current) || force) {
       // A copy, so React sees a new object and the HUD re-renders.
       setSnapshot({
         ...snap,
@@ -212,6 +224,7 @@ export default function ChainOfFoolsGame() {
     });
     scene.current.setLocal(SESSION.id);
 
+    pacer.reset();
     const start = Date.now();
     const fresh = freshChainWorld(start);
     fresh.players.push(

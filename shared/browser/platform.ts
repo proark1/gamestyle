@@ -2,7 +2,9 @@ import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { isTouchDevice } from './device';
 
+export * from './device';
 export * from './wake-lock';
 export * from './haptics';
 
@@ -63,21 +65,15 @@ export function isStandalone(): boolean {
 
 /**
  * Returns true if running on a mobile device or touch-first screen.
+ *
+ * Native builds are mobile by definition; on the web this is the same
+ * `TOUCH_QUERY` the scenes use, so the HUD, the touch controls and the render
+ * tier can never disagree about the device.
  */
 export function isMobile(): boolean {
   const platform = getPlatform();
   if (platform === 'ios' || platform === 'android') return true;
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia?.('(max-width: 768px)')?.matches || isTouchDevice();
-}
-
-/**
- * Returns true if the device supports touch input.
- */
-export function isTouchDevice(): boolean {
-  if (typeof window === 'undefined' || typeof navigator === 'undefined')
-    return false;
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  return isTouchDevice();
 }
 
 /**

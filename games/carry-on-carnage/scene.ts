@@ -9,6 +9,7 @@ import {
 } from './models';
 import { computeSuitcaseBulge, SIZER_X, SIZER_Z } from './physics';
 import { type CarryOnSnapshot, type PlayerInput } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 export type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -67,15 +68,8 @@ export class CarryOnScene {
     this.camera.lookAt(1.5, 0.8, 0);
 
     // 3. Renderer setup
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
+    this.renderer = createRenderer(container, { focusable: false }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    container.appendChild(this.renderer.domElement);
 
     // 4. Lighting
     const ambient = new T.AmbientLight('#ffffff', 0.85);

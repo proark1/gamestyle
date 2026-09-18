@@ -72,8 +72,14 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { siegeAnalytics, siegePlayState } from './analytics';
+import {
+  ROOM_CODE_PATTERN,
+  looksLikeRoomCode,
+} from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
-const SESSION_KEY = 'siege-and-desist-session-v1';
+const sessions = sessionStore('siege-and-desist-session-v1');
 const PREFS_KEY = 'siege-and-desist-prefs-v1';
 const time = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -106,7 +112,12 @@ export default function SiegeAndDesist() {
     latest = useRef<SiegeSnapshot | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: SiegeAction) => void>(() => {}),
-    hudAt = useRef(0);
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<SiegeSnapshot>(
+        (snapshot) => `${snapshot.world.phase}:${snapshot.world.eventId}`,
+      ),
+    );
   const [snapshot, setSnapshot] = useState<SiegeSnapshot | null>(null),
     [session, setSession] = useState<SiegeSession | null>(null),
     [name, setName] = useState(''),
@@ -134,19 +145,10 @@ export default function SiegeAndDesist() {
     if (!activeSession.current) return;
     hydrateSiege(next.world);
     tracker.observe(siegePlayState(next, activeSession.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next.world, activeSession.current.id);
-    if (
-      !previous ||
-      previous.world.phase !== next.world.phase ||
-      previous.world.eventId !== next.world.eventId ||
-      performance.now() - hudAt.current > 90
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
 
   function attach(s: SiegeSession, state?: SiegeSnapshot) {
@@ -159,11 +161,7 @@ export default function SiegeAndDesist() {
     setStatus('reconnecting');
     sound.current?.reset();
     scene.current?.setSession(s.id);
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {
-      /* Storage may be disabled. */
-    }
+    sessions.save(s);
     network.current = new PeerGameConnection(
       'siege-and-desist',
       s,
@@ -199,7 +197,7 @@ export default function SiegeAndDesist() {
         if (!disposed) setSelectedMode(urlMode);
       });
     }
-    if (invite && /^[A-Z2-9]{6}$/i.test(invite))
+    if (invite && looksLikeRoomCode(invite))
       queueMicrotask(() => {
         if (!disposed) {
           setCode(invite.toUpperCase());
@@ -235,21 +233,10 @@ export default function SiegeAndDesist() {
             },
           });
           setReady(true);
-          if (!invite)
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (
-                saved?.peer === true &&
-                /^[A-Z2-9]{6}$/.test(saved.code) &&
-                typeof saved.id === 'string' &&
-                typeof saved.token === 'string'
-              )
-                attach(saved);
-            } catch {
-              /* A new session can always be created. */
-            }
+          if (!invite) {
+            const saved = sessions.loadPeer();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The siege field could not load. Enable hardware acceleration and reload to play.',
@@ -417,7 +404,7 @@ export default function SiegeAndDesist() {
       sound.current?.update(null);
       setBusy(false);
       try {
-        sessionStorage.removeItem(SESSION_KEY);
+        sessions.clear();
       } catch {
         /* Storage is optional. */
       }
@@ -1362,7 +1349,7 @@ export default function SiegeAndDesist() {
                   autoComplete="off"
                   spellCheck={false}
                   required
-                  pattern="[A-Z2-9]{6}"
+                  pattern={ROOM_CODE_PATTERN}
                 />
               </label>
               <button

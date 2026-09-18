@@ -338,13 +338,17 @@ function executeRacketHit(
   }
 }
 
-/** Step the whole Bungee Doubles simulation forward by dt (default 1/60s) */
+/**
+ * Step the whole Bungee Doubles simulation forward by dt seconds (default 1/60).
+ * The world clock counts milliseconds, as every game's does: the peer engine
+ * reads it to decide when a silent player's controls are let go.
+ */
 export function advanceBungee(
   world: BungeeWorld,
   dt = 1 / 60,
   now = Date.now(),
 ) {
-  world.clock += dt;
+  world.clock += dt * 1000;
 
   // Handle post-score delay before next serve
   if (world.phase === 'scored') {
@@ -492,7 +496,7 @@ export function advanceBungee(
     const server = world.players.find((p) => p.id === world.servingPlayerId);
     if (server) {
       world.ball.x = server.x;
-      world.ball.y = 1.1 + Math.sin(world.clock * 4) * 0.08;
+      world.ball.y = 1.1 + Math.sin((world.clock / 1000) * 4) * 0.08;
       world.ball.z = server.z + (server.team === 'orange' ? 0.9 : -0.9);
     }
   }

@@ -1,24 +1,27 @@
-export type GameId =
-  | 'wrong-floor'
-  | 'stack-or-sink'
-  | 'act-natural'
-  | 'uphill-delivery'
-  | 'reel-problems'
-  | 'one-more-button'
-  | 'four-brain-cells'
-  | 'siege-and-desist'
-  | 'dont-wake-the-giant'
-  | 'load-bearing'
-  | 'crane-clash'
-  | 'basketball'
-  | 'bungee-doubles'
-  | 'panic-curling'
-  | 'zorb-clash'
-  | 'carry-on-carnage'
-  | 'sample-stampede'
-  | 'drive-thru'
-  | 'scaffold-scramble'
-  | 'chain-of-fools';
+import {
+  BORROWED_AUDIO,
+  GAME_IDS,
+  isGame,
+  isHandwerkerGame,
+  type Game,
+  type HandwerkerGame,
+} from '../games/identity';
+
+/**
+ * Games with their own standard sound workshop: the collection minus the Handwerker
+ * titles, which build their sounds in the construction workshop, and minus games
+ * that borrow another game's recordings. Derived from the collection list so an
+ * audio registry can never name a game the collection does not have.
+ */
+export type GameId = Exclude<
+  Game,
+  HandwerkerGame | keyof typeof BORROWED_AUDIO
+>;
+
+export const GAME_IDS_WITH_AUDIO: readonly GameId[] = GAME_IDS.filter(
+  (game): game is GameId =>
+    !isHandwerkerGame(game) && !(game in BORROWED_AUDIO),
+);
 export type AudioCategory =
   | 'material'
   | 'speech'
@@ -87,26 +90,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'chain-of-fools': 'Chain of Fools',
 };
 export const isGameId = (v: unknown): v is GameId =>
-  v === 'wrong-floor' ||
-  v === 'stack-or-sink' ||
-  v === 'act-natural' ||
-  v === 'uphill-delivery' ||
-  v === 'reel-problems' ||
-  v === 'one-more-button' ||
-  v === 'four-brain-cells' ||
-  v === 'siege-and-desist' ||
-  v === 'dont-wake-the-giant' ||
-  v === 'load-bearing' ||
-  v === 'crane-clash' ||
-  v === 'basketball' ||
-  v === 'bungee-doubles' ||
-  v === 'panic-curling' ||
-  v === 'zorb-clash' ||
-  v === 'carry-on-carnage' ||
-  v === 'sample-stampede' ||
-  v === 'drive-thru' ||
-  v === 'scaffold-scramble' ||
-  v === 'chain-of-fools';
+  isGame(v) && !isHandwerkerGame(v) && !(v in BORROWED_AUDIO);
 /** Reused clips keep their original immutable storage path. */
 export function audioFileUrl(file: string) {
   const [game, name] = file.split('/');

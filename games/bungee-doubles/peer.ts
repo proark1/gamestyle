@@ -10,7 +10,7 @@ import {
   freshBungeeWorld,
   newPlayer,
 } from './simulation';
-import { reconcileBungeeBots } from './bots';
+import { reconcileBungeeBots, stepBungeeBot } from './bots';
 import {
   idleInput,
   type BungeeAction,
@@ -68,7 +68,16 @@ const adapter: GameAdapter<BungeeWorld, BungeeSnapshot> = {
   idle(p) {
     p.input = idleInput();
   },
-  advance: advanceBungee,
+  // The engine passes an absolute time in ms, not a step, so the step is
+  // recovered from the world clock. Timers compare against wall-clock ms because
+  // actions stamp them with Date.now(). The bots run here as the solo loop runs
+  // them; the simulation does not.
+  advance: (w, now) => {
+    const dt = Math.min(0.05, Math.max(0, (now - w.clock) / 1000));
+    const wall = Date.now();
+    for (const p of w.players) if (p.bot) stepBungeeBot(p, w, dt, wall);
+    advanceBungee(w, dt, wall);
+  },
   act: (w, id, a, _host) => {
     bungeeAction(w, id, a as BungeeAction);
   },

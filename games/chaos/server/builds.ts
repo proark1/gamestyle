@@ -8,6 +8,7 @@ import { buildSnapshot } from '@/games/chaos/build-snapshot';
 import { hashIdentity } from '@/games/chaos/build-storage';
 import { withRoomLock } from '@/games/chaos/room-lock';
 import type { World } from '@/games/chaos/model';
+import { isRoomCode } from '../../../shared/rooms/identity';
 const json = (
   value: unknown,
   status = 200,
@@ -41,7 +42,7 @@ async function handleRequest(request: Request) {
       !body ||
       typeof body !== 'object' ||
       typeof body.code !== 'string' ||
-      !/^[A-Z2-9]{6}$/.test(body.code) ||
+      !isRoomCode(body.code) ||
       typeof body.id !== 'string' ||
       typeof body.token !== 'string' ||
       body.token.length > 100
