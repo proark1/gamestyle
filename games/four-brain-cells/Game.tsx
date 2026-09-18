@@ -64,6 +64,7 @@ import { breakfastAnalytics, breakfastPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('four-brain-cells-session-v1');
 const PREFS_KEY = 'four-brain-cells-prefs-v1';
@@ -415,7 +416,10 @@ export default function FourBrainCells() {
     disabled = !playing || !!modal || status !== 'online',
     arm = (me?.limb ?? 0) < 2;
   return (
-    <main className={`brain-game${session ? ' brain-in-session' : ''}`}>
+    <main
+      className={`brain-game${session ? ' brain-in-session' : ''}`}
+      {...partyRound(!!session && done)}
+    >
       <div className="brain-canvas" ref={container} />
       <header className="brain-header">
         <a href="/" className="brain-brand">

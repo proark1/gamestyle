@@ -62,6 +62,7 @@ import { giantAnalytics, giantPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('dont-wake-the-giant-session-v1');
 const duration = (ms: number) => {
@@ -352,6 +353,7 @@ export default function GiantGame() {
   return (
     <main
       className={`giant-game ${session ? 'giant-in-game' : ''} ${w?.phase === 'escape' ? 'giant-escape' : ''}`}
+      {...partyRound(done)}
     >
       <div className="giant-canvas" ref={canvas} />
       <header className="giant-topbar">

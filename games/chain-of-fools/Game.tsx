@@ -35,6 +35,7 @@ import { TOUCH_QUERY } from '../../shared/browser/device';
 import { TouchControls } from '../../shared/input/TouchControls';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { COLORS } from '../../shared/rendering/palette';
 import { chainOfFoolsAnalytics, chainPlayState } from './analytics';
@@ -399,7 +400,7 @@ export default function ChainOfFoolsGame() {
   };
 
   return (
-    <main className="cof-game">
+    <main className="cof-game" {...partyRound(ended)}>
       <div ref={container} className="cof-canvas" />
 
       <header className="topbar cof-topbar">

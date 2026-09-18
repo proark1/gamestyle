@@ -68,6 +68,7 @@ import {
 } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('wrong-floor-session-v1');
 const PREFS_KEY = 'wrong-floor-prefs-v1';
@@ -402,6 +403,7 @@ export default function WrongFloor() {
   return (
     <main
       className={`hotel-game${session ? ' in-session' : ''}${escape ? ' escaping' : ''}`}
+      {...partyRound(!!session && done)}
     >
       <div className="hotel-canvas" ref={container} />
       {session && <div className="hotel-vignette" aria-hidden="true" />}

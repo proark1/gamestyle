@@ -39,6 +39,7 @@ import { useLanguage } from '../../shared/language/useLanguage';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { SAMPLE_STAMPEDE_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(sampleStampedeAnalytics);
 
@@ -415,7 +416,7 @@ export default function SampleStampede() {
   }
 
   return (
-    <main className="stampede-container">
+    <main className="stampede-container" {...partyRound(isGameOver)}>
       <div ref={containerRef} className="stampede-canvas-wrapper" />
 
       {/* SPEED LINES OVERLAY (DURING SUGAR RUSH) */}

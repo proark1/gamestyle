@@ -52,6 +52,7 @@ import {
 } from './types';
 import './style.css';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(scaffoldScrambleAnalytics);
 
@@ -303,7 +304,7 @@ export default function ScaffoldScrambleGame() {
   ] as const;
 
   return (
-    <main className="sc-game">
+    <main className="sc-game" {...partyRound(isEnded)}>
       <div ref={container} className="sc-canvas" />
 
       <header className="topbar sc-topbar">
