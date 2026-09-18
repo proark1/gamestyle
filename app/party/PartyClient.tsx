@@ -14,7 +14,6 @@ import {
   RotateCcw,
   LogOut,
   Sparkles,
-  Timer,
   X,
 } from 'lucide-react';
 import { COLORS } from '@/shared/rendering/palette';
@@ -30,10 +29,13 @@ import {
   nextPartyRound,
   rematchParty,
   leaveParty,
-  recordPartyResult,
   closePartyRound,
 } from '@/platform/party/client';
-import type { PartyPlayer, PartyRoomState } from '@/platform/party/types';
+import type {
+  PartyPass,
+  PartyPlayer,
+  PartyRoomState,
+} from '@/platform/party/types';
 import './party.css';
 
 const SESSION_KEY = 'jumbleyard-party-session-v1';
@@ -47,6 +49,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   const [error, setError] = useState('');
 
   const [playerId, setPlayerId] = useState<string | null>(null);
+  // The secret that proves this browser holds the seat; sessions saved
+  // before passes existed have none.
+  const [token, setToken] = useState('');
   const [room, setRoom] = useState<PartyRoomState | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -75,6 +80,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
         const saved = JSON.parse(raw);
         if (saved?.code && saved?.playerId) {
           setPlayerId(saved.playerId);
+          if (typeof saved.token === 'string') setToken(saved.token);
           void getParty(saved.code).then((st) => {
             if (st) setRoom(st);
           });
@@ -93,6 +99,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
           JSON.stringify({
             code: room.code,
             playerId,
+            token,
             name: me?.name ?? name,
             color: me?.color ?? color,
             isHost: room.hostId === playerId,
@@ -100,7 +107,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
         );
       } catch {}
     }
-  }, [room?.code, room?.players, room?.hostId, playerId, name, color]);
+  }, [room?.code, room?.players, room?.hostId, playerId, token, name, color]);
 
   // Polling loop to sync state across all 4 players
   useEffect(() => {
@@ -158,6 +165,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   ]);
 
   const isHost = room?.hostId === playerId;
+  const pass: PartyPass | null = playerId ? { id: playerId, token } : null;
   const me = room?.players.find((p) => p.id === playerId);
 
   const handleCreate = async () => {
@@ -167,6 +175,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     try {
       const res = await createParty(name || 'Player 1', color);
       setPlayerId(res.playerId);
+      setToken(res.token);
       setRoom(res.state);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create party.');
@@ -186,6 +195,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
         color,
       );
       setPlayerId(res.playerId);
+      setToken(res.token);
       setRoom(res.state);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not join party.');
@@ -204,9 +214,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleToggleReady = async () => {
-    if (!room || !playerId) return;
+    if (!room || !pass) return;
     try {
-      const next = await togglePartyReady(room.code, playerId, !me?.ready);
+      const next = await togglePartyReady(room.code, pass, !me?.ready);
       setRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle ready.');
@@ -214,9 +224,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleAddBot = async () => {
-    if (!room || !playerId || !isHost) return;
+    if (!room || !pass || !isHost) return;
     try {
-      const next = await addPartyBot(room.code, playerId);
+      const next = await addPartyBot(room.code, pass);
       setRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add bot.');
@@ -224,9 +234,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleKick = async (targetId: string) => {
-    if (!room || !playerId || !isHost) return;
+    if (!room || !pass || !isHost) return;
     try {
-      const next = await removePartyPlayer(room.code, playerId, targetId);
+      const next = await removePartyPlayer(room.code, pass, targetId);
       setRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not remove player.');
@@ -234,9 +244,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleStart = async () => {
-    if (!room || !playerId || !isHost) return;
+    if (!room || !pass || !isHost) return;
     try {
-      const next = await startParty(room.code, playerId);
+      const next = await startParty(room.code, pass);
       setRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start party.');
@@ -244,9 +254,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleNextRound = async () => {
-    if (!room || !playerId || !isHost) return;
+    if (!room || !pass || !isHost) return;
     try {
-      const next = await nextPartyRound(room.code, playerId);
+      const next = await nextPartyRound(room.code, pass);
       setRoom(next);
     } catch (err) {
       setError(
@@ -256,13 +266,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleCloseRound = async () => {
-    if (!room || !playerId || !isHost) return;
+    if (!room || !pass || !isHost) return;
     try {
-      const next = await closePartyRound(
-        room.code,
-        room.currentRound,
-        playerId,
-      );
+      const next = await closePartyRound(room.code, room.currentRound, pass);
       setRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not close round.');
@@ -270,9 +276,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleRematch = async () => {
-    if (!room || !playerId || !isHost) return;
+    if (!room || !pass || !isHost) return;
     try {
-      const next = await rematchParty(room.code, playerId);
+      const next = await rematchParty(room.code, pass);
       setRoom(next);
     } catch (err) {
       setError(
@@ -282,33 +288,14 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   };
 
   const handleLeave = async () => {
-    if (!room || !playerId) return;
+    if (!room || !pass) return;
     try {
-      await leaveParty(room.code, playerId);
+      await leaveParty(room.code, pass);
     } catch {}
     sessionStorage.removeItem(SESSION_KEY);
     setRoom(null);
     setPlayerId(null);
-  };
-
-  // Simulate or submit test score for host quick-testing
-  const handleSimulateGameEnd = async () => {
-    if (!room || !playerId || !isHost) return;
-    const scores: Record<string, number> = {};
-    room.players.forEach((p, i) => {
-      scores[p.id] = Math.floor(Math.random() * 100) + (4 - i) * 20;
-    });
-    try {
-      const next = await recordPartyResult(
-        room.code,
-        room.currentRound,
-        scores,
-        playerId,
-      );
-      setRoom(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not record scores.');
-    }
+    setToken('');
   };
 
   // 1. NOT IN A ROOM YET
@@ -1079,16 +1066,6 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
 
             {isHost ? (
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                {/* Host Quick-Simulate button for fast verification */}
-                <button
-                  type="button"
-                  className="party-btn party-btn-ghost"
-                  style={{ fontSize: 13 }}
-                  onClick={handleSimulateGameEnd}
-                  title="Fast-forward one round for quick testing"
-                >
-                  <Timer size={15} /> Fast-Test Score
-                </button>
                 <button
                   type="button"
                   className="party-btn party-btn-primary"

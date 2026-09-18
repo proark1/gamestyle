@@ -266,3 +266,70 @@ body.jumbleyard-party-mode .reel-menu-note {
     opacity: 1;
   }
 }
+
+/* 5. In-Game Standings Panel (opened from the ribbon) */
+.party-standings-panel {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99991;
+  width: min(360px, calc(100vw - 32px));
+  box-sizing: border-box;
+  background: rgba(22, 43, 38, 0.96);
+  border: 1px solid rgba(243, 191, 80, 0.35);
+  border-radius: 18px;
+  padding: 12px 14px 14px;
+  color: #fff;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.party-standings-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: #f3bf50;
+  font-family: Fredoka, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.party-standings-panel ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.party-standings-panel li {
+  display: grid;
+  grid-template-columns: 16px 12px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.party-standings-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.party-standings-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.party-standings-state {
+  color: #c9e2dc;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.party-standings-score {
+  color: #f3bf50;
+  font-weight: 800;
+}

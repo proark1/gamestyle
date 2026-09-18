@@ -14,7 +14,6 @@ import {
   addBotToParty,
   removePlayerFromParty,
   startPartyTournament,
-  recordRoundResult,
   reportRoundResult,
   closePartyRound,
   advanceToNextRound,
@@ -46,25 +45,25 @@ async function handleRequest(request: Request) {
 
     switch (body.op) {
       case 'create': {
-        const { state, playerId } = await createPartyRoom(
+        const { state, playerId, token } = await createPartyRoom(
           store,
           body.hostName,
           body.color,
         );
-        return json({ state, playerId });
+        return json({ state, playerId, token });
       }
 
       case 'join': {
         if (!body.code || !/^[A-Z2-9]{6}$/i.test(body.code)) {
           return json({ error: 'Invalid party room code.' }, 400);
         }
-        const { state, playerId } = await joinPartyRoom(
+        const { state, playerId, token } = await joinPartyRoom(
           store,
           body.code,
           body.name,
           body.color,
         );
-        return json({ state, playerId });
+        return json({ state, playerId, token });
       }
 
       case 'get': {
@@ -77,14 +76,17 @@ async function handleRequest(request: Request) {
         const state = await toggleReady(
           store,
           body.code,
-          body.playerId,
+          { id: body.playerId, token: body.token },
           body.ready,
         );
         return json({ state });
       }
 
       case 'add_bot': {
-        const state = await addBotToParty(store, body.code, body.hostId);
+        const state = await addBotToParty(store, body.code, {
+          id: body.hostId,
+          token: body.token,
+        });
         return json({ state });
       }
 
@@ -92,25 +94,17 @@ async function handleRequest(request: Request) {
         const state = await removePlayerFromParty(
           store,
           body.code,
-          body.hostId,
+          { id: body.hostId, token: body.token },
           body.targetId,
         );
         return json({ state });
       }
 
       case 'start': {
-        const state = await startPartyTournament(store, body.code, body.hostId);
-        return json({ state });
-      }
-
-      case 'record_result': {
-        const state = await recordRoundResult(
-          store,
-          body.code,
-          body.round,
-          body.scores,
-          body.hostId,
-        );
+        const state = await startPartyTournament(store, body.code, {
+          id: body.hostId,
+          token: body.token,
+        });
         return json({ state });
       }
 
@@ -119,34 +113,41 @@ async function handleRequest(request: Request) {
           store,
           body.code,
           body.round,
-          body.playerId,
+          { id: body.playerId, token: body.token },
           body.result,
         );
         return json({ state });
       }
 
       case 'close_round': {
-        const state = await closePartyRound(
-          store,
-          body.code,
-          body.round,
-          body.hostId,
-        );
+        const state = await closePartyRound(store, body.code, body.round, {
+          id: body.hostId,
+          token: body.token,
+        });
         return json({ state });
       }
 
       case 'next_round': {
-        const state = await advanceToNextRound(store, body.code, body.hostId);
+        const state = await advanceToNextRound(store, body.code, {
+          id: body.hostId,
+          token: body.token,
+        });
         return json({ state });
       }
 
       case 'rematch': {
-        const state = await rematchParty(store, body.code, body.hostId);
+        const state = await rematchParty(store, body.code, {
+          id: body.hostId,
+          token: body.token,
+        });
         return json({ state });
       }
 
       case 'leave': {
-        const state = await leavePartyRoom(store, body.code, body.playerId);
+        const state = await leavePartyRoom(store, body.code, {
+          id: body.playerId,
+          token: body.token,
+        });
         return json({ state });
       }
 

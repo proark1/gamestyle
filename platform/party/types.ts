@@ -48,30 +48,49 @@ export type PartyRoomState = {
   updated: number;
 };
 
+/**
+ * A human's proof of their seat: their player id and the secret token the
+ * server handed out when they created or joined the party.
+ */
+export type PartyPass = { id: string; token: string };
+
+/** Every action taken as a player carries that player's party pass token. */
 export type PartyAction =
   | { op: 'create'; hostName: string; color: number }
   | { op: 'join'; code: string; name: string; color: number }
-  | { op: 'leave'; code: string; playerId: string }
-  | { op: 'ready'; code: string; playerId: string; ready: boolean }
-  | { op: 'add_bot'; code: string; hostId: string }
-  | { op: 'remove_player'; code: string; hostId: string; targetId: string }
-  | { op: 'start'; code: string; hostId: string }
+  | { op: 'leave'; code: string; playerId: string; token: string }
   | {
-      op: 'record_result';
+      op: 'ready';
       code: string;
-      round: number;
-      scores: Record<string, number>;
-      hostId: string;
+      playerId: string;
+      token: string;
+      ready: boolean;
     }
+  | { op: 'add_bot'; code: string; hostId: string; token: string }
+  | {
+      op: 'remove_player';
+      code: string;
+      hostId: string;
+      token: string;
+      targetId: string;
+    }
+  | { op: 'start'; code: string; hostId: string; token: string }
   | {
       op: 'report_result';
       code: string;
       round: number;
       playerId: string;
+      token: string;
       /** The game's result, or null to give up the round. */
       result: PartyResult | null;
     }
-  | { op: 'close_round'; code: string; round: number; hostId: string }
-  | { op: 'next_round'; code: string; hostId: string }
-  | { op: 'rematch'; code: string; hostId: string }
+  | {
+      op: 'close_round';
+      code: string;
+      round: number;
+      hostId: string;
+      token: string;
+    }
+  | { op: 'next_round'; code: string; hostId: string; token: string }
+  | { op: 'rematch'; code: string; hostId: string; token: string }
   | { op: 'get'; code: string };

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { computeEndScore, stepCurlingPhysics } from './physics';
 import {
+  PARTY_AIM_PATIENCE_S,
+  advancePanicCurling,
   freshCurlingWorld,
   launchDelivery,
   newCurlingPlayer,
@@ -16,6 +18,36 @@ import {
   type IceTile,
   type Stone,
 } from './types';
+
+void test('in a party round, a deliverer who never throws has the stone thrown for them', () => {
+  const idle = (patience?: number) => {
+    const world = freshCurlingWorld(1000);
+    world.aimPatience = patience;
+    world.players.push(
+      newCurlingPlayer('human', 'You', 0, world.turnTeam, 'deliverer', false),
+    );
+    let now = 1000;
+    const run = (seconds: number) => {
+      for (let t = 0; t < seconds; t += 0.1)
+        advancePanicCurling(world, (now += 100));
+    };
+    return { world, run };
+  };
+
+  const party = idle(PARTY_AIM_PATIENCE_S);
+  party.run(2);
+  assert.equal(party.world.phase, 'aiming');
+  party.run(PARTY_AIM_PATIENCE_S - 2);
+  assert.equal(party.world.phase, 'aiming', 'the deliverer gets time to aim');
+  party.run(2);
+  assert.equal(party.world.phase, 'sliding', 'the stone went on its own');
+  assert.equal(party.world.stones.length, 1);
+
+  // Normal play waits for the player however long they take.
+  const normal = idle();
+  normal.run(PARTY_AIM_PATIENCE_S + 10);
+  assert.equal(normal.world.phase, 'aiming');
+});
 
 void test('stone launches and decelerates over ice with rotational curl', () => {
   const world = freshCurlingWorld(1000);

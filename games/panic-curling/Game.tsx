@@ -29,6 +29,7 @@ import {
   advancePanicCurling,
   freshCurlingWorld,
   newCurlingPlayer,
+  PARTY_AIM_PATIENCE_S,
   panicCurlingAction,
   panicCurlingSnapshot,
 } from './simulation';
@@ -55,6 +56,7 @@ import {
   partyRound,
   partyVersus,
 } from '../../shared/ui/party-round';
+import { inPartyMode } from '../../shared/ui/party-mode';
 
 const tracker = new GameTracker(panicCurlingAnalytics);
 
@@ -170,6 +172,8 @@ export default function PanicCurlingGame() {
     // Create solo world
     const now = Date.now();
     const world = freshCurlingWorld(now);
+    // Bots never throw for you, so an idle party player would stall the end.
+    if (inPartyMode()) world.aimPatience = PARTY_AIM_PATIENCE_S;
     world.players.push(
       newCurlingPlayer(
         sessionRef.current.id,
