@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import { worker, WORKER_HEAD_TOP } from './worker';
+import { worker, WORKER_HAND_Y, WORKER_HEAD_TOP } from './worker';
 
 function meshes(root: T.Object3D) {
   const found: T.Mesh[] = [];
@@ -24,8 +24,8 @@ void test('an outfit changes the clothes and hat but never the body or its joint
   });
   assert.equal(
     meshes(dressed).length,
-    meshes(plain).length - 2,
-    'only the cap comes off',
+    meshes(plain).length - 4,
+    'only the cap, its badge and its button come off',
   );
   for (const key of ['legL', 'legR', 'armL', 'armR'])
     assert.deepEqual(
@@ -42,6 +42,12 @@ void test('an outfit changes the clothes and hat but never the body or its joint
   );
   const top = new T.Box3().setFromObject(head).max.y;
   assert.ok(Math.abs(top - WORKER_HEAD_TOP) < 1e-6, 'hats sit on the head top');
+  for (const key of ['armL', 'armR'])
+    assert.equal(
+      dressed.userData[key].getObjectByName('worker-hand')!.position.y,
+      WORKER_HAND_Y,
+      `${key} holds props at the hand height`,
+    );
   assert.equal(colour(dressed.userData.armR.children[0]), '#123456');
   assert.equal(colour(dressed.userData.legL.children[0]), '#654321');
   assert.equal(colour(dressed.userData.legL.children[1]), '#222222');
