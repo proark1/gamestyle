@@ -87,6 +87,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'sample-stampede': 'Sample Stampede',
   'drive-thru': 'Drive-Thru Static',
   'scaffold-scramble': 'Scaffold Scramble',
+  'chain-of-fools': 'Chain of Fools',
 };
 export const isGameId = (v: unknown): v is GameId =>
   isGame(v) && !isHandwerkerGame(v) && !(v in BORROWED_AUDIO);

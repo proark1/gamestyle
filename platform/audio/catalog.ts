@@ -18,6 +18,7 @@ import { carryOnCarnageCatalog } from '../../games/carry-on-carnage/audio';
 import { sampleStampedeCatalog } from '../../games/sample-stampede/audio';
 import { driveThruCatalog } from '../../games/drive-thru/audio';
 import { scaffoldScrambleCatalog } from '../../games/scaffold-scramble/audio';
+import { chainOfFoolsCatalog } from '../../games/chain-of-fools/audio';
 
 const catalogs: Record<GameId, Cue[]> = {
   'wrong-floor': hotelCatalog,
@@ -39,6 +40,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'sample-stampede': sampleStampedeCatalog,
   'drive-thru': driveThruCatalog,
   'scaffold-scramble': scaffoldScrambleCatalog,
+  'chain-of-fools': chainOfFoolsCatalog,
 };
 
 export function getCatalog(game: GameId): Cue[] {

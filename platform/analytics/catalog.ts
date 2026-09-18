@@ -21,6 +21,7 @@ import { sampleStampedeAnalytics } from '../../games/sample-stampede/analytics';
 import { driveThruAnalytics } from '../../games/drive-thru/analytics';
 import { zorbClashAnalytics } from '../../games/zorb-clash/analytics';
 import { scaffoldScrambleAnalytics } from '../../games/scaffold-scramble/analytics';
+import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
 
 export type CatalogGame = {
   id: string;
@@ -62,6 +63,7 @@ export const GAMES: readonly CatalogGame[] = [
   ['drive-thru', 'Drive-Thru Static', driveThruAnalytics],
   ['zorb-clash', 'Zorb Clash', zorbClashAnalytics],
   ['scaffold-scramble', 'Scaffold Scramble', scaffoldScrambleAnalytics],
+  ['chain-of-fools', 'Chain of Fools', chainOfFoolsAnalytics],
 ].map(([id, name, analytics]) => {
   const game = id as string;
   const construction = game === 'chaos' || game === 'first-person';

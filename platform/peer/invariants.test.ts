@@ -24,6 +24,7 @@ const GAMES: readonly GameId[] = [
   'basketball',
   'bungee-doubles',
   'carry-on-carnage',
+  'chain-of-fools',
   'crane-clash',
   'dont-wake-the-giant',
   'drive-thru',

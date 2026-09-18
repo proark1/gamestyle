@@ -217,6 +217,9 @@
 .scaffold-scramble-card .game-title-dot {
   color: #0284c7;
 }
+.chain-of-fools-card .game-title-dot {
+  color: #f08a24;
+}
 @media (min-width: 1001px) {
   .game-shelf {
     max-width: 1440px;

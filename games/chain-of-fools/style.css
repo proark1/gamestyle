@@ -1,0 +1,688 @@
+.cof-game {
+  --cof-ink: #2b2a28;
+  --cof-muted: #6f675b;
+  --cof-panel: rgba(255, 251, 242, 0.95);
+  --cof-line: #e6dcc8;
+  --cof-hivis: #f08a24;
+  --cof-hazard: #f1c232;
+  --cof-rust: #b4552f;
+  --cof-go: #4f9a5f;
+  --cof-danger: #d8432b;
+
+  position: relative;
+  height: 100dvh;
+  min-height: 560px;
+  overflow: hidden;
+  background: #a9cfd8;
+  color: var(--cof-ink);
+  font-family: 'DM Sans', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cof-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.cof-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Corner: sound, camera, language */
+.cof-corner {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cof-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 12px;
+  background: var(--cof-panel);
+  color: var(--cof-ink);
+  font:
+    700 13px 'Fredoka',
+    sans-serif;
+  box-shadow: 0 4px 14px rgba(43, 42, 40, 0.14);
+  cursor: pointer;
+}
+
+.cof-icon-btn:hover {
+  background: #ffffff;
+}
+
+/* HUD */
+.cof-hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 290px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.cof-hud-badge {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: var(--cof-panel);
+  box-shadow: 0 4px 16px rgba(43, 42, 40, 0.12);
+}
+
+.cof-hud-badge strong {
+  display: block;
+  font:
+    700 20px/1 'Fredoka',
+    sans-serif;
+}
+
+.cof-hud-badge small {
+  display: block;
+  margin-top: 2px;
+  color: var(--cof-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cof-timer {
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+}
+
+.cof-track-badge {
+  flex: 1 1 260px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  min-width: 220px;
+  max-width: 520px;
+}
+
+.cof-track {
+  position: relative;
+  height: 20px;
+  margin: 0 12px 0 6px;
+}
+
+.cof-track-rail {
+  position: absolute;
+  top: 9px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--cof-hazard) 0 8px,
+    var(--cof-ink) 8px 16px
+  );
+}
+
+.cof-track-flag {
+  position: absolute;
+  top: 4px;
+  width: 3px;
+  height: 13px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: #c8bfae;
+}
+
+.cof-track-flag.banked {
+  background: var(--cof-go);
+}
+
+.cof-track-finish {
+  position: absolute;
+  top: 2px;
+  margin-left: -2px;
+  color: var(--cof-rust);
+}
+
+.cof-track-dot {
+  position: absolute;
+  top: 4px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.12s linear;
+}
+
+.cof-track-dot.me {
+  top: 1px;
+  width: 15px;
+  height: 15px;
+  margin-left: -7px;
+  z-index: 2;
+}
+
+.cof-track-dot.dangling,
+.cof-track-dot.limp {
+  border-color: var(--cof-danger);
+  animation: cof-blink 0.5s infinite alternate;
+}
+
+.cof-meters {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.cof-meter {
+  display: grid;
+  grid-template-columns: 16px 1fr 38px;
+  align-items: center;
+  gap: 6px;
+}
+
+.cof-meter small {
+  margin: 0;
+}
+
+.cof-meter-bar {
+  position: relative;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--cof-line);
+}
+
+.cof-meter-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+  background: #8b969a;
+  transition: width 0.1s linear;
+}
+
+.cof-meter.hot .cof-meter-bar > span {
+  background: var(--cof-danger);
+}
+
+.cof-meter.grip .cof-meter-bar > span {
+  background: var(--cof-go);
+}
+
+.cof-meter.grip.on .cof-meter-bar > span {
+  background: var(--cof-hivis);
+}
+
+.cof-meter.grip.out .cof-meter-bar > span {
+  background: var(--cof-danger);
+  animation: cof-blink 0.35s infinite alternate;
+}
+
+/* Contextual prompt */
+.cof-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(43, 42, 40, 0.88);
+  color: #fffaf0;
+  font:
+    700 15px 'Fredoka',
+    sans-serif;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.cof-prompt.urgent {
+  background: var(--cof-hivis);
+  color: #ffffff;
+  animation: cof-nudge 0.7s infinite alternate;
+}
+
+.cof-prompt.self {
+  background: var(--cof-danger);
+  color: #ffffff;
+}
+
+/* Welcome */
+.cof-welcome {
+  position: absolute;
+  top: 64px;
+  left: 32px;
+  z-index: 20;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+  padding: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  background: var(--cof-panel);
+  box-shadow: 0 16px 40px rgba(43, 42, 40, 0.18);
+}
+
+.cof-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cof-hazard);
+  color: var(--cof-ink);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.cof-welcome h1 {
+  margin: 0 0 8px;
+  font:
+    700 40px/1.02 'Fredoka',
+    sans-serif;
+  color: var(--cof-ink);
+}
+
+.cof-welcome h1 span {
+  display: inline;
+  color: var(--cof-hivis);
+}
+
+.cof-desc {
+  margin: 0 0 12px;
+  color: #4b463e;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cof-rules {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.cof-rules li {
+  position: relative;
+  padding: 7px 10px 7px 30px;
+  border-radius: 10px;
+  background: #f4ecdc;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.cof-rules li::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  width: 10px;
+  height: 6px;
+  border: 2px solid var(--cof-rust);
+  border-radius: 4px;
+  transform: translateY(-50%);
+}
+
+.cof-crew {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.cof-crew-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 5px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid var(--cof-line);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cof-crew-chip i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.cof-crew-chip + .cof-crew-chip::before {
+  content: '';
+  width: 10px;
+  height: 2px;
+  margin-left: -14px;
+  margin-right: 2px;
+  background: #8b969a;
+}
+
+.cof-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 2px solid var(--cof-line);
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--cof-ink);
+  font:
+    700 15px 'Fredoka',
+    sans-serif;
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
+}
+
+.cof-btn.primary {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 16px;
+  background: var(--cof-hivis);
+  color: #ffffff;
+  font-size: 17px;
+  box-shadow: 0 6px 20px rgba(240, 138, 36, 0.4);
+}
+
+.cof-btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 24px rgba(240, 138, 36, 0.5);
+}
+
+/* End of shift */
+.cof-ended-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  padding: 30px;
+  border-radius: 26px;
+  background: #fffbf2;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(43, 42, 40, 0.3);
+  transform: translate(-50%, -50%);
+  animation: cof-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.cof-ended-banner h2 {
+  margin: 0 0 8px;
+  font:
+    700 36px 'Fredoka',
+    sans-serif;
+  color: var(--cof-danger);
+}
+
+.cof-ended-banner.crew h2 {
+  color: var(--cof-go);
+}
+
+.cof-ended-banner p {
+  margin: 0 0 16px;
+  color: #4b463e;
+  line-height: 1.5;
+}
+
+.cof-score {
+  margin: 0 auto 18px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #f4ecdc;
+}
+
+.cof-score small {
+  display: block;
+  color: var(--cof-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cof-score strong {
+  font:
+    700 34px 'Fredoka',
+    sans-serif;
+}
+
+/* Keyboard hints */
+.cof-hint-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(43, 42, 40, 0.82);
+  color: #fffaf0;
+  font-size: 12px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.cof-hint-bar kbd {
+  margin-right: 4px;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+  color: #fffaf0;
+  font:
+    700 11px 'Fredoka',
+    sans-serif;
+}
+
+/* Touch */
+.cof-game .touch-controls,
+.cof-dock {
+  display: none;
+}
+
+/* The collection's touch query, TOUCH_QUERY in shared/browser/device.ts. */
+@media (pointer: coarse), (max-width: 900px) {
+  .cof-hint-bar {
+    display: none;
+  }
+
+  .cof-game .touch-controls {
+    display: block;
+    position: absolute;
+    left: 18px;
+    bottom: 22px;
+    z-index: 25;
+  }
+
+  .cof-game .touch-controls[data-touch-controls] .joystick {
+    width: 118px;
+    height: 118px;
+    border: 2px solid rgba(255, 250, 240, 0.75);
+    border-radius: 50%;
+    background: rgba(43, 42, 40, 0.42);
+    color: #fffaf0;
+  }
+
+  .cof-game .touch-controls[data-touch-controls] .joystick > span {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: var(--cof-hivis);
+  }
+
+  .cof-game .touch-controls[data-touch-controls] .touch-jump {
+    position: fixed;
+    right: 18px;
+    bottom: 22px;
+    width: 84px;
+    height: 84px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: var(--cof-hazard);
+    color: var(--cof-ink);
+    font:
+      700 13px 'Fredoka',
+      sans-serif;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  }
+
+  .cof-dock {
+    position: absolute;
+    right: 112px;
+    bottom: 22px;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cof-dock-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 64px;
+    height: 58px;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    border-radius: 16px;
+    background: rgba(43, 42, 40, 0.72);
+    color: #fffaf0;
+    font:
+      700 11px 'Fredoka',
+      sans-serif;
+    touch-action: none;
+    -webkit-touch-callout: none;
+  }
+
+  .cof-dock-btn:disabled {
+    opacity: 0.4;
+  }
+
+  .cof-dock-btn:active,
+  .cof-dock-btn.on {
+    background: var(--cof-hivis);
+    border-color: #ffffff;
+  }
+
+  .cof-prompt {
+    bottom: 216px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 860px) {
+  .cof-hud {
+    right: 14px;
+    top: 60px;
+    gap: 6px;
+  }
+
+  .cof-hud-badge {
+    padding: 6px 10px;
+  }
+
+  .cof-hud-badge strong {
+    font-size: 16px;
+  }
+
+  .cof-track-badge {
+    order: -1;
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .cof-welcome {
+    top: 60px;
+    left: 50%;
+    width: auto;
+    padding: 20px;
+    transform: translateX(-50%);
+  }
+
+  .cof-welcome h1 {
+    font-size: 32px;
+  }
+
+  .cof-icon-btn span {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .cof-meters {
+    min-width: 120px;
+  }
+
+  .cof-hud-badge small {
+    font-size: 9px;
+  }
+}
+
+@keyframes cof-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes cof-blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+  }
+}
+
+@keyframes cof-nudge {
+  from {
+    transform: translateX(-50%) scale(1);
+  }
+  to {
+    transform: translateX(-50%) scale(1.04);
+  }
+}

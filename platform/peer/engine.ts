@@ -19,6 +19,7 @@ import { createEngine as carryOnCarnage } from '../../games/carry-on-carnage/pee
 import { createEngine as sampleStampede } from '../../games/sample-stampede/peer';
 import { createEngine as driveThru } from '../../games/drive-thru/peer';
 import { createEngine as scaffoldScramble } from '../../games/scaffold-scramble/peer';
+import { createEngine as chainOfFools } from '../../games/chain-of-fools/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
 const engines = {
   'wrong-floor': hotel,
@@ -40,6 +41,7 @@ const engines = {
   'sample-stampede': sampleStampede,
   'drive-thru': driveThru,
   'scaffold-scramble': scaffoldScramble,
+  'chain-of-fools': chainOfFools,
 };
 export function createPeerEngine(
   game: GameId,

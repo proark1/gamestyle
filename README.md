@@ -1,8 +1,8 @@
 # Jumbleyard
 
-**Jumbleyard** is a collection of twenty-two matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
+**Jumbleyard** is a collection of twenty-three matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
 
-## The twenty-two games
+## The twenty-three games
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
@@ -30,6 +30,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Sample Stampede   | `/sample-stampede`     | `games/sample-stampede/`     | `app/sample-stampede/`           |
 | Drive-Thru Static | `/drive-thru`          | `games/drive-thru/`          | `app/drive-thru/`                |
 | Scaffold Scramble | `/scaffold-scramble`   | `games/scaffold-scramble/`   | `app/scaffold-scramble/`         |
+| Chain of Fools    | `/chain-of-fools`      | `games/chain-of-fools/`      | `app/chain-of-fools/`            |
 
 Every game but Shelf Control has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
 
@@ -92,6 +93,16 @@ Play at `/shelf-control`. One guard hunts three mannequins among eighteen identi
 Space poses, WASD/arrows or touch move, E interacts, and Q drops. Two keys open the loading door and a ladder reaches a service hatch, but both routes need the security switch off. Inspection requires proximity, line of sight and a cooldown; five wrong inspections end the hunt, while successful catches cost nothing. The mannequins win if at least one escapes before time runs out. Snapshots contain only locally visible characters, items and nearby action sounds, so no hidden ownership or offscreen action reaches the guard. Rooms use a separate `shelf:` namespace, and captured or escaped players get a waiting screen rather than a free spectator camera.
 
 Run `node games/shelf-control/scripts/shelf-control-integration.mjs` for the four-client check and `node games/shelf-control/scripts/shelf-control-bots-integration.mjs` for the NPC seats. See [Shelf Control design](games/shelf-control/docs/shelf-control-design.md) and [validation](games/shelf-control/docs/shelf-control-validation.md).
+
+## Chain of Fools
+
+Play at `/chain-of-fools`. Four demolition workers share one safety line across a half-demolished site, from the site gate to the site office, in a four-minute shift. The line never breaks. A worker who misses a step hangs from it, and whether the rest of the crew holds them depends on how they are standing: a braced worker is an anchor, a worker on their feet can be dragged, and anyone in the air is dead weight. Two braced workers hold two who went over; one worker does not hold three.
+
+The course is a girder run with a low road underneath it, a scaffold climb, a tipping plank, a ledge swept by a wrecking load, a pipe too low to jump in with a faster route over its roof, and a cargo net down to the yard. Most stretches have a quick way and a safe way, and choosing between them is the game. Hauling a dangling worker back up, reviving a winded one, and clipping the line to a ring so that link becomes a fixed pivot are how a crew recovers. If the whole line goes over at once, the crew goes back to its last banked checkpoint. Solo practice puts you at the front of the line with three bots who follow your route, brace when someone is hanging, and haul them up.
+
+WASD/arrows move, Space jumps, Shift braces (it tires the arms), F hauls or helps up a nearby teammate, E clips to a ring or grabs the wrecking hook, Q calls the crew, and V changes the camera. On the cargo net, forward climbs down. Touch devices get the shared joystick with brace, help and clip buttons. The line is a custom position-based solver rather than Cannon, so the simulation stays deterministic for the shared peer engine. Synthesized cues play until workshop recordings exist at `/chain-of-fools/admin`.
+
+Run `node scripts/test.mjs games/chain-of-fools` for the line solver, hauling, bracing, checkpoints, the net and pipe, the follow-the-leader bots, and a full bot crew completing the course.
 
 ## Code structure
 

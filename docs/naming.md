@@ -26,6 +26,14 @@ Court Clash is a 2v2 street basketball party game in the Stack or Sink style wit
 Bungee Doubles is a 2v2 tethered tennis doubles party game where teammates are linked by an elastic bungee cord for slingshot smashes and slapstick collisions. The display name, route, and game identifier are `bungee-doubles`.
 Drive-Thru Static is a frantic fast-food drive-thru co-op and party game featuring a scrambled intercom speaker box, chaotic kitchen grill assembly, clumsy sedan driving, and the ragdoll Short Stop window reach. The display name is `Drive-Thru Static`, and the route and game identifier are `drive-thru`.
 
+Added 2026-09-18:
+
+| Game                                     | Display name   | Route / internal ID |
+| ---------------------------------------- | -------------- | ------------------- |
+| Co-op obstacle course on one safety line | Chain of Fools | `/chain-of-fools`   |
+
+Chain of Fools is a one-to-four player co-op obstacle course where the whole crew is clipped to one unbreakable safety line across a demolition site. The display name is `Chain of Fools`, and the route, game identifier and audio namespace are `chain-of-fools`.
+
 The platform is **Jumbleyard**, with this exact spelling. Blend Business and
 Tiptoe Thieves are deliberately independent of a particular animal, disguise,
 map, or opponent. Current game descriptions still describe their playable maps;

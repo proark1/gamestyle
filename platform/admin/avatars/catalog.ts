@@ -26,6 +26,7 @@ import { sampleStampedeAvatars } from '../../../games/sample-stampede/avatar';
 import { driveThruAvatars } from '../../../games/drive-thru/avatar';
 import { zorbAvatars } from '../../../games/zorb-clash/avatar';
 import { scaffoldAvatars } from '../../../games/scaffold-scramble/avatar';
+import { chainOfFoolsAvatars } from '../../../games/chain-of-fools/avatar';
 import { GAMES } from '../../analytics/catalog';
 
 export type AvatarCard = {
@@ -172,6 +173,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'scaffold-scramble': {
     looks: scaffoldAvatars,
     note: 'The shared worker in high-rise cleaning gear on a suspended platform.',
+  },
+  'chain-of-fools': {
+    looks: chainOfFoolsAvatars,
+    note: 'The shared worker in a yellow hard hat and hi-vis harness with a back D-ring for the safety line.',
   },
 };
 

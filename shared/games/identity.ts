@@ -16,6 +16,7 @@ export const GAME_IDS = [
   'basketball',
   'bungee-doubles',
   'carry-on-carnage',
+  'chain-of-fools',
   'chaos',
   'crane-clash',
   'dont-wake-the-giant',
