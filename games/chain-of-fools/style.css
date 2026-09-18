@@ -1,28 +1,29 @@
+/* Chain of Fools paints on the collection's shared kit and house HUD tokens in
+   shared/styles/game-ui.css. Only the chrome unique to a roped-together crew
+   lives here. */
 .cof-game {
-  --cof-ink: #2b2a28;
-  --cof-muted: #6f675b;
-  --cof-panel: rgba(255, 251, 242, 0.95);
-  --cof-line: #e6dcc8;
-  --cof-hivis: #f08a24;
-  --cof-hazard: #f1c232;
-  --cof-rust: #b4552f;
-  --cof-go: #4f9a5f;
-  --cof-danger: #d8432b;
   /* viewport-fit=cover puts the page under notches and home bars. */
   --cof-top: max(12px, env(safe-area-inset-top));
   --cof-right: max(12px, env(safe-area-inset-right));
   --cof-bottom: max(14px, env(safe-area-inset-bottom));
   --cof-left: max(12px, env(safe-area-inset-left));
+  /* The house top bar; the HUD and the camera switch start under it. */
+  --cof-bar: 80px;
 
   position: relative;
   height: 100dvh;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   background: #a9cfd8;
-  color: var(--cof-ink);
-  font-family: 'DM Sans', sans-serif;
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   user-select: none;
   -webkit-user-select: none;
+}
+
+.cof-game :is(button, a):focus-visible {
+  outline: 3px solid var(--hud-accent);
+  outline-offset: 3px;
 }
 
 .cof-canvas {
@@ -37,12 +38,43 @@
   touch-action: none;
 }
 
-/* Corner: sound, camera, language */
+/* Wordmark and shared toolbar */
+.cof-game .cof-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  color: var(--hud-ink);
+  pointer-events: none;
+}
+
+.cof-topbar > * {
+  pointer-events: auto;
+}
+
+.cof-mark {
+  display: flex;
+  padding: 9px;
+  margin-right: 3px;
+  background: var(--hud-accent);
+  border-radius: 13px;
+  color: var(--hud-ink);
+  transform: rotate(-7deg);
+}
+
+/* The kit's wordmark is a flex row, so the full stop needs pulling back in. */
+.cof-topbar .wordmark .title-dot {
+  margin-left: -6px;
+  color: var(--hud-accent-strong);
+}
+
+/* Camera: the game's own view switch, under the toolbar */
 .cof-corner {
   position: absolute;
-  top: var(--cof-top);
-  right: var(--cof-right);
-  z-index: 30;
+  top: calc(var(--cof-bar) + 8px);
+  right: 24px;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -51,31 +83,31 @@
 .cof-icon-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 38px;
-  min-width: 38px;
-  padding: 0 10px;
-  border: none;
-  border-radius: 12px;
-  background: var(--cof-panel);
-  color: var(--cof-ink);
-  font:
-    700 13px 'Fredoka',
-    sans-serif;
-  box-shadow: 0 4px 14px rgba(43, 42, 40, 0.14);
+  gap: 8px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 8px 0 13px;
+  border: 1px solid var(--hud-edge);
+  border-radius: 14px;
+  background: var(--hud-card);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
+  font: 600 14px/1 var(--hud-body);
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .cof-icon-btn:hover {
-  background: #ffffff;
+  background: var(--hud-card-strong);
 }
 
 /* HUD */
 .cof-hud {
   position: absolute;
-  top: var(--cof-top);
-  left: var(--cof-left);
-  right: 290px;
+  top: calc(var(--cof-bar) + 8px);
+  left: 24px;
+  right: 190px;
   z-index: 10;
   display: flex;
   flex-wrap: wrap;
@@ -87,27 +119,34 @@
 .cof-hud-badge {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 14px;
-  border-radius: 16px;
-  background: var(--cof-panel);
-  box-shadow: 0 4px 16px rgba(43, 42, 40, 0.12);
+  gap: 10px;
+  padding: 9px 15px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
+}
+
+.cof-hud-badge > svg,
+.cof-meter > svg {
+  flex: 0 0 auto;
+  color: var(--hud-muted);
 }
 
 .cof-hud-badge strong {
   display: block;
-  font:
-    700 20px/1 'Fredoka',
-    sans-serif;
+  font: 600 22px/1 var(--hud-display);
+  color: var(--hud-ink);
 }
 
 .cof-hud-badge small {
   display: block;
-  margin-top: 2px;
-  color: var(--cof-muted);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  margin-top: 4px;
+  color: var(--hud-muted);
+  font: 700 10px/1.2 var(--hud-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -131,6 +170,7 @@
   margin: 0 12px 0 6px;
 }
 
+/* The safety line: amber tape over the crew's path */
 .cof-track-rail {
   position: absolute;
   top: 9px;
@@ -140,8 +180,8 @@
   border-radius: 2px;
   background: repeating-linear-gradient(
     90deg,
-    var(--cof-hazard) 0 8px,
-    var(--cof-ink) 8px 16px
+    var(--hud-accent) 0 8px,
+    var(--hud-muted) 8px 16px
   );
 }
 
@@ -152,18 +192,18 @@
   height: 13px;
   margin-left: -1px;
   border-radius: 2px;
-  background: #c8bfae;
+  background: var(--hud-edge-strong);
 }
 
 .cof-track-flag.banked {
-  background: var(--cof-go);
+  background: var(--hud-good);
 }
 
 .cof-track-finish {
   position: absolute;
   top: 2px;
   margin-left: -2px;
-  color: var(--cof-rust);
+  color: var(--hud-danger);
 }
 
 .cof-track-dot {
@@ -172,9 +212,9 @@
   width: 11px;
   height: 11px;
   margin-left: -5px;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--hud-card-solid);
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--hud-ink) 35%, transparent);
   transition: left 0.12s linear;
 }
 
@@ -188,25 +228,26 @@
 
 .cof-track-dot.dangling,
 .cof-track-dot.limp {
-  border-color: var(--cof-danger);
+  border-color: var(--hud-danger);
   animation: cof-blink 0.5s infinite alternate;
 }
 
 .cof-meters {
   flex-direction: column;
   align-items: stretch;
-  gap: 5px;
-  min-width: 150px;
+  justify-content: center;
+  gap: 6px;
+  min-width: 160px;
 }
 
 .cof-meter {
   display: grid;
-  grid-template-columns: 16px 1fr 38px;
+  grid-template-columns: 16px 1fr 44px;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
 }
 
-.cof-meter small {
+.cof-hud-badge .cof-meter small {
   margin: 0;
 }
 
@@ -215,84 +256,88 @@
   height: 7px;
   overflow: hidden;
   border-radius: 4px;
-  background: var(--cof-line);
+  background: var(--hud-edge);
 }
 
 .cof-meter-bar > span {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: 4px;
-  background: #8b969a;
+  background: var(--hud-muted);
   transition: width 0.1s linear;
 }
 
 .cof-meter.hot .cof-meter-bar > span {
-  background: var(--cof-danger);
+  background: var(--hud-danger);
 }
 
 .cof-meter.grip .cof-meter-bar > span {
-  background: var(--cof-go);
+  background: var(--hud-good);
 }
 
 .cof-meter.grip.on .cof-meter-bar > span {
-  background: var(--cof-hivis);
+  background: var(--hud-accent);
 }
 
 .cof-meter.grip.out .cof-meter-bar > span {
-  background: var(--cof-danger);
+  background: var(--hud-danger);
   animation: cof-blink 0.35s infinite alternate;
 }
 
-/* Contextual prompt */
+/* Contextual prompt: a house pill; amber when the crew needs you, rust when you
+   are the one in trouble. */
 .cof-prompt {
   position: absolute;
   left: 50%;
-  bottom: 70px;
+  bottom: 96px;
   z-index: 12;
   display: flex;
   align-items: center;
   gap: 8px;
   max-width: calc(100vw - 32px);
   padding: 10px 18px;
+  border: 1px solid var(--hud-edge);
   border-radius: 999px;
-  background: rgba(43, 42, 40, 0.88);
-  color: #fffaf0;
-  font:
-    700 15px 'Fredoka',
-    sans-serif;
+  background: var(--hud-card);
+  box-shadow: var(--hud-shadow-strong);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
+  font: 600 15px/1.3 var(--hud-body);
   text-align: center;
   transform: translateX(-50%);
   pointer-events: none;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .cof-prompt.urgent {
-  background: var(--cof-hivis);
-  color: #ffffff;
+  border-color: var(--hud-accent-strong);
+  background: var(--hud-accent);
+  color: var(--hud-ink);
   animation: cof-nudge 0.7s infinite alternate;
 }
 
 .cof-prompt.self {
-  background: var(--cof-danger);
-  color: #ffffff;
+  border-color: var(--hud-danger);
+  background: var(--hud-danger);
+  color: var(--hud-card-solid);
 }
 
-/* Welcome */
+/* Welcome: the rules scroll, the start button stays put at the foot. */
 .cof-welcome {
   position: absolute;
-  top: 64px;
+  top: calc(var(--cof-bar) + 16px);
   left: 32px;
   z-index: 20;
   display: flex;
   flex-direction: column;
   width: 400px;
   max-width: calc(100vw - 32px);
-  max-height: calc(100dvh - 90px);
+  max-height: calc(100dvh - var(--cof-bar) - 110px);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 24px;
-  background: var(--cof-panel);
-  box-shadow: 0 16px 40px rgba(43, 42, 40, 0.18);
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: 18px;
+  box-shadow: var(--hud-shadow-strong);
+  backdrop-filter: blur(8px);
 }
 
 .cof-welcome-body {
@@ -300,75 +345,78 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 26px 26px 6px;
+  padding: 24px 24px 6px;
 }
 
 .cof-welcome-foot {
   flex: 0 0 auto;
-  padding: 12px 26px 22px;
-  background: linear-gradient(to top, var(--cof-panel) 75%, transparent);
+  padding: 12px 24px 22px;
+  background: linear-gradient(to top, var(--hud-card) 75%, transparent);
 }
 
 .cof-kicker {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--cof-hazard);
-  color: var(--cof-ink);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--hud-accent-ink);
+  font: 700 11px/1.4 var(--hud-body);
+  letter-spacing: 0.14em;
+}
+
+.cof-kicker > svg {
+  flex: 0 0 auto;
 }
 
 .cof-welcome h1 {
   display: block;
-  margin: 0 0 8px;
-  font:
-    700 40px/1.02 'Fredoka',
-    sans-serif;
-  color: var(--cof-ink);
+  margin: 0 0 10px;
+  font: 600 40px/1 var(--hud-display);
+  letter-spacing: -0.5px;
+  color: var(--hud-ink);
+  filter: none;
 }
 
 .cof-welcome h1 span {
   display: inline;
-  color: var(--cof-hivis);
+  color: var(--hud-accent-strong);
 }
 
 .cof-desc {
-  margin: 0 0 12px;
-  color: #4b463e;
+  margin: 0 0 14px;
+  color: var(--hud-muted);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .cof-rules {
   display: grid;
   gap: 6px;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   padding: 0;
   list-style: none;
 }
 
 .cof-rules li {
   position: relative;
-  padding: 7px 10px 7px 30px;
-  border-radius: 10px;
-  background: #f4ecdc;
+  padding: 8px 11px 8px 32px;
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius-small);
+  background: var(--hud-card-solid);
+  color: var(--hud-ink);
   font-size: 13px;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
+/* A chain link as the bullet */
 .cof-rules li::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: 11px;
+  left: 12px;
   width: 10px;
   height: 6px;
-  border: 2px solid var(--cof-rust);
+  border: 2px solid var(--hud-accent-strong);
   border-radius: 4px;
   transform: translateY(-50%);
 }
@@ -384,12 +432,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px 4px 5px;
+  padding: 5px 11px 5px 6px;
+  border: 1px solid var(--hud-edge);
   border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid var(--cof-line);
-  font-size: 12px;
-  font-weight: 700;
+  background: var(--hud-card-solid);
+  color: var(--hud-ink);
+  font: 700 12px/1.2 var(--hud-body);
 }
 
 .cof-crew-chip i {
@@ -404,7 +452,7 @@
   height: 2px;
   margin-left: -14px;
   margin-right: 2px;
-  background: #8b969a;
+  background: var(--hud-edge-strong);
 }
 
 .cof-btn {
@@ -412,34 +460,19 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 16px;
-  border: 2px solid var(--cof-line);
-  border-radius: 14px;
-  background: #ffffff;
-  color: var(--cof-ink);
-  font:
-    700 15px 'Fredoka',
-    sans-serif;
+  font-family: var(--hud-body);
   cursor: pointer;
-  transition:
-    transform 0.12s,
-    box-shadow 0.12s;
 }
 
+/* The start and restart buttons wear the kit's amber .primary-button. */
 .cof-btn.primary {
   width: 100%;
-  padding: 15px;
-  border: none;
-  border-radius: 16px;
-  background: var(--cof-hivis);
-  color: #ffffff;
-  font-size: 17px;
-  box-shadow: 0 6px 20px rgba(240, 138, 36, 0.4);
+  padding: 14px 18px;
+  font-size: 16px;
 }
 
-.cof-btn.primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 9px 24px rgba(240, 138, 36, 0.5);
+.cof-ended-banner .cof-btn.primary svg {
+  margin-left: 0;
 }
 
 /* End of shift */
@@ -451,84 +484,114 @@
   width: 420px;
   max-width: calc(100vw - 32px);
   padding: 30px;
-  border-radius: 26px;
-  background: #fffbf2;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge);
+  border-radius: 20px;
+  box-shadow: 0 18px 70px color-mix(in srgb, var(--hud-ink) 24%, transparent);
+  color: var(--hud-ink);
   text-align: center;
-  box-shadow: 0 24px 60px rgba(43, 42, 40, 0.3);
   transform: translate(-50%, -50%);
   animation: cof-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .cof-ended-banner h2 {
   margin: 0 0 8px;
-  font:
-    700 36px 'Fredoka',
-    sans-serif;
-  color: var(--cof-danger);
+  font: 500 34px/1.13 var(--hud-display);
+  letter-spacing: -0.5px;
+  color: var(--hud-danger);
 }
 
 .cof-ended-banner.crew h2 {
-  color: var(--cof-go);
+  color: var(--hud-good);
 }
 
 .cof-ended-banner p {
   margin: 0 0 16px;
-  color: #4b463e;
-  line-height: 1.5;
+  color: var(--hud-muted);
+  font-size: 14px;
+  line-height: 1.65;
 }
 
 .cof-score {
-  margin: 0 auto 18px;
-  padding: 10px;
-  border-radius: 14px;
-  background: #f4ecdc;
+  margin: 0 auto 20px;
+  padding: 14px 10px;
+  border-top: 1px solid var(--hud-edge);
+  border-bottom: 1px solid var(--hud-edge);
 }
 
 .cof-score small {
   display: block;
-  color: var(--cof-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  color: var(--hud-muted);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .cof-score strong {
-  font:
-    700 34px 'Fredoka',
-    sans-serif;
+  font: 500 34px/1 var(--hud-display);
+  color: var(--hud-ink);
 }
 
-/* Keyboard hints */
-.cof-hint-bar {
+/* Keyboard hints, dressed as the kit's tool dock */
+.cof-game .cof-hint-bar {
   position: absolute;
-  bottom: 16px;
+  bottom: 24px;
   left: 50%;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  background: rgba(43, 42, 40, 0.82);
-  color: #fffaf0;
-  font-size: 12px;
+  gap: 2px;
+  padding: 6px 8px;
   white-space: nowrap;
   transform: translateX(-50%);
   pointer-events: none;
 }
 
-.cof-hint-bar kbd {
-  margin-right: 4px;
-  padding: 2px 6px;
-  border: none;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: none;
-  color: #fffaf0;
-  font:
-    700 11px 'Fredoka',
-    sans-serif;
+.cof-hint-bar > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  color: var(--hud-ink);
+  font: 600 12.5px/1 var(--hud-body);
+}
+
+.cof-hint-bar > span + span {
+  border-left: 1px solid var(--hud-edge);
+}
+
+.cof-game .house-key,
+.game-dialog .cof-help-keys .house-key {
+  margin: 0;
+  font-family: var(--hud-body);
+}
+
+.cof-icon-btn .house-key {
+  margin-left: 2px;
+}
+
+.game-dialog .cof-rules {
+  margin: 4px 0 0;
+}
+
+.cof-help-keys {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 14px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--hud-muted);
+  font-size: 13.5px;
+}
+
+.cof-help-keys li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cof-help-keys .house-key {
+  min-width: 48px;
 }
 
 /* Touch */
@@ -539,21 +602,51 @@
 
 /* The collection's touch query, TOUCH_QUERY in shared/browser/device.ts. */
 @media (pointer: coarse), (max-width: 900px) {
-  .cof-icon-btn {
-    height: 42px;
-    min-width: 42px;
+  .cof-game {
+    --cof-bar: calc(80px + env(safe-area-inset-top));
+    --cof-hud-top: calc(var(--cof-bar) + 4px);
   }
 
-  .cof-icon-btn span {
+  /* The kit only clears notches for the top bar below 700px wide; this also
+     lines the wordmark up with the HUD under it. */
+  .cof-game .cof-topbar.topbar {
+    height: var(--cof-bar);
+    padding-top: env(safe-area-inset-top);
+    padding-right: var(--cof-right);
+    padding-left: var(--cof-left);
+  }
+
+  .cof-game .cof-hint-bar {
     display: none;
   }
 
-  /* HUD: timer and wipes beside the corner buttons, the course track below. */
-  .cof-hud {
+  /* The camera switch closes the HUD's first row, as a round icon. */
+  .cof-corner {
+    top: var(--cof-hud-top);
     right: var(--cof-right);
+  }
+
+  .cof-icon-btn {
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .cof-icon-btn span,
+  .cof-icon-btn .house-key {
+    display: none;
+  }
+
+  /* HUD: timer and wipes beside the camera switch, the course track below. */
+  .cof-hud {
+    top: var(--cof-hud-top);
+    right: var(--cof-right);
+    left: var(--cof-left);
     display: grid;
     grid-template-columns: auto auto 1fr;
-    /* The first row matches the corner buttons it sits beside. */
+    /* The first row matches the camera switch it sits beside. */
     grid-template-rows: 42px auto;
     align-items: stretch;
     gap: 6px;
@@ -570,7 +663,9 @@
   }
 
   .cof-hud-badge small {
+    margin-top: 2px;
     font-size: 9px;
+    letter-spacing: 0.1em;
   }
 
   .cof-badge-timer {
@@ -597,7 +692,7 @@
   }
 
   .cof-prompt {
-    top: calc(var(--cof-top) + 112px);
+    top: calc(var(--cof-hud-top) + 112px);
     bottom: auto;
     max-width: calc(100vw - var(--cof-left) - var(--cof-right));
     padding: 9px 14px;
@@ -605,7 +700,8 @@
     line-height: 1.25;
   }
 
-  /* Welcome: a bottom sheet, start button always in reach. */
+  /* Welcome: a bottom sheet, start button always in reach, the camera switch
+     still clear above it. */
   .cof-welcome {
     top: auto;
     right: var(--cof-right);
@@ -613,9 +709,8 @@
     left: var(--cof-left);
     width: auto;
     max-width: 520px;
-    max-height: calc(100dvh - var(--cof-top) - var(--cof-bottom) - 56px);
+    max-height: calc(100dvh - var(--cof-hud-top) - var(--cof-bottom) - 56px);
     margin: 0 auto;
-    border-radius: 22px;
   }
 
   .cof-welcome-body {
@@ -677,22 +772,24 @@
   .cof-game .touch-controls[data-touch-controls] .joystick {
     width: 122px;
     height: 122px;
-    border: 2px solid rgba(255, 250, 240, 0.8);
+    border: 2px solid var(--hud-card-solid);
     border-radius: 50%;
-    background: rgba(43, 42, 40, 0.38);
-    color: #fffaf0;
+    background: color-mix(in srgb, var(--hud-card) 45%, transparent);
+    box-shadow: var(--hud-shadow);
+    color: var(--hud-ink);
     backdrop-filter: blur(2px);
   }
 
   .cof-game .touch-controls[data-touch-controls] .joystick > span {
     display: grid;
     place-items: center;
-    width: 46px;
-    height: 46px;
-    border: 2px solid #ffffff;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--hud-edge);
     border-radius: 50%;
-    background: var(--cof-hivis);
-    color: #ffffff;
+    background: var(--hud-card-strong);
+    box-shadow: var(--hud-shadow);
+    color: var(--hud-good);
   }
 
   /* Jump and the crew actions in an arc on the right thumb. */
@@ -702,14 +799,12 @@
     bottom: var(--cof-bottom);
     width: 86px;
     height: 86px;
-    border: 3px solid #ffffff;
+    border: 3px solid var(--hud-card-solid);
     border-radius: 50%;
-    background: var(--cof-hazard);
-    color: var(--cof-ink);
-    font:
-      700 13px 'Fredoka',
-      sans-serif;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    background: var(--hud-accent);
+    color: var(--hud-ink);
+    font: 700 12px/1.2 var(--hud-body);
+    box-shadow: var(--hud-shadow-strong);
   }
 
   .cof-stick.jump-lit .touch-jump {
@@ -737,19 +832,17 @@
     width: 64px;
     height: 64px;
     padding: 0;
-    border: 2px solid rgba(255, 255, 255, 0.9);
+    border: 2px solid var(--hud-card-solid);
     border-radius: 50%;
-    background: rgba(43, 42, 40, 0.74);
-    color: #fffaf0;
-    font:
-      700 11px/1 'Fredoka',
-      sans-serif;
+    background: var(--hud-card);
+    box-shadow: var(--hud-shadow-strong);
+    color: var(--hud-ink);
+    font: 700 11px/1 var(--hud-body);
     pointer-events: auto;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   }
 
   /* Left of Jump, above-left of it, and above it. */
@@ -760,10 +853,11 @@
     background:
       linear-gradient(
         to top,
-        rgba(79, 154, 95, 0.9) calc(var(--grip, 1) * 100%),
+        color-mix(in srgb, var(--hud-good) 55%, var(--hud-card-solid))
+          calc(var(--grip, 1) * 100%),
         transparent 0
       ),
-      rgba(43, 42, 40, 0.74);
+      var(--hud-card);
   }
 
   .cof-dock-btn.help {
@@ -778,38 +872,62 @@
 
   .cof-dock-btn:active,
   .cof-dock-btn.on {
-    border-color: #ffffff;
-    background: var(--cof-hivis);
+    border-color: var(--hud-accent-strong);
+    background: var(--hud-accent);
   }
 
   .cof-dock-btn.brace.on {
     background: linear-gradient(
       to top,
-      rgba(240, 138, 36, 0.95) calc(var(--grip, 1) * 100%),
-      rgba(43, 42, 40, 0.74) 0
+      var(--hud-accent) calc(var(--grip, 1) * 100%),
+      var(--hud-card) 0
     );
   }
 
   .cof-dock-btn.brace.out {
-    background: rgba(216, 67, 43, 0.85);
+    border-color: var(--hud-danger);
+    background: var(--hud-danger);
+    color: var(--hud-card-solid);
     animation: cof-blink 0.35s infinite alternate;
   }
 
   /* The control the current prompt is asking for. */
   .cof-dock-btn.lit.urgent {
-    border-color: var(--cof-hazard);
+    border-color: var(--hud-accent);
     animation: cof-glow 0.7s infinite alternate;
   }
 
   .cof-dock-btn.lit.info {
-    border-color: var(--cof-hazard);
+    border-color: var(--hud-accent);
   }
 }
 
-/* Landscape phones: every row counts, so the HUD becomes a single strip. */
-@media (max-height: 500px) and (orientation: landscape) {
+/* Phones: the kit's own 64px top bar, clear of the status bar. */
+@media (max-width: 700px) {
+  .cof-game {
+    --cof-bar: calc(64px + env(safe-area-inset-top));
+  }
+
+  .cof-game .cof-topbar.topbar {
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: max(10px, env(safe-area-inset-left));
+  }
+}
+
+/* Landscape phones: every row counts, so the top bar slims down and the HUD
+   becomes a single strip under it. */
+@media (pointer: coarse) and (max-height: 500px) and (orientation: landscape),
+  (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .cof-game {
+    --cof-bar: calc(56px + env(safe-area-inset-top));
+  }
+
+  .cof-topbar .game-toolbar-volume {
+    display: none;
+  }
+
   .cof-hud {
-    right: calc(var(--cof-right) + 180px);
+    right: calc(var(--cof-right) + 48px);
     grid-template-columns: auto auto 1fr;
   }
 
@@ -819,11 +937,11 @@
   }
 
   .cof-prompt {
-    top: calc(var(--cof-top) + 56px);
+    top: calc(var(--cof-hud-top) + 56px);
   }
 
   .cof-welcome {
-    top: var(--cof-top);
+    top: var(--cof-hud-top);
     bottom: var(--cof-bottom);
     left: var(--cof-left);
     right: auto;
@@ -881,10 +999,10 @@
 
 @keyframes cof-glow {
   from {
-    box-shadow: 0 0 0 0 rgba(241, 194, 50, 0.9);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--hud-accent) 90%, transparent);
   }
   to {
-    box-shadow: 0 0 0 9px rgba(241, 194, 50, 0);
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--hud-accent) 0%, transparent);
   }
 }
 

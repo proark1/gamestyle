@@ -20,16 +20,20 @@ import {
   RotateCcw,
   Timer,
   Video,
-  Volume2,
-  VolumeX,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   GameTracker,
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { TOUCH_QUERY } from '../../shared/browser/device';
 import { TouchControls } from '../../shared/input/TouchControls';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { COLORS } from '../../shared/rendering/palette';
@@ -248,6 +252,7 @@ export default function ChainOfFoolsGame() {
   const [snapshot, setSnapshot] = useState<ChainSnapshot | null>(null);
   const [camera, setCamera] = useState<CameraMode>('crew');
   const [muted, setMuted] = useState(false);
+  const [help, setHelp] = useState(false);
 
   const publish = useCallback((force = false) => {
     const current = world.current;
@@ -376,6 +381,17 @@ export default function ChainOfFoolsGame() {
     sound.current?.setMuted(next);
   };
 
+  // One list feeds the keyboard bar and the help dialog.
+  const keyHints = [
+    ['WASD', strings.hintMove],
+    ['Space', strings.hintJump],
+    ['Shift', strings.hintBrace],
+    ['F', strings.hintHelp],
+    ['E', strings.hintClip],
+    ['Q', strings.hintCall],
+    ['V', strings.hintCamera],
+  ] as const;
+
   const touchJump = () => {
     sound.current?.unlock();
     scene.current?.hold('jump', true);
@@ -386,15 +402,22 @@ export default function ChainOfFoolsGame() {
     <main className="cof-game">
       <div ref={container} className="cof-canvas" />
 
+      <header className="topbar cof-topbar">
+        <a href="/" className="wordmark">
+          <span className="cof-mark">
+            <Link2 size={22} />
+          </span>{' '}
+          CHAIN OF FOOLS<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={muted}
+          onToggleSound={toggleMute}
+          onHelp={() => setHelp(true)}
+          voiceHint="Use your group call to talk with friends. In-game voice is not available in Chain of Fools yet."
+        />
+      </header>
+
       <div className="cof-corner">
-        <button
-          type="button"
-          className="cof-icon-btn"
-          onClick={toggleMute}
-          aria-label={muted ? 'Sound on' : 'Sound off'}
-        >
-          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-        </button>
         <button
           type="button"
           className="cof-icon-btn"
@@ -404,8 +427,8 @@ export default function ChainOfFoolsGame() {
         >
           <Video size={18} />
           <span>{strings.cameraModes[camera]}</span>
+          <kbd className="house-key">V</kbd>
         </button>
-        <LanguageSwitcher variant="header" />
       </div>
 
       {w && (playing || ended) && (
@@ -518,7 +541,7 @@ export default function ChainOfFoolsGame() {
           <div className="cof-welcome-foot">
             <button
               type="button"
-              className="cof-btn primary"
+              className="cof-btn primary primary-button"
               onClick={() => dispatch({ type: 'start' })}
             >
               {strings.startShift} <ArrowRight size={18} />
@@ -547,7 +570,7 @@ export default function ChainOfFoolsGame() {
           </div>
           <button
             type="button"
-            className="cof-btn primary"
+            className="cof-btn primary primary-button"
             onClick={() => dispatch({ type: 'restart' })}
           >
             <RotateCcw size={18} /> {strings.playAgain}
@@ -556,30 +579,39 @@ export default function ChainOfFoolsGame() {
       )}
 
       {!touch && (
-        <div className="cof-hint-bar">
-          <span>
-            <kbd>WASD</kbd> {strings.hintMove}
-          </span>
-          <span>
-            <kbd>Space</kbd> {strings.hintJump}
-          </span>
-          <span>
-            <kbd>Shift</kbd> {strings.hintBrace}
-          </span>
-          <span>
-            <kbd>F</kbd> {strings.hintHelp}
-          </span>
-          <span>
-            <kbd>E</kbd> {strings.hintClip}
-          </span>
-          <span>
-            <kbd>Q</kbd> {strings.hintCall}
-          </span>
-          <span>
-            <kbd>V</kbd> {strings.hintCamera}
-          </span>
+        <div className="cof-hint-bar tool-dock">
+          {keyHints.map(([key, label]) => (
+            <span key={key}>
+              <kbd className="house-key">{key}</kbd> {label}
+            </span>
+          ))}
         </div>
       )}
+
+      <Dialog open={help} onOpenChange={setHelp}>
+        <DialogContent className="game-dialog">
+          <DialogTitle>
+            {strings.titleMain}
+            {strings.titleHighlight}
+          </DialogTitle>
+          <DialogDescription>{strings.desc}</DialogDescription>
+          <ul className="cof-rules">
+            {strings.rules.map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
+          {/* Keyboard keys mean nothing on a phone; its prompts name the buttons. */}
+          {!touch && (
+            <ul className="cof-help-keys">
+              {keyHints.map(([key, label]) => (
+                <li key={key}>
+                  <kbd className="house-key">{key}</kbd> {label}
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {playing && (
         <>
