@@ -25,6 +25,7 @@ function sign(text: string, bg: string, fg: string, width: number) {
   const sprite = label(text, bg, fg, width);
   sprite.material.fog = false;
   sprite.material.toneMapped = false;
+  if (sprite.material.map) sprite.material.map.colorSpace = T.SRGBColorSpace;
   return sprite;
 }
 

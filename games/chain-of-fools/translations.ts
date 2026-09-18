@@ -1,5 +1,18 @@
 import type { Localized } from '../../shared/language/types';
 
+/**
+ * What a prompt calls each control: a key on a keyboard, the on-screen button
+ * on a touch device. `tap` prefixes a one-shot control, `press` is the verb.
+ */
+export type KeyLabels = {
+  help: string;
+  brace: string;
+  clip: string;
+  jump: string;
+  tap: string;
+  press: string;
+};
+
 export interface ChainTranslations {
   titleMain: string;
   titleHighlight: string;
@@ -15,14 +28,15 @@ export interface ChainTranslations {
   hudGrip: string;
   sections: Record<string, string>;
 
-  promptHaul: (name: string) => string;
-  promptRevive: (name: string) => string;
-  promptBrace: string;
-  promptClip: string;
-  promptUnclip: string;
-  promptHook: string;
-  promptNet: string;
-  youDangling: string;
+  keys: { desktop: KeyLabels; touch: KeyLabels };
+  promptHaul: (name: string, k: KeyLabels) => string;
+  promptRevive: (name: string, k: KeyLabels) => string;
+  promptBrace: (k: KeyLabels) => string;
+  promptClip: (k: KeyLabels) => string;
+  promptUnclip: (k: KeyLabels) => string;
+  promptHook: (k: KeyLabels) => string;
+  promptNet: (touch: boolean) => string;
+  youDangling: (k: KeyLabels) => string;
   youLimp: string;
   youClipped: string;
   exhausted: string;
@@ -77,14 +91,36 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       office: 'Site office',
     },
 
-    promptHaul: (name) => `Hold F — haul ${name} up`,
-    promptRevive: (name) => `Hold F — get ${name} up`,
-    promptBrace: 'Hold Shift — brace! Someone is over',
-    promptClip: 'E — clip the line to the ring',
-    promptUnclip: 'E — unclip and move on',
-    promptHook: 'E — grab the wrecking hook to stall it',
-    promptNet: 'Forward climbs down · Space lets go',
-    youDangling: 'You are over the edge — kick with Space, wait for a haul',
+    keys: {
+      desktop: {
+        help: 'F',
+        brace: 'Shift',
+        clip: 'E',
+        jump: 'Space',
+        tap: '',
+        press: 'press',
+      },
+      touch: {
+        help: 'Help',
+        brace: 'Brace',
+        clip: 'Clip',
+        jump: 'Jump',
+        tap: 'Tap ',
+        press: 'tap',
+      },
+    },
+    promptHaul: (name, k) => `Hold ${k.help} — haul ${name} up`,
+    promptRevive: (name, k) => `Hold ${k.help} — get ${name} up`,
+    promptBrace: (k) => `Hold ${k.brace} — someone is over!`,
+    promptClip: (k) => `${k.tap}${k.clip} — clip the line to this ring`,
+    promptUnclip: (k) => `${k.tap}${k.clip} — unclip and move on`,
+    promptHook: (k) => `${k.tap}${k.clip} — grab the hook to stall the ball`,
+    promptNet: (touch) =>
+      touch
+        ? 'Push forward to climb down · Jump lets go'
+        : 'Forward climbs down · Space lets go',
+    youDangling: (k) =>
+      `You're over the edge — ${k.press} ${k.jump} to kick, wait for a haul`,
     youLimp: 'Winded! Dead weight until someone helps you up',
     youClipped: 'Clipped on: nobody can drag you',
     exhausted: 'Arms gave out',
@@ -141,15 +177,36 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       office: 'Baubüro',
     },
 
-    promptHaul: (name) => `F halten – ${name} hochziehen`,
-    promptRevive: (name) => `F halten – ${name} aufhelfen`,
-    promptBrace: 'Shift halten – abstemmen! Jemand hängt',
-    promptClip: 'E – Kette in den Ring einhaken',
-    promptUnclip: 'E – aushaken und weiter',
-    promptHook: 'E – Abrisshaken greifen und bremsen',
-    promptNet: 'Vorwärts klettert runter · Leertaste loslassen',
-    youDangling:
-      'Du hängst über der Kante – strampeln mit Leertaste, auf Hilfe warten',
+    keys: {
+      desktop: {
+        help: 'F',
+        brace: 'Shift',
+        clip: 'E',
+        jump: 'Leertaste',
+        tap: '',
+        press: 'drücke',
+      },
+      touch: {
+        help: 'Helfen',
+        brace: 'Stemmen',
+        clip: 'Haken',
+        jump: 'Springen',
+        tap: 'Tippe ',
+        press: 'tippe',
+      },
+    },
+    promptHaul: (name, k) => `${k.help} halten – ${name} hochziehen`,
+    promptRevive: (name, k) => `${k.help} halten – ${name} aufhelfen`,
+    promptBrace: (k) => `${k.brace} halten – jemand hängt!`,
+    promptClip: (k) => `${k.tap}${k.clip} – Kette in den Ring einhaken`,
+    promptUnclip: (k) => `${k.tap}${k.clip} – aushaken und weiter`,
+    promptHook: (k) => `${k.tap}${k.clip} – Haken greifen, Abrissbirne bremsen`,
+    promptNet: (touch) =>
+      touch
+        ? 'Vorwärts drücken klettert runter · Springen lässt los'
+        : 'Vorwärts klettert runter · Leertaste lässt los',
+    youDangling: (k) =>
+      `Du hängst über der Kante – ${k.press} ${k.jump} zum Strampeln, warte auf Hilfe`,
     youLimp: 'Die Luft ist weg! Totes Gewicht, bis dir jemand aufhilft',
     youClipped: 'Eingehakt: dich zieht niemand weg',
     exhausted: 'Die Arme geben nach',

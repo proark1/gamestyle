@@ -8,11 +8,16 @@
   --cof-rust: #b4552f;
   --cof-go: #4f9a5f;
   --cof-danger: #d8432b;
+  /* viewport-fit=cover puts the page under notches and home bars. */
+  --cof-top: max(12px, env(safe-area-inset-top));
+  --cof-right: max(12px, env(safe-area-inset-right));
+  --cof-bottom: max(14px, env(safe-area-inset-bottom));
+  --cof-left: max(12px, env(safe-area-inset-left));
 
   position: relative;
   height: 100dvh;
-  min-height: 560px;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
   background: #a9cfd8;
   color: var(--cof-ink);
   font-family: 'DM Sans', sans-serif;
@@ -35,8 +40,8 @@
 /* Corner: sound, camera, language */
 .cof-corner {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: var(--cof-top);
+  right: var(--cof-right);
   z-index: 30;
   display: flex;
   align-items: center;
@@ -68,8 +73,8 @@
 /* HUD */
 .cof-hud {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: var(--cof-top);
+  left: var(--cof-left);
   right: 290px;
   z-index: 10;
   display: flex;
@@ -278,15 +283,30 @@
   top: 64px;
   left: 32px;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
   width: 400px;
   max-width: calc(100vw - 32px);
   max-height: calc(100dvh - 90px);
-  overflow-y: auto;
-  padding: 26px;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 24px;
   background: var(--cof-panel);
   box-shadow: 0 16px 40px rgba(43, 42, 40, 0.18);
+}
+
+.cof-welcome-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 26px 26px 6px;
+}
+
+.cof-welcome-foot {
+  flex: 0 0 auto;
+  padding: 12px 26px 22px;
+  background: linear-gradient(to top, var(--cof-panel) 75%, transparent);
 }
 
 .cof-kicker {
@@ -304,6 +324,7 @@
 }
 
 .cof-welcome h1 {
+  display: block;
   margin: 0 0 8px;
   font:
     700 40px/1.02 'Fredoka',
@@ -356,7 +377,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
 }
 
 .cof-crew-chip {
@@ -511,51 +532,177 @@
 }
 
 /* Touch */
-.cof-game .touch-controls,
+.cof-stick,
 .cof-dock {
   display: none;
 }
 
 /* The collection's touch query, TOUCH_QUERY in shared/browser/device.ts. */
 @media (pointer: coarse), (max-width: 900px) {
-  .cof-hint-bar {
+  .cof-icon-btn {
+    height: 42px;
+    min-width: 42px;
+  }
+
+  .cof-icon-btn span {
     display: none;
+  }
+
+  /* HUD: timer and wipes beside the corner buttons, the course track below. */
+  .cof-hud {
+    right: var(--cof-right);
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    /* The first row matches the corner buttons it sits beside. */
+    grid-template-rows: 42px auto;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .cof-hud-badge {
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 14px;
+  }
+
+  .cof-hud-badge strong {
+    font-size: 17px;
+  }
+
+  .cof-hud-badge small {
+    font-size: 9px;
+  }
+
+  .cof-badge-timer {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .cof-badge-wipes {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .cof-track-badge {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    min-width: 0;
+    max-width: none;
+    padding: 6px 12px 5px;
+  }
+
+  /* Grip lives on the Brace button, and the line shows its own strain. */
+  .cof-meters {
+    display: none;
+  }
+
+  .cof-prompt {
+    top: calc(var(--cof-top) + 112px);
+    bottom: auto;
+    max-width: calc(100vw - var(--cof-left) - var(--cof-right));
+    padding: 9px 14px;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  /* Welcome: a bottom sheet, start button always in reach. */
+  .cof-welcome {
+    top: auto;
+    right: var(--cof-right);
+    bottom: var(--cof-bottom);
+    left: var(--cof-left);
+    width: auto;
+    max-width: 520px;
+    max-height: calc(100dvh - var(--cof-top) - var(--cof-bottom) - 56px);
+    margin: 0 auto;
+    border-radius: 22px;
+  }
+
+  .cof-welcome-body {
+    padding: 20px 20px 4px;
+  }
+
+  .cof-welcome-foot {
+    padding: 10px 20px 18px;
+  }
+
+  .cof-welcome h1 {
+    font-size: 32px;
+  }
+
+  .cof-desc {
+    font-size: 13.5px;
+  }
+
+  .cof-rules li {
+    padding: 6px 10px 6px 30px;
+    font-size: 12.5px;
+  }
+
+  /* Two by two: a wrapped chain of chips leaves a dangling connector. */
+  .cof-crew {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cof-crew-chip + .cof-crew-chip::before {
+    display: none;
+  }
+
+  .cof-ended-banner {
+    width: calc(100vw - var(--cof-left) - var(--cof-right));
+    max-width: 420px;
+    max-height: calc(100dvh - var(--cof-top) - var(--cof-bottom));
+    overflow-y: auto;
+    padding: 24px 20px;
+  }
+
+  .cof-ended-banner h2 {
+    font-size: 30px;
+  }
+
+  /* Joystick on the left thumb. */
+  .cof-stick {
+    display: block;
   }
 
   .cof-game .touch-controls {
     display: block;
     position: absolute;
-    left: 18px;
-    bottom: 22px;
+    left: var(--cof-left);
+    bottom: var(--cof-bottom);
     z-index: 25;
   }
 
   .cof-game .touch-controls[data-touch-controls] .joystick {
-    width: 118px;
-    height: 118px;
-    border: 2px solid rgba(255, 250, 240, 0.75);
+    width: 122px;
+    height: 122px;
+    border: 2px solid rgba(255, 250, 240, 0.8);
     border-radius: 50%;
-    background: rgba(43, 42, 40, 0.42);
+    background: rgba(43, 42, 40, 0.38);
     color: #fffaf0;
+    backdrop-filter: blur(2px);
   }
 
   .cof-game .touch-controls[data-touch-controls] .joystick > span {
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     border: 2px solid #ffffff;
     border-radius: 50%;
     background: var(--cof-hivis);
+    color: #ffffff;
   }
 
+  /* Jump and the crew actions in an arc on the right thumb. */
   .cof-game .touch-controls[data-touch-controls] .touch-jump {
     position: fixed;
-    right: 18px;
-    bottom: 22px;
-    width: 84px;
-    height: 84px;
-    border: 2px solid #ffffff;
+    right: var(--cof-right);
+    bottom: var(--cof-bottom);
+    width: 86px;
+    height: 86px;
+    border: 3px solid #ffffff;
     border-radius: 50%;
     background: var(--cof-hazard);
     color: var(--cof-ink);
@@ -565,96 +712,150 @@
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   }
 
+  .cof-stick.jump-lit .touch-jump {
+    animation: cof-glow 0.8s infinite alternate;
+  }
+
   .cof-dock {
+    display: block;
     position: absolute;
-    right: 112px;
-    bottom: 22px;
+    right: var(--cof-right);
+    bottom: var(--cof-bottom);
     z-index: 25;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    width: 200px;
+    height: 196px;
+    pointer-events: none;
   }
 
   .cof-dock-btn {
+    position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 1px;
     width: 64px;
-    height: 58px;
-    border: 2px solid rgba(255, 255, 255, 0.85);
-    border-radius: 16px;
-    background: rgba(43, 42, 40, 0.72);
+    height: 64px;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    background: rgba(43, 42, 40, 0.74);
     color: #fffaf0;
     font:
-      700 11px 'Fredoka',
+      700 11px/1 'Fredoka',
       sans-serif;
+    pointer-events: auto;
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
     -webkit-touch-callout: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   }
 
-  .cof-dock-btn:disabled {
-    opacity: 0.4;
+  /* Left of Jump, above-left of it, and above it. */
+  .cof-dock-btn.brace {
+    right: 98px;
+    bottom: 4px;
+    /* Grip left, filling up from the bottom of the button. */
+    background:
+      linear-gradient(
+        to top,
+        rgba(79, 154, 95, 0.9) calc(var(--grip, 1) * 100%),
+        transparent 0
+      ),
+      rgba(43, 42, 40, 0.74);
+  }
+
+  .cof-dock-btn.help {
+    right: 86px;
+    bottom: 86px;
+  }
+
+  .cof-dock-btn.clip {
+    right: 12px;
+    bottom: 104px;
   }
 
   .cof-dock-btn:active,
   .cof-dock-btn.on {
-    background: var(--cof-hivis);
     border-color: #ffffff;
+    background: var(--cof-hivis);
   }
 
-  .cof-prompt {
-    bottom: 216px;
-    font-size: 13px;
+  .cof-dock-btn.brace.on {
+    background: linear-gradient(
+      to top,
+      rgba(240, 138, 36, 0.95) calc(var(--grip, 1) * 100%),
+      rgba(43, 42, 40, 0.74) 0
+    );
+  }
+
+  .cof-dock-btn.brace.out {
+    background: rgba(216, 67, 43, 0.85);
+    animation: cof-blink 0.35s infinite alternate;
+  }
+
+  /* The control the current prompt is asking for. */
+  .cof-dock-btn.lit.urgent {
+    border-color: var(--cof-hazard);
+    animation: cof-glow 0.7s infinite alternate;
+  }
+
+  .cof-dock-btn.lit.info {
+    border-color: var(--cof-hazard);
   }
 }
 
-@media (max-width: 860px) {
+/* Landscape phones: every row counts, so the HUD becomes a single strip. */
+@media (max-height: 500px) and (orientation: landscape) {
   .cof-hud {
-    right: 14px;
-    top: 60px;
-    gap: 6px;
-  }
-
-  .cof-hud-badge {
-    padding: 6px 10px;
-  }
-
-  .cof-hud-badge strong {
-    font-size: 16px;
+    right: calc(var(--cof-right) + 180px);
+    grid-template-columns: auto auto 1fr;
   }
 
   .cof-track-badge {
-    order: -1;
-    flex-basis: 100%;
-    max-width: none;
+    grid-row: 1;
+    grid-column: 3;
+  }
+
+  .cof-prompt {
+    top: calc(var(--cof-top) + 56px);
   }
 
   .cof-welcome {
-    top: 60px;
-    left: 50%;
-    width: auto;
-    padding: 20px;
-    transform: translateX(-50%);
+    top: var(--cof-top);
+    bottom: var(--cof-bottom);
+    left: var(--cof-left);
+    right: auto;
+    width: min(460px, calc(100vw - var(--cof-left) - var(--cof-right) - 170px));
+    max-height: none;
+    margin: 0;
+  }
+
+  .cof-welcome-body {
+    padding: 16px 18px 4px;
   }
 
   .cof-welcome h1 {
-    font-size: 32px;
+    font-size: 28px;
   }
 
-  .cof-icon-btn span {
-    display: none;
+  .cof-game .touch-controls[data-touch-controls] .joystick {
+    width: 112px;
+    height: 112px;
   }
 }
 
-@media (max-width: 480px) {
-  .cof-meters {
-    min-width: 120px;
+/* The narrowest phones: the icons already say shift and wipes. */
+@media (max-width: 400px) {
+  .cof-badge-timer small,
+  .cof-badge-wipes small {
+    display: none;
   }
 
-  .cof-hud-badge small {
-    font-size: 9px;
+  .cof-badge-timer,
+  .cof-badge-wipes {
+    padding: 6px 10px;
   }
 }
 
@@ -675,6 +876,15 @@
   }
   to {
     opacity: 0.45;
+  }
+}
+
+@keyframes cof-glow {
+  from {
+    box-shadow: 0 0 0 0 rgba(241, 194, 50, 0.9);
+  }
+  to {
+    box-shadow: 0 0 0 9px rgba(241, 194, 50, 0);
   }
 }
 
