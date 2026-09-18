@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { CLOTH } from '../../shared/rendering/palette';
 import { cleaner, poseScaffoldWorker } from './avatar';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   createCloudMesh,
   createCradleMesh,
@@ -841,7 +842,10 @@ export class ScaffoldScene {
     for (const player of world.players) {
       let pObj = this.playerMeshes.get(player.id);
       if (!pObj) {
-        const root = cleaner(player.color);
+        const root = cleaner(
+          player.color,
+          player.id === this.localId ? getEquippedLook() : undefined,
+        );
         root.scale.set(0.92, 0.92, 0.92);
 
         // Tool models

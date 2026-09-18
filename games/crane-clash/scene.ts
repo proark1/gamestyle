@@ -6,6 +6,7 @@ import {
   createPlatformMesh,
 } from './models';
 import { craneWorker, poseCraneWorker } from './avatar';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   CRANE_CONFIG,
   PAD_Y,
@@ -263,7 +264,11 @@ export class CraneClashScene {
         mesh = undefined;
       }
       if (!mesh) {
-        mesh = craneWorker(p.team, p.color);
+        mesh = craneWorker(
+          p.team,
+          p.color,
+          p.id === this.localId ? getEquippedLook() : undefined,
+        );
         mesh.userData.team = p.team;
         this.scene.add(mesh);
         this.playerMeshes.set(p.id, mesh);

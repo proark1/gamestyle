@@ -16,6 +16,7 @@ import {
 } from './types';
 import { GRILL_BOUNDS, TRAY_LEDGE_POS } from './physics';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   addHouseLight,
   HOUSE_EXPOSURE,
@@ -262,7 +263,13 @@ export class DriveThruScene {
     for (const p of snapshot.players) {
       let worker = this.workerMeshes.get(p.id);
       if (!worker) {
-        worker = createDriveThruWorker(p.role, p.color);
+        // Each role has one player; yours shows your wardrobe items.
+        const mine = !p.bot && p.role === snapshot.myRole;
+        worker = createDriveThruWorker(
+          p.role,
+          p.color,
+          mine ? getEquippedLook() : undefined,
+        );
         this.workerMeshes.set(p.id, worker);
         this.scene.add(worker);
       }

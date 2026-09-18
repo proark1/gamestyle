@@ -445,7 +445,8 @@ export class BasketballScene {
         mesh = undefined;
       }
       if (!mesh) {
-        const look = p.bot ? undefined : getEquippedLook();
+        // Only your own player wears your wardrobe items.
+        const look = p.id === this.localId ? getEquippedLook() : undefined;
         mesh = basketballPlayer(p.team, look);
         mesh.userData.team = p.team;
         this.playerMeshes.set(p.id, mesh);

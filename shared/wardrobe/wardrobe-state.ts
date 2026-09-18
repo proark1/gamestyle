@@ -25,14 +25,22 @@ export const DEFAULT_UNLOCKED: readonly string[] = [
   'round-glasses',
 ];
 
+/**
+ * The outfit every player used to start wearing. A saved look that is exactly
+ * this was never chosen, so it is read as nothing equipped.
+ */
+const OLD_STARTER_LOOK: Look = {
+  hat: 'bobble-beanie',
+  top: 'striped-tee',
+  legs: 'denim-overalls',
+  shoes: 'rain-boots',
+  face: 'round-glasses',
+};
+
+// New players start with nothing equipped, so every game shows its own
+// costume until they pick items; the starter items are unlocked to try on.
 const DEFAULT_STATE: WardrobeState = {
-  look: {
-    hat: 'bobble-beanie',
-    top: 'striped-tee',
-    legs: 'denim-overalls',
-    shoes: 'rain-boots',
-    face: 'round-glasses',
-  },
+  look: {},
   coins: 500, // Welcoming starting balance for party perks & shopping
   unlockedItems: [...DEFAULT_UNLOCKED],
   stats: {
@@ -51,7 +59,7 @@ function loadFromStorage(): WardrobeState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw) as Partial<WardrobeState>;
-    const look = parseLook(parsed.look) ?? DEFAULT_STATE.look;
+    const look = storedLook(parsed.look);
     const coins =
       typeof parsed.coins === 'number'
         ? Math.max(0, parsed.coins)
@@ -81,6 +89,18 @@ function loadFromStorage(): WardrobeState {
   } catch {
     return DEFAULT_STATE;
   }
+}
+
+/** The look a saved wardrobe holds, with the old untouched starter outfit read as empty. */
+export function storedLook(raw: unknown): Look {
+  const look = parseLook(raw);
+  if (!look) return {};
+  const slots = Object.keys(look) as (keyof Look)[];
+  const starter = Object.keys(OLD_STARTER_LOOK) as (keyof Look)[];
+  const untouched =
+    slots.length === starter.length &&
+    starter.every((slot) => look[slot] === OLD_STARTER_LOOK[slot]);
+  return untouched ? {} : look;
 }
 
 function saveToStorage(state: WardrobeState) {

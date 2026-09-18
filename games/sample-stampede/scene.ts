@@ -12,6 +12,7 @@ import {
   WAREHOUSE_COLORS,
 } from './models';
 import { createShopperWorker, poseShopper } from './avatar';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   type ItemKind,
   type PlayerInput,
@@ -266,14 +267,19 @@ export class SampleStampedeScene {
         this.scene.add(rig.root);
         this.cartRigs.set(cart.id, rig);
 
+        // Your own wardrobe items show on the shopper you play in your cart.
+        const mine = cart.id === snapshot.localCartId;
+        const look = (role: 'driver' | 'grabber') =>
+          mine && snapshot.myRole === role ? getEquippedLook() : undefined;
+
         // Add Driver Avatar
-        const driver = createShopperWorker(cart.team);
+        const driver = createShopperWorker(cart.team, look('driver'));
         driver.rotation.y = Math.PI / 2; // Face forward (+X) toward cart handle!
         rig.driverAnchor.add(driver);
         this.driverMeshes.set(cart.id, driver);
 
         // Add Basket Rider Avatar
-        const rider = createShopperWorker(cart.team);
+        const rider = createShopperWorker(cart.team, look('grabber'));
         rider.rotation.y = Math.PI / 2; // Face forward (+X) inside the basket!
         rig.riderAnchor.add(rider);
         this.riderMeshes.set(cart.id, rider);
