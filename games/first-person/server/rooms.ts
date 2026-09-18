@@ -7,6 +7,7 @@ import { RoomError } from '@/shared/rooms/types';
 import {
   hashToken as hash,
   isRoomCode,
+  newRoomCode,
   playerName,
 } from '../../../shared/rooms/identity';
 import { isRoomOriginAllowed } from '@/shared/http/request-origin';
@@ -106,12 +107,8 @@ async function handleRequest(request: Request) {
       const id = crypto.randomUUID(),
         token = crypto.randomUUID() + crypto.randomUUID(),
         tokenHash = await hash(token);
-      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       for (let i = 0; i < 5; i++) {
-        const code = Array.from(
-          crypto.getRandomValues(new Uint8Array(6)),
-          (n) => alphabet[n % alphabet.length],
-        ).join('');
+        const code = newRoomCode();
         try {
           await db.batch([
             db

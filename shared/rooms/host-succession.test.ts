@@ -5,6 +5,7 @@ import { type RoomStore, type Row } from './types';
 import { handleFarmRoom } from '../../games/act-natural/rooms';
 import { handleDeliveryRoom } from '../../games/uphill-delivery/rooms';
 import { handleGiantRoom } from '../../games/dont-wake-the-giant/rooms';
+import { handleShelfRoom } from '../../games/shelf-control/rooms';
 import type { Session } from './session';
 
 type Reply = {
@@ -13,9 +14,15 @@ type Reply = {
   snapshot?: {
     code: string;
     host: string;
-    world: { started: number; players: { id: string }[] };
+    // Shelf Control's snapshot is flat: its players sit at the top level.
+    world?: { started: number; players: { id: string }[] };
+    players?: { id: string }[];
   };
 };
+const ids = (reply: Reply) =>
+  (reply.snapshot?.world?.players ?? reply.snapshot?.players ?? []).map(
+    (p) => p.id,
+  );
 type Handler = (
   store: RoomStore,
   body: Record<string, unknown>,
@@ -26,6 +33,7 @@ const games: Record<string, { handle: Handler; prefix: string }> = {
   'act-natural': { handle: handleFarmRoom, prefix: 'act:' },
   'uphill-delivery': { handle: handleDeliveryRoom, prefix: 'delivery:' },
   'dont-wake-the-giant': { handle: handleGiantRoom, prefix: 'giant:' },
+  'shelf-control': { handle: handleShelfRoom, prefix: 'shelf:' },
 };
 const NOW = 1_000_000;
 
@@ -83,7 +91,7 @@ for (const [game, { handle, prefix }] of Object.entries(games)) {
       assert.equal(reply.snapshot?.host, sessions[i + 1].id);
       assert.equal(reply.snapshot?.code, sessions[0].code);
       assert.deepEqual(
-        reply.snapshot?.world.players.map((p) => p.id),
+        ids(reply),
         sessions.slice(i + 1).map((s) => s.id),
       );
       await assert.rejects(
@@ -110,7 +118,7 @@ for (const [game, { handle, prefix }] of Object.entries(games)) {
     );
     for (const reply of replies) {
       assert.equal(reply.snapshot?.host, sessions[1].id);
-      assert.equal(reply.snapshot?.world.players.length, 3);
+      assert.equal(ids(reply).length, 3);
     }
     await assert.rejects(
       handle(store, { op: 'sync', ...sessions[0] }, NOW + 30_101),
@@ -128,10 +136,7 @@ for (const [game, { handle, prefix }] of Object.entries(games)) {
       NOW + 30_100,
     );
     assert.equal(reply.snapshot?.host, sessions[2].id);
-    assert.deepEqual(
-      reply.snapshot?.world.players.map((p) => p.id),
-      [sessions[2].id, sessions[3].id],
-    );
+    assert.deepEqual(ids(reply), [sessions[2].id, sessions[3].id]);
   });
 
   void test(`${game}: a returning former host rejoins at the back of the succession queue`, async () => {
@@ -174,68 +179,144 @@ for (const [game, { handle, prefix }] of Object.entries(games)) {
     );
     assert.equal(returned.snapshot?.host, sessions[0].id);
     assert.deepEqual(
-      returned.snapshot?.world.players.map((p) => p.id),
+      ids(returned),
       sessions.map((s) => s.id),
     );
   });
 
-  void test(`${game}: only the successor gains host controls, without starting a new round`, async () => {
-    const { store, sessions } = await fourPlayers(handle);
-    await handle(
-      store,
-      {
-        op: 'action',
-        ...sessions[0],
-        action: { type: 'start' },
-        requestId: 'start-round',
-      },
-      NOW + 100,
-    );
-    const before = JSON.parse(
-      store.rows.get(prefix + sessions[0].code)!.state,
-    ) as { world: { started: number } };
-    await handle(store, { op: 'leave', ...sessions[0] }, NOW + 250);
-    const next = await handle(store, { op: 'sync', ...sessions[2] }, NOW + 260);
-    assert.equal(next.snapshot?.host, sessions[1].id);
-    assert.equal(
-      next.snapshot?.world.started,
-      before.world.started,
-      'Host handover must not start a new round',
-    );
-    // Complete the round before exercising restart, as some games prohibit restarting mid-round.
-    const row = store.rows.get(prefix + sessions[0].code)!;
-    const finished = JSON.parse(row.state) as { world: { phase: string } };
-    finished.world.phase =
-      game === 'act-natural'
-        ? 'cows-win'
-        : game === 'dont-wake-the-giant'
-          ? 'ended'
-          : 'won';
-    row.state = JSON.stringify(finished);
-    await assert.rejects(
-      handle(
+  // Shelf Control starts a shift only with exactly four players; its version is below.
+  if (game !== 'shelf-control')
+    void test(`${game}: only the successor gains host controls, without starting a new round`, async () => {
+      const { store, sessions } = await fourPlayers(handle);
+      await handle(
         store,
         {
           op: 'action',
-          ...sessions[2],
-          action: { type: 'restart' },
-          requestId: 'not-host',
+          ...sessions[0],
+          action: { type: 'start' },
+          requestId: 'start-round',
         },
-        NOW + 270,
-      ),
-      /host|captain|leader/i,
-    );
-    const restarted = await handle(
+        NOW + 100,
+      );
+      const before = JSON.parse(
+        store.rows.get(prefix + sessions[0].code)!.state,
+      ) as { world: { started: number } };
+      await handle(store, { op: 'leave', ...sessions[0] }, NOW + 250);
+      const next = await handle(
+        store,
+        { op: 'sync', ...sessions[2] },
+        NOW + 260,
+      );
+      assert.equal(next.snapshot?.host, sessions[1].id);
+      assert.equal(
+        next.snapshot?.world?.started,
+        before.world.started,
+        'Host handover must not start a new round',
+      );
+      // Complete the round before exercising restart, as some games prohibit restarting mid-round.
+      const row = store.rows.get(prefix + sessions[0].code)!;
+      const finished = JSON.parse(row.state) as { world: { phase: string } };
+      finished.world.phase =
+        game === 'act-natural'
+          ? 'cows-win'
+          : game === 'dont-wake-the-giant'
+            ? 'ended'
+            : 'won';
+      row.state = JSON.stringify(finished);
+      await assert.rejects(
+        handle(
+          store,
+          {
+            op: 'action',
+            ...sessions[2],
+            action: { type: 'restart' },
+            requestId: 'not-host',
+          },
+          NOW + 270,
+        ),
+        /host|captain|leader/i,
+      );
+      const restarted = await handle(
+        store,
+        {
+          op: 'action',
+          ...sessions[1],
+          action: { type: 'restart' },
+          requestId: 'new-host',
+        },
+        NOW + 280,
+      );
+      assert.equal(restarted.snapshot?.host, sessions[1].id);
+      assert.equal(restarted.snapshot?.world?.started, NOW + 280);
+    });
+}
+
+void test('shelf-control: only the successor gains host controls, without starting a new shift', async () => {
+  const shelf = games['shelf-control'].handle;
+  const { store, sessions } = await fourPlayers(shelf);
+  const stored = () =>
+    JSON.parse(store.rows.get(`shelf:${sessions[0].code}`)!.state) as {
+      world: { started: number; phase: string; players: { id: string }[] };
+    };
+  await shelf(
+    store,
+    {
+      op: 'action',
+      ...sessions[0],
+      action: { type: 'start' },
+      requestId: 'start-shift',
+    },
+    NOW + 100,
+  );
+  const started = stored().world.started;
+  assert.notEqual(stored().world.phase, 'lobby', 'the shift began');
+  await shelf(store, { op: 'leave', ...sessions[0] }, NOW + 250);
+  const next = await shelf(store, { op: 'sync', ...sessions[2] }, NOW + 260);
+  assert.equal(next.snapshot?.host, sessions[1].id);
+  assert.equal(
+    stored().world.started,
+    started,
+    'Host handover must not start a new shift',
+  );
+  // End the shift, then check that only the new host can begin another.
+  const row = store.rows.get(`shelf:${sessions[0].code}`)!;
+  const finished = JSON.parse(row.state) as { world: { phase: string } };
+  finished.world.phase = 'guard-win';
+  row.state = JSON.stringify(finished);
+  await assert.rejects(
+    shelf(
       store,
       {
         op: 'action',
-        ...sessions[1],
+        ...sessions[2],
         action: { type: 'restart' },
-        requestId: 'new-host',
+        requestId: 'not-host',
       },
-      NOW + 280,
-    );
-    assert.equal(restarted.snapshot?.host, sessions[1].id);
-    assert.equal(restarted.snapshot?.world.started, NOW + 280);
-  });
-}
+      NOW + 270,
+    ),
+    /host/i,
+  );
+  // A shift needs four: the new host fills the empty seat with a bot first.
+  await shelf(
+    store,
+    {
+      op: 'action',
+      ...sessions[1],
+      action: { type: 'add-bot' },
+      requestId: 'fill-seat',
+    },
+    NOW + 275,
+  );
+  const restarted = await shelf(
+    store,
+    {
+      op: 'action',
+      ...sessions[1],
+      action: { type: 'restart' },
+      requestId: 'new-host',
+    },
+    NOW + 280,
+  );
+  assert.equal(restarted.snapshot?.host, sessions[1].id);
+  assert.ok(stored().world.started > started, 'the new host began a new shift');
+});
