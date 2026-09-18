@@ -1,7 +1,15 @@
 'use client';
 /* oxlint-disable react/react-compiler */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import {
   Anchor,
   ArrowRight,
@@ -19,6 +27,7 @@ import {
   GameTracker,
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
+import { TOUCH_QUERY } from '../../shared/browser/device';
 import { TouchControls } from '../../shared/input/TouchControls';
 import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
 import { hudPacer } from '../../shared/ui/hud-pacer';
@@ -45,7 +54,7 @@ import {
   freshChainWorld,
   newPlayer,
 } from './simulation';
-import { CHAIN_TRANSLATIONS } from './translations';
+import { CHAIN_TRANSLATIONS, type KeyLabels } from './translations';
 import {
   BRACE_STAMINA_MAX,
   CLIP_REACH,
@@ -97,21 +106,33 @@ function haptic(pattern: number | number[]) {
   }
 }
 
-type Prompt = { text: string; tone: 'info' | 'urgent' | 'self' };
+type Prompt = {
+  text: string;
+  tone: 'info' | 'urgent' | 'self';
+  /** The control the prompt is about, lit up on touch devices. */
+  focus?: 'help' | 'brace' | 'clip' | 'jump';
+};
 
 /** The one thing most worth telling the local worker right now. */
 function promptFor(
   world: ChainWorld,
   me: Player | undefined,
   s: ReturnType<typeof useStrings>,
+  k: KeyLabels,
+  touch: boolean,
 ): Prompt | null {
   if (!me || world.phase !== 'playing' || me.state === 'finished') return null;
-  if (me.state === 'dangling') return { text: s.youDangling, tone: 'self' };
+  if (me.state === 'dangling')
+    return { text: s.youDangling(k), tone: 'self', focus: 'jump' };
   if (me.state === 'limp') return { text: s.youLimp, tone: 'self' };
   if (me.anchorId)
-    return { text: `${s.youClipped} · ${s.promptUnclip}`, tone: 'info' };
+    return {
+      text: `${s.youClipped} · ${s.promptUnclip(k)}`,
+      tone: 'info',
+      focus: 'clip',
+    };
   if (world.pendulumRider === me.id)
-    return { text: s.promptUnclip, tone: 'info' };
+    return { text: s.promptUnclip(k), tone: 'info', focus: 'clip' };
 
   const others = world.players.filter((p) => p.id !== me.id);
   const dangler = others.find(
@@ -120,7 +141,11 @@ function promptFor(
       Math.hypot(p.x - me.x, p.z - me.z) <= HAUL_REACH * 1.3,
   );
   if (dangler && me.grounded)
-    return { text: s.promptHaul(dangler.name), tone: 'urgent' };
+    return {
+      text: s.promptHaul(dangler.name, k),
+      tone: 'urgent',
+      focus: 'help',
+    };
 
   const limp = others.find(
     (p) =>
@@ -128,29 +153,33 @@ function promptFor(
       Math.hypot(p.x - me.x, p.y - me.y, p.z - me.z) <= REVIVE_REACH * 1.4,
   );
   if (limp && me.grounded)
-    return { text: s.promptRevive(limp.name), tone: 'urgent' };
+    return {
+      text: s.promptRevive(limp.name, k),
+      tone: 'urgent',
+      focus: 'help',
+    };
 
   if (me.braceCooldown > 0) return { text: s.exhausted, tone: 'self' };
 
   if (others.some((p) => p.state === 'dangling') && me.grounded && !me.braced)
-    return { text: s.promptBrace, tone: 'urgent' };
+    return { text: s.promptBrace(k), tone: 'urgent', focus: 'brace' };
 
   if (!me.grounded && nearNet(me.x, me.y, me.z))
-    return { text: s.promptNet, tone: 'info' };
+    return { text: s.promptNet(touch), tone: 'info' };
 
   const [bx, by, bz] = pendulumBall(world.pendulumAngle);
   if (
     Math.hypot(me.x - bx, me.y + PLAYER_HEIGHT * 0.6 - by, me.z - bz) <=
     PENDULUM.hookReach + PENDULUM.ballRadius
   )
-    return { text: s.promptHook, tone: 'info' };
+    return { text: s.promptHook(k), tone: 'info', focus: 'clip' };
 
   if (
     ANCHORS.some(
       (a) => Math.hypot(me.x - a.x, me.y - a.y, me.z - a.z) < CLIP_REACH,
     )
   )
-    return { text: s.promptClip, tone: 'info' };
+    return { text: s.promptClip(k), tone: 'info', focus: 'clip' };
 
   return null;
 }
@@ -160,8 +189,54 @@ function useStrings() {
   return t(CHAIN_TRANSLATIONS);
 }
 
+function subscribeTouch(change: () => void) {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+  const query = window.matchMedia(TOUCH_QUERY);
+  query.addEventListener('change', change);
+  return () => query.removeEventListener('change', change);
+}
+
+/**
+ * Whether the touch layout is showing, using the collection's one touch query
+ * so the prompts name the same controls the stylesheet puts on screen.
+ */
+function useTouchLayout() {
+  return useSyncExternalStore(
+    subscribeTouch,
+    () => window.matchMedia?.(TOUCH_QUERY).matches ?? false,
+    () => false,
+  );
+}
+
+/**
+ * A button held down for as long as the finger stays on it. Capturing the
+ * pointer means sliding a thumb a little off the button mid-hold does not
+ * drop whoever the player is holding on the line.
+ */
+function holdHandlers(on: () => void, off: () => void) {
+  return {
+    onPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+      if (event.button !== 0) return;
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Without capture the hold still works; it just ends if the thumb slips.
+      }
+      on();
+    },
+    onPointerUp: off,
+    onPointerCancel: off,
+    onLostPointerCapture: off,
+    onContextMenu(event: { preventDefault(): void }) {
+      event.preventDefault();
+    },
+  };
+}
+
 export default function ChainOfFoolsGame() {
   const strings = useStrings();
+  const touch = useTouchLayout();
+  const keys = touch ? strings.keys.touch : strings.keys.desktop;
   useGameTracker(tracker);
 
   const container = useRef<HTMLDivElement>(null);
@@ -291,7 +366,9 @@ export default function ChainOfFoolsGame() {
   const trailingX = w?.players.length
     ? Math.min(...w.players.map((p) => p.x))
     : 0;
-  const prompt = w ? promptFor(w, me, strings) : null;
+  const prompt = w ? promptFor(w, me, strings, keys, touch) : null;
+  const lit = (control: NonNullable<Prompt['focus']>) =>
+    prompt?.focus === control ? `lit ${prompt.tone}` : '';
 
   const toggleMute = () => {
     const next = !muted;
@@ -333,11 +410,13 @@ export default function ChainOfFoolsGame() {
 
       {w && (playing || ended) && (
         <section className="cof-hud" aria-live="off">
-          <div className="cof-hud-badge">
+          <div className="cof-hud-badge cof-badge-timer">
             <Timer size={18} />
             <div>
               <strong className="cof-timer">
-                {formatTime(playing ? timeLeft(w) : 0)}
+                {formatTime(
+                  playing ? timeLeft(w) : Math.max(0, w.endsAt - w.clock),
+                )}
               </strong>
               <small>{strings.hudTime}</small>
             </div>
@@ -394,7 +473,7 @@ export default function ChainOfFoolsGame() {
             </div>
           </div>
 
-          <div className="cof-hud-badge">
+          <div className="cof-hud-badge cof-badge-wipes">
             <HardHat size={18} />
             <div>
               <strong>{w.wipes}</strong>
@@ -413,34 +492,38 @@ export default function ChainOfFoolsGame() {
 
       {w?.phase === 'lobby' && (
         <section className="cof-welcome">
-          <div className="cof-kicker">
-            <Link2 size={14} /> {strings.tagline}
+          <div className="cof-welcome-body">
+            <div className="cof-kicker">
+              <Link2 size={14} /> {strings.tagline}
+            </div>
+            <h1>
+              {strings.titleMain}
+              <span>{strings.titleHighlight}</span>.
+            </h1>
+            <p className="cof-desc">{strings.desc}</p>
+            <ul className="cof-rules">
+              {strings.rules.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+            <div className="cof-crew">
+              {w.players.map((p) => (
+                <span key={p.id} className="cof-crew-chip">
+                  <i style={{ background: COLORS[p.color % 4] }} />
+                  {p.id === SESSION.id ? SESSION.name : p.name}
+                </span>
+              ))}
+            </div>
           </div>
-          <h1>
-            {strings.titleMain}
-            <span>{strings.titleHighlight}</span>.
-          </h1>
-          <p className="cof-desc">{strings.desc}</p>
-          <ul className="cof-rules">
-            {strings.rules.map((rule) => (
-              <li key={rule}>{rule}</li>
-            ))}
-          </ul>
-          <div className="cof-crew">
-            {w.players.map((p) => (
-              <span key={p.id} className="cof-crew-chip">
-                <i style={{ background: COLORS[p.color % 4] }} />
-                {p.id === SESSION.id ? SESSION.name : p.name}
-              </span>
-            ))}
+          <div className="cof-welcome-foot">
+            <button
+              type="button"
+              className="cof-btn primary"
+              onClick={() => dispatch({ type: 'start' })}
+            >
+              {strings.startShift} <ArrowRight size={18} />
+            </button>
           </div>
-          <button
-            type="button"
-            className="cof-btn primary"
-            onClick={() => dispatch({ type: 'start' })}
-          >
-            {strings.startShift} <ArrowRight size={18} />
-          </button>
         </section>
       )}
 
@@ -472,80 +555,84 @@ export default function ChainOfFoolsGame() {
         </section>
       )}
 
-      <div className="cof-hint-bar">
-        <span>
-          <kbd>WASD</kbd> {strings.hintMove}
-        </span>
-        <span>
-          <kbd>Space</kbd> {strings.hintJump}
-        </span>
-        <span>
-          <kbd>Shift</kbd> {strings.hintBrace}
-        </span>
-        <span>
-          <kbd>F</kbd> {strings.hintHelp}
-        </span>
-        <span>
-          <kbd>E</kbd> {strings.hintClip}
-        </span>
-        <span>
-          <kbd>Q</kbd> {strings.hintCall}
-        </span>
-        <span>
-          <kbd>V</kbd> {strings.hintCamera}
-        </span>
-      </div>
+      {!touch && (
+        <div className="cof-hint-bar">
+          <span>
+            <kbd>WASD</kbd> {strings.hintMove}
+          </span>
+          <span>
+            <kbd>Space</kbd> {strings.hintJump}
+          </span>
+          <span>
+            <kbd>Shift</kbd> {strings.hintBrace}
+          </span>
+          <span>
+            <kbd>F</kbd> {strings.hintHelp}
+          </span>
+          <span>
+            <kbd>E</kbd> {strings.hintClip}
+          </span>
+          <span>
+            <kbd>Q</kbd> {strings.hintCall}
+          </span>
+          <span>
+            <kbd>V</kbd> {strings.hintCamera}
+          </span>
+        </div>
+      )}
 
-      <TouchControls
-        disabled={!playing}
-        move={(v) => scene.current?.move(v)}
-        jump={touchJump}
-      />
-      <nav className="cof-dock" aria-label="Crew actions">
-        <button
-          type="button"
-          className={`cof-dock-btn brace ${me?.braced ? 'on' : ''}`}
-          disabled={!playing}
-          onPointerDown={() => {
-            sound.current?.unlock();
-            scene.current?.hold('brace', true);
-            haptic(15);
-          }}
-          onPointerUp={() => scene.current?.hold('brace', false)}
-          onPointerCancel={() => scene.current?.hold('brace', false)}
-          onPointerLeave={() => scene.current?.hold('brace', false)}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <Hand size={20} />
-          {strings.touchBrace}
-        </button>
-        <button
-          type="button"
-          className="cof-dock-btn help"
-          disabled={!playing}
-          onPointerDown={() => {
-            sound.current?.unlock();
-            scene.current?.hold('haul', true);
-            haptic(15);
-          }}
-          onPointerUp={() => scene.current?.hold('haul', false)}
-          onPointerCancel={() => scene.current?.hold('haul', false)}
-          onPointerLeave={() => scene.current?.hold('haul', false)}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <Link2 size={20} />
-          {strings.touchHelp}
-        </button>
-        <button
-          type="button"
-          className={`cof-dock-btn clip ${me?.anchorId ? 'on' : ''}`}
-          disabled={!playing}
-          onClick={() => dispatch({ type: 'clip' })}
-        >
-          <Anchor size={20} />
-          {strings.touchClip}
-        </button>
-      </nav>
+      {playing && (
+        <>
+          <div className={`cof-stick ${lit('jump') ? 'jump-lit' : ''}`}>
+            <TouchControls
+              disabled={!playing}
+              move={(v) => scene.current?.move(v)}
+              jump={touchJump}
+            />
+          </div>
+          <nav className="cof-dock" aria-label="Crew actions">
+            <button
+              type="button"
+              className={`cof-dock-btn brace ${me?.braced ? 'on' : ''} ${me && me.braceCooldown > 0 ? 'out' : ''} ${lit('brace')}`}
+              style={{ '--grip': grip } as CSSProperties}
+              {...holdHandlers(
+                () => {
+                  sound.current?.unlock();
+                  scene.current?.hold('brace', true);
+                  haptic(15);
+                },
+                () => scene.current?.hold('brace', false),
+              )}
+            >
+              <Hand size={20} />
+              {strings.touchBrace}
+            </button>
+            <button
+              type="button"
+              className={`cof-dock-btn help ${lit('help')}`}
+              {...holdHandlers(
+                () => {
+                  sound.current?.unlock();
+                  scene.current?.hold('haul', true);
+                  haptic(15);
+                },
+                () => scene.current?.hold('haul', false),
+              )}
+            >
+              <Link2 size={20} />
+              {strings.touchHelp}
+            </button>
+            <button
+              type="button"
+              className={`cof-dock-btn clip ${me?.anchorId ? 'on' : ''} ${lit('clip')}`}
+              onClick={() => dispatch({ type: 'clip' })}
+            >
+              <Anchor size={20} />
+              {strings.touchClip}
+            </button>
+          </nav>
+        </>
+      )}
     </main>
   );
 }

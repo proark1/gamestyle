@@ -1,4 +1,9 @@
 import * as T from 'three';
+import {
+  isTouchDevice,
+  prefersReducedMotion,
+} from '../../shared/browser/device';
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import {
   addHouseLight,
@@ -38,6 +43,10 @@ const TAUT_RED = new T.Color('#e0452c');
 const UNIT = new T.Vector3(1, 1, 1);
 const X_AXIS = new T.Vector3(1, 0, 0);
 const Y_AXIS = new T.Vector3(0, 1, 0);
+/** Narrower than this and the screen is a phone held upright. */
+const PORTRAIT_ASPECT = 0.85;
+/** Name tags keep this on-screen height however far away the camera is. */
+const TAG_PIXELS = 19;
 
 type Worker = {
   root: T.Group;
@@ -69,6 +78,10 @@ export class ChainScene {
   private particleGeometry = new T.BoxGeometry(0.12, 0.12, 0.12);
   private particleMaterials = new Map<string, T.MeshBasicMaterial>();
   private sun: T.DirectionalLight;
+  /** Touch tier: fewer name tags and particles, smaller everything. */
+  private touchDevice = isTouchDevice();
+  /** No screen shake for anyone who asked their device for less motion. */
+  private calmMotion = prefersReducedMotion();
 
   private world: ChainWorld | null = null;
   private localId = '';
@@ -112,12 +125,8 @@ export class ChainScene {
     this.renderer = renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
 
-    this.camera = new T.PerspectiveCamera(
-      50,
-      container.clientWidth / Math.max(1, container.clientHeight),
-      0.3,
-      400,
-    );
+    this.camera = new T.PerspectiveCamera(50, 1, 0.3, 400);
+    this.fitCamera(container.clientWidth, container.clientHeight);
 
     // The collection's house light over a building site.
     const { sun } = addHouseLight(this.scene, {
@@ -137,6 +146,17 @@ export class ChainScene {
     this.sun = sun;
 
     this.site = createSite();
+    // Static scenery shares draw calls; only what moves or changes stays apart.
+    batchScenery(this.site.root, [
+      this.site.plank,
+      this.site.pendulum,
+      ...this.site.anchors.values(),
+      ...this.site.checkpointFlags,
+    ]);
+    // The plank and the wrecking load each move as one rigid piece, so their
+    // parts can share draw calls inside their own groups.
+    batchScenery(this.site.plank);
+    batchScenery(this.site.pendulum);
     this.scene.add(this.site.root);
 
     // The safety line: real links, recoloured by how hard the line is pulling.
@@ -279,10 +299,37 @@ export class ChainScene {
   private resize = () => {
     const w = this.container.clientWidth;
     const h = Math.max(1, this.container.clientHeight);
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this.touchDevice = isTouchDevice();
+    this.fitCamera(w, h);
     this.renderer.setSize(w, h);
   };
+
+  /**
+   * A phone held upright sees a narrow slice of the world, so it gets a wider
+   * lens; the framing in `stepCamera` pulls back and looks further ahead too.
+   */
+  private fitCamera(width: number, height: number) {
+    const aspect = width / Math.max(1, height);
+    this.camera.aspect = aspect;
+    this.camera.fov = aspect < PORTRAIT_ASPECT ? 64 : 50;
+    this.camera.updateProjectionMatrix();
+    this.viewHeight = Math.max(1, height);
+    for (const worker of this.workers.values()) this.sizeTag(worker.tag);
+  }
+
+  private viewHeight = 1;
+
+  /**
+   * Tags ignore distance, so a name stays readable when the camera pulls back
+   * to fit the whole crew on a phone. Without attenuation a sprite's height is
+   * a share of the view: its scale times the projection's vertical focal term,
+   * over the two units clip space spans.
+   */
+  private sizeTag(tag: T.Sprite) {
+    const focal = this.camera.projectionMatrix.elements[5];
+    const tall = ((TAG_PIXELS / this.viewHeight) * 2) / focal;
+    tag.scale.set(tall * 4, tall, 1);
+  }
 
   /** Turns keys and stick into world-space movement relative to the camera. */
   private pollInput(): PlayerInput {
@@ -374,15 +421,24 @@ export class ChainScene {
           player.color,
           player.id === this.localId ? getEquippedLook() : undefined,
         );
+        // Each rig part is rigid, so its meshes can share draw calls while the
+        // parts themselves keep animating.
+        const rig = root.userData as Record<string, T.Object3D>;
+        const limbs = [rig.legL, rig.legR, rig.armL, rig.armR];
+        batchScenery(rig.body as T.Group, limbs);
+        for (const limb of limbs) batchScenery(limb as T.Group);
         const tag = label(
           player.id === this.localId ? 'You' : player.name,
           COLORS[player.color % 4],
           '#ffffff',
-          1.5,
+          1.4,
         );
-        tag.position.y = 2.55;
+        tag.position.y = 2.45;
         tag.material.fog = false;
         tag.material.toneMapped = false;
+        tag.material.sizeAttenuation = false;
+        if (tag.material.map) tag.material.map.colorSpace = T.SRGBColorSpace;
+        this.sizeTag(tag);
         root.add(tag);
         this.scene.add(root);
         worker = {
@@ -419,7 +475,13 @@ export class ChainScene {
         climbing,
         seed: player.link,
       });
-      worker.tag.visible = player.state !== 'finished';
+      // A line of workers seen from behind stacks every name in one spot, so
+      // tags show your own worker and anyone who needs a hand right now.
+      worker.tag.visible =
+        player.state !== 'finished' &&
+        (player.id === this.localId ||
+          player.state === 'dangling' ||
+          player.state === 'limp');
     }
 
     for (const [id, worker] of this.workers) {
@@ -608,8 +670,10 @@ export class ChainScene {
       mat = new T.MeshBasicMaterial({ color: colour });
       this.particleMaterials.set(colour, mat);
     }
-    for (let i = 0; i < count; i++) {
-      if (this.particles.length > 220) break;
+    const limit = this.touchDevice ? 70 : 200;
+    const wanted = this.touchDevice ? Math.ceil(count / 2) : count;
+    for (let i = 0; i < wanted; i++) {
+      if (this.particles.length >= limit) break;
       const mesh = new T.Mesh(this.particleGeometry, mat);
       mesh.position.copy(at);
       this.scene.add(mesh);
@@ -677,8 +741,12 @@ export class ChainScene {
     const tx = me ? cx + (me.x - cx) * focus : cx;
     const ty = me ? cy + (me.y - cy) * focus : cy;
     const tz = me ? cz + (me.z - cz) * focus : cz;
+    // Upright, the view looks further along the course so the next obstacle
+    // is on screen above the crew rather than off the side of it.
+    const portrait = this.camera.aspect < PORTRAIT_ASPECT;
+    const ahead = portrait && this.mode !== 'side' ? 4 : 2;
     this.cameraTarget.lerp(
-      this.tmpA.set(tx + 2, ty + 1.1, tz),
+      this.tmpA.set(tx + ahead, ty + 1.1, tz),
       1 - Math.exp(-dt * 4),
     );
 
@@ -687,12 +755,18 @@ export class ChainScene {
     let side: number;
     if (this.mode === 'side') {
       back = 2;
-      up = 5.5 + spread * 0.15;
-      side = 15 + spread * 0.55;
+      up = (portrait ? 7 : 5.5) + spread * 0.15;
+      side = (portrait ? 21 : 15) + spread * (portrait ? 0.9 : 0.55);
     } else if (this.mode === 'close') {
-      back = 7.5;
-      up = 4.2;
-      side = 3.2;
+      back = portrait ? 9 : 7.5;
+      up = portrait ? 5.5 : 4.2;
+      side = portrait ? 1.4 : 3.2;
+    } else if (portrait) {
+      // Straight down the course, so the line of workers stays centred and
+      // clear of the thumb controls at the bottom of the screen.
+      back = 11 + spread * 0.45;
+      up = 9.5 + spread * 0.25;
+      side = 0.6;
     } else {
       back = 10 + spread * 0.35;
       up = 7 + spread * 0.18;
@@ -707,6 +781,7 @@ export class ChainScene {
     this.cameraPosition.lerp(wanted, 1 - Math.exp(-dt * 3.2));
     this.camera.position.copy(this.cameraPosition);
 
+    if (this.calmMotion) this.trauma = 0;
     if (this.trauma > 0) {
       const shake = this.trauma * this.trauma * 0.35;
       this.camera.position.x += (Math.random() - 0.5) * shake;
