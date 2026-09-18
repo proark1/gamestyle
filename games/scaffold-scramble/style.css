@@ -1,12 +1,20 @@
+/* Scaffold Scramble paints on the collection's shared kit and house HUD tokens
+   in shared/styles/game-ui.css. Only the chrome unique to a window-washing
+   cradle lives here. */
 .sc-game {
   position: relative;
   height: 100dvh;
   min-height: 600px;
   overflow: hidden;
   background: #7ec3f2;
-  color: #1e293b;
-  font-family: 'DM Sans', sans-serif;
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   user-select: none;
+}
+
+.sc-game :is(button, a):focus-visible {
+  outline: 3px solid var(--hud-accent);
+  outline-offset: 3px;
 }
 
 .sc-canvas {
@@ -21,56 +29,109 @@
   touch-action: none;
 }
 
-/* Topbar HUD */
-.sc-hud {
+/* Wordmark and shared toolbar */
+.sc-game .sc-topbar {
   position: absolute;
-  top: 14px;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  color: var(--hud-ink);
+  pointer-events: none;
+}
+
+.sc-topbar > * {
+  pointer-events: auto;
+}
+
+.sc-mark {
+  display: flex;
+  padding: 9px;
+  margin-right: 3px;
+  background: var(--hud-accent);
+  border-radius: 13px;
+  color: var(--hud-ink);
+  transform: rotate(-7deg);
+}
+
+/* The kit's wordmark is a flex row, so the full stop needs pulling back in. */
+.sc-topbar .wordmark .title-dot {
+  margin-left: -6px;
+  color: var(--hud-accent-strong);
+}
+
+/* Telemetry row under the top bar */
+.sc-hud-stack {
+  position: absolute;
+  top: 84px;
   left: 50%;
-  transform: translateX(-50%);
   z-index: 10;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
   pointer-events: none;
-  max-width: 96%;
+}
+
+.sc-hud {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
 }
 
 .sc-hud-badge {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
-  font-weight: 700;
+  padding: 9px 15px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
   pointer-events: auto;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+.sc-hud-badge > svg {
+  flex: 0 0 auto;
+  color: var(--hud-muted);
+}
+
+.sc-hud-badge.cleaned > svg {
+  color: var(--hud-good);
 }
 
 .sc-hud-badge.tilt {
   flex-direction: column;
-  gap: 4px;
-  min-width: 175px;
+  align-items: stretch;
+  gap: 5px;
+  min-width: 176px;
+  max-width: 220px;
   text-align: center;
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
-  border: 2px solid transparent;
+  border-width: 2px;
 }
 
 .sc-hud-badge.tilt.safe {
-  border-color: #22c55e;
+  border-color: color-mix(in srgb, var(--hud-good) 45%, var(--hud-edge));
 }
 
 .sc-hud-badge.tilt.warning {
-  border-color: #eab308;
-  background: rgba(254, 252, 232, 0.96);
+  border-color: var(--hud-warn);
+  background: var(--hud-card-strong);
 }
 
 .sc-hud-badge.tilt.danger {
-  border-color: #ef4444;
-  background: rgba(254, 242, 242, 0.96);
+  border-color: var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 14%, var(--hud-card-solid));
   animation: sc-pulse 0.6s infinite alternate;
 }
 
@@ -84,24 +145,40 @@
 }
 
 .sc-tilt-val {
-  font-size: 26px;
-  line-height: 1;
-  font-family: 'Fredoka', sans-serif;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 5px;
+  font: 600 25px/1 var(--hud-display);
+  color: var(--hud-ink);
 }
 
-/* Industrial Spirit Level Capsule */
+.sc-tilt-val .sc-tilt-icon {
+  color: var(--hud-warn);
+}
+
+.sc-hud-badge.tilt.danger .sc-tilt-icon {
+  color: var(--hud-danger);
+}
+
+/* Spirit level: calm middle, amber past 15 degrees, rust past 20. */
 .sc-spirit-level {
+  position: relative;
   width: 100%;
   height: 12px;
-  background: linear-gradient(180deg, #94a3b8 0%, #cbd5e1 50%, #94a3b8 100%);
-  border-radius: 6px;
-  border: 1px solid #64748b;
-  position: relative;
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--hud-edge-strong);
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--hud-danger) 34%, var(--hud-card-solid)) 0 20%,
+    color-mix(in srgb, var(--hud-warn) 30%, var(--hud-card-solid)) 20% 27.5%,
+    color-mix(in srgb, var(--hud-good) 20%, var(--hud-card-solid)) 27.5% 72.5%,
+    color-mix(in srgb, var(--hud-warn) 30%, var(--hud-card-solid)) 72.5% 80%,
+    color-mix(in srgb, var(--hud-danger) 34%, var(--hud-card-solid)) 80% 100%
+  );
+  box-shadow: inset 0 1px 2px
+    color-mix(in srgb, var(--hud-ink) 18%, transparent);
 }
 
 .sc-spirit-tick {
@@ -116,27 +193,27 @@
 .sc-spirit-tick.zero {
   left: 50%;
   transform: translateX(-50%);
-  background: #3b82f6;
+  background: color-mix(in srgb, var(--hud-ink) 55%, transparent);
 }
 
 .sc-spirit-tick.neg15 {
   left: calc(50% - 22.5%);
-  background: #eab308;
+  background: var(--hud-warn);
 }
 
 .sc-spirit-tick.pos15 {
   left: calc(50% + 22.5%);
-  background: #eab308;
+  background: var(--hud-warn);
 }
 
 .sc-spirit-tick.neg20 {
   left: calc(50% - 30%);
-  background: #ef4444;
+  background: var(--hud-danger);
 }
 
 .sc-spirit-tick.pos20 {
   left: calc(50% + 30%);
-  background: #ef4444;
+  background: var(--hud-danger);
 }
 
 .sc-spirit-bubble {
@@ -144,26 +221,25 @@
   top: 1px;
   bottom: 1px;
   width: 16px;
+  z-index: 2;
   border-radius: 6px;
   background: radial-gradient(
     circle at 35% 35%,
-    #ffffff 0%,
-    #fef08a 45%,
-    #facc15 100%
+    var(--hud-card-solid) 0%,
+    var(--hud-accent) 70%
   );
+  box-shadow: 0 0 0 1px var(--hud-accent-strong);
   transform: translateX(-50%);
-  box-shadow: 0 0 6px rgba(250, 204, 21, 0.7);
   transition: left 0.08s ease-out;
 }
 
 .sc-hud-badge.tilt.danger .sc-spirit-bubble {
   background: radial-gradient(
     circle at 35% 35%,
-    #ffffff 0%,
-    #fca5a5 45%,
-    #ef4444 100%
+    var(--hud-card-solid) 0%,
+    var(--hud-danger) 70%
   );
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 0 1px var(--hud-danger);
 }
 
 .sc-pulse-icon {
@@ -171,9 +247,17 @@
 }
 
 .sc-hud-badge.wind-gust {
-  border-color: #f59e0b;
-  background: rgba(254, 252, 232, 0.96);
+  border-color: var(--hud-warn);
+  background: var(--hud-card-strong);
   animation: sc-breeze 1.2s infinite ease-in-out alternate;
+}
+
+.sc-hud-badge.wind-gust > svg {
+  color: var(--hud-warn);
+}
+
+.sc-hud-badge.wind-gust .sc-score-val {
+  color: var(--hud-accent-ink);
 }
 
 @keyframes sc-breeze {
@@ -185,115 +269,122 @@
   }
 }
 
-.sc-score-val {
-  font-size: 24px;
-  line-height: 1;
-  font-family: 'Fredoka', sans-serif;
-  color: #0284c7;
+.sc-score-val,
+.sc-timer-val {
+  font: 600 24px/1 var(--hud-display);
+  color: var(--hud-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.sc-timer-val {
-  font-size: 24px;
-  line-height: 1;
-  font-family: 'Fredoka', sans-serif;
-  color: #0f172a;
+.sc-score-sub {
+  font: 500 14px/1 var(--hud-display);
+  color: var(--hud-faint);
+}
+
+.sc-unit {
+  font: 600 12px/1 var(--hud-body);
+  color: var(--hud-muted);
 }
 
 .sc-hud-meta {
-  display: flex;
-  flex-direction: column;
-  font-size: 10px;
+  display: block;
+  max-width: 190px;
+  margin-top: 4px;
+  color: var(--hud-muted);
+  font: 700 10px/1.3 var(--hud-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #64748b;
-  letter-spacing: 0.5px;
 }
 
-/* Tool Selector / Active Tool Badge */
+.sc-hud-badge.tilt .sc-hud-meta {
+  max-width: none;
+  margin-top: 0;
+}
+
+/* Active tool: a house pill that also swaps the tool */
 .sc-tool-badge {
-  position: absolute;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  background: rgba(15, 23, 42, 0.88);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
+  gap: 9px;
+  padding: 6px 7px 6px 15px;
+  border: 1px solid var(--hud-edge);
+  border-radius: 999px;
+  background: var(--hud-card);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
+  font: 700 13px/1.2 var(--hud-body);
   cursor: pointer;
   pointer-events: auto;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
   transition:
     transform 0.15s,
     background-color 0.15s;
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .sc-tool-badge:hover {
-  transform: translateX(-50%) scale(1.05);
-  background: rgba(15, 23, 42, 0.96);
+  background: var(--hud-card-strong);
+  transform: scale(1.04);
 }
 
-.sc-tool-key {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Welcome Overlay */
+/* Welcome and crew assignment, below the telemetry row so both stay readable */
 .sc-welcome {
   position: absolute;
-  top: 60px;
-  left: 36px;
+  top: 180px;
+  left: 32px;
   z-index: 20;
   width: 380px;
-  max-width: calc(100vw - 72px);
-  padding: 28px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(14px);
-  border-radius: 24px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  max-width: calc(100vw - 64px);
+  max-height: calc(100dvh - 196px);
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: 18px;
+  box-shadow: var(--hud-shadow-strong);
+  backdrop-filter: blur(8px);
 }
 
 .sc-welcome h1 {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 38px;
-  line-height: 1.05;
-  margin: 0 0 8px;
-  color: #0f172a;
+  display: block;
+  margin: 0 0 12px;
+  font: 600 40px/1 var(--hud-display);
+  letter-spacing: -0.5px;
+  color: var(--hud-ink);
+  filter: none;
 }
 
 .sc-welcome h1 span {
-  color: #0284c7;
+  color: var(--hud-accent-strong);
 }
 
 .sc-tagline {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: #f59e0b;
   margin-bottom: 12px;
+  color: var(--hud-accent-ink);
+  font: 700 11px/1.4 var(--hud-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .sc-desc {
+  margin: 0 0 18px;
+  color: var(--hud-muted);
   font-size: 14px;
-  line-height: 1.65;
-  color: #475569;
-  margin: 0 0 20px;
+  line-height: 1.6;
 }
 
 .sc-role-selector {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 22px;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.sc-role-title {
+  color: var(--hud-muted);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .sc-role-grid {
@@ -307,60 +398,64 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  border: 2px solid #e2e8f0;
-  background: #ffffff;
-  color: #334155;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 14px;
+  font-family: var(--hud-body);
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
 }
 
-.sc-btn:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+/* Crew assignment choices: cream secondaries, amber when picked. */
+.sc-btn:not(.primary) {
+  padding: 11px 12px;
+  border: 1px solid var(--hud-edge-strong);
+  border-radius: var(--hud-radius-small);
+  background: var(--hud-card-solid);
+  color: var(--hud-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sc-btn:not(.primary):hover {
+  background: var(--hud-card-strong);
 }
 
 .sc-btn.active {
-  border-color: #0284c7;
-  background: #e0f2fe;
-  color: #0369a1;
+  border-color: var(--hud-accent);
+  background: var(--hud-card-strong);
+  box-shadow: inset 0 0 0 1px var(--hud-accent);
+  color: var(--hud-accent-ink);
   font-weight: 700;
 }
 
+/* The start and restart buttons wear the kit's amber .primary-button. */
 .sc-btn.primary {
   width: 100%;
-  padding: 15px;
-  border-radius: 16px;
-  border: none;
-  background: #0284c7;
-  color: #ffffff;
-  font-size: 17px;
-  font-weight: 700;
-  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35);
+  padding: 14px 18px;
+  font-size: 16px;
 }
 
-.sc-btn.primary:hover {
-  background: #0369a1;
-  transform: translateY(-1px);
+.sc-ended-banner .sc-btn.primary svg {
+  margin-left: 0;
 }
 
-/* Match Ended Banner */
+/* Result */
 .sc-ended-banner {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
   z-index: 30;
-  width: 440px;
-  max-width: 90vw;
-  padding: 36px;
-  background: #ffffff;
-  border-radius: 28px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  width: 430px;
+  max-width: calc(100vw - 32px);
+  padding: 30px;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge);
+  border-radius: 20px;
+  box-shadow: 0 18px 70px color-mix(in srgb, var(--hud-ink) 24%, transparent);
+  color: var(--hud-ink);
   text-align: center;
+  transform: translate(-50%, -50%);
   animation: sc-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -376,63 +471,81 @@
 }
 
 .sc-ended-banner h2 {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 32px;
   margin: 0 0 10px;
-  color: #0f172a;
+  font: 500 31px/1.13 var(--hud-display);
+  letter-spacing: -0.5px;
+  color: var(--hud-ink);
 }
 
 .sc-ended-status {
-  font-size: 19px;
-  font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  font: 600 19px/1.3 var(--hud-display);
 }
 
 .sc-ended-status.crew {
-  color: #16a34a;
+  color: var(--hud-good);
 }
 
 .sc-ended-status.failed {
-  color: #dc2626;
+  color: var(--hud-danger);
 }
 
 .sc-ended-desc {
+  margin: 0 0 22px;
+  color: var(--hud-muted);
   font-size: 14px;
-  line-height: 1.6;
-  color: #64748b;
-  margin-bottom: 24px;
+  line-height: 1.65;
 }
 
-/* Controls Hint Bar at bottom */
-.sc-hint-bar {
+/* Keyboard hints, dressed as the kit's tool dock */
+.sc-game .sc-hint-bar {
   position: absolute;
-  bottom: 16px;
+  bottom: 24px;
   left: 50%;
-  transform: translateX(-50%);
   z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 18px;
-  border-radius: 20px;
-  background: rgba(15, 23, 42, 0.85);
-  color: #f8fafc;
-  font-size: 12px;
+  gap: 2px;
+  padding: 6px 8px;
+  transform: translateX(-50%);
   pointer-events: none;
-  backdrop-filter: blur(8px);
   white-space: nowrap;
 }
 
-.sc-hint-key {
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.22);
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  margin-right: 4px;
+.sc-hint-bar > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  color: var(--hud-ink);
+  font: 600 12.5px/1 var(--hud-body);
 }
 
-/* Mobile Touch Controls */
+.sc-hint-bar > span + span {
+  border-left: 1px solid var(--hud-edge);
+}
+
+.sc-help {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--hud-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.sc-help li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sc-help .house-key {
+  min-width: 52px;
+}
+
+/* Touch controls */
 .sc-mobile-controls {
   position: absolute;
   bottom: 50px;
@@ -443,15 +556,6 @@
   justify-content: space-between;
   pointer-events: none;
   z-index: 25;
-}
-
-@media (max-width: 860px) {
-  .sc-mobile-controls {
-    display: flex;
-  }
-  .sc-hint-bar {
-    display: none;
-  }
 }
 
 .sc-touch-group {
@@ -467,24 +571,17 @@
 }
 
 .sc-touch-btn {
-  width: 58px;
-  height: 54px;
-  border-radius: 16px;
-  background: linear-gradient(
-    180deg,
-    rgba(30, 41, 59, 0.92) 0%,
-    rgba(15, 23, 42, 0.96) 100%
-  );
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.25),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
   display: grid;
   place-items: center;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
+  width: 58px;
+  height: 54px;
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  background: var(--hud-card);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
+  font: 700 12px/1.1 var(--hud-body);
   cursor: pointer;
   touch-action: manipulation;
   transition:
@@ -493,13 +590,92 @@
 }
 
 .sc-touch-btn:active {
-  background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
-  box-shadow:
-    0 2px 6px rgba(2, 132, 199, 0.4),
-    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-color: var(--hud-accent-strong);
+  background: var(--hud-accent);
   transform: scale(0.94);
 }
 
 .sc-touch-btn.wide {
   width: 124px;
+}
+
+@media (max-width: 860px) {
+  .sc-mobile-controls {
+    display: flex;
+  }
+
+  .sc-game .sc-hint-bar {
+    display: none;
+  }
+
+  .sc-hud-stack {
+    top: 72px;
+    width: calc(100% - 20px);
+    max-width: none;
+    gap: 8px;
+  }
+
+  .sc-hud {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sc-hud-badge {
+    gap: 7px;
+    padding: 6px 10px;
+    border-radius: 13px;
+  }
+
+  .sc-hud-badge > svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sc-hud-badge.tilt {
+    min-width: 150px;
+  }
+
+  .sc-score-val,
+  .sc-timer-val,
+  .sc-tilt-val {
+    font-size: 19px;
+  }
+
+  .sc-hud-meta {
+    max-width: 120px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+
+  .sc-welcome {
+    top: 76px;
+    left: 50%;
+    width: min(380px, calc(100vw - 24px));
+    max-width: none;
+    max-height: calc(100dvh - 92px);
+    padding: 20px;
+    transform: translateX(-50%);
+  }
+
+  .sc-welcome h1 {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sc-hud-badge {
+    padding: 5px 9px;
+  }
+
+  .sc-hud-badge > svg {
+    display: none;
+  }
+
+  .sc-hud-badge.tilt {
+    min-width: 132px;
+  }
+
+  .sc-hud-meta {
+    max-width: 104px;
+  }
 }

@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   RotateCcw,
-  Volume2,
-  VolumeX,
-  HelpCircle,
   ShoppingBag,
+  ShoppingCart,
   Flame,
   Zap,
   CheckSquare,
@@ -38,11 +36,24 @@ import {
 import { sampleStampedeAnalytics } from './analytics';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { SAMPLE_STAMPEDE_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(sampleStampedeAnalytics);
+
+// "DRIFT [SHIFT]" reads as a label and a house key cap. Labels without a
+// trailing bracketed key pass through unchanged.
+function KeyHint({ text }: { text: string }) {
+  const match = /^(.*?)\s*\[([^\]]{1,12})\]$/.exec(text.trim());
+  if (!match) return <>{text}</>;
+  return (
+    <>
+      <span>{match[1]}</span>
+      <kbd className="house-key">{match[2]}</kbd>
+    </>
+  );
+}
 
 const formatTime = (seconds: number) => {
   const s = Math.max(0, Math.ceil(seconds));
@@ -412,6 +423,25 @@ export default function SampleStampede() {
         <div className="stampede-speed-lines" aria-hidden="true" />
       )}
 
+      {/* HOUSE TOP BAR: WORDMARK + SHARED TOOLBAR */}
+      <header className="topbar stampede-topbar">
+        <a href="/" className="wordmark">
+          <span className="stampede-mark">
+            <ShoppingCart size={22} />
+          </span>{' '}
+          SAMPLE STAMPEDE<span className="stampede-title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={!soundEnabled}
+          onToggleSound={() => {
+            audioRef.current?.unlock();
+            setSoundEnabled(!soundEnabled);
+          }}
+          onHelp={() => setShowHelp(true)}
+          voiceHint="Use your group call to talk with friends. In-game voice is not available in Sample Stampede yet."
+        />
+      </header>
+
       {/* TOP HEADER HUD */}
       <div className="stampede-hud-top">
         <div className="stampede-score-pill red">
@@ -577,7 +607,7 @@ export default function SampleStampede() {
           onTouchEnd={handleDriftRelease}
           aria-label="Drift Handbrake"
         >
-          <Zap size={16} /> {strings.drift}
+          <Zap size={17} /> <KeyHint text={strings.drift} />
         </button>
 
         <button
@@ -585,7 +615,7 @@ export default function SampleStampede() {
           onClick={handleGrabberTrigger}
           aria-label="Use Grabber Pole"
         >
-          <ShoppingBag size={16} /> {strings.grab}
+          <ShoppingBag size={17} /> <KeyHint text={strings.grab} />
         </button>
       </div>
 
@@ -607,27 +637,8 @@ export default function SampleStampede() {
         }}
       />
 
-      {/* TOP RIGHT TOOLBAR */}
+      {/* RESTART, UNDER THE TOOLBAR (sound, language and help live in it) */}
       <div className="stampede-top-right">
-        <LanguageSwitcher variant="header" />
-        <button
-          className="stampede-icon-btn"
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          title={soundEnabled ? strings.muteAudio : strings.unmuteAudio}
-          aria-label="Toggle Sound"
-        >
-          {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </button>
-
-        <button
-          className="stampede-icon-btn"
-          onClick={() => setShowHelp(true)}
-          title={strings.rules}
-          aria-label="Show Help"
-        >
-          <HelpCircle size={18} />
-        </button>
-
         <button
           className="stampede-icon-btn"
           onClick={handleRestart}
@@ -647,7 +658,7 @@ export default function SampleStampede() {
             if (e.key === 'Escape') setShowHelp(false);
           }}
         >
-          <div className="stampede-modal-card">
+          <div className="stampede-modal-card stampede-help-card">
             <h2>{strings.rulesTitle}</h2>
             <p>
               {strings.rulesWelcome}
@@ -683,11 +694,9 @@ export default function SampleStampede() {
       {isGameOver && (
         <dialog open className="stampede-modal-backdrop">
           <div className="stampede-modal-card">
-            <Trophy
-              size={48}
-              color="#f1c40f"
-              style={{ margin: '0 auto 12px auto' }}
-            />
+            <span className="stampede-modal-emblem">
+              <Trophy size={30} />
+            </span>
             <h2>{strings.storeClosed}</h2>
             <p>
               {snapshot.world.winnerTeam === 'red'
@@ -696,24 +705,14 @@ export default function SampleStampede() {
             </p>
 
             <div className="stampede-modal-scores">
-              <div className="stampede-modal-team-score">
-                <span
-                  className="team-name"
-                  style={{ color: 'var(--team-red-glow)' }}
-                >
-                  {strings.redTeam}
-                </span>
+              <div className="stampede-modal-team-score red">
+                <span className="team-name">{strings.redTeam}</span>
                 <span className="team-pts">
                   {snapshot.world.teamScores.red}
                 </span>
               </div>
-              <div className="stampede-modal-team-score">
-                <span
-                  className="team-name"
-                  style={{ color: 'var(--team-blue-glow)' }}
-                >
-                  {strings.blueTeam}
-                </span>
+              <div className="stampede-modal-team-score blue">
+                <span className="team-name">{strings.blueTeam}</span>
                 <span className="team-pts">
                   {snapshot.world.teamScores.blue}
                 </span>

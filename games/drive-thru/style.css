@@ -1,10 +1,15 @@
+/* Drive-Thru Static paints its HUD on the collection's house kit
+   (shared/styles/game-ui.css): cream cards, dark green ink, an amber accent,
+   Fredoka figures over DM Sans. The order ticket stays a paper receipt, with
+   the garbled intercom line printed in a till-roll monospace. */
 .drive-thru-container {
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background-color: #1c1917;
-  font-family: var(--font-fredoka, 'Fredoka', 'DM Sans', sans-serif);
+  background-color: #c7d3b6;
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   user-select: none;
 }
 
@@ -15,124 +20,225 @@
   height: 100%;
 }
 
-/* Top Order Ticket */
+.drive-thru-container :is(button, a):focus-visible {
+  outline: 3px solid var(--hud-accent);
+  outline-offset: 3px;
+}
+
+/* House top bar */
+.drive-thru-container .drive-thru-topbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.drive-thru-topbar > * {
+  pointer-events: auto;
+}
+
+/* The lot and the kitchen are dark, so the wordmark sits on a cream pill like
+   the toolbar's buttons instead of straight on the scene. */
+.drive-thru-topbar .wordmark {
+  color: var(--hud-ink);
+  padding: 4px 20px 4px 4px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+}
+
+@media (max-width: 700px) {
+  .drive-thru-topbar .wordmark {
+    padding: 4px;
+  }
+}
+
+.drive-thru-mark {
+  display: flex;
+  padding: 8px;
+  background: var(--hud-accent);
+  border-radius: 13px;
+  transform: rotate(-7deg);
+  margin-right: 3px;
+}
+
+/* The kit's wordmark is a flex row, so the full stop needs pulling back in. */
+.drive-thru-title-dot {
+  margin-left: -6px;
+  color: var(--hud-danger);
+}
+
+/* Order ticket: cream till paper with a torn bottom edge */
 .drive-thru-ticket-banner {
   position: absolute;
-  top: 16px;
+  top: 86px;
   left: 50%;
   transform: translateX(-50%);
-  background: #fef08a;
-  border: 3px solid #b45309;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  padding: 12px 20px;
-  max-width: 680px;
-  width: 90%;
+  background: var(--hud-card-solid);
+  padding: 14px 22px 16px;
+  max-width: 660px;
+  width: calc(100% - 48px);
   z-index: 20;
-  color: #451a03;
+  color: var(--hud-ink);
+  border-radius: var(--hud-radius) var(--hud-radius) 0 0;
+  filter: drop-shadow(0 8px 14px #3a5d3924);
+}
+
+.drive-thru-ticket-banner::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 10px;
+  background: radial-gradient(
+      circle,
+      transparent,
+      transparent 50%,
+      var(--hud-card-solid) 50%,
+      var(--hud-card-solid) 100%
+    )
+    -7px -5px / 14px 14px repeat-x;
+  transform: rotate(180deg);
 }
 
 .drive-thru-ticket-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 800;
-  font-size: 14px;
+  gap: 12px;
+  color: var(--hud-muted);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  border-bottom: 2px dashed #d97706;
-  padding-bottom: 6px;
-  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--hud-edge-strong);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.drive-thru-ticket-header strong {
+  margin-left: 4px;
+  color: var(--hud-ink);
+  font: 600 19px/1 var(--hud-display);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .drive-thru-ticket-order-num {
-  background: #dc2626;
-  color: #ffffff;
-  padding: 2px 8px;
-  border-radius: 4px;
+  background: var(--hud-accent);
+  border: 1px solid var(--hud-accent-strong);
+  color: var(--hud-ink);
+  padding: 5px 11px;
+  border-radius: 999px;
+  letter-spacing: 0.1em;
 }
 
 .drive-thru-ticket-scramble {
-  font-family: monospace;
-  font-size: 16px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px;
   font-weight: 700;
-  color: #b91c1c;
-  background: rgba(239, 68, 68, 0.15);
-  padding: 4px 8px;
-  border-radius: 4px;
-  margin-bottom: 4px;
+  line-height: 1.45;
+  color: var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 9%, transparent);
+  padding: 7px 10px;
+  border-radius: var(--hud-radius-small);
+  margin-bottom: 9px;
 }
 
 .drive-thru-ticket-clear {
   font-size: 14px;
-  color: #78350f;
+  line-height: 1.45;
+  color: var(--hud-ink);
   font-weight: 600;
 }
 
-/* HUD Gauges: Milkshake Pressure & Timer */
+/* Gauges: milkshake pressure and fryer heat */
 .drive-thru-hud-gauges {
   position: absolute;
-  top: 110px;
-  right: 20px;
+  top: 96px;
+  right: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   z-index: 20;
 }
 
 .drive-thru-gauge-card {
-  background: rgba(28, 25, 23, 0.85);
-  border: 2px solid #44403c;
-  backdrop-filter: blur(8px);
-  padding: 10px 14px;
-  border-radius: 8px;
-  color: #ffffff;
-  min-width: 170px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  padding: 11px 15px 13px;
+  border-radius: var(--hud-radius);
+  color: var(--hud-ink);
+  min-width: 180px;
 }
 
 .drive-thru-gauge-label {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin-bottom: 6px;
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--hud-muted);
+  font: 700 10.5px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.drive-thru-gauge-label > span:last-child {
+  color: var(--hud-ink);
+  font: 600 17px/1 var(--hud-display);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .drive-thru-progress-bar {
   width: 100%;
-  height: 10px;
-  background: #292524;
-  border-radius: 5px;
+  height: 7px;
+  background: color-mix(in srgb, var(--hud-edge) 70%, transparent);
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .drive-thru-progress-fill-shake {
   height: 100%;
-  background: linear-gradient(90deg, #ec4899, #ef4444);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--hud-accent), var(--hud-danger));
   transition: width 0.15s ease-out;
 }
 
 .drive-thru-progress-fill-fryer {
   height: 100%;
-  background: linear-gradient(90deg, #eab308, #dc2626);
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--hud-good),
+    var(--hud-accent),
+    var(--hud-warn)
+  );
   transition: width 0.15s ease-out;
 }
 
-/* Reach & Balance Warning */
+/* Reach alert: the amber call to act now */
 .drive-thru-reach-panel {
   position: absolute;
-  bottom: 120px;
+  bottom: 112px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(220, 38, 38, 0.9);
-  color: white;
-  padding: 10px 24px;
-  border-radius: 30px;
-  font-weight: 800;
-  font-size: 16px;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  background: var(--hud-accent);
+  border: 1px solid var(--hud-accent-strong);
+  color: var(--hud-ink);
+  padding: 11px 24px;
+  border-radius: 999px;
+  font: 700 14px/1.3 var(--hud-body);
+  letter-spacing: 0.06em;
+  text-align: center;
+  box-shadow:
+    0 3px 0 var(--hud-accent-strong),
+    var(--hud-shadow-strong);
   z-index: 25;
   animation: pulse 1s infinite alternate;
 }
@@ -161,88 +267,107 @@
   mix-blend-mode: hard-light;
 }
 
-/* Role Selector Tabs */
+/* Role picker: cream cards, the chosen role in amber */
 .drive-thru-role-bar {
   position: absolute;
-  top: 110px;
-  left: 20px;
+  top: 96px;
+  left: 30px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   z-index: 20;
 }
 
 .drive-thru-role-btn {
-  background: rgba(41, 37, 36, 0.85);
-  border: 2px solid #57534e;
-  color: #d6d3d1;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
+  padding: 10px 16px 10px 13px;
+  border-radius: 13px;
+  font: 600 14px/1.2 var(--hud-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.drive-thru-role-btn svg {
+  color: var(--hud-muted);
 }
 
 .drive-thru-role-btn:hover {
-  background: #44403c;
-  color: #ffffff;
+  background: var(--hud-card-solid);
 }
 
 .drive-thru-role-btn.active {
-  background: #dc2626;
-  border-color: #f87171;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
+  background: var(--hud-accent);
+  border-color: var(--hud-accent-strong);
+  box-shadow:
+    0 3px 0 var(--hud-accent-strong),
+    var(--hud-shadow);
+  font-weight: 700;
 }
 
-/* Bottom Controls & Action Bar */
+.drive-thru-role-btn.active svg {
+  color: var(--hud-ink);
+}
+
+/* Action dock: the house tool dock with key caps */
 .drive-thru-controls-bar {
   position: absolute;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 12px;
+  gap: 5px;
+  padding: 7px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
   z-index: 20;
 }
 
 .drive-thru-action-btn {
-  background: #b91c1c;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 15px;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition:
-    transform 0.1s,
-    background 0.1s;
+  gap: 8px;
+  background: transparent;
+  color: var(--hud-ink);
+  border: 0;
+  border-radius: var(--hud-radius-small);
+  padding: 12px 14px;
+  font: 600 14px/1.2 var(--hud-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.drive-thru-action-btn svg {
+  color: var(--hud-muted);
+}
+
+.drive-thru-action-btn .house-key {
+  margin-left: 2px;
 }
 
 .drive-thru-action-btn:hover {
-  background: #dc2626;
-  transform: translateY(-2px);
+  background: #e8ead4;
 }
 
 .drive-thru-action-btn:active {
   transform: translateY(1px);
 }
 
-/* Modal Overlay for Results & Fail States */
+/* Result dialog: the kit's game dialog on a soft green veil */
 .drive-thru-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
+  background: #294b4933;
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -250,51 +375,115 @@
 }
 
 .drive-thru-modal {
-  background: #292524;
-  border: 4px solid #b91c1c;
-  border-radius: 16px;
-  padding: 32px 40px;
-  max-width: 520px;
+  background: #fff6df;
+  border: 1px solid #fffbea;
+  border-radius: 20px;
+  padding: 30px;
+  width: calc(100% - 32px);
+  max-width: 430px;
   text-align: center;
-  color: #ffffff;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  color: var(--hud-ink);
+  box-shadow: 0 18px 70px #294b493d;
 }
 
 .drive-thru-modal-title {
-  font-size: 32px;
-  font-weight: 900;
+  font: 500 31px/1.13 var(--hud-display);
+  letter-spacing: -0.5px;
   margin-bottom: 12px;
   text-transform: uppercase;
 }
 
 .drive-thru-modal-fail {
-  color: #ef4444;
+  color: var(--hud-danger);
 }
 
 .drive-thru-modal-win {
-  color: #22c55e;
+  color: var(--hud-good);
 }
 
 .drive-thru-modal-body {
-  font-size: 16px;
-  color: #d6d3d1;
-  margin-bottom: 24px;
-  line-height: 1.5;
+  font-size: 14px;
+  color: #6a7b62;
+  margin-bottom: 22px;
+  line-height: 1.65;
 }
 
+/* Matches the kit's .primary-button. */
 .drive-thru-btn-restart {
-  background: #f59e0b;
-  color: #451a03;
-  border: none;
-  padding: 14px 32px;
-  font-size: 18px;
-  font-weight: 900;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: #f3bf50;
+  color: #344632;
+  border: 1px solid #d8a444;
+  box-shadow: 0 3px 0 #bc8932;
+  padding: 13px 15px;
+  font: 700 15px/1.2 var(--hud-body);
+  border-radius: var(--hud-radius-small);
   cursor: pointer;
-  transition: all 0.15s;
 }
 
 .drive-thru-btn-restart:hover {
-  background: #fbbf24;
-  transform: scale(1.05);
+  background: #ffd16a;
+}
+
+@media (max-width: 900px) {
+  .drive-thru-ticket-banner {
+    top: 72px;
+    width: calc(100% - 24px);
+    padding: 10px 14px 12px;
+  }
+  .drive-thru-ticket-header {
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+  }
+  .drive-thru-ticket-header strong {
+    font-size: 15px;
+  }
+  .drive-thru-ticket-scramble {
+    font-size: 12.5px;
+  }
+  .drive-thru-ticket-clear {
+    font-size: 12.5px;
+  }
+  .drive-thru-role-bar {
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: 88px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .drive-thru-role-btn {
+    padding: 8px 11px;
+    font-size: 12px;
+  }
+  .drive-thru-hud-gauges {
+    top: auto;
+    right: 12px;
+    bottom: 196px;
+  }
+  .drive-thru-gauge-card {
+    min-width: 150px;
+    padding: 8px 12px 10px;
+  }
+  .drive-thru-controls-bar {
+    bottom: 16px;
+    max-width: calc(100% - 24px);
+  }
+  .drive-thru-action-btn {
+    padding: 11px 10px;
+    font-size: 12px;
+  }
+  .drive-thru-action-btn .house-key {
+    display: none;
+  }
+  .drive-thru-reach-panel {
+    bottom: 250px;
+    width: calc(100% - 24px);
+    font-size: 12px;
+  }
 }

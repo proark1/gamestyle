@@ -340,8 +340,9 @@ export class BasketballSound extends SiteAudio {
       if (event.id <= this.lastEvent) continue;
       this.lastEvent = event.id;
 
-      // 1. Play synthetic immediate audio
-      this.synth.play(event.type, 1.0);
+      // 1. Play synthetic immediate audio. It bypasses SiteAudio's master
+      // gain, so the game's mute has to stop it here.
+      if (this.enabled) this.synth.play(event.type, 1.0);
 
       // 2. Play from SiteAudio if asset exists
       const cue = CUES[event.type];
@@ -352,7 +353,7 @@ export class BasketballSound extends SiteAudio {
 
     if (world.phase !== this.lastPhase) {
       if (world.phase === 'ended') {
-        this.synth.play('buzzer', 1.0);
+        if (this.enabled) this.synth.play('buzzer', 1.0);
         this.play('event.win', 1);
       }
       this.lastPhase = world.phase;

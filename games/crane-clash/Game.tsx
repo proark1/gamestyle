@@ -1,6 +1,13 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, RotateCcw, Timer } from 'lucide-react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowRight, Construction, RotateCcw, Timer } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import type { PeerGameConnection } from '../../shared/peer/connection';
 import {
   advanceCraneClash,
@@ -26,7 +33,6 @@ import { CraneClashSound } from './audio';
 import { CraneClashScene } from './scene';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
 import { CRANE_CLASH_TRANSLATIONS } from './translations';
 import {
   GameTracker,
@@ -66,6 +72,8 @@ export default function CraneClash() {
   const [snapshot, setSnapshot] = useState<CraneClashSnapshot | null>(null);
   const [team, setTeam] = useState<TeamId>('red');
   const [role, setRole] = useState<Role>('swinger');
+  const [muted, setMuted] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const sessionRef = useRef<CraneClashSession>({
     id: 'p-local',
@@ -214,16 +222,64 @@ export default function CraneClash() {
     dispatchAction({ type: 'switchRole', role: newRole });
   };
 
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    if (sound.current) {
+      sound.current.unlock();
+      sound.current.enabled = !next;
+    }
+  };
+
+  // One list feeds the hint bar and the help dialog, so they never disagree.
+  const hints: { keys: string[]; label: string }[] = isSolo
+    ? [
+        { keys: ['WASD'], label: strings.hintSwing },
+        { keys: [strings.keyArrows], label: strings.hintCraneRotate },
+        { keys: ['Q', 'Z'], label: strings.hintHoist },
+        { keys: ['Space', 'E'], label: strings.hintGrabRelease },
+        { keys: ['Tab'], label: strings.hintSwapKeys },
+        { keys: ['V'], label: strings.hintCamera },
+      ]
+    : role === 'swinger'
+      ? [
+          { keys: [strings.keyWasdArrows], label: strings.hintSwingMomentum },
+          { keys: ['Space', 'E'], label: strings.hintGrabTossCrate },
+          { keys: ['V'], label: strings.hintCamera },
+        ]
+      : [
+          { keys: [strings.keyWasdArrows], label: strings.hintCraneControl },
+          { keys: ['Q', 'Z'], label: strings.hintWinch },
+          { keys: ['V'], label: strings.hintCamera },
+        ];
+  const hintKeys = (keys: string[]) =>
+    keys.map((key, index) => (
+      <Fragment key={key}>
+        {index > 0 && ' / '}
+        <span className="cc-hint-key house-key">{key}</span>
+      </Fragment>
+    ));
+
   return (
     <main className="cc-game">
       <div ref={container} className="cc-canvas" />
-      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 20 }}>
-        <LanguageSwitcher variant="header" />
-      </div>
+      <header className="topbar">
+        <a href="/" className="wordmark">
+          <span className="cc-mark">
+            <Construction size={22} />
+          </span>{' '}
+          CRANE CLASH<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={muted}
+          onToggleSound={toggleSound}
+          onHelp={() => setHelpOpen(true)}
+        />
+      </header>
 
       {/* Top HUD with Scores & Timer */}
       <div className="cc-hud">
-        <div className="cc-team-score red">
+        <div className="cc-team-score red house-card">
           <div className="cc-score-val">{redScore.toFixed(1)}m</div>
           <div className="cc-score-meta">
             <span>{strings.teamRed}</span>
@@ -233,12 +289,12 @@ export default function CraneClash() {
           </div>
         </div>
 
-        <div className="cc-timer-badge">
+        <div className="cc-timer-badge house-card">
           <Timer size={18} />
           <span>{formatTime(msLeft)}</span>
         </div>
 
-        <div className="cc-team-score blue">
+        <div className="cc-team-score blue house-card">
           <div className="cc-score-meta" style={{ textAlign: 'right' }}>
             <span>{strings.teamBlue}</span>
             <span>
@@ -251,22 +307,17 @@ export default function CraneClash() {
 
       {/* Lobby / Team Choice Overlay */}
       {!isPlaying && !isEnded && (
-        <div className="cc-welcome">
+        <div className="cc-welcome setup-card">
+          <p className="cc-tagline house-label">
+            <span className="tiny-line" /> {strings.tagline}
+          </p>
           <h1>
-            Crane <span>Clash</span>.
+            Crane <span>Clash.</span>
           </h1>
-          <div className="cc-tagline">{strings.tagline}</div>
           <p className="cc-desc">{strings.desc}</p>
 
           <div className="cc-role-selector">
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                color: '#777',
-              }}
-            >
+            <span className="cc-choice-label house-label">
               {strings.yourTeam}
             </span>
             <div className="cc-role-row">
@@ -287,11 +338,9 @@ export default function CraneClash() {
             </div>
 
             <span
+              className="cc-choice-label house-label"
               style={{
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                color: isSolo ? `var(--team-${team}-deep)` : '#777',
+                color: isSolo ? `var(--team-${team}-deep)` : undefined,
                 marginTop: 4,
               }}
             >
@@ -317,7 +366,7 @@ export default function CraneClash() {
 
           <button
             type="button"
-            className="cc-btn primary"
+            className="cc-btn primary primary-button"
             onClick={handleStart}
           >
             {strings.startMatch} <ArrowRight size={18} />
@@ -336,13 +385,13 @@ export default function CraneClash() {
                 ? strings.blueWins
                 : strings.draw}
           </div>
-          <p style={{ margin: '0 0 20px', color: '#666' }}>
+          <p className="cc-ended-scores">
             {strings.red}: {redScore.toFixed(1)}m | {strings.blue}:{' '}
             {blueScore.toFixed(1)}m
           </p>
           <button
             type="button"
-            className="cc-btn primary"
+            className="cc-btn primary primary-button"
             onClick={handleRestart}
           >
             <RotateCcw size={18} /> {strings.playAgain}
@@ -352,59 +401,26 @@ export default function CraneClash() {
 
       {/* Controls Bar at bottom */}
       <div className="cc-hint-bar">
-        {isSolo ? (
-          <>
-            <span>
-              <span className="cc-hint-key">WASD</span> {strings.hintSwing}
-            </span>
-            <span>
-              <span className="cc-hint-key">{strings.keyArrows}</span>{' '}
-              {strings.hintCraneRotate}
-            </span>
-            <span>
-              <span className="cc-hint-key">Q</span> /{' '}
-              <span className="cc-hint-key">Z</span> {strings.hintHoist}
-            </span>
-            <span>
-              <span className="cc-hint-key">Space</span> /{' '}
-              <span className="cc-hint-key">E</span> {strings.hintGrabRelease}
-            </span>
-            <span>
-              <span className="cc-hint-key">Tab</span> {strings.hintSwapKeys}
-            </span>
-            <span>
-              <span className="cc-hint-key">V</span> {strings.hintCamera}
-            </span>
-          </>
-        ) : role === 'swinger' ? (
-          <>
-            <span>
-              <span className="cc-hint-key">{strings.keyWasdArrows}</span>{' '}
-              {strings.hintSwingMomentum}
-            </span>
-            <span>
-              <span className="cc-hint-key">Space / E</span>{' '}
-              {strings.hintGrabTossCrate}
-            </span>
-            <span>
-              <span className="cc-hint-key">V</span> {strings.hintCamera}
-            </span>
-          </>
-        ) : (
-          <>
-            <span>
-              <span className="cc-hint-key">{strings.keyWasdArrows}</span>{' '}
-              {strings.hintCraneControl}
-            </span>
-            <span>
-              <span className="cc-hint-key">Q / Z</span> {strings.hintWinch}
-            </span>
-            <span>
-              <span className="cc-hint-key">V</span> {strings.hintCamera}
-            </span>
-          </>
-        )}
+        {hints.map((hint) => (
+          <span key={hint.label}>
+            {hintKeys(hint.keys)} {hint.label}
+          </span>
+        ))}
       </div>
+
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="game-dialog">
+          <DialogTitle>Crane Clash</DialogTitle>
+          <DialogDescription>{strings.desc}</DialogDescription>
+          <ul className="cc-help">
+            {hints.map((hint) => (
+              <li key={hint.label}>
+                <span>{hintKeys(hint.keys)}</span> {hint.label}
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

@@ -8,6 +8,7 @@ import {
   Flame,
   Hammer,
   RotateCcw,
+  Snowflake,
   Sparkles,
   Trophy,
   Users,
@@ -417,11 +418,19 @@ export default function PanicCurlingGame() {
 
   return (
     <div className="curling-container">
-      <GameToolbar
-        muted={!soundEnabled}
-        onToggleSound={toggleSound}
-        onHelp={() => {}}
-      />
+      <header className="topbar curling-topbar">
+        <a href="/" className="wordmark">
+          <span className="curling-mark">
+            <Snowflake size={22} />
+          </span>{' '}
+          PANIC CURLING<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={!soundEnabled}
+          onToggleSound={toggleSound}
+          onHelp={() => {}}
+        />
+      </header>
 
       <div ref={containerRef} className="curling-viewport" />
 
@@ -503,7 +512,7 @@ export default function PanicCurlingGame() {
 
       {/* Top Alpine Tournament Scoreboard */}
       {world && (
-        <div className="curling-scoreboard">
+        <div className="curling-scoreboard house-card">
           <div className="curling-team-score">
             <span className="curling-team-badge red">🔴</span>
             <span className="curling-team-name">{TEAM_NAMES.red}</span>
@@ -571,7 +580,7 @@ export default function PanicCurlingGame() {
 
       {/* Deliverer Aim & Power Controls */}
       {isDeliverPhase && (
-        <div className="curling-deliver-hud">
+        <div className="curling-deliver-hud house-card">
           {/* Stone Selection 3D Cards */}
           <div className="curling-stone-cards">
             <button
@@ -746,8 +755,7 @@ export default function PanicCurlingGame() {
                 <div className="curling-telemetry-item">
                   <span className="curling-telemetry-label">SWEEP STATUS</span>
                   <span
-                    className="curling-telemetry-val"
-                    style={{ color: isSweeping ? '#ffb703' : '#a8dadc' }}
+                    className={`curling-telemetry-val ${isSweeping ? 'is-sweeping' : 'is-idle'}`}
                   >
                     {isSweeping
                       ? `🔥 SWEEPING (-${Math.round(GADGET_CONFIGS[activeGadget].frictionCut * 100)}%)`
@@ -882,9 +890,7 @@ export default function PanicCurlingGame() {
                 </span>
               </div>
             </div>
-            <p style={{ color: '#8ed6ff', fontWeight: 700 }}>
-              {strings.freshIce}
-            </p>
+            <p className="curling-modal-note">{strings.freshIce}</p>
           </div>
         </div>
       )}
@@ -892,11 +898,7 @@ export default function PanicCurlingGame() {
       {world?.phase === 'match_over' && (
         <div className="curling-modal-overlay">
           <div className="curling-modal-card">
-            <Trophy
-              size={56}
-              color="#f1c40f"
-              style={{ margin: '0 auto 14px' }}
-            />
+            <Trophy size={56} className="curling-modal-trophy" />
             <h2 className="curling-modal-title">{strings.matchFinished}</h2>
             <p className="curling-modal-desc">
               {world.scores.red > world.scores.blue
@@ -927,10 +929,7 @@ export default function PanicCurlingGame() {
               className="curling-action-btn"
               onClick={() => dispatchAction({ type: 'restart' })}
             >
-              <RotateCcw
-                size={18}
-                style={{ display: 'inline', marginRight: '6px' }}
-              />
+              <RotateCcw size={18} />
               {strings.playAgain}
             </button>
           </div>

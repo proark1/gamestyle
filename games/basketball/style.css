@@ -1,12 +1,20 @@
+/* Court Clash paints on the collection's shared kit (shared/styles/game-ui.css)
+   and its house HUD tokens (--hud-*). Only the court's own chrome lives here;
+   the team colours come from app/globals.css. */
 .bb-game {
   position: relative;
   height: 100dvh;
   min-height: 600px;
   overflow: hidden;
   background: #b5d4ca;
-  color: var(--ink, #252422);
-  font-family: 'DM Sans', sans-serif;
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   user-select: none;
+}
+
+.bb-game :is(button, a):focus-visible {
+  outline: 3px solid var(--hud-accent);
+  outline-offset: 3px;
 }
 
 .bb-canvas {
@@ -21,125 +29,186 @@
   touch-action: none;
 }
 
-/* Topbar HUD */
+/* Top bar: the wordmark on the left, the shared toolbar on the right. The
+   bar itself lets drags through to the court. */
+.bb-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.bb-topbar > * {
+  pointer-events: auto;
+}
+
+.bb-topbar .wordmark {
+  color: var(--hud-ink);
+}
+
+/* The kit's wordmark is a flex row, so the full stop needs pulling back in. */
+.bb-topbar .wordmark .title-dot {
+  margin-left: -6px;
+  color: var(--team-red);
+}
+
+.bb-mark {
+  display: flex;
+  padding: 9px;
+  background: var(--hud-accent);
+  border-radius: 13px;
+  transform: rotate(-7deg);
+  margin-right: 3px;
+}
+
+/* Scoreboard */
 .bb-hud {
   position: absolute;
-  top: 18px;
+  top: 88px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   pointer-events: none;
 }
 
 .bb-team-score {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 18px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  font-weight: 700;
+  min-width: 150px;
+  padding: 9px 16px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
   pointer-events: auto;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  position: relative;
   transition:
     transform 0.15s ease,
-    box-shadow 0.15s ease;
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.bb-team-score.blue {
+  justify-content: flex-end;
 }
 
 .bb-team-score.has-possession {
   transform: scale(1.04);
 }
 
-.bb-team-score.red {
-  border-left: 6px solid var(--team-red);
-}
 .bb-team-score.red.has-possession {
-  box-shadow: 0 6px 24px color-mix(in srgb, var(--team-red) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--team-red-soft) 45%,
+    var(--hud-card-solid)
+  );
+  border-color: var(--team-red-glow);
 }
 
-.bb-team-score.blue {
-  border-right: 6px solid var(--team-blue);
-}
 .bb-team-score.blue.has-possession {
-  box-shadow: 0 6px 24px color-mix(in srgb, var(--team-blue) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--team-blue-soft) 45%,
+    var(--hud-card-solid)
+  );
+  border-color: var(--team-blue-glow);
 }
 
 .bb-score-val {
-  font-size: 34px;
-  line-height: 1;
-  font-family: 'Fredoka', sans-serif;
   min-width: 36px;
+  font: 600 34px/1 var(--hud-display);
   text-align: center;
 }
 
-.bb-team-score.red .bb-score-val {
+.bb-team-score.red .bb-score-val,
+.bb-team-score.red .bb-score-meta > span:first-child {
   color: var(--team-red-deep);
 }
 
-.bb-team-score.blue .bb-score-val {
+.bb-team-score.blue .bb-score-val,
+.bb-team-score.blue .bb-score-meta > span:first-child {
   color: var(--team-blue-deep);
 }
 
 .bb-score-meta {
   display: flex;
   flex-direction: column;
-  font-size: 11px;
+  gap: 3px;
+  color: var(--hud-muted);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #63615c;
-  letter-spacing: 0.6px;
+}
+
+.bb-team-score.blue .bb-score-meta {
+  text-align: right;
 }
 
 .bb-poss-dot {
-  display: inline-block;
+  position: absolute;
+  top: 9px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-top: 2px;
 }
 
 .bb-team-score.red .bb-poss-dot {
+  right: 10px;
   background: var(--team-red);
-  box-shadow: 0 0 8px var(--team-red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--team-red) 22%, transparent);
 }
 
 .bb-team-score.blue .bb-poss-dot {
+  left: 10px;
   background: var(--team-blue);
-  box-shadow: 0 0 8px var(--team-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--team-blue) 22%, transparent);
 }
 
 .bb-center-clock-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .bb-timer-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  background: #252422;
-  color: #fff;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: all 0.2s ease;
+  gap: 7px;
+  min-height: 52px;
+  padding: 0 16px;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge-strong);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  color: var(--hud-ink);
+  font: 600 24px/1 var(--hud-display);
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.bb-timer-badge svg {
+  color: var(--hud-muted);
 }
 
 .bb-timer-badge.danger {
-  background: #c0392b;
-  color: #fff;
-  box-shadow: 0 0 18px rgba(192, 57, 43, 0.7);
+  background: color-mix(in srgb, var(--hud-danger) 12%, var(--hud-card-solid));
+  border-color: var(--hud-danger);
+  color: var(--hud-danger);
   animation: clockPulse 0.5s infinite alternate;
+}
+
+.bb-timer-badge.danger svg {
+  color: currentColor;
 }
 
 @keyframes clockPulse {
@@ -147,27 +216,35 @@
     transform: scale(0.98);
   }
   to {
-    transform: scale(1.08);
+    transform: scale(1.06);
   }
 }
 
 .bb-clearance-badge {
-  padding: 3px 10px;
-  border-radius: 12px;
-  background: #f39c12;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background: var(--hud-card-strong);
+  border: 1px solid var(--hud-warn);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow);
+  color: var(--hud-accent-ink);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
   animation: pulse 0.7s infinite alternate;
-  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.4);
 }
 
-/* Shot Meter & Combo Meter (Center HUD) */
+.bb-clearance-badge svg {
+  color: var(--hud-warn);
+}
+
+/* Shot meter and combo badges (centre HUD) */
 .bb-action-hud {
   position: absolute;
-  bottom: 84px;
+  bottom: 88px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -182,24 +259,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  background: rgba(25, 30, 28, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 8px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  gap: 7px;
+  padding: 11px 16px 9px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
 }
 
 .bb-shot-meter-box {
-  width: 200px;
-  height: 18px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 9px;
-  overflow: hidden;
   position: relative;
-  border: 2px solid #ffffff;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  width: 200px;
+  height: 12px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--hud-edge) 70%, var(--hud-card-solid));
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px
+    color-mix(in srgb, var(--hud-ink) 14%, transparent);
 }
 
 .bb-shot-meter-sweet {
@@ -207,42 +284,51 @@
   left: 70%;
   width: 15%;
   height: 100%;
-  background: rgba(46, 204, 113, 0.65);
-  border-left: 2px solid #2ecc71;
-  border-right: 2px solid #2ecc71;
-  box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+  background: color-mix(in srgb, var(--hud-good) 28%, transparent);
+  border-left: 2px solid var(--hud-good);
+  border-right: 2px solid var(--hud-good);
 }
 
 .bb-shot-meter-fill {
   height: 100%;
-  background: linear-gradient(90deg, #f1c40f, #e67e22);
+  background: linear-gradient(
+    90deg,
+    var(--hud-accent),
+    var(--hud-accent-strong)
+  );
+  border-radius: inherit;
   transition: width 0.04s linear;
 }
 
 .bb-shot-meter-fill.in-sweet {
-  background: linear-gradient(90deg, #f1c40f, #2ecc71);
-  box-shadow: 0 0 12px #2ecc71;
+  background: var(--hud-good);
 }
 
 .bb-shot-meter-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  color: #ecf0f1;
+  color: var(--hud-muted);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .bb-combo-badge {
-  padding: 6px 16px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #e84118, #fbc531);
-  color: #ffffff;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  box-shadow: 0 0 18px rgba(232, 65, 24, 0.65);
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  background: var(--hud-card-strong);
+  border: 1px solid var(--hud-accent);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow);
+  color: var(--hud-accent-ink);
+  font: 600 15px/1.2 var(--hud-display);
+  letter-spacing: 0.02em;
   animation: pulse 1s infinite alternate;
+}
+
+.bb-combo-badge svg {
+  color: var(--hud-accent-strong);
 }
 
 @keyframes pulse {
@@ -254,246 +340,256 @@
   }
 }
 
-/* Welcome Overlay */
-.bb-welcome {
-  position: absolute;
-  top: 70px;
-  left: 36px;
-  z-index: 20;
-  width: 360px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-}
-
-.bb-welcome h1 {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 42px;
-  line-height: 0.95;
-  margin: 0 0 8px;
-}
-
-.bb-welcome h1 span {
-  color: #e58e38;
-}
-
-.bb-tagline {
-  font-weight: 600;
-  font-size: 14px;
-  color: #5d5a55;
-  margin-bottom: 12px;
-}
-
-.bb-desc {
-  font-size: 13px;
-  line-height: 1.55;
-  color: #63615c;
-  margin-bottom: 18px;
-}
-
-.bb-team-selector {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 18px;
-  background: #f4f5f1;
-  padding: 10px;
-  border-radius: 16px;
-}
-
-.bb-btn {
-  flex: 1;
-  padding: 10px 14px;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.15s ease;
-}
-
-.bb-btn.active {
-  border-color: #252422;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.bb-btn.red {
-  background: var(--team-red-soft);
-  color: var(--team-red-deep);
-}
-.bb-btn.red.active {
-  background: var(--team-red);
-  color: #fff;
-}
-
-.bb-btn.blue {
-  background: var(--team-blue-soft);
-  color: var(--team-blue-deep);
-}
-.bb-btn.blue.active {
-  background: var(--team-blue);
-  color: #fff;
-}
-
-.bb-btn.primary {
-  width: 100%;
-  padding: 14px;
-  font-size: 16px;
-  border-radius: 14px;
-  background: #252422;
-  color: #fff;
-}
-.bb-btn.primary:hover {
-  background: #3d3b37;
-}
-
-/* Controls Hint Bar */
-.bb-hint-bar {
-  position: absolute;
-  bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 22px;
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  font-size: 13px;
-  font-weight: 600;
-  color: #4f4c46;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.bb-hint-key {
-  display: inline-block;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: #e5e5df;
-  border: 1px solid #cecdc7;
-  font-family: monospace;
-  font-size: 11px;
-  color: #222;
-  margin-right: 4px;
-}
-
-/* Match Ended Banner */
-.bb-ended-banner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 30;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
-  padding: 36px 48px;
-  border-radius: 28px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-}
-
-.bb-ended-banner h2 {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 42px;
-  margin: 0 0 10px;
-}
-
-.bb-ended-winner {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 22px;
-}
-
-.bb-ended-winner.red {
-  color: var(--team-red-deep);
-}
-.bb-ended-winner.blue {
-  color: var(--team-blue-deep);
-}
-
-/* On Fire Badge */
+/* On fire: the house terracotta, glowing amber. */
 .bb-combo-badge.fire {
-  background: linear-gradient(135deg, #ff1900, #ff9900);
-  box-shadow: 0 0 24px rgba(255, 69, 0, 0.85);
+  background: var(--hud-danger);
+  border-color: var(--hud-danger);
+  color: var(--hud-card-solid);
   animation: firePulse 0.45s infinite alternate;
+}
+
+.bb-combo-badge.fire svg {
+  color: currentColor;
 }
 
 @keyframes firePulse {
   from {
     transform: scale(0.98);
-    box-shadow: 0 0 16px rgba(255, 69, 0, 0.7);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--hud-accent) 25%, transparent),
+      var(--hud-shadow);
   }
   to {
-    transform: scale(1.08);
-    box-shadow: 0 0 32px rgba(255, 140, 0, 1);
+    transform: scale(1.06);
+    box-shadow:
+      0 0 0 7px color-mix(in srgb, var(--hud-accent) 35%, transparent),
+      var(--hud-shadow-strong);
   }
 }
 
-/* Spectacular Celebration Popups */
+/* Welcome card */
+.bb-welcome {
+  position: absolute;
+  top: 92px;
+  left: 24px;
+  z-index: 20;
+  width: 360px;
+  max-width: calc(100% - 32px);
+  padding: 24px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: 18px;
+  box-shadow: var(--hud-shadow-strong);
+  backdrop-filter: blur(6px);
+}
+
+.bb-welcome h1 {
+  margin: 0 0 12px;
+  color: var(--hud-ink);
+  font: 600 46px/0.92 var(--hud-display);
+  letter-spacing: -1px;
+}
+
+.bb-welcome h1 span {
+  color: var(--hud-accent-strong);
+}
+
+.bb-tagline {
+  margin-bottom: 10px;
+  color: var(--hud-ink);
+  font: 500 19px/1.3 var(--hud-display);
+}
+
+.bb-desc {
+  margin-bottom: 18px;
+  color: var(--hud-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.bb-team-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 6px;
+  background: color-mix(in srgb, var(--hud-edge) 35%, var(--hud-card-solid));
+  border: 1px solid var(--hud-edge);
+  border-radius: 13px;
+}
+
+.bb-team-selector .bb-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: 700 13px/1.2 var(--hud-body);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.bb-team-selector .bb-btn.red {
+  background: var(--team-red-soft);
+  color: var(--team-red-deep);
+}
+
+.bb-team-selector .bb-btn.red.active {
+  background: var(--team-red);
+  border-color: var(--team-red-deep);
+  box-shadow: 0 3px 0 var(--team-red-deep);
+  color: var(--hud-card-solid);
+}
+
+.bb-team-selector .bb-btn.blue {
+  background: var(--team-blue-soft);
+  color: var(--team-blue-deep);
+}
+
+.bb-team-selector .bb-btn.blue.active {
+  background: var(--team-blue);
+  border-color: var(--team-blue-deep);
+  box-shadow: 0 3px 0 var(--team-blue-deep);
+  color: var(--hud-card-solid);
+}
+
+.bb-team-selector .bb-btn:not(.active):hover {
+  border-color: var(--hud-edge-strong);
+}
+
+/* Start and rematch are the kit's .primary-button; .bb-btn.primary stays
+   for the party ribbon, which clicks it to auto-start a round. */
+.bb-btn.primary {
+  cursor: pointer;
+}
+
+/* Controls card. The toolbar's help button toggles it. */
+.bb-hint-bar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 16px;
+  width: max-content;
+  max-width: calc(100% - 48px);
+  padding: 10px 18px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  color: var(--hud-ink);
+  font: 600 12px/1.2 var(--hud-body);
+}
+
+.bb-hint-bar > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.bb-hint-bar.is-closed {
+  display: none;
+}
+
+/* Match ended: the kit's result dialog, placed over the court. */
+.bb-ended-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  display: grid;
+  width: min(430px, calc(100% - 32px));
+  transform: translate(-50%, -50%);
+}
+
+.bb-ended-banner .dialog-emblem {
+  background: var(--hud-card-strong);
+  border-color: color-mix(in srgb, var(--hud-accent) 55%, transparent);
+  color: var(--hud-accent-ink);
+}
+
+.bb-ended-banner h2 {
+  margin: 0;
+  color: var(--hud-ink);
+  font: 500 31px/1.13 var(--hud-display);
+  letter-spacing: -0.5px;
+}
+
+.bb-ended-winner {
+  margin-bottom: 6px;
+  font: 600 19px/1.3 var(--hud-display);
+}
+
+.bb-ended-winner.red {
+  color: var(--team-red-deep);
+}
+
+.bb-ended-winner.blue {
+  color: var(--team-blue-deep);
+}
+
+/* The kit pushes a trailing icon right; the rematch icon leads instead. */
+.bb-ended-banner .primary-button svg {
+  margin-left: 0;
+}
+
+/* Celebration popups */
 .bb-celebration-banner {
   position: absolute;
-  top: 28%;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 25;
   pointer-events: none;
   text-align: center;
-  padding: 18px 36px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.25),
-    0 0 40px rgba(255, 165, 0, 0.4);
+  padding: 18px 34px;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge);
+  border-radius: 20px;
+  box-shadow: var(--hud-shadow-strong);
   animation: bannerPop 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 .bb-celebration-banner.superdunk {
-  border: 3px solid #ff471a;
+  border: 2px solid var(--hud-accent-strong);
   box-shadow:
-    0 16px 52px rgba(255, 69, 0, 0.45),
-    0 0 45px rgba(255, 100, 0, 0.6);
+    0 0 0 6px color-mix(in srgb, var(--hud-accent) 22%, transparent),
+    var(--hud-shadow-strong);
 }
 
 .bb-celebration-banner.anklebreaker {
-  border: 3px solid #ffd32a;
-  box-shadow: 0 16px 52px rgba(255, 211, 42, 0.4);
+  border: 2px solid var(--hud-accent);
 }
 
 .bb-celebration-title {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 44px;
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: 1px;
+  margin-bottom: 6px;
   /* Red team by default; the blue team's banner overrides it below. */
-  background: linear-gradient(135deg, var(--team-red), var(--team-red-deep));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 4px 20px color-mix(in srgb, var(--team-red) 30%, transparent);
-  margin-bottom: 4px;
+  color: var(--team-red-deep);
+  font: 600 44px/1 var(--hud-display);
+  letter-spacing: 0.5px;
 }
 
 .bb-celebration-banner.blue .bb-celebration-title {
-  background: linear-gradient(135deg, var(--team-blue), var(--team-blue-deep));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 4px 20px color-mix(in srgb, var(--team-blue) 30%, transparent);
+  color: var(--team-blue-deep);
 }
 
 .bb-celebration-subtitle {
-  font-size: 15px;
-  font-weight: 700;
+  color: var(--hud-muted);
+  font: 700 13px/1.2 var(--hud-body);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  color: #576574;
 }
 
 @keyframes bannerPop {
@@ -518,7 +614,7 @@
   }
 }
 
-/* Mobile Touch Controls */
+/* Touch controls */
 .bb-touch-controls {
   position: absolute;
   inset: 0;
@@ -533,9 +629,8 @@
   width: 130px;
   height: 130px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(8px);
-  border: 2px solid rgba(255, 255, 255, 0.45);
+  background: color-mix(in srgb, var(--hud-card-solid) 30%, transparent);
+  border: 2px solid color-mix(in srgb, var(--hud-card-solid) 65%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -547,9 +642,9 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: rgba(37, 36, 34, 0.85);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-  border: 2px solid #fff;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  box-shadow: var(--hud-shadow);
   pointer-events: none;
 }
 
@@ -573,19 +668,17 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: none;
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
+  border: 1px solid var(--hud-edge);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-  color: #252422;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--hud-shadow);
+  color: var(--hud-ink);
+  font: 700 12px/1.1 var(--hud-body);
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
@@ -599,24 +692,107 @@
 .bb-touch-btn.shoot {
   width: 72px;
   height: 72px;
-  background: #e58e38;
-  color: #fff;
-  font-size: 15px;
-  box-shadow: 0 6px 20px rgba(229, 142, 56, 0.45);
+  background: var(--hud-accent);
+  border-color: var(--hud-accent-strong);
+  box-shadow:
+    0 3px 0 var(--hud-accent-ink),
+    var(--hud-shadow);
+  color: var(--hud-ink);
+  font-size: 14px;
 }
 
 .bb-touch-btn.pass {
-  background: #349387;
-  color: #fff;
+  background: var(--hud-card-solid);
+  border-color: var(--hud-good);
+  color: var(--hud-good);
 }
 
 .bb-touch-btn.special {
-  background: #252422;
-  color: #ffe181;
+  background: var(--hud-card-strong);
+  border-color: var(--hud-accent);
+  color: var(--hud-accent-ink);
 }
 
+/* With touch buttons on screen, the centre HUD sits above them. The query
+   matches TOUCH_QUERY in shared/browser/device.ts, which shows them. */
+@media (pointer: coarse), (max-width: 900px) {
+  .bb-action-hud {
+    bottom: 184px;
+  }
+}
+
+/* Narrow screens: the controls card waits for the help button. */
 @media (max-width: 820px) {
-  .bb-hint-bar {
+  .bb-hint-bar:not(.is-open) {
     display: none;
+  }
+  .bb-hint-bar {
+    bottom: 14px;
+    gap: 7px 12px;
+    max-width: calc(100% - 28px);
+    padding: 10px 14px;
+  }
+  .bb-hud {
+    top: 72px;
+  }
+  .bb-welcome {
+    top: 76px;
+    left: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .bb-hud {
+    gap: 6px;
+  }
+  .bb-team-score {
+    min-width: 0;
+    gap: 8px;
+    padding: 7px 10px;
+  }
+  .bb-team-score.red {
+    padding-right: 17px;
+  }
+  .bb-team-score.blue {
+    padding-left: 17px;
+  }
+  .bb-combo-badge {
+    font-size: 13px;
+  }
+  .bb-score-val {
+    min-width: 24px;
+    font-size: 26px;
+  }
+  .bb-score-meta {
+    font-size: 9px;
+  }
+  .bb-poss-dot {
+    top: 7px;
+    width: 7px;
+    height: 7px;
+  }
+  .bb-team-score.red .bb-poss-dot {
+    right: 6px;
+  }
+  .bb-team-score.blue .bb-poss-dot {
+    left: 6px;
+  }
+  .bb-timer-badge {
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 19px;
+  }
+  .bb-welcome {
+    padding: 18px;
+  }
+  .bb-welcome h1 {
+    font-size: 38px;
+  }
+  .bb-celebration-title {
+    font-size: 30px;
+  }
+  .bb-celebration-banner {
+    padding: 14px 20px;
+    max-width: calc(100% - 32px);
   }
 }

@@ -198,7 +198,9 @@ export class BungeeDoublesSound extends SiteAudio {
       this.lastProcessedEvent = evt.id;
 
       const cueId = CUES[evt.type];
-      if (cueId) {
+      // The procedural sound bypasses SiteAudio's master gain, so the game's
+      // mute has to stop it here.
+      if (cueId && this.enabled) {
         // Fallback procedural sound plays immediately
         this.procedural.play(evt.type);
       }

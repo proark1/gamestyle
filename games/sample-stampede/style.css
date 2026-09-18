@@ -1,16 +1,15 @@
+/* Sample Stampede paints its HUD on the collection's house kit
+   (shared/styles/game-ui.css): cream cards, dark green ink, an amber accent,
+   Fredoka figures over DM Sans. Only the warehouse-specific chrome lives here.
+   Team elements stay on --team-red / --team-blue from app/globals.css. */
 .stampede-container {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #1a252f;
-  font-family:
-    Fredoka,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  background-color: #c7d3b6;
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   user-select: none;
 }
 
@@ -21,15 +20,66 @@
   height: 100%;
 }
 
-/* TOP HEADER HUD */
+.stampede-container :is(button, a):focus-visible {
+  outline: 3px solid var(--hud-accent);
+  outline-offset: 3px;
+}
+
+/* HOUSE TOP BAR */
+.stampede-container .stampede-topbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.stampede-topbar > * {
+  pointer-events: auto;
+}
+
+/* The warehouse ceiling is dark, so the wordmark sits on a cream pill like the
+   toolbar's buttons instead of straight on the scene. */
+.stampede-topbar .wordmark {
+  color: var(--hud-ink);
+  padding: 4px 20px 4px 4px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+}
+
+@media (max-width: 700px) {
+  .stampede-topbar .wordmark {
+    padding: 4px;
+  }
+}
+
+.stampede-mark {
+  display: flex;
+  padding: 8px;
+  background: var(--hud-accent);
+  border-radius: 13px;
+  transform: rotate(-7deg);
+  margin-right: 3px;
+}
+
+/* The kit's wordmark is a flex row, so the full stop needs pulling back in. */
+.stampede-title-dot {
+  margin-left: -6px;
+  color: var(--team-red);
+}
+
+/* TOP HEADER HUD: team scores either side of the closing-time clock */
 .stampede-hud-top {
   position: absolute;
-  top: 14px;
+  top: 88px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: stretch;
+  gap: 10px;
+  width: max-content;
   z-index: 20;
   pointer-events: none;
 }
@@ -37,90 +87,112 @@
 .stampede-score-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 18px;
-  border-radius: 9999px;
-  background: rgba(18, 30, 49, 0.92);
-  backdrop-filter: blur(8px);
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1.15rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  gap: 12px;
+  padding: 8px 18px 8px 16px;
+  border-radius: 999px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  font: 700 12px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+.stampede-score-pill::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px var(--pill-halo, transparent);
 }
 
 .stampede-score-pill.red {
-  border-color: var(--team-red);
-  color: var(--team-red-glow);
+  --pill-halo: var(--team-red-soft);
+  color: var(--team-red-deep);
+  box-shadow:
+    inset 0 -3px 0 var(--team-red),
+    var(--hud-shadow);
 }
 
 .stampede-score-pill.blue {
-  border-color: var(--team-blue);
-  color: var(--team-blue-glow);
+  --pill-halo: var(--team-blue-soft);
+  color: var(--team-blue-deep);
+  box-shadow:
+    inset 0 -3px 0 var(--team-blue),
+    var(--hud-shadow);
 }
 
 .stampede-score-num {
-  font-size: 1.45rem;
-  color: #ffffff;
+  font: 600 26px/1 var(--hud-display);
+  letter-spacing: 0;
+  color: var(--hud-ink);
 }
 
 .stampede-timer-box {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
+  justify-content: center;
   align-items: center;
-  background: rgba(18, 30, 49, 0.94);
-  backdrop-filter: blur(8px);
-  padding: 6px 20px;
-  border-radius: 18px;
-  border: 2px solid rgba(241, 196, 15, 0.7);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  gap: 4px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  padding: 8px 22px;
+  border-radius: var(--hud-radius);
 }
 
 .stampede-timer {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #f1c40f;
-  letter-spacing: 0.04em;
+  font: 600 30px/1 var(--hud-display);
+  color: var(--hud-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .stampede-timer-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #bdc3c7;
-  letter-spacing: 0.08em;
+  color: var(--hud-muted);
+  font: 700 10px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-/* PA ANNOUNCEMENT TICKER BANNER */
+/* PA ANNOUNCEMENT: a house notice with an amber lead */
 .stampede-announcement-banner {
   position: absolute;
-  top: 76px;
+  top: 162px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(90deg, #e74c3c, #f39c12, #e74c3c);
-  background-size: 200% 100%;
-  animation: bannerGlow 2.5s infinite linear;
-  color: #ffffff;
-  padding: 8px 24px;
-  border-radius: 9999px;
-  border: 2px solid #ffffff;
-  font-weight: 800;
-  font-size: 1.05rem;
-  box-shadow: 0 6px 25px rgba(231, 76, 60, 0.6);
+  background: var(--hud-card-strong);
+  color: var(--hud-ink);
+  padding: 10px 22px 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--hud-accent);
+  font: 700 15px/1.2 var(--hud-body);
+  box-shadow: var(--hud-shadow-strong);
+  animation: bannerGlow 1.6s ease-in-out infinite alternate;
   z-index: 25;
   pointer-events: none;
   white-space: nowrap;
 }
 
+.stampede-announcement-banner svg {
+  color: var(--hud-accent-strong);
+}
+
 @keyframes bannerGlow {
-  0% {
-    background-position: 0% 50%;
+  from {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--hud-accent) 0%, transparent),
+      var(--hud-shadow-strong);
   }
-  100% {
-    background-position: 200% 50%;
+  to {
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--hud-accent) 22%, transparent),
+      var(--hud-shadow-strong);
   }
 }
 
@@ -132,10 +204,11 @@
   background: radial-gradient(
     ellipse at center,
     transparent 50%,
-    rgba(241, 196, 15, 0.16) 80%,
-    rgba(231, 76, 60, 0.35) 100%
+    color-mix(in srgb, var(--hud-accent) 16%, transparent) 80%,
+    color-mix(in srgb, var(--hud-accent-strong) 38%, transparent) 100%
   );
-  box-shadow: inset 0 0 90px rgba(243, 156, 18, 0.45);
+  box-shadow: inset 0 0 90px
+    color-mix(in srgb, var(--hud-accent) 45%, transparent);
   animation: speedStreak 0.12s infinite alternate;
   z-index: 15;
 }
@@ -151,23 +224,24 @@
   }
 }
 
-/* WHOLESALE PAPER RECEIPT MANIFEST */
+/* SHOPPING LIST: still a torn-off till receipt, now in house paper and ink */
 .stampede-manifest-receipt {
   position: absolute;
-  top: 18px;
-  left: 18px;
+  top: 92px;
+  left: 30px;
   width: 250px;
-  background: #fdfbf7;
-  border-radius: 4px;
-  box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.55),
-    0 2px 6px rgba(0, 0, 0, 0.2);
-  color: #2c3e50;
-  font-family: 'Courier New', Courier, monospace;
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   z-index: 25;
   pointer-events: none;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
-  transform: rotate(-0.5deg);
+  filter: drop-shadow(0 8px 14px #3a5d3924);
+  transform: rotate(-0.6deg);
+}
+
+.receipt-inner {
+  background: var(--hud-card-solid);
+  padding: 8px 16px 12px;
+  position: relative;
 }
 
 .receipt-perforated-top,
@@ -177,8 +251,8 @@
       circle,
       transparent,
       transparent 50%,
-      #fdfbf7 50%,
-      #fdfbf7 100%
+      var(--hud-card-solid) 50%,
+      var(--hud-card-solid) 100%
     )
     -7px -5px / 14px 14px repeat-x;
 }
@@ -187,53 +261,67 @@
   transform: rotate(180deg);
 }
 
-.receipt-inner {
-  padding: 8px 14px 12px 14px;
-  position: relative;
-}
-
 .receipt-barcode {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   letter-spacing: 4px;
   text-align: center;
-  color: #2c3e50;
+  color: var(--hud-ink);
+  opacity: 0.75;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   user-select: none;
 }
 
 .receipt-store-name {
-  font-size: 0.88rem;
-  font-weight: 900;
+  font: 600 19px/1.1 var(--hud-display);
   text-align: center;
-  letter-spacing: 1px;
-  color: #1a252f;
+  letter-spacing: 0.04em;
+  color: var(--hud-ink);
 }
 
 .receipt-subhead {
-  font-size: 0.65rem;
-  font-weight: 700;
+  color: var(--hud-muted);
+  font: 700 9.5px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-align: center;
-  color: #7f8c8d;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .receipt-divider {
-  border-top: 1px dashed #bdc3c7;
-  margin: 7px 0;
+  border-top: 1px dashed var(--hud-edge-strong);
+  margin: 9px 0;
+}
+
+.stampede-manifest-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .stampede-receipt-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.76rem;
-  font-weight: 700;
-  line-height: 1.4;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
-.stampede-receipt-row.complete {
-  color: #27ae60;
+.stampede-receipt-row svg {
+  color: var(--hud-faint);
+}
+
+.stampede-receipt-row .count {
+  font-weight: 700;
+  color: var(--hud-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stampede-receipt-row.complete,
+.stampede-receipt-row.complete svg,
+.stampede-receipt-row.complete .count {
+  color: var(--hud-good);
 }
 
 .stampede-receipt-row.complete .item-name {
@@ -242,22 +330,40 @@
 }
 
 .receipt-mass-section {
-  font-size: 0.72rem;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .receipt-mass-row {
   display: flex;
   justify-content: space-between;
-  font-weight: 800;
+  align-items: baseline;
+  color: var(--hud-muted);
+  font: 700 10.5px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
+}
+
+.receipt-mass-row > span:last-child {
+  color: var(--hud-ink);
+  font: 600 15px/1 var(--hud-display);
+  letter-spacing: 0.02em;
 }
 
 .receipt-mass-status {
-  font-size: 0.65rem;
-  font-weight: 900;
-  color: #e67e22;
+  color: var(--hud-accent-ink);
+  font: 700 10px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-align: right;
-  margin-top: 2px;
+  margin-top: 4px;
+}
+
+.stampede-contraband-alert {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hud-danger) 12%, transparent);
+  color: var(--hud-danger);
+  font: 700 10.5px/1.3 var(--hud-body);
+  letter-spacing: 0.06em;
 }
 
 /* RUBBER STAMPS */
@@ -266,29 +372,26 @@
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%) rotate(-12deg);
-  font-size: 0.95rem;
-  font-weight: 900;
-  padding: 6px 10px;
-  border-radius: 6px;
+  font: 600 16px/1 var(--hud-display);
+  padding: 7px 12px;
+  border-radius: 8px;
   text-align: center;
   white-space: nowrap;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.12em;
   pointer-events: none;
 }
 
 .receipt-stamp.approved {
-  color: #27ae60;
-  border: 3px solid #27ae60;
-  background: rgba(46, 204, 113, 0.12);
-  box-shadow: 0 0 16px rgba(46, 204, 113, 0.4);
+  color: var(--hud-good);
+  border: 3px solid var(--hud-good);
+  background: color-mix(in srgb, var(--hud-good) 12%, var(--hud-card-solid));
   animation: stampPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .receipt-stamp.rejected {
-  color: #e74c3c;
-  border: 3px solid #e74c3c;
-  background: rgba(231, 76, 60, 0.18);
-  box-shadow: 0 0 16px rgba(231, 76, 60, 0.6);
+  color: var(--hud-danger);
+  border: 3px solid var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 12%, var(--hud-card-solid));
   animation: stampPulse 0.8s infinite alternate;
 }
 
@@ -314,7 +417,7 @@
   }
 }
 
-/* RETRO COCKPIT HUD (SPEED & WOBBLE HEAT) */
+/* COCKPIT: speed and caster wobble */
 .stampede-cockpit-hud {
   position: absolute;
   bottom: 24px;
@@ -322,13 +425,13 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: rgba(18, 30, 49, 0.92);
-  backdrop-filter: blur(12px);
+  gap: 18px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
   padding: 10px 22px;
-  border-radius: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  border-radius: var(--hud-radius);
   z-index: 20;
   pointer-events: none;
 }
@@ -337,54 +440,61 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 3px;
   min-width: 54px;
+  padding-right: 18px;
+  border-right: 1px solid var(--hud-edge);
 }
 
 .stampede-speed-dial .speed-val {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: #f1c40f;
-  line-height: 1;
+  font: 600 30px/1 var(--hud-display);
+  color: var(--hud-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .stampede-speed-dial .speed-unit {
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: #bdc3c7;
-  letter-spacing: 1px;
+  color: var(--hud-muted);
+  font: 700 10px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
 }
 
 .stampede-wobble-gauge {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 130px;
+  gap: 7px;
+  width: 150px;
 }
 
 .wobble-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #ecf0f1;
+  color: var(--hud-muted);
+  font: 700 10.5px/1.2 var(--hud-body);
+  letter-spacing: 0.12em;
 }
 
 .wobble-pct {
-  color: #e74c3c;
+  color: var(--hud-accent-ink);
+  letter-spacing: 0.02em;
 }
 
 .wobble-bar-bg {
   width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
+  height: 7px;
+  background: color-mix(in srgb, var(--hud-edge) 70%, transparent);
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .wobble-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
-  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--hud-good),
+    var(--hud-accent),
+    var(--hud-danger)
+  );
+  border-radius: 999px;
   transition: width 0.15s ease-out;
 }
 
@@ -392,52 +502,47 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(
-    135deg,
-    rgba(231, 76, 60, 0.3),
-    rgba(243, 156, 18, 0.3)
-  );
-  border: 1px solid #e74c3c;
+  background: var(--hud-accent);
+  border: 1px solid var(--hud-accent-strong);
   padding: 6px 12px;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: #ff7675;
+  border-radius: 999px;
+  color: var(--hud-ink);
+  font: 700 12px/1.2 var(--hud-body);
+  letter-spacing: 0.08em;
   animation: boostGlow 0.4s infinite alternate;
 }
 
 @keyframes boostGlow {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 6px rgba(231, 76, 60, 0.4);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--hud-accent) 0%, transparent);
   }
   100% {
     transform: scale(1.05);
-    box-shadow: 0 0 14px rgba(231, 76, 60, 0.8);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--hud-accent) 30%, transparent);
   }
 }
 
-/* RADAR MINIMAP */
+/* RADAR MINIMAP: a paper floor plan on a house card */
 .stampede-radar-box {
   position: absolute;
-  bottom: 18px;
-  right: 18px;
-  background: rgba(18, 30, 49, 0.94);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  padding: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  bottom: 24px;
+  right: 24px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  border-radius: var(--hud-radius);
+  padding: 12px 12px 10px;
   z-index: 20;
   pointer-events: none;
 }
 
 .stampede-radar-title {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #bdc3c7;
-  letter-spacing: 0.08em;
-  margin-bottom: 6px;
+  color: var(--hud-muted);
+  font: 700 10.5px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
+  margin-bottom: 8px;
   text-align: center;
 }
 
@@ -446,28 +551,32 @@
 }
 
 .stampede-radar-floor {
-  fill: #2c3e50;
-  stroke: rgba(255, 255, 255, 0.1);
+  fill: #f4efdc;
+  stroke: var(--hud-edge-strong);
   stroke-width: 1;
 }
 
 .stampede-radar-shelf {
-  fill: #34495e;
-  stroke: #2980b9;
-  stroke-width: 1;
+  fill: var(--hud-edge-strong);
+  stroke: none;
 }
 
 .stampede-radar-exit {
-  fill: rgba(241, 196, 15, 0.3);
-  stroke: #f1c40f;
+  fill: color-mix(in srgb, var(--hud-accent) 30%, transparent);
+  stroke: var(--hud-accent-strong);
   stroke-width: 1.5;
   stroke-dasharray: 2, 2;
 }
 
 .stampede-radar-kiosk {
-  fill: #e74c3c;
-  stroke: #ffffff;
+  fill: var(--hud-warn);
+  stroke: var(--hud-card-solid);
   stroke-width: 1.5;
+}
+
+.stampede-radar-kiosk.active {
+  fill: var(--hud-accent);
+  stroke: var(--hud-accent-ink);
 }
 
 .stampede-radar-cart {
@@ -476,26 +585,32 @@
 
 .stampede-radar-cart.red {
   fill: var(--team-red);
-  stroke: #ffffff;
+  stroke: var(--hud-card-solid);
 }
 
 .stampede-radar-cart.blue {
   fill: var(--team-blue);
-  stroke: #ffffff;
+  stroke: var(--hud-card-solid);
 }
 
 .stampede-radar-cart.self {
-  stroke: #f1c40f;
+  stroke: var(--hud-ink);
   stroke-width: 2.5;
 }
 
-/* ACTION CONTROLS / OVERLAYS */
+/* ACTION DOCK: a house tool dock; the grabber is the amber primary */
 .stampede-controls-overlay {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
+  bottom: 24px;
+  left: 30px;
   display: flex;
-  gap: 12px;
+  gap: 5px;
+  padding: 7px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
   z-index: 30;
 }
 
@@ -504,47 +619,62 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 12px 20px;
-  border-radius: 14px;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 0.95rem;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--hud-radius-small);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-ink);
+  font: 700 13px/1.2 var(--hud-body);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
   cursor: pointer;
-  border: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   transition:
-    transform 0.1s ease,
-    filter 0.1s ease;
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.stampede-action-btn svg {
+  color: var(--hud-muted);
+}
+
+.stampede-action-btn .house-key {
+  margin-left: 2px;
 }
 
 .stampede-action-btn:active {
-  transform: scale(0.95);
+  transform: translateY(1px);
 }
 
-.stampede-action-btn.drift {
-  background: linear-gradient(135deg, #e67e22, #d35400);
-  color: #ffffff;
-  border: 2px solid #f39c12;
+.stampede-action-btn.drift:hover {
+  background: #e8ead4;
 }
 
 .stampede-action-btn.grab {
-  background: linear-gradient(135deg, #f1c40f, #f39c12);
-  color: #2c3e50;
-  border: 2px solid #ffffff;
+  background: var(--hud-accent);
+  border-color: var(--hud-accent-strong);
+  box-shadow: 0 3px 0 var(--hud-accent-strong);
 }
 
-.stampede-action-btn.restart {
-  background: rgba(18, 30, 49, 0.9);
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+.stampede-action-btn.grab svg {
+  color: var(--hud-ink);
 }
 
-/* TOP RIGHT QUICK ACTIONS */
+.stampede-action-btn.grab .house-key {
+  background: #fff3d2;
+  border-color: var(--hud-accent-strong);
+  color: var(--hud-accent-ink);
+}
+
+.stampede-action-btn.grab:hover {
+  background: #f3b450;
+}
+
+/* RESTART: a house icon button tucked under the toolbar */
 .stampede-top-right {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 92px;
+  right: 24px;
   display: flex;
   gap: 8px;
   z-index: 30;
@@ -552,42 +682,41 @@
 
 .stampede-icon-btn {
   pointer-events: auto;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: rgba(18, 30, 49, 0.88);
-  backdrop-filter: blur(8px);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge-strong);
+  color: var(--hud-ink);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-  transition: transform 0.1s ease;
+  box-shadow: 0 2px 6px #203a2912;
 }
 
 .stampede-icon-btn:hover {
-  border-color: #f1c40f;
-  color: #f1c40f;
+  background: #ffefc7;
 }
 
 .stampede-icon-btn:active {
-  transform: scale(0.94);
+  transform: translateY(1px);
 }
 
-/* MODALS */
+/* DIALOGS: the kit's game dialog, on a soft green veil */
 dialog.stampede-modal-backdrop,
 .stampede-modal-backdrop {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  max-width: none;
+  max-height: none;
   margin: 0;
   padding: 0;
   border: none;
-  background: rgba(10, 16, 26, 0.85);
-  backdrop-filter: blur(8px);
+  background: #294b4933;
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -595,81 +724,116 @@ dialog.stampede-modal-backdrop,
 }
 
 .stampede-modal-card {
-  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(100% - 32px);
   max-width: 440px;
-  background: #1a252f;
-  border: 3px solid #f1c40f;
-  border-radius: 24px;
-  padding: 28px;
-  color: #ffffff;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  background: #fff6df;
+  border: 1px solid #fffbea;
+  border-radius: 20px;
+  padding: 30px;
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 18px 70px #294b493d;
+}
+
+.stampede-modal-emblem {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 14px;
+  background: #eee5bd;
+  border: 1px solid #e5d9a8;
+  border-radius: 18px;
+  color: var(--hud-accent-ink);
+  transform: rotate(-5deg);
 }
 
 .stampede-modal-card h2 {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0 0 10px 0;
-  color: #f1c40f;
+  font: 500 31px/1.13 var(--hud-display);
+  letter-spacing: -0.5px;
+  margin: 0 0 10px;
+  color: var(--hud-ink);
 }
 
 .stampede-modal-card p {
-  font-size: 1rem;
-  color: #bdc3c7;
-  line-height: 1.5;
-  margin-bottom: 22px;
+  font-size: 14px;
+  color: #6a7b62;
+  line-height: 1.65;
+  margin: 0 0 22px;
+}
+
+.stampede-modal-card p strong {
+  color: #3e5c48;
+}
+
+/* Rules read like the kit's help steps: left-aligned under a centred title. */
+.stampede-help-card p {
+  align-self: stretch;
+  text-align: left;
 }
 
 .stampede-modal-scores {
   display: flex;
-  justify-content: space-around;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 14px;
-  border-radius: 16px;
-  margin-bottom: 24px;
+  justify-content: center;
+  gap: 48px;
+  width: 100%;
+  padding: 17px 0;
+  margin-bottom: 22px;
+  border-top: 1px solid #dddfc1;
+  border-bottom: 1px solid #dddfc1;
 }
 
 .stampede-modal-team-score {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
 }
 
 .stampede-modal-team-score .team-name {
-  font-size: 0.9rem;
-  font-weight: 700;
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.stampede-modal-team-score .team-pts {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #ffffff;
+.stampede-modal-team-score.red .team-name {
+  color: var(--team-red-deep);
 }
 
+.stampede-modal-team-score.blue .team-name {
+  color: var(--team-blue-deep);
+}
+
+.stampede-modal-team-score .team-pts {
+  font: 500 29px/1 var(--hud-display);
+  color: #3f654f;
+}
+
+/* Matches the kit's .primary-button. */
 .stampede-modal-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #f1c40f, #e67e22);
-  color: #1a252f;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 1.15rem;
-  padding: 14px 32px;
-  border-radius: 9999px;
-  border: none;
+  width: 100%;
+  background: #f3bf50;
+  color: #344632;
+  font: 700 15px/1.2 var(--hud-body);
+  padding: 13px 15px;
+  border-radius: var(--hud-radius-small);
+  border: 1px solid #d8a444;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(241, 196, 15, 0.4);
-  transition: transform 0.1s ease;
+  box-shadow: 0 3px 0 #bc8932;
 }
 
 .stampede-modal-btn:hover {
-  transform: scale(1.04);
-}
-
-.stampede-modal-btn:active {
-  transform: scale(0.97);
+  background: #ffd16a;
 }
 
 /* MOBILE TOUCH CONTROLS */
@@ -689,22 +853,22 @@ dialog.stampede-modal-backdrop,
   .stampede-container .touch-controls[data-touch-controls] .joystick {
     width: 114px;
     height: 114px;
-    border: 2px solid rgba(241, 196, 15, 0.65);
+    border: 1px solid var(--hud-edge-strong);
     border-radius: 50%;
-    background: rgba(26, 37, 47, 0.8);
-    backdrop-filter: blur(8px);
-    color: #f1c40f;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    background: color-mix(in srgb, var(--hud-card-solid) 72%, transparent);
+    backdrop-filter: blur(6px);
+    color: var(--hud-muted);
+    box-shadow: var(--hud-shadow);
   }
 
   .stampede-container .joystick > span {
-    width: 44px;
-    height: 44px;
-    border: 2px solid #ffffff;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--hud-accent-strong);
     border-radius: 50%;
-    background: #f1c40f;
-    color: #1a252f;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    background: var(--hud-accent);
+    color: var(--hud-ink);
+    box-shadow: 0 3px 0 var(--hud-accent-strong);
   }
 
   .stampede-container .touch-controls[data-touch-controls] .touch-jump {
@@ -717,13 +881,12 @@ dialog.stampede-modal-backdrop,
     right: 20px;
     bottom: 24px;
     flex-direction: column-reverse;
-    gap: 12px;
+    gap: 5px;
     z-index: 35;
   }
 
   .stampede-action-btn {
-    padding: 14px 20px;
-    font-size: 0.95rem;
+    padding: 14px 16px;
     min-width: 105px;
   }
 
@@ -737,22 +900,57 @@ dialog.stampede-modal-backdrop,
 }
 
 @media (max-width: 768px) {
-  .stampede-manifest-card {
-    width: 180px;
-    font-size: 0.78rem;
-    left: 12px;
-    top: 70px;
-  }
   .stampede-hud-top {
-    gap: 8px;
-    top: 10px;
+    gap: 6px;
+    top: 72px;
   }
   .stampede-score-pill {
-    padding: 6px 12px;
-    font-size: 0.9rem;
+    gap: 6px;
+    padding: 5px 11px 5px 9px;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+  .stampede-score-pill::before {
+    width: 8px;
+    height: 8px;
+    box-shadow: 0 0 0 3px var(--pill-halo, transparent);
+  }
+  .stampede-score-num {
+    font-size: 18px;
+  }
+  .stampede-timer-box {
+    padding: 5px 10px;
+    gap: 3px;
   }
   .stampede-timer {
-    font-size: 1.25rem;
+    font-size: 20px;
+  }
+  .stampede-timer-label {
+    font-size: 7.5px;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .stampede-announcement-banner {
+    top: 124px;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    padding: 7px 14px 7px 11px;
+    white-space: normal;
+    font-size: 12.5px;
+  }
+  .stampede-manifest-receipt {
+    top: 170px;
+    left: 12px;
+    transform: rotate(-0.6deg) scale(0.72);
+    transform-origin: top left;
+  }
+  .stampede-top-right {
+    top: 170px;
+    right: 12px;
+  }
+  .stampede-top-right .stampede-icon-btn {
+    width: 38px;
+    height: 38px;
   }
   .stampede-radar-box {
     bottom: 155px;
@@ -765,5 +963,8 @@ dialog.stampede-modal-backdrop,
     left: 14px;
     transform: scale(0.85);
     transform-origin: bottom left;
+  }
+  .stampede-action-btn .house-key {
+    display: none;
   }
 }
