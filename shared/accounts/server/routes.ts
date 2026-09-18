@@ -94,7 +94,11 @@ function landing(returnTo: string, popup: boolean, result: Landing) {
 }
 
 export function createAccountRoutes(deps: AccountRouteDeps) {
-  /** Account traffic has its own admission budget, apart from rooms. */
+  /**
+   * Account traffic has its own admission budget, apart from rooms. Every take
+   * passes the request's `now`, so the limiter runs on the same clock as the
+   * sessions and flows it protects rather than quietly reading the wall clock.
+   */
   const budget = new RequestBudget(32, 4096);
   const clock = deps.now ?? Date.now;
   const fetcher = deps.fetch ?? fetch;
@@ -167,7 +171,7 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
     session: guard(async (request) => {
       const config = deps.config(),
         now = clock();
-      budget.take('account:session', 600, 100);
+      budget.take('account:session', 600, 100, now);
       const methods = signInMethods(config);
       const db = deps.db();
       await tidy(db, now);
@@ -201,7 +205,7 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
           [],
           landing(returnTo, popup, 'unavailable'),
         );
-      budget.take('account:google:start', 120, 2);
+      budget.take('account:google:start', 120, 2, now);
       const origin = publicOriginFor(request, config.publicOrigin),
         secure = isSecureOrigin(origin);
       const start = await beginGoogle(
@@ -257,11 +261,11 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
       // mint flows, so a flood of starts cannot turn away players coming back
       // from Google.
       try {
-        budget.take(`account:google:flow:${flow.state}`, 1, 1 / 600);
+        budget.take(`account:google:flow:${flow.state}`, 1, 1 / 600, now);
       } catch {
         return finish('failed');
       }
-      budget.take('account:google:callback', 240, 4);
+      budget.take('account:google:callback', 240, 4, now);
       if (params.get('error')) return finish('cancelled');
       const code = params.get('code') ?? '';
       if (!code || code.length > 2048) return finish('failed');
@@ -301,13 +305,13 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
         now = clock();
       assertWritable(request, config);
       const { secret, email: delivery } = emailReady(config);
-      budget.take('account:email', 30, 0.5);
+      budget.take('account:email', 30, 0.5, now);
       const email = normalizeEmail((await readJsonObject(request, 1024)).email);
       if (!email) throw new AccountError('Enter a valid email address.', 400);
       const secure = secureRequest(request, config);
       const flow = emailFlow(request, secure) ?? randomToken();
       const flowHash = await sha256(flow);
-      budget.take(`account:email:${flowHash}`, 3, 1 / 60);
+      budget.take(`account:email:${flowHash}`, 3, 1 / 60, now);
       const db = deps.db();
       await tidy(db, now);
       try {
@@ -345,7 +349,7 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
           remaining: 0,
         });
       const flowHash = await sha256(flow);
-      budget.take(`account:verify:${flowHash}`, 10, 1 / 30);
+      budget.take(`account:verify:${flowHash}`, 10, 1 / 30, now);
       const db = deps.db();
       const subject = await confirmCode(
         { db, secret, now },
@@ -383,7 +387,7 @@ export function createAccountRoutes(deps: AccountRouteDeps) {
       const db = deps.db();
       const session = await readSession(request, { db, config, now });
       if (!session) throw new AccountError('Sign in first.', 401);
-      budget.take(`account:profile:${session.account.id}`, 10, 0.2);
+      budget.take(`account:profile:${session.account.id}`, 10, 0.2, now);
       const body = await readJsonObject(request, 512);
       const displayName = playerName(body.displayName, '') || null;
       await setDisplayName(db, session.account.id, displayName, now);
