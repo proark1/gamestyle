@@ -7,6 +7,7 @@ import {
   type ZorbClashSnapshot,
 } from './types';
 import { createZorbAvatar, poseZorbWorker, type ZorbMeshRig } from './avatar';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { createStadium, type StadiumRig } from './stadium';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import {
@@ -537,7 +538,7 @@ export class ZorbClashScene {
         rig = createZorbAvatar(
           player.team,
           player.color,
-          undefined,
+          isLocal ? getEquippedLook() : undefined,
           player.name,
           isLocal,
         );

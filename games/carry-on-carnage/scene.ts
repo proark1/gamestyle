@@ -1,5 +1,6 @@
 import * as T from 'three';
 import { traveler } from './avatar';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { poseWorker } from '../../shared/rendering/worker-pose';
 import {
   createAirportTerminal,
@@ -243,7 +244,11 @@ export class CarryOnScene {
       activePlayerIds.add(p.id);
       let mesh = this.playerMeshes.get(p.id);
       if (!mesh) {
-        mesh = traveler(p.color, undefined, p.wearingTinFoil);
+        mesh = traveler(
+          p.color,
+          p.id === localPlayerId ? getEquippedLook() : undefined,
+          p.wearingTinFoil,
+        );
         mesh.castShadow = true;
         this.scene.add(mesh);
         this.playerMeshes.set(p.id, mesh);

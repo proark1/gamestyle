@@ -3,6 +3,8 @@ import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { island, junk } from './objects';
 import { LoadCrane } from './load-crane';
 import { worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { poseStacker } from './avatar';
 import { previewPieces } from './preview';
 import { emptyInput, movePlayer, nearestPiece, placement } from './simulation';
@@ -287,7 +289,12 @@ export class GameScene {
       }
     for (const p of snapshot.world.players)
       if (!this.actors.has(p.id)) {
-        const m = worker(p.color);
+        // Your own wardrobe items show on your worker.
+        const m = dressedWorker(
+          p.color,
+          {},
+          p.id === id ? getEquippedLook() : undefined,
+        ).model;
         const name = label(
           `${p.name}${p.id === id ? ' · YOU' : ''}`,
           p.id === id ? '#fff2b7' : '#edf1de',

@@ -1,5 +1,6 @@
 import * as T from 'three';
 import { curler, poseCurler } from './avatar';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   createBananaMesh,
   createCurlingRinkMesh,
@@ -61,6 +62,11 @@ export class PanicCurlingScene {
   private callbacks: SceneCallbacks;
   private time = 0;
   private localPlayerId = '';
+
+  /** Your own wardrobe items show on your curler. */
+  private lookFor(id: string) {
+    return id === this.localPlayerId ? getEquippedLook() : undefined;
+  }
   private cameraTarget = new T.Vector3(0, 0, HACK_Z + 4);
   private trauma = 0;
 
@@ -221,13 +227,13 @@ export class PanicCurlingScene {
       // model; the gadget stays.
       if (group && group.userData.team !== p.team) {
         this.scene.remove(group);
-        group = curler(p.team, p.color);
+        group = curler(p.team, p.color, this.lookFor(p.id));
         group.userData.team = p.team;
         this.scene.add(group);
         this.playerMeshes.set(p.id, group);
       }
       if (!group) {
-        group = curler(p.team, p.color);
+        group = curler(p.team, p.color, this.lookFor(p.id));
         group.userData.team = p.team;
         this.scene.add(group);
         this.playerMeshes.set(p.id, group);

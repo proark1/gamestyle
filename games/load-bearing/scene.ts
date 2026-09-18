@@ -1,5 +1,6 @@
 import * as T from 'three';
-import { worker } from '../../shared/rendering/worker';
+import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { poseWrecker } from './avatar';
 import { SiteMotion, emptyPose } from './motion';
 import { CABLE } from './physics';
@@ -356,7 +357,11 @@ export class LoadBearingScene {
       live.add(player.id);
       let mesh = this.people.get(player.id);
       if (!mesh) {
-        mesh = worker(player.color);
+        mesh = dressedWorker(
+          player.color,
+          {},
+          player.id === this.localId ? getEquippedLook() : undefined,
+        ).model;
         this.people.set(player.id, mesh);
         this.scene.add(mesh);
       }
