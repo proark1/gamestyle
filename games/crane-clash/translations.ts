@@ -29,6 +29,8 @@ export interface CraneClashTranslation {
   hintGrabTossCrate: string;
   hintCraneControl: string;
   hintWinch: string;
+  keyArrows: string;
+  keyWasdArrows: string;
 }
 
 export const CRANE_CLASH_TRANSLATIONS: Localized<CraneClashTranslation> = {
@@ -61,6 +63,8 @@ export const CRANE_CLASH_TRANSLATIONS: Localized<CraneClashTranslation> = {
     hintGrabTossCrate: 'Grab / Toss crate',
     hintCraneControl: 'Steer crane',
     hintWinch: 'Cable hoist',
+    keyArrows: 'Arrow keys',
+    keyWasdArrows: 'WASD / Arrows',
   },
   de: {
     tagline: 'ZWEI KRÄNE. VIER SPIELER. BAUSTELLEN-CHAOS.',
@@ -91,5 +95,7 @@ export const CRANE_CLASH_TRANSLATIONS: Localized<CraneClashTranslation> = {
     hintGrabTossCrate: 'Kiste Greifen / Werfen',
     hintCraneControl: 'Kran steuern',
     hintWinch: 'Seilwinde',
+    keyArrows: 'Pfeiltasten',
+    keyWasdArrows: 'WASD / Pfeile',
   },
 };

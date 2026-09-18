@@ -267,7 +267,7 @@ export default function CraneClash() {
                 color: '#777',
               }}
             >
-              Dein Team
+              {strings.yourTeam}
             </span>
             <div className="cc-role-row">
               <button
@@ -275,14 +275,14 @@ export default function CraneClash() {
                 className={`cc-btn orange ${team === 'orange' ? 'active' : ''}`}
                 onClick={() => handleTeamChange('orange')}
               >
-                Team Orange
+                {strings.teamOrange}
               </button>
               <button
                 type="button"
                 className={`cc-btn teal ${team === 'teal' ? 'active' : ''}`}
                 onClick={() => handleTeamChange('teal')}
               >
-                Team Teal
+                {strings.teamTeal}
               </button>
             </div>
 
@@ -357,7 +357,7 @@ export default function CraneClash() {
               <span className="cc-hint-key">WASD</span> {strings.hintSwing}
             </span>
             <span>
-              <span className="cc-hint-key">Pfeiltasten</span>{' '}
+              <span className="cc-hint-key">{strings.keyArrows}</span>{' '}
               {strings.hintCraneRotate}
             </span>
             <span>
@@ -378,7 +378,7 @@ export default function CraneClash() {
         ) : role === 'swinger' ? (
           <>
             <span>
-              <span className="cc-hint-key">WASD / Pfeile</span>{' '}
+              <span className="cc-hint-key">{strings.keyWasdArrows}</span>{' '}
               {strings.hintSwingMomentum}
             </span>
             <span>
@@ -386,20 +386,20 @@ export default function CraneClash() {
               {strings.hintGrabTossCrate}
             </span>
             <span>
-              <span className="cc-hint-key">V</span> Kamera
+              <span className="cc-hint-key">V</span> {strings.hintCamera}
             </span>
           </>
         ) : (
           <>
             <span>
-              <span className="cc-hint-key">WASD / Pfeile</span>{' '}
+              <span className="cc-hint-key">{strings.keyWasdArrows}</span>{' '}
               {strings.hintCraneControl}
             </span>
             <span>
               <span className="cc-hint-key">Q / Z</span> {strings.hintWinch}
             </span>
             <span>
-              <span className="cc-hint-key">V</span> Kamera
+              <span className="cc-hint-key">V</span> {strings.hintCamera}
             </span>
           </>
         )}
