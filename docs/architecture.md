@@ -35,7 +35,7 @@ shared/               Reusable code independent of game implementations
   rendering/          Renderer factory, primitive meshes, models, instrumentation
     avatars/          Potential player avatars on the shared worker rig
     cosmetics/        Wardrobe item models, dressing the shared worker
-  rooms/              Persistence contracts, room codes, sessions, token hashing
+  rooms/              Room lifecycle, persistence contracts, codes, sessions, tokens
   styles/             Shared game UI and construction theme
   ui/                 Common toolbar
   voice/              Shared voice clients and membership authorization
@@ -61,7 +61,7 @@ The audio player accepts an `AudioProfile`. Game-specific acoustics, preload pol
 
 The two audio contracts remain separate because the construction games support variations, recording capture, and different storage/API conventions. Their common encryption, cancellation handling, errors, and prompt limits are consolidated. Combining their public APIs or persistent data would require a separate compatibility migration.
 
-Room routes share origin validation, streaming request-size enforcement, JSON-object validation, error translation, and no-store responses. Game rules remain in each game's room handler. Game-specific membership lifetimes and action behavior are intentionally preserved.
+Room routes share origin validation, streaming request-size enforcement, JSON-object validation, error translation, and no-store responses. Server-run rooms also share their lifecycle: `handleRoomRequest` in `shared/rooms/lifecycle.ts` owns validation order, the pass check, expiry, seat release, host election, request de-duplication and the compare-and-swap loop, and each game supplies a `RoomAdapter` with its own seating rules, controls, actions and wording. Game-specific membership lifetimes and action behavior are intentionally preserved. The stored room shape is fixed, because rooms stay live across deploys.
 
 Public assets retain their existing URLs. Game assets already have directories such as `public/first-person` and `public/audio/act-natural`; collection illustrations belong to the site collection. Runtime SQLite files and generated recordings are data, not source modules, and must never move with a source refactor.
 
@@ -84,6 +84,10 @@ enforced by tests that read every game's source:
   it names sessions live players hold.
 - **Crew counting.** `crewOf()` in `shared/analytics/protocol.ts` reports who is in a room.
   A seat the game plays that is not in `world.players` is passed as `extraNpcs`.
+- **Server rooms.** A game that keeps server authority (for hidden roles, as Shelf Control
+  does) implements `RoomAdapter` from `shared/rooms/lifecycle.ts` rather than writing its own
+  handler, and joins `shared/rooms/host-succession.test.ts`, the server-side counterpart of
+  `platform/peer/invariants.test.ts`.
 
 ## Adding or changing a game
 
@@ -91,7 +95,7 @@ enforced by tests that read every game's source:
 2. Add a thin `app/<route>/page.tsx` importing that game's component. Add API route re-exports only when needed.
 3. Extract a helper to `shared/` when multiple callers actually need the same behavior. Pass differing policies as explicit parameters; preserve each game's rules. The decisions listed above are not per-game: take them from `shared/` rather than re-deciding them.
 4. For peer play, implement the local adapter contract in `shared/peer/engine.ts` and pass a lazy loader to the shared connection. Hidden-role games should retain server authority when a player host would reveal secrets. `advance(world, now)` receives an **absolute time in milliseconds**, not a step. A simulation that steps by elapsed seconds must recover the step as `(now - world.clock) / 1000`; passing `now` straight through made three games' clocks grow to `Infinity` and broke host handover. Run any bots the way the solo loop does, since the simulation does not. Add the game to `platform/peer/invariants.test.ts`, which checks this contract through the same entry point handover uses.
-5. For generated audio, keep the catalog and profile inside the game and register the catalog in the appropriate platform registry.
+5. For server-authoritative play, implement `RoomAdapter` from `shared/rooms/lifecycle.ts` and export a thin handler around `handleRoomRequest`; keep the storage key stable once rooms exist. For generated audio, keep the catalog and profile inside the game and register the catalog in the appropriate platform registry.
 6. For play analytics, add `games/<id>/analytics.ts` with the game's milestones, result reasons, counted actions and snapshot mapping, report through a module-level `GameTracker`, and register the definition in `platform/analytics/catalog.ts`. Report keys are kebab-case: the tracker normalises an action name before matching it, so a camelCase key silently counts nothing. Open the state with `crewOf()`. See [play analytics](analytics.md).
 7. Build player characters from the shared worker with `dressedWorker` from `shared/rendering/cosmetics/dress.ts`, and change only their clothes and hat through `WorkerOutfit`, so players look alike across the collection. The same call puts on a player's wardrobe items from `shared/wardrobe/`: leave off the game's own hat, vest or mask for any slot the look fills, and mark the avatar `dressable`. For the admin avatar lineup, add `games/<id>/avatar.ts` exporting the player's looks as `AvatarLook`s from `shared/rendering/avatar-preview.ts`. Pose them with the same functions the scene calls, so the lineup cannot drift from the game, and register them in `platform/admin/avatars/catalog.ts`; a catalog test fails for any game left out.
 8. Run `npm run check` and the relevant production build. Tests are discovered recursively, so new game tests do not need another glob in `package.json`.

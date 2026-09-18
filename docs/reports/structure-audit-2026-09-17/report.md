@@ -1,17 +1,17 @@
 # Structure and efficiency audit — 2026-09-17
 
 Scope: `games/`, `shared/`, `platform/`, `app/`, `db/`, audited at `ab6eded` and fixed on
-`claude/game-structure-efficiency-review-ace67e` in three commits. 22 games, ~144k lines of
-TypeScript outside tests.
+`claude/game-structure-efficiency-review-ace67e`. A second round handled the three follow-ups
+the first one left open. 22 games, ~144k lines of TypeScript outside tests.
 
 ## Outcome
 
 | Gate                                      | Before  | After                          |
 | ----------------------------------------- | ------- | ------------------------------ |
-| Architecture boundaries                   | hold    | hold (889 files, 2834 imports) |
+| Architecture boundaries                   | hold    | hold (891 files, 2839 imports) |
 | `tsc --noEmit`                            | clean   | clean                          |
 | `oxlint` on the source directories        | clean   | clean                          |
-| Tests                                     | 1131    | **1258** (+127), all passing   |
+| Tests                                     | 1131    | **1281** (+150), all passing   |
 
 The architecture was already sound. `scripts/check-architecture.mjs` walks the import graph
 from all 63 client entries and enforces five real boundaries, which is why the collection held
@@ -30,10 +30,12 @@ to the collection in one place, and adds tests that stop each problem from comin
 | 8   | Six spellings of "is this a touch device"                 | **Fixed**                      |
 | 12  | README listed 12 of 22 games                              | **Fixed**                      |
 | 13  | Crew-counting block rebuilt by hand                       | **Fixed**                      |
-| 10  | Server room handlers ~75% identical                       | Corrected; left for its own PR |
+| 10  | Server room handlers ~75% identical                       | **Fixed** in the second round  |
 | 3   | `chaos/Game.tsx` is a 3242-line component                 | Left for its own PR            |
 | 9   | Game CSS has no token layer                               | Left for a design pass         |
 | 11  | Test depth varies between games                           | Corrected, partly addressed    |
+| B   | Bungee Doubles clock in seconds; idle players kept running | **Fixed** in the second round  |
+| C   | Sign-in rate-limit test flaky under load                  | **Fixed** in the second round  |
 
 Four claims in the first version of this report were wrong. They are corrected in place below
 and marked **Correction**.
@@ -86,10 +88,11 @@ depends on:
 
 Run against the old adapters, it fails exactly these three games and passes the other 16.
 
-**Still open.** Bungee Doubles keeps its clock in seconds for the scene's animation, but the
-engine's idle check reads it as milliseconds. As a result, idle players there are released
-after minutes instead of half a second. The explosion was hiding this. Fixing it means moving the
-scene's animation to milliseconds, so I've noted it and left the code alone.
+**Follow-up, fixed (B).** Bungee Doubles kept its clock in seconds for the scene's animation, but
+the engine's idle check reads it as milliseconds, so a player who dropped out kept running on
+their last stick direction for minutes. The clock now counts milliseconds like every other game,
+and the scene converts once per frame to the seconds its animations take, so they are unchanged.
+Two new tests fail against the old code.
 
 ## 1. Zorb Clash and Scaffold Scramble analytics were rejected — fixed
 
@@ -164,22 +167,39 @@ across the collection.
   each spelling the validation slightly differently. `sessionStore(key)` owns it now. The keys
   themselves stay per game, because they name sessions that live players are holding.
 
-## 10. Server room handlers — corrected, left for its own PR
+## 10. Server room handlers — fixed in the second round
 
 > **Correction.** The first version said Stack or Sink had been moved to a generic `/api/rooms`
 > route, so a migration template already existed. That was wrong. `/api/rooms` is just Stack or
-> Sink's own server, exported under a generic name. There is no half-finished migration.
+> Sink's own server, exported under a generic name. There was no half-finished migration.
 
-The real finding is narrower. Five games run server-authoritative rooms (Shelf Control needs this
-because it has hidden roles), and all five share `shared/http/room-handler`. But their `rooms.ts`
-files are about 75% identical: the same create/join/action/leave lifecycle and the same
-compare-and-swap loop, with only the game functions changed. A diff of two of them is almost
-entirely renames.
+Five games run server-authoritative rooms. Shelf Control has to, because of its hidden roles.
+Their `rooms.ts` handlers were about 75% identical: the same validation order, pass check,
+expiry, seat release, host election, request de-duplication and compare-and-swap loop, differing
+mostly in names.
 
-The peer games already solve this with a `GameAdapter`, and the server rooms need the same
-treatment. It's left for its own PR because it's concurrency code covering host succession under
-simultaneous requests. It needs a focused review, and its existing tests make that review
-practical.
+`shared/rooms/lifecycle.ts` now owns that frame, the way `GameAdapter` already does for peer
+games. Each game supplies a `RoomAdapter` with what is genuinely its own: its wording, who can
+take a seat (Blend Business and Shelf Control give a bot's seat to a person; Uphill Delivery
+doesn't), what controls look like and which input counts as newer, and which actions exist.
+The five handlers went from 1,113 lines to 588, plus 290 shared lines. The stored room is
+byte-for-byte unchanged, so rooms that are live across a deploy keep working.
+
+**How it was checked.** Before extracting anything, a golden-master script ran every old handler
+through the same 44-step scenario with deterministic crypto, randomness and clocks. The new
+handlers reproduce it byte for byte for four games. Stack or Sink differs in two places, both
+brought in line with the other four:
+
+- An unknown operation without a pass now returns 400 instead of 401, because the operation is
+  checked first.
+- An empty `requestId` is now rejected. Before, it was accepted and could trigger an action.
+  The client always sends a UUID.
+
+With the empty-`requestId` step removed from the scenario, the first difference is the only one
+left. After the extraction, all five games also created, joined, synced, left and handed hosting
+on correctly through the dev server's real routes and database. Host-succession coverage now
+includes Shelf Control, and `shared/rooms/lifecycle.test.ts` pins the contract with a minimal
+adapter.
 
 ## 3, 9, 11 — left, with reasons
 
@@ -196,9 +216,12 @@ practical.
   cross-game invariant test above adds depth to all 19 peer games at once, and it's the test that
   found finding A.
 
-## Also noticed
+## C. Flaky sign-in rate-limit test — fixed in the second round
 
-`shared/accounts/server/routes.test.ts:484` ("starts are still limited") failed once in six
-full-suite runs, with a `302` where it expected a `429`. It passes every time in isolation. It
-fills a rate limiter against the wall clock, so under full-suite load the bucket can refill before
-the 200-request loop hits the limit. None of this work touched it.
+`shared/accounts/server/routes.test.ts` ("starts are still limited") failed once in six loaded
+full-suite runs, with a `302` where it expected a `429`. The account routes take an injected
+clock and use it for sessions, flows and codes, but every `budget.take()` call left out `now`.
+So the rate limiter alone read the wall clock, and under load its buckets refilled in real time
+before the loop could drain them. Each call now passes the request's `now`. Production is
+unchanged, since the injected clock defaults to `Date.now`. A new test makes the wall clock jump
+ten seconds on every read, and still sees exactly the bucket's 120 starts admitted.
