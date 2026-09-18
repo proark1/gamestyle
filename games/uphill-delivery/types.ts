@@ -33,9 +33,15 @@ export type DeliveryPlayer = Vec & {
   stumble: number;
 };
 export type DeliveryWorld = {
-  phase: 'lobby' | 'playing' | 'delivered';
+  /** `late` is reachable only with a `timeLimit`. */
+  phase: 'lobby' | 'playing' | 'delivered' | 'late';
   clock: number;
   started: number;
+  /**
+   * Party rounds only: milliseconds a delivery may take before it ends `late`.
+   * Crew and solo play have no clock and finish only when the sofa is in.
+   */
+  timeLimit?: number;
   players: DeliveryPlayer[];
   npcBrains?: Record<string, DeliveryBrain>;
   npcTeam?: DeliveryTeam;

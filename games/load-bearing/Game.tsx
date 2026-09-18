@@ -53,6 +53,7 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { loadBearingAnalytics, loadBearingPlayState } from './analytics';
+import { inPartyMode } from '../../shared/ui/party-mode';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
@@ -274,8 +275,11 @@ export default function LoadBearing() {
     sound.current?.unlock();
     sound.current?.reset();
     savePrefs();
-    const now = Date.now(),
-      world = freshSite(now, 'practice'),
+    // Practice has no clock, so only a flattened house or a broken piano ends
+    // it. A party round keeps the three-minute job clock and always ends.
+    const party = inPartyMode(),
+      now = Date.now(),
+      world = freshSite(now, party ? 'normal' : 'practice'),
       s = { code: 'PRACTICE', id: 'practice-wrecker', token: '' };
     world.players.push(newWrecker(s.id, name.trim() || 'Wrecker', 0, now));
     // Practice NPCs use the same roster shape the networked crew does.
@@ -288,7 +292,7 @@ export default function LoadBearing() {
           color: i + 1,
         })),
       );
-    siteAction(world, s.id, { type: 'practice' }, s.id);
+    siteAction(world, s.id, { type: party ? 'start' : 'practice' }, s.id);
     localWorld.current = world;
     activeSession.current = s;
     setSession(s);

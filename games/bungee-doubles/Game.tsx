@@ -12,6 +12,7 @@ import {
 import type { PeerGameConnection } from '../../shared/peer/connection';
 import {
   advanceBungee,
+  autoServe,
   bungeeAction,
   bungeeSnapshot,
   freshBungeeWorld,
@@ -32,6 +33,7 @@ import { BungeeScene } from './scene';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { inPartyMode } from '../../shared/ui/party-mode';
 import { BUNGEE_DOUBLES_TRANSLATIONS } from './translations';
 import {
   GameTracker,
@@ -140,6 +142,10 @@ export default function BungeeDoublesGame() {
     setSnapshot(initialSnap);
     scene.current.render(initialSnap);
 
+    // You are red's named server, so an idle party player would hold the
+    // match at the serve forever. A party round serves after five seconds.
+    const serve = inPartyMode() ? autoServe(5000) : null;
+
     // Solo game simulation loop (60 FPS)
     let lastTick = performance.now();
     let animId = 0;
@@ -161,6 +167,7 @@ export default function BungeeDoublesGame() {
           stepBungeeBot(p, world, dt, stepNow);
         }
       }
+      serve?.(world, stepNow);
 
       advanceBungee(world, dt, stepNow);
 

@@ -230,6 +230,32 @@ void test('summit alone does not win; the entire released sofa must settle insid
   assert.equal(w.phase, 'delivered');
   assert.throws(() => deliveryAction(w, 'p0', { type: 'grab' }, 'p0'), /Start/);
 });
+void test('a party time limit ends an undelivered run late', () => {
+  const w = round();
+  w.timeLimit = 2000;
+  advance(w, 1);
+  assert.equal(w.phase, 'playing');
+  advance(w, 1.5);
+  assert.equal(w.phase, 'late');
+  assert.equal(w.events.at(-1)?.text.startsWith('Out of time'), true);
+  deliveryAction(w, 'p0', { type: 'restart' }, 'p0');
+  assert.equal(w.phase, 'playing');
+  assert.equal(w.timeLimit, 2000, 'another party run keeps the limit');
+});
+void test('without a time limit a delivery never runs out of time', () => {
+  const w = round();
+  advance(w, 5);
+  assert.equal(w.phase, 'playing');
+  assert.equal(w.timeLimit, undefined);
+});
+void test('a sofa that settles inside the time limit is delivered', () => {
+  const w = round();
+  sofaAt(w, -6, 22.01, -23);
+  w.door = w.doorTarget = Math.PI / 2;
+  w.timeLimit = 60_000;
+  advance(w, 3);
+  assert.equal(w.phase, 'delivered');
+});
 void test('ice preserves more cargo momentum than the stone road', () => {
   const rough = round(),
     icy = round();

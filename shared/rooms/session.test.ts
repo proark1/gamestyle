@@ -90,6 +90,20 @@ void test('storage that throws never breaks a game', () => {
   store.clear();
 });
 
+void test('a party round never rejoins a saved session', () => {
+  const store = sessionStore('game-session-v1');
+  store.save(valid);
+  const global = globalThis as { location?: { search: string } };
+  global.location = { search: '?party=XYZ789&round=1' };
+  try {
+    assert.equal(store.load(), null);
+    assert.equal(store.loadPeer(), null);
+  } finally {
+    delete global.location;
+  }
+  assert.deepEqual(store.load(), valid, 'the session is kept, just not used');
+});
+
 void test('an invite code is read from the query and normalised', () => {
   assert.equal(inviteCode('?room=abc234'), 'ABC234');
   assert.equal(inviteCode('?room=ABC234&x=1'), 'ABC234');

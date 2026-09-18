@@ -313,7 +313,14 @@ function drawAmmoBlue(w: SiegeWorld): AmmoKind {
   return w.engineBlue.supply.shift()!;
 }
 
-function finishClash(w: SiegeWorld, winner: TeamId | 'draw') {
+/** Who holds more towers when a timed clash reaches dawn. */
+function dawnLeader(w: SiegeWorld): TeamId | 'draw' {
+  const red = w.towers?.red.filter(Boolean).length ?? 0,
+    blue = w.towers?.blue.filter(Boolean).length ?? 0;
+  return red === blue ? 'draw' : red > blue ? 'red' : 'blue';
+}
+
+function finishClash(w: SiegeWorld, winner: TeamId | 'draw', atDawn = false) {
   w.phase = 'won';
   w.winner = winner;
   for (const p of w.players) {
@@ -324,9 +331,13 @@ function finishClash(w: SiegeWorld, winner: TeamId | 'draw') {
   emit(
     w,
     'finish',
-    winner === 'draw'
-      ? 'Catastrophic double collapse! Both castles lie in ruins. It is a draw!'
-      : `${winner.toUpperCase()} TEAM WINS! All three opposing towers have been toppled!`,
+    atDawn
+      ? winner === 'draw'
+        ? 'Dawn, and the castles stand level. It is a draw!'
+        : `Dawn! ${winner.toUpperCase()} TEAM WINS with more towers standing!`
+      : winner === 'draw'
+        ? 'Catastrophic double collapse! Both castles lie in ruins. It is a draw!'
+        : `${winner.toUpperCase()} TEAM WINS! All three opposing towers have been toppled!`,
   );
 }
 
@@ -860,9 +871,11 @@ function stepBots(w: SiegeWorld, dt: number) {
 function step(w: SiegeWorld, dt: number) {
   if (w.phase !== 'playing' && w.phase !== 'relief') return;
   const is2v2 = w.mode === 'clash2v2';
+  // A classic siege always ends at dawn; a clash only in a party round.
+  const timed = !is2v2 || !!w.clashDawn;
 
   if (
-    !is2v2 &&
+    timed &&
     w.phase === 'playing' &&
     w.clock >= w.started + ROUND_MS - RELIEF_MS
   ) {
@@ -871,11 +884,14 @@ function step(w: SiegeWorld, dt: number) {
     emit(
       w,
       'wind',
-      'Dust on the road. A relief column is coming. Last volleys!',
+      is2v2
+        ? 'The sky is paling. At dawn, most towers standing wins. Last volleys!'
+        : 'Dust on the road. A relief column is coming. Last volleys!',
     );
   }
-  if (!is2v2 && w.phase === 'relief' && w.clock >= w.reliefAt) {
-    finish(w, false);
+  if (timed && w.phase === 'relief' && w.clock >= w.reliefAt) {
+    if (is2v2) finishClash(w, dawnLeader(w), true);
+    else finish(w, false);
     return;
   }
 

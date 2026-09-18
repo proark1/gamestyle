@@ -70,6 +70,7 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { stackAnalytics, stackPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
+import { inPartyMode } from '../../shared/ui/party-mode';
 
 const sessions = sessionStore('stack-or-sink-session-v1');
 
@@ -134,6 +135,7 @@ export default function Game() {
   const world = state?.world,
     player = world?.players.find((p) => p.id === session?.id),
     isLocal = session?.code === 'PRACTICE',
+    calm = world?.mode === 'practice',
     isHost = state?.host === session?.id;
   const ended = world?.phase === 'won' || world?.phase === 'lost';
   const touchMode = useMediaQuery(TOUCH_CONTROLS_QUERY);
@@ -391,7 +393,9 @@ export default function Game() {
     const now = Date.now(),
       id = 'local-player',
       s = { code: 'PRACTICE', id, token: '' };
-    const w = freshWorld(now, 'practice');
+    // Practice pins the water, so only reaching the rescue platform would end
+    // it. A party round floods like a crew round instead, and always ends.
+    const w = freshWorld(now, inPartyMode() ? 'normal' : 'practice');
     w.players = [createPlayer(id, name.trim() || 'Apprentice', color, 0, now)];
     act(w, id, { type: 'start' }, id);
     local.current = w;
@@ -778,7 +782,11 @@ export default function Game() {
               disabled={isLocal}
             >
               <span>
-                {isLocal ? 'TAKE YOUR TIME' : 'YOUR CREW CODE'}
+                {isLocal
+                  ? calm
+                    ? 'TAKE YOUR TIME'
+                    : 'MIND THE TIDE'
+                  : 'YOUR CREW CODE'}
                 <strong>{session.code}</strong>
               </span>
               {isLocal ? <Anchor size={21} /> : <Copy size={18} />}
@@ -788,7 +796,9 @@ export default function Game() {
             >
               <span className="live-dot" />
               {isLocal
-                ? 'Solo practice'
+                ? calm
+                  ? 'Solo practice'
+                  : 'Solo run'
                 : status === 'online'
                   ? 'Everyone in the same boat'
                   : status === 'expired'
@@ -818,7 +828,7 @@ export default function Game() {
               </i>
             </div>
             <span className="water-caption">
-              {isLocal
+              {calm
                 ? 'CALM WATERS'
                 : world.phase === 'lobby'
                   ? 'WAITING FOR CREW'

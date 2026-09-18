@@ -72,6 +72,7 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { siegeAnalytics, siegePlayState } from './analytics';
+import { inPartyMode } from '../../shared/ui/party-mode';
 import {
   ROOM_CODE_PATTERN,
   looksLikeRoomCode,
@@ -325,6 +326,9 @@ export default function SiegeAndDesist() {
     if (selectedMode === 'clash2v2') {
       reconcileClashBots(world);
     }
+    // A clash has no clock and ends only when a castle falls. A party round
+    // cannot wait on that, so it plays to dawn like a classic siege.
+    if (inPartyMode()) world.clashDawn = true;
     siegeAction(world, s.id, { type: 'start', mode: selectedMode }, s.id);
     local.current = world;
     activeSession.current = s;
@@ -719,7 +723,11 @@ export default function SiegeAndDesist() {
               </div>
               <div className="sad-clash-middle">
                 <span className="sad-vs">VS</span>
-                <div className="sad-clock">
+                <div
+                  className={
+                    w.phase === 'relief' ? 'sad-clock urgent' : 'sad-clock'
+                  }
+                >
                   <Timer size={14} />
                   <strong>
                     {w.phase === 'lobby'
@@ -1167,7 +1175,9 @@ export default function SiegeAndDesist() {
                     ? `Team ${playerTeam.toUpperCase()} stands victorious!`
                     : w.winner === 'draw'
                       ? 'Both castles stood their ground.'
-                      : `Team ${w.winner ? w.winner.toUpperCase() : 'Enemy'} destroyed your towers.`
+                      : w.towers?.[playerTeam].some(Boolean)
+                        ? `Team ${w.winner ? w.winner.toUpperCase() : 'Enemy'} held more towers at dawn.`
+                        : `Team ${w.winner ? w.winner.toUpperCase() : 'Enemy'} destroyed your towers.`
                   : w.phase === 'won'
                     ? 'Banner down.'
                     : 'Still standing. Annoyingly.'}

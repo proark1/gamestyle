@@ -129,6 +129,35 @@ export function prepareServe(world: BungeeWorld, team: TeamId) {
   };
 }
 
+/** The player a serve is waiting on, or undefined while the ball is live. */
+export function awaitedServer(world: BungeeWorld): Player | undefined {
+  if (world.phase !== 'serving' || world.ball.state !== 'serving') return;
+  // Nobody is named before the first point: the serving team's first player
+  // is the one who can serve, and bots only serve once named.
+  return world.servingPlayerId
+    ? world.players.find((p) => p.id === world.servingPlayerId)
+    : world.players.find((p) => p.team === world.serverTeam);
+}
+
+/**
+ * Serves for whoever a serve has waited on for `patienceMs`. Party rounds use
+ * it because the human is red's named server, so an idle player would
+ * otherwise hold the match at the serve forever. Call it once a frame: it
+ * remembers when the current wait began.
+ */
+export function autoServe(patienceMs: number) {
+  let waitingOn: string | undefined;
+  let since = 0;
+  return (world: BungeeWorld, now: number) => {
+    const server = awaitedServer(world);
+    if (server?.id !== waitingOn) {
+      waitingOn = server?.id;
+      since = now;
+    } else if (server && now - since >= patienceMs)
+      bungeeAction(world, server.id, { type: 'swing' }, now);
+  };
+}
+
 export function scorePoint(
   world: BungeeWorld,
   winningTeam: TeamId,

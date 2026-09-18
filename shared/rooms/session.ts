@@ -1,4 +1,5 @@
 import { isRoomCode, roomCode } from './identity';
+import { inPartyMode } from '../ui/party-mode';
 
 export type Session = { peer?: true; code: string; id: string; token: string };
 
@@ -35,9 +36,14 @@ export const isPeerSession = (value: unknown): value is PeerSession =>
  * same swallowed write, once per game, with the validation spelled out slightly
  * differently each time. The key stays per-game and unchanged, because it names
  * sessions that live players are holding.
+ *
+ * A party round never rejoins. The party ribbon starts every round from the
+ * game's own menu, and a crew this tab played earlier would reattach on load
+ * and hide that menu, so the round would never start.
  */
 export function sessionStore(key: string) {
   const read = (): unknown => {
+    if (inPartyMode()) return null;
     try {
       return JSON.parse(sessionStorage.getItem(key) ?? 'null');
     } catch {
