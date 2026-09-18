@@ -172,7 +172,7 @@ export type BasketballWorld = {
 export type BasketballAction =
   | { type: 'start' }
   | { type: 'restart' }
-  | { type: 'switchTeam' }
+  | { type: 'switchTeam'; team: TeamId }
   | { type: 'shoot'; charge: number; superJump?: boolean }
   | { type: 'pass' }
   | { type: 'steal' }

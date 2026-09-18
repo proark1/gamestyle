@@ -64,13 +64,14 @@ export default function BasketballGame() {
   // 20Hz feed does not rebuild it twenty times a second.
   const hud = useRef(
     hudPacer<BasketballSnapshot>(
-      ({ world: w }) =>
-        `${w.phase}:${w.eventId}:${w.scores.red}:${w.scores.blue}`,
+      ({ world: w, localId }) =>
+        `${w.phase}:${w.eventId}:${w.scores.red}:${w.scores.blue}:${
+          w.players.find((p) => p.id === localId)?.team
+        }`,
     ),
   );
 
   const [snapshot, setSnapshot] = useState<BasketballSnapshot | null>(null);
-  const [team, setTeam] = useState<TeamId>('red');
   const [muted, setMuted] = useState(false);
   // The toolbar's help button shows or hides the controls card. Until it is
   // pressed the card follows the screen width.
@@ -250,14 +251,13 @@ export default function BasketballGame() {
     };
   }, [dispatchAction]);
 
-  useEffect(() => {
-    sessionRef.current.team = team;
-  }, [team]);
-
   const world = snapshot?.world;
   const localPlayer = snapshot
     ? snapshot.world.players.find((p) => p.id === snapshot.localId)
     : undefined;
+  // The picker shows the team the world has you on, not the last button
+  // pressed, so it cannot disagree with where you actually play.
+  const team: TeamId = localPlayer?.team ?? 'red';
   const superReady = localPlayer ? canSuperJump(localPlayer) : false;
   const teamName: Record<TeamId, string> = {
     red: strings.red,
@@ -273,8 +273,8 @@ export default function BasketballGame() {
   };
 
   const handleSwitchTeam = (newTeam: TeamId) => {
-    setTeam(newTeam);
-    dispatchAction({ type: 'switchTeam' });
+    if (newTeam === team) return;
+    dispatchAction({ type: 'switchTeam', team: newTeam });
   };
 
   const toggleSound = () => {
@@ -380,8 +380,8 @@ export default function BasketballGame() {
               </div>
               <div className="bb-shot-meter-label">
                 {localPlayer.shotCharge >= 0.7 && localPlayer.shotCharge <= 0.85
-                  ? '🔥 SWEET SPOT! (Loslassen)'
-                  : 'Wurf aufladen...'}
+                  ? `🔥 ${strings.shotSweetSpot}`
+                  : strings.shotCharging}
               </div>
             </div>
           )}

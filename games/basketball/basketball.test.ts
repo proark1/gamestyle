@@ -14,7 +14,13 @@ import {
   stepBallPhysics,
 } from './physics';
 import { createEngine } from './peer';
-import { BALL_RADIUS, HOOP, TARGET_SCORE } from './types';
+import {
+  BALL_RADIUS,
+  HOOP,
+  TARGET_SCORE,
+  type BasketballAction,
+  type BasketballWorld,
+} from './types';
 import { basketballAvatars } from './avatar';
 
 void test('world initializes with court, ball, and scores', () => {
@@ -231,4 +237,97 @@ void test('alley-oop lob launches high pass and teammate slam', () => {
     w.events.some((e) => e.type === 'alleyoop'),
     'alley-oop event was emitted',
   );
+});
+
+/** A lobby as the solo game builds it: one human on red, three bots. */
+function soloLobby(): BasketballWorld {
+  const w = freshBasketballWorld(1000);
+  w.players.push(newPlayer('me', 'Du', 0, 'red', false, 0));
+  reconcileBasketballBots(w);
+  return w;
+}
+
+/** Two a side, every id distinct, and nobody standing on anybody. */
+function assertFairCourt(w: BasketballWorld) {
+  for (const team of ['red', 'blue'] as const)
+    assert.equal(
+      w.players.filter((p) => p.team === team).length,
+      2,
+      `two on ${team}`,
+    );
+  const ids = w.players.map((p) => p.id);
+  assert.equal(new Set(ids).size, ids.length, `unique ids: ${ids.join()}`);
+  const spots = w.players.map((p) => `${p.x.toFixed(2)},${p.z.toFixed(2)}`);
+  assert.equal(new Set(spots).size, spots.length, `own spots: ${spots.join()}`);
+}
+
+void test('switchTeam joins the team it names, and your own team is a no-op', () => {
+  const w = soloLobby();
+  assertFairCourt(w);
+  const me = () => w.players.find((p) => p.id === 'me')!;
+
+  basketballAction(w, 'me', { type: 'switchTeam', team: 'blue' }, true);
+  assert.equal(me().team, 'blue');
+  assert.ok(me().x > 0, 'moved to the blue side');
+  assertFairCourt(w);
+
+  // The picker's button for the team you are already on used to flip you.
+  const before = JSON.stringify(w.players);
+  basketballAction(w, 'me', { type: 'switchTeam', team: 'blue' }, true);
+  assert.equal(JSON.stringify(w.players), before, 'nothing changed');
+
+  basketballAction(w, 'me', { type: 'switchTeam', team: 'red' }, true);
+  assert.equal(me().team, 'red');
+  assertFairCourt(w);
+});
+
+void test('switchTeam ignores unknown teams and matches in progress', () => {
+  const w = soloLobby();
+  const before = JSON.stringify(w.players);
+  for (const team of ['green', undefined, 7])
+    basketballAction(
+      w,
+      'me',
+      { type: 'switchTeam', team } as unknown as BasketballAction,
+      true,
+    );
+  assert.equal(JSON.stringify(w.players), before, 'unknown teams ignored');
+
+  basketballAction(w, 'me', { type: 'start' }, true);
+  basketballAction(w, 'me', { type: 'switchTeam', team: 'blue' }, true);
+  assert.equal(w.players.find((p) => p.id === 'me')?.team, 'red');
+});
+
+void test('peer joiners take a free seat on their own team', () => {
+  const member = (id: string, order: number) => ({
+    id,
+    name: id,
+    color: 0,
+    order,
+    instance: id,
+    seen: 1000,
+  });
+  const engine = createEngine(1000);
+  engine.reconcile([member('a', 0), member('b', 1)]);
+  const team = (id: string) =>
+    engine.world.players.find((p) => p.id === id)?.team;
+  assert.equal(team('a'), 'red');
+  // The second joiner lands on blue but used to get red's seat number, which
+  // put them on top of the blue bot left standing there.
+  assert.equal(team('b'), 'blue');
+  assertFairCourt(engine.world);
+
+  // A bot refilling the gap once used the id of the bot still on court.
+  engine.reconcile([member('a', 0)]);
+  assertFairCourt(engine.world);
+  engine.reconcile([member('a', 0), member('c', 2)]);
+  assert.equal(team('c'), 'blue');
+  assertFairCourt(engine.world);
+
+  engine.execute('c', 'req-1', { type: 'switchTeam', team: 'red' }, 'a');
+  assert.equal(team('c'), 'red');
+  assertFairCourt(engine.world);
+  // An old client's action without a team no longer does anything.
+  engine.execute('c', 'req-2', { type: 'switchTeam' }, 'a');
+  assert.equal(team('c'), 'red');
 });

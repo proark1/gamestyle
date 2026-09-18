@@ -14,6 +14,9 @@ export interface BasketballTranslation {
   teamWins: string;
   playRematch: string;
   clearBall: string;
+  /** The shot meter's label while charging, and once it is in the sweet spot. */
+  shotCharging: string;
+  shotSweetSpot: string;
   hintMove: string;
   hintShootDunk: string;
   hintCrossover: string;
@@ -38,6 +41,8 @@ export const BASKETBALL_TRANSLATIONS: Localized<BasketballTranslation> = {
     teamWins: 'Team {team} wins the game!',
     playRematch: 'Play Rematch',
     clearBall: 'Clear ball (3PT)',
+    shotCharging: 'Charging shot...',
+    shotSweetSpot: 'SWEET SPOT! (Release)',
     hintMove: 'Move',
     hintShootDunk: 'Shoot / Dunk',
     hintCrossover: 'Crossover',
@@ -60,6 +65,8 @@ export const BASKETBALL_TRANSLATIONS: Localized<BasketballTranslation> = {
     teamWins: 'Team {team} gewinnt das Spiel!',
     playRematch: 'Rematch spielen',
     clearBall: 'Ball klären (3er)',
+    shotCharging: 'Wurf aufladen...',
+    shotSweetSpot: 'SWEET SPOT! (Loslassen)',
     hintMove: 'Bewegen',
     hintShootDunk: 'Werfen / Dunken',
     hintCrossover: 'Crossover',

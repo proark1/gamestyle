@@ -1,6 +1,6 @@
 import { HOOP, TEAMS, type BasketballWorld, type Player } from './types';
 import { distanceToHoop } from './physics';
-import { newPlayer } from './simulation';
+import { newPlayer, openSlot } from './simulation';
 
 const BOT_NAMES_RED = ['SlamDunk-Bot', 'Hoop-Bot'];
 const BOT_NAMES_BLUE = ['Swish-Bot', 'AlleyOop-Bot'];
@@ -14,14 +14,25 @@ export function reconcileBasketballBots(w: BasketballWorld): void {
     const neededBots = Math.max(0, 2 - humansOnTeam);
 
     if (botsOnTeam.length < neededBots) {
-      // Add missing bots
-      for (let i = botsOnTeam.length; i < neededBots; i++) {
-        const botNames = team === 'red' ? BOT_NAMES_RED : BOT_NAMES_BLUE;
-        const name = botNames[i % botNames.length];
+      // Add missing bots. A human who takes a bot's place leaves a gap in the
+      // numbering, so counting up from the bots left would reuse a live id.
+      const botNames = team === 'red' ? BOT_NAMES_RED : BOT_NAMES_BLUE;
+      let missing = neededBots - botsOnTeam.length;
+      for (let i = 0; missing > 0; i++) {
         const botId = `bot-${team}-${i + 1}`;
+        if (w.players.some((p) => p.id === botId)) continue;
+        const name = botNames[i % botNames.length];
         w.players.push(
-          newPlayer(botId, name, team === 'red' ? 0 : 1, team, true, i),
+          newPlayer(
+            botId,
+            name,
+            team === 'red' ? 0 : 1,
+            team,
+            true,
+            openSlot(w, team),
+          ),
         );
+        missing--;
       }
     } else if (botsOnTeam.length > neededBots) {
       // Remove excess bots

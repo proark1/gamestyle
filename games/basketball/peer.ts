@@ -9,6 +9,7 @@ import {
   basketballSnapshot,
   freshBasketballWorld,
   newPlayer,
+  seatHuman,
 } from './simulation';
 import { reconcileBasketballBots, stepBasketballBot } from './bots';
 import {
@@ -45,15 +46,7 @@ const adapter: GameAdapter<BasketballWorld, BasketballSnapshot> = {
       (p) => !p.bot && p.team === 'blue',
     ).length;
     const team: TeamId = redHumans <= blueHumans ? 'red' : 'blue';
-
-    // Remove a bot from the chosen team if present
-    const botIdx = w.players.findIndex((p) => p.bot && p.team === team);
-    if (botIdx >= 0) {
-      w.players.splice(botIdx, 1);
-    }
-
-    w.players.push(newPlayer(m.id, m.name, m.color, team, false, redHumans));
-    reconcileBasketballBots(w);
+    seatHuman(w, newPlayer(m.id, m.name, m.color, team), team);
   },
   remove: (w, id) => {
     w.players = w.players.filter((p) => p.id !== id);
