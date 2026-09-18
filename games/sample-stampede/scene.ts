@@ -19,6 +19,11 @@ import {
 } from './types';
 import { WAREHOUSE_BOUNDS } from './physics';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -89,7 +94,7 @@ export class SampleStampedeScene {
 
     // Renderer
     this.renderer = createRenderer(container, {
-      exposure: 1.15,
+      exposure: HOUSE_EXPOSURE,
       focusable: false,
     }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -102,10 +107,6 @@ export class SampleStampedeScene {
       250,
     );
     this.camera.position.set(0, 16, 22);
-
-    // Scene & Warehouse Ambience
-    this.scene.background = new THREE.Color(0x1a252f);
-    this.scene.fog = new THREE.FogExp2(0x1a252f, 0.012);
 
     this.setupLighting();
     this.setupWarehouseFloorAndRacks();
@@ -122,16 +123,12 @@ export class SampleStampedeScene {
   }
 
   private setupLighting() {
-    // Soft warehouse ambient light
-    const amb = new THREE.AmbientLight(0xffffff, 0.95);
-    this.scene.add(amb);
-
-    // Main overhead high-bay industrial floodlight with shadows
-    const sun = new THREE.DirectionalLight(0xfff7ed, 1.8);
+    // The collection's house light, in the warehouse hall.
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.hall,
+      fog: { near: 60, far: 160 },
+    });
     sun.position.set(15, 30, 10);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 5;
     sun.shadow.camera.far = 70;
     sun.shadow.camera.left = -32;
@@ -139,12 +136,6 @@ export class SampleStampedeScene {
     sun.shadow.camera.top = 40;
     sun.shadow.camera.bottom = -40;
     sun.shadow.bias = -0.0008;
-    this.scene.add(sun);
-
-    // Secondary soft fill light from opposite corner
-    const fill = new THREE.DirectionalLight(0x74b9ff, 0.75);
-    fill.position.set(-15, 20, -15);
-    this.scene.add(fill);
   }
 
   private setupWarehouseFloorAndRacks() {

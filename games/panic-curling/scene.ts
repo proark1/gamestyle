@@ -15,6 +15,11 @@ import {
   type PlayerInput,
 } from './types';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -63,16 +68,12 @@ export class PanicCurlingScene {
     this.container = container;
     this.callbacks = callbacks;
 
-    // 1. Setup Renderer with ACES Filmic Tone Mapping
+    // 1. Setup Renderer
     this.renderer = createRenderer(container, {
-      exposure: 1.25,
+      exposure: HOUSE_EXPOSURE,
       focusable: false,
     }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-
-    // 2. Setup Scene and Atmospheric Winter Fog
-    this.scene.background = new T.Color('#9bc5de');
-    this.scene.fog = new T.FogExp2('#9bc5de', 0.012);
 
     // 3. Camera
     this.camera = new T.PerspectiveCamera(
@@ -84,22 +85,18 @@ export class PanicCurlingScene {
     this.camera.position.set(0, 5.0, HACK_Z - 5.5);
     this.camera.lookAt(0, 0.4, HACK_Z + 12);
 
-    // 4. Lighting: Warm Golden Winter Sunlight & Sky Ambient
-    const ambient = new T.AmbientLight('#c8e4f8', 1.25);
-    this.scene.add(ambient);
-
-    const sun = new T.DirectionalLight('#fff8ea', 1.85);
+    // 4. Lighting: the collection's house light under a frosty sky.
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.frost,
+      fog: { near: 45, far: 125 },
+    });
     sun.position.set(16, 28, -6);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 5;
     sun.shadow.camera.far = 90;
     sun.shadow.camera.left = -22;
     sun.shadow.camera.right = 22;
     sun.shadow.camera.top = 45;
     sun.shadow.camera.bottom = -15;
-    this.scene.add(sun);
 
     // 5. Rink Mesh
     this.rinkGroup = createCurlingRinkMesh();

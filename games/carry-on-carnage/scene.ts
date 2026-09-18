@@ -10,6 +10,11 @@ import {
 import { computeSuitcaseBulge, SIZER_X, SIZER_Z } from './physics';
 import { type CarryOnSnapshot, type PlayerInput } from './types';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 export type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -58,8 +63,6 @@ export class CarryOnScene {
 
     // 1. Scene setup
     this.scene = new T.Scene();
-    this.scene.background = new T.Color('#dbeafe'); // Cheerful airport sky
-    this.scene.fog = new T.FogExp2('#dbeafe', 0.018);
 
     // 2. Camera setup: elevated dynamic isometric angle looking down on terminal
     const aspect = container.clientWidth / (container.clientHeight || 1);
@@ -68,25 +71,24 @@ export class CarryOnScene {
     this.camera.lookAt(1.5, 0.8, 0);
 
     // 3. Renderer setup
-    this.renderer = createRenderer(container, { focusable: false }).renderer;
+    this.renderer = createRenderer(container, {
+      focusable: false,
+      exposure: HOUSE_EXPOSURE,
+    }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
 
-    // 4. Lighting
-    const ambient = new T.AmbientLight('#ffffff', 0.85);
-    this.scene.add(ambient);
-
-    const sun = new T.DirectionalLight('#fffbeb', 1.4);
+    // 4. Lighting: the collection's house light, in the terminal hall.
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.hall,
+      fog: { near: 35, far: 80 },
+    });
     sun.position.set(6, 16, 10);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 1024;
-    sun.shadow.mapSize.height = 1024;
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 35;
     sun.shadow.camera.left = -16;
     sun.shadow.camera.right = 16;
     sun.shadow.camera.top = 10;
     sun.shadow.camera.bottom = -10;
-    this.scene.add(sun);
 
     // 5. Environment & Sizer Box
     this.terminalRoot = createAirportTerminal();
