@@ -33,8 +33,10 @@ function sign(text: string, bg: string, fg: string, width: number) {
 export const SITE = {
   sky: '#a9cfd8',
   fog: '#e2d5bb',
-  dirt: '#b99a6d',
-  dirtDark: '#8f7552',
+  // A step darker than a house sand, so hard hats and hi-vis stand out on the
+  // yard under the collection's bright house light.
+  dirt: '#a88b61',
+  dirtDark: '#806848',
   rust: '#b4552f',
   rustDark: '#86391f',
   steel: '#7d888c',

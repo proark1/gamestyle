@@ -271,12 +271,13 @@ export function createWindsockMesh(): { root: T.Group; sock: T.Group } {
 export function createSkyscraperMesh(): SkyscraperAssembly {
   const root = new T.Group();
 
-  // Skyscraper main tower body
+  // Skyscraper main tower body: sea-glass curtain wall in the house tones.
+  // (It used to be 85% metal with nothing to reflect, so it rendered black.)
   const towerGeo = new T.BoxGeometry(38, 125, 45);
   const towerMat = new T.MeshStandardMaterial({
-    color: '#0f172a',
-    roughness: 0.15,
-    metalness: 0.85,
+    color: '#8fa9a6',
+    roughness: 0.55,
+    metalness: 0.1,
   });
   const tower = new T.Mesh(towerGeo, towerMat);
   tower.position.set(0, 55, -23);
@@ -284,13 +285,13 @@ export function createSkyscraperMesh(): SkyscraperAssembly {
 
   // Structural Corner Columns (Architectural definition)
   for (const cx of [-18.5, 18.5]) {
-    box(root, [1.2, 125, 1.6], [cx, 55, -0.6], '#1e293b');
+    box(root, [1.2, 125, 1.6], [cx, 55, -0.6], '#d6cfbd');
   }
 
   // Floor Spandrel bands across the glass facade every 4 meters
   for (let r = 0; r < 20; r++) {
     const fy = 18 + r * 4.0;
-    box(root, [36, 0.45, 0.2], [0, fy, -0.4], '#334155');
+    box(root, [36, 0.45, 0.2], [0, fy, -0.4], '#c9c2ae');
   }
 
   // Floor Marker Plates along the left and right columns
@@ -307,9 +308,9 @@ export function createSkyscraperMesh(): SkyscraperAssembly {
     for (const side of [-1, 1]) {
       const px = side * (CRADLE_WIDTH / 2 + 2.2);
       // Backing plate
-      box(root, [1.4, 0.75, 0.15], [px, fl.y, -0.2], '#f59e0b');
+      box(root, [1.4, 0.75, 0.15], [px, fl.y, -0.2], '#eaa43c');
       // Dark border trim
-      box(root, [1.46, 0.82, 0.08], [px, fl.y, -0.25], '#0f172a');
+      box(root, [1.46, 0.82, 0.08], [px, fl.y, -0.25], '#2e3632');
     }
   }
 
@@ -386,24 +387,24 @@ export function createSkyscraperMesh(): SkyscraperAssembly {
   // Ground level street vertigo props far below (Y = 0)
   const street = new T.Group();
   street.position.set(0, 0, 10);
-  box(street, [90, 0.2, 70], [0, 0, 0], '#1e293b');
+  box(street, [90, 0.2, 70], [0, 0, 0], '#7d8a86');
 
   // Sidewalks & curbs
-  box(street, [90, 0.35, 5], [0, 0.1, 0], '#64748b');
-  box(street, [90, 0.35, 5], [0, 0.1, 20], '#64748b');
+  box(street, [90, 0.35, 5], [0, 0.1, 0], '#c9c2ae');
+  box(street, [90, 0.35, 5], [0, 0.1, 20], '#c9c2ae');
 
   // Miniature roadside trees
   for (let i = -6; i <= 6; i++) {
-    box(street, [0.18, 0.8, 0.18], [i * 6.5, 0.5, 0], '#78350f');
-    ball(street, [0.65, 0.75, 0.65], [i * 6.5, 1.1, 0], '#15803d');
+    box(street, [0.18, 0.8, 0.18], [i * 6.5, 0.5, 0], '#73543d');
+    ball(street, [0.65, 0.75, 0.65], [i * 6.5, 1.1, 0], '#6f9c6a');
   }
 
   // Adjacent lower building rooftops in the distance with AC chillers & water towers
   const neighbors = [
-    { x: -35, z: -15, w: 22, h: 22, d: 24, c: '#334155' },
-    { x: 35, z: -15, w: 22, h: 26, d: 24, c: '#1e293b' },
-    { x: -32, z: 25, w: 18, h: 14, d: 18, c: '#475569' },
-    { x: 32, z: 25, w: 18, h: 16, d: 18, c: '#334155' },
+    { x: -35, z: -15, w: 22, h: 22, d: 24, c: '#a9b8b0' },
+    { x: 35, z: -15, w: 22, h: 26, d: 24, c: '#c4bba6' },
+    { x: -32, z: 25, w: 18, h: 14, d: 18, c: '#9fb0a8' },
+    { x: 32, z: 25, w: 18, h: 16, d: 18, c: '#b8ae98' },
   ];
   for (const b of neighbors) {
     box(street, [b.w, b.h, b.d], [b.x, b.h / 2, b.z], b.c);
@@ -509,13 +510,13 @@ export function createWindowMesh(): {
   const height = 3.2;
 
   // Window frame / mullion
-  box(group, [width + 0.12, height + 0.12, 0.08], [0, 0, 0], '#1e293b');
+  box(group, [width + 0.12, height + 0.12, 0.08], [0, 0, 0], '#44525a');
 
   // Interior Office Vignette behind glass (visible depth)
   const interior = new T.Group();
   interior.position.set(0, 0, -0.22);
   // Back office wall
-  box(interior, [width - 0.06, height - 0.06, 0.05], [0, 0, -0.1], '#1e293b');
+  box(interior, [width - 0.06, height - 0.06, 0.05], [0, 0, -0.1], '#3a4642');
   // Desk
   box(interior, [0.75, 0.06, 0.32], [0, -0.65, 0.05], '#b45309');
   // Computer monitor with bright glowing screen

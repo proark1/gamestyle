@@ -23,6 +23,11 @@ import {
   type ScaffoldSnapshot,
 } from './types';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 export type SceneCallbacks = {
   input: (input: PlayerInput) => void;
@@ -141,14 +146,10 @@ export class ScaffoldScene {
     private cb: SceneCallbacks,
   ) {
     this.renderer = createRenderer(container, {
-      exposure: 1.25,
+      exposure: HOUSE_EXPOSURE,
       focusable: false,
     }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-
-    // High altitude vibrant sky with atmospheric haze
-    this.scene.background = new T.Color('#7ec3f2');
-    this.scene.fog = new T.FogExp2('#9fd7f8', 0.0035);
 
     this.camera = new T.PerspectiveCamera(
       48,
@@ -157,15 +158,12 @@ export class ScaffoldScene {
       350,
     );
 
-    // Lighting setup
-    const hemi = new T.HemisphereLight('#cffafe', '#1e293b', 1.05);
-    this.scene.add(hemi);
-
-    const sun = new T.DirectionalLight('#fffbeb', 1.6);
+    // The collection's house light, high above the city.
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.coast,
+      fog: { near: 80, far: 300 },
+    });
     sun.position.set(22, 95, 45);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 5;
     sun.shadow.camera.far = 200;
     const d = 36;
@@ -174,7 +172,6 @@ export class ScaffoldScene {
     sun.shadow.camera.top = d;
     sun.shadow.camera.bottom = -d;
     sun.shadow.bias = -0.0004;
-    this.scene.add(sun);
 
     // Skyscraper & Helipad assembly
     const sky = createSkyscraperMesh();

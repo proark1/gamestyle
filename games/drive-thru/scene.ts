@@ -16,6 +16,11 @@ import {
 } from './types';
 import { GRILL_BOUNDS, TRAY_LEDGE_POS } from './physics';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 type Callbacks = {
   input: (i: PlayerInput) => void;
@@ -47,7 +52,7 @@ export class DriveThruScene {
     private cb: Callbacks,
   ) {
     this.renderer = createRenderer(this.container, {
-      exposure: 1.25,
+      exposure: HOUSE_EXPOSURE,
       focusable: false,
     }).renderer;
 
@@ -81,21 +86,18 @@ export class DriveThruScene {
   }
 
   private setupLighting(): void {
-    // Warm retro diner outdoor lighting
-    const ambient = new T.AmbientLight('#ffffff', 0.9);
-    this.scene.add(ambient);
-
-    const sun = new T.DirectionalLight('#fff7ed', 1.6);
+    // The collection's house light over the diner lot.
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.coast,
+      fog: { near: 40, far: 100 },
+    });
     sun.position.set(-15, 25, 20);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 70;
     sun.shadow.camera.left = -20;
     sun.shadow.camera.right = 20;
     sun.shadow.camera.top = 20;
     sun.shadow.camera.bottom = -20;
-    this.scene.add(sun);
 
     // Kitchen warm neon downlight
     const kitchenLight = new T.PointLight('#fef08a', 2.2, 12);

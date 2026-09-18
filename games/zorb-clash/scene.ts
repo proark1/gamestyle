@@ -9,6 +9,11 @@ import {
 import { createZorbAvatar, poseZorbWorker, type ZorbMeshRig } from './avatar';
 import { createStadium, type StadiumRig } from './stadium';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -88,9 +93,8 @@ export class ZorbClashScene {
   ) {
     this.container = container;
 
-    // Renderer with ACES Filmic Tone Mapping for rich color vibrancy
     this.renderer = createRenderer(container, {
-      exposure: 1.22,
+      exposure: HOUSE_EXPOSURE,
       focusable: false,
     }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -104,10 +108,6 @@ export class ZorbClashScene {
     );
     this.camera.position.set(0, 32, -38);
     this.camera.lookAt(0, 0, 0);
-
-    // Atmospheric Pastel Sky & Fog
-    this.scene.background = new T.Color('#8ecae6');
-    this.scene.fog = new T.Fog('#8ecae6', 45, 115);
 
     this.setupLighting();
 
@@ -144,16 +144,11 @@ export class ZorbClashScene {
   }
 
   private setupLighting() {
-    // Warm Hemisphere Light: gentle golden sun sky + soft grassy ground bounce
-    const hemiLight = new T.HemisphereLight('#fff8e7', '#426038', 1.8);
-    this.scene.add(hemiLight);
-
-    // Directional Sun Light casting soft shadows
-    const sun = new T.DirectionalLight('#fff4de', 2.2);
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.coast,
+      fog: { near: 45, far: 115 },
+    });
     sun.position.set(-18, 38, -24);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 10;
     sun.shadow.camera.far = 130;
     sun.shadow.camera.left = -40;
