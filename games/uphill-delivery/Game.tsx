@@ -401,9 +401,14 @@ export default function UphillDelivery() {
       className={`delivery-shell ${session ? 'delivery-playing' : ''}`}
       {...partyRound(
         done,
-        // Every delivery clears it, so the faster one wins. The clock runs on
-        // afterwards; the ribbon keeps the first ended frame.
-        w ? partyGoal(true, -(w.clock - w.started) / 1000) : null,
+        // A delivery clears it, and the faster one wins. The clock runs on
+        // afterwards; the ribbon keeps the first ended frame. A run that
+        // ran out of time ranks by how high the sofa got.
+        w
+          ? late
+            ? partyGoal(false, w.bestHeight)
+            : partyGoal(true, -(w.clock - w.started) / 1000)
+          : null,
       )}
     >
       <div className="delivery-canvas" ref={canvas} />
