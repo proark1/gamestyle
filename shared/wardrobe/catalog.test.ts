@@ -92,3 +92,22 @@ void test('admin wardrobe state helpers allow adding coins, unlocking all items,
   assert.equal(reset.coins, initial.coins);
   assert.equal(reset.unlockedItems.length, DEFAULT_UNLOCKED.length);
 });
+
+void test('players start with nothing equipped, and an untouched old starter outfit reads as empty', async () => {
+  const { serverWardrobeSnapshot, storedLook } =
+    await import('./wardrobe-state');
+  assert.deepEqual(serverWardrobeSnapshot().look, {});
+  const oldStarter = {
+    hat: 'bobble-beanie',
+    top: 'striped-tee',
+    legs: 'denim-overalls',
+    shoes: 'rain-boots',
+    face: 'round-glasses',
+  };
+  assert.deepEqual(storedLook(oldStarter), {}, 'the untouched outfit clears');
+  const chosen = { ...oldStarter, hat: 'top-hat' };
+  assert.deepEqual(storedLook(chosen), chosen, 'a changed outfit stays');
+  const partial = { hat: 'bobble-beanie', face: 'round-glasses' };
+  assert.deepEqual(storedLook(partial), partial, 'a trimmed outfit stays');
+  assert.deepEqual(storedLook('junk'), {}, 'junk reads as empty');
+});
