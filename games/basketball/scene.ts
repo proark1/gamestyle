@@ -146,13 +146,12 @@ export class BasketballScene {
       this.scene.add(dot);
     }
 
-    // Initialize 3D Confetti Particle Pool
+    // Initialize 3D Confetti Particle Pool: both team colours, gold and white
     const confettiColors = [
-      '#e58e38',
-      '#349387',
+      TEAM_COLORS.red,
+      TEAM_COLORS.blue,
       '#ffe181',
       '#ffffff',
-      '#ff4757',
     ];
     const confGeo = new T.BoxGeometry(0.12, 0.08, 0.02);
     for (let i = 0; i < 50; i++) {
@@ -442,9 +441,16 @@ export class BasketballScene {
       if (p.id === this.localId) localPlayer = p;
 
       let mesh = this.playerMeshes.get(p.id);
+      // Players wear their team's kit, so switching team in the lobby needs a
+      // fresh model.
+      if (mesh && mesh.userData.team !== p.team) {
+        this.scene.remove(mesh);
+        mesh = undefined;
+      }
       if (!mesh) {
         const look = p.bot ? undefined : getEquippedLook();
-        mesh = basketballPlayer(TEAM_COLORS[p.team], p.team, look);
+        mesh = basketballPlayer(p.team, look);
+        mesh.userData.team = p.team;
         this.playerMeshes.set(p.id, mesh);
         this.scene.add(mesh);
       }

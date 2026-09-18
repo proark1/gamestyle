@@ -266,7 +266,7 @@ export function calculateRacketShot(
   facingAngle: number,
 ): { vx: number; vy: number; vz: number } {
   // Target is deep into opponent's court
-  const targetZ = hitterTeam === 'orange' ? 7.5 : -7.5;
+  const targetZ = hitterTeam === 'red' ? 7.5 : -7.5;
   // Target X combines facing angle with slight baseline spread
   const targetX = Math.sin(facingAngle) * (COURT.width * 0.35);
 

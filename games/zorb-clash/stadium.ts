@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { TEAM } from '../../shared/rendering/palette';
 import {
   GOAL_DEPTH,
   GOAL_HEIGHT,
@@ -265,8 +266,8 @@ export function createStadium(): StadiumRig {
     roughness: 0.6,
   });
   const seatColors = [
-    '#f95738',
-    '#00b4d8',
+    TEAM.red,
+    TEAM.blue,
     '#ffd166',
     '#06d6a0',
     '#ef476f',
@@ -411,10 +412,10 @@ export function createStadium(): StadiumRig {
 
   // 6. Corner Flags at the 4 pitch corners
   const cornerCoords = [
-    [-PITCH_WIDTH / 2, -PITCH_LENGTH / 2, '#f95738'],
-    [PITCH_WIDTH / 2, -PITCH_LENGTH / 2, '#f95738'],
-    [-PITCH_WIDTH / 2, PITCH_LENGTH / 2, '#00b4d8'],
-    [PITCH_WIDTH / 2, PITCH_LENGTH / 2, '#00b4d8'],
+    [-PITCH_WIDTH / 2, -PITCH_LENGTH / 2, TEAM.red],
+    [PITCH_WIDTH / 2, -PITCH_LENGTH / 2, TEAM.red],
+    [-PITCH_WIDTH / 2, PITCH_LENGTH / 2, TEAM.blue],
+    [PITCH_WIDTH / 2, PITCH_LENGTH / 2, TEAM.blue],
   ];
 
   for (const [cx, cz, color] of cornerCoords) {
@@ -507,8 +508,8 @@ export function createStadium(): StadiumRig {
     root.add(g);
   };
 
-  buildGoal(-1, '#f95738'); // Red Goal South
-  buildGoal(1, '#00b4d8'); // Blue Goal North
+  buildGoal(-1, TEAM.red); // Red Goal South
+  buildGoal(1, TEAM.blue); // Blue Goal North
 
   const update = (time: number, celebration: boolean) => {
     // Animate cheering spectators

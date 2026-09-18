@@ -1293,12 +1293,12 @@
 }
 
 .sad-castle-card.red .castle-name {
-  color: #f87171;
+  color: var(--team-red-glow);
   font-weight: 700;
 }
 
 .sad-castle-card.blue .castle-name {
-  color: #38bdf8;
+  color: var(--team-blue-glow);
   font-weight: 700;
 }
 
@@ -1406,15 +1406,15 @@
 }
 
 .sad-team-pill.red {
-  background: #c2472f33;
-  color: #fca5a5;
-  border: 1px solid #c2472f88;
+  background: color-mix(in srgb, var(--team-red) 20%, transparent);
+  color: var(--team-red-glow);
+  border: 1px solid color-mix(in srgb, var(--team-red) 55%, transparent);
 }
 
 .sad-team-pill.blue {
-  background: #0284c733;
-  color: #7dd3fc;
-  border: 1px solid #0284c788;
+  background: color-mix(in srgb, var(--team-blue) 20%, transparent);
+  color: var(--team-blue-glow);
+  border: 1px solid color-mix(in srgb, var(--team-blue) 55%, transparent);
 }
 
 /* 2v2 Lobby Teams View */
@@ -1441,11 +1441,11 @@
 }
 
 .sad-team-box.red {
-  border-top: 3px solid #c2472f;
+  border-top: 3px solid var(--team-red);
 }
 
 .sad-team-box.blue {
-  border-top: 3px solid #0284c7;
+  border-top: 3px solid var(--team-blue);
 }
 
 .sad-team-box-header strong {
@@ -1455,11 +1455,11 @@
 }
 
 .sad-team-box.red .sad-team-box-header strong {
-  color: #f87171;
+  color: var(--team-red-glow);
 }
 
 .sad-team-box.blue .sad-team-box-header strong {
-  color: #38bdf8;
+  color: var(--team-blue-glow);
 }
 
 .sad-team-box-header small {

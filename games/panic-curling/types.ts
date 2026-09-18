@@ -1,3 +1,4 @@
+import { TEAM } from '../../shared/rendering/palette';
 import type { Session } from '../../shared/rooms/session';
 
 export type TeamId = 'red' | 'blue';
@@ -10,10 +11,8 @@ export const TEAM_NAMES: Record<TeamId, string> = {
   red: 'Red Rovers',
   blue: 'Blue Blazers',
 };
-export const TEAM_COLORS: Record<TeamId, string> = {
-  red: '#d94b38',
-  blue: '#3277b3',
-};
+/** The collection's team colours: red against blue. */
+export const TEAM_COLORS: Record<TeamId, string> = TEAM;
 
 export const RINK_WIDTH = 6.4; // width of the ice track (-3.2 to 3.2)
 export const RINK_LENGTH = 40.0; // from hack (-4) to back line (36)
@@ -25,9 +24,9 @@ export const BACK_LINE_Z = 35.5; // back of the house
 
 export const HOUSE_RINGS = {
   button: { radius: 0.45, points: 5, color: '#f3c742' },
-  fourFoot: { radius: 1.25, points: 3, color: '#d94b38' },
+  fourFoot: { radius: 1.25, points: 3, color: TEAM.red },
   eightFoot: { radius: 2.35, points: 2, color: '#ffffff' },
-  twelveFoot: { radius: 3.55, points: 1, color: '#3277b3' },
+  twelveFoot: { radius: 3.55, points: 1, color: TEAM.blue },
 } as const;
 
 export type StoneConfig = {

@@ -2,8 +2,8 @@ import { HOOP, TEAMS, type BasketballWorld, type Player } from './types';
 import { distanceToHoop } from './physics';
 import { newPlayer } from './simulation';
 
-const BOT_NAMES_ORANGE = ['SlamDunk-Bot', 'Hoop-Bot'];
-const BOT_NAMES_TEAL = ['Swish-Bot', 'AlleyOop-Bot'];
+const BOT_NAMES_RED = ['SlamDunk-Bot', 'Hoop-Bot'];
+const BOT_NAMES_BLUE = ['Swish-Bot', 'AlleyOop-Bot'];
 
 export function reconcileBasketballBots(w: BasketballWorld): void {
   for (const team of TEAMS) {
@@ -16,11 +16,11 @@ export function reconcileBasketballBots(w: BasketballWorld): void {
     if (botsOnTeam.length < neededBots) {
       // Add missing bots
       for (let i = botsOnTeam.length; i < neededBots; i++) {
-        const botNames = team === 'orange' ? BOT_NAMES_ORANGE : BOT_NAMES_TEAL;
+        const botNames = team === 'red' ? BOT_NAMES_RED : BOT_NAMES_BLUE;
         const name = botNames[i % botNames.length];
         const botId = `bot-${team}-${i + 1}`;
         w.players.push(
-          newPlayer(botId, name, team === 'orange' ? 0 : 1, team, true, i),
+          newPlayer(botId, name, team === 'red' ? 0 : 1, team, true, i),
         );
       }
     } else if (botsOnTeam.length > neededBots) {

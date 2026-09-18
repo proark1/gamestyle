@@ -204,7 +204,8 @@ export function createLaserLine(team: TeamId) {
   g.name = `laser-${team}`;
   g.position.set(cfg.pad.x, PAD_Y, cfg.pad.z);
 
-  const laserColor = team === 'orange' ? '#ff7700' : '#00e5ff';
+  // A lighter tint of the team colour, so the laser glows above the decking.
+  const laserColor = new T.Color(cfg.color).offsetHSL(0, 0, 0.15);
   const laserMat = new T.MeshBasicMaterial({
     color: laserColor,
     wireframe: true,

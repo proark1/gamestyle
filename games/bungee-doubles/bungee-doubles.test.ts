@@ -22,8 +22,8 @@ import { bungeeDoublesAvatars } from './avatar';
 
 void test('world initializes with tennis court, ball and 0-0 score', () => {
   const world = freshBungeeWorld();
-  assert.equal(world.scores.orange, 0);
-  assert.equal(world.scores.teal, 0);
+  assert.equal(world.scores.red, 0);
+  assert.equal(world.scores.blue, 0);
   assert.equal(world.phase, 'serving');
   assert.equal(world.rallyCount, 0);
   assert.ok(world.ball);
@@ -35,11 +35,11 @@ void test('bot reconciliation maintains 4 players in 2v2 setup', () => {
   reconcileBungeeBots(world);
 
   assert.equal(world.players.length, 4);
-  const orange = world.players.filter((p) => p.team === 'orange');
-  const teal = world.players.filter((p) => p.team === 'teal');
-  assert.equal(orange.length, 2);
-  assert.equal(teal.length, 2);
-  assert.ok(orange.every((p) => p.bot));
+  const red = world.players.filter((p) => p.team === 'red');
+  const blue = world.players.filter((p) => p.team === 'blue');
+  assert.equal(red.length, 2);
+  assert.equal(blue.length, 2);
+  assert.ok(red.every((p) => p.bot));
 });
 
 void test('court boundary and net height checks work accurately', () => {
@@ -55,8 +55,8 @@ void test('court boundary and net height checks work accurately', () => {
 });
 
 void test('bungee tether calculates spring tension between teammates', () => {
-  const p1 = newPlayer('p1', 'Player 1', 0, 'orange', false, 0);
-  const p2 = newPlayer('p2', 'Player 2', 0, 'orange', false, 1);
+  const p1 = newPlayer('p1', 'Player 1', 0, 'red', false, 0);
+  const p2 = newPlayer('p2', 'Player 2', 0, 'red', false, 1);
 
   p1.x = -2.0;
   p1.z = -4.0;
@@ -82,8 +82,8 @@ void test('bungee tether calculates spring tension between teammates', () => {
 });
 
 void test('partner head-on collision triggers bonk and stun', () => {
-  const p1 = newPlayer('p1', 'Player 1', 0, 'orange', false, 0);
-  const p2 = newPlayer('p2', 'Player 2', 0, 'orange', false, 1);
+  const p1 = newPlayer('p1', 'Player 1', 0, 'red', false, 0);
+  const p2 = newPlayer('p2', 'Player 2', 0, 'red', false, 1);
 
   p1.x = 0;
   p1.z = -5.0;
@@ -134,10 +134,10 @@ void test('ball rebounds off padel back glass after floor bounce and remains liv
   world.ball.x = 0;
   world.ball.y = 1.0;
   world.ball.z = 9.8;
-  world.ball.vz = 12.0; // Heading towards Teal back wall (z = 11)
-  world.ball.lastHitTeam = 'orange';
-  world.ball.currentSide = 'teal';
-  world.ball.bouncesOnCurrentSide = 1; // Already bounced once on Teal court floor!
+  world.ball.vz = 12.0; // Heading towards Blue back wall (z = 11)
+  world.ball.lastHitTeam = 'red';
+  world.ball.currentSide = 'blue';
+  world.ball.bouncesOnCurrentSide = 1; // Already bounced once on Blue court floor!
 
   advanceBungee(world, 1 / 10);
 
@@ -154,16 +154,16 @@ void test('ball hitting wall directly on the fly triggers fault and awards point
   world.ball.y = 2.0;
   world.ball.z = 9.8;
   world.ball.vz = 14.0;
-  world.ball.lastHitTeam = 'orange';
-  world.ball.currentSide = 'teal';
+  world.ball.lastHitTeam = 'red';
+  world.ball.currentSide = 'blue';
   world.ball.bouncesOnCurrentSide = 0; // Did not bounce on court floor!
 
   const now = Date.now();
   advanceBungee(world, 1 / 10, now);
 
   assert.equal(world.phase, 'scored');
-  assert.equal(world.scores.teal, 1);
-  assert.equal(world.scores.orange, 0);
+  assert.equal(world.scores.blue, 1);
+  assert.equal(world.scores.red, 0);
   assert.ok(world.events.some((e) => e.type === 'point_scored'));
 });
 
@@ -186,21 +186,21 @@ void test('ball rebounds off side wall and reverses horizontal velocity', () => 
 });
 
 void test('calculateRacketShot produces trajectory clearing the net', () => {
-  const shot = calculateRacketShot(0, 1.2, -6.0, 'orange', false, false, 0);
-  assert.ok(shot.vz > 0); // Aiming towards positive Z (Teal side)
+  const shot = calculateRacketShot(0, 1.2, -6.0, 'red', false, false, 0);
+  assert.ok(shot.vz > 0); // Aiming towards positive Z (Blue side)
   assert.ok(shot.vy > 0); // Upward launch arc
 });
 
 void test('scoring advances points and triggers match end', () => {
   const world = freshBungeeWorld();
-  world.scores.orange = 6;
+  world.scores.red = 6;
   const now = Date.now();
 
-  scorePoint(world, 'orange', 'Smash winner!', now);
+  scorePoint(world, 'red', 'Smash winner!', now);
 
-  assert.equal(world.scores.orange, 7);
+  assert.equal(world.scores.red, 7);
   assert.equal(world.phase, 'ended');
-  assert.equal(world.winner, 'orange');
+  assert.equal(world.winner, 'red');
   assert.ok(world.events.some((e) => e.type === 'game_won'));
 });
 
@@ -246,7 +246,7 @@ void test('computeCameraRelativeMovement: idle input produces zero movement', ()
   assert.equal(res.z, 0);
 });
 
-void test('computeCameraRelativeMovement: looking down -Z (Behind Teal baseline)', () => {
+void test('computeCameraRelativeMovement: looking down -Z (Behind Blue baseline)', () => {
   // Camera looking down -Z: right is +X, forward is -Z
   const camMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 10, 20, 1];
 
@@ -271,7 +271,7 @@ void test('computeCameraRelativeMovement: looking down -Z (Behind Teal baseline)
   assert.equal(Math.round(moveS.z), 1);
 });
 
-void test('computeCameraRelativeMovement: looking down +Z (Behind Orange baseline, 180 deg)', () => {
+void test('computeCameraRelativeMovement: looking down +Z (Behind Red baseline, 180 deg)', () => {
   // Camera looking down +Z (rotated 180° around Y): right is -X, forward is +Z
   // Matrix col 0: [-1, 0, 0], col 2: [0, 0, -1]
   const camMatrix = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 10, -20, 1];

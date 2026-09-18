@@ -1,3 +1,4 @@
+import { TEAM } from '../../shared/rendering/palette';
 import type { Session } from '../../shared/rooms/session';
 
 export const ROUND_MS = 180_000;
@@ -6,21 +7,20 @@ export const FLOOR_Y = 0;
 export const PAD_Y = 0.4;
 export const PAD_SIZE = 4.4; // 4.4m x 4.4m foundation platform
 
-export type TeamId = 'orange' | 'teal';
+export type TeamId = 'red' | 'blue';
 export type Role = 'operator' | 'swinger';
 
-export const TEAMS: readonly TeamId[] = ['orange', 'teal'];
+export const TEAMS: readonly TeamId[] = ['red', 'blue'];
 export const ROLES: readonly Role[] = ['operator', 'swinger'];
 
+/** Team names in the German event log; the HUD takes its names from translations. */
 export const TEAM_NAMES: Record<TeamId, string> = {
-  orange: 'Team Orange',
-  teal: 'Team Teal',
+  red: 'Team Rot',
+  blue: 'Team Blau',
 };
 
-export const TEAM_COLORS: Record<TeamId, string> = {
-  orange: '#d97438',
-  teal: '#2f877c',
-};
+/** The collection's team colours: red against blue. */
+export const TEAM_COLORS: Record<TeamId, string> = TEAM;
 
 export const ROLE_NAMES: Record<Role, string> = {
   operator: 'Kranführer',
@@ -40,24 +40,24 @@ export const CRANE_CONFIG: Record<
     trimColor: string;
   }
 > = {
-  orange: {
+  red: {
     mast: { x: -8.5, z: 0 },
     pad: { x: -8.5, z: 6.2 },
     cabinY: 13.5,
     boomY: 15.0,
     reachMin: 2.2,
     reachMax: 13.5,
-    color: '#e58e38',
+    color: TEAM_COLORS.red,
     trimColor: '#2b2a29',
   },
-  teal: {
+  blue: {
     mast: { x: 8.5, z: 0 },
     pad: { x: 8.5, z: 6.2 },
     cabinY: 13.5,
     boomY: 15.0,
     reachMin: 2.2,
     reachMax: 13.5,
-    color: '#349387',
+    color: TEAM_COLORS.blue,
     trimColor: '#2b2a29',
   },
 };

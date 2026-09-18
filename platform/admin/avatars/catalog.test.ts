@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
+import { WARDROBE_COLOURS } from '../../../shared/rendering/palette';
 import { WORKER_HEAD_TOP, worker } from '../../../shared/rendering/worker';
 import type { Look } from '../../../shared/wardrobe/look';
 import { GAMES } from '../../analytics/catalog';
@@ -136,6 +137,46 @@ void test('the games on the shared worker build its exact body and change only c
       `${id} builds the shared worker's body`,
     );
   }
+});
+
+/** The shared worker inside a preview, even when a game seats it in something. */
+function findWorker(root: T.Object3D) {
+  let found: T.Object3D | undefined;
+  root.traverse((object) => {
+    const rig = object.userData;
+    if (!found && rig.body && rig.armR && rig.legL) found = object;
+  });
+  return found;
+}
+
+const colourOf = (object: T.Object3D) =>
+  `#${((object as T.Mesh).material as T.MeshStandardMaterial).color.getHexString()}`;
+
+void test('every game dresses the worker in colours from the shared palette', (t) => {
+  const previous = globalThis.document;
+  globalThis.document = paperDocument();
+  t.after(() => {
+    globalThis.document = previous;
+  });
+  // Mannequins are the worker carved in oak: wood is the point of that game.
+  const exempt = new Set(['shelf-control:mannequin']);
+  const allowed = new Set(WARDROBE_COLOURS.map((hex) => hex.toLowerCase()));
+  const offCloth: string[] = [];
+  for (const card of AVATAR_GAMES)
+    for (const look of card.looks) {
+      const key = `${card.id}:${look.key}`;
+      const model = findWorker(look.create().root);
+      if (!model || exempt.has(key)) continue;
+      const rig = model.userData as Record<string, T.Object3D>;
+      const clothes = {
+        shirt: colourOf(rig.armR.children[0]),
+        trousers: colourOf(rig.legL.children[0]),
+        shoes: colourOf(rig.legL.children[1]),
+      };
+      for (const [part, hex] of Object.entries(clothes))
+        if (!allowed.has(hex)) offCloth.push(`${key} ${part} ${hex}`);
+    }
+  assert.deepEqual(offCloth, [], 'clothes outside the shared palette');
 });
 
 void test('games dress the shared worker in wardrobe items over their own clothes', () => {

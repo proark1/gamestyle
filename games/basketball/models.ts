@@ -3,20 +3,36 @@ import { box, beam, label, material } from '../../shared/rendering/primitives';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 import { worker, WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
-import { COURT, HOOP, BALL_RADIUS, type TeamId } from './types';
+import { CLOTH } from '../../shared/rendering/palette';
+import { COURT, HOOP, BALL_RADIUS, TEAM_COLORS, type TeamId } from './types';
+
+/**
+ * A team colour's deep shade, 14 points darker in sRGB lightness: the same
+ * shade as the HUD's `--team-red-deep` and `--team-blue-deep`.
+ */
+function deepShade(hex: string): string {
+  const hsl = new T.Color(hex).getHSL({ h: 0, s: 0, l: 0 }, T.SRGBColorSpace);
+  const deep = new T.Color().setHSL(
+    hsl.h,
+    hsl.s,
+    hsl.l - 0.14,
+    T.SRGBColorSpace,
+  );
+  return `#${deep.getHexString()}`;
+}
 
 /**
  * Creates a basketball player using the shared worker avatar.
- * Dressed in a team-colored basketball jersey, shorts and white sneakers.
+ * Dressed in a matching team kit (jersey and shorts) and cream sneakers.
  */
-export function basketballPlayer(color: string, team: TeamId, look?: Look) {
-  const shortsColor = team === 'orange' ? '#9e461b' : '#1b5a52';
+export function basketballPlayer(team: TeamId, look?: Look) {
+  const kit = TEAM_COLORS[team];
   const { model: g, worn } = dressedWorker(
     0,
     {
-      shirt: color,
-      overalls: shortsColor,
-      boots: '#fff0d0', // White/cream basketball sneakers
+      shirt: kit,
+      overalls: kit,
+      boots: CLOTH.cream,
       cap: false,
     },
     look,
@@ -34,23 +50,13 @@ export function basketballPlayer(color: string, team: TeamId, look?: Look) {
       '#4a3728',
       true,
     );
-    // Sweatband in player / team accent
-    box(
-      body,
-      [0.56, 0.08, 0.54],
-      [0, WORKER_HEAD_TOP - 0.04, 0],
-      team === 'orange' ? '#fff4dd' : '#d2f4ee',
-    );
+    // Cream sweatband
+    box(body, [0.56, 0.08, 0.54], [0, WORKER_HEAD_TOP - 0.04, 0], CLOTH.cream);
   }
 
-  // Jersey front trim & number badge
-  box(body, [0.28, 0.22, 0.02], [0, 0.88, 0.23], '#ffffff');
-  box(
-    body,
-    [0.16, 0.14, 0.025],
-    [0, 0.88, 0.23],
-    team === 'orange' ? '#e58e38' : '#349387',
-  );
+  // Jersey front trim & number badge in the team colour
+  box(body, [0.28, 0.22, 0.02], [0, 0.88, 0.23], CLOTH.white);
+  box(body, [0.16, 0.14, 0.025], [0, 0.88, 0.23], kit);
 
   return g;
 }
@@ -459,7 +465,7 @@ export function basketballCourt(): T.Group {
 
   const starDecal = new T.Mesh(
     new T.RingGeometry(0.3, 0.7, 5),
-    material('#e58e38'),
+    material(CLOTH.hivis),
   );
   starDecal.rotation.x = -Math.PI / 2;
   starDecal.position.set(0, 0.026, COURT.halfCourtZ);
@@ -604,14 +610,15 @@ export function basketballCourt(): T.Group {
   g.add(bleachers);
   g.userData.spectators = spectators;
 
-  // 8. Team benches beside court
-  // Orange team bench (left front)
-  box(g, [0.9, 0.45, 2.2], [COURT.minX - 0.7, 0.225, 1.0], '#d97438');
-  box(g, [0.9, 0.65, 0.12], [COURT.minX - 0.7, 0.65, -0.1], '#a64b18');
-
-  // Teal team bench (right front)
-  box(g, [0.9, 0.45, 2.2], [COURT.maxX + 0.7, 0.225, 1.0], '#349387');
-  box(g, [0.9, 0.65, 0.12], [COURT.maxX + 0.7, 0.65, -0.1], '#1a5e55');
+  // 8. Team benches beside court: red on the left, blue on the right.
+  // Each seat is the team colour, its backrest the team's deep shade.
+  for (const [team, x] of [
+    ['red', COURT.minX - 0.7],
+    ['blue', COURT.maxX + 0.7],
+  ] as const) {
+    box(g, [0.9, 0.45, 2.2], [x, 0.225, 1.0], TEAM_COLORS[team]);
+    box(g, [0.9, 0.65, 0.12], [x, 0.65, -0.1], deepShade(TEAM_COLORS[team]));
+  }
 
   // Ball rack on sideline
   box(g, [0.6, 0.9, 1.6], [COURT.minX - 0.7, 0.45, -3.0], '#d3b07b');

@@ -4,8 +4,10 @@ export interface CraneClashTranslation {
   tagline: string;
   desc: string;
   yourTeam: string;
-  teamOrange: string;
-  teamTeal: string;
+  teamRed: string;
+  teamBlue: string;
+  red: string;
+  blue: string;
   soloPrompt: string;
   yourRole: string;
   swingerSolo: string;
@@ -14,8 +16,8 @@ export interface CraneClashTranslation {
   operatorRole: string;
   startMatch: string;
   matchOver: string;
-  orangeWins: string;
-  tealWins: string;
+  redWins: string;
+  blueWins: string;
   draw: string;
   playAgain: string;
   crates: string;
@@ -38,8 +40,10 @@ export const CRANE_CLASH_TRANSLATIONS: Localized<CraneClashTranslation> = {
     tagline: 'TWO CRANES. FOUR PLAYERS. WORKSITE MAYHEM.',
     desc: 'Swing through the air on the crane cable, grab wooden crates and stone blocks, and work with your crane operator to build the highest tower before time runs out!',
     yourTeam: 'Your Team',
-    teamOrange: 'Team Orange',
-    teamTeal: 'Team Teal',
+    teamRed: 'Team Red',
+    teamBlue: 'Team Blue',
+    red: 'Red',
+    blue: 'Blue',
     soloPrompt: 'Solo Mode: You control crane & cable simultaneously!',
     yourRole: 'Your Role',
     swingerSolo: 'Camera: Cable Acrobat',
@@ -48,8 +52,8 @@ export const CRANE_CLASH_TRANSLATIONS: Localized<CraneClashTranslation> = {
     operatorRole: 'Crane Operator (Cabin)',
     startMatch: 'Start Match',
     matchOver: 'Match Over!',
-    orangeWins: 'Team Orange wins!',
-    tealWins: 'Team Teal wins!',
+    redWins: 'Team Red wins!',
+    blueWins: 'Team Blue wins!',
     draw: 'Draw!',
     playAgain: 'Play Again',
     crates: 'crates',
@@ -70,8 +74,10 @@ export const CRANE_CLASH_TRANSLATIONS: Localized<CraneClashTranslation> = {
     tagline: 'ZWEI KRÄNE. VIER SPIELER. BAUSTELLEN-CHAOS.',
     desc: 'Schwinge am Seil durch die Luft, greife Holzkisten und Steinblöcke und baue mit deinem Kranführer den höchsten Turm vor Ablauf der Zeit!',
     yourTeam: 'Dein Team',
-    teamOrange: 'Team Orange',
-    teamTeal: 'Team Teal',
+    teamRed: 'Team Rot',
+    teamBlue: 'Team Blau',
+    red: 'Rot',
+    blue: 'Blau',
     soloPrompt: 'Solo-Modus: Du steuerst Kran & Seil gleichzeitig!',
     yourRole: 'Deine Rolle',
     swingerSolo: 'Kamera: Seil-Akrobat',
@@ -80,8 +86,8 @@ export const CRANE_CLASH_TRANSLATIONS: Localized<CraneClashTranslation> = {
     operatorRole: 'Kranführer (Kabine)',
     startMatch: 'Match starten',
     matchOver: 'Match Vorbei!',
-    orangeWins: 'Team Orange gewinnt!',
-    tealWins: 'Team Teal gewinnt!',
+    redWins: 'Team Rot gewinnt!',
+    blueWins: 'Team Blau gewinnt!',
     draw: 'Unentschieden!',
     playAgain: 'Nochmal spielen',
     crates: 'Kisten',

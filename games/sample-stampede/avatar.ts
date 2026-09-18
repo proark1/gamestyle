@@ -1,8 +1,17 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH, COLORS, TEAM } from '../../shared/rendering/palette';
 import type { Look } from '../../shared/wardrobe/look';
-import type { PlayerRole } from './types';
+import type { PlayerRole, TeamId } from './types';
+
+/** Shirt per team: red against blue; the unused yellow and green take player colours. */
+const TEAM_SHIRT: Record<TeamId, string> = {
+  red: TEAM.red,
+  blue: TEAM.blue,
+  yellow: COLORS[0],
+  green: COLORS[1],
+};
 
 export type ShopperPoseState = {
   role: PlayerRole;
@@ -88,13 +97,17 @@ export function poseShopper(
   }
 }
 
-export function createShopperWorker(color: number, look?: Look): T.Group {
+/**
+ * A shopper in the club's navy trousers: a cart's crew wears its team colour,
+ * and the store's own shoppers (no team) wear hi-vis vests.
+ */
+export function createShopperWorker(team: TeamId | null, look?: Look): T.Group {
   return dressedWorker(
-    color,
+    0,
     {
-      shirt: color === 0 ? '#e74c3c' : color === 1 ? '#2980b9' : '#f39c12',
-      overalls: '#2c3e50', // Wholesale club navy apron/pants
-      boots: '#4c4840',
+      shirt: team ? TEAM_SHIRT[team] : CLOTH.hivis,
+      overalls: CLOTH.navy,
+      boots: CLOTH.charcoal,
     },
     look,
   ).model;
@@ -106,7 +119,7 @@ export const sampleStampedeAvatars: readonly AvatarLook[] = [
     label: 'Bulk Club Member',
     dressable: true,
     create(look) {
-      const root = createShopperWorker(0, look);
+      const root = createShopperWorker('red', look);
       return {
         root,
         pose: (time, walking) =>
@@ -124,7 +137,7 @@ export const sampleStampedeAvatars: readonly AvatarLook[] = [
     label: 'Basket Scout',
     dressable: true,
     create(look) {
-      const root = createShopperWorker(1, look);
+      const root = createShopperWorker('blue', look);
       return {
         root,
         pose: (time, walking) =>

@@ -1,7 +1,7 @@
 import type { Snapshot } from './model';
 import type { PartyAction } from './party';
 import { activeSwapTeam, swapPuzzle } from './swap';
-const teamName = (index: number) => (index ? 'Turquoise' : 'Yellow');
+const teamName = (index: number) => (index ? 'Blue' : 'Red');
 export function SwapPanel({
   snapshot: s,
   playerId,

@@ -99,8 +99,9 @@ export const bungeeDoublesAvatars: readonly AvatarLook[] = [
     key: 'tennis-duo',
     label: 'Tennis Duo',
     dressable: true,
+    // The game's own player, on the red team, so preview and court match.
     create(look) {
-      const root = tennisPlayer('#f5f5f7', 'orange', look);
+      const root = tennisPlayer('red', look);
       return {
         root,
         pose: (time, walking) => poseTennisWorker(root, time, { walking }),

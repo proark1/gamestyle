@@ -2,6 +2,7 @@ import * as T from 'three';
 import { box, label, material } from '../../shared/rendering/primitives';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
 import { COLORS } from './types';
@@ -61,14 +62,14 @@ function hotelGuest(color: number, look?: Look) {
   const coat = COLORS[color % COLORS.length];
   const { model: g, worn } = dressedWorker(
     color,
-    { shirt: coat, overalls: '#35585b', boots: '#665445', cap: false },
+    { shirt: coat, overalls: CLOTH.teal, boots: CLOTH.brown, cap: false },
     look,
   );
   if (worn.hat) return g;
   const body = g.userData.body as T.Group;
   box(body, [0.56, 0.2, 0.54], [0, WORKER_HEAD_TOP + 0.06, 0], coat, true);
-  box(body, [0.58, 0.08, 0.56], [0, WORKER_HEAD_TOP - 0.02, 0], '#f4d8a1');
-  ball(body, [0.07, 0.07, 0.07], [0, WORKER_HEAD_TOP + 0.2, 0], '#f4d8a1');
+  box(body, [0.58, 0.08, 0.56], [0, WORKER_HEAD_TOP - 0.02, 0], CLOTH.sand);
+  ball(body, [0.07, 0.07, 0.07], [0, WORKER_HEAD_TOP + 0.2, 0], CLOTH.sand);
   return g;
 }
 

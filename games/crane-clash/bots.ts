@@ -14,19 +14,19 @@ import { emitEvent, newPlayer } from './simulation';
 import { CraneClashPhysics, GRAB_REACH } from './physics';
 
 const BOT_NAMES: Record<TeamId, Record<Role, string>> = {
-  orange: {
+  red: {
     operator: 'Kran-Klaus (Bot)',
     swinger: 'Schwing-Susi (Bot)',
   },
-  teal: {
+  blue: {
     operator: 'Hebe-Helmut (Bot)',
     swinger: 'Pendel-Peter (Bot)',
   },
 };
 
 const BOT_COLORS: Record<TeamId, Record<Role, number>> = {
-  orange: { operator: 0, swinger: 1 },
-  teal: { operator: 2, swinger: 3 },
+  red: { operator: 0, swinger: 1 },
+  blue: { operator: 2, swinger: 3 },
 };
 
 function normalizeAngle(a: number): number {

@@ -40,7 +40,7 @@ export function bungeeDoublesPlayState(
   if (world.phase === 'lobby') return { stage: 'lobby', ...base };
 
   const milestones: string[] = [];
-  const maxScore = Math.max(world.scores.orange, world.scores.teal);
+  const maxScore = Math.max(world.scores.red, world.scores.blue);
   if (maxScore > 0) milestones.push('first-point');
   if (world.players.some((p) => p.smashes > 0)) milestones.push('first-smash');
   if (world.players.some((p) => p.slingshots > 0))

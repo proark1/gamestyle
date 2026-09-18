@@ -31,6 +31,16 @@
   --orange: #dd8e36;
   --teal: #72afa8;
   --line: #dedfc7;
+  /* Every team game plays red against blue: shared/rendering/palette.ts TEAM.
+     `deep` is for text on light cards, `soft` for fills, `glow` on dark HUDs. */
+  --team-red: #c8553d;
+  --team-red-deep: #943c2a;
+  --team-red-soft: #f1d2cc;
+  --team-red-glow: #df9b8c;
+  --team-blue: #4d7ab0;
+  --team-blue-deep: #37587e;
+  --team-blue-soft: #ccd9e9;
+  --team-blue-glow: #93afd0;
 }
 * {
   box-sizing: border-box;

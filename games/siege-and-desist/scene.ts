@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { TEAM } from '../../shared/rendering/palette';
 import { label } from '../../shared/rendering/primitives';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
@@ -474,18 +475,21 @@ export class SiegeScene {
       }
     for (const p of w.players) {
       let model = this.people.get(p.id);
+      // In 2v2 the crew wears its team; otherwise each player's own colour.
+      // Switching camp changes the shirt, so that needs a fresh model.
+      const colorHex =
+        w.mode === 'clash2v2'
+          ? p.team === 'blue'
+            ? TEAM.blue
+            : TEAM.red
+          : COLORS[p.color % 4];
+      if (model && model.userData.shirt !== colorHex) {
+        this.scene.remove(model);
+        this.release(model);
+        this.people.delete(p.id);
+        model = undefined;
+      }
       if (!model) {
-        let colorHex = COLORS[p.color % 4];
-        if (w.mode === 'clash2v2') {
-          colorHex =
-            p.team === 'blue'
-              ? p.color % 2 === 0
-                ? '#2f7d74'
-                : '#7c5aa0'
-              : p.color % 2 === 0
-                ? '#c2472f'
-                : '#d8a13d';
-        }
         model = crewMember(
           colorHex,
           this.localId === p.id ? getEquippedLook() : undefined,
@@ -495,6 +499,7 @@ export class SiegeScene {
         name.position.y = 2.6;
         model.add(name);
         model.position.set(p.x, p.y, p.z);
+        model.userData.shirt = colorHex;
         this.people.set(p.id, model);
         this.scene.add(model);
       }

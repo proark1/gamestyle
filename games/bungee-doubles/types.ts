@@ -1,18 +1,20 @@
-export type TeamId = 'orange' | 'teal';
+import { TEAM } from '../../shared/rendering/palette';
 
-export const TEAMS: readonly TeamId[] = ['orange', 'teal'];
+export type TeamId = 'red' | 'blue';
+
+export const TEAMS: readonly TeamId[] = ['red', 'blue'];
 
 export const COURT = {
   width: 13, // -6.5 to +6.5
   length: 22, // -11 to +11
-  baselineOrangeZ: -10,
-  baselineTealZ: 10,
+  baselineRedZ: -10,
+  baselineBlueZ: 10,
   netZ: 0,
   netHeight: 1.05,
   netCenterHeight: 0.92,
   netWidth: 14.5,
   serviceLineZ: 5.5,
-  serviceLineOrangeZ: -5.5,
+  serviceLineRedZ: -5.5,
   minX: -6.5,
   maxX: 6.5,
   minZ: -11,
@@ -194,10 +196,8 @@ export type BungeeSession = {
   team: TeamId;
 };
 
-export const TEAM_COLORS: Record<TeamId, string> = {
-  orange: '#e58e38',
-  teal: '#349387',
-};
+/** The collection's team colours: red against blue. */
+export const TEAM_COLORS: Record<TeamId, string> = TEAM;
 
 export function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val));

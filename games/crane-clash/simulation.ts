@@ -4,6 +4,7 @@ import {
   CRATE_CONFIGS,
   ROUND_MS,
   TEAMS,
+  TEAM_NAMES,
   WIN_HEIGHT,
   idleInput,
   type Crate,
@@ -92,7 +93,7 @@ export function buildYardCrates(seed = 1): Crate[] {
 
 export function initialCrane(team: TeamId): CraneState {
   const cfg = CRANE_CONFIG[team];
-  const angle = team === 'orange' ? 0.45 : Math.PI - 0.45;
+  const angle = team === 'red' ? 0.45 : Math.PI - 0.45;
   const trolleyDist = 5.8;
   const trolleyX = cfg.mast.x + Math.cos(angle) * trolleyDist;
   const trolleyZ = cfg.mast.z + Math.sin(angle) * trolleyDist;
@@ -123,13 +124,13 @@ export function freshClashWorld(now: number, seed = 1): CraneClashWorld {
     remainder: 0,
     players: [],
     cranes: {
-      orange: initialCrane('orange'),
-      teal: initialCrane('teal'),
+      red: initialCrane('red'),
+      blue: initialCrane('blue'),
     },
     crates: buildYardCrates(seed),
     scores: {
-      orange: { height: 0, crates: 0, recordHeight: 0 },
-      teal: { height: 0, crates: 0, recordHeight: 0 },
+      red: { height: 0, crates: 0, recordHeight: 0 },
+      blue: { height: 0, crates: 0, recordHeight: 0 },
     },
     winner: null,
     events: [],
@@ -201,30 +202,30 @@ export function advanceCraneClash(w: CraneClashWorld, now: number) {
   const playedMs = w.clock - w.started;
   if (playedMs >= ROUND_MS) {
     w.phase = 'ended';
-    const orangeH = w.scores.orange.height;
-    const tealH = w.scores.teal.height;
-    if (orangeH > tealH) {
-      w.winner = 'orange';
+    const redH = w.scores.red.height;
+    const blueH = w.scores.blue.height;
+    if (redH > blueH) {
+      w.winner = 'red';
       emitEvent(
         w,
         'siren',
-        `Zeit abgelaufen! Team Orange gewinnt mit ${orangeH.toFixed(1)}m!`,
-        'orange',
+        `Zeit abgelaufen! ${TEAM_NAMES.red} gewinnt mit ${redH.toFixed(1)}m!`,
+        'red',
       );
-    } else if (tealH > orangeH) {
-      w.winner = 'teal';
+    } else if (blueH > redH) {
+      w.winner = 'blue';
       emitEvent(
         w,
         'siren',
-        `Zeit abgelaufen! Team Teal gewinnt mit ${tealH.toFixed(1)}m!`,
-        'teal',
+        `Zeit abgelaufen! ${TEAM_NAMES.blue} gewinnt mit ${blueH.toFixed(1)}m!`,
+        'blue',
       );
     } else {
       w.winner = 'draw';
       emitEvent(
         w,
         'siren',
-        `Unentschieden! Beide Teams bauten ${orangeH.toFixed(1)}m hoch.`,
+        `Unentschieden! Beide Teams bauten ${redH.toFixed(1)}m hoch.`,
       );
     }
     return;
@@ -344,7 +345,7 @@ export function advanceCraneClash(w: CraneClashWorld, now: number) {
           emitEvent(
             w,
             'height',
-            `${team === 'orange' ? 'Team Orange' : 'Team Teal'} erreicht ${next.height.toFixed(1)}m!`,
+            `${TEAM_NAMES[team]} erreicht ${next.height.toFixed(1)}m!`,
             team,
           );
         }
@@ -352,7 +353,7 @@ export function advanceCraneClash(w: CraneClashWorld, now: number) {
         emitEvent(
           w,
           'topple',
-          `ACHTUNG! Der Turm von ${team === 'orange' ? 'Team Orange' : 'Team Teal'} ist eingestürzt!`,
+          `ACHTUNG! Der Turm von ${TEAM_NAMES[team]} ist eingestürzt!`,
           team,
         );
       }
@@ -367,7 +368,7 @@ export function advanceCraneClash(w: CraneClashWorld, now: number) {
         emitEvent(
           w,
           'siren',
-          `${team === 'orange' ? 'Team Orange' : 'Team Teal'} erreicht ${WIN_HEIGHT}m und gewinnt sofort!`,
+          `${TEAM_NAMES[team]} erreicht ${WIN_HEIGHT}m und gewinnt sofort!`,
           team,
         );
       }
@@ -408,6 +409,8 @@ export function craneClashAction(
   if (!player) return;
 
   if (action.type === 'switchTeam') {
+    // An unknown team (such as a stale client's old id) has no crane to join.
+    if (!TEAMS.includes(action.team)) return;
     if (w.phase === 'lobby' || w.mode === 'practice') {
       player.team = action.team;
       reconcileClashBots(w);

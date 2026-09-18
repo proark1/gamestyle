@@ -33,7 +33,9 @@ import {
   type PartyAction,
   type Mission,
 } from './party';
-export const PLAYER_COLORS = ['#ffba32', '#62c9c9', '#e97897', '#a2a0e3'];
+/** Hard hat colours: the collection's four player colours. */
+export const PLAYER_COLORS = COLORS;
+import { COLORS } from '../../shared/rendering/palette';
 import { CATALOG, SAYINGS } from './catalog';
 import { PROP_USES } from './house-props';
 import { validateAppearance, type Appearance } from './appearance';

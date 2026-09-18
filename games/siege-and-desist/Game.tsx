@@ -454,7 +454,7 @@ export default function SiegeAndDesist() {
       ? {
           engine: w.engineBlue,
           label: 'BLUE TREBUCHET (North)',
-          color: '#38bdf8',
+          color: 'var(--team-blue-glow)',
         }
       : {
           engine: {
@@ -465,7 +465,7 @@ export default function SiegeAndDesist() {
             supply: w?.supply ?? [],
           },
           label: is2v2 ? 'RED TREBUCHET (South)' : 'COUNTERWEIGHT',
-          color: '#f87171',
+          color: 'var(--team-red-glow)',
         };
 
   const lastEvent = w?.events.at(-1);

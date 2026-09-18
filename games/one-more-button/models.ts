@@ -2,6 +2,7 @@ import * as T from 'three';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { box, material, label } from '../../shared/rendering/primitives';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
 import type { Hazard } from './types';
@@ -39,7 +40,7 @@ function cylinder(
 export function contestant(color: string, look?: Look) {
   const { model: g, worn } = dressedWorker(
     0,
-    { shirt: color, overalls: '#35585b', boots: '#fff0d0', cap: false },
+    { shirt: color, overalls: CLOTH.teal, boots: CLOTH.cream, cap: false },
     look,
   );
   const body = g.userData.body as T.Group;
@@ -48,12 +49,12 @@ export function contestant(color: string, look?: Look) {
       body,
       [0.55, 0.12, 0.53],
       [0, WORKER_HEAD_TOP + 0.04, 0],
-      '#73543d',
+      CLOTH.brown,
       true,
     );
-    box(body, [0.56, 0.07, 0.54], [0, WORKER_HEAD_TOP - 0.06, 0], '#fff4dd');
+    box(body, [0.56, 0.07, 0.54], [0, WORKER_HEAD_TOP - 0.06, 0], CLOTH.cream);
   }
-  box(body, [0.22, 0.14, 0.02], [0, 0.9, 0.29], '#fff3ce');
+  box(body, [0.22, 0.14, 0.02], [0, 0.9, 0.29], CLOTH.cream);
   return g;
 }
 /** Walks a contestant, arms up while airborne; `now` is in milliseconds. */

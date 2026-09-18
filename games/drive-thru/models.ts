@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { ball, box } from '../../shared/rendering/primitives';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH, TEAM } from '../../shared/rendering/palette';
 import type { Look } from '../../shared/wardrobe/look';
 import { GRILL_BOUNDS, SPEAKER_POLE_POS, WINDOW_SILL_POS } from './physics';
 import type { BurgerLayer, RoleId } from './types';
@@ -336,15 +337,15 @@ export function createDriveThruWorker(
   const isKitchen = role === 'grill' || role === 'barista';
   const outfit = isKitchen
     ? {
-        shirt: '#ffffff', // Cook shirt
-        overalls: '#b91c1c', // Kitchen apron
-        boots: '#374151',
+        shirt: CLOTH.white, // Cook shirt
+        overalls: TEAM.red, // Kitchen apron
+        boots: CLOTH.charcoal,
         cap: false,
       }
     : {
-        shirt: '#dc2626', // Driver jacket
-        overalls: '#1e3a8a', // Jeans
-        boots: '#111827',
+        shirt: TEAM.red, // Driver jacket
+        overalls: CLOTH.denim, // Jeans
+        boots: CLOTH.ink,
         cap: true,
       };
 
@@ -354,8 +355,8 @@ export function createDriveThruWorker(
   if (isKitchen && !worn.hat) {
     const body = model.userData.body as T.Group;
     if (body) {
-      box(body, [0.55, 0.22, 0.32], [0, 1.78, 0], '#ffffff');
-      box(body, [0.56, 0.05, 0.33], [0, 1.72, 0], '#b91c1c'); // Red accent stripe
+      box(body, [0.55, 0.22, 0.32], [0, 1.78, 0], CLOTH.white);
+      box(body, [0.56, 0.05, 0.33], [0, 1.72, 0], TEAM.red); // Red accent stripe
     }
   }
 
@@ -363,9 +364,9 @@ export function createDriveThruWorker(
   if (role === 'barista' && !worn.face) {
     const body = model.userData.body as T.Group;
     if (body) {
-      box(body, [0.56, 0.04, 0.04], [0, 1.62, 0], '#111827');
-      box(body, [0.05, 0.08, 0.28], [0.26, 1.45, 0.2], '#111827');
-      ball(body, [0.05, 0.05, 0.05], [0.26, 1.45, 0.34], '#000000'); // Foam mic
+      box(body, [0.56, 0.04, 0.04], [0, 1.62, 0], CLOTH.ink);
+      box(body, [0.05, 0.08, 0.28], [0.26, 1.45, 0.2], CLOTH.ink);
+      ball(body, [0.05, 0.05, 0.05], [0.26, 1.45, 0.34], CLOTH.ink); // Foam mic
     }
   }
 

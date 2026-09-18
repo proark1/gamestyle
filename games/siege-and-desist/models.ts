@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH, TEAM } from '../../shared/rendering/palette';
 import { box, beam, label, material } from '../../shared/rendering/primitives';
 import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
@@ -74,8 +75,8 @@ export function crewMember(color: string | number, look?: Look) {
     colorNum,
     {
       shirt,
-      overalls: '#54473a',
-      boots: '#3d2e21',
+      overalls: CLOTH.brown,
+      boots: CLOTH.charcoal,
       cap: false,
     },
     look,
@@ -84,8 +85,8 @@ export function crewMember(color: string | number, look?: Look) {
   const body = g.userData.body as T.Group;
 
   // Leather belt and brass buckle across the tunic waist
-  box(body, [0.7, 0.12, 0.46], [0, 0.68, 0], '#5b4a34', true);
-  box(body, [0.12, 0.12, 0.04], [0, 0.68, 0.24], '#d8a13d', true);
+  box(body, [0.7, 0.12, 0.46], [0, 0.68, 0], CLOTH.leather, true);
+  box(body, [0.12, 0.12, 0.04], [0, 0.68, 0.24], CLOTH.gold, true);
 
   // Conical helmet with a nasal bar; replaced if a player wears their own wardrobe hat
   if (!worn.hat) {
@@ -94,14 +95,14 @@ export function crewMember(color: string | number, look?: Look) {
       0.34,
       0.42,
       [0, WORKER_HEAD_TOP + 0.21, 0],
-      '#b9a06a',
+      CLOTH.tan,
     );
     helmetCone.name = 'helmet';
     const nasalBar = box(
       body,
       [0.05, 0.24, 0.05],
       [0, WORKER_HEAD_TOP - 0.12, 0.27],
-      '#b9a06a',
+      CLOTH.tan,
       true,
     );
     nasalBar.name = 'helmet';
@@ -240,7 +241,7 @@ export function gooseModel() {
 export function blockModel(b: Block) {
   const g = new T.Group();
   if (b.part === 'banner' || b.mascotKind === 'banner') {
-    const bannerColor = b.team === 'blue' ? '#2f7d74' : '#c2472f';
+    const bannerColor = b.team === 'blue' ? TEAM.blue : TEAM.red;
     box(g, [1.56, 0.6, 1.56], [0, -b.h / 2 + 0.3, 0], '#b0a289', true);
     cylinder(g, 0.09, b.h, [0, 0, 0], '#6b4a2c', 8);
     const cloth = box(
@@ -308,7 +309,7 @@ export function trebuchet(
   g.position.set(pos.x, 0, pos.z);
   const bed = new T.Group();
   bed.name = 'bed';
-  const accentColor = team === 'blue' ? '#2f7d74' : '#c2472f';
+  const accentColor = team === 'blue' ? TEAM.blue : TEAM.red;
   // Ground bed and A-frames.
   for (const x of [-2.5, 2.5])
     box(bed, [0.55, 0.4, 9], [x, 0.2, 0], '#6b4a2c', true);

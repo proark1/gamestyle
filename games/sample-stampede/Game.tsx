@@ -697,7 +697,10 @@ export default function SampleStampede() {
 
             <div className="stampede-modal-scores">
               <div className="stampede-modal-team-score">
-                <span className="team-name" style={{ color: '#ff7675' }}>
+                <span
+                  className="team-name"
+                  style={{ color: 'var(--team-red-glow)' }}
+                >
                   {strings.redTeam}
                 </span>
                 <span className="team-pts">
@@ -705,7 +708,10 @@ export default function SampleStampede() {
                 </span>
               </div>
               <div className="stampede-modal-team-score">
-                <span className="team-name" style={{ color: '#74b9ff' }}>
+                <span
+                  className="team-name"
+                  style={{ color: 'var(--team-blue-glow)' }}
+                >
                   {strings.blueTeam}
                 </span>
                 <span className="team-pts">

@@ -1,6 +1,9 @@
-export type TeamId = 'orange' | 'teal';
+import { TEAM } from '../../shared/rendering/palette';
 
-export const TEAMS: readonly TeamId[] = ['orange', 'teal'];
+/** Court Clash plays red against blue, like every team game. */
+export type TeamId = 'red' | 'blue';
+
+export const TEAMS: readonly TeamId[] = ['red', 'blue'];
 
 export const COURT = {
   width: 15,
@@ -196,10 +199,8 @@ export type BasketballSession = {
   team: TeamId;
 };
 
-export const TEAM_COLORS: Record<TeamId, string> = {
-  orange: '#e58e38',
-  teal: '#349387',
-};
+/** The shared team colours: jersey, shorts, badge and HUD all use these. */
+export const TEAM_COLORS: Record<TeamId, string> = TEAM;
 
 export function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val));

@@ -61,12 +61,12 @@ export default function BasketballGame() {
   const hud = useRef(
     hudPacer<BasketballSnapshot>(
       ({ world: w }) =>
-        `${w.phase}:${w.eventId}:${w.scores.orange}:${w.scores.teal}`,
+        `${w.phase}:${w.eventId}:${w.scores.red}:${w.scores.blue}`,
     ),
   );
 
   const [snapshot, setSnapshot] = useState<BasketballSnapshot | null>(null);
-  const [team, setTeam] = useState<TeamId>('orange');
+  const [team, setTeam] = useState<TeamId>('red');
   const [celebrationBanner, setCelebrationBanner] = useState<{
     text: string;
     subtext: string;
@@ -87,7 +87,7 @@ export default function BasketballGame() {
     token: 'solo-token',
     code: 'SOLO',
     name: 'Baller',
-    team: 'orange',
+    team: 'red',
   });
 
   const dispatchAction = useCallback((act: BasketballAction) => {
@@ -134,9 +134,7 @@ export default function BasketballGame() {
     // Initialize local world with bots
     const now = Date.now();
     const w = freshBasketballWorld(now);
-    w.players.push(
-      newPlayer(sessionRef.current.id, 'Du', 0, 'orange', false, 0),
-    );
+    w.players.push(newPlayer(sessionRef.current.id, 'Du', 0, 'red', false, 0));
     reconcileBasketballBots(w);
     localWorld.current = w;
 
@@ -253,6 +251,10 @@ export default function BasketballGame() {
     ? snapshot.world.players.find((p) => p.id === snapshot.localId)
     : undefined;
   const superReady = localPlayer ? canSuperJump(localPlayer) : false;
+  const teamName: Record<TeamId, string> = {
+    red: strings.red,
+    blue: strings.blue,
+  };
 
   const handleStart = () => {
     dispatchAction({ type: 'start' });
@@ -277,19 +279,17 @@ export default function BasketballGame() {
       {/* Topbar HUD */}
       {world && world.phase !== 'lobby' && (
         <div className="bb-hud">
-          {/* Orange Team Score */}
+          {/* Red Team Score */}
           <div
-            className={`bb-team-score orange ${
-              world.possession === 'orange' ? 'has-possession' : ''
+            className={`bb-team-score red ${
+              world.possession === 'red' ? 'has-possession' : ''
             }`}
           >
-            <div className="bb-score-val">{world.scores.orange}</div>
+            <div className="bb-score-val">{world.scores.red}</div>
             <div className="bb-score-meta">
-              <span>Orange</span>
+              <span>{teamName.red}</span>
               <span>Team</span>
-              {world.possession === 'orange' && (
-                <span className="bb-poss-dot" />
-              )}
+              {world.possession === 'red' && <span className="bb-poss-dot" />}
             </div>
           </div>
 
@@ -314,23 +314,23 @@ export default function BasketballGame() {
             )}
           </div>
 
-          {/* Teal Team Score */}
+          {/* Blue Team Score */}
           <div
-            className={`bb-team-score teal ${
-              world.possession === 'teal' ? 'has-possession' : ''
+            className={`bb-team-score blue ${
+              world.possession === 'blue' ? 'has-possession' : ''
             }`}
           >
             <div className="bb-score-meta" style={{ textAlign: 'right' }}>
-              <span>Teal</span>
+              <span>{teamName.blue}</span>
               <span>Team</span>
-              {world.possession === 'teal' && (
+              {world.possession === 'blue' && (
                 <span
                   className="bb-poss-dot"
                   style={{ alignSelf: 'flex-end' }}
                 />
               )}
             </div>
-            <div className="bb-score-val">{world.scores.teal}</div>
+            <div className="bb-score-val">{world.scores.blue}</div>
           </div>
         </div>
       )}
@@ -478,17 +478,17 @@ export default function BasketballGame() {
           <div className="bb-team-selector">
             <button
               type="button"
-              className={`bb-btn orange ${team === 'orange' ? 'active' : ''}`}
-              onClick={() => handleSwitchTeam('orange')}
+              className={`bb-btn red ${team === 'red' ? 'active' : ''}`}
+              onClick={() => handleSwitchTeam('red')}
             >
-              Team Orange
+              {strings.teamRed}
             </button>
             <button
               type="button"
-              className={`bb-btn teal ${team === 'teal' ? 'active' : ''}`}
-              onClick={() => handleSwitchTeam('teal')}
+              className={`bb-btn blue ${team === 'blue' ? 'active' : ''}`}
+              onClick={() => handleSwitchTeam('blue')}
             >
-              Team Teal
+              {strings.teamBlue}
             </button>
           </div>
 
@@ -507,10 +507,10 @@ export default function BasketballGame() {
         <div className="bb-ended-banner">
           <Trophy size={48} color="#e58e38" style={{ margin: '0 auto 12px' }} />
           <h2>{strings.matchEnded}</h2>
-          <div className={`bb-ended-winner ${world.winner ?? 'orange'}`}>
+          <div className={`bb-ended-winner ${world.winner ?? 'red'}`}>
             {strings.teamWins.replace(
               '{team}',
-              (world.winner ?? 'orange').toUpperCase(),
+              teamName[world.winner ?? 'red'].toUpperCase(),
             )}
           </div>
           <button

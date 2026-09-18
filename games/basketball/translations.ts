@@ -3,8 +3,12 @@ import type { Localized } from '../../shared/language/types';
 export interface BasketballTranslation {
   tagline: string;
   desc: string;
-  teamOrange: string;
-  teamTeal: string;
+  /** The team picker buttons. */
+  teamRed: string;
+  teamBlue: string;
+  /** The bare team names, for the scoreboard and the winner line. */
+  red: string;
+  blue: string;
   startMatch: string;
   matchEnded: string;
   teamWins: string;
@@ -25,8 +29,10 @@ export const BASKETBALL_TRANSLATIONS: Localized<BasketballTranslation> = {
   en: {
     tagline: '2v2 Street Basketball in Jumbleyard style',
     desc: 'Compete in 2-on-2 matchups! Dribble, break ankles with crossovers, shoot step-backs, dish alley-oops, and charge your combo bar for spectacular super jumps and slam dunks!',
-    teamOrange: 'Team Orange',
-    teamTeal: 'Team Teal',
+    teamRed: 'Team Red',
+    teamBlue: 'Team Blue',
+    red: 'Red',
+    blue: 'Blue',
     startMatch: 'Start Match (to 15 pts)',
     matchEnded: 'Match Ended!',
     teamWins: 'Team {team} wins the game!',
@@ -45,8 +51,10 @@ export const BASKETBALL_TRANSLATIONS: Localized<BasketballTranslation> = {
   de: {
     tagline: '2v2 Street Basketball im Jumbleyard-Stil',
     desc: 'Tritt im 2-gegen-2 Match an! Dribble, breche Knöchel mit Crossovern, wirf Step-Backs, passe spektakuläre Alley-Oops und lade die Combo-Leiste für spektakuläre Super-Jumps und Slam Dunks auf!',
-    teamOrange: 'Team Orange',
-    teamTeal: 'Team Teal',
+    teamRed: 'Team Rot',
+    teamBlue: 'Team Blau',
+    red: 'Rot',
+    blue: 'Blau',
     startMatch: 'Match starten (bis 15 Pkt.)',
     matchEnded: 'Match Beendet!',
     teamWins: 'Team {team} gewinnt das Spiel!',

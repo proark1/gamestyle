@@ -37,14 +37,14 @@ const adapter: GameAdapter<BasketballWorld, BasketballSnapshot> = {
     return w;
   },
   add: (w, m) => {
-    // Balance teams (Orange vs Teal)
-    const orangeHumans = w.players.filter(
-      (p) => !p.bot && p.team === 'orange',
+    // Balance teams (Red vs Blue)
+    const redHumans = w.players.filter(
+      (p) => !p.bot && p.team === 'red',
     ).length;
-    const tealHumans = w.players.filter(
-      (p) => !p.bot && p.team === 'teal',
+    const blueHumans = w.players.filter(
+      (p) => !p.bot && p.team === 'blue',
     ).length;
-    const team: TeamId = orangeHumans <= tealHumans ? 'orange' : 'teal';
+    const team: TeamId = redHumans <= blueHumans ? 'red' : 'blue';
 
     // Remove a bot from the chosen team if present
     const botIdx = w.players.findIndex((p) => p.bot && p.team === team);
@@ -52,7 +52,7 @@ const adapter: GameAdapter<BasketballWorld, BasketballSnapshot> = {
       w.players.splice(botIdx, 1);
     }
 
-    w.players.push(newPlayer(m.id, m.name, m.color, team, false, orangeHumans));
+    w.players.push(newPlayer(m.id, m.name, m.color, team, false, redHumans));
     reconcileBasketballBots(w);
   },
   remove: (w, id) => {

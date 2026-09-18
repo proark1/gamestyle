@@ -192,7 +192,8 @@ export const basketballAvatars: readonly AvatarLook[] = [
     label: 'Street Baller',
     dressable: true,
     create(look) {
-      const root = basketballPlayer('#e58e38', 'orange', look);
+      // The scene's own builder in the red kit, so the preview cannot drift.
+      const root = basketballPlayer('red', look);
       return {
         root,
         pose: (time, walking) =>

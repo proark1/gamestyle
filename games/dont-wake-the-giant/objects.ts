@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { beam, box, label, material } from '../../shared/rendering/primitives';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH } from '../../shared/rendering/palette';
 import type { Look } from '../../shared/wardrobe/look';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { CHANDELIER, EXIT, SLIPPER, STATIC } from './level';
@@ -148,9 +149,9 @@ export function thief(color: number, look?: Look) {
   g.scale.setScalar(0.52);
   if (worn.face) return g;
   const body = g.userData.body as T.Group;
-  box(body, [0.53, 0.18, 0.03], [0, 1.46, 0.27], '#334743', true);
+  box(body, [0.53, 0.18, 0.03], [0, 1.46, 0.27], CLOTH.ink, true);
   for (const x of [-0.12, 0.12])
-    box(body, [0.07, 0.065, 0.025], [x, 1.46, 0.29], '#f8edd0');
+    box(body, [0.07, 0.065, 0.025], [x, 1.46, 0.29], CLOTH.cream);
   return g;
 }
 /** Walks a thief, hunched when crouching; `now` is in milliseconds. */

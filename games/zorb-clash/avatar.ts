@@ -3,6 +3,7 @@ import { worker, type WorkerOutfit } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { dressWorker } from '../../shared/rendering/cosmetics/dress';
+import { CLOTH, TEAM } from '../../shared/rendering/palette';
 import { ZORB_RADIUS, type TeamId } from './types';
 
 export type ZorbMeshRig = {
@@ -15,23 +16,21 @@ export type ZorbMeshRig = {
   squash: number;
 };
 
+/** The collection's team colour, a lighter tint for the ball and a dark glow. */
+function teamTones(hex: string) {
+  const tint = new T.Color(hex).offsetHSL(0, 0, 0.12);
+  return {
+    primary: hex,
+    secondary: `#${tint.getHexString()}`,
+    bubble: tint.getHex(),
+    glow: `#${new T.Color(hex).offsetHSL(0, 0, -0.22).getHexString()}`,
+  };
+}
+
 const TEAM_COLORS: Record<
   TeamId,
   { primary: string; secondary: string; bubble: number; glow: string }
-> = {
-  red: {
-    primary: '#f95738',
-    secondary: '#ee964b',
-    bubble: 0xff6b4a,
-    glow: '#8b1e0f',
-  },
-  blue: {
-    primary: '#00b4d8',
-    secondary: '#90e0ef',
-    bubble: 0x38bdf8,
-    glow: '#0353a4',
-  },
-};
+> = { red: teamTones(TEAM.red), blue: teamTones(TEAM.blue) };
 
 /** Builds an overhead floating name badge texture. */
 function createNameBadgeTexture(
@@ -134,19 +133,19 @@ export function createZorbAvatar(
   // 4. Interior Collection Worker Avatar
   const outfit: WorkerOutfit = {
     shirt: TEAM_COLORS[team].primary,
-    overalls: team === 'red' ? '#8b1e0f' : '#0353a4',
-    boots: '#2b2d42',
+    overalls: CLOTH.navy,
+    boots: CLOTH.ink,
     cap: true,
   };
 
   const workerModel = worker(colorIndex, outfit);
   if (look) {
-    dressWorker(workerModel, outfit.shirt ?? '#f95738', look);
+    dressWorker(workerModel, outfit.shirt ?? TEAM.red, look);
   }
 
   // Add safety harness chest straps to worker
   const strapMat = new T.MeshStandardMaterial({
-    color: '#1e2430',
+    color: CLOTH.ink,
     roughness: 0.7,
   });
   const strapGeoL = new T.BoxGeometry(0.08, 0.48, 0.06);

@@ -1,9 +1,11 @@
 import type { Session } from '../../shared/rooms/session';
+import { COLORS as PLAYER_COLOURS } from '../../shared/rendering/palette';
 
 export const ROUND_MS = 240_000;
 export const RELIEF_MS = 30_000;
 /** The crew colours follow the Kayi standard: felt red, steppe teal, brass, plum. */
-export const COLORS = ['#c2472f', '#2f7d74', '#d8a13d', '#7c5aa0'];
+/** Crew colours: the collection's four player colours. */
+export const COLORS = PLAYER_COLOURS;
 export const FIELD = { x: 26, z: 30 };
 export const CASTLE = { x: 0, z: -13.6 };
 /** The frame stands between the sling and the castle, because that is how a

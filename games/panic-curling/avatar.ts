@@ -1,7 +1,23 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
-import type { PlayerStatus } from './types';
+import { CLOTH } from '../../shared/rendering/palette';
+import type { Look } from '../../shared/wardrobe/look';
+import { TEAM_COLORS, type PlayerStatus, type TeamId } from './types';
+
+/** A curler: the worker in a team-coloured jacket, navy trousers and a cap. */
+export function curler(team: TeamId, color: number, look?: Look) {
+  return dressedWorker(
+    color,
+    {
+      shirt: TEAM_COLORS[team],
+      overalls: CLOTH.navy,
+      boots: CLOTH.ink,
+      cap: true,
+    },
+    look,
+  ).model;
+}
 
 /**
  * Poses the shared worker for winter curling: delivery slide lunges,
@@ -96,15 +112,7 @@ export const curlingAvatars: readonly AvatarLook[] = [
     label: 'Olympic Curler',
     dressable: true,
     create(look) {
-      const root = dressedWorker(
-        0,
-        {
-          shirt: '#d94b38',
-          overalls: '#223242',
-          boots: '#111822',
-        },
-        look,
-      ).model;
+      const root = curler('red', 0, look);
       return {
         root,
         pose: (time, walking) =>

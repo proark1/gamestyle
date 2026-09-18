@@ -1,8 +1,8 @@
 import { TEAMS, type BungeeWorld, type Player } from './types';
 import { bungeeAction, newPlayer } from './simulation';
 
-const BOT_NAMES_ORANGE = ['Ace-Bot', 'Lob-Bot'];
-const BOT_NAMES_TEAL = ['Smash-Bot', 'Volley-Bot'];
+const BOT_NAMES_RED = ['Ace-Bot', 'Lob-Bot'];
+const BOT_NAMES_BLUE = ['Smash-Bot', 'Volley-Bot'];
 
 export function reconcileBungeeBots(w: BungeeWorld): void {
   for (const team of TEAMS) {
@@ -14,11 +14,11 @@ export function reconcileBungeeBots(w: BungeeWorld): void {
 
     if (botsOnTeam.length < neededBots) {
       for (let i = botsOnTeam.length; i < neededBots; i++) {
-        const botNames = team === 'orange' ? BOT_NAMES_ORANGE : BOT_NAMES_TEAL;
+        const botNames = team === 'red' ? BOT_NAMES_RED : BOT_NAMES_BLUE;
         const name = botNames[i % botNames.length];
         const botId = `bot-${team}-${i + 1}`;
         w.players.push(
-          newPlayer(botId, name, team === 'orange' ? 0 : 1, team, true, i),
+          newPlayer(botId, name, team === 'red' ? 0 : 1, team, true, i),
         );
       }
     } else if (botsOnTeam.length > neededBots) {
@@ -60,7 +60,7 @@ export function stepBungeeBot(
     // Face the opponent side and hit the serve
     bot.input.x = 0;
     bot.input.z = 0;
-    bot.facing = bot.team === 'orange' ? 0 : Math.PI;
+    bot.facing = bot.team === 'red' ? 0 : Math.PI;
     if (Math.random() < 0.08) {
       bungeeAction(w, bot.id, { type: 'swing' }, now);
     }
@@ -72,13 +72,13 @@ export function stepBungeeBot(
   const partner = w.players.find((p) => p.team === bot.team && p.id !== bot.id);
 
   // Target default position (if ball is on the other side)
-  const isOrange = bot.team === 'orange';
-  const defaultZ = isOrange ? -5.5 : 5.5;
+  const isRed = bot.team === 'red';
+  const defaultZ = isRed ? -5.5 : 5.5;
   const slotOffset = bot.id.includes('1') ? -2.2 : 2.2;
   let targetX = slotOffset;
   let targetZ = defaultZ;
 
-  const ballOnOurSide = (isOrange && ball.z < 0) || (!isOrange && ball.z > 0);
+  const ballOnOurSide = (isRed && ball.z < 0) || (!isRed && ball.z > 0);
 
   if (ballOnOurSide && ball.state === 'in_play') {
     // Intercept ball
@@ -94,12 +94,12 @@ export function stepBungeeBot(
       // Padel glass wall anticipation:
       // If ball has bounced once and is heading deep into the back glass, wait for the rebound
       const headingToBackGlass =
-        (isOrange && ball.z < -8.5 && ball.vz < -2) ||
-        (!isOrange && ball.z > 8.5 && ball.vz > 2);
+        (isRed && ball.z < -8.5 && ball.vz < -2) ||
+        (!isRed && ball.z > 8.5 && ball.vz > 2);
 
       if (headingToBackGlass && ball.bouncesOnCurrentSide >= 1) {
         targetX = ball.x;
-        targetZ = isOrange ? -8.2 : 8.2;
+        targetZ = isRed ? -8.2 : 8.2;
       } else {
         targetX = ball.x;
         targetZ = ball.z;

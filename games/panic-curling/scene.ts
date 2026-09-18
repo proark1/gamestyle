@@ -1,6 +1,5 @@
 import * as T from 'three';
-import { worker } from '../../shared/rendering/worker';
-import { poseCurler } from './avatar';
+import { curler, poseCurler } from './avatar';
 import {
   createBananaMesh,
   createCurlingRinkMesh,
@@ -221,14 +220,18 @@ export class PanicCurlingScene {
       let group = this.playerMeshes.get(p.id);
       let gadgetGroup = this.gadgetMeshes.get(p.id);
 
+      // Curlers wear their team's jacket, so switching team needs a fresh
+      // model; the gadget stays.
+      if (group && group.userData.team !== p.team) {
+        this.scene.remove(group);
+        group = curler(p.team, p.color);
+        group.userData.team = p.team;
+        this.scene.add(group);
+        this.playerMeshes.set(p.id, group);
+      }
       if (!group) {
-        const teamColor = p.team === 'red' ? '#d94b38' : '#3277b3';
-        group = worker(p.color, {
-          shirt: teamColor,
-          overalls: '#223242',
-          boots: '#111822',
-          cap: true,
-        });
+        group = curler(p.team, p.color);
+        group.userData.team = p.team;
         this.scene.add(group);
         this.playerMeshes.set(p.id, group);
 
