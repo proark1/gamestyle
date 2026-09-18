@@ -1,5 +1,9 @@
-import type { RoomStore } from '../../shared/rooms/types';
-import { newRoomCode, playerName } from '../../shared/rooms/identity';
+import { RoomError, type RoomStore } from '../../shared/rooms/types';
+import {
+  hashToken,
+  newRoomCode,
+  playerName,
+} from '../../shared/rooms/identity';
 import { parsePartyResult } from '../../shared/ui/party-round';
 import { generatePlaylist, getPartyGameInfo } from './playlist';
 import {
@@ -9,7 +13,12 @@ import {
   scoreTeamRound,
   type RoundReports,
 } from './scoring';
-import type { PartyPlayer, PartyRoomState, RoundResult } from './types';
+import type {
+  PartyPass,
+  PartyPlayer,
+  PartyRoomState,
+  RoundResult,
+} from './types';
 
 export const partyStorageKey = (code: string) => `party:${code}`;
 
@@ -23,13 +32,53 @@ const safeColor = (val: unknown) => {
 
 const BOT_NAMES = ['Gizmo', 'Widget', 'Bolt', 'Sprocket', 'Rusty', 'Pixel'];
 
+/** The SHA-256 of each human's party pass, by player id. */
+type Passes = Record<string, string>;
+
+/**
+ * What the store holds: the public room plus the pass hashes, which never
+ * leave the server. Parties created before passes existed have none and stay
+ * open until they expire.
+ */
+type StoredParty = PartyRoomState & { passes?: Passes };
+
+function readParty(raw: string): { room: PartyRoomState; passes?: Passes } {
+  const { passes, ...room } = JSON.parse(raw) as StoredParty;
+  return { room, passes };
+}
+
+async function newPass() {
+  const token = crypto.randomUUID() + crypto.randomUUID();
+  return { token, hash: await hashToken(token) };
+}
+
+async function passHash(token: unknown) {
+  return typeof token === 'string' && token && token.length <= 100
+    ? hashToken(token)
+    : null;
+}
+
+function checkPass(
+  passes: Passes | undefined,
+  id: string,
+  hash: string | null,
+) {
+  if (passes && (!hash || passes[id] !== hash)) {
+    throw new RoomError(
+      'This party does not recognise you. Rejoin from the party page.',
+      401,
+    );
+  }
+}
+
 export async function createPartyRoom(
   store: RoomStore,
   hostName: string,
   color: number,
   now = Date.now(),
-): Promise<{ state: PartyRoomState; playerId: string }> {
+): Promise<{ state: PartyRoomState; playerId: string; token: string }> {
   const playerId = crypto.randomUUID();
+  const { token, hash } = await newPass();
   const host: PartyPlayer = {
     id: playerId,
     name: safeName(hostName, 'Party Leader'),
@@ -53,15 +102,19 @@ export async function createPartyRoom(
       updated: now,
     };
 
+    const stored: StoredParty = {
+      ...roomState,
+      passes: { [playerId]: hash },
+    };
     const row = {
       code: partyStorageKey(code),
-      state: JSON.stringify(roomState),
+      state: JSON.stringify(stored),
       version: 1,
       updated: now,
     };
 
     if (await store.insert(row)) {
-      return { state: roomState, playerId };
+      return { state: roomState, playerId, token };
     }
   }
 
@@ -75,30 +128,41 @@ export async function getPartyRoom(
   const row = await store.get(partyStorageKey(code.toUpperCase()));
   if (!row) return null;
   try {
-    return JSON.parse(row.state) as PartyRoomState;
+    return readParty(row.state).room;
   } catch {
     return null;
   }
 }
 
+/**
+ * Applies `updater` to the stored room. `actor`, when given, must hold the
+ * pass of the player acting. The updater may edit the pass hashes it is
+ * handed, and never sees them in the room.
+ */
 async function updatePartyRoom(
   store: RoomStore,
   code: string,
-  updater: (current: PartyRoomState) => PartyRoomState,
+  actor: PartyPass | null,
+  updater: (current: PartyRoomState, passes?: Passes) => PartyRoomState,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   const storageCode = partyStorageKey(code.toUpperCase());
+  const hash = actor ? await passHash(actor.token) : null;
   for (let attempt = 0; attempt < 5; attempt++) {
     const row = await store.get(storageCode);
     if (!row) throw new Error('Party room not found.');
-    const current = JSON.parse(row.state) as PartyRoomState;
-    const next = updater(current);
-    next.updated = now;
+    const { room, passes } = readParty(row.state);
+    if (actor) checkPass(passes, actor.id, hash);
+    const nextPasses = passes && { ...passes };
+    const next = { ...updater(room, nextPasses), updated: now };
+    const stored: StoredParty = nextPasses
+      ? { ...next, passes: nextPasses }
+      : next;
 
     const ok = await store.compareAndSwap(
       {
         code: storageCode,
-        state: JSON.stringify(next),
+        state: JSON.stringify(stored),
         version: row.version + 1,
         updated: now,
       },
@@ -116,8 +180,9 @@ export async function joinPartyRoom(
   name: string,
   color: number,
   now = Date.now(),
-): Promise<{ state: PartyRoomState; playerId: string }> {
+): Promise<{ state: PartyRoomState; playerId: string; token: string }> {
   const playerId = crypto.randomUUID();
+  const { token, hash } = await newPass();
   const player: PartyPlayer = {
     id: playerId,
     name: safeName(name, `Guest ${Math.floor(Math.random() * 900) + 100}`),
@@ -130,13 +195,15 @@ export async function joinPartyRoom(
   const state = await updatePartyRoom(
     store,
     code,
-    (room) => {
+    null,
+    (room, passes) => {
       if (room.players.length >= 4) {
         throw new Error('This party room is already full (maximum 4 players).');
       }
       if (room.status !== 'lobby') {
         throw new Error('This party has already started.');
       }
+      if (passes) passes[playerId] = hash;
       return {
         ...room,
         players: [...room.players, player],
@@ -145,19 +212,22 @@ export async function joinPartyRoom(
     now,
   );
 
-  return { state, playerId };
+  return { state, playerId, token };
 }
 
 export async function leavePartyRoom(
   store: RoomStore,
   code: string,
-  playerId: string,
+  player: PartyPass,
   now = Date.now(),
 ): Promise<PartyRoomState> {
+  const playerId = player.id;
   return updatePartyRoom(
     store,
     code,
-    (room) => {
+    player,
+    (room, passes) => {
+      if (passes) delete passes[playerId];
       const remaining = room.players.filter((p) => p.id !== playerId);
       if (remaining.length === 0) {
         return { ...room, players: [] };
@@ -182,16 +252,17 @@ export async function leavePartyRoom(
 export async function toggleReady(
   store: RoomStore,
   code: string,
-  playerId: string,
+  player: PartyPass,
   ready: boolean,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
     code,
+    player,
     (room) => {
       const players = room.players.map((p) =>
-        p.id === playerId ? { ...p, ready } : p,
+        p.id === player.id ? { ...p, ready } : p,
       );
       return { ...room, players };
     },
@@ -202,14 +273,15 @@ export async function toggleReady(
 export async function addBotToParty(
   store: RoomStore,
   code: string,
-  hostId: string,
+  host: PartyPass,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
     code,
+    host,
     (room) => {
-      if (room.hostId !== hostId) {
+      if (room.hostId !== host.id) {
         throw new Error('Only the party host can add bots.');
       }
       if (room.players.length >= 4) {
@@ -250,20 +322,22 @@ export async function addBotToParty(
 export async function removePlayerFromParty(
   store: RoomStore,
   code: string,
-  hostId: string,
+  host: PartyPass,
   targetId: string,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
     code,
-    (room) => {
-      if (room.hostId !== hostId) {
+    host,
+    (room, passes) => {
+      if (room.hostId !== host.id) {
         throw new Error('Only the party host can remove players.');
       }
-      if (targetId === hostId) {
+      if (targetId === host.id) {
         throw new Error('Host cannot kick themselves.');
       }
+      if (passes) delete passes[targetId];
       return finishIfAllReported({
         ...room,
         players: room.players.filter((p) => p.id !== targetId),
@@ -276,14 +350,15 @@ export async function removePlayerFromParty(
 export async function startPartyTournament(
   store: RoomStore,
   code: string,
-  hostId: string,
+  host: PartyPass,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
     code,
+    host,
     (room) => {
-      if (room.hostId !== hostId) {
+      if (room.hostId !== host.id) {
         throw new Error('Only the party host can start the tournament.');
       }
       if (room.players.length < 2) {
@@ -334,8 +409,8 @@ export async function startPartyTournament(
 }
 
 /**
- * Scores a round from explicit per-player scores and moves on to the
- * standings. A round is only ever scored once.
+ * Scores a round from per-player scores and moves on to the standings. A
+ * round is only ever scored once.
  */
 function finishRound(
   room: PartyRoomState,
@@ -438,28 +513,6 @@ function finishIfAllReported(room: PartyRoomState): PartyRoomState {
   return scoreReportedRound(room);
 }
 
-/** The host submits every player's score for the round directly. */
-export async function recordRoundResult(
-  store: RoomStore,
-  code: string,
-  round: number,
-  scores: Record<string, number>,
-  hostId: string,
-  now = Date.now(),
-): Promise<PartyRoomState> {
-  return updatePartyRoom(
-    store,
-    code,
-    (room) => {
-      if (room.hostId !== hostId) {
-        throw new Error('Only the party host can submit round results.');
-      }
-      return finishRound(room, round, scores);
-    },
-    now,
-  );
-}
-
 /**
  * A human reports how their own match went, or gives up with a null result.
  * The first report stands, so a rematch after the round cannot improve it.
@@ -468,7 +521,7 @@ export async function reportRoundResult(
   store: RoomStore,
   code: string,
   round: number,
-  playerId: string,
+  player: PartyPass,
   result: unknown,
   now = Date.now(),
 ): Promise<PartyRoomState> {
@@ -476,9 +529,11 @@ export async function reportRoundResult(
   if (result !== null && !parsed) {
     throw new Error('That round result could not be read.');
   }
+  const playerId = player.id;
   return updatePartyRoom(
     store,
     code,
+    player,
     (room) => {
       const player = room.players.find((p) => p.id === playerId);
       if (!player || player.isBot) {
@@ -512,14 +567,15 @@ export async function closePartyRound(
   store: RoomStore,
   code: string,
   round: number,
-  hostId: string,
+  host: PartyPass,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
     code,
+    host,
     (room) => {
-      if (room.hostId !== hostId) {
+      if (room.hostId !== host.id) {
         throw new Error('Only the party host can close the round.');
       }
       if (room.currentRound !== round || !roundInPlay(room)) return room;
@@ -532,14 +588,15 @@ export async function closePartyRound(
 export async function advanceToNextRound(
   store: RoomStore,
   code: string,
-  hostId: string,
+  host: PartyPass,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
     code,
+    host,
     (room) => {
-      if (room.hostId !== hostId) {
+      if (room.hostId !== host.id) {
         throw new Error('Only the party host can advance the round.');
       }
       const nextRound = room.currentRound + 1;
@@ -561,14 +618,15 @@ export async function advanceToNextRound(
 export async function rematchParty(
   store: RoomStore,
   code: string,
-  hostId: string,
+  host: PartyPass,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
     code,
+    host,
     (room) => {
-      if (room.hostId !== hostId) {
+      if (room.hostId !== host.id) {
         throw new Error('Only the party host can trigger a rematch.');
       }
       const resetPlayers = room.players.map((p) => ({

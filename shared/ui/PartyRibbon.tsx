@@ -2,7 +2,14 @@
 /* oxlint-disable react/react-compiler, typescript/unbound-method */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Trophy, ArrowRight, Flag, LoaderCircle, Sparkles } from 'lucide-react';
+import {
+  Trophy,
+  ArrowRight,
+  Flag,
+  LoaderCircle,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { COLORS } from '../rendering/palette';
 import { looksLikeRoomCode } from '../rooms/identity';
 import {
@@ -37,6 +44,19 @@ const GAME_TITLES: Record<string, string> = {
   'chain-of-fools': 'Chain of Fools',
 };
 
+/** The slice of the party room the standings panel shows. */
+type Standings = {
+  status: string;
+  players: {
+    id: string;
+    name: string;
+    color: number;
+    score: number;
+    isBot?: boolean;
+  }[];
+  reports?: Record<string, unknown>;
+};
+
 const PREF_KEYS = [
   'stack-or-sink-prefs-v1',
   'wrong-floor-prefs-v1',
@@ -57,6 +77,7 @@ export default function PartyRibbon() {
   const [playerName, setPlayerName] = useState<string>('Player 1');
   const [playerColor, setPlayerColor] = useState<number>(0);
   const [playerId, setPlayerId] = useState<string>('');
+  const [token, setToken] = useState<string>('');
   const [introVisible, setIntroVisible] = useState<boolean>(true);
   const [introFading, setIntroFading] = useState<boolean>(false);
   // The first result the game publishes; the round's result from then on.
@@ -66,6 +87,8 @@ export default function PartyRibbon() {
   );
   const [confirmGiveUp, setConfirmGiveUp] = useState<boolean>(false);
   const [leaving, setLeaving] = useState<boolean>(false);
+  const [standingsOpen, setStandingsOpen] = useState<boolean>(false);
+  const [standings, setStandings] = useState<Standings | null>(null);
 
   const autoStarted = useRef<boolean>(false);
   const attempts = useRef<number>(0);
@@ -113,6 +136,9 @@ export default function PartyRibbon() {
         }
         if (typeof parsed.playerId === 'string') {
           setPlayerId(parsed.playerId);
+        }
+        if (typeof parsed.token === 'string') {
+          setToken(parsed.token);
         }
       }
     } catch {}
@@ -280,6 +306,7 @@ export default function PartyRibbon() {
           code: partyCode,
           round,
           playerId,
+          token,
           result: value,
         }),
       })
@@ -293,12 +320,36 @@ export default function PartyRibbon() {
       reporting.current = sent;
       return sent;
     },
-    [partyCode, playerId, round],
+    [partyCode, playerId, token, round],
   );
 
   useEffect(() => {
     if (result) void sendReport(result);
   }, [result, sendReport]);
+
+  // Standings open over the game: going to the party page mid-round would
+  // send this player straight back into a fresh match.
+  useEffect(() => {
+    if (!standingsOpen || !partyCode) return;
+    let live = true;
+    const load = () =>
+      fetch('/api/party', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ op: 'get', code: partyCode }),
+      })
+        .then((res) => res.json())
+        .then((data: { state?: Standings | null }) => {
+          if (live && data.state) setStandings(data.state);
+        })
+        .catch(() => {});
+    void load();
+    const timer = setInterval(load, 3000);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
+  }, [standingsOpen, partyCode]);
 
   useEffect(() => {
     if (!confirmGiveUp) return;
@@ -376,12 +427,14 @@ export default function PartyRibbon() {
         </div>
 
         <div className="party-ribbon-actions">
-          <a
-            href={`/party?room=${partyCode}`}
+          <button
+            type="button"
             className="party-ribbon-btn party-ribbon-btn-standings"
+            aria-expanded={standingsOpen}
+            onClick={() => setStandingsOpen((open) => !open)}
           >
             Standings
-          </a>
+          </button>
 
           <button
             type="button"
@@ -406,6 +459,60 @@ export default function PartyRibbon() {
           </button>
         </div>
       </aside>
+
+      {standingsOpen && (
+        <section
+          className="party-standings-panel"
+          aria-label="Tournament standings"
+        >
+          <header>
+            <span>Standings</span>
+            <button
+              type="button"
+              className="party-ribbon-btn party-ribbon-btn-standings"
+              aria-label="Close standings"
+              onClick={() => setStandingsOpen(false)}
+            >
+              <X size={14} />
+            </button>
+          </header>
+          {standings ? (
+            <ol>
+              {[...standings.players]
+                .sort((a, b) => b.score - a.score)
+                .map((player, index) => (
+                  <li key={player.id}>
+                    <span>{index + 1}</span>
+                    <span
+                      className="party-standings-dot"
+                      style={{ background: COLORS[player.color] ?? '#999' }}
+                    />
+                    <span className="party-standings-name">
+                      {player.name}
+                      {player.id === playerId ? ' (You)' : ''}
+                    </span>
+                    <span className="party-standings-state">
+                      {player.isBot
+                        ? 'Bot'
+                        : standings.status !== 'countdown'
+                          ? ''
+                          : standings.reports?.[player.id] === undefined
+                            ? 'Playing'
+                            : standings.reports[player.id] === null
+                              ? 'Gave up'
+                              : 'Finished'}
+                    </span>
+                    <span className="party-standings-score">
+                      {player.score} pts
+                    </span>
+                  </li>
+                ))}
+            </ol>
+          ) : (
+            <LoaderCircle size={16} className="party-spin" />
+          )}
+        </section>
+      )}
 
       {/* In-Game Round Complete Toast */}
       {result && !leaving && (

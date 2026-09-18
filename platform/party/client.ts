@@ -1,5 +1,5 @@
 import type { PartyResult } from '../../shared/ui/party-round';
-import type { PartyAction, PartyRoomState } from './types';
+import type { PartyAction, PartyPass, PartyRoomState } from './types';
 
 async function partyRequest<T>(action: PartyAction): Promise<T> {
   const res = await fetch('/api/party', {
@@ -16,10 +16,12 @@ async function partyRequest<T>(action: PartyAction): Promise<T> {
   return data;
 }
 
+type Seat = { state: PartyRoomState; playerId: string; token: string };
+
 export async function createParty(
   hostName: string,
   color: number,
-): Promise<{ state: PartyRoomState; playerId: string }> {
+): Promise<Seat> {
   return partyRequest({ op: 'create', hostName, color });
 }
 
@@ -27,7 +29,7 @@ export async function joinParty(
   code: string,
   name: string,
   color: number,
-): Promise<{ state: PartyRoomState; playerId: string }> {
+): Promise<Seat> {
   return partyRequest({ op: 'join', code, name, color });
 }
 
@@ -43,136 +45,109 @@ export async function getParty(code: string): Promise<PartyRoomState | null> {
   }
 }
 
-export async function togglePartyReady(
+async function stateOf(action: PartyAction): Promise<PartyRoomState> {
+  return (await partyRequest<{ state: PartyRoomState }>(action)).state;
+}
+
+export function togglePartyReady(
   code: string,
-  playerId: string,
+  player: PartyPass,
   ready: boolean,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
+  return stateOf({
     op: 'ready',
     code,
-    playerId,
+    playerId: player.id,
+    token: player.token,
     ready,
   });
-  return data.state;
 }
 
-export async function addPartyBot(
+export function addPartyBot(
   code: string,
-  hostId: string,
+  host: PartyPass,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
-    op: 'add_bot',
-    code,
-    hostId,
-  });
-  return data.state;
+  return stateOf({ op: 'add_bot', code, hostId: host.id, token: host.token });
 }
 
-export async function removePartyPlayer(
+export function removePartyPlayer(
   code: string,
-  hostId: string,
+  host: PartyPass,
   targetId: string,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
+  return stateOf({
     op: 'remove_player',
     code,
-    hostId,
+    hostId: host.id,
+    token: host.token,
     targetId,
   });
-  return data.state;
 }
 
-export async function startParty(
+export function startParty(
   code: string,
-  hostId: string,
+  host: PartyPass,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
-    op: 'start',
-    code,
-    hostId,
-  });
-  return data.state;
+  return stateOf({ op: 'start', code, hostId: host.id, token: host.token });
 }
 
-export async function recordPartyResult(
+export function reportPartyResult(
   code: string,
   round: number,
-  scores: Record<string, number>,
-  hostId: string,
-): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
-    op: 'record_result',
-    code,
-    round,
-    scores,
-    hostId,
-  });
-  return data.state;
-}
-
-export async function reportPartyResult(
-  code: string,
-  round: number,
-  playerId: string,
+  player: PartyPass,
   result: PartyResult | null,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
+  return stateOf({
     op: 'report_result',
     code,
     round,
-    playerId,
+    playerId: player.id,
+    token: player.token,
     result,
   });
-  return data.state;
 }
 
-export async function closePartyRound(
+export function closePartyRound(
   code: string,
   round: number,
-  hostId: string,
+  host: PartyPass,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
+  return stateOf({
     op: 'close_round',
     code,
     round,
-    hostId,
+    hostId: host.id,
+    token: host.token,
   });
-  return data.state;
 }
 
-export async function nextPartyRound(
+export function nextPartyRound(
   code: string,
-  hostId: string,
+  host: PartyPass,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
+  return stateOf({
     op: 'next_round',
     code,
-    hostId,
+    hostId: host.id,
+    token: host.token,
   });
-  return data.state;
 }
 
-export async function rematchParty(
+export function rematchParty(
   code: string,
-  hostId: string,
+  host: PartyPass,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
-    op: 'rematch',
-    code,
-    hostId,
-  });
-  return data.state;
+  return stateOf({ op: 'rematch', code, hostId: host.id, token: host.token });
 }
 
-export async function leaveParty(
+export function leaveParty(
   code: string,
-  playerId: string,
+  player: PartyPass,
 ): Promise<PartyRoomState> {
-  const data = await partyRequest<{ state: PartyRoomState }>({
+  return stateOf({
     op: 'leave',
     code,
-    playerId,
+    playerId: player.id,
+    token: player.token,
   });
-  return data.state;
 }

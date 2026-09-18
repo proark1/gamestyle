@@ -225,6 +225,12 @@ export type PanicCurlingWorld = {
   clock: number;
   phase: GamePhase;
   phaseTimer: number;
+  /**
+   * Seconds a deliverer may aim before the stone goes on its own. Bots never
+   * throw for a human, so only a party round sets it: an idle player there
+   * would stall the end forever.
+   */
+  aimPatience?: number;
   round: number; // current end (1 to 3)
   maxRounds: number;
   throwIndex: number; // 0 to 7 (8 throws per end)

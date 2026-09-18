@@ -104,6 +104,9 @@ export function freshCurlingWorld(now: number): PanicCurlingWorld {
   };
 }
 
+/** How long a party round lets a deliverer aim; see `aimPatience`. */
+export const PARTY_AIM_PATIENCE_S = 20;
+
 /** Delivers a stone down the ice track with aim, power, and spin. */
 export function launchDelivery(
   world: PanicCurlingWorld,
@@ -227,7 +230,13 @@ export function advancePanicCurling(world: PanicCurlingWorld, now: number) {
     }
 
     case 'aiming': {
-      // Deliverer aims and charges power
+      // Deliverer aims and charges power; in a party round, a plain throw at
+      // the house if they take too long.
+      if (
+        world.aimPatience !== undefined &&
+        world.phaseTimer > world.aimPatience
+      )
+        launchDelivery(world, 0.5, 0, 1, 'granite');
       break;
     }
 
