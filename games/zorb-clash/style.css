@@ -1,3 +1,7 @@
+/* Zorb Clash paints on the collection's shared kit (shared/styles/game-ui.css):
+   cream house cards, dark green ink, amber accent, Fredoka figures over DM Sans.
+   The stadium's own flavour — a football scoreboard, a pitch radar, the
+   turtle alarm — stays; only its colours and type follow the house. */
 .zorb-container {
   position: relative;
   width: 100vw;
@@ -5,7 +9,13 @@
   overflow: hidden;
   user-select: none;
   background: #64b5f6;
-  font-family: var(--font-fredoka, 'Fredoka', 'DM Sans', sans-serif);
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
+}
+
+.zorb-container :is(button, a):focus-visible {
+  outline: 3px solid var(--hud-accent);
+  outline-offset: 3px;
 }
 
 .zorb-canvas-wrapper {
@@ -15,192 +25,256 @@
   height: 100%;
 }
 
-/* Header HUD */
+/* Top bar: wordmark on the left, the shared toolbar on the right. The stands
+   behind the wordmark are dark, so it sits on a card of its own. */
+.zorb-container .topbar {
+  position: relative;
+  z-index: 45;
+}
+
+.zorb-container .wordmark {
+  padding: 6px 16px 6px 6px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: 18px;
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+}
+
+.zorb-mark {
+  display: flex;
+  padding: 8px;
+  background: var(--hud-accent);
+  border-radius: 12px;
+  transform: rotate(-7deg);
+  margin-right: 3px;
+}
+
+/* The kit's wordmark is a flex row, so the full stop needs pulling back in. */
+.zorb-container .wordmark .title-dot {
+  margin-left: -6px;
+  color: var(--hud-accent-strong);
+}
+
+/* Scoreboard */
 .zorb-hud-top {
   position: absolute;
-  top: 1rem;
+  top: 88px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  background: rgba(18, 22, 34, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 0.6rem 1.6rem;
-  border-radius: 9999px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  align-items: stretch;
+  padding: 8px;
   z-index: 20;
+}
+
+.zorb-hud-top.house-card {
+  border-radius: 18px;
 }
 
 .zorb-team-score {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 1.4rem;
-  font-weight: 800;
+  gap: 12px;
+  padding: 0 10px;
+  font: 700 13px/1 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .zorb-team-score.red {
-  color: var(--team-red-glow);
+  color: var(--team-red-deep);
 }
 
 .zorb-team-score.blue {
-  color: var(--team-blue-glow);
+  color: var(--team-blue-deep);
 }
 
 .zorb-score-num {
-  font-size: 2rem;
-  font-weight: 900;
-  line-height: 1;
-  min-width: 2.2ch;
-  text-align: center;
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  height: 52px;
+  padding: 0 8px;
+  border-radius: 12px;
+  font: 600 32px/1 var(--hud-display);
+  letter-spacing: 0;
+}
+
+.zorb-team-score.red .zorb-score-num {
+  background: var(--team-red-soft);
+}
+
+.zorb-team-score.blue .zorb-score-num {
+  background: var(--team-blue-soft);
 }
 
 .zorb-timer-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-left: 2px solid rgba(255, 255, 255, 0.15);
-  border-right: 2px solid rgba(255, 255, 255, 0.15);
-  padding: 0 1.2rem;
+  justify-content: center;
+  gap: 5px;
+  margin: 0 6px;
+  padding: 0 18px;
+  border-left: 1px solid var(--hud-edge);
+  border-right: 1px solid var(--hud-edge);
 }
 
 .zorb-timer {
-  font-size: 1.6rem;
-  font-weight: 900;
-  color: #ffffff;
+  font: 600 26px/1 var(--hud-display);
+  color: var(--hud-ink);
 }
 
 .zorb-bonk-count {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #ffd166;
-  text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 4px;
+  font: 700 10.5px/1 var(--hud-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--hud-accent-ink);
 }
 
-/* Controls Guide & Status */
+.zorb-bonk-count svg {
+  color: var(--hud-accent-strong);
+}
+
+/* Controls dock: dash meter and brace, with the roll keys underneath. */
 .zorb-hud-bottom {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 10px;
   z-index: 20;
   pointer-events: none;
 }
 
-/* Bumper Dash Meter */
+.zorb-dock {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px 10px 18px;
+}
+
 .zorb-dash-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  background: rgba(18, 22, 34, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 0.6rem 1.4rem;
-  border-radius: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  gap: 7px;
 }
 
 .zorb-dash-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  gap: 8px;
+  font: 700 13px/1 var(--hud-body);
+  white-space: nowrap;
+  color: var(--hud-ink);
 }
 
-.zorb-dash-key {
-  background: #334155;
-  color: #f8fafc;
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.35rem;
-  font-size: 0.75rem;
-  border-bottom: 2px solid #1e293b;
+.zorb-dash-label svg {
+  color: var(--hud-accent-strong);
+}
+
+.zorb-dash-label .zorb-dash-key {
+  margin-left: auto;
 }
 
 .zorb-dash-bar-bg {
-  width: 180px;
-  height: 14px;
-  background: #1e293b;
-  border-radius: 9999px;
+  width: 190px;
+  height: 10px;
+  background: color-mix(in srgb, var(--hud-edge) 55%, transparent);
+  border: 1px solid var(--hud-edge);
+  border-radius: 999px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .zorb-dash-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ffd166, #ff006e);
+  background: linear-gradient(
+    90deg,
+    var(--hud-accent),
+    var(--hud-accent-strong)
+  );
   transition: width 0.05s ease-out;
-  border-radius: 9999px;
+  border-radius: 999px;
 }
 
 .zorb-dash-bar-fill.ready {
-  background: linear-gradient(90deg, #ff006e, #00f5d4);
-  box-shadow: 0 0 16px rgba(0, 245, 212, 0.85);
+  background: var(--hud-good);
   animation: zorb-dash-pulse 0.45s infinite alternate ease-in-out;
 }
 
 @keyframes zorb-dash-pulse {
   from {
     filter: brightness(1);
-    box-shadow: 0 0 10px rgba(0, 245, 212, 0.7);
   }
   to {
-    filter: brightness(1.25);
-    box-shadow: 0 0 20px rgba(0, 245, 212, 1);
+    filter: brightness(1.2);
   }
 }
 
-/* Brace Indicator */
+.zorb-dock-divider {
+  align-self: stretch;
+  width: 1px;
+  background: var(--hud-edge);
+}
+
 .zorb-brace-badge {
-  background: rgba(30, 41, 59, 0.9);
-  color: #94a3b8;
-  padding: 0.3rem 0.8rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: var(--hud-radius-small);
+  font: 700 13px/1 var(--hud-body);
+  white-space: nowrap;
+  color: var(--hud-muted);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .zorb-brace-badge.active {
-  background: #3b82f6;
-  color: #ffffff;
-  border-color: #93c5fd;
-  box-shadow: 0 0 14px rgba(59, 130, 246, 0.6);
-  transform: scale(1.05);
+  background: color-mix(in srgb, var(--hud-accent) 55%, var(--hud-card-solid));
+  box-shadow: inset 0 0 0 1px var(--hud-accent-strong);
+  color: var(--hud-ink);
 }
 
-/* Comical Turtle State Alert */
+.zorb-controls-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px 5px 6px;
+  background: color-mix(in srgb, var(--hud-card-solid) 72%, transparent);
+  border-radius: 999px;
+  font: 600 12px/1 var(--hud-body);
+  color: var(--hud-muted);
+}
+
+.zorb-hint-label {
+  margin-left: 5px;
+}
+
+/* Turtle alarm: a house warning, not a siren. */
 .zorb-turtle-banner {
   position: absolute;
-  top: 6.5rem;
+  top: 172px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #ff0054, #ff5400);
-  color: #ffffff;
-  padding: 0.8rem 2rem;
-  border-radius: 1.2rem;
-  font-size: 1.4rem;
-  font-weight: 900;
+  max-width: calc(100% - 32px);
+  padding: 12px 26px 13px;
+  background: color-mix(in srgb, var(--hud-warn) 16%, var(--hud-card-solid));
+  border: 2px solid var(--hud-warn);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow-strong);
+  color: var(--hud-danger);
+  font: 600 26px/1.1 var(--hud-display);
   text-align: center;
-  box-shadow: 0 12px 32px rgba(255, 0, 84, 0.5);
   animation: zorb-turtle-wobble 0.6s infinite alternate ease-in-out;
   z-index: 30;
   pointer-events: none;
@@ -208,64 +282,66 @@
 
 .zorb-turtle-banner small {
   display: block;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #ffe181;
+  margin-top: 5px;
+  color: var(--hud-accent-ink);
+  font: 700 11.5px/1.35 var(--hud-body);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin-top: 0.2rem;
 }
 
 @keyframes zorb-turtle-wobble {
   0% {
-    transform: translateX(-50%) rotate(-3deg) scale(1);
+    transform: translateX(-50%) rotate(-1.5deg);
   }
   100% {
-    transform: translateX(-50%) rotate(3deg) scale(1.05);
+    transform: translateX(-50%) rotate(1.5deg);
   }
 }
 
-/* Goal Celebration Overlay */
+/* Goal celebration: an amber card, like the house primary button. */
 .zorb-goal-banner {
   position: absolute;
-  top: 40%;
+  top: 42%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(18, 22, 34, 0.92);
-  border: 4px solid #ffd166;
-  border-radius: 1.5rem;
-  padding: 1.5rem 3rem;
+  max-width: calc(100% - 32px);
+  padding: 22px 44px 24px;
+  background: color-mix(in srgb, var(--hud-accent) 70%, var(--hud-card-solid));
+  border: 2px solid var(--hud-accent-strong);
+  border-radius: 22px;
+  box-shadow:
+    0 5px 0 var(--hud-accent-strong),
+    var(--hud-shadow-strong);
+  color: var(--hud-ink);
   text-align: center;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
   animation: zorb-goal-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 40;
   pointer-events: none;
 }
 
-.zorb-goal-title {
-  font-size: 3.5rem;
-  font-weight: 900;
-  color: #ffd166;
-  text-shadow: 0 4px 16px rgba(255, 209, 102, 0.6);
-  letter-spacing: 0.05em;
+.zorb-goal-banner .zorb-goal-title {
+  display: block;
   margin: 0;
+  font: 600 64px/1 var(--hud-display);
+  letter-spacing: 0.02em;
+  color: var(--hud-ink);
+  filter: none;
 }
 
 .zorb-goal-subtitle {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin-top: 0.4rem;
+  margin-top: 8px;
+  font: 600 20px/1.2 var(--hud-display);
 }
 
 .zorb-goal-turtle-badge {
-  background: #ff0054;
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 800;
-  padding: 0.3rem 0.8rem;
-  border-radius: 9999px;
   display: inline-block;
-  margin-top: 0.6rem;
+  margin-top: 12px;
+  padding: 6px 14px;
+  background: var(--hud-danger);
+  border-radius: 999px;
+  color: var(--hud-card-solid);
+  font: 700 13px/1.2 var(--hud-body);
+  letter-spacing: 0.04em;
   animation: pulse 1s infinite;
 }
 
@@ -280,12 +356,12 @@
   }
 }
 
-/* Match Over Overlay */
+/* Result */
 .zorb-modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10, 14, 26, 0.85);
-  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--hud-ink) 32%, transparent);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -293,79 +369,97 @@
 }
 
 .zorb-modal {
-  background: #1e293b;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  border-radius: 1.5rem;
-  padding: 2.5rem;
-  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   width: 90%;
+  max-width: 430px;
+  padding: 30px;
   text-align: center;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge);
+  border-radius: 20px;
+  box-shadow: var(--hud-shadow-strong);
+  color: var(--hud-ink);
 }
 
 .zorb-modal h2 {
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: #f8fafc;
-  margin-bottom: 0.5rem;
+  margin: 0;
+  font: 600 34px/1.1 var(--hud-display);
+  letter-spacing: -0.5px;
 }
 
 .zorb-modal p {
-  color: #94a3b8;
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
+  margin: 0;
+  font: 500 19px/1.35 var(--hud-display);
 }
 
 .zorb-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  width: 100%;
+  margin: 4px 0 8px;
+  padding: 16px 0;
+  border-top: 1px solid var(--hud-edge);
+  border-bottom: 1px solid var(--hud-edge);
 }
 
 .zorb-stat-card {
-  background: rgba(15, 23, 42, 0.6);
-  padding: 1rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+}
+
+.zorb-stat-card + .zorb-stat-card {
+  border-left: 1px solid var(--hud-edge);
 }
 
 .zorb-stat-card strong {
-  display: block;
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: #ffd166;
+  font: 600 30px/1 var(--hud-display);
+  color: var(--hud-ink);
 }
 
 .zorb-stat-card span {
-  font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--hud-muted);
+  font: 700 10.5px/1.3 var(--hud-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-weight: 700;
 }
 
-.zorb-btn {
-  background: linear-gradient(135deg, #ff006e, #fb5607);
-  color: #ffffff;
-  border: none;
-  font-size: 1.2rem;
-  font-weight: 800;
-  padding: 0.8rem 2rem;
-  border-radius: 9999px;
+/* The amber look comes from the kit's .primary-button. */
+.zorb-modal .zorb-btn {
   cursor: pointer;
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
-  box-shadow: 0 8px 24px rgba(255, 0, 110, 0.4);
 }
 
-.zorb-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(255, 0, 110, 0.6);
+.zorb-modal .primary-button svg {
+  margin-left: 0;
 }
 
-.zorb-btn:active {
-  transform: translateY(1px);
+/* Help dialog (rendered in a portal, so not scoped to the container). */
+.zorb-help {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--hud-muted);
+}
+
+.zorb-help li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zorb-help li > span {
+  display: inline-flex;
+  gap: 4px;
+  min-width: 104px;
 }
 
 /* Mobile Touch Controls */
@@ -383,8 +477,8 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: color-mix(in srgb, var(--hud-card-solid) 28%, transparent);
+  border: 2px solid color-mix(in srgb, var(--hud-card-solid) 72%, transparent);
   pointer-events: auto;
   touch-action: none;
 }
@@ -396,9 +490,10 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge);
   transform: translate(-50%, -50%);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--hud-shadow-strong);
 }
 
 .zorb-touch-actions {
@@ -414,10 +509,9 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: 900;
+  color: var(--hud-ink);
+  font: 700 12px/1 var(--hud-body);
+  letter-spacing: 0.06em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -426,60 +520,64 @@
 }
 
 .zorb-touch-btn.dash {
-  background: linear-gradient(135deg, #ff006e, #fb5607);
-  box-shadow: 0 6px 20px rgba(255, 0, 110, 0.4);
+  background: var(--hud-accent);
+  border: 1px solid var(--hud-accent-strong);
+  box-shadow:
+    0 4px 0 var(--hud-accent-strong),
+    var(--hud-shadow);
 }
 
 .zorb-touch-btn.brace {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge-strong);
+  box-shadow:
+    0 4px 0 var(--hud-edge-strong),
+    var(--hud-shadow);
 }
 
 /* Tactical Pitch Mini-Radar */
 .zorb-radar {
   position: absolute;
-  top: 1rem;
-  right: 1.25rem;
-  background: rgba(18, 22, 34, 0.88);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  border-radius: 1rem;
-  padding: 0.5rem 0.65rem 0.65rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  z-index: 20;
+  top: 88px;
+  right: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 10px 12px 12px;
+  background: var(--hud-card);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
+  backdrop-filter: blur(6px);
+  z-index: 20;
   pointer-events: none;
 }
 
 .zorb-radar-header {
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: #94a3b8;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.35rem;
+  margin-bottom: 6px;
+  color: var(--hud-muted);
+  font: 700 10px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .zorb-radar-svg {
   display: block;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
 .zorb-radar-pitch {
-  fill: rgba(34, 100, 42, 0.7);
-  stroke: rgba(255, 255, 255, 0.45);
+  fill: color-mix(in srgb, var(--hud-good) 72%, var(--hud-card-solid));
+  stroke: var(--hud-card-solid);
   stroke-width: 1.4;
 }
 
 .zorb-radar-line {
-  stroke: rgba(255, 255, 255, 0.35);
+  stroke: color-mix(in srgb, var(--hud-card-solid) 70%, transparent);
   stroke-width: 1.2;
 }
 
 .zorb-radar-center-dot {
-  fill: rgba(255, 255, 255, 0.6);
+  fill: var(--hud-card-solid);
 }
 
 .zorb-radar-box {
@@ -488,18 +586,18 @@
 }
 
 .zorb-radar-box.blue {
-  stroke: color-mix(in srgb, var(--team-blue-glow) 75%, transparent);
-  fill: color-mix(in srgb, var(--team-blue) 12%, transparent);
+  stroke: var(--team-blue-soft);
+  fill: color-mix(in srgb, var(--team-blue) 35%, transparent);
 }
 
 .zorb-radar-box.red {
-  stroke: color-mix(in srgb, var(--team-red-glow) 75%, transparent);
-  fill: color-mix(in srgb, var(--team-red) 12%, transparent);
+  stroke: var(--team-red-soft);
+  fill: color-mix(in srgb, var(--team-red) 35%, transparent);
 }
 
 .zorb-radar-self-ring {
   fill: none;
-  stroke: #ffd166;
+  stroke: var(--hud-accent);
   stroke-width: 1.6;
   animation: zorb-radar-pulse 1.3s infinite ease-out;
 }
@@ -516,23 +614,21 @@
 }
 
 .zorb-radar-player {
-  stroke: #ffffff;
+  stroke: var(--hud-card-solid);
   stroke-width: 1.2;
   transition: transform 0.05s linear;
 }
 
 .zorb-radar-player.red {
   fill: var(--team-red);
-  filter: drop-shadow(0 0 4px var(--team-red-glow));
 }
 
 .zorb-radar-player.blue {
   fill: var(--team-blue);
-  filter: drop-shadow(0 0 4px var(--team-blue-glow));
 }
 
 .zorb-radar-player.self {
-  stroke: #ffd166;
+  stroke: var(--hud-accent);
   stroke-width: 1.8;
 }
 
@@ -552,10 +648,9 @@
 }
 
 .zorb-radar-ball {
-  fill: #ffffff;
-  stroke: #ff9f43;
+  fill: var(--hud-card-solid);
+  stroke: var(--hud-accent-strong);
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 5px #ffffff);
   animation: zorb-radar-ball-bob 0.8s infinite alternate ease-in-out;
 }
 
@@ -568,53 +663,71 @@
   }
 }
 
-/* Controls Hint Badge */
-.zorb-controls-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: rgba(18, 22, 34, 0.82);
-  backdrop-filter: blur(8px);
-  padding: 0.35rem 0.8rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  margin-bottom: 0.1rem;
-}
-
-.zorb-key-tag {
-  background: #334155;
-  color: #f8fafc;
-  padding: 0.15rem 0.45rem;
-  border-radius: 0.3rem;
-  font-size: 0.72rem;
-  font-weight: 800;
-  border-bottom: 2px solid #1e293b;
-}
-
-.zorb-hint-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #94a3b8;
-  margin-left: 0.35rem;
-  text-transform: uppercase;
-}
-
 /* Responsive Styles */
 @media (max-width: 768px) {
   .zorb-radar {
     display: none;
   }
   .zorb-hud-top {
-    padding: 0.4rem 1rem;
-    gap: 0.8rem;
+    top: 72px;
+    padding: 6px;
+  }
+  .zorb-team-score {
+    gap: 8px;
+    padding: 0 6px;
+    font-size: 11px;
   }
   .zorb-score-num {
-    font-size: 1.6rem;
+    min-width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+  .zorb-timer-box {
+    padding: 0 12px;
   }
   .zorb-timer {
-    font-size: 1.3rem;
+    font-size: 20px;
   }
   .zorb-controls-hint {
+    display: none;
+  }
+  .zorb-turtle-banner {
+    top: 140px;
+    padding: 10px 16px;
+    font-size: 20px;
+  }
+  .zorb-goal-banner {
+    padding: 18px 26px;
+  }
+  .zorb-goal-banner .zorb-goal-title {
+    font-size: 44px;
+  }
+}
+
+@media (max-width: 700px) {
+  .zorb-container .wordmark {
+    padding: 6px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Keep the dock clear of the thumb stick and the action buttons. */
+  .zorb-container:has(.zorb-touch-controls) .zorb-hud-bottom {
+    bottom: 168px;
+  }
+  .zorb-dock {
+    gap: 10px;
+    padding: 8px 10px 8px 12px;
+  }
+  .zorb-dash-bar-bg {
+    width: 130px;
+  }
+  .zorb-dash-label,
+  .zorb-brace-badge {
+    font-size: 12px;
+  }
+  /* Like the kit's tool dock, drop key caps where there is no keyboard. */
+  .zorb-dock .zorb-dash-key {
     display: none;
   }
 }

@@ -13,11 +13,17 @@ import {
   Wind,
 } from 'lucide-react';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   GameTracker,
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import type { PeerGameConnection } from '../../shared/peer/connection';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { scaffoldScrambleAnalytics } from './analytics';
 import { ScaffoldScrambleSound } from './audio';
@@ -85,6 +91,8 @@ export default function ScaffoldScrambleGame() {
 
   const [snapshot, setSnapshot] = useState<ScaffoldSnapshot | null>(null);
   const [role, setRole] = useState<Role>('cleaner');
+  const [muted, setMuted] = useState(false);
+  const [help, setHelp] = useState(false);
 
   const sessionRef = useRef<ScaffoldSession>({
     id: 'cleaner-local',
@@ -276,125 +284,155 @@ export default function ScaffoldScrambleGame() {
     dispatchAction({ type: 'switchTool' });
   };
 
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    if (sound.current) {
+      sound.current.unlock();
+      sound.current.enabled = !next;
+    }
+  };
+
+  // One list feeds the keyboard bar and the help dialog.
+  const keyHints = [
+    ['A/D', strings.hintMove],
+    ['Q/Z', strings.hintWinchLeft],
+    ['E/R', strings.hintWinchRight],
+    ['Space', strings.hintAction],
+    ['Tab', strings.hintSwitchTool],
+  ] as const;
+
   return (
     <main className="sc-game">
       <div ref={container} className="sc-canvas" />
 
-      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 30 }}>
-        <LanguageSwitcher variant="header" />
-      </div>
+      <header className="topbar sc-topbar">
+        <a href="/" className="wordmark">
+          <span className="sc-mark">
+            <Building2 size={22} />
+          </span>{' '}
+          SCAFFOLD SCRAMBLE<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={muted}
+          onToggleSound={toggleSound}
+          onHelp={() => setHelp(true)}
+          voiceHint="Use your group call to talk with friends. In-game voice is not available in Scaffold Scramble yet."
+        />
+      </header>
 
-      {/* Top HUD Telemetry */}
-      <div className="sc-hud">
-        {/* Floor Altitude Ticker */}
-        <div className="sc-hud-badge">
-          <Building2 size={22} color="#0284c7" />
-          <div>
-            <div className="sc-score-val flex items-center gap-1">
-              <span>{currentStory}</span>
-              <span style={{ fontSize: 13, color: '#94a3b8' }}>/ 80</span>
+      <div className="sc-hud-stack">
+        {/* Top HUD Telemetry */}
+        <div className="sc-hud">
+          {/* Floor Altitude Ticker */}
+          <div className="sc-hud-badge">
+            <Building2 size={22} />
+            <div>
+              <div className="sc-score-val flex items-center gap-1">
+                <span>{currentStory}</span>
+                <span className="sc-score-sub">/ 80</span>
+              </div>
+              <div className="sc-hud-meta">{strings.hudStory}</div>
             </div>
-            <div className="sc-hud-meta">{strings.hudStory}</div>
           </div>
-        </div>
 
-        {/* Industrial Spirit Level Attitude Indicator */}
-        <div className={`sc-hud-badge tilt ${tiltClass}`}>
-          <div className="sc-tilt-val">
-            {absTilt >= TILT_WARNING_DEG && (
-              <AlertTriangle
-                size={18}
-                color={absTilt >= TILT_SLIP_DEG ? '#ef4444' : '#eab308'}
-                className={absTilt >= TILT_SLIP_DEG ? 'sc-pulse-icon' : ''}
+          {/* Industrial Spirit Level Attitude Indicator */}
+          <div className={`sc-hud-badge tilt ${tiltClass}`}>
+            <div className="sc-tilt-val">
+              {absTilt >= TILT_WARNING_DEG && (
+                <AlertTriangle
+                  size={18}
+                  className={
+                    absTilt >= TILT_SLIP_DEG
+                      ? 'sc-tilt-icon sc-pulse-icon'
+                      : 'sc-tilt-icon'
+                  }
+                />
+              )}
+              <span>{tiltDeg.toFixed(1)}°</span>
+            </div>
+
+            {/* Curved Glass Spirit Level Capsule */}
+            <div className="sc-spirit-level">
+              <div className="sc-spirit-tick neg20" />
+              <div className="sc-spirit-tick neg15" />
+              <div className="sc-spirit-tick zero" />
+              <div className="sc-spirit-tick pos15" />
+              <div className="sc-spirit-tick pos20" />
+              <div
+                className="sc-spirit-bubble"
+                style={{ left: `${bubblePercent}%` }}
               />
-            )}
-            <span>{tiltDeg.toFixed(1)}°</span>
+            </div>
+
+            <div className="sc-hud-meta">
+              {absTilt >= TILT_SLIP_DEG
+                ? strings.slipHazard
+                : absTilt >= TILT_WARNING_DEG
+                  ? strings.tiltWarning
+                  : strings.hudTilt}
+            </div>
           </div>
 
-          {/* Curved Glass Spirit Level Capsule */}
-          <div className="sc-spirit-level">
-            <div className="sc-spirit-tick neg20" />
-            <div className="sc-spirit-tick neg15" />
-            <div className="sc-spirit-tick zero" />
-            <div className="sc-spirit-tick pos15" />
-            <div className="sc-spirit-tick pos20" />
-            <div
-              className="sc-spirit-bubble"
-              style={{ left: `${bubblePercent}%` }}
+          {/* Live Wind Telemetry Widget */}
+          <div className={`sc-hud-badge ${windActive ? 'wind-gust' : ''}`}>
+            <Wind
+              size={22}
+              style={{
+                transform: `scaleX(${windStrength >= 0 ? 1 : -1})`,
+                transition: 'transform 0.3s',
+              }}
             />
-          </div>
-
-          <div className="sc-hud-meta">
-            {absTilt >= TILT_SLIP_DEG
-              ? strings.slipHazard
-              : absTilt >= TILT_WARNING_DEG
-                ? strings.tiltWarning
-                : strings.hudTilt}
-          </div>
-        </div>
-
-        {/* Live Wind Telemetry Widget */}
-        <div className={`sc-hud-badge ${windActive ? 'wind-gust' : ''}`}>
-          <Wind
-            size={22}
-            color={windActive ? '#f59e0b' : '#38bdf8'}
-            style={{
-              transform: `scaleX(${windStrength >= 0 ? 1 : -1})`,
-              transition: 'transform 0.3s',
-            }}
-          />
-          <div>
-            <div
-              className="sc-score-val"
-              style={{ color: windActive ? '#d97706' : '#0284c7' }}
-            >
-              {windKnots} <span style={{ fontSize: 12 }}>kt</span>
-            </div>
-            <div className="sc-hud-meta">
-              {windActive ? strings.windGust : strings.windCalm}
+            <div>
+              <div className="sc-score-val">
+                {windKnots} <span className="sc-unit">kt</span>
+              </div>
+              <div className="sc-hud-meta">
+                {windActive ? strings.windGust : strings.windCalm}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Windows Cleaned Badge */}
-        <div className="sc-hud-badge">
-          <Sparkles size={22} color="#16a34a" />
-          <div>
-            <div className="sc-score-val" style={{ color: '#16a34a' }}>
-              {world?.cleanedCount ?? 0} / 30
+          {/* Windows Cleaned Badge */}
+          <div className="sc-hud-badge cleaned">
+            <Sparkles size={22} />
+            <div>
+              <div className="sc-score-val">
+                {world?.cleanedCount ?? 0} / 30
+              </div>
+              <div className="sc-hud-meta">{strings.hudCleaned}</div>
             </div>
-            <div className="sc-hud-meta">{strings.hudCleaned}</div>
           </div>
-        </div>
 
-        {/* Helicopter Deadline Timer with Descent Radar */}
-        <div className="sc-hud-badge">
-          <Timer size={22} color="#0f172a" />
-          <div>
-            <div className="sc-timer-val">{formatTime(msLeft)}</div>
-            <div className="sc-hud-meta">
-              {strings.hudDeadline} ({heliProgress}%)
+          {/* Helicopter Deadline Timer with Descent Radar */}
+          <div className="sc-hud-badge">
+            <Timer size={22} />
+            <div>
+              <div className="sc-timer-val">{formatTime(msLeft)}</div>
+              <div className="sc-hud-meta">
+                {strings.hudDeadline} ({heliProgress}%)
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Active Tool Badge */}
+        {isPlaying && (
+          <button
+            type="button"
+            className="sc-tool-badge"
+            onClick={handleSwitchTool}
+            title="Click or press Tab to switch tools"
+          >
+            <span>
+              {activeTool === 'sponge'
+                ? strings.activeToolSponge
+                : strings.activeToolSqueegee}
+            </span>
+            <span className="sc-tool-key house-key">Tab</span>
+          </button>
+        )}
       </div>
-
-      {/* Active Tool Badge */}
-      {isPlaying && (
-        <button
-          type="button"
-          className="sc-tool-badge"
-          onClick={handleSwitchTool}
-          title="Click or press Tab to switch tools"
-        >
-          <span>
-            {activeTool === 'sponge'
-              ? strings.activeToolSponge
-              : strings.activeToolSqueegee}
-          </span>
-          <span className="sc-tool-key">Tab</span>
-        </button>
-      )}
 
       {/* Welcome / Role Select Overlay */}
       {!isPlaying && !isEnded && (
@@ -406,16 +444,7 @@ export default function ScaffoldScrambleGame() {
           <p className="sc-desc">{strings.desc}</p>
 
           <div className="sc-role-selector">
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                color: '#64748b',
-              }}
-            >
-              {strings.roleSelectorTitle}
-            </span>
+            <span className="sc-role-title">{strings.roleSelectorTitle}</span>
             <div className="sc-role-grid">
               <button
                 type="button"
@@ -450,7 +479,7 @@ export default function ScaffoldScrambleGame() {
 
           <button
             type="button"
-            className="sc-btn primary"
+            className="sc-btn primary primary-button"
             onClick={handleStart}
           >
             {strings.startShift} <ArrowRight size={18} />
@@ -474,7 +503,7 @@ export default function ScaffoldScrambleGame() {
           </p>
           <button
             type="button"
-            className="sc-btn primary"
+            className="sc-btn primary primary-button"
             onClick={handleRestart}
           >
             <RotateCcw size={18} /> {strings.playAgain}
@@ -483,23 +512,30 @@ export default function ScaffoldScrambleGame() {
       )}
 
       {/* Bottom Keyboard Controls Hint Bar */}
-      <div className="sc-hint-bar">
-        <span>
-          <span className="sc-hint-key">A/D</span> {strings.hintMove}
-        </span>
-        <span>
-          <span className="sc-hint-key">Q/Z</span> {strings.hintWinchLeft}
-        </span>
-        <span>
-          <span className="sc-hint-key">E/R</span> {strings.hintWinchRight}
-        </span>
-        <span>
-          <span className="sc-hint-key">Space</span> {strings.hintAction}
-        </span>
-        <span>
-          <span className="sc-hint-key">Tab</span> {strings.hintSwitchTool}
-        </span>
+      <div className="sc-hint-bar tool-dock">
+        {keyHints.map(([key, label]) => (
+          <span key={key}>
+            <span className="sc-hint-key house-key">{key}</span> {label}
+          </span>
+        ))}
       </div>
+
+      <Dialog open={help} onOpenChange={setHelp}>
+        <DialogContent className="game-dialog">
+          <DialogTitle>
+            {strings.titleMain}
+            {strings.titleHighlight}
+          </DialogTitle>
+          <DialogDescription>{strings.desc}</DialogDescription>
+          <ul className="sc-help">
+            {keyHints.map(([key, label]) => (
+              <li key={key}>
+                <span className="house-key">{key}</span> {label}
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile Touch Controls */}
       <div className="sc-mobile-controls">

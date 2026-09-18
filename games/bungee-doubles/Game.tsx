@@ -1,6 +1,14 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, Flame, RotateCcw, Trophy, Users, Zap } from 'lucide-react';
+import {
+  Camera,
+  Flame,
+  Link2,
+  RotateCcw,
+  Trophy,
+  Users,
+  Zap,
+} from 'lucide-react';
 import type { PeerGameConnection } from '../../shared/peer/connection';
 import {
   advanceBungee,
@@ -23,7 +31,7 @@ import { BungeeDoublesSound } from './audio';
 import { BungeeScene } from './scene';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { BUNGEE_DOUBLES_TRANSLATIONS } from './translations';
 import {
   GameTracker,
@@ -56,6 +64,9 @@ export default function BungeeDoublesGame() {
 
   const [snapshot, setSnapshot] = useState<BungeeSnapshot | null>(null);
   const [team, setTeam] = useState<TeamId>('red');
+  const [muted, setMuted] = useState(false);
+  // The toolbar's help button shows or hides the camera hint.
+  const [hint, setHint] = useState(true);
   const [banner, setBanner] = useState<{
     text: string;
     subtext: string;
@@ -192,20 +203,41 @@ export default function BungeeDoublesGame() {
   const tensionClass =
     tensionVal > 80 ? 'danger' : tensionVal > 50 ? 'warning' : 'safe';
 
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    if (sound.current) {
+      sound.current.unlock();
+      sound.current.enabled = !next;
+    }
+  };
+
   return (
     <div className="bungee-game">
-      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 30 }}>
-        <LanguageSwitcher variant="header" />
-      </div>
       <div ref={container} className="bungee-canvas" />
+      <header className="topbar bungee-topbar">
+        <a href="/" className="wordmark">
+          <span className="bungee-mark">
+            <Link2 size={22} />
+          </span>
+          BUNGEE DOUBLES<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={muted}
+          onToggleSound={toggleSound}
+          onHelp={() => setHint((shown) => !shown)}
+        />
+      </header>
 
       {/* 360 Camera Orbit Helper Badge */}
-      <div className="bungee-camera-hint">
-        <Camera size={13} />
-        <span>{strings.orbitHint}</span>
-        <kbd>Q/R</kbd>
-        <kbd>C</kbd>
-      </div>
+      {hint && (
+        <div className="bungee-camera-hint">
+          <Camera size={13} />
+          <span>{strings.orbitHint}</span>
+          <kbd className="house-key">Q/R</kbd>
+          <kbd className="house-key">C</kbd>
+        </div>
+      )}
 
       {/* Top HUD: Scoreboard */}
       <div className="bungee-hud">
@@ -277,15 +309,16 @@ export default function BungeeDoublesGame() {
 
       {/* Win Banner */}
       {world?.phase === 'ended' && world.winner && (
-        <div className="bungee-banner win">
-          <Trophy size={48} color="#f1c40f" />
+        <div className="bungee-banner win game-dialog result-dialog">
+          <span className="dialog-emblem">
+            <Trophy size={30} />
+          </span>
           <h2>
             {strings[world.winner].toUpperCase()} {strings.wins}
           </h2>
           <p>{strings.matchComplete}</p>
           <button
-            className="bungee-btn primary"
-            style={{ marginTop: 14 }}
+            className="bungee-btn primary primary-button"
             onClick={() => dispatchAction({ type: 'restart' })}
           >
             {strings.playAgain}
@@ -301,7 +334,7 @@ export default function BungeeDoublesGame() {
         >
           <Flame size={14} />
           <span>{strings.volley}</span>
-          <kbd className="bungee-kbd">SPACE</kbd>
+          <kbd className="bungee-kbd house-key">SPACE</kbd>
         </button>
         <button
           className="bungee-btn smash-btn"
@@ -309,14 +342,14 @@ export default function BungeeDoublesGame() {
         >
           <Zap size={14} />
           <span>{strings.smash}</span>
-          <kbd className="bungee-kbd">E</kbd>
+          <kbd className="bungee-kbd house-key">E</kbd>
         </button>
         <button
           className="bungee-btn"
           onClick={() => dispatchAction({ type: 'dive' })}
         >
           <span>{strings.dive}</span>
-          <kbd className="bungee-kbd">SHIFT</kbd>
+          <kbd className="bungee-kbd house-key">SHIFT</kbd>
         </button>
         <button
           className="bungee-btn"
@@ -336,7 +369,7 @@ export default function BungeeDoublesGame() {
         >
           <Camera size={14} />
           <span>{strings.camera}</span>
-          <kbd className="bungee-kbd">C</kbd>
+          <kbd className="bungee-kbd house-key">C</kbd>
         </button>
         <button
           className="bungee-btn"
@@ -378,7 +411,7 @@ export default function BungeeDoublesGame() {
           DIVE
         </button>
         <button
-          className="bungee-action-circle"
+          className="bungee-action-circle hit"
           onTouchStart={(e) => {
             e.preventDefault();
             dispatchAction({ type: 'swing' });

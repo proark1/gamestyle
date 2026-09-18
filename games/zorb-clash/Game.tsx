@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { RotateCcw, Shield, Zap, Flame } from 'lucide-react';
+import { RotateCcw, Shield, Zap, Flame, Volleyball } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { ZorbClashScene } from './scene';
 import { ZorbClashAudio } from './audio';
 import {
@@ -25,7 +27,6 @@ import {
 import { zorbClashAnalytics } from './analytics';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
 import { ZORB_CLASH_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 
@@ -185,6 +186,8 @@ export default function ZorbClash() {
       ('ontouchstart' in window || navigator.maxTouchPoints > 0),
   );
   const [selfId] = useState('local-player');
+  const [muted, setMuted] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const lastFrameTime = useRef(0);
   const animId = useRef(0);
@@ -299,6 +302,13 @@ export default function ZorbClash() {
     audioRef.current?.whistle();
   };
 
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    audioRef.current?.unlock();
+    audioRef.current?.setMuted(next);
+  };
+
   const setPlayerInput = (patch: Partial<PlayerInput>) => {
     const p = worldRef.current?.players.find((pl) => pl.id === selfId);
     if (p) {
@@ -342,13 +352,23 @@ export default function ZorbClash() {
 
   return (
     <main className="zorb-container">
-      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 40 }}>
-        <LanguageSwitcher variant="header" />
-      </div>
       <div ref={containerRef} className="zorb-canvas-wrapper" />
+      <header className="topbar">
+        <a href="/" className="wordmark">
+          <span className="zorb-mark">
+            <Volleyball size={22} />
+          </span>{' '}
+          ZORB CLASH<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={muted}
+          onToggleSound={toggleSound}
+          onHelp={() => setHelpOpen(true)}
+        />
+      </header>
 
       {/* Top Header HUD */}
-      <div className="zorb-hud-top">
+      <div className="zorb-hud-top house-card">
         <div className="zorb-team-score red">
           <span>{strings.red}</span>
           <span className="zorb-score-num">
@@ -407,35 +427,39 @@ export default function ZorbClash() {
 
       {/* Bottom Controls / Meter HUD */}
       <div className="zorb-hud-bottom">
+        <div className="zorb-dock house-card">
+          <div className="zorb-dash-container">
+            <div className="zorb-dash-label">
+              <Zap size={15} />
+              <span>{strings.bumperDash}</span>
+              <span className="zorb-dash-key house-key">Space</span>
+            </div>
+            <div className="zorb-dash-bar-bg">
+              <div
+                className={`zorb-dash-bar-fill ${dashCharge > 0.85 ? 'ready' : ''}`}
+                style={{ width: `${Math.round(dashCharge * 100)}%` }}
+              />
+            </div>
+          </div>
+
+          <i className="zorb-dock-divider" aria-hidden="true" />
+
+          <div className={`zorb-brace-badge ${isBraced ? 'active' : ''}`}>
+            <Shield size={14} />
+            <span>{strings.braceAnchor}</span>
+            <span className="zorb-dash-key house-key">Shift</span>
+          </div>
+        </div>
+
         {!touchActive && (
           <div className="zorb-controls-hint">
-            <span className="zorb-key-tag">W</span>
-            <span className="zorb-key-tag">A</span>
-            <span className="zorb-key-tag">S</span>
-            <span className="zorb-key-tag">D</span>
+            <span className="zorb-key-tag house-key">W</span>
+            <span className="zorb-key-tag house-key">A</span>
+            <span className="zorb-key-tag house-key">S</span>
+            <span className="zorb-key-tag house-key">D</span>
             <span className="zorb-hint-label">{strings.roll}</span>
           </div>
         )}
-
-        <div className="zorb-dash-container">
-          <div className="zorb-dash-label">
-            <Zap size={15} color="#ffd166" />
-            <span>{strings.bumperDash}</span>
-            <span className="zorb-dash-key">Space</span>
-          </div>
-          <div className="zorb-dash-bar-bg">
-            <div
-              className={`zorb-dash-bar-fill ${dashCharge > 0.85 ? 'ready' : ''}`}
-              style={{ width: `${Math.round(dashCharge * 100)}%` }}
-            />
-          </div>
-        </div>
-
-        <div className={`zorb-brace-badge ${isBraced ? 'active' : ''}`}>
-          <Shield size={14} />
-          <span>{strings.braceAnchor}</span>
-          <span className="zorb-dash-key">Shift</span>
-        </div>
       </div>
 
       {/* Mobile Touch Overlay */}
@@ -499,16 +523,49 @@ export default function ZorbClash() {
               </div>
             </div>
 
-            <button type="button" className="zorb-btn" onClick={handleRestart}>
-              <RotateCcw
-                size={18}
-                style={{ display: 'inline', marginRight: '6px' }}
-              />
+            <button
+              type="button"
+              className="zorb-btn primary-button"
+              onClick={handleRestart}
+            >
+              <RotateCcw size={18} />
               {strings.rematch}
             </button>
           </div>
         </div>
       )}
+
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="game-dialog">
+          <DialogTitle>Zorb Clash</DialogTitle>
+          <ul className="zorb-help">
+            <li>
+              <span>
+                <span className="house-key">W</span>
+                <span className="house-key">A</span>
+                <span className="house-key">S</span>
+                <span className="house-key">D</span>
+              </span>
+              {strings.roll}
+            </li>
+            <li>
+              <span>
+                <span className="house-key">Space</span>
+              </span>
+              {strings.bumperDash}
+            </li>
+            <li>
+              <span>
+                <span className="house-key">Shift</span>
+              </span>
+              {strings.braceAnchor}
+            </li>
+          </ul>
+          <p className="help-note">
+            <strong>{strings.turtled}</strong> {strings.turtledSub}
+          </p>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

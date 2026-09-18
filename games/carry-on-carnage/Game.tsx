@@ -217,17 +217,25 @@ export default function CarryOnCarnageGame() {
       <div ref={containerRef} className="carryon-canvas" />
 
       {/* Top App Header & Collection Navigation */}
-      <GameToolbar
-        muted={!soundEnabled}
-        onToggleSound={() => setSoundEnabled((v) => !v)}
-        onHelp={() => {}}
-        workshop="/carry-on-carnage/admin"
-      />
+      <header className="topbar carryon-topbar">
+        <a href="/" className="wordmark">
+          <span className="carryon-mark">
+            <Luggage size={22} />
+          </span>{' '}
+          CARRY-ON CARNAGE<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={!soundEnabled}
+          onToggleSound={() => setSoundEnabled((v) => !v)}
+          onHelp={() => {}}
+          workshop="/carry-on-carnage/admin"
+        />
+      </header>
 
       {/* Top Left: Target Baggage Quota */}
       {world && (
-        <div className="carryon-target-hud">
-          <Luggage size={18} className="text-sky-400" />
+        <div className="carryon-target-hud house-card">
+          <Luggage size={18} />
           <span>{strings.bagsApproved}</span>
           <span className="carryon-target-count">
             {world.approvedCount} / {world.targetBags}
@@ -250,10 +258,7 @@ export default function CarryOnCarnageGame() {
             </div>
           </div>
           <div className={`carryon-fids-timer ${isUrgent ? 'urgent' : ''}`}>
-            <Timer
-              size={18}
-              className={isUrgent ? 'text-red-400' : 'text-amber-400'}
-            />
+            <Timer size={18} />
             <span className="carryon-fids-clock">
               {formatTime(remainingMs)}
             </span>
@@ -286,42 +291,42 @@ export default function CarryOnCarnageGame() {
 
       {/* Luggage Strain & Compression Gauge HUD */}
       {nearbySc && (
-        <div className="carryon-luggage-hud">
+        <div className="carryon-luggage-hud house-card">
           <div className="carryon-luggage-status-pill">
             {nearbySc.approved ? (
-              <span className="text-emerald-400 font-bold">
+              <span className="carryon-status is-good">
                 {strings.sizerApproved}
               </span>
             ) : nearbySc.burst ? (
-              <span className="text-rose-400 font-bold">
+              <span className="carryon-status is-danger">
                 {strings.pinataBurst}
               </span>
             ) : nearbySc.zipped >= 0.98 ? (
-              <span className="text-emerald-300 font-bold">
+              <span className="carryon-status is-good">
                 {me?.sittingOn === nearbySc.id
                   ? strings.fullyZippedHopOff
                   : strings.fullyZippedCarry}
               </span>
             ) : me?.sittingOn === nearbySc.id ? (
-              <span className="text-emerald-300 font-bold">
+              <span className="carryon-status is-good">
                 {strings.sittingCompressing.replace(
                   '{pct}',
                   String(Math.round(nearbySc.compression * 100)),
                 )}
               </span>
             ) : nearbySc.bulge > 0.15 ? (
-              <span className="text-amber-300 font-bold">
+              <span className="carryon-status is-warn">
                 {strings.overstuffed}
               </span>
             ) : (
-              <span className="text-sky-300 font-bold">{strings.packMore}</span>
+              <span className="carryon-status is-info">{strings.packMore}</span>
             )}
           </div>
 
           <div className="carryon-gauge-row">
             <span>{strings.luggageBulge}</span>
             <span
-              className={nearbySc.strain > 0.7 ? 'text-red-400 font-bold' : ''}
+              className={`carryon-gauge-value ${nearbySc.strain > 0.7 ? 'is-danger' : ''}`}
             >
               {Math.round(nearbySc.strain * 50)}%
             </span>
@@ -335,7 +340,7 @@ export default function CarryOnCarnageGame() {
 
           <div className="carryon-gauge-row">
             <span>{strings.compressionWeight}</span>
-            <span className="text-amber-300 font-semibold">
+            <span className="carryon-gauge-value is-warn">
               {Math.round(nearbySc.compression * 100)}%
               {nearbySc.sittingCount > 0
                 ? strings.sittingCount.replace(
@@ -354,7 +359,7 @@ export default function CarryOnCarnageGame() {
 
           <div className="carryon-gauge-row">
             <span>{strings.zipperClosure}</span>
-            <span className="text-emerald-400 font-bold">
+            <span className="carryon-gauge-value is-good">
               {Math.round(nearbySc.zipped * 100)}%
             </span>
           </div>
@@ -368,13 +373,12 @@ export default function CarryOnCarnageGame() {
       )}
 
       {/* Action Controls Prompt Dock */}
-      <div className="carryon-dock">
+      <div className="carryon-dock tool-dock">
         <button
           type="button"
-          className={`carryon-dock-btn ${me?.holdingItem || me?.holdingSuitcase ? 'highlight' : ''}`}
+          className={`carryon-dock-btn ${me?.holdingItem || me?.holdingSuitcase ? 'highlight active' : ''}`}
           onClick={() => dispatchAction({ type: 'interact', action: 'grab' })}
         >
-          <span className="carryon-key-badge">E</span>
           <span>
             {me?.holdingItem
               ? strings.packIntoBag
@@ -390,17 +394,18 @@ export default function CarryOnCarnageGame() {
                       ? strings.removeItem
                       : strings.grabItem}
           </span>
+          <span className="carryon-key-badge house-key">E</span>
         </button>
 
         <button
           type="button"
-          className={`carryon-dock-btn ${me?.sittingOn ? 'highlight' : ''}`}
+          className={`carryon-dock-btn ${me?.sittingOn ? 'highlight active' : ''}`}
           onClick={() =>
             dispatchAction({ type: 'interact', action: 'compress' })
           }
         >
-          <span className="carryon-key-badge">R</span>
           <span>{me?.sittingOn ? strings.hopOff : strings.sitCompress}</span>
+          <span className="carryon-key-badge house-key">R</span>
         </button>
 
         <button
@@ -408,8 +413,8 @@ export default function CarryOnCarnageGame() {
           className="carryon-dock-btn"
           onClick={() => dispatchAction({ type: 'interact', action: 'zip' })}
         >
-          <span className="carryon-key-badge">F</span>
           <span>{strings.pullZipper}</span>
+          <span className="carryon-key-badge house-key">F</span>
         </button>
 
         <button
@@ -417,8 +422,8 @@ export default function CarryOnCarnageGame() {
           className="carryon-dock-btn"
           onClick={() => dispatchAction({ type: 'interact', action: 'drop' })}
         >
-          <span className="carryon-key-badge">Q</span>
           <span>{strings.dropRelease}</span>
+          <span className="carryon-key-badge house-key">Q</span>
         </button>
       </div>
 
@@ -426,13 +431,13 @@ export default function CarryOnCarnageGame() {
       {world?.phase === 'flight_departed' && (
         <div className="carryon-end-modal">
           <div className="carryon-end-card">
-            <Plane size={48} className="text-amber-400" />
+            <Plane size={48} />
             <h2 className="carryon-end-title">
               {world.approvedCount >= world.targetBags
                 ? strings.boardingComplete
                 : strings.flightDeparted}
             </h2>
-            <p className="text-slate-300 text-sm">
+            <p className="carryon-end-desc">
               {world.approvedCount >= world.targetBags
                 ? strings.successDesc
                 : strings.failDesc}
@@ -440,34 +445,34 @@ export default function CarryOnCarnageGame() {
 
             <div className="carryon-end-stats">
               <div className="carryon-stat-box">
-                <span className="text-slate-400 text-xs">
+                <span className="carryon-stat-label">
                   {strings.approvedBagsStat}
                 </span>
-                <span className="text-xl font-bold text-emerald-400">
+                <span className="carryon-stat-value is-good">
                   {world.approvedCount} / {world.targetBags}
                 </span>
               </div>
               <div className="carryon-stat-box">
-                <span className="text-slate-400 text-xs">
+                <span className="carryon-stat-label">
                   {strings.contrabandStat}
                 </span>
-                <span className="text-xl font-bold text-sky-400">
+                <span className="carryon-stat-value">
                   {world.contrabandCount}
                 </span>
               </div>
               <div className="carryon-stat-box">
-                <span className="text-slate-400 text-xs">
+                <span className="carryon-stat-label">
                   {strings.gateFeesStat}
                 </span>
-                <span className="text-xl font-bold text-rose-400">
+                <span className="carryon-stat-value is-danger">
                   -${world.feesPaid}
                 </span>
               </div>
               <div className="carryon-stat-box">
-                <span className="text-slate-400 text-xs">
+                <span className="carryon-stat-label">
                   {strings.netScoreStat}
                 </span>
-                <span className="text-xl font-bold text-amber-400">
+                <span className="carryon-stat-value is-accent">
                   {world.totalScore} PTS
                 </span>
               </div>

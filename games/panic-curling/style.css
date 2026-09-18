@@ -1,12 +1,22 @@
+/* Panic Curling paints on the collection's shared kit (shared/styles/game-ui.css):
+   the top bar, house cards, labels and keys come from there, and every colour
+   here is a house HUD token or a team colour from app/globals.css. */
 .curling-container {
   position: relative;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: #b8dcec;
-  font-family: var(--font-fredoka, 'Fredoka', system-ui, sans-serif);
+  color: var(--hud-ink);
+  font-family: var(--hud-body);
   user-select: none;
   -webkit-user-select: none;
+}
+
+.curling-container :is(button, a):focus-visible {
+  outline: 3px solid var(--hud-accent);
+  outline-offset: 3px;
 }
 
 .curling-viewport {
@@ -16,46 +26,58 @@
   height: 100%;
 }
 
+/* The house top bar: wordmark on the left, the shared toolbar on the right. */
+.curling-container .curling-topbar {
+  position: relative;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.curling-topbar > * {
+  pointer-events: auto;
+}
+
+.curling-mark {
+  display: flex;
+  padding: 9px;
+  margin-right: 3px;
+  background: var(--hud-accent);
+  border-radius: 13px;
+  transform: rotate(-7deg);
+}
+
+.curling-container .wordmark .title-dot {
+  margin-left: -6px;
+  color: var(--hud-danger);
+}
+
 /* ==========================================================================
-   1. Alpine Tournament Scoreboard
+   1. Scoreboard
    ========================================================================== */
 .curling-scoreboard {
   position: absolute;
-  top: 16px;
+  top: 90px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 18px;
-  background: linear-gradient(
-    135deg,
-    rgba(28, 40, 51, 0.94),
-    rgba(44, 62, 80, 0.94)
-  );
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  padding: 10px 28px;
-  border-radius: 32px;
-  border: 2px solid rgba(241, 196, 15, 0.45);
-  box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 10px 24px;
   z-index: 20;
-  max-width: 95vw;
+  max-width: calc(100vw - 32px);
 }
 
 .curling-team-score {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
 }
 
 .curling-team-badge {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--hud-card-solid);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,40 +86,43 @@
 
 .curling-team-badge.red {
   background: linear-gradient(135deg, var(--team-red), var(--team-red-deep));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--team-red) 80%, transparent);
+  box-shadow: 0 0 0 1px var(--team-red-soft);
 }
 
 .curling-team-badge.blue {
   background: linear-gradient(135deg, var(--team-blue), var(--team-blue-deep));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--team-blue) 80%, transparent);
+  box-shadow: 0 0 0 1px var(--team-blue-soft);
 }
 
 .curling-team-name {
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font: 600 18px/1.1 var(--hud-display);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.curling-team-score:first-child .curling-team-name {
+  color: var(--team-red-deep);
+}
+
+.curling-team-score:last-child .curling-team-name {
+  color: var(--team-blue-deep);
 }
 
 .curling-team-points {
-  font-size: 2.1rem;
-  font-weight: 900;
-  color: #f1c40f;
-  min-width: 32px;
+  min-width: 30px;
   text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  line-height: 1;
+  color: var(--hud-ink);
+  font: 600 34px/1 var(--hud-display);
 }
 
 .curling-round-info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
   padding: 0 18px;
-  border-left: 1px solid rgba(255, 255, 255, 0.16);
-  border-right: 1px solid rgba(255, 255, 255, 0.16);
+  border-left: 1px solid var(--hud-edge);
+  border-right: 1px solid var(--hud-edge);
 }
 
 .curling-round-header {
@@ -107,14 +132,13 @@
 }
 
 .curling-round-title {
-  color: #aed6f1;
-  font-size: 0.75rem;
-  font-weight: 800;
+  color: var(--hud-muted);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
 }
 
-/* Three dots for the 3 Ends */
+/* Three dots for the three ends */
 .curling-end-dots {
   display: flex;
   gap: 5px;
@@ -125,30 +149,26 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--hud-edge);
   transition: all 0.2s ease;
 }
 
 .curling-end-dot.completed {
-  background: #f1c40f;
-  box-shadow: 0 0 6px rgba(241, 196, 15, 0.7);
+  background: var(--hud-accent);
 }
 
 .curling-end-dot.active {
-  background: #2ecc71;
-  box-shadow: 0 0 8px rgba(46, 204, 113, 0.9);
-  transform: scale(1.25);
+  background: var(--hud-good);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hud-good) 22%, transparent);
   animation: dotPulse 1.2s infinite alternate;
 }
 
 @keyframes dotPulse {
   from {
-    transform: scale(1.1);
-    opacity: 0.8;
+    transform: scale(1);
   }
   to {
-    transform: scale(1.35);
-    opacity: 1;
+    transform: scale(1.25);
   }
 }
 
@@ -156,55 +176,54 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.88rem;
-  font-weight: 800;
-  padding: 3px 10px;
-  border-radius: 12px;
-  color: #ffffff;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font: 700 12px/1.3 var(--hud-body);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .curling-round-turn.red-turn {
-  background: color-mix(in srgb, var(--team-red) 30%, transparent);
-  border: 1px solid color-mix(in srgb, var(--team-red) 50%, transparent);
-  color: var(--team-red-glow);
+  background: var(--team-red-soft);
+  border: 1px solid color-mix(in srgb, var(--team-red) 35%, transparent);
+  color: var(--team-red-deep);
 }
 
 .curling-round-turn.blue-turn {
-  background: color-mix(in srgb, var(--team-blue) 30%, transparent);
-  border: 1px solid color-mix(in srgb, var(--team-blue) 50%, transparent);
-  color: var(--team-blue-glow);
+  background: var(--team-blue-soft);
+  border: 1px solid color-mix(in srgb, var(--team-blue) 35%, transparent);
+  color: var(--team-blue-deep);
 }
 
 .curling-hammer-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.7rem;
-  color: #f1c40f;
-  background: rgba(241, 196, 15, 0.15);
-  border: 1px solid rgba(241, 196, 15, 0.35);
-  padding: 1px 7px;
-  border-radius: 10px;
-  margin-top: 1px;
+  padding: 2px 9px;
+  background: var(--hud-card-strong);
+  border: 1px solid color-mix(in srgb, var(--hud-accent) 55%, transparent);
+  border-radius: 999px;
+  color: var(--hud-accent-ink);
+  font: 700 11px/1.3 var(--hud-body);
+  white-space: nowrap;
 }
 
 /* ==========================================================================
-   2. Thin Ice & Reaction Notifications
+   2. Thin ice and reaction notices
    ========================================================================== */
 .curling-ice-warning {
   position: absolute;
-  top: 86px;
+  top: 190px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #c0392b, #962d22);
-  color: #ffffff;
-  padding: 8px 22px;
-  border-radius: 24px;
-  font-weight: 800;
-  font-size: 0.88rem;
-  letter-spacing: 0.5px;
-  box-shadow: 0 6px 20px rgba(192, 57, 43, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 9px 20px;
+  background: var(--team-red-soft);
+  border: 1px solid var(--hud-danger);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow);
+  color: var(--team-red-deep);
+  font: 700 14px/1.3 var(--hud-body);
+  letter-spacing: 0.04em;
   animation: icePulse 1s infinite alternate;
   z-index: 20;
 }
@@ -220,20 +239,18 @@
 
 .curling-reaction-toast {
   position: absolute;
-  top: 130px;
+  top: 196px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(14, 26, 36, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: #f1c40f;
-  padding: 10px 24px;
-  border-radius: 20px;
-  border: 2px solid #f1c40f;
-  font-weight: 900;
-  font-size: 1.15rem;
-  letter-spacing: 0.8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  padding: 10px 22px;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-accent);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow-strong);
+  color: var(--hud-ink);
+  font: 600 19px/1.2 var(--hud-display);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
   z-index: 30;
   pointer-events: none;
   animation: reactionPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
@@ -251,56 +268,52 @@
 }
 
 /* ==========================================================================
-   3. Collapsible "Match Tactics" Pill & Modal
+   3. Team and role picker
    ========================================================================== */
 .curling-tactics-pill {
   position: absolute;
-  top: 18px;
-  left: 18px;
+  top: 10px;
+  left: 24px;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(28, 40, 51, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #ffffff;
-  padding: 8px 16px;
-  border-radius: 22px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  font-size: 0.88rem;
-  font-weight: 800;
+  padding: 10px 16px;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hud-edge);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow);
+  color: var(--hud-ink);
+  font: 700 14px/1.2 var(--hud-body);
   cursor: pointer;
   z-index: 22;
   transition: all 0.15s ease;
 }
 
+.curling-tactics-pill > svg {
+  color: var(--hud-muted);
+}
+
 .curling-tactics-pill:hover {
-  background: rgba(38, 54, 69, 0.95);
-  border-color: #f1c40f;
-  transform: translateY(-1px);
+  background: var(--hud-card-solid);
+  border-color: var(--hud-edge-strong);
 }
 
 .curling-tactics-menu {
   position: absolute;
-  top: 66px;
-  left: 18px;
-  background: linear-gradient(
-    135deg,
-    rgba(24, 35, 46, 0.96),
-    rgba(35, 50, 65, 0.96)
-  );
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  padding: 16px;
+  top: 62px;
+  left: 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  width: 300px;
+  padding: 18px;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow-strong);
   z-index: 23;
-  width: 260px;
   animation: tacticsSlide 0.2s ease-out;
 }
 
@@ -315,50 +328,48 @@
   }
 }
 
+.curling-tactics-menu .curling-btn-group {
+  width: 100%;
+}
+
+.curling-tactics-menu .curling-toggle-btn {
+  flex: 1;
+  justify-content: center;
+  padding: 8px 6px;
+  white-space: nowrap;
+}
+
 .curling-tactics-section-title {
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #85c1e9;
   margin-bottom: -4px;
+  color: var(--hud-muted);
+  font: 700 11px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 /* ==========================================================================
-   4. Deliverer Tactile Clay HUD
+   4. Delivery panel
    ========================================================================== */
 .curling-deliver-hud {
   position: absolute;
-  bottom: 20px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(
-    135deg,
-    rgba(18, 30, 42, 0.94),
-    rgba(28, 45, 60, 0.94)
-  );
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 18px 24px;
-  border-radius: 28px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  z-index: 25;
   width: 92%;
   max-width: 520px;
+  padding: 18px 22px;
+  z-index: 25;
 }
 
-/* Stone Selection 3D Cards */
+/* Stone choice */
 .curling-stone-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -366,36 +377,27 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 6px;
-  border-radius: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
-  color: #cfd8dc;
+  padding: 9px 6px 8px;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge);
+  border-radius: 12px;
+  color: var(--hud-ink);
+  text-align: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
-  text-align: center;
 }
 
 .curling-stone-card:hover {
-  background: rgba(255, 255, 255, 0.14);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+  border-color: var(--hud-edge-strong);
+  background: var(--hud-card-strong);
 }
 
 .curling-stone-card.active {
-  background: linear-gradient(135deg, #2980b9, #3498db);
-  border-color: #f1c40f;
-  color: #ffffff;
-  transform: translateY(-2px);
+  background: var(--hud-card-strong);
+  border-color: var(--hud-accent);
   box-shadow:
-    0 6px 0 #1b4f72,
-    0 8px 20px rgba(52, 152, 219, 0.4);
-}
-
-.curling-stone-card:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+    0 0 0 1px var(--hud-accent),
+    0 3px 0 var(--hud-accent-strong);
 }
 
 .curling-stone-icon {
@@ -404,18 +406,18 @@
 }
 
 .curling-stone-name {
-  font-size: 0.82rem;
-  font-weight: 800;
-  margin-top: 2px;
+  margin-top: 3px;
+  font: 600 16px/1.15 var(--hud-display);
 }
 
 .curling-stone-sub {
-  font-size: 0.65rem;
-  opacity: 0.8;
-  margin-top: 1px;
+  margin-top: 2px;
+  color: var(--hud-muted);
+  font-size: 11px;
+  line-height: 1.3;
 }
 
-/* HUD Row Controls */
+/* Rows and segmented toggles */
 .curling-hud-row {
   display: flex;
   align-items: center;
@@ -426,40 +428,40 @@
 
 .curling-btn-group {
   display: flex;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.28);
+  gap: 4px;
   padding: 4px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--hud-edge) 38%, transparent);
+  border: 1px solid var(--hud-edge);
+  border-radius: 12px;
 }
 
 .curling-toggle-btn {
-  background: transparent;
-  border: none;
-  color: #cbd5e1;
-  padding: 7px 12px;
-  border-radius: 12px;
-  font-size: 0.82rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   gap: 5px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--hud-ink);
+  font: 700 13px/1.2 var(--hud-body);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .curling-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: var(--hud-card-solid);
 }
 
 .curling-toggle-btn.active {
-  background: linear-gradient(135deg, #e67e22, #d35400);
-  color: #ffffff;
-  box-shadow: 0 3px 0 #933c00;
+  background: var(--hud-accent);
+  border-color: var(--hud-accent-strong);
+  box-shadow: 0 2px 0 var(--hud-accent-strong);
+  color: var(--hud-ink);
 }
 
-/* Power Meter with Labeled Tactical Zones */
+/* Power meter with guard, draw and takeout zones. The bar paints the zones;
+   the fill is a window onto them and veils everything past it. */
 .curling-power-meter {
   display: flex;
   flex-direction: column;
@@ -471,102 +473,97 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 800;
+  color: var(--hud-ink);
+  font: 700 13px/1.2 var(--hud-body);
 }
 
 .curling-power-zone-tag {
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 8px;
-  background: rgba(241, 196, 15, 0.2);
-  border: 1px solid rgba(241, 196, 15, 0.4);
-  color: #f1c40f;
+  padding: 3px 10px;
+  background: var(--hud-card-strong);
+  border: 1px solid color-mix(in srgb, var(--hud-accent) 55%, transparent);
+  border-radius: 999px;
+  color: var(--hud-accent-ink);
+  font: 700 12px/1.2 var(--hud-body);
 }
 
 .curling-power-bar-bg {
   position: relative;
   width: 100%;
-  height: 22px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 11px;
+  height: 18px;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(
+    90deg,
+    var(--hud-good) 0 35%,
+    var(--hud-accent) 35% 72%,
+    var(--hud-danger) 72% 100%
+  );
+  border: 1px solid var(--hud-edge-strong);
+  border-radius: 999px;
 }
 
 .curling-power-bar-fill {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    #2ecc71 0%,
-    #3498db 35%,
-    #f39c12 70%,
-    #e74c3c 100%
-  );
-  border-radius: 11px;
+  background: transparent;
+  box-shadow:
+    inset -3px 0 0 var(--hud-ink),
+    0 0 0 100vmax color-mix(in srgb, var(--hud-card-solid) 80%, transparent);
   transition: width 0.04s linear;
 }
 
-/* Zone Guides Beneath Meter */
 .curling-power-zones {
   display: flex;
   width: 100%;
-  font-size: 0.65rem;
-  font-weight: 800;
+  margin-top: -1px;
+  font: 700 10.5px/1.2 var(--hud-body);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #94a3b8;
-  margin-top: -2px;
 }
 
 .curling-zone-guard {
   width: 35%;
   text-align: left;
-  color: #58d68d;
+  color: var(--hud-good);
 }
 
 .curling-zone-draw {
   width: 37%;
   text-align: center;
-  color: #f5b041;
+  color: var(--hud-accent-ink);
 }
 
 .curling-zone-takeout {
   width: 28%;
   text-align: right;
-  color: #ec7063;
+  color: var(--hud-danger);
 }
 
-/* Aim Rocker Buttons */
+/* Aim rocker */
 .curling-aim-group {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  background: rgba(0, 0, 0, 0.25);
   padding: 4px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--hud-edge) 38%, transparent);
+  border: 1px solid var(--hud-edge);
+  border-radius: 12px;
 }
 
 .curling-aim-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: none;
-  color: #ffffff;
   padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 0.82rem;
-  font-weight: 800;
+  background: var(--hud-card-solid);
+  border: 1px solid var(--hud-edge);
+  border-radius: 9px;
+  box-shadow: 0 2px 0 var(--hud-edge);
+  color: var(--hud-ink);
+  font: 700 13px/1.2 var(--hud-body);
   cursor: pointer;
   transition: all 0.12s ease;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
 }
 
 .curling-aim-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-1px);
+  background: var(--hud-card-strong);
+  border-color: var(--hud-edge-strong);
 }
 
 .curling-aim-btn:active {
@@ -575,315 +572,305 @@
 }
 
 .curling-aim-display {
-  color: #aed6f1;
-  font-size: 0.82rem;
-  font-weight: 800;
   padding: 0 8px;
+  color: var(--hud-muted);
+  font: 500 15px/1.2 var(--hud-display);
 }
 
-/* Juicy Deliver Button */
+/* The house primary: amber, dark ink, a firm shadow underneath. */
 .curling-launch-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #e67e22, #d35400);
-  color: #ffffff;
-  border: none;
-  padding: 13px 24px;
-  border-radius: 18px;
-  font-size: 1.15rem;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  box-shadow:
-    0 6px 0 #933c00,
-    0 10px 24px rgba(211, 84, 0, 0.5);
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 24px;
+  background: var(--hud-accent);
+  border: 1px solid var(--hud-accent-strong);
+  border-radius: 12px;
+  box-shadow: 0 4px 0 var(--hud-accent-ink);
+  color: var(--hud-ink);
+  font: 600 21px/1.1 var(--hud-display);
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    background 0.15s ease;
 }
 
 .curling-launch-btn:hover {
-  background: linear-gradient(135deg, #f39c12, #e67e22);
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 0 #933c00,
-    0 12px 28px rgba(243, 156, 18, 0.6);
+  background: color-mix(in srgb, var(--hud-accent) 82%, white);
 }
 
 .curling-launch-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 #933c00;
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--hud-accent-ink);
 }
 
 .curling-launch-sub {
-  font-size: 0.68rem;
-  font-weight: 700;
-  opacity: 0.85;
-  letter-spacing: 0.4px;
+  color: var(--hud-accent-ink);
+  font: 700 12px/1.2 var(--hud-body);
+  letter-spacing: 0.02em;
 }
 
 /* ==========================================================================
-   5. Sweeper Cockpit & Gadget Dock
+   5. Sweeper cockpit and gadget dock
    ========================================================================== */
 .curling-sweeper-cockpit {
   position: absolute;
-  bottom: 22px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   z-index: 25;
-  width: 90%;
-  max-width: 480px;
+  width: 94%;
+  max-width: 580px;
 }
 
-/* Slide Telemetry Readout */
+/* Slide readout */
 .curling-slide-telemetry {
   display: flex;
-  gap: 16px;
-  background: rgba(14, 26, 36, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 6px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  gap: 22px;
   align-items: center;
   justify-content: center;
+  padding: 9px 20px;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow);
 }
 
 .curling-telemetry-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 3px;
 }
 
 .curling-telemetry-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.5px;
+  color: var(--hud-muted);
+  font: 700 10px/1.2 var(--hud-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .curling-telemetry-val {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #ffffff;
+  color: var(--hud-ink);
+  font: 600 18px/1.1 var(--hud-display);
+  white-space: nowrap;
 }
 
-/* Gadget Dock */
+.curling-telemetry-val.is-idle {
+  color: var(--hud-muted);
+  font: 700 12px/1.5 var(--hud-body);
+  letter-spacing: 0.06em;
+}
+
+.curling-telemetry-val.is-sweeping {
+  color: var(--hud-accent-ink);
+}
+
+/* Gadget dock, dressed like the house tool dock */
 .curling-gadget-dock {
   display: flex;
-  gap: 8px;
-  background: rgba(18, 30, 42, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  padding: 6px 10px;
-  border-radius: 20px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  gap: 5px;
+  padding: 6px;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hud-edge);
+  border-radius: 15px;
+  box-shadow: var(--hud-shadow);
 }
 
 .curling-gadget-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
-  padding: 7px 14px;
-  border-radius: 14px;
-  font-size: 0.82rem;
-  font-weight: 800;
+  gap: 7px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--hud-ink);
+  font: 600 13px/1.2 var(--hud-body);
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.curling-gadget-btn > svg {
+  color: var(--hud-muted);
 }
 
 .curling-gadget-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--hud-edge) 45%, transparent);
 }
 
 .curling-gadget-btn.active {
-  background: linear-gradient(135deg, #f39c12, #d35400);
-  border-color: #f1c40f;
-  color: #ffffff;
-  box-shadow:
-    0 4px 0 #933c00,
-    0 6px 18px rgba(243, 156, 18, 0.4);
+  background: var(--hud-accent);
+  border-color: var(--hud-accent-strong);
 }
 
-.curling-gadget-btn:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+.curling-gadget-btn.active > svg {
+  color: var(--hud-ink);
 }
 
-/* Sweeper Steer & Scrub Controls */
+/* Steer and sweep */
 .curling-sweeper-hud {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
   justify-content: center;
 }
 
 .curling-sweep-btn {
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-  color: #ffffff;
-  border: none;
-  padding: 18px 30px;
-  border-radius: 28px;
-  font-size: 1.25rem;
-  font-weight: 900;
-  letter-spacing: 0.8px;
-  cursor: pointer;
-  box-shadow:
-    0 6px 0 #1e8449,
-    0 10px 28px rgba(46, 204, 113, 0.5);
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 16px 28px;
+  background: var(--hud-accent);
+  border: 1px solid var(--hud-accent-strong);
+  border-radius: 14px;
+  box-shadow: 0 5px 0 var(--hud-accent-ink);
+  color: var(--hud-ink);
+  font: 600 22px/1.1 var(--hud-display);
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  cursor: pointer;
   touch-action: manipulation;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    background 0.15s ease;
 }
 
 .curling-sweep-btn:hover {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 0 #1e8449,
-    0 12px 32px rgba(46, 204, 113, 0.6);
+  background: color-mix(in srgb, var(--hud-accent) 82%, white);
 }
 
 .curling-sweep-btn:active,
 .curling-sweep-btn.active {
-  transform: translateY(4px) scale(0.96);
-  background: linear-gradient(135deg, #1e8449, #27ae60);
-  box-shadow: 0 2px 0 #145a32;
+  transform: translateY(4px) scale(0.97);
+  background: var(--hud-accent-strong);
+  box-shadow: 0 1px 0 var(--hud-accent-ink);
 }
 
 .curling-steer-btn {
-  background: rgba(28, 40, 51, 0.92);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
   padding: 14px 18px;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  font-weight: 800;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hud-edge);
+  border-radius: 14px;
+  box-shadow:
+    0 3px 0 var(--hud-edge),
+    var(--hud-shadow);
+  color: var(--hud-ink);
+  font: 700 14px/1.2 var(--hud-body);
+  white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
-  transition: all 0.1s ease;
   touch-action: manipulation;
+  transition: all 0.1s ease;
 }
 
 .curling-steer-btn:hover {
-  background: rgba(38, 54, 69, 0.95);
-  transform: translateY(-1px);
+  background: var(--hud-card-solid);
+  border-color: var(--hud-edge-strong);
 }
 
 .curling-steer-btn:active,
 .curling-steer-btn.active {
-  background: #2980b9;
-  border-color: #3498db;
+  background: var(--hud-card-strong);
+  border-color: var(--hud-accent);
   transform: translateY(2px);
   box-shadow: none;
 }
 
-/* Banana Sabotage Button */
+/* Banana sabotage */
 .curling-banana-btn {
   position: absolute;
-  bottom: 24px;
+  bottom: 30px;
   right: 24px;
-  background: linear-gradient(135deg, #f1c40f, #f39c12);
-  color: #1e293b;
-  border: 2px solid #ffffff;
-  padding: 14px 22px;
-  border-radius: 22px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  cursor: pointer;
+  padding: 13px 20px;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hud-edge-strong);
+  border-radius: 14px;
   box-shadow:
-    0 5px 0 #b7950b,
-    0 8px 20px rgba(241, 196, 15, 0.4);
+    0 3px 0 var(--hud-edge-strong),
+    var(--hud-shadow);
+  color: var(--hud-ink);
+  font: 700 14px/1.2 var(--hud-body);
+  cursor: pointer;
   z-index: 25;
   transition: all 0.1s ease;
 }
 
 .curling-banana-btn:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 7px 0 #b7950b,
-    0 10px 24px rgba(241, 196, 15, 0.5);
+  background: var(--hud-card-strong);
+  border-color: var(--hud-accent);
 }
 
 .curling-banana-btn:active {
   transform: translateY(3px);
-  box-shadow: 0 2px 0 #b7950b;
+  box-shadow: none;
 }
 
-/* Waiting Indicator */
+/* Opponent's turn */
 .curling-waiting-banner {
   position: absolute;
-  bottom: 28px;
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(18, 30, 42, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: #aed6f1;
-  padding: 12px 28px;
-  border-radius: 22px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: 0.5px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  padding: 13px 26px;
+  background: var(--hud-card);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--hud-edge);
+  border-radius: 999px;
+  box-shadow: var(--hud-shadow);
+  color: var(--hud-muted);
+  font: 700 14px/1.3 var(--hud-body);
+  white-space: nowrap;
   z-index: 22;
 }
 
 /* ==========================================================================
-   6. End Summary & Match Finished Modals
+   6. End summary and match result, drawn like the house result dialog
    ========================================================================== */
 .curling-modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10, 18, 26, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: color-mix(in srgb, var(--hud-ink) 26%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 40;
 }
 
 .curling-modal-card {
-  background: linear-gradient(135deg, #1c2833, #273746);
-  border: 2px solid rgba(241, 196, 15, 0.4);
-  border-radius: 30px;
-  padding: 36px 44px;
-  max-width: 480px;
-  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(440px, calc(100% - 32px));
+  padding: 30px;
+  background: var(--cream);
+  border: 1px solid var(--hud-card-solid);
+  border-radius: 20px;
+  box-shadow: 0 18px 70px color-mix(in srgb, var(--hud-ink) 24%, transparent);
+  color: var(--hud-ink);
   text-align: center;
-  color: #ffffff;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
 }
 
 @keyframes modalPop {
   0% {
-    transform: scale(0.85);
+    transform: scale(0.9);
     opacity: 0;
   }
   100% {
@@ -892,84 +879,173 @@
   }
 }
 
+.curling-modal-trophy {
+  color: var(--hud-accent);
+}
+
 .curling-modal-title {
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: #f1c40f;
-  margin-bottom: 10px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  margin: 0;
+  color: var(--hud-ink);
+  font: 500 31px/1.13 var(--hud-display);
+  letter-spacing: -0.3px;
 }
 
 .curling-modal-desc {
-  font-size: 1.05rem;
-  color: #cbd5e1;
-  margin-bottom: 24px;
-  line-height: 1.5;
+  margin: 0;
+  color: var(--hud-muted);
+  font-size: 14px;
+  line-height: 1.65;
 }
 
 .curling-modal-scores {
   display: flex;
-  justify-content: space-around;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+  gap: 48px;
+  width: 100%;
+  padding: 17px 0;
+  border-top: 1px solid var(--hud-edge);
+  border-bottom: 1px solid var(--hud-edge);
 }
 
 .curling-modal-team-score {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .curling-modal-team-name {
-  font-weight: 800;
-  font-size: 0.95rem;
+  color: var(--hud-muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .curling-modal-team-val {
-  font-size: 2.4rem;
-  font-weight: 900;
-  line-height: 1;
+  font: 500 34px/1 var(--hud-display);
 }
 
 .curling-modal-team-val.red {
-  color: var(--team-red-glow);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--team-red) 60%, transparent);
+  color: var(--team-red-deep);
 }
 
 .curling-modal-team-val.blue {
-  color: var(--team-blue-glow);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--team-blue) 60%, transparent);
+  color: var(--team-blue-deep);
+}
+
+.curling-modal-note {
+  margin: 0;
+  color: var(--hud-good);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .curling-action-btn {
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-  color: #ffffff;
-  border: none;
-  padding: 14px 34px;
-  border-radius: 18px;
-  font-size: 1.15rem;
-  font-weight: 900;
-  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 15px;
+  background: var(--hud-accent);
+  border: 1px solid var(--hud-accent-strong);
+  border-radius: 10px;
+  box-shadow: 0 3px 0 var(--hud-accent-ink);
+  color: var(--hud-ink);
+  font: 700 15px/1.2 var(--hud-body);
+  letter-spacing: 0.04em;
   cursor: pointer;
-  box-shadow:
-    0 6px 0 #1e8449,
-    0 8px 24px rgba(39, 174, 96, 0.4);
   transition: all 0.12s ease;
 }
 
 .curling-action-btn:hover {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 0 #1e8449,
-    0 12px 28px rgba(46, 204, 113, 0.5);
+  background: color-mix(in srgb, var(--hud-accent) 82%, white);
 }
 
 .curling-action-btn:active {
   transform: translateY(3px);
-  box-shadow: 0 2px 0 #1e8449;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   7. Small screens and touch
+   ========================================================================== */
+@media (max-width: 800px) {
+  .curling-scoreboard {
+    top: 72px;
+    gap: 10px;
+    padding: 8px 14px;
+  }
+  .curling-team-name {
+    display: none;
+  }
+  .curling-team-points {
+    font-size: 28px;
+  }
+  .curling-round-info {
+    padding: 0 10px;
+  }
+  /* Below the scoreboard: the picker on the left, the banana on the right.
+     The picker is placed from the top bar's lower edge. */
+  .curling-tactics-pill {
+    top: 98px;
+    left: 12px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .curling-tactics-menu {
+    top: 144px;
+    left: 12px;
+  }
+  .curling-reaction-toast {
+    top: 216px;
+    font-size: 16px;
+  }
+  .curling-deliver-hud {
+    bottom: 12px;
+    width: calc(100% - 20px);
+    padding: 12px;
+    gap: 9px;
+  }
+  .curling-stone-sub {
+    display: none;
+  }
+  .curling-power-zones {
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+  .curling-aim-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .curling-launch-btn {
+    font-size: 18px;
+    padding: 10px 16px;
+  }
+  .curling-sweeper-cockpit {
+    bottom: 12px;
+    width: calc(100% - 20px);
+  }
+  .curling-sweep-btn {
+    padding: 14px 18px;
+    font-size: 18px;
+  }
+  .curling-steer-btn {
+    padding: 12px 12px;
+    font-size: 13px;
+  }
+  .curling-banana-btn {
+    top: 162px;
+    right: 12px;
+    bottom: auto;
+    padding: 9px 13px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .curling-tactics-pill,
+  .curling-banana-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
 }

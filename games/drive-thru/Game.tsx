@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Volume2,
-  VolumeX,
   RotateCcw,
   Car,
   Utensils,
@@ -12,6 +10,7 @@ import {
   Flame,
   AlertTriangle,
   Zap,
+  Hamburger,
 } from 'lucide-react';
 import { DriveThruScene } from './scene';
 import { DriveThruAudio } from './audio';
@@ -37,11 +36,24 @@ import {
 import { driveThruAnalytics } from './analytics';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { DRIVE_THRU_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(driveThruAnalytics);
+
+// "Flip Patty (Space)" reads as a label and a house key cap. Labels without
+// a short trailing key in brackets pass through unchanged.
+function KeyHint({ text }: { text: string }) {
+  const match = /^(.*?)\s*\(([^)]{1,12})\)$/.exec(text.trim());
+  if (!match) return <>{text}</>;
+  return (
+    <>
+      <span>{match[1]}</span>
+      <kbd className="house-key">{match[2]}</kbd>
+    </>
+  );
+}
 
 export default function DriveThruGame() {
   const { t } = useLanguage();
@@ -193,11 +205,26 @@ export default function DriveThruGame() {
 
   return (
     <div className="drive-thru-container">
-      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 40 }}>
-        <LanguageSwitcher variant="header" />
-      </div>
       {/* 3D WebGL Canvas */}
       <div ref={containerRef} className="drive-thru-canvas-wrapper" />
+
+      {/* House top bar: wordmark + shared toolbar (sound, language, help) */}
+      <header className="topbar drive-thru-topbar">
+        <a href="/" className="wordmark">
+          <span className="drive-thru-mark">
+            <Hamburger size={22} />
+          </span>{' '}
+          DRIVE-THRU STATIC<span className="drive-thru-title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={!audioEnabled}
+          onToggleSound={handleToggleAudio}
+          // Drive-Thru has no rules panel yet; the role bar and the action
+          // dock already show every control.
+          onHelp={() => {}}
+          voiceHint="Use your group call to talk with friends. In-game voice is not available in Drive-Thru Static yet."
+        />
+      </header>
 
       {/* Top Order Ticket Banner */}
       {snapshot?.ticket && (
@@ -208,10 +235,10 @@ export default function DriveThruGame() {
               {snapshot.ticket.orderNumber}
             </span>
             <span>
-              {strings.timeLeft} {snapshot.phaseTimer}s
+              {strings.timeLeft} <strong>{snapshot.phaseTimer}s</strong>
             </span>
             <span>
-              {strings.score} {snapshot.score}
+              {strings.score} <strong>{snapshot.score}</strong>
             </span>
           </div>
           <div className="drive-thru-ticket-scramble">
@@ -307,7 +334,7 @@ export default function DriveThruGame() {
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'honk' })}
             >
-              <Zap size={16} /> {strings.honkHorn}
+              <Zap size={17} /> <KeyHint text={strings.honkHorn} />
             </button>
           </>
         )}
@@ -318,19 +345,19 @@ export default function DriveThruGame() {
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'reachTray' })}
             >
-              Reach for Tray (Space)
+              <KeyHint text="Reach for Tray (Space)" />
             </button>
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'swatDistraction' })}
             >
-              Swat Toddler Toy (R)
+              <KeyHint text="Swat Toddler Toy (R)" />
             </button>
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'toggleWipers' })}
             >
-              Wipers (E)
+              <KeyHint text="Wipers (E)" />
             </button>
           </>
         )}
@@ -341,13 +368,13 @@ export default function DriveThruGame() {
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'flipPatty' })}
             >
-              <Utensils size={16} /> {strings.flipPatty}
+              <Utensils size={17} /> <KeyHint text={strings.flipPatty} />
             </button>
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'liftFryer' })}
             >
-              <Flame size={16} /> Pull Fryer (R)
+              <Flame size={17} /> <KeyHint text="Pull Fryer (R)" />
             </button>
             <button
               className="drive-thru-action-btn"
@@ -355,7 +382,7 @@ export default function DriveThruGame() {
                 handleAction({ type: 'stackIngredient', layer: 'patty' })
               }
             >
-              Stack Patty (E)
+              <KeyHint text="Stack Patty (E)" />
             </button>
           </>
         )}
@@ -366,20 +393,17 @@ export default function DriveThruGame() {
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'ventMilkshake' })}
             >
-              <AlertTriangle size={16} /> Vent Shake Valve (Space)
+              <AlertTriangle size={17} />{' '}
+              <KeyHint text="Vent Shake Valve (Space)" />
             </button>
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'pushTray' })}
             >
-              Push Tray to Window (E)
+              <KeyHint text="Push Tray to Window (E)" />
             </button>
           </>
         )}
-
-        <button className="drive-thru-action-btn" onClick={handleToggleAudio}>
-          {audioEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-        </button>
       </div>
 
       {/* Game Over / Meltdown / Victory Modal */}
@@ -404,10 +428,7 @@ export default function DriveThruGame() {
                   'The shift ended in catastrophic fast-food disaster!'}
             </div>
             <button className="drive-thru-btn-restart" onClick={handleRestart}>
-              <RotateCcw
-                size={18}
-                style={{ display: 'inline', marginRight: 8 }}
-              />
+              <RotateCcw size={18} />
               Start New Shift
             </button>
           </div>

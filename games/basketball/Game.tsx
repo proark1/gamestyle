@@ -6,6 +6,7 @@ import {
   RotateCcw,
   Timer,
   Trophy,
+  Volleyball,
   Zap,
 } from 'lucide-react';
 import type { PeerGameConnection } from '../../shared/peer/connection';
@@ -33,7 +34,7 @@ import { BasketballSound } from './audio';
 import { BasketballScene } from './scene';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { BASKETBALL_TRANSLATIONS } from './translations';
 import {
   GameTracker,
@@ -43,6 +44,8 @@ import { basketballAnalytics } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(basketballAnalytics);
+// Below this width the controls card starts hidden; style.css matches it.
+const HINTS_HIDDEN_QUERY = '(max-width: 820px)';
 
 export default function BasketballGame() {
   useGameTracker(tracker);
@@ -67,6 +70,10 @@ export default function BasketballGame() {
 
   const [snapshot, setSnapshot] = useState<BasketballSnapshot | null>(null);
   const [team, setTeam] = useState<TeamId>('red');
+  const [muted, setMuted] = useState(false);
+  // The toolbar's help button shows or hides the controls card. Until it is
+  // pressed the card follows the screen width.
+  const [hints, setHints] = useState<boolean | null>(null);
   const [celebrationBanner, setCelebrationBanner] = useState<{
     text: string;
     subtext: string;
@@ -269,12 +276,36 @@ export default function BasketballGame() {
     dispatchAction({ type: 'switchTeam' });
   };
 
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    if (sound.current) {
+      sound.current.unlock();
+      sound.current.enabled = !next;
+    }
+  };
+
+  const toggleHints = () =>
+    setHints(
+      (shown) => !(shown ?? !window.matchMedia(HINTS_HIDDEN_QUERY).matches),
+    );
+
   return (
     <div className="bb-game">
       <div ref={container} className="bb-canvas" />
-      <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 20 }}>
-        <LanguageSwitcher variant="header" />
-      </div>
+      <header className="topbar bb-topbar">
+        <a href="/" className="wordmark">
+          <span className="bb-mark">
+            <Volleyball size={22} />
+          </span>
+          COURT CLASH<span className="title-dot">.</span>
+        </a>
+        <GameToolbar
+          muted={muted}
+          onToggleSound={toggleSound}
+          onHelp={toggleHints}
+        />
+      </header>
 
       {/* Topbar HUD */}
       {world && world.phase !== 'lobby' && (
@@ -305,10 +336,7 @@ export default function BasketballGame() {
             </div>
             {world.needsClearance && (
               <div className="bb-clearance-badge">
-                <AlertCircle
-                  size={10}
-                  style={{ display: 'inline', marginRight: 4 }}
-                />
+                <AlertCircle size={12} />
                 {strings.clearBall}
               </div>
             )}
@@ -320,15 +348,10 @@ export default function BasketballGame() {
               world.possession === 'blue' ? 'has-possession' : ''
             }`}
           >
-            <div className="bb-score-meta" style={{ textAlign: 'right' }}>
+            <div className="bb-score-meta">
               <span>{teamName.blue}</span>
               <span>Team</span>
-              {world.possession === 'blue' && (
-                <span
-                  className="bb-poss-dot"
-                  style={{ alignSelf: 'flex-end' }}
-                />
-              )}
+              {world.possession === 'blue' && <span className="bb-poss-dot" />}
             </div>
             <div className="bb-score-val">{world.scores.blue}</div>
           </div>
@@ -364,28 +387,14 @@ export default function BasketballGame() {
 
           {superReady && (
             <div className="bb-combo-badge">
-              <Flame
-                size={16}
-                style={{
-                  display: 'inline',
-                  verticalAlign: 'middle',
-                  marginRight: 4,
-                }}
-              />
+              <Flame size={16} />
               SUPER JUMP READY! (Space x2)
             </div>
           )}
 
           {localPlayer.combo >= 80 && (
             <div className="bb-combo-badge fire">
-              <Flame
-                size={16}
-                style={{
-                  display: 'inline',
-                  verticalAlign: 'middle',
-                  marginRight: 4,
-                }}
-              />
+              <Flame size={16} />
               ON FIRE! (+Speed &amp; Power)
             </div>
           )}
@@ -494,7 +503,7 @@ export default function BasketballGame() {
 
           <button
             type="button"
-            className="bb-btn primary"
+            className="bb-btn primary primary-button"
             onClick={handleStart}
           >
             {strings.startMatch}
@@ -504,8 +513,10 @@ export default function BasketballGame() {
 
       {/* Match Ended Banner */}
       {world?.phase === 'ended' && (
-        <div className="bb-ended-banner">
-          <Trophy size={48} color="#e58e38" style={{ margin: '0 auto 12px' }} />
+        <div className="bb-ended-banner game-dialog result-dialog">
+          <span className="dialog-emblem">
+            <Trophy size={30} />
+          </span>
           <h2>{strings.matchEnded}</h2>
           <div className={`bb-ended-winner ${world.winner ?? 'red'}`}>
             {strings.teamWins.replace(
@@ -515,43 +526,52 @@ export default function BasketballGame() {
           </div>
           <button
             type="button"
-            className="bb-btn primary"
+            className="bb-btn primary primary-button"
             onClick={handleRestart}
           >
-            <RotateCcw size={18} style={{ marginRight: 6 }} />{' '}
+            <RotateCcw size={18} />
             {strings.playRematch}
           </button>
         </div>
       )}
 
       {/* Controls Hint Bar */}
-      <div className="bb-hint-bar">
+      <div
+        className={`bb-hint-bar${
+          hints === null ? '' : hints ? ' is-open' : ' is-closed'
+        }`}
+      >
         <span>
-          <span className="bb-hint-key">WASD</span> {strings.hintMove}
+          <span className="bb-hint-key house-key">WASD</span> {strings.hintMove}
         </span>
         <span>
-          <span className="bb-hint-key">Space</span> {strings.hintShootDunk}
+          <span className="bb-hint-key house-key">Space</span>{' '}
+          {strings.hintShootDunk}
         </span>
         <span>
-          <span className="bb-hint-key">F</span> {strings.hintCrossover}
+          <span className="bb-hint-key house-key">F</span>{' '}
+          {strings.hintCrossover}
         </span>
         <span>
-          <span className="bb-hint-key">C</span> {strings.hintSpin}
+          <span className="bb-hint-key house-key">C</span> {strings.hintSpin}
         </span>
         <span>
-          <span className="bb-hint-key">S+Space</span> {strings.hintStepBack}
+          <span className="bb-hint-key house-key">S+Space</span>{' '}
+          {strings.hintStepBack}
         </span>
         <span>
-          <span className="bb-hint-key">E</span> {strings.hintPass}
+          <span className="bb-hint-key house-key">E</span> {strings.hintPass}
         </span>
         <span>
-          <span className="bb-hint-key">Shift</span> {strings.hintSprint}
+          <span className="bb-hint-key house-key">Shift</span>{' '}
+          {strings.hintSprint}
         </span>
         <span>
-          <span className="bb-hint-key">Space x2</span> {strings.hintSuperJump}
+          <span className="bb-hint-key house-key">Space x2</span>{' '}
+          {strings.hintSuperJump}
         </span>
         <span>
-          <span className="bb-hint-key">V</span> {strings.hintCamera}
+          <span className="bb-hint-key house-key">V</span> {strings.hintCamera}
         </span>
       </div>
     </div>

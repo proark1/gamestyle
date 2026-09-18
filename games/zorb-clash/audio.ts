@@ -6,12 +6,21 @@
 
 export { zorbClashCatalog } from './audio/catalog';
 
+const MASTER_LEVEL = 0.35;
+
 export class ZorbClashAudio {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private chargeOsc: OscillatorNode | null = null;
   private chargeGain: GainNode | null = null;
   private unlocked = false;
+  private muted = false;
+
+  /** The toolbar's sound switch: silences everything through the master bus. */
+  setMuted(muted: boolean) {
+    this.muted = muted;
+    if (this.masterGain) this.masterGain.gain.value = muted ? 0 : MASTER_LEVEL;
+  }
 
   private init() {
     if (this.ctx) return;
@@ -22,7 +31,7 @@ export class ZorbClashAudio {
           .webkitAudioContext;
       this.ctx = new AudioCtx();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = 0.35;
+      this.masterGain.gain.value = this.muted ? 0 : MASTER_LEVEL;
       this.masterGain.connect(this.ctx.destination);
     } catch {
       // Audio not supported or blocked
