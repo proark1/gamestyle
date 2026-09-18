@@ -321,3 +321,36 @@ void test('computeCameraRelativeMovement: sideline camera (looking down +X)', ()
   const moveWD = computeCameraRelativeMovement(1, 1, camMatrix);
   assert.ok(Math.abs(Math.hypot(moveWD.x, moveWD.z) - 1.0) < 0.001);
 });
+
+void test('online, a player who stops sending input is released within a second', () => {
+  // The engine idles a player whose last input is more than 500ms old on the
+  // world clock. That only works if the clock counts milliseconds, as it does
+  // in every other game; in seconds it took minutes of silence.
+  const engine = createEngine(1_000_000);
+  const member = (id: string, order: number) => ({
+    id,
+    name: id,
+    order,
+    color: order,
+    instance: `instance-${id}`,
+    seen: 0,
+  });
+  engine.reconcile([member('a', 0), member('b', 1)]);
+  engine.input('a', { x: 1, z: 0 }, 1);
+  engine.advance(50);
+  const held = () =>
+    (engine.world.players.find((p) => p.id === 'a') as { input: { x: number } })
+      .input.x;
+  assert.equal(held(), 1, 'a live player keeps their input');
+
+  // A second of engine time with nothing from player a.
+  for (let tick = 0; tick < 20; tick++) engine.advance(50);
+  assert.equal(held(), 0, 'their stick is let go, so they stop running');
+});
+
+void test('the world clock counts milliseconds, like every other game', () => {
+  const world = freshBungeeWorld(0);
+  const before = world.clock;
+  advanceBungee(world, 0.05, 0);
+  assert.equal(world.clock - before, 50);
+});

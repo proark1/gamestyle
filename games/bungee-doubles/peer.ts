@@ -68,11 +68,10 @@ const adapter: GameAdapter<BungeeWorld, BungeeSnapshot> = {
   idle(p) {
     p.input = idleInput();
   },
-  // The engine passes the world clock plus the elapsed ms. This world keeps its
-  // clock in seconds for the scene's animation, so the step is recovered as a
-  // difference, which holds in either unit. Timers compare against wall-clock ms
-  // because actions stamp them with Date.now(). The bots run here as the solo
-  // loop runs them; the simulation does not.
+  // The engine passes an absolute time in ms, not a step, so the step is
+  // recovered from the world clock. Timers compare against wall-clock ms because
+  // actions stamp them with Date.now(). The bots run here as the solo loop runs
+  // them; the simulation does not.
   advance: (w, now) => {
     const dt = Math.min(0.05, Math.max(0, (now - w.clock) / 1000));
     const wall = Date.now();

@@ -432,6 +432,8 @@ export class BungeeScene {
   render(snap: BungeeSnapshot) {
     this.localId = snap.localId;
     const { world } = snap;
+    // The world clock is in ms; the animation helpers take seconds.
+    const seconds = world.clock / 1000;
 
     // Update ball
     this.ballMesh.position.set(world.ball.x, world.ball.y, world.ball.z);
@@ -443,7 +445,7 @@ export class BungeeScene {
       world.ball.x,
       world.ball.z,
       world.ball.y,
-      world.clock,
+      seconds,
     );
 
     // Dynamic ball speed trail on high-velocity shots and smashes
@@ -476,7 +478,7 @@ export class BungeeScene {
       mesh.rotation.y = p.facing;
 
       const walking = Math.hypot(p.vx, p.vz) > 0.4;
-      poseTennisWorker(mesh, world.clock, {
+      poseTennisWorker(mesh, seconds, {
         walking,
         specialState: p.specialState,
       });
@@ -492,7 +494,7 @@ export class BungeeScene {
           [teamPlayers[0].x, teamPlayers[0].y, teamPlayers[0].z],
           [teamPlayers[1].x, teamPlayers[1].y, teamPlayers[1].z],
           tether.tension,
-          world.clock,
+          seconds,
         );
       } else {
         this.bungeeCords[team].group.visible = false;
