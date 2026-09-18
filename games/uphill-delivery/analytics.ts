@@ -14,7 +14,10 @@ export const deliveryAnalytics: GameAnalytics = {
     { key: 'icy-stairs', label: 'Reached the icy stairs' },
     { key: 'front-door', label: 'Reached the front door' },
   ],
-  reasons: { delivered: 'The sofa was delivered' },
+  reasons: {
+    delivered: 'The sofa was delivered',
+    late: 'A party round ran out of time',
+  },
   actions: {
     grab: 'Grabbed or let go of a corner',
     release: 'Let go of the sofa',
@@ -60,6 +63,9 @@ export function deliveryPlayState(
     stage: 'finished',
     ...base,
     milestones,
-    result: { outcome: 'won', reason: 'delivered', score: world.drops },
+    result:
+      world.phase === 'late'
+        ? { outcome: 'lost', reason: 'late' }
+        : { outcome: 'won', reason: 'delivered', score: world.drops },
   };
 }

@@ -920,6 +920,47 @@ void test('toppling all three enemy towers awards victory in 2v2', () => {
   assert.equal(w.winner, 'red', 'red team wins by toppling all 3 blue towers');
 });
 
+function clash(party: boolean) {
+  const w = freshSiege(1000, 'clash2v2');
+  w.players.push(newCrew('0', 'Cap', 0, w.clock, 'red'));
+  if (party) w.clashDawn = true;
+  siegeAction(w, '0', { type: 'start', mode: 'clash2v2' }, '0');
+  return w;
+}
+
+void test('a 2v2 clash has no dawn outside a party round', () => {
+  const w = clash(false);
+  w.started = w.clock - ROUND_MS - 1000;
+  advanceSiege(w, w.clock + 50);
+  assert.equal(w.phase, 'playing');
+});
+
+void test('a party clash ends at dawn, won on towers standing', () => {
+  const w = clash(true);
+  w.started = w.clock - (ROUND_MS - RELIEF_MS) + 10;
+  advanceSiege(w, w.clock + 50);
+  assert.equal(w.phase, 'relief');
+  assert.ok(w.events.some((e) => e.text.includes('dawn')));
+  w.towers!.blue[0] = false;
+  w.reliefAt = w.clock + 10;
+  advanceSiege(w, w.clock + 50);
+  assert.equal(w.phase, 'won');
+  assert.equal(w.winner, 'red', 'red kept three towers to blue two');
+  assert.ok(w.events.at(-1)?.text.startsWith('Dawn!'));
+  siegeAction(w, '0', { type: 'restart' }, '0');
+  assert.equal(w.clashDawn, true, 'a party rematch keeps the dawn');
+});
+
+void test('a party clash level at dawn is a draw', () => {
+  const w = clash(true);
+  w.started = w.clock - ROUND_MS + 10;
+  w.phase = 'relief';
+  w.reliefAt = w.clock + 10;
+  advanceSiege(w, w.clock + 50);
+  assert.equal(w.phase, 'won');
+  assert.equal(w.winner, 'draw');
+});
+
 void test('bot teammate never aims or looses when human is on team', () => {
   const w = freshSiege(1000, 'clash2v2');
   w.players.push(

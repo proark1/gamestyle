@@ -2,9 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   advanceBungee,
+  autoServe,
+  awaitedServer,
   freshBall,
   freshBungeeWorld,
   newPlayer,
+  prepareServe,
   scorePoint,
 } from './simulation';
 import { reconcileBungeeBots } from './bots';
@@ -353,4 +356,47 @@ void test('the world clock counts milliseconds, like every other game', () => {
   const before = world.clock;
   advanceBungee(world, 0.05, 0);
   assert.equal(world.clock - before, 50);
+});
+
+/** A solo match as the game builds it: you on red, bots filling the rest. */
+function soloMatch() {
+  const world = freshBungeeWorld(0);
+  world.players.push(newPlayer('you', 'You', 0, 'red'));
+  reconcileBungeeBots(world);
+  return world;
+}
+
+void test('the opening serve waits on the human, as red has nobody named', () => {
+  const world = soloMatch();
+  assert.equal(world.servingPlayerId, null);
+  assert.equal(awaitedServer(world)?.id, 'you');
+  prepareServe(world, 'blue');
+  assert.equal(awaitedServer(world)?.team, 'blue');
+  world.phase = 'rally';
+  assert.equal(awaitedServer(world), undefined);
+});
+
+void test('auto-serve hits an idle serve once its patience runs out', () => {
+  const world = soloMatch();
+  const serve = autoServe(5000);
+  serve(world, 1000);
+  serve(world, 5999);
+  assert.equal(world.ball.state, 'serving', 'still waiting');
+  serve(world, 6000);
+  assert.equal(world.ball.state, 'in_play');
+  assert.equal(world.phase, 'rally');
+  assert.equal(world.ball.lastHitBy, 'you');
+});
+
+void test('auto-serve restarts its patience for every new serve', () => {
+  const world = soloMatch();
+  const serve = autoServe(5000);
+  serve(world, 0);
+  world.phase = 'scored';
+  serve(world, 4000);
+  prepareServe(world, 'red');
+  serve(world, 6000);
+  assert.equal(world.ball.state, 'serving', 'a fresh wait began at 6000');
+  serve(world, 11_000);
+  assert.equal(world.ball.state, 'in_play');
 });

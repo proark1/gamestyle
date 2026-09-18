@@ -61,6 +61,7 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { breakfastAnalytics, breakfastPlayState } from './analytics';
+import { inPartyMode } from '../../shared/ui/party-mode';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
@@ -324,6 +325,9 @@ export default function FourBrainCells() {
       world = freshBreakfast(now),
       s = { code: 'PRACTICE', id: 'practice-brain', token: '' };
     addBrain(world, s.id, name.trim() || 'You', 0);
+    // Practice opens in the lobby, and nobody in a party round is there to
+    // press "Let's make breakfast", so the party skips straight to the clock.
+    if (inPartyMode()) breakfastAction(world, s.id, { type: 'start' }, s.id);
     local.current = world;
     active.current = s;
     latest.current = null;

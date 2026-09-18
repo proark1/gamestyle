@@ -62,6 +62,7 @@ import {
 import { deliveryAnalytics, deliveryPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
+import { inPartyMode, PARTY_TIME_LIMIT_MS } from '../../shared/ui/party-mode';
 
 const sessions = sessionStore('uphill-delivery-session-v1');
 type ModelContext = {
@@ -118,7 +119,8 @@ export default function UphillDelivery() {
     practice = session?.code === 'PRACTICE',
     host = snapshot?.host === session?.id,
     playing = w?.phase === 'playing',
-    done = w?.phase === 'delivered';
+    late = w?.phase === 'late',
+    done = w?.phase === 'delivered' || late;
   const altitude = Math.max(0, (w?.sofa.y ?? SOFA_CENTER) - SOFA_CENTER),
     hands = w?.players.filter((p) => p.grip !== null).length ?? 0;
   function accept(next: DeliverySnapshot) {
@@ -338,6 +340,9 @@ export default function UphillDelivery() {
       s = { id, code: 'PRACTICE', token: '' },
       world = freshDelivery(now);
     world.players = [deliveryPlayer(id, name.trim() || 'Mover', 0, now)];
+    // Solo has no clock: only a delivered sofa ends it. A party round cannot
+    // wait on that, so it gets a time limit.
+    if (inPartyMode()) world.timeLimit = PARTY_TIME_LIMIT_MS;
     deliveryAction(world, id, { type: 'start' }, id);
     sessionRef.current = s;
     local.current = world;
@@ -594,7 +599,11 @@ export default function UphillDelivery() {
               <span>
                 <Hand size={14} /> {hands} / {w?.players.length} holding
               </span>
-              <span>{duration((w?.clock ?? 0) - (w?.started ?? 0))}</span>
+              <span>
+                {w?.timeLimit === undefined
+                  ? duration((w?.clock ?? 0) - (w?.started ?? 0))
+                  : `${duration(w.timeLimit - (w.clock - w.started))} left`}
+              </span>
             </div>
           </aside>
           <div className="delivery-camera">
@@ -726,12 +735,30 @@ export default function UphillDelivery() {
         <DialogContent className="delivery-dialog" showCloseButton={!done}>
           {done ? (
             <>
-              <Trophy className="delivery-dialog-icon" size={40} />
-              <DialogTitle>Special delivery. Still in one piece.</DialogTitle>
+              {late ? (
+                <Sofa className="delivery-dialog-icon" size={40} />
+              ) : (
+                <Trophy className="delivery-dialog-icon" size={40} />
+              )}
+              <DialogTitle>
+                {late
+                  ? 'Out of time. The sofa stays outside.'
+                  : 'Special delivery. Still in one piece.'}
+              </DialogTitle>
               <DialogDescription>
-                The sofa is inside No. 4.{' '}
-                {duration((w?.clock ?? 0) - (w?.started ?? 0))} of teamwork,{' '}
-                {w?.drops} hands-off moments, and absolutely no elevator.
+                {late ? (
+                  <>
+                    The sofa got {(w?.bestHeight ?? 0).toFixed(1)} m up the{' '}
+                    {SUMMIT} m climb before the clock ran out, with {w?.drops}{' '}
+                    hands-off moments.
+                  </>
+                ) : (
+                  <>
+                    The sofa is inside No. 4.{' '}
+                    {duration((w?.clock ?? 0) - (w?.started ?? 0))} of teamwork,{' '}
+                    {w?.drops} hands-off moments, and absolutely no elevator.
+                  </>
+                )}
               </DialogDescription>
               {!practice && w && (
                 <CrewSlots

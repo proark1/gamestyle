@@ -202,6 +202,11 @@ export type SiegeWorld = {
   phase: 'lobby' | 'playing' | 'relief' | 'won' | 'lost';
   mode: GameMode;
   winner?: TeamId | 'draw';
+  /**
+   * Party rounds only: the 2v2 clash also ends at dawn, won by the side with
+   * more towers standing. Otherwise a clash lasts until a castle falls.
+   */
+  clashDawn?: true;
   players: Crew[];
   blocks: Block[];
   totalBlocks: number;

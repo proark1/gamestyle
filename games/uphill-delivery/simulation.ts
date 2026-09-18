@@ -254,6 +254,11 @@ export function advanceDelivery(w: DeliveryWorld, now: number) {
       deliveryEvent(w, 'Delivered. Four stars. One very tired sofa.');
       break;
     }
+    if (w.timeLimit !== undefined && w.clock - w.started >= w.timeLimit) {
+      w.phase = 'late';
+      deliveryEvent(w, 'Out of time. The customer is sitting on the floor.');
+      break;
+    }
   }
   w.clock = now;
 }
