@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { generatePlaylist, PARTY_GAMES } from './playlist';
 import { calculateRoundPoints } from './scoring';
 import {
@@ -12,6 +13,7 @@ import {
   advanceToNextRound,
   rematchParty,
   getPartyRoom,
+  partyStorageKey,
 } from './coordinator';
 import type { RoomStore, Row } from '../../shared/rooms/types';
 
@@ -47,6 +49,21 @@ void test('generatePlaylist selects 6 unique valid games', () => {
   assert.equal(unique.size, 6);
   for (const game of playlist) {
     assert(PARTY_GAMES.some((g) => g.id === game));
+  }
+});
+
+void test('every party game tells the ribbon when its match is over', () => {
+  // Game components import stylesheets, so their source is read as text. The
+  // ribbon used to guess each game's end banner by class name and stalled the
+  // playlist on most of them when those names drifted.
+  for (const { id } of PARTY_GAMES) {
+    const source = readFileSync(`games/${id}/Game.tsx`, 'utf8');
+    assert.match(
+      source,
+      /\{\.\.\.partyRound\(/,
+      `games/${id}/Game.tsx does not spread partyRound() onto its root, so a ` +
+        `party playlist never advances past it`,
+    );
   }
 });
 
@@ -91,6 +108,47 @@ void test('calculateRoundPoints handles 2v2 team games', () => {
   assert.equal(points.p2, 10);
   assert.equal(points.p3, 3);
   assert.equal(points.p4, 3);
+});
+
+void test('the 2v2 party games score their round as two pairs', async () => {
+  for (const game of [
+    'zorb-clash',
+    'sample-stampede',
+    'siege-and-desist',
+  ] as const) {
+    const store = createMockRoomStore();
+    const { state, playerId: hostId } = await createPartyRoom(store, 'Host', 0);
+    // Pin the game into round 0; the tournament keeps a full playlist.
+    const row = (await store.get(partyStorageKey(state.code)))!;
+    const playlist = [
+      game,
+      ...PARTY_GAMES.map((entry) => entry.id).filter((id) => id !== game),
+    ].slice(0, 6);
+    await store.compareAndSwap(
+      {
+        ...row,
+        state: JSON.stringify({ ...state, playlist }),
+        version: row.version + 1,
+      },
+      row.version,
+    );
+    await joinPartyRoom(store, state.code, 'Guest', 1);
+    const started = await startPartyTournament(store, state.code, hostId);
+    const [red1, red2, blue1, blue2] = started.players.map((p) => p.id);
+
+    const after = await recordRoundResult(
+      store,
+      state.code,
+      0,
+      { [red1]: 3, [red2]: 3, [blue1]: 1, [blue2]: 1 },
+      hostId,
+    );
+    assert.deepEqual(
+      after.roundResults[0].pointsAwarded,
+      { [red1]: 10, [red2]: 10, [blue1]: 3, [blue2]: 3 },
+      `${game} did not award team points`,
+    );
+  }
 });
 
 void test('Party Room Lifecycle: create -> join -> start -> score -> next round -> finish -> rematch', async () => {

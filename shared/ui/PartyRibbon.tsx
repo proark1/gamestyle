@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trophy, ArrowRight, LoaderCircle, Sparkles } from 'lucide-react';
 import { COLORS } from '../rendering/palette';
 import { looksLikeRoomCode } from '../rooms/identity';
+import { PARTY_ROUND_ENDED_SELECTOR } from './party-round';
 import './party-ribbon.css';
 
 const GAME_TITLES: Record<string, string> = {
@@ -12,6 +13,7 @@ const GAME_TITLES: Record<string, string> = {
   'crane-clash': 'Crane Clash',
   'act-natural': 'Blend Business',
   'dont-wake-the-giant': 'Tiptoe Thieves',
+  'drive-thru': 'Drive-Thru Static',
   'four-brain-cells': 'Four Brain Cells',
   'load-bearing': 'Load Bearing',
   'one-more-button': 'One More Button',
@@ -240,14 +242,13 @@ export default function PartyRibbon() {
     return () => clearInterval(interval);
   }, [partyCode, playerName]);
 
-  // 3. Listen for round completion in the DOM
+  // 3. Listen for round completion: every party game marks its root
+  // `data-party-round="ended"` once its match is over (see party-round.ts).
   useEffect(() => {
     if (!partyCode) return;
 
     const checkEnded = () => {
-      const endedEl = document.querySelector(
-        '.cc-ended-banner, .bb-celebration-banner, .sc-ended-banner, .cof-ended-banner, .bungee-banner.win, .sos-win-dialog, .sos-lost-dialog, .hotel-gameover, .omb-gameover, .giant-gameover, .brain-gameover, .lb-gameover, .reel-gameover, .delivery-gameover, .farm-gameover, .curling-winner-banner, .zorb-win-banner, .stampede-receipt-overlay',
-      );
+      const endedEl = document.querySelector(PARTY_ROUND_ENDED_SELECTOR);
       if (endedEl && !roundCompleted) {
         setRoundCompleted(true);
       }

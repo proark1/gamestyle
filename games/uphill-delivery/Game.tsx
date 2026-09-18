@@ -26,6 +26,7 @@ import {
 import { TouchControls } from '../../shared/input/TouchControls';
 import { COLORS } from '../../shared/rendering/palette';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { partyRound } from '../../shared/ui/party-round';
 import { DeliverySound } from './audio';
 import {
   advanceDelivery,
@@ -391,7 +392,10 @@ export default function UphillDelivery() {
     }
   }
   return (
-    <main className={`delivery-shell ${session ? 'delivery-playing' : ''}`}>
+    <main
+      className={`delivery-shell ${session ? 'delivery-playing' : ''}`}
+      {...partyRound(done)}
+    >
       <div className="delivery-canvas" ref={canvas} />
       <header className="delivery-topbar">
         <a href="/" className="delivery-wordmark">

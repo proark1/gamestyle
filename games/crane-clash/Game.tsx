@@ -40,6 +40,7 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { craneClashAnalytics, craneClashPlayState } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(craneClashAnalytics);
 
@@ -261,7 +262,7 @@ export default function CraneClash() {
     ));
 
   return (
-    <main className="cc-game">
+    <main className="cc-game" {...partyRound(isEnded)}>
       <div ref={container} className="cc-canvas" />
       <header className="topbar">
         <a href="/" className="wordmark">

@@ -66,6 +66,7 @@ import { reelAnalytics, reelPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('reel-problems-session-v1');
 const time = (ms: number) => {
@@ -596,7 +597,10 @@ export default function ReelProblems() {
   );
   const uiDisabled = !playing || status !== 'online' || !!modal;
   return (
-    <main className={`reel-game${session ? ' in-session' : ''}`}>
+    <main
+      className={`reel-game${session ? ' in-session' : ''}`}
+      {...partyRound(!!session && done)}
+    >
       <div className="reel-canvas" ref={container} />
       {playing && (me?.line?.tension ?? 0) > 0.85 && (
         <div

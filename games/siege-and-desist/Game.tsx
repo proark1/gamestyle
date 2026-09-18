@@ -78,6 +78,7 @@ import {
 } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const sessions = sessionStore('siege-and-desist-session-v1');
 const PREFS_KEY = 'siege-and-desist-prefs-v1';
@@ -492,7 +493,10 @@ export default function SiegeAndDesist() {
   const idle = disabled || !(atEngine || nearSling || canHelp || riding);
 
   return (
-    <main className={`sad-game${session ? ' in-session' : ''}`}>
+    <main
+      className={`sad-game${session ? ' in-session' : ''}`}
+      {...partyRound(!!session && done)}
+    >
       <div className="sad-canvas" ref={container} />
       <header className="sad-header">
         <a href="/" className="sad-brand">

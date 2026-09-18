@@ -50,6 +50,7 @@ import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { PANIC_CURLING_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 
 const tracker = new GameTracker(panicCurlingAnalytics);
 
@@ -417,7 +418,10 @@ export default function PanicCurlingGame() {
   const myPlayer = world?.players.find((p) => p.id === sessionRef.current.id);
 
   return (
-    <div className="curling-container">
+    <div
+      className="curling-container"
+      {...partyRound(world?.phase === 'match_over')}
+    >
       <header className="topbar curling-topbar">
         <a href="/" className="wordmark">
           <span className="curling-mark">

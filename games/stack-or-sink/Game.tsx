@@ -56,6 +56,7 @@ import { type Session, sessionStore } from '../../shared/rooms/session';
 import type { GameScene, Hud } from './scene';
 import { Sound } from './sound';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { partyRound } from '../../shared/ui/party-round';
 import { TouchControls } from '../../shared/input/TouchControls';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
 import { triggerHaptic } from '../../shared/browser/haptics';
@@ -517,7 +518,10 @@ export default function Game() {
     Math.min(100, ((world?.water || 0) / GOAL) * 100),
   );
   return (
-    <main className={`game-shell ${session ? 'is-playing' : ''}`}>
+    <main
+      className={`game-shell ${session ? 'is-playing' : ''}`}
+      {...partyRound(ended)}
+    >
       <div className="world-canvas" ref={canvas} />
       <header className="topbar">
         <a

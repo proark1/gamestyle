@@ -36,6 +36,7 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
     id: 'zorb-clash',
     name: 'Zorb Clash',
     tagline: 'Bumper sumo showdown in inflatable orbs',
+    teams: true,
   },
   {
     id: 'carry-on-carnage',
@@ -46,6 +47,7 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
     id: 'sample-stampede',
     name: 'Sample Stampede',
     tagline: 'Grocery cart dash to snatch tasty bites',
+    teams: true,
   },
   {
     id: 'one-more-button',
@@ -56,6 +58,8 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
     id: 'siege-and-desist',
     name: 'Siege and Desist',
     tagline: 'Aim the giant trebuchet & shatter walls',
+    // Party mode launches the default 2v2 clash, not classic siege.
+    teams: true,
   },
   {
     id: 'stack-or-sink',

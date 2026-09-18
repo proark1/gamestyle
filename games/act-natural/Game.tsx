@@ -67,6 +67,7 @@ import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { sessionStore } from '../../shared/rooms/session';
 import { TOUCH_QUERY } from '../../shared/browser/device';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyRound } from '../../shared/ui/party-round';
 const sessions = sessionStore('act-natural-session-v1');
 const clock = (seconds: number) => {
   const whole = Math.ceil(Math.max(0, seconds));
@@ -387,6 +388,7 @@ export default function ActNatural() {
   return (
     <main
       className={`farm-shell ${session ? 'farm-active' : ''} ${w && farmMode(w) === 'human' && w.phase !== 'lobby' ? 'farm-night' : ''} ${w?.phase === 'lobby' ? 'farm-in-lobby' : ''} ${spectating ? 'farm-spectating' : ''}`}
+      {...partyRound(ended)}
     >
       <div className="farm-canvas" ref={canvas} />
       <header className="farm-topbar">
