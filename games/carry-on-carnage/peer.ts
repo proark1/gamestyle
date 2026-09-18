@@ -60,7 +60,10 @@ const adapter: GameAdapter<CarryOnWorld, CarryOnSnapshot> = {
   idle: (p) => {
     p.input = idleInput();
   },
-  advance: (w, dt) => {
+  // The engine passes an absolute time, not a step: recover the step from the
+  // clock, which the simulation keeps in ms.
+  advance: (w, now) => {
+    const dt = Math.min(0.1, Math.max(0, (now - w.clock) / 1000));
     updateCarryOnBots(w, w.clock, eventIdRef);
     advanceCarryOn(w, dt, eventIdRef);
   },

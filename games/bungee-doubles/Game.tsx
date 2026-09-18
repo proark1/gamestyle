@@ -30,6 +30,7 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { bungeeDoublesAnalytics } from './analytics';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(bungeeDoublesAnalytics);
 
@@ -44,6 +45,14 @@ export default function BungeeDoublesGame() {
   const network = useRef<PeerGameConnection<BungeeSnapshot> | null>(null);
   const localWorld = useRef<BungeeWorld | null>(null);
   const currentInput = useRef(idleInput());
+  // The scene is handed every snapshot directly; the HUD is paced, so a
+  // 20Hz feed does not rebuild it twenty times a second.
+  const hud = useRef(
+    hudPacer<BungeeSnapshot>(
+      ({ world: w }) =>
+        `${w.phase}:${w.eventId}:${w.scores.orange}:${w.scores.teal}`,
+    ),
+  );
 
   const [snapshot, setSnapshot] = useState<BungeeSnapshot | null>(null);
   const [team, setTeam] = useState<TeamId>('orange');
@@ -75,7 +84,7 @@ export default function BungeeDoublesGame() {
         sessionRef.current.id,
         Date.now(),
       );
-      setSnapshot(snap);
+      if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(snap.world, sessionRef.current.id);
     }
@@ -153,7 +162,7 @@ export default function BungeeDoublesGame() {
         stepNow,
       );
 
-      setSnapshot(snap);
+      if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(world, sessionRef.current.id);
 

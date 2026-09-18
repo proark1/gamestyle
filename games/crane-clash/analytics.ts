@@ -1,5 +1,5 @@
 import {
-  modeOf,
+  crewOf,
   type GameAnalytics,
   type PlayState,
 } from '../../shared/analytics/protocol';
@@ -32,14 +32,7 @@ export function craneClashPlayState(
   session: { code: string; id: string },
 ): PlayState {
   const { world } = snapshot;
-  const bots = world.players.filter((p) => p.bot).length;
-  const base = {
-    mode: modeOf(session, snapshot.host),
-    room: session.code,
-    humans: world.players.length - bots,
-    npcs: bots,
-    round: world.seed,
-  };
+  const base = crewOf(session, snapshot.host, world.players, world.seed);
 
   if (world.phase === 'lobby') return { stage: 'lobby', ...base };
 

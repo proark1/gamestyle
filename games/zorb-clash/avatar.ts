@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { worker, type WorkerOutfit } from '../../shared/rendering/worker';
 import type { Look } from '../../shared/wardrobe/look';
+import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { dressWorker } from '../../shared/rendering/cosmetics/dress';
 import { ZORB_RADIUS, type TeamId } from './types';
 
@@ -346,3 +347,33 @@ export function poseZorbWorker(
     innerRig.armR.rotation.set(-1.4 - swing * 0.15, 0, 0);
   }
 }
+
+/**
+ * The admin lineup, posed by the same function the scene calls so the preview
+ * cannot drift from the game. Both teams appear because the zorb's colour is the
+ * player's team, not a costume.
+ */
+const zorbLook = (team: TeamId, key: string, label: string): AvatarLook => ({
+  key,
+  label,
+  dressable: true,
+  create(look) {
+    const rig = createZorbAvatar(team, team === 'red' ? 0 : 1, look);
+    return {
+      root: rig.root,
+      pose: (time, walking) =>
+        poseZorbWorker(rig, time, {
+          speed: walking ? 6 : 0,
+          turtle: false,
+          braced: false,
+          dashCharge: 0,
+          dashing: false,
+        }),
+    };
+  },
+});
+
+export const zorbAvatars: readonly AvatarLook[] = [
+  zorbLook('red', 'zorb-red', 'Red Zorb'),
+  zorbLook('blue', 'zorb-blue', 'Blue Zorb'),
+];

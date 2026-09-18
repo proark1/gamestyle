@@ -11,6 +11,11 @@ import {
   type GiantInput,
   type GiantSnapshot,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  isTouchDevice,
+  prefersReducedMotion,
+} from '../../shared/browser/device';
 
 export class GiantScene {
   renderer: T.WebGLRenderer;
@@ -46,7 +51,7 @@ export class GiantScene {
   creep = false;
   center = new T.Vector3(0, 2.8, 0);
   snapshot: GiantSnapshot;
-  reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  reduced = prefersReducedMotion();
   constructor(
     public host: HTMLElement,
     public callbacks: {
@@ -56,23 +61,13 @@ export class GiantScene {
   ) {
     this.snapshot = giantSnapshot(freshGiant(Date.now()), '', '', '', 0);
     this.giant = new GiantModel(this.snapshot.world);
-    const mobile = matchMedia('(pointer:coarse)').matches;
-    this.renderer = new T.WebGLRenderer({
-      antialias: !mobile,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.3 : 1.8));
-    this.renderer.shadowMap.enabled = !mobile;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
-    const canvas = this.renderer.domElement;
-    canvas.tabIndex = 0;
-    canvas.setAttribute(
-      'aria-label',
-      'Giant cottage. WASD moves, Space jumps, Shift creeps, E grabs or banks, Q places, F tickles, H helps, X exits, V changes camera. Drag to orbit.',
-    );
-    host.appendChild(canvas);
+    const mobile = isTouchDevice();
+    this.renderer = createRenderer(host, {
+      shadows: mobile ? 'off' : 'soft',
+      exposure: 1.3,
+      label:
+        'Giant cottage. WASD moves, Space jumps, Shift creeps, E grabs or banks, Q places, F tickles, H helps, X exits, V changes camera. Drag to orbit.',
+    }).renderer;
     this.scene.background = new T.Color('#343f39');
     this.scene.add(new T.HemisphereLight('#fff1ce', '#64756d', 2.3));
     const lamp = new T.DirectionalLight('#ffdd9e', 3.3);

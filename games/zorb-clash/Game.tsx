@@ -27,6 +27,7 @@ import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
 import { ZORB_CLASH_TRANSLATIONS } from './translations';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(zorbClashAnalytics);
 
@@ -169,6 +170,13 @@ export default function ZorbClash() {
   const audioRef = useRef<ZorbClashAudio | null>(null);
   const physicsRef = useRef<ZorbClashPhysics | null>(null);
   const worldRef = useRef<ZorbClashWorld | null>(null);
+  // The scene is handed every snapshot directly; the HUD is paced, so a
+  // 20Hz feed does not rebuild it twenty times a second.
+  const hud = useRef(
+    hudPacer<ZorbClashSnapshot>(
+      ({ world: w }) => `${w.status}:${w.score.red}:${w.score.blue}`,
+    ),
+  );
 
   const [snapshot, setSnapshot] = useState<ZorbClashSnapshot | null>(null);
   const [touchActive] = useState(
@@ -263,7 +271,7 @@ export default function ZorbClash() {
           1,
         );
 
-        setSnapshot(snap);
+        if (hud.current.due(snap)) setSnapshot(snap);
         sceneRef.current?.render(snap);
       }
     };

@@ -11,6 +11,7 @@ import {
   type ButtonInput,
   type ButtonSnapshot,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 type Callbacks = {
   input: (i: ButtonInput) => void;
@@ -47,20 +48,11 @@ export class ButtonScene {
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+    this.renderer = createRenderer(container, {
+      label:
+        'One More Button arena. WASD moves, E presses, Space jumps, X exits, Q shouts STOP.',
+    }).renderer;
     this.renderer.setClearColor('#bad5ce');
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'One More Button arena. WASD moves, E presses, Space jumps, X exits, Q shouts STOP.',
-    );
-    this.renderer.domElement.tabIndex = 0;
-    container.appendChild(this.renderer.domElement);
     this.scene.add(new T.HemisphereLight('#fff4d7', '#618d91', 2.8));
     const sun = new T.DirectionalLight('#fff3d7', 3);
     sun.position.set(-12, 28, 16);

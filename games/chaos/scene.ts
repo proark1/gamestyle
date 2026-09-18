@@ -54,6 +54,8 @@ import {
   type Player,
   type Snapshot,
 } from './model';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import { renderQuality } from '../../shared/browser/device';
 
 type SceneCallbacks = {
   input?: (touch: boolean) => void;
@@ -344,26 +346,17 @@ export class GameScene {
     public host: HTMLElement,
     public callbacks: SceneCallbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: !this.touchMode,
-      alpha: false,
-      preserveDrawingBuffer: false,
-      powerPreference: 'high-performance',
+    // A whole articulated building site, so it draws at the heavy-scene budget.
+    const view = createRenderer(host, {
+      weight: 'heavy',
+      shadows: this.touchMode ? 'off' : 'hard',
+      exposure: 1.3,
+      focusable: false,
+      label:
+        'Three-dimensional building site. Tap to select, drag to rotate, use two fingers to zoom and pan.',
     });
-    this.pixelRatio = Math.min(
-      window.devicePixelRatio,
-      this.touchMode ? 1.15 : 1.6,
-    );
-    this.renderer.shadowMap.enabled = !this.touchMode;
-    this.renderer.shadowMap.type = T.PCFShadowMap;
-    this.renderer.outputColorSpace = T.SRGBColorSpace;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Three-dimensional building site. Tap to select, drag to rotate, use two fingers to zoom and pan.',
-    );
-    host.appendChild(this.renderer.domElement);
+    this.renderer = view.renderer;
+    this.pixelRatio = view.quality.pixelRatio;
     this.buildHandle = document.createElement('div');
     this.buildHandle.className = 'touch-build-handle';
     this.buildHandle.setAttribute('aria-hidden', 'true');
@@ -736,7 +729,8 @@ export class GameScene {
     }
   }
   setQuality(low: boolean) {
-    this.pixelRatio = Math.min(devicePixelRatio, low ? 1.15 : 1.6);
+    // Low quality asks a desktop to draw on the touch budget.
+    this.pixelRatio = renderQuality('heavy', low || this.touchMode).pixelRatio;
     this.resizePending = true;
     this.renderer.shadowMap.enabled = !low;
   }

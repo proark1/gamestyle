@@ -62,8 +62,14 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { hotelAnalytics, hotelPlayState } from './analytics';
+import {
+  ROOM_CODE_PATTERN,
+  looksLikeRoomCode,
+} from '../../shared/rooms/identity';
+import { sessionStore } from '../../shared/rooms/session';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
-const SESSION_KEY = 'wrong-floor-session-v1';
+const sessions = sessionStore('wrong-floor-session-v1');
 const PREFS_KEY = 'wrong-floor-prefs-v1';
 const countdown = (ms: number) =>
   `${Math.floor(Math.max(0, Math.ceil(ms / 1000)) / 60)}:${String(Math.max(0, Math.ceil(ms / 1000)) % 60).padStart(2, '0')}`;
@@ -83,7 +89,12 @@ export default function WrongFloor() {
     latest = useRef<HotelSnapshot | null>(null);
   const input = useRef(idleInput()),
     actionRef = useRef<(a: HotelAction) => void>(() => {}),
-    hudAt = useRef(0),
+    // The scene is handed every snapshot directly; the HUD is paced.
+    hud = useRef(
+      hudPacer<HotelSnapshot>(
+        (snapshot) => `${snapshot.world.eventId}:${snapshot.you.inspected}`,
+      ),
+    ),
     localTick = useRef(0);
   const [snapshot, setSnapshot] = useState<HotelSnapshot | null>(null),
     [session, setSession] = useState<HotelSession | null>(null);
@@ -121,19 +132,10 @@ export default function WrongFloor() {
   function accept(next: HotelSnapshot) {
     if (!active.current) return;
     tracker.observe(hotelPlayState(next, active.current));
-    const previous = latest.current;
     latest.current = next;
     scene.current?.setSnapshot(next);
     sound.current?.update(next, active.current.id);
-    if (
-      !previous ||
-      next.world.eventId !== previous.world.eventId ||
-      next.you.inspected !== previous.you.inspected ||
-      performance.now() - hudAt.current > 100
-    ) {
-      hudAt.current = performance.now();
-      setSnapshot(next);
-    }
+    if (hud.current.due(next)) setSnapshot(next);
   }
   function attach(s: HotelSession, state?: HotelSnapshot) {
     network.current?.stop();
@@ -145,11 +147,7 @@ export default function WrongFloor() {
     setStatus('reconnecting');
     sound.current?.reset();
     scene.current?.setSession(s.id);
-    try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    } catch {
-      /* Optional storage. */
-    }
+    sessions.save(s);
     network.current = new PeerGameConnection(
       'wrong-floor',
       s,
@@ -179,7 +177,7 @@ export default function WrongFloor() {
       /* Optional storage. */
     }
     const invite = new URL(location.href).searchParams.get('room');
-    if (invite && /^[A-Z2-9]{6}$/i.test(invite))
+    if (invite && looksLikeRoomCode(invite))
       queueMicrotask(() => {
         if (!disposed) {
           setCode(invite.toUpperCase());
@@ -229,21 +227,10 @@ export default function WrongFloor() {
             },
           });
           setReady(true);
-          if (!invite)
-            try {
-              const saved = JSON.parse(
-                sessionStorage.getItem(SESSION_KEY) || 'null',
-              );
-              if (
-                saved?.peer === true &&
-                /^[A-Z2-9]{6}$/.test(saved.code) &&
-                typeof saved.id === 'string' &&
-                typeof saved.token === 'string'
-              )
-                attach(saved);
-            } catch {
-              /* Start a new stay if session storage is unavailable. */
-            }
+          if (!invite) {
+            const saved = sessions.loadPeer();
+            if (saved) attach(saved);
+          }
         } catch {
           setNotice(
             'The hotel could not load. Enable hardware acceleration and reload.',
@@ -326,7 +313,7 @@ export default function WrongFloor() {
     setNotice('');
     scene.current?.setSession(s.id);
     try {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessions.clear();
     } catch {
       /* Optional storage. */
     }
@@ -386,7 +373,7 @@ export default function WrongFloor() {
       setNotice('');
       setBusy(false);
       try {
-        sessionStorage.removeItem(SESSION_KEY);
+        sessions.clear();
       } catch {
         /* Optional storage. */
       }
@@ -1012,7 +999,7 @@ export default function WrongFloor() {
                   maxLength={6}
                   minLength={6}
                   required
-                  pattern="[A-Z2-9]{6}"
+                  pattern={ROOM_CODE_PATTERN}
                   autoCapitalize="characters"
                   placeholder="ABCDEF"
                   autoComplete="off"

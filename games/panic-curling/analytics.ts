@@ -1,5 +1,5 @@
 import {
-  modeOf,
+  crewOf,
   type GameAnalytics,
   type PlayState,
 } from '../../shared/analytics/protocol';
@@ -32,14 +32,7 @@ export function panicCurlingPlayState(
   session: { code: string; id: string },
 ): PlayState {
   const { world } = snapshot;
-  const bots = world.players.filter((p) => p.bot).length;
-  const base = {
-    mode: modeOf(session, snapshot.host),
-    room: session.code,
-    humans: world.players.length - bots,
-    npcs: bots,
-    round: world.round,
-  };
+  const base = crewOf(session, snapshot.host, world.players, world.round);
 
   if (world.phase === 'warmup') return { stage: 'lobby', ...base };
 

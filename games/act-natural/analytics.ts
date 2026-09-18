@@ -1,5 +1,5 @@
 import {
-  modeOf,
+  crewOf,
   type GameAnalytics,
   type PlayState,
 } from '../../shared/analytics/protocol';
@@ -38,17 +38,17 @@ export function farmPlayState(
   session: { code: string; id: string },
 ): PlayState {
   const { world } = snapshot;
-  const bots = world.players.filter((player) => player.bot).length;
-  // A computer farmer is a whole opposing role played by the game.
+  // A computer farmer is a whole opposing role played by the game, and it is
+  // not one of world.players, so it counts as an extra seat.
   const computerFarmer =
     (world.mode ?? (world.practice ? 'computer' : 'human')) === 'computer';
-  const base = {
-    mode: modeOf(session, snapshot.host),
-    room: session.code,
-    humans: world.players.length - bots,
-    npcs: bots + (computerFarmer ? 1 : 0),
-    round: world.round,
-  };
+  const base = crewOf(
+    session,
+    snapshot.host,
+    world.players,
+    world.round,
+    computerFarmer ? 1 : 0,
+  );
   if (world.phase === 'lobby') return { stage: 'lobby', ...base };
   const cows = world.players.filter((player) => player.role === 'cow');
   const escaped = cows.filter((cow) => cow.status === 'escaped').length;

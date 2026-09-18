@@ -1,6 +1,4 @@
-export const COMPACT_QUERY =
-  '(max-width: 1024px), (max-height: 500px), (pointer: coarse)';
-export const TOUCH_QUERY = '(pointer: coarse)';
+export { COMPACT_QUERY, TOUCH_QUERY } from '../../shared/browser/device';
 
 export function touchSprint(amount: number, active: boolean) {
   return (

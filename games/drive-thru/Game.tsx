@@ -39,6 +39,7 @@ import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import LanguageSwitcher from '../../shared/language/LanguageSwitcher';
 import { DRIVE_THRU_TRANSLATIONS } from './translations';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(driveThruAnalytics);
 
@@ -51,6 +52,13 @@ export default function DriveThruGame() {
   const worldRef = useRef<DriveThruWorld>(freshDriveThruWorld());
   const localPlayerIdRef = useRef<string>('player-human');
 
+  // This loop runs on every animation frame, so without pacing the HUD would
+  // rebuild at the frame rate. The order, the score and a fail are immediate.
+  const hud = useRef(
+    hudPacer<DriveThruSnapshot>(
+      (s) => `${s.phase}:${s.score}:${s.failState}:${s.ticket?.id ?? ''}`,
+    ),
+  );
   const [snapshot, setSnapshot] = useState<DriveThruSnapshot | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [selectedRole, setSelectedRole] = useState<RoleId>('driver');
@@ -129,7 +137,7 @@ export default function DriveThruGame() {
         1,
       );
 
-      setSnapshot(snap);
+      if (hud.current.due(snap)) setSnapshot(snap);
       scene.update(snap);
       audio.update(currentWorld);
 

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   AnalyticsError,
+  crewOf,
   MAX_BATCH_EVENTS,
   parseBatch,
   stepLabel,
@@ -100,4 +101,43 @@ void test('keys, step order and labels follow each game', () => {
   assert.equal(stepLabel(game, 'playing'), 'Started building');
   assert.equal(stepLabel(game, 'bridge'), 'Crossed the bridge');
   assert.equal(stepLabel(game, 'won'), 'Won a round');
+});
+
+void test('a crew separates the people from the seats the game plays', () => {
+  const session = { code: 'ABC234', id: 'me' };
+  const players = [
+    { id: 'me' },
+    { id: 'friend' },
+    { id: 'npc-1', bot: true },
+    { id: 'npc-2', bot: true },
+  ];
+  // players includes the bots, which is the easy way to miscount a crew.
+  assert.deepEqual(crewOf(session, 'me', players), {
+    mode: 'host',
+    room: 'ABC234',
+    humans: 2,
+    npcs: 2,
+    round: 1,
+  });
+  assert.equal(crewOf(session, 'friend', players).mode, 'join');
+  assert.equal(
+    crewOf({ code: 'PRACTICE', id: 'me' }, 'me', players).mode,
+    'solo',
+  );
+});
+
+void test('a seat the game plays outside the player list still counts', () => {
+  const session = { code: 'ABC234', id: 'me' };
+  const players = [{ id: 'me' }, { id: 'bot', bot: true }];
+  const crew = crewOf(session, 'me', players, 3, 1);
+  assert.deepEqual(
+    [crew.humans, crew.npcs, crew.round],
+    [1, 2, 3],
+    'the opposing role the game plays joins the bots as an npc seat',
+  );
+});
+
+void test('an empty crew reports nobody rather than a negative count', () => {
+  const crew = crewOf({ code: 'ABC234', id: 'me' }, 'me', []);
+  assert.deepEqual([crew.humans, crew.npcs], [0, 0]);
 });

@@ -117,6 +117,36 @@ export function modeOf(
   return host === session.id ? 'host' : 'join';
 }
 
+/** The crew fields of a `PlayState`, which every game reports the same way. */
+export type Crew = Required<
+  Pick<PlayState, 'mode' | 'room' | 'humans' | 'npcs' | 'round'>
+>;
+
+/**
+ * Who is in the room, how this visit got there, and which round it is.
+ *
+ * Every game's `playState` opened by rebuilding this block by hand, which is
+ * also where the two ways to miscount a crew live: forgetting that `players`
+ * includes the bots, and forgetting a seat the game plays that is not in
+ * `players` at all. Pass such a seat as `extraNpcs`.
+ */
+export function crewOf(
+  session: { code: string; id: string },
+  host: string,
+  players: readonly { bot?: boolean }[],
+  round: string | number = 1,
+  extraNpcs = 0,
+): Crew {
+  const bots = players.filter((player) => player.bot).length;
+  return {
+    mode: modeOf(session, host),
+    room: session.code,
+    humans: players.length - bots,
+    npcs: bots + extraNpcs,
+    round,
+  };
+}
+
 export const EVENT_TYPES = [
   'opened',
   'mode',

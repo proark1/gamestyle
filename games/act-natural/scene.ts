@@ -37,6 +37,11 @@ import {
   type FarmAction,
   type FarmSnapshot,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  isTouchDevice,
+  prefersReducedMotion,
+} from '../../shared/browser/device';
 export type FarmHud = {
   hint: string;
   target: string;
@@ -90,7 +95,7 @@ export class FarmScene {
   night = false;
   lastSight = { x: Infinity, z: Infinity, angle: Infinity };
   walkDistance = 0;
-  reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  reduced = prefersReducedMotion();
   constructor(
     public host: HTMLElement,
     public callbacks: {
@@ -99,22 +104,13 @@ export class FarmScene {
       hud: (h: FarmHud) => void;
     },
   ) {
-    const mobile = matchMedia('(pointer:coarse)').matches;
-    this.renderer = new T.WebGLRenderer({
-      antialias: !mobile,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.3 : 1.8));
-    this.renderer.shadowMap.enabled = !mobile;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
-    this.renderer.domElement.tabIndex = 0;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Blend Business pasture. WASD to move, Space to graze, E to interact or inspect, Q to drop. Click a cow to select it.',
-    );
-    host.appendChild(this.renderer.domElement);
+    const mobile = isTouchDevice();
+    this.renderer = createRenderer(host, {
+      shadows: mobile ? 'off' : 'soft',
+      exposure: 1.25,
+      label:
+        'Blend Business pasture. WASD to move, Space to graze, E to interact or inspect, Q to drop. Click a cow to select it.',
+    }).renderer;
     this.scene.background = new T.Color('#c7d3b6');
     this.scene.fog = new T.Fog('#c7d3b6', 65, 120);
     this.scene.add(this.hemisphere);

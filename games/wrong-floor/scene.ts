@@ -17,6 +17,8 @@ import {
   HotelCameraBoom,
   type HotelCameraMode,
 } from './camera';
+import { createRenderer } from '../../shared/rendering/create-renderer';
+import { prefersReducedMotion } from '../../shared/browser/device';
 
 type Callbacks = {
   input: (input: Input) => void;
@@ -63,30 +65,19 @@ export class HotelScene {
   private sent = 0;
   private stopped = false;
   private drag: { id: number; x: number; y: number } | null = null;
-  private reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  private reduced = prefersReducedMotion();
   private target = new T.Vector3();
   private look = new T.Vector3();
   constructor(
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+    this.renderer = createRenderer(container, {
+      exposure: 1.05,
+      label:
+        'First-person hotel corridor. WASD or arrows move, E inspects, drag to look up, down and around. V switches camera.',
+    }).renderer;
     this.renderer.setClearColor('#10191d');
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.outputColorSpace = T.SRGBColorSpace;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
-    this.renderer.domElement.tabIndex = 0;
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'First-person hotel corridor. WASD or arrows move, E inspects, drag to look up, down and around. V switches camera.',
-    );
-    container.appendChild(this.renderer.domElement);
     this.scene.fog = new T.Fog('#10191d', 9, 33);
     this.scene.add(this.hotel.root, this.ambient);
     const light = new T.DirectionalLight('#ffe0a7', 0.65);

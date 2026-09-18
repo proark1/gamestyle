@@ -17,6 +17,7 @@ import {
   type Player,
   type PlayerInput,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 type Callbacks = {
   input: (i: PlayerInput) => void;
@@ -85,22 +86,11 @@ export class BasketballScene {
     private container: HTMLDivElement,
     private cb: Callbacks,
   ) {
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
-
-    this.renderer.domElement.setAttribute(
-      'aria-label',
-      'Court Clash basketball arena. WASD moves, Space shoots/dunks, F crossovers, C spins, E passes/steals, Shift sprints, V switches camera.',
-    );
-    this.renderer.domElement.tabIndex = 0;
-    container.appendChild(this.renderer.domElement);
+    this.renderer = createRenderer(container, {
+      exposure: 1.3,
+      label:
+        'Court Clash basketball arena. WASD moves, Space shoots/dunks, F crossovers, C spins, E passes/steals, Shift sprints, V switches camera.',
+    }).renderer;
 
     // Stack or Sink style palette: pastel turquoise sky & warm sunlight
     this.scene.background = new T.Color('#b5d4ca');

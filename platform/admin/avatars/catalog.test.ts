@@ -159,10 +159,13 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     'reel-problems:angler',
     'sample-stampede:rider',
     'sample-stampede:shopper',
+    'scaffold-scramble:scaffold-cleaner',
     'siege-and-desist:crew',
     'stack-or-sink:stacker',
     'uphill-delivery:mover',
     'wrong-floor:guest',
+    'zorb-clash:zorb-blue',
+    'zorb-clash:zorb-red',
   ]);
   const reference = workerShape(worker(0));
   const everything: Look = {
@@ -174,12 +177,18 @@ void test('games dress the shared worker in wardrobe items over their own clothe
   };
   for (const { key, look } of dressable) {
     const dressed = look.create(everything).root;
+    // Showing the player's items is the promise `dressable` makes, so it holds
+    // for every avatar regardless of what the game builds around the worker.
+    assert.ok(wearsItems(dressed), `${key} shows the items`);
+    // The body and hat-swap rules below read the worker rig off the preview root.
+    // Zorb Clash seats the worker inside a bumper sphere, so its root is the
+    // sphere; dressWorker still puts the look on the worker within it.
+    if (!dressed.userData.body) continue;
     assert.deepEqual(
       workerShape(dressed),
       reference,
       `${key} keeps the shared body under a full look`,
     );
-    assert.ok(wearsItems(dressed), `${key} shows the items`);
     // Uphill Delivery merges its torso, any hat included, so there is nothing
     // separate to find. It dresses through dressedWorker, whose own test checks
     // that a hat takes the cap off.

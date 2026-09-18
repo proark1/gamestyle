@@ -4,7 +4,12 @@ import {
   budgetError,
 } from '@/shared/http/request-budget';
 import { RoomError } from '@/shared/rooms/types';
-import { playerName, hashToken as hash } from '../../../shared/rooms/identity';
+import {
+  hashToken as hash,
+  isRoomCode,
+  newRoomCode,
+  playerName,
+} from '../../../shared/rooms/identity';
 import { isRoomOriginAllowed } from '@/shared/http/request-origin';
 import { getBinding } from '@/db/index';
 import type { GameDatabase } from '@/db/contract';
@@ -102,12 +107,8 @@ async function handleRequest(request: Request) {
       const id = crypto.randomUUID(),
         token = crypto.randomUUID() + crypto.randomUUID(),
         tokenHash = await hash(token);
-      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       for (let i = 0; i < 5; i++) {
-        const code = Array.from(
-          crypto.getRandomValues(new Uint8Array(6)),
-          (n) => alphabet[n % alphabet.length],
-        ).join('');
+        const code = newRoomCode();
         try {
           await db.batch([
             db
@@ -128,7 +129,7 @@ async function handleRequest(request: Request) {
       return json({ error: 'Please try again in a moment.' }, 503);
     }
     const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
-    if (!/^[A-Z2-9]{6}$/.test(code))
+    if (!isRoomCode(code))
       return json(
         { error: 'A room code contains six letters or digits.' },
         400,

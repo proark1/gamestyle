@@ -1,5 +1,6 @@
 import { RoomError } from '../rooms/types';
 import { readJsonObject } from './json-request';
+import { looksLikeRoomCode } from '../rooms/identity';
 
 type Bucket = { tokens: number; at: number; expires: number };
 
@@ -86,10 +87,7 @@ export async function readRoomRequest(request: Request, maxBytes = 4096) {
   if (body.op === 'create') {
     // Shared across games so switching endpoints cannot evade room admission.
     budget.take('room-creation', 120, 2);
-  } else if (
-    typeof body.code === 'string' &&
-    /^[A-Z2-9]{6}$/i.test(body.code)
-  ) {
+  } else if (typeof body.code === 'string' && looksLikeRoomCode(body.code)) {
     const game =
       path === '/api/peer' &&
       typeof body.game === 'string' &&

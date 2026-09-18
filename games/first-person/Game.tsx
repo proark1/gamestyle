@@ -55,8 +55,10 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { siteAnalytics, sitePlayState } from './analytics';
+import { sessionStore } from '../../shared/rooms/session';
+import { TOUCH_QUERY } from '../../shared/browser/device';
 
-const SESSION_KEY = 'steinwerk-session-v1';
+const sessions = sessionStore('steinwerk-session-v1');
 const TOOLS = [
   { id: 'brick' as const, label: 'Brick', icon: Blocks },
   { id: 'mortar' as const, label: 'Mortar', icon: Shovel },
@@ -188,7 +190,7 @@ export default function Game() {
   const connect = (s: Session, initial?: Snapshot) => {
     sessionRef.current = s;
     setSession(s);
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    sessions.save(s);
     connection.current?.stop();
     if (initial) accept(initial);
     connection.current = new Connection(
@@ -198,7 +200,7 @@ export default function Game() {
       (error) => {
         if (error instanceof ConnectionError && error.status === 401) {
           connection.current?.stop();
-          sessionStorage.removeItem(SESSION_KEY);
+          sessions.clear();
           sessionRef.current = null;
           setSession(null);
           setPlaying(false);
@@ -217,7 +219,7 @@ export default function Game() {
     sound.current = new SiteAudio('first-person');
     const url = new URL(location.href),
       invited = url.searchParams.get('raum');
-    const coarse = matchMedia('(any-pointer: coarse), (max-width: 900px)');
+    const coarse = matchMedia(TOUCH_QUERY);
     const mediaChanged = () => setTouch(coarse.matches);
     coarse.addEventListener('change', mediaChanged);
     import('./scene')
@@ -250,31 +252,24 @@ export default function Game() {
             },
           });
           setReady(true);
-          const stored = sessionStorage.getItem(SESSION_KEY);
-          if (stored) {
-            let s: Session;
-            try {
-              s = JSON.parse(stored);
-            } catch {
-              sessionStorage.removeItem(SESSION_KEY);
-              return;
-            }
-            if (!invited || invited.toUpperCase() === s.code) {
-              setBusy(true);
-              request({ op: 'sync', ...s })
-                .then((data) => {
-                  if (!disposed) connect(s, data.snapshot);
-                })
-                .catch((e) => {
-                  if (!disposed) {
-                    sessionStorage.removeItem(SESSION_KEY);
-                    toast(e.message);
-                  }
-                })
-                .finally(() => {
-                  if (!disposed) setBusy(false);
-                });
-            }
+          const s = sessions.load();
+          // A stored value that no longer parses or validates is not worth keeping.
+          if (!s) sessions.clear();
+          else if (!invited || invited.toUpperCase() === s.code) {
+            setBusy(true);
+            request({ op: 'sync', ...s })
+              .then((data) => {
+                if (!disposed) connect(s, data.snapshot);
+              })
+              .catch((e) => {
+                if (!disposed) {
+                  sessions.clear();
+                  toast(e.message);
+                }
+              })
+              .finally(() => {
+                if (!disposed) setBusy(false);
+              });
           }
         } catch {
           setFatal(
@@ -449,7 +444,7 @@ export default function Game() {
     const old = sessionRef.current;
     connection.current?.stop();
     scene.current?.setPlaying(false);
-    sessionStorage.removeItem(SESSION_KEY);
+    sessions.clear();
     if (old) {
       try {
         await request({ op: 'leave', ...old });

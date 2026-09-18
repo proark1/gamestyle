@@ -18,6 +18,7 @@ import {
   type SampleStampedeSnapshot,
 } from './types';
 import { WAREHOUSE_BOUNDS } from './physics';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -87,17 +88,11 @@ export class SampleStampedeScene {
     this.container = container;
 
     // Renderer
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer = createRenderer(container, {
+      exposure: 1.15,
+      focusable: false,
+    }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
-    container.appendChild(this.renderer.domElement);
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(

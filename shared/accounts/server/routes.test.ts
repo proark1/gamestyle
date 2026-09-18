@@ -672,3 +672,37 @@ void test('a leftover signed-in hint is cleared for guests', async () => {
     h.close();
   }
 });
+
+void test('the sign-in limiter runs on the routes clock, not the wall clock', async (t) => {
+  const h = harness();
+  // A slow machine: every read of the wall clock is ten seconds later than the
+  // last. On the wall clock the start bucket (2 a second) would refill between
+  // every request and the flood would never be refused. This is what made the
+  // flood test above fail under a loaded full-suite run.
+  const realNow = Date.now;
+  let wall = realNow();
+  Date.now = () => (wall += 10_000);
+  t.after(() => {
+    Date.now = realNow;
+  });
+  try {
+    const start = () =>
+      h.routes.googleStart(
+        h.request('/api/account/google/start', 'GET', { cookies: '' }),
+      );
+    let accepted = 0;
+    let status = 0;
+    for (let i = 0; i < 200 && status !== 429; i++) {
+      status = (await start()).status;
+      if (status !== 429) accepted++;
+    }
+    assert.equal(status, 429, 'the flood is refused despite the wall clock');
+    assert.equal(accepted, 120, 'exactly the bucket capacity is let through');
+
+    // Time passing on the routes' own clock is what refills it.
+    h.clock.now += 1000;
+    assert.notEqual((await start()).status, 429, 'two starts refill a second');
+  } finally {
+    h.close();
+  }
+});

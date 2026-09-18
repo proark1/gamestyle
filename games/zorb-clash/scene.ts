@@ -8,6 +8,7 @@ import {
 } from './types';
 import { createZorbAvatar, poseZorbWorker, type ZorbMeshRig } from './avatar';
 import { createStadium, type StadiumRig } from './stadium';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -88,17 +89,11 @@ export class ZorbClashScene {
     this.container = container;
 
     // Renderer with ACES Filmic Tone Mapping for rich color vibrancy
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer = createRenderer(container, {
+      exposure: 1.22,
+      focusable: false,
+    }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.22;
-    container.appendChild(this.renderer.domElement);
 
     // Camera
     this.camera = new T.PerspectiveCamera(

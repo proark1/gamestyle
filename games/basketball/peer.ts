@@ -10,7 +10,7 @@ import {
   freshBasketballWorld,
   newPlayer,
 } from './simulation';
-import { reconcileBasketballBots } from './bots';
+import { reconcileBasketballBots, stepBasketballBot } from './bots';
 import {
   idleInput,
   type BasketballAction,
@@ -78,7 +78,15 @@ const adapter: GameAdapter<BasketballWorld, BasketballSnapshot> = {
   idle(p) {
     p.input = idleInput();
   },
-  advance: advanceBasketball,
+  // The engine passes an absolute time; this simulation steps by elapsed
+  // seconds. Handing it `now` directly treated a timestamp as a step, so the
+  // clock grew exponentially to Infinity and handover rejected the checkpoint.
+  // The bots run here as the solo loop runs them; the simulation does not.
+  advance: (w, now) => {
+    const dt = Math.min(0.05, Math.max(0, (now - w.clock) / 1000));
+    for (const p of w.players) if (p.bot) stepBasketballBot(p, w, dt);
+    advanceBasketball(w, dt);
+  },
   act: (w, id, a, host) => {
     basketballAction(w, id, a as BasketballAction, host === id);
   },

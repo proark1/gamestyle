@@ -40,6 +40,7 @@ import {
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
 import { basketballAnalytics } from './analytics';
+import { hudPacer } from '../../shared/ui/hud-pacer';
 
 const tracker = new GameTracker(basketballAnalytics);
 
@@ -55,6 +56,14 @@ export default function BasketballGame() {
   const network = useRef<PeerGameConnection<BasketballSnapshot> | null>(null);
   const localWorld = useRef<BasketballWorld | null>(null);
   const currentInput = useRef(idleInput());
+  // The scene is handed every snapshot directly; the HUD is paced, so a
+  // 20Hz feed does not rebuild it twenty times a second.
+  const hud = useRef(
+    hudPacer<BasketballSnapshot>(
+      ({ world: w }) =>
+        `${w.phase}:${w.eventId}:${w.scores.orange}:${w.scores.teal}`,
+    ),
+  );
 
   const [snapshot, setSnapshot] = useState<BasketballSnapshot | null>(null);
   const [team, setTeam] = useState<TeamId>('orange');
@@ -95,7 +104,7 @@ export default function BasketballGame() {
         sessionRef.current.id,
         Date.now(),
       );
-      setSnapshot(snap);
+      if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(snap.world, sessionRef.current.id);
     }
@@ -218,7 +227,7 @@ export default function BasketballGame() {
           Date.now(),
         );
 
-        setSnapshot(snap);
+        if (hud.current.due(snap)) setSnapshot(snap);
         scene.current?.render(snap);
         sound.current?.update(snap.world, sessionRef.current.id);
       }

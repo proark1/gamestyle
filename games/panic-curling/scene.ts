@@ -15,6 +15,7 @@ import {
   type PanicCurlingWorld,
   type PlayerInput,
 } from './types';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 
 type SceneCallbacks = {
   input: (inp: PlayerInput) => void;
@@ -64,18 +65,11 @@ export class PanicCurlingScene {
     this.callbacks = callbacks;
 
     // 1. Setup Renderer with ACES Filmic Tone Mapping
-    this.renderer = new T.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer = createRenderer(container, {
+      exposure: 1.25,
+      focusable: false,
+    }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = T.PCFSoftShadowMap;
-    this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
-    this.renderer.outputColorSpace = T.SRGBColorSpace;
-    container.appendChild(this.renderer.domElement);
 
     // 2. Setup Scene and Atmospheric Winter Fog
     this.scene.background = new T.Color('#9bc5de');
