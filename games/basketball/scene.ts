@@ -18,6 +18,10 @@ import {
   type PlayerInput,
 } from './types';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+} from '../../shared/rendering/house-light';
 
 type Callbacks = {
   input: (i: PlayerInput) => void;
@@ -87,20 +91,14 @@ export class BasketballScene {
     private cb: Callbacks,
   ) {
     this.renderer = createRenderer(container, {
-      exposure: 1.3,
+      exposure: HOUSE_EXPOSURE,
       label:
         'Court Clash basketball arena. WASD moves, Space shoots/dunks, F crossovers, C spins, E passes/steals, Shift sprints, V switches camera.',
     }).renderer;
 
-    // Stack or Sink style palette: pastel turquoise sky & warm sunlight
-    this.scene.background = new T.Color('#b5d4ca');
-    this.scene.fog = new T.Fog('#b5d4ca', 38, 95);
-
-    this.scene.add(new T.HemisphereLight('#fff2d4', '#7fa497', 2.8));
-    const sun = new T.DirectionalLight('#fff1d2', 3.3);
+    // The collection's house light under the coast sky.
+    const { sun } = addHouseLight(this.scene, { fog: { near: 38, far: 95 } });
     sun.position.set(-14, 26, 16);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
     Object.assign(sun.shadow.camera, {
       left: -22,
       right: 22,
@@ -111,7 +109,6 @@ export class BasketballScene {
     });
     sun.shadow.bias = -0.0002;
     sun.shadow.normalBias = 0.04;
-    this.scene.add(sun);
 
     // Court, Ball & Ball Drop Shadow
     this.scene.add(this.courtGroup);

@@ -24,6 +24,10 @@ import {
 import { clamp } from '../../shared/math/clamp';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+} from '../../shared/rendering/house-light';
+import {
   isTouchDevice,
   prefersReducedMotion,
 } from '../../shared/browser/device';
@@ -120,25 +124,17 @@ export class GameScene {
     const mobile = isTouchDevice();
     this.renderer = createRenderer(host, {
       shadows: mobile ? 'off' : 'hard',
-      exposure: 1.3,
+      exposure: HOUSE_EXPOSURE,
       label:
         'Stack or Sink 3D island surrounded by rising water. Tap a surface to aim, drag to orbit, pinch to zoom. Use the movement, Jump and action buttons, or WASD, Space and E.',
     }).renderer;
-    this.scene.background = new T.Color('#b5d4ca');
-    this.scene.fog = new T.Fog('#b5d4ca', 65, 120);
-    this.scene.add(new T.HemisphereLight('#fff2d4', '#7fa497', 3));
-    const sun = new T.DirectionalLight('#fff1d2', 3.3);
-    sun.position.set(-13, 24, 12);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    const { sun } = addHouseLight(this.scene);
     Object.assign(sun.shadow.camera, {
       left: -25,
       right: 25,
       top: 25,
       bottom: -25,
     });
-    sun.shadow.normalBias = 0.05;
-    this.scene.add(sun);
     this.scenery = island();
     batchScenery(this.scenery);
     this.scene.add(this.scenery);

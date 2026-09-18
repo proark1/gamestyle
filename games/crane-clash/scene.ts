@@ -17,6 +17,11 @@ import {
   type TeamId,
 } from './types';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 export type SceneCallbacks = {
   input: (input: PlayerInput) => void;
@@ -67,10 +72,11 @@ export class CraneClashScene {
     private container: HTMLElement,
     private cb: SceneCallbacks,
   ) {
-    this.renderer = createRenderer(container, { focusable: false }).renderer;
+    this.renderer = createRenderer(container, {
+      focusable: false,
+      exposure: HOUSE_EXPOSURE,
+    }).renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-
-    this.scene.background = new T.Color('#dce7e9');
 
     this.camera = new T.PerspectiveCamera(
       45,
@@ -79,15 +85,12 @@ export class CraneClashScene {
       120,
     );
 
-    // Setup Lighting
-    const hemi = new T.HemisphereLight('#fef0d9', '#637a85', 0.85);
-    this.scene.add(hemi);
-
-    const sun = new T.DirectionalLight('#fff5e3', 1.4);
+    // The collection's house light over a building site.
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.site,
+      fog: { near: 60, far: 115 },
+    });
     sun.position.set(18, 35, 22);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 5;
     sun.shadow.camera.far = 70;
     const d = 26;
@@ -95,7 +98,6 @@ export class CraneClashScene {
     sun.shadow.camera.right = d;
     sun.shadow.camera.top = d;
     sun.shadow.camera.bottom = -d;
-    this.scene.add(sun);
 
     // Ground mesh
     const groundGeom = new T.PlaneGeometry(90, 70);

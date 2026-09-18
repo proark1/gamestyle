@@ -17,6 +17,11 @@ import {
 } from './types';
 import { computeCameraRelativeMovement } from './physics';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 
 type Callbacks = {
   input: (i: PlayerInput) => void;
@@ -95,7 +100,7 @@ export class BungeeScene {
     private cb: Callbacks,
   ) {
     this.renderer = createRenderer(this.container, {
-      exposure: 1.22,
+      exposure: HOUSE_EXPOSURE,
       focusable: false,
     }).renderer;
 
@@ -121,9 +126,6 @@ export class BungeeScene {
   }
 
   private setupScene() {
-    this.scene.background = new T.Color('#78b7e6'); // Vibrant Mediterranean sky
-    this.scene.fog = new T.FogExp2('#8ec4ee', 0.01);
-
     this.scene.add(this.courtGroup);
     this.scene.add(this.ballMesh);
     this.scene.add(this.landingTarget.mesh);
@@ -141,14 +143,11 @@ export class BungeeScene {
   }
 
   private setupLighting() {
-    const hemi = new T.HemisphereLight('#ffffff', '#334155', 0.95);
-    this.scene.add(hemi);
-
-    const sun = new T.DirectionalLight('#fffaf0', 1.55);
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.coast,
+      fog: { near: 60, far: 130 },
+    });
     sun.position.set(16, 26, 12);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 6;
     sun.shadow.camera.far = 70;
     sun.shadow.camera.left = -20;
@@ -156,12 +155,6 @@ export class BungeeScene {
     sun.shadow.camera.top = 22;
     sun.shadow.camera.bottom = -22;
     sun.shadow.bias = -0.0003;
-    this.scene.add(sun);
-
-    // Subtle warm court fill light over the net to make the ball and players pop
-    const courtFill = new T.PointLight('#ffe8d6', 0.85, 25);
-    courtFill.position.set(0, 5.5, 0);
-    this.scene.add(courtFill);
   }
 
   private setupParticles() {

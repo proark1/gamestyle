@@ -1,5 +1,10 @@
 import * as T from 'three';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  addHouseLight,
+  HOUSE_EXPOSURE,
+  SKY,
+} from '../../shared/rendering/house-light';
 import { label, material } from '../../shared/rendering/primitives';
 import { COLORS } from '../../shared/rendering/palette';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
@@ -99,16 +104,13 @@ export class ChainScene {
     private cb: SceneCallbacks,
   ) {
     const { renderer, quality } = createRenderer(container, {
-      exposure: 1.15,
+      exposure: HOUSE_EXPOSURE,
       focusable: false,
       label:
         'Chain of Fools. WASD moves, Space jumps, Shift braces, F hauls, E clips to a ring.',
     });
     this.renderer = renderer;
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-
-    this.scene.background = new T.Color(SITE.sky);
-    this.scene.fog = new T.Fog(SITE.fog, 28, 110);
 
     this.camera = new T.PerspectiveCamera(
       50,
@@ -117,10 +119,12 @@ export class ChainScene {
       400,
     );
 
-    this.scene.add(new T.HemisphereLight('#fdf3dc', '#6d5a44', 1.15));
-    const sun = new T.DirectionalLight('#fff0d0', 1.9);
+    // The collection's house light over a building site.
+    const { sun } = addHouseLight(this.scene, {
+      sky: SKY.site,
+      fog: { near: 28, far: 110 },
+    });
     sun.position.set(-30, 60, 40);
-    sun.castShadow = true;
     sun.shadow.mapSize.set(quality.shadowMapSize, quality.shadowMapSize);
     sun.shadow.camera.near = 5;
     sun.shadow.camera.far = 160;
@@ -129,7 +133,6 @@ export class ChainScene {
     sun.shadow.camera.top = 30;
     sun.shadow.camera.bottom = -30;
     sun.shadow.bias = -0.0005;
-    this.scene.add(sun);
     this.scene.add(sun.target);
     this.sun = sun;
 
