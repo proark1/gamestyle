@@ -83,6 +83,16 @@ Space poses, WASD/arrows or touch move, E interacts, and Q drops. Two keys open 
 
 Run `node games/shelf-control/scripts/shelf-control-integration.mjs` for the four-client check and `node games/shelf-control/scripts/shelf-control-bots-integration.mjs` for the NPC seats. See [Shelf Control design](games/shelf-control/docs/shelf-control-design.md) and [validation](games/shelf-control/docs/shelf-control-validation.md).
 
+## Chain of Fools
+
+Play at `/chain-of-fools`; the code is in `games/chain-of-fools/`. Four demolition workers share one safety line across a half-demolished site, from the site gate to the site office, in a four-minute shift. The line never breaks. A worker who misses a step hangs from it, and whether the rest of the crew holds them depends on how they are standing: a braced worker is an anchor, a worker on their feet can be dragged, and anyone in the air is dead weight. Two braced workers hold two who went over; one worker does not hold three.
+
+The course is a girder run with a low road underneath it, a scaffold climb, a tipping plank, a ledge swept by a wrecking load, a pipe too low to jump in with a faster route over its roof, and a cargo net down to the yard. Most stretches have a quick way and a safe way, and choosing between them is the game. Hauling a dangling worker back up, reviving a winded one, and clipping the line to a ring so that link becomes a fixed pivot are how a crew recovers. If the whole line goes over at once, the crew goes back to its last banked checkpoint. Solo practice puts you at the front of the line with three bots who follow your route, brace when someone is hanging, and haul them up.
+
+WASD/arrows move, Space jumps, Shift braces (it tires the arms), F hauls or helps up a nearby teammate, E clips to a ring or grabs the wrecking hook, Q calls the crew, and V changes the camera. On the cargo net, forward climbs down. Touch devices get the shared joystick with brace, help and clip buttons. The line is a custom position-based solver rather than Cannon, so the simulation stays deterministic for the shared peer engine. Synthesized cues play until workshop recordings exist at `/chain-of-fools/admin`.
+
+Run `node scripts/test.mjs games/chain-of-fools` for the line solver, hauling, bracing, checkpoints, the net and pipe, the follow-the-leader bots, and a full bot crew completing the course.
+
 ## Code structure
 
 All eleven games live in their own folder under `games/`, listed in the table above. Reusable infrastructure lives in `shared/` (audio, browser, http, input, math, peer, physics, rendering, rooms, styles, ui, voice); `platform/` composes game catalogs, and `app/` contains thin routes. Permit Pending and Brick by Hand sit in the `app/(handwerker)/` route group, which does not change their public URLs. See the [architecture and contributor guide](docs/architecture.md) for ownership rules, shared interfaces, and how to add a game. Run `npm run check` for types, lint, dependency boundaries, and the complete test suite.

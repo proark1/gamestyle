@@ -612,4 +612,33 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
       cta: 'Scaffold Scramble spielen',
     },
   },
+
+  'chain-of-fools': {
+    en: {
+      tag: 'ONE LINE. FOUR FOOLS.',
+      isNew: true,
+      newTag: 'NEW TO JUMBLEYARD',
+      players: '1–4 workers on one chain',
+      duration: '4 min · Clock in by the horn',
+      titleMain: 'Chain of ',
+      titleHighlight: 'Fools',
+      titleSuffix: '.',
+      desc: 'Four demolition workers share one safety line across a half-knocked-down site: girder gaps, a scaffold climb, a tipping plank, a wrecking ball, a pipe crawl and a cargo net. When one goes over, the rest are holding them — or following them.',
+      tagline: 'BRACE. HAUL. NEVER UNCLIP.',
+      cta: 'Play Chain of Fools',
+    },
+    de: {
+      tag: 'EINE KETTE. VIER NARREN.',
+      isNew: true,
+      newTag: 'NEU IN JUMBLEYARD',
+      players: '1–4 Arbeiter an einer Kette',
+      duration: '4 Min · Einstempeln vor der Sirene',
+      titleMain: 'Chain of ',
+      titleHighlight: 'Fools',
+      titleSuffix: '.',
+      desc: 'Vier Abrissarbeiter hängen an einer Sicherungskette und müssen über eine halb abgerissene Baustelle: Trägerlücken, ein Gerüst, ein Kippbrett, eine Abrissbirne, ein Rohr und ein Frachtnetz. Stürzt einer ab, hält ihn der Rest – oder fällt hinterher.',
+      tagline: 'ABSTEMMEN. HOCHZIEHEN. NIE AUSHAKEN.',
+      cta: 'Chain of Fools spielen',
+    },
+  },
 };

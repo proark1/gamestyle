@@ -24,6 +24,7 @@ import { curlingAvatars } from '../../../games/panic-curling/avatar';
 import { carryOnCarnageAvatars } from '../../../games/carry-on-carnage/avatar';
 import { sampleStampedeAvatars } from '../../../games/sample-stampede/avatar';
 import { driveThruAvatars } from '../../../games/drive-thru/avatar';
+import { chainOfFoolsAvatars } from '../../../games/chain-of-fools/avatar';
 import { GAMES } from '../../analytics/catalog';
 
 export type AvatarCard = {
@@ -162,6 +163,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'drive-thru': {
     looks: driveThruAvatars,
     note: 'The shared worker as drive-thru driver with cap and kitchen cook with paper hat and apron.',
+  },
+  'chain-of-fools': {
+    looks: chainOfFoolsAvatars,
+    note: 'The shared worker in a yellow hard hat and hi-vis harness with a back D-ring for the safety line.',
   },
 };
 

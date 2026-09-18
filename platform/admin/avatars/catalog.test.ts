@@ -148,6 +148,7 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     'basketball:baller',
     'bungee-doubles:tennis-duo',
     'carry-on-carnage:traveler',
+    'chain-of-fools:chain-worker',
     'chaos:worker',
     'crane-clash:crane-crew',
     'dont-wake-the-giant:thief',

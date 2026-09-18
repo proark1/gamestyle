@@ -17,7 +17,8 @@ export type GameId =
   | 'carry-on-carnage'
   | 'sample-stampede'
   | 'drive-thru'
-  | 'scaffold-scramble';
+  | 'scaffold-scramble'
+  | 'chain-of-fools';
 export type AudioCategory =
   | 'material'
   | 'speech'
@@ -83,6 +84,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'sample-stampede': 'Sample Stampede',
   'drive-thru': 'Drive-Thru Static',
   'scaffold-scramble': 'Scaffold Scramble',
+  'chain-of-fools': 'Chain of Fools',
 };
 export const isGameId = (v: unknown): v is GameId =>
   v === 'wrong-floor' ||
@@ -103,7 +105,8 @@ export const isGameId = (v: unknown): v is GameId =>
   v === 'carry-on-carnage' ||
   v === 'sample-stampede' ||
   v === 'drive-thru' ||
-  v === 'scaffold-scramble';
+  v === 'scaffold-scramble' ||
+  v === 'chain-of-fools';
 /** Reused clips keep their original immutable storage path. */
 export function audioFileUrl(file: string) {
   const [game, name] = file.split('/');

@@ -74,6 +74,7 @@ void test('i18n: all 20 game cards have both English and German translations', (
     'zorb-clash',
     'sample-stampede',
     'drive-thru',
+    'chain-of-fools',
   ];
 
   for (const slug of expectedSlugs) {

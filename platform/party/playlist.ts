@@ -107,6 +107,11 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
     name: 'Scaffold Scramble',
     tagline: 'Crank winches & wipe windows 80 stories up',
   },
+  {
+    id: 'chain-of-fools',
+    name: 'Chain of Fools',
+    tagline: 'Four workers, one safety line, no unclipping',
+  },
 ];
 
 export function getPartyGameInfo(id: GameId): PartyGameInfo | undefined {

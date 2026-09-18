@@ -26,6 +26,7 @@ import {
   Utensils,
   Trophy,
   Building2,
+  Link2,
 } from 'lucide-react';
 import type { ElementType, ReactElement } from 'react';
 import AccountButton from '@/shared/accounts/AccountButton';
@@ -300,6 +301,18 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
       'A beat-up sedan parked at a chaotic fast-food drive-thru window as a passenger leans out to grab a burger tray over the curb gap while the kitchen smokes.',
     loading: 'lazy',
     tagIcon: Utensils,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
+  'chain-of-fools': {
+    slug: 'chain-of-fools',
+    href: '/chain-of-fools',
+    cardClass: 'chain-of-fools-card',
+    imgSrc: '/images/chain-of-fools.png',
+    imgAlt:
+      'Four demolition workers in hard hats chained together by their safety harnesses, one dangling off a rusty girder over a pit while the other three brace and haul, with a wrecking ball swinging behind them.',
+    loading: 'lazy',
+    tagIcon: Link2,
     metaIcon1: Users,
     metaIcon2: Timer,
   },
