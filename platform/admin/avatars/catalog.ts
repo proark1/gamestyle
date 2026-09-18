@@ -4,6 +4,9 @@ import { bumble, walkBumble } from '../../../shared/rendering/avatars/bumble';
 import { hollow, walkHollow } from '../../../shared/rendering/avatars/hollow';
 import { mochi, walkMochi } from '../../../shared/rendering/avatars/mochi';
 import { milo, walkMilo } from '../../../shared/rendering/avatars/milo';
+import { jelly, walkJelly } from '../../../shared/rendering/avatars/jelly';
+import { pip, walkPip } from '../../../shared/rendering/avatars/pip';
+import { pals, walkPals } from '../../../shared/rendering/avatars/pals';
 import { farmAvatars } from '../../../games/act-natural/avatar';
 import { chaosAvatars } from '../../../games/chaos/avatar';
 import { giantAvatars } from '../../../games/dont-wake-the-giant/avatar';
@@ -84,6 +87,27 @@ export const POTENTIAL_AVATARS: readonly AvatarCard[] = [
     tag: 'Human',
     note: 'A soft, rounded human with swept hair, a crooked smile and easygoing steps. Wears a sweater and sneakers. Player colour: sweater.',
     looks: [potential('milo', 'Milo', milo, walkMilo)],
+  },
+  {
+    id: 'bean',
+    name: 'Jelly',
+    tag: 'Party',
+    note: 'A soft jellybean with a face window, big eyes and stubby limbs, in the style of current party games. Wears the worker outfit, and its round top sits at the worker head top. Player colour: the bean.',
+    looks: [potential('jelly', 'Jelly', jelly, walkJelly)],
+  },
+  {
+    id: 'chibi',
+    name: 'Pip',
+    tag: 'Co-op',
+    note: 'A chibi crewmate with a big head, worker overalls and floating hands, like couch co-op games. Reads well from far overhead cameras. Player colour: shirt and cap.',
+    looks: [potential('pip', 'Pip', pip, walkPip)],
+  },
+  {
+    id: 'animals',
+    name: 'Pals',
+    tag: 'Animals',
+    note: 'Chubby party animals in hoodies: a bear, cat, fox or bunny by player colour. Ears replace the cap. Player colour: hoodie.',
+    looks: [potential('pals', 'Pals', pals, walkPals)],
   },
 ];
 
