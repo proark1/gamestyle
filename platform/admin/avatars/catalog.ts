@@ -7,9 +7,9 @@ import { milo, walkMilo } from '../../../shared/rendering/avatars/milo';
 import { jelly, walkJelly } from '../../../shared/rendering/avatars/jelly';
 import { pip, walkPip } from '../../../shared/rendering/avatars/pip';
 import { pals, walkPals } from '../../../shared/rendering/avatars/pals';
-import { lola, walkLola } from '../../../shared/rendering/avatars/lola';
-import { nico, walkNico } from '../../../shared/rendering/avatars/nico';
-import { TEAM } from '../../../shared/rendering/palette';
+import { playerKid, type KidId } from '../../../shared/rendering/avatars/kid';
+import { runHoopKid } from '../../../shared/rendering/avatars/hoop-kid';
+import { KIT } from '../../../shared/rendering/palette';
 import {
   snug,
   walkSnug,
@@ -65,6 +65,21 @@ function potential(
     },
   };
 }
+
+/** A kid in one of the four kits, wearing a player's wardrobe items. */
+function kidLook(kid: KidId, colour: keyof typeof KIT): AvatarLook {
+  return {
+    key: colour,
+    label: `${colour[0].toUpperCase()}${colour.slice(1)} kit`,
+    dressable: true,
+    create(look) {
+      const root = playerKid(kid, { jersey: KIT[colour] }, look).model;
+      return { root, pose: (time, walking) => runHoopKid(root, time, walking) };
+    },
+  };
+}
+
+const KITS = Object.keys(KIT) as (keyof typeof KIT)[];
 
 /** Snug in player colour `color`, wearing a player's hat and no other item. */
 function snugLook(kind: SnugKind, label: string, color: number): AvatarLook {
@@ -135,31 +150,15 @@ export const POTENTIAL_AVATARS: readonly AvatarCard[] = [
     id: 'hoop-girl',
     name: 'Lola',
     tag: 'Girl',
-    note: 'The girl from the clay basketball picture: big glossy eyes, rosy cheeks, an open smile, swept bangs and two pigtails. Sleeveless jersey and shorts with white piping, wristbands and high-tops, in either team kit. Player colour: kit and hair ties.',
-    looks: [
-      potential('red', 'Red kit', () => lola(0, { shirt: TEAM.red }), walkLola),
-      potential(
-        'blue',
-        'Blue kit',
-        () => lola(0, { shirt: TEAM.blue }),
-        walkLola,
-      ),
-    ],
+    note: 'The girl from the clay basketball picture: big glossy eyes, rosy cheeks, an open smile, swept bangs and two pigtails. Sleeveless jersey and shorts with white piping, wristbands and high-tops. Players are Nico for now, but she is built and dressed the same way, ready if the owner wants a choice of kid. Player colour: kit and hair ties.',
+    looks: KITS.map((kit) => kidLook('lola', kit)),
   },
   {
     id: 'hoop-boy',
     name: 'Nico',
     tag: 'Boy',
-    note: 'The boy dunking in the clay basketball picture: a mop of dark curls, ears showing and a toothy grin, in the same kit as Lola. Player colour: kit.',
-    looks: [
-      potential('red', 'Red kit', () => nico(0, { shirt: TEAM.red }), walkNico),
-      potential(
-        'blue',
-        'Blue kit',
-        () => nico(0, { shirt: TEAM.blue }),
-        walkNico,
-      ),
-    ],
+    note: 'The boy dunking in the clay basketball picture: a mop of dark curls, ears showing and a toothy grin. He is the player in Court Clash, the first game on the kids. Team games dress him in red or blue; a game without teams gives each of four seats its own kit, adding green and yellow. Every wardrobe item fits, and under a hat his curls show only below the brim. Player colour: kit.',
+    looks: KITS.map((kit) => kidLook('nico', kit)),
   },
   {
     id: 'toy',
@@ -227,7 +226,7 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   },
   basketball: {
     looks: basketballAvatars,
-    note: 'The shared worker in a team jersey, shorts and sneakers.',
+    note: 'The first game on the clay kids: every player is Nico in the team kit, wearing their own wardrobe items. The fans on the bleachers are kids too.',
   },
   'bungee-doubles': {
     looks: bungeeDoublesAvatars,

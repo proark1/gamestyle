@@ -16,7 +16,7 @@ export const LOOK_GROUP = 'worker-look';
 const FACE = [0, 1.43, 0.25];
 
 /** The models a look really has, by slot. Unknown or misplaced ids are ignored. */
-function modelsOf(look?: Look) {
+export function modelsOf(look?: Look) {
   const models: Partial<Record<Slot, ItemModel>> = {};
   for (const slot of SLOTS) {
     const id = look?.[slot];
@@ -26,7 +26,8 @@ function modelsOf(look?: Look) {
   return models;
 }
 
-function lookGroup(parent: T.Object3D) {
+/** The group a body part's items go in, made on first use. */
+export function lookGroup(parent: T.Object3D) {
   let group = parent.children.find((child) => child.name === LOOK_GROUP);
   if (!group) {
     group = new T.Group();
@@ -37,13 +38,14 @@ function lookGroup(parent: T.Object3D) {
 }
 
 /** The highest point of a head part, measured from the top of the head. */
-function partTop(part: Part) {
+export function partTop(part: Part) {
   if (part.shape === 'box') return part.at[1] + part.size[1] / 2;
   if (part.shape === 'ball') return part.at[1] + part.size[1];
   return part.at[1] + part.height / 2;
 }
 
-function addPart(
+/** Builds one item part in `parent`, `origin` plus its offset, mirrored by `side`. */
+export function addPart(
   parent: T.Object3D,
   part: Part,
   origin: readonly number[],
@@ -80,6 +82,7 @@ function addPart(
         : Math.max(2 * Math.max(part.top, part.bottom), part.height);
   // Small details add a shadow pass and nothing anyone would see.
   if (extent < 0.15) mesh.castShadow = false;
+  return mesh;
 }
 
 /** Puts a look's items on a built worker, and says which slots it filled. */

@@ -3,6 +3,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import * as T from 'three';
 import { dressedWorker } from '../rendering/cosmetics/dress';
+import { liveKid, playerKid, type KidId } from '../rendering/avatars/kid';
+import { SEAT_KITS } from '../rendering/palette';
 import { buildStandaloneItem } from '../rendering/cosmetics/standalone-item';
 import { disposeGeometry } from '../rendering/primitives';
 import { poseWorker, type WorkerPose } from '../rendering/worker-pose';
@@ -17,6 +19,10 @@ export type WardrobePreviewHandle = {
 
 export type WardrobePreviewProps = {
   look: Look;
+  /** The kid to dress; the shared worker when unset. */
+  kid?: KidId;
+  /** The kid's jersey colour. */
+  kit?: string;
   mode?: WardrobePreviewMode;
   itemId?: string | null;
   pose?: WorkerPose;
@@ -28,6 +34,8 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
   function WardrobePreview(
     {
       look,
+      kid,
+      kit = SEAT_KITS[0],
       mode = 'avatar',
       itemId,
       pose = 'walk',
@@ -38,6 +46,8 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
   ) {
     const containerRef = useRef<HTMLDivElement>(null);
     const lookRef = useRef(look);
+    const kidRef = useRef(kid);
+    const kitRef = useRef(kit);
     const modeRef = useRef(mode);
     const itemIdRef = useRef(itemId);
     const poseRef = useRef(pose);
@@ -155,7 +165,13 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
           shadow.scale.set(0.65, 0.65, 0.65);
           shadow.position.y = modelBbox.min.y - 0.02;
         } else {
-          const { model } = dressedWorker(0, {}, lookRef.current);
+          const { model } = kidRef.current
+            ? playerKid(
+                kidRef.current,
+                { jersey: kitRef.current },
+                lookRef.current,
+              )
+            : dressedWorker(0, {}, lookRef.current);
           model.position.set(0, 0, 0);
           turn.add(model);
           currentModel = model;
@@ -217,6 +233,8 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
 
         if (modeRef.current === 'avatar' && currentModel) {
           poseWorker(currentModel, now, poseRef.current);
+          if (kidRef.current)
+            liveKid(currentModel, now, poseRef.current === 'walk');
         }
 
         renderer.render(scene, camera);
@@ -259,10 +277,12 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
 
     useEffect(() => {
       lookRef.current = look;
+      kidRef.current = kid;
+      kitRef.current = kit;
       modeRef.current = mode;
       itemIdRef.current = itemId;
       applyViewRef.current?.();
-    }, [look, mode, itemId]);
+    }, [look, kid, kit, mode, itemId]);
 
     useEffect(() => {
       poseRef.current = pose;

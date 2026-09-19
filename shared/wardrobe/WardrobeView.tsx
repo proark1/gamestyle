@@ -20,6 +20,8 @@ import {
   X,
 } from 'lucide-react';
 import { getItemThumbnails } from '../rendering/cosmetics/standalone-item';
+import { PLAYER_KID } from '../rendering/avatars/kid';
+import { KIT } from '../rendering/palette';
 import { GOALS, ITEMS, SLOTS, type Item, type Slot } from './catalog';
 import type { Look } from './look';
 import {
@@ -77,6 +79,8 @@ export default function WardrobeView({
   const [selectedSlot, setSelectedSlot] = useState<Slot | 'all'>('all');
   const [previewMode, setPreviewMode] = useState<WardrobePreviewMode>('avatar');
   const [avatarPose, setAvatarPose] = useState<WorkerPose>('walk');
+  // Which kit the preview shows; each game picks the real one.
+  const [kit, setKit] = useState<string>(KIT.red);
   const [isSpinning, setIsSpinning] = useState(true);
   const [selectedItem, setSelectedItem] = useState<Item | null>(
     ITEMS[0] ?? null,
@@ -221,6 +225,29 @@ export default function WardrobeView({
         <div className="wardrobe-main-layout">
           {/* 3D Preview Panel with Turning, Walk, Still and Poses */}
           <div className="wardrobe-preview-panel">
+            {/* A kit colour to try items in; each game picks the real one */}
+            <div className="wardrobe-kit-bar">
+              <div
+                className="wardrobe-kit-swatches"
+                role="group"
+                aria-label="Kit colour"
+              >
+                {Object.entries(KIT).map(([name, colour]) => (
+                  <button
+                    key={name}
+                    type="button"
+                    className="wardrobe-kit-swatch"
+                    style={{ background: colour }}
+                    data-active={kit === colour}
+                    aria-pressed={kit === colour}
+                    aria-label={`${name} kit`}
+                    title={`${name[0].toUpperCase()}${name.slice(1)} kit`}
+                    onClick={() => setKit(colour)}
+                  />
+                ))}
+              </div>
+            </div>
+
             {/* Mode Toggle Bar */}
             <div className="wardrobe-preview-mode-bar">
               <button
@@ -248,6 +275,8 @@ export default function WardrobeView({
               <WardrobePreview
                 ref={previewRef}
                 look={previewLook}
+                kid={PLAYER_KID}
+                kit={kit}
                 mode={previewMode}
                 itemId={selectedItem?.id ?? null}
                 pose={avatarPose}
