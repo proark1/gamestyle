@@ -88,14 +88,17 @@ export function stepCarPhysics(
     car.bumperDamage = Math.min(100, car.bumperDamage + 25);
   }
 
-  // Track drive-thru lane bounds (X: [-8, 2.0], Z: [-12, 24])
+  // Track drive-thru lane bounds (X: [-8, 2.0], Z: [-12, 24]). Scraping an
+  // edge keeps 85% of the speed per 1/60 s, whatever the frame rate: a flat
+  // 0.85 per step pinned a car on the curb at 0.26 m/s at 144 Hz.
+  const scrape = Math.pow(0.85, dt * 60);
   if (car.x > 1.8) {
     // Rubbing curb
     car.x = 1.8;
-    car.speed *= 0.85;
+    car.speed *= scrape;
   } else if (car.x < -8.0) {
     car.x = -8.0;
-    car.speed *= 0.85;
+    car.speed *= scrape;
   }
 
   // Windshield wipers auto-clear splat

@@ -493,6 +493,9 @@ export function advanceDriveThruWorld(
       'Car reversed into the drive-thru speaker pole and destroyed it!',
     );
   }
+  // A failure this tick ends the round: the window check below must not
+  // reopen it.
+  if (w.failState !== 'none') return;
 
   // 6. Phase timer countdown
   w.phaseTimer -= dt;
