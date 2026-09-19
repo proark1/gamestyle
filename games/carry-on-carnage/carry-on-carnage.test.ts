@@ -22,6 +22,7 @@ import {
 import {
   ITEM_CONFIGS,
   PASSED_REWARD,
+  REACH_DISTANCE,
   type CarryOnWorld,
   type LuggageItem,
   type Suitcase,
@@ -326,6 +327,87 @@ void test('player can unpack / remove an item from an open suitcase', () => {
     'Item should no longer be packed in suitcase',
   );
   assert.equal(sc.items.length, 0, 'Suitcase items array should be empty');
+});
+
+// The bags stand 1.4 m apart, so a neighbour is always within reach too.
+function besideBag(index: number) {
+  const world = freshCarryOnWorld(1000);
+  const sc = world.suitcases[index];
+  const player = newTraveler('p1', 'Tester', 0, 1000);
+  player.x = sc.x + 0.8;
+  player.z = sc.z;
+  world.players.push(player);
+  const neighbour = world.suitcases[index - 1];
+  assert.ok(
+    Math.hypot(neighbour.x - player.x, neighbour.z - player.z) < REACH_DISTANCE,
+    'the bag before this one is in reach as well',
+  );
+  const act = (action: 'grab' | 'compress' | 'zip') =>
+    carryOnAction(
+      world,
+      player.id,
+      { type: 'interact', action },
+      { current: 100 },
+    );
+  return { world, sc, neighbour, player, act };
+}
+
+void test('a held item is packed into the nearest bag, not the first in reach', () => {
+  const { world, sc, neighbour, player, act } = besideBag(1);
+  const item = world.items[0];
+  item.heldBy = player.id;
+  player.holdingItem = item.id;
+
+  act('grab');
+
+  assert.equal(item.packedIn, sc.id);
+  assert.deepEqual(sc.items, [item.id]);
+  assert.deepEqual(neighbour.items, []);
+});
+
+void test('grabbing next to a bag in a row lifts that bag, not a neighbour', () => {
+  const { world, sc, neighbour, player, act } = besideBag(2);
+  for (const bag of [sc, neighbour]) {
+    bag.zipped = 1;
+    bag.open = false;
+  }
+
+  act('grab');
+
+  assert.equal(player.holdingSuitcase, sc.id);
+  assert.equal(sc.heldBy, player.id);
+  assert.equal(neighbour.heldBy, null);
+  assert.ok(world.items.every((it) => it.heldBy === null));
+});
+
+void test('zipping while sitting on a bag zips that bag, not the first in reach', () => {
+  const { world, sc, neighbour, player, act } = besideBag(1);
+  player.sittingOn = sc.id;
+  // Sitting puts the traveller on the bag, still in reach of the one before.
+  advanceCarryOn(world, 0.016, { current: 100 });
+  assert.equal(player.x, sc.x);
+  assert.equal(player.z, sc.z);
+
+  act('zip');
+
+  assert.equal(player.zippingSuitcase, sc.id);
+  assert.ok(sc.zipped > 0);
+  assert.equal(neighbour.zipped, 0);
+});
+
+void test('sitting down and picking up loose items choose the nearest too', () => {
+  const { world, sc, player, act } = besideBag(3);
+  act('compress');
+  assert.equal(player.sittingOn, sc.id);
+
+  // Two loose items in reach; the later one in the list lies closer.
+  const [far, near] = world.items;
+  Object.assign(far, { x: player.x + 1.5, z: player.z });
+  Object.assign(near, { x: player.x + 0.4, z: player.z });
+  player.sittingOn = null;
+  act('grab');
+  assert.equal(player.holdingItem, near.id);
+  assert.equal(far.heldBy, null);
 });
 
 void test('a bot sizes a ready bag once, the sizer clears, and an approved bag cannot score twice', () => {

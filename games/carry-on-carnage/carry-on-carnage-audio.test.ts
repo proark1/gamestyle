@@ -223,8 +223,8 @@ void test('every catalog cue is played by the game and the game names no other c
     assert.ok(!unpacked.some((id) => id.endsWith('.pack')));
   }
 
-  // Sit, zip three times, jam, then burst an overstuffed bag. The first bag
-  // in reach is the one acted on, so each scene works on bag 0.
+  // Sit, zip three times, jam, then burst an overstuffed bag. The nearest bag
+  // in reach is the one acted on, so each scene stands right by bag 0.
   {
     const world = round();
     const sc = world.suitcases[0];

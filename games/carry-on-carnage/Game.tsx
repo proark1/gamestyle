@@ -26,6 +26,7 @@ import {
   carryOnSnapshot,
   freshCarryOnWorld,
   newTraveler,
+  reachable,
 } from './simulation';
 import {
   idleInput,
@@ -211,12 +212,13 @@ export default function CarryOnCarnageGame() {
   const remainingMs = world ? timeLeft(world) : 0;
   const isUrgent = remainingMs < 30_000 && remainingMs > 0;
 
-  // Nearby suitcase calculation for HUD
+  // The suitcase the HUD describes is the one the keys act on: the one being
+  // sat on, else the nearest in reach.
   let nearbySc: Suitcase | undefined;
   if (world && me) {
-    nearbySc = world.suitcases.find(
-      (sc) => Math.hypot(sc.x - me.x, sc.z - me.z) < 2.0,
-    );
+    nearbySc =
+      world.suitcases.find((sc) => sc.id === me.sittingOn) ??
+      reachable(me, world.suitcases);
   }
 
   return (

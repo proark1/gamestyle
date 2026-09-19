@@ -239,7 +239,7 @@ export type CarryOnAction =
   | {
       type: 'interact';
       action: 'grab' | 'compress' | 'zip' | 'drop';
-      /** Act on this item or suitcase only; without it, the first one in reach. */
+      /** Act on this item or suitcase only; without it, the nearest one in reach. */
       target?: string;
     };
 
