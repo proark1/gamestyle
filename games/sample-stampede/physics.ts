@@ -11,6 +11,7 @@ import {
 } from './types';
 
 export const STEP = 1 / 60;
+const GRAB_COOLDOWN = 0.8;
 export const WAREHOUSE_BOUNDS = {
   minX: -26,
   maxX: 26,
@@ -29,6 +30,9 @@ export class SampleStampedePhysics {
   itemBodies = new Map<string, C.Body>();
   shelfBodies: C.Body[] = [];
   wallBodies: C.Body[] = [];
+  // Per cart: whether GRAB was held last step, and how long a fresh press
+  // still waits for the pole.
+  private grabPresses = new Map<string, { held: boolean; wait: number }>();
 
   constructor(public state: SampleStampedeWorld) {
     this.world = new C.World({
@@ -310,9 +314,17 @@ export class SampleStampedePhysics {
         drift: false,
         grabberAction: false,
       };
-      const grabberInput =
-        (grabberPlayer && inputs.get(grabberPlayer.id)) || input;
-      this.handleGrabberAction(cart, grabberInput, dt, events);
+      // A human in the basket works the pole. Otherwise the driver's GRAB
+      // does, next to any bot rider: a solo player's rider is a bot.
+      const riderIsHuman = !!grabberPlayer && !grabberPlayer.bot;
+      const riderInput = grabberPlayer && inputs.get(grabberPlayer.id);
+      this.handleGrabberAction(
+        cart,
+        riderIsHuman ? !!riderInput?.grabberAction : input.grabberAction,
+        !riderIsHuman && !!riderInput?.grabberAction,
+        dt,
+        events,
+      );
 
       // High-speed collision check: risk of dropping items if rammed hard
       this.checkCartCollisions(cart, events);
@@ -377,7 +389,8 @@ export class SampleStampedePhysics {
 
   private handleGrabberAction(
     cart: ShoppingCart,
-    input: PlayerInput,
+    pressed: boolean,
+    botAsks: boolean,
     dt: number,
     events: StampedeEvent[],
   ) {
@@ -385,8 +398,17 @@ export class SampleStampedePhysics {
       cart.grabberCooldown -= dt;
     }
 
-    if (input.grabberAction && cart.grabberCooldown <= 0) {
-      cart.grabberCooldown = 0.8;
+    // A fresh press waits out the cooldown instead of being dropped, so a
+    // tap just after the bot rider's swing still swings.
+    const press = this.grabPresses.get(cart.id) ?? { held: false, wait: 0 };
+    press.wait =
+      pressed && !press.held ? GRAB_COOLDOWN : Math.max(0, press.wait - dt);
+    press.held = pressed;
+    this.grabPresses.set(cart.id, press);
+
+    if ((pressed || botAsks || press.wait > 0) && cart.grabberCooldown <= 0) {
+      press.wait = 0;
+      cart.grabberCooldown = GRAB_COOLDOWN;
       cart.grabberReach = 1.0;
       cart.grabberSwatting = true;
 

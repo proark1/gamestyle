@@ -17,6 +17,7 @@ import {
   type ItemKind,
   type PlayerInput,
   type SampleStampedeSnapshot,
+  type StampedeEvent,
 } from './types';
 import { WAREHOUSE_BOUNDS } from './physics';
 import { createRenderer } from '../../shared/rendering/create-renderer';
@@ -53,6 +54,33 @@ type SkidMark = {
   maxLife: number;
 };
 
+// Comfortably more ids than a room snapshot repeats.
+const SHOWN_EVENT_MEMORY = 128;
+
+/**
+ * The events not shown yet, in order. A room snapshot repeats its world's
+ * recent events, so ids already shown are skipped. The solo world keeps no
+ * events, so its loop passes in each frame's own.
+ */
+export function eventsToShow(
+  shown: Set<number>,
+  kept: readonly StampedeEvent[],
+  frame: readonly StampedeEvent[] = [],
+): StampedeEvent[] {
+  const fresh: StampedeEvent[] = [];
+  for (const ev of [...kept, ...frame]) {
+    if (shown.has(ev.id)) continue;
+    shown.add(ev.id);
+    fresh.push(ev);
+  }
+  // A Set iterates oldest first, so this forgets the longest-shown ids.
+  for (const id of shown) {
+    if (shown.size <= SHOWN_EVENT_MEMORY) break;
+    shown.delete(id);
+  }
+  return fresh;
+}
+
 export class SampleStampedeScene {
   renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -75,6 +103,7 @@ export class SampleStampedeScene {
   private comicPopups: ComicPopup[] = [];
   private skidMarks: SkidMark[] = [];
   private screenShake = 0;
+  private shownEvents = new Set<number>();
   private activeSteamSources: { x: number; y: number; z: number }[] = [];
 
   private currentInput: PlayerInput = {
@@ -253,7 +282,11 @@ export class SampleStampedeScene {
     }
   }
 
-  public render(snapshot: SampleStampedeSnapshot) {
+  /** `frameEvents`: what the local simulation produced this frame. */
+  public render(
+    snapshot: SampleStampedeSnapshot,
+    frameEvents: readonly StampedeEvent[] = [],
+  ) {
     const { world, localCartId } = snapshot;
     const now = performance.now();
     const dt = Math.min((now - this.lastTime) / 1000, 0.05);
@@ -449,7 +482,11 @@ export class SampleStampedeScene {
     this.updateComicPopups(dt);
 
     // Process new events for camera shake, particle effects and comic text popups
-    for (const ev of world.events) {
+    for (const ev of eventsToShow(
+      this.shownEvents,
+      world.events,
+      frameEvents,
+    )) {
       if (ev.type === 'cart_crash' || ev.type === 'shelf_tumble') {
         this.screenShake = Math.max(this.screenShake, 0.48);
         this.emitImpactDust(ev.x, ev.y, ev.z, 10);
@@ -469,7 +506,6 @@ export class SampleStampedeScene {
         this.spawnComicPopup(ev.x, ev.y + 1.2, ev.z, ev.text);
       }
     }
-    world.events.length = 0; // Clear processed events
 
     // 7. Smooth Dynamic Third-Person Camera Follow with FOV Zoom & Screen Shake
     const myCart =

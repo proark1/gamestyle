@@ -1,13 +1,37 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  advanceSampleStampedeTick,
   advanceSampleStampedeWorld,
   freshSampleStampedeWorld,
   newStampedePlayer,
+  sampleStampedeSnapshot,
 } from './simulation';
 import { SampleStampedePhysics } from './physics';
 import { createEngine } from './peer';
+import { eventsToShow } from './scene';
 import { type PlayerInput, type StampedeEvent } from './types';
+
+// The solo game's red crew: the player drives, a bot rides in the basket.
+function soloWorld() {
+  const world = freshSampleStampedeWorld(1000);
+  world.players.push(
+    newStampedePlayer('me', 'You', 0, 'red', 'cart-red', 'driver'),
+    newStampedePlayer('gus', 'Gus', 1, 'red', 'cart-red', 'grabber', true),
+  );
+  return world;
+}
+
+// A point straight ahead of the cart.
+function ahead(cart: { x: number; z: number; rotY: number }, distance: number) {
+  return {
+    x: cart.x + Math.cos(cart.rotY) * distance,
+    z: cart.z - Math.sin(cart.rotY) * distance,
+  };
+}
+
+const redSwings = (events: StampedeEvent[]) =>
+  events.filter((e) => e.type === 'grabber_whack' && e.team === 'red').length;
 
 void test('cart mass increases dynamically as bulk items are loaded into the basket', () => {
   const world = freshSampleStampedeWorld(1000);
@@ -291,4 +315,138 @@ void test('peer engine creates sample-stampede room and manages players', () => 
     engine.checkpoint().world.clock > 1000,
     'Engine clock should advance on tick',
   );
+});
+
+void test("the solo player's GRAB works the pole beside a bot rider", () => {
+  const world = soloWorld();
+  const cart = world.carts[0];
+  const physics = new SampleStampedePhysics(world);
+  // Within the pole's reach, but too far for the bot rider to try.
+  const spot = ahead(cart, 3.5);
+  physics.spawnGroundItem('sample_taquito', spot.x, 0.5, spot.z, false);
+
+  const me = world.players[0];
+  me.input = { ...me.input, grabberAction: true };
+  const events: StampedeEvent[] = [];
+  advanceSampleStampedeWorld(world, physics, 1 / 60, events);
+
+  assert.equal(redSwings(events), 1);
+  assert.ok(cart.items.some((it) => it.kind === 'sample_taquito'));
+  physics.destroy();
+});
+
+void test("a GRAB tap during the bot rider's cooldown swings once the pole is free", () => {
+  const world = soloWorld();
+  const cart = world.carts[0];
+  const physics = new SampleStampedePhysics(world);
+  const spot = ahead(cart, 2);
+  physics.spawnGroundItem('paper_towels', spot.x, 0.5, spot.z, false);
+
+  // The bot rider snags the roll, which starts the pole's cooldown.
+  const first: StampedeEvent[] = [];
+  advanceSampleStampedeWorld(world, physics, 1 / 60, first);
+  assert.equal(redSwings(first), 1);
+
+  // The player taps GRAB for 200 ms, well before the cooldown ends.
+  const me = world.players[0];
+  const swungAt: number[] = [];
+  for (let frame = 0; frame < 90; frame++) {
+    me.input = { ...me.input, grabberAction: frame < 12 };
+    const events: StampedeEvent[] = [];
+    advanceSampleStampedeWorld(world, physics, 1 / 60, events);
+    if (redSwings(events)) swungAt.push(frame);
+  }
+  assert.equal(swungAt.length, 1, 'the tap swings exactly once');
+  assert.ok(swungAt[0] >= 12, 'after the tap was released');
+  physics.destroy();
+});
+
+void test('the scene shows each event once, from a solo frame or a room snapshot', () => {
+  const shown = new Set<number>();
+
+  // Solo keeps no events on the world; Game.tsx hands in the frame's own.
+  const world = soloWorld();
+  const cart = world.carts[0];
+  const physics = new SampleStampedePhysics(world);
+  world.hazards.push({
+    id: 'plate-under-cart',
+    x: cart.x,
+    z: cart.z,
+    kind: 'plate',
+    rotation: 0,
+    duration: 30,
+  });
+  const frame: StampedeEvent[] = [];
+  advanceSampleStampedeWorld(world, physics, 1 / 60, frame);
+  const snap = sampleStampedeSnapshot(world, 'SOLO', 'me', 'me', 1);
+  assert.equal(snap.world.events.length, 0);
+  const slip = eventsToShow(shown, snap.world.events, frame);
+  assert.deepEqual(
+    slip.map((e) => e.type),
+    ['plate_slip'],
+  );
+  physics.destroy();
+
+  // A room snapshot repeats its recent events; only the new one shows.
+  const snag: StampedeEvent = {
+    id: slip[0].id + 1,
+    type: 'item_snagged',
+    x: 0,
+    y: 0,
+    z: 0,
+    text: '+ Paper Towels',
+  };
+  assert.deepEqual(eventsToShow(shown, [...slip, snag]), [snag]);
+  assert.deepEqual(eventsToShow(shown, [...slip, snag]), []);
+
+  // The memory of shown ids stays small over a long match.
+  for (let id = 0; id < 1000; id++) eventsToShow(shown, [], [{ ...snag, id }]);
+  assert.ok(shown.size <= 128);
+});
+
+void test("a room keeps only recent events, and a tick's events reach its snapshot", () => {
+  const world = freshSampleStampedeWorld(1000);
+  for (let id = 0; id < 200; id++)
+    world.events.push({ id, type: 'grabber_whack', x: 0, y: 0, z: 0 });
+  const cart = world.carts[0];
+  world.hazards.push({
+    id: 'plate-under-cart',
+    x: cart.x,
+    z: cart.z,
+    kind: 'plate',
+    rotation: 0,
+    duration: 30,
+  });
+
+  advanceSampleStampedeTick(world, 1016);
+
+  assert.equal(world.events.length, 25, "the last 24, then this tick's slip");
+  const snap = sampleStampedeSnapshot(world, 'ROOM', 'host', 'host', 1);
+  assert.equal(snap.world.events.at(-1)?.type, 'plate_slip');
+});
+
+void test('a bot driver turns toward the item it wants', () => {
+  const world = freshSampleStampedeWorld(1000);
+  world.players.push(
+    newStampedePlayer('bot', 'Bot', 0, 'red', 'cart-red', 'driver', true),
+  );
+  for (const kiosk of world.kiosks) kiosk.active = false;
+  const cart = world.carts[0];
+  // One roll the manifest wants, 12 m to the cart's left.
+  const roll = world.groundItems.find((it) => it.kind === 'paper_towels')!;
+  world.groundItems = [
+    { ...roll, x: cart.x - 12, y: 0.5, z: cart.z, onShelf: false },
+  ];
+  const physics = new SampleStampedePhysics(world);
+  const distance = () =>
+    Math.hypot(
+      world.groundItems[0].x - cart.x,
+      world.groundItems[0].z - cart.z,
+    );
+
+  for (let frame = 0; frame < 90; frame++)
+    advanceSampleStampedeWorld(world, physics, 1 / 60, []);
+
+  assert.ok(distance() < 8, `still ${distance().toFixed(1)} m away`);
+  physics.destroy();
 });
