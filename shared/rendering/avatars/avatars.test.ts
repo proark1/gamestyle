@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
+import { ITEMS } from '../../wardrobe/catalog';
+import { LOOK_GROUP } from '../cosmetics/dress';
 import { worker } from '../worker';
 import { bumble, walkBumble } from './bumble';
 import { hollow, walkHollow } from './hollow';
@@ -11,6 +13,7 @@ import { pip, walkPip } from './pip';
 import { pals, walkPals } from './pals';
 import { lola, walkLola } from './lola';
 import { nico, walkNico } from './nico';
+import { snug, walkSnug } from './snug';
 
 const AVATARS = [
   { name: 'Bumble', build: bumble, walk: walkBumble },
@@ -22,6 +25,16 @@ const AVATARS = [
   { name: 'Pals', build: pals, walk: walkPals },
   { name: 'Lola', build: lola, walk: walkLola },
   { name: 'Nico', build: nico, walk: walkNico },
+  {
+    name: 'Snug (woman)',
+    build: (color: number) => snug(color, 'woman'),
+    walk: walkSnug,
+  },
+  {
+    name: 'Snug (man)',
+    build: (color: number) => snug(color, 'man'),
+    walk: walkSnug,
+  },
 ];
 
 function lowestPoint(root: T.Object3D) {
@@ -101,4 +114,55 @@ void test('each potential avatar wears the player colour without repainting shar
       `${name} changes with the player colour`,
     );
   assert.deepEqual(colours(worker(0)), workerColours);
+});
+
+function worn(root: T.Object3D) {
+  const parts: T.Object3D[] = [];
+  root.traverse((object) => {
+    if (object.name === LOOK_GROUP) parts.push(object);
+  });
+  return parts;
+}
+
+function meshes(root: T.Object3D) {
+  let count = 0;
+  root.traverse((object) => {
+    if ((object as T.Mesh).isMesh) count++;
+  });
+  return count;
+}
+
+void test('Snug shows only the hat of a wardrobe look, sitting on its round head', () => {
+  const hats = ITEMS.filter((item) => item.slot === 'hat');
+  const others = ITEMS.filter((item) => item.slot !== 'hat');
+  for (const kind of ['woman', 'man'] as const) {
+    const bare = snug(0, kind);
+    assert.equal(worn(bare).length, 0, `${kind} starts bareheaded`);
+    assert.ok(bare.userData.bob, `bareheaded, the ${kind} has a bun or curl`);
+    for (const item of others)
+      assert.equal(
+        meshes(snug(0, kind, { [item.slot]: item.id })),
+        meshes(bare),
+        `${kind} leaves off the ${item.id}`,
+      );
+    for (const item of hats) {
+      const model = snug(0, kind, { hat: item.id });
+      model.updateMatrixWorld(true);
+      const [hat] = worn(model);
+      assert.ok(hat && meshes(hat) > 0, `${kind} wears the ${item.id}`);
+      const head = (model.userData.head as T.Object3D).children[0];
+      const scalp = new T.Box3().setFromObject(head);
+      const bounds = new T.Box3().setFromObject(hat);
+      assert.ok(
+        bounds.min.y < scalp.max.y && bounds.max.y > scalp.max.y,
+        `the ${item.id} sits on the ${kind}'s head`,
+      );
+      if (item.id !== 'bobble-beanie')
+        assert.equal(
+          model.userData.bob,
+          undefined,
+          `the ${item.id} covers the ${kind}'s bun or curl`,
+        );
+    }
+  }
 });

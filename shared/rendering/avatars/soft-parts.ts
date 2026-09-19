@@ -2,8 +2,8 @@ import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 /**
- * Smooth building blocks for the rounder potential avatars (Jelly, Pip and
- * Pals). Materials and geometries are cached and shared by every model, so a
+ * Smooth building blocks for the rounder potential avatars (Jelly, Pip, Pals
+ * and Snug). Materials and geometries are cached and shared by every model, so a
  * crowd of them stays cheap; callers place meshes by transform only.
  */
 type Point = [number, number, number];
@@ -102,6 +102,21 @@ export function lathe(
       ),
   );
   return place(parent, new T.Mesh(geometry, surface(color)), position);
+}
+
+/** A mesh on a geometry of the caller's own, built once per `key`. */
+export function custom(
+  parent: T.Object3D,
+  key: string,
+  make: () => T.BufferGeometry,
+  position: Point,
+  color: string,
+) {
+  return place(
+    parent,
+    new T.Mesh(cached(`custom:${key}`, make), surface(color)),
+    position,
+  );
 }
 
 /** A cone standing on Y. */

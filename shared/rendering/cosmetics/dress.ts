@@ -116,6 +116,20 @@ export function dressWorker(
 }
 
 /**
+ * Puts a look's hat on a head other than the worker's. Its parts go in
+ * `parent` as if its origin were the top of the worker's head; the caller
+ * places and scales `parent` to fit its own head. False when there is no hat.
+ */
+export function wearHat(parent: T.Object3D, player: string, look?: Look) {
+  const hat = modelsOf(look).hat;
+  if (!hat) return false;
+  for (const part of hat.parts)
+    if (part.on === 'head')
+      addPart(lookGroup(parent), part, [0, 0, 0], 1, player);
+  return true;
+}
+
+/**
  * The shared worker in a game's outfit, wearing a player's look over it. The
  * player's items win: a hat takes the cap off, and legs and shoes recolour the
  * trousers and boots. The shirt always keeps the player colour.

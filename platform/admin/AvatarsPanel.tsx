@@ -402,6 +402,17 @@ function AvatarCardView({
           the shared worker.
         </p>
       )}
+      {look.dressable &&
+        look.slots &&
+        SLOTS.some((slot) => wearing[slot] && !look.slots?.includes(slot)) && (
+          <p className={styles.note}>
+            Only the{' '}
+            {look.slots
+              .map((slot) => SLOT_NAMES[slot].toLowerCase())
+              .join(', ')}{' '}
+            shows here: this avatar isn&rsquo;t built on the shared worker.
+          </p>
+        )}
       <button type="button" className={admin.quiet} onClick={onTemplate}>
         {isTemplate ? 'Stop using as template' : 'Use as template'}
       </button>

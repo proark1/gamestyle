@@ -10,6 +10,11 @@ import { pals, walkPals } from '../../../shared/rendering/avatars/pals';
 import { lola, walkLola } from '../../../shared/rendering/avatars/lola';
 import { nico, walkNico } from '../../../shared/rendering/avatars/nico';
 import { TEAM } from '../../../shared/rendering/palette';
+import {
+  snug,
+  walkSnug,
+  type SnugKind,
+} from '../../../shared/rendering/avatars/snug';
 import { farmAvatars } from '../../../games/act-natural/avatar';
 import { chaosAvatars } from '../../../games/chaos/avatar';
 import { giantAvatars } from '../../../games/dont-wake-the-giant/avatar';
@@ -57,6 +62,20 @@ function potential(
     create() {
       const root = build(0);
       return { root, pose: (time, walking) => walk(root, time, walking) };
+    },
+  };
+}
+
+/** Snug in player colour `color`, wearing a player's hat and no other item. */
+function snugLook(kind: SnugKind, label: string, color: number): AvatarLook {
+  return {
+    key: kind,
+    label,
+    dressable: true,
+    slots: ['hat'],
+    create(look) {
+      const root = snug(color, kind, look);
+      return { root, pose: (time, walking) => walkSnug(root, time, walking) };
     },
   };
 }
@@ -141,6 +160,13 @@ export const POTENTIAL_AVATARS: readonly AvatarCard[] = [
         walkNico,
       ),
     ],
+  },
+  {
+    id: 'toy',
+    name: 'Snug',
+    tag: 'Cosy',
+    note: 'Chunky vinyl-toy travellers from the hotel concept art: a big round face, quilted puffer, jeans, woolly socks, boots and a backpack. She wears a twisted bun, he short hair. Hats come from the wardrobe: the Bobble Beanie is the knit beanie from the art, and any other hat fits the round head. Shown in plum and amber, like the art. Player colour: puffer.',
+    looks: [snugLook('woman', 'Woman', 3), snugLook('man', 'Man', 0)],
   },
 ];
 

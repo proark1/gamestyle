@@ -1,4 +1,5 @@
 import type * as T from 'three';
+import type { Slot } from '../wardrobe/catalog';
 import type { Look } from '../wardrobe/look';
 
 /** One player avatar built outside its game, for side-by-side previews. */
@@ -17,4 +18,6 @@ export type AvatarLook = {
   create(look?: Look): AvatarPreview;
   /** True when `create` puts a player's wardrobe items on the avatar. */
   dressable?: boolean;
+  /** The only slots a dressable avatar shows, when it can't wear them all. */
+  slots?: readonly Slot[];
 };
