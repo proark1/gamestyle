@@ -100,6 +100,18 @@ void test('shared narrator auditions persist, selection is reused, both games ke
     const delivery = await library(db, 'uphill-delivery');
     assert.equal(delivery.settings.voiceId, 'shared_voice');
     assert.equal(delivery.keyAvailable, true);
+    // Every game added after the narrator was chosen inherits it, not a fixed few.
+    for (const later of ['chain-of-fools', 'carry-on-carnage'] as const) {
+      await db
+        .prepare('DELETE FROM audio_settings WHERE game = ?')
+        .bind(later)
+        .run();
+      assert.equal(
+        (await library(db, later)).settings.voiceId,
+        'shared_voice',
+        later,
+      );
+    }
     assert.equal(
       (await library(db, 'stack-or-sink')).settings.voiceId,
       'shared_voice',

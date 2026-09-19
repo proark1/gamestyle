@@ -159,16 +159,9 @@ export async function library(
   };
   const map = new Map(saved.results.map((c) => [c.cue, c]));
   const narrator = await narratorState(db);
-  // A newly added game inherits the collection's already approved narrator.
-  if (
-    (game === 'uphill-delivery' ||
-      game === 'dont-wake-the-giant' ||
-      game === 'reel-problems' ||
-      game === 'four-brain-cells') &&
-    !settings.voiceId &&
-    narrator.voice
-  )
-    settings.voiceId = narrator.voice.id;
+  // Choosing the narrator writes it into every game that existed at the time.
+  // A game added afterwards, or one without a voice of its own, inherits it here.
+  if (!settings.voiceId && narrator.voice) settings.voiceId = narrator.voice.id;
   const sharedKey = narrator.voice
     ? await db
         .prepare(
