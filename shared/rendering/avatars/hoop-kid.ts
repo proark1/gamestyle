@@ -25,19 +25,26 @@ const TRIM = CLOTH.white;
 const CLAY = 0.6;
 
 /** Where each leg swings from, and where the head sits on the neck. */
-const HIP: Point = [0.11, 0.55, 0];
-const SHOULDER: Point = [0.245, 0.885, 0];
-const HEAD_Y = 1.04;
+export const HIP: Point = [0.11, 0.55, 0];
+export const SHOULDER: Point = [0.245, 0.885, 0];
+export const HEAD_Y = 1.04;
 /** The jersey is a lathe squashed front to back by this much. */
-const DEPTH = 0.74;
+export const DEPTH = 0.74;
+/** Where long trousers end, below the hip. */
+export const TROUSER_HEM = -0.37;
+/** Where a hat's brim sits on the head, in head space: just above the brows. */
+export const HAT_BRIM = 0.43;
 
-type Ellipsoid = { centre: Point; radii: Point };
+export type Ellipsoid = { centre: Point; radii: Point };
 /** The skull, and the chubby cheeks and jaw below it, in head space. */
 export const SKULL: Ellipsoid = {
   centre: [0, 0.3, 0],
   radii: [0.31, 0.29, 0.28],
 };
-const JAW: Ellipsoid = { centre: [0, 0.19, 0.035], radii: [0.265, 0.19, 0.25] };
+export const JAW: Ellipsoid = {
+  centre: [0, 0.19, 0.035],
+  radii: [0.265, 0.19, 0.25],
+};
 
 const FORWARD = new T.Vector3(0, 0, 1);
 const geometries = new Map<string, T.BufferGeometry>();
@@ -372,15 +379,19 @@ function jerseyProfile(): [number, number][] {
   ];
 }
 
-/** The jersey's half-width at `height` above the hem. */
-function jerseyRadius(height: number) {
-  const profile = jerseyProfile();
+/** A profile's radius at `height`, straight between its points. */
+function radiusAt(profile: [number, number][], height: number) {
   for (let i = 1; i < profile.length; i++) {
     const [r0, h0] = profile[i - 1];
     const [r1, h1] = profile[i];
     if (height <= h1) return r0 + ((r1 - r0) * (height - h0)) / (h1 - h0);
   }
   return 0;
+}
+
+/** The jersey's half-width at `height` above the hem. */
+export function jerseyRadius(height: number) {
+  return radiusAt(jerseyProfile(), height);
 }
 
 /** Piping round an armhole, lying on the jersey's side. */
@@ -407,21 +418,53 @@ function shortsLegProfile(): [number, number][] {
   ];
 }
 
-function leg(body: T.Group, side: number, kit: string, shorts: string) {
+/** Long trousers, for a wardrobe item worn on the legs: down to the high-tops. */
+function trouserLegProfile(): [number, number][] {
+  return [
+    [0.001, TROUSER_HEM],
+    [0.104, TROUSER_HEM],
+    [0.11, -0.26],
+    [0.13, -0.13],
+    [0.13, -0.04],
+    [0.118, 0.06],
+    [0.001, 0.07],
+  ];
+}
+
+/** How far out long trousers reach at `y` below the hip. */
+export function trouserRadius(y: number) {
+  const outline = trouserLegProfile().slice(1, -1);
+  return radiusAt(outline, Math.min(0.06, Math.max(TROUSER_HEM, y)));
+}
+
+function leg(
+  body: T.Group,
+  side: number,
+  kit: string,
+  shorts: string,
+  trousers: boolean,
+) {
   const leg = new T.Group();
   leg.position.set(side * HIP[0], HIP[1], HIP[2]);
   body.add(leg);
-  lathe(leg, 'hoop-shorts-leg', shortsLegProfile, [0, 0, 0], shorts);
-  band(leg, 0.143, 0.032, [0, -0.155, 0], TRIM, 0.146);
-  rounded(
-    leg,
-    [0.022, 0.2, 0.05],
-    [side * 0.132, -0.06, 0],
-    TRIM,
-    0.01,
-  ).rotation.z = side * 0.07;
-  capsule(leg, 0.068, 0.19, [0, -0.29, 0], SKIN).material = surface(SKIN, CLAY);
-  band(leg, 0.076, 0.13, [0, -0.39, 0], TRIM, 0.074);
+  if (trousers)
+    lathe(leg, 'hoop-trouser-leg', trouserLegProfile, [0, 0, 0], shorts);
+  else {
+    lathe(leg, 'hoop-shorts-leg', shortsLegProfile, [0, 0, 0], shorts);
+    band(leg, 0.143, 0.032, [0, -0.155, 0], TRIM, 0.146);
+    rounded(
+      leg,
+      [0.022, 0.2, 0.05],
+      [side * 0.132, -0.06, 0],
+      TRIM,
+      0.01,
+    ).rotation.z = side * 0.07;
+    capsule(leg, 0.068, 0.19, [0, -0.29, 0], SKIN).material = surface(
+      SKIN,
+      CLAY,
+    );
+    band(leg, 0.076, 0.13, [0, -0.39, 0], TRIM, 0.074);
+  }
   // A high-top sneaker in the kit colour, with a white toe, sole and laces.
   const foot = -HIP[1];
   band(leg, 0.086, 0.08, [0, foot + 0.165, 0.005], kit, 0.09);
@@ -459,8 +502,11 @@ function arm(body: T.Group, side: number, kit: string) {
   skin(splay, [0.072, 0.084, 0.066], [0, -0.39, 0.01]);
   skin(splay, [0.028, 0.045, 0.03], [-side * 0.058, -0.372, 0.042]).rotation.z =
     side * 0.5;
-  return arm;
+  return { arm, splay };
 }
+
+/** How a wardrobe look changes the kid: long trousers, or a hat to fit under. */
+export type KidStyle = { trousers?: boolean; hat?: boolean };
 
 export type HoopKid = {
   root: T.Group;
@@ -473,13 +519,15 @@ export type HoopKid = {
 /**
  * Builds the kid without hair. The kit is the player colour unless `outfit`
  * sets it: `shirt` is the jersey, `overalls` the shorts and `boots` the
- * sneakers, and the shorts and sneakers match the jersey by default. The kid
- * keeps the worker's rig: feet at zero, facing +Z.
+ * sneakers, and the shorts and sneakers match the jersey by default. With
+ * `trousers` the shorts reach down to the sneakers. The kid keeps the
+ * worker's rig: feet at zero, facing +Z. `sleeveL` and `sleeveR` are the
+ * groups each arm hangs in, a little out from the body.
  */
 export function hoopKid(
   color: number,
   outfit: WorkerOutfit,
-  features: { teeth: boolean; ears: boolean },
+  features: { teeth: boolean; ears: boolean; trousers?: boolean },
 ): HoopKid {
   const kit = outfit.shirt ?? COLORS[color % COLORS.length];
   const shorts = outfit.overalls ?? kit;
@@ -506,8 +554,11 @@ export function hoopKid(
   body.add(head);
   const eyes = face(head, features.teeth, features.ears);
 
-  const legs = [-1, 1].map((side) => leg(body, side, shoes, shorts));
-  const arms = [-1, 1].map((side) => arm(body, side, kit));
+  const legs = [-1, 1].map((side) =>
+    leg(body, side, shoes, shorts, !!features.trousers),
+  );
+  const limbs = [-1, 1].map((side) => arm(body, side, kit));
+  const arms = limbs.map(({ arm }) => arm);
   const swinging: T.Group[] = [];
   Object.assign(root.userData, {
     body,
@@ -519,6 +570,8 @@ export function hoopKid(
     legR: legs[1],
     armL: arms[0],
     armR: arms[1],
+    sleeveL: limbs[0].splay,
+    sleeveR: limbs[1].splay,
     swinging,
   });
   return { root, body, head, swinging };
@@ -541,25 +594,35 @@ type KidRig = {
  */
 export function runHoopKid(model: T.Object3D, time: number, walking: boolean) {
   const rig = model.userData as KidRig;
-  const beat = time * 9;
-  const swing = walking ? Math.sin(beat) : 0;
-  const bounce = Math.abs(swing);
+  const swing = walking ? Math.sin(time * 9) : 0;
   rig.legL.rotation.x = swing * 0.62;
   rig.legR.rotation.x = -swing * 0.62;
   rig.armL.rotation.x = -swing * 0.75;
   rig.armR.rotation.x = swing * 0.75;
-  rig.body.position.y = walking ? bounce * 0.05 : 0;
+  rig.body.position.y = walking ? Math.abs(swing) * 0.05 : 0;
   rig.body.rotation.y = swing * 0.06;
-  rig.head.rotation.z = walking
+  liveHoopKid(model, time, walking);
+}
+
+/**
+ * Only the face and hair: a tilt and glance of the head, swinging hair and a
+ * blink. For a game that poses the body and limbs itself.
+ */
+export function liveHoopKid(model: T.Object3D, time: number, moving: boolean) {
+  const rig = model.userData as KidRig;
+  const beat = time * 9;
+  const swing = moving ? Math.sin(beat) : 0;
+  const bounce = Math.abs(swing);
+  rig.head.rotation.z = moving
     ? Math.sin(beat / 2) * 0.04
     : Math.sin(time * 1.1) * 0.035;
-  rig.head.rotation.y = walking ? -swing * 0.04 : Math.sin(time * 0.6) * 0.18;
+  rig.head.rotation.y = moving ? -swing * 0.04 : Math.sin(time * 0.6) * 0.18;
   for (const [i, hair] of rig.swinging.entries()) {
     const side = hair.userData.side as number;
-    hair.rotation.z = walking
+    hair.rotation.z = moving
       ? side * (bounce * 0.28 - 0.08)
       : side * Math.sin(time * 1.6 + i) * 0.05;
-    hair.rotation.x = walking ? swing * 0.2 : 0;
+    hair.rotation.x = moving ? swing * 0.2 : 0;
   }
   const open = blink(time, 0.8);
   for (const eye of rig.eyes) eye.scale.y = open;

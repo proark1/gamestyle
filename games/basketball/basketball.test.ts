@@ -141,15 +141,17 @@ void test('peer createEngine initializes 2v2 adapter and handles member actions'
   assert.equal(engine.world.phase, 'playing', 'engine started the match');
 });
 
-void test('basketballAvatars exports dressable worker avatar', () => {
-  assert.ok(basketballAvatars.length > 0);
-  const look = basketballAvatars[0];
-  assert.equal(look.key, 'baller');
-  assert.equal(look.dressable, true);
-
-  const preview = look.create();
-  assert.ok(preview.root, 'avatar model created');
-  assert.ok(typeof preview.pose === 'function', 'pose function exists');
+void test('the admin shows the kid in both team kits, dressable', () => {
+  assert.deepEqual(
+    basketballAvatars.map((look) => look.key),
+    ['baller-red', 'baller-blue'],
+  );
+  for (const look of basketballAvatars) {
+    assert.equal(look.dressable, true);
+    const preview = look.create();
+    assert.equal(preview.root.userData.kid, 'nico');
+    assert.ok(typeof preview.pose === 'function', 'pose function exists');
+  }
 });
 
 void test('crossover breaks defender ankles and triggers anklebreaker event', () => {

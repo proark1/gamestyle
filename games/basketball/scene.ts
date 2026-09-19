@@ -1,5 +1,7 @@
 import * as T from 'three';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
+import { liveKid } from '../../shared/rendering/avatars/kid';
+import { disposeGeometry } from '../../shared/rendering/primitives';
 import {
   ballDropShadow,
   basketballBall,
@@ -22,6 +24,13 @@ import {
   addHouseLight,
   HOUSE_EXPOSURE,
 } from '../../shared/rendering/house-light';
+
+/** Frees a player model's own buffers; shared ones stay for the next. */
+function releaseModel(model: T.Object3D) {
+  model.traverse((object) => {
+    if ((object as T.Mesh).isMesh) disposeGeometry((object as T.Mesh).geometry);
+  });
+}
 
 type Callbacks = {
   input: (i: PlayerInput) => void;
@@ -438,17 +447,21 @@ export class BasketballScene {
       if (p.id === this.localId) localPlayer = p;
 
       let mesh = this.playerMeshes.get(p.id);
-      // Players wear their team's kit, so switching team in the lobby needs a
-      // fresh model.
-      if (mesh && mesh.userData.team !== p.team) {
+      // Only your own player wears your wardrobe items. A new team or look
+      // needs a fresh model.
+      const look = p.id === this.localId ? getEquippedLook() : undefined;
+      if (
+        mesh &&
+        (mesh.userData.team !== p.team || mesh.userData.look !== look)
+      ) {
         this.scene.remove(mesh);
+        releaseModel(mesh);
         mesh = undefined;
       }
       if (!mesh) {
-        // Only your own player wears your wardrobe items.
-        const look = p.id === this.localId ? getEquippedLook() : undefined;
         mesh = basketballPlayer(p.team, look);
         mesh.userData.team = p.team;
+        mesh.userData.look = look;
         this.playerMeshes.set(p.id, mesh);
         this.scene.add(mesh);
       }
@@ -518,12 +531,14 @@ export class BasketballScene {
           !p.hasBall &&
           p.specialMove === 'none',
       });
+      liveKid(mesh, now * 0.001, moving);
     }
 
     // Remove obsolete player meshes and shadows
     for (const [id, mesh] of this.playerMeshes) {
       if (!activeIds.has(id)) {
         this.scene.remove(mesh);
+        releaseModel(mesh);
         this.playerMeshes.delete(id);
       }
     }

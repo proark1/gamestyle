@@ -186,6 +186,35 @@
   }
 }
 
+.wardrobe-kit-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 12px;
+  padding: 12px 14px 0;
+  z-index: 2;
+}
+
+.wardrobe-kit-swatches {
+  display: flex;
+  gap: 6px;
+}
+
+.wardrobe-kit-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #fffdf5;
+  box-shadow: 0 0 0 1px #dcd4be;
+  cursor: pointer;
+}
+
+.wardrobe-kit-swatch[data-active='true'] {
+  box-shadow: 0 0 0 2px #2b5247;
+}
+
 .wardrobe-preview-mode-bar {
   display: flex;
   justify-content: center;

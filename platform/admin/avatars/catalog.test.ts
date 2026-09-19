@@ -132,7 +132,6 @@ void test('the games on the shared worker build its exact body and change only c
     ['reel-problems', 'angler'],
     ['act-natural', 'farmer'],
     ['shelf-control', 'mannequin'],
-    ['basketball', 'baller'],
     ['bungee-doubles', 'tennis-duo'],
     ['panic-curling', 'curler'],
     ['carry-on-carnage', 'traveler'],
@@ -150,12 +149,15 @@ void test('the games on the shared worker build its exact body and change only c
   }
 });
 
-/** The shared worker inside a preview, even when a game seats it in something. */
+/**
+ * The shared worker inside a preview, even when a game seats it in something.
+ * The kids share its rig but not its body; their own tests cover their kits.
+ */
 function findWorker(root: T.Object3D) {
   let found: T.Object3D | undefined;
   root.traverse((object) => {
     const rig = object.userData;
-    if (!found && rig.body && rig.armR && rig.legL) found = object;
+    if (!found && rig.body && rig.armR && rig.legL && !rig.kid) found = object;
   });
   return found;
 }
@@ -197,7 +199,8 @@ void test('games dress the shared worker in wardrobe items over their own clothe
       .map((look) => ({ key: `${card.id}:${look.key}`, look })),
   );
   assert.deepEqual(dressable.map(({ key }) => key).sort(), [
-    'basketball:baller',
+    'basketball:baller-blue',
+    'basketball:baller-red',
     'bungee-doubles:tennis-duo',
     'carry-on-carnage:traveler',
     'chain-of-fools:chain-worker',
@@ -235,8 +238,9 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     assert.ok(wearsItems(dressed), `${key} shows the items`);
     // The body and hat-swap rules below read the worker rig off the preview root.
     // Zorb Clash seats the worker inside a bumper sphere, so its root is the
-    // sphere; dressWorker still puts the look on the worker within it.
-    if (!dressed.userData.body) continue;
+    // sphere; dressWorker still puts the look on the worker within it. Court
+    // Clash plays the kid, whose own tests check how items sit on him.
+    if (!dressed.userData.body || dressed.userData.kid) continue;
     assert.deepEqual(
       workerShape(dressed),
       reference,

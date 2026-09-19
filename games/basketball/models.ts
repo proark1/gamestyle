@@ -1,7 +1,6 @@
 import * as T from 'three';
 import { box, beam, label, material } from '../../shared/rendering/primitives';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
-import { worker, WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { PLAYER_KID, playerKid } from '../../shared/rendering/avatars/kid';
 import type { Look } from '../../shared/wardrobe/look';
 import { CLOTH } from '../../shared/rendering/palette';
 import { COURT, HOOP, BALL_RADIUS, TEAM_COLORS, type TeamId } from './types';
@@ -21,44 +20,9 @@ function deepShade(hex: string): string {
   return `#${deep.getHexString()}`;
 }
 
-/**
- * Creates a basketball player using the shared worker avatar.
- * Dressed in a matching team kit (jersey and shorts) and cream sneakers.
- */
+/** A basketball player: the kid in their team's kit, wearing their `look`. */
 export function basketballPlayer(team: TeamId, look?: Look) {
-  const kit = TEAM_COLORS[team];
-  const { model: g, worn } = dressedWorker(
-    0,
-    {
-      shirt: kit,
-      overalls: kit,
-      boots: CLOTH.cream,
-      cap: false,
-    },
-    look,
-  );
-
-  const body = g.userData.body as T.Group;
-
-  // Add headband if player is not wearing a wardrobe hat
-  if (!worn.hat) {
-    // Hair
-    box(
-      body,
-      [0.55, 0.12, 0.53],
-      [0, WORKER_HEAD_TOP + 0.04, 0],
-      '#4a3728',
-      true,
-    );
-    // Cream sweatband
-    box(body, [0.56, 0.08, 0.54], [0, WORKER_HEAD_TOP - 0.04, 0], CLOTH.cream);
-  }
-
-  // Jersey front trim & number badge in the team colour
-  box(body, [0.28, 0.22, 0.02], [0, 0.88, 0.23], CLOTH.white);
-  box(body, [0.16, 0.14, 0.025], [0, 0.88, 0.23], kit);
-
-  return g;
+  return playerKid(PLAYER_KID, { jersey: TEAM_COLORS[team] }, look).model;
 }
 
 /**
@@ -320,7 +284,7 @@ function lowPolyTree(x: number, z: number, scale = 1.0): T.Group {
 }
 
 /**
- * Creates spectator bleachers with animated worker avatars.
+ * Creates spectator bleachers with fans cheering on either team.
  */
 function spectatorBleachers(): { bleachers: T.Group; spectators: T.Group[] } {
   const bleachers = new T.Group();
@@ -341,25 +305,22 @@ function spectatorBleachers(): { bleachers: T.Group; spectators: T.Group[] } {
     '#d3b07b',
   );
 
-  // Spectator worker characters seated or cheering
-  const spectatorConfigs = [
-    { z: centerZ - 2.4, tier: 1, color: 1, shirt: '#4b7bec', cap: true },
-    { z: centerZ - 0.8, tier: 1, color: 3, shirt: '#eb4d4b', cap: false },
-    { z: centerZ + 1.0, tier: 1, color: 0, shirt: '#f0932b', cap: true },
-    { z: centerZ + 2.4, tier: 1, color: 2, shirt: '#6ab04c', cap: false },
-    { z: centerZ - 1.6, tier: 2, color: 2, shirt: '#22a6b3', cap: true },
-    { z: centerZ + 0.2, tier: 2, color: 1, shirt: '#be2edd', cap: false },
-    { z: centerZ + 1.8, tier: 2, color: 0, shirt: '#f9ca24', cap: true },
+  // Fans in their team's shirt, seated or cheering
+  const spectatorConfigs: { z: number; tier: number; team: TeamId }[] = [
+    { z: centerZ - 2.4, tier: 1, team: 'blue' },
+    { z: centerZ - 0.8, tier: 1, team: 'red' },
+    { z: centerZ + 1.0, tier: 1, team: 'red' },
+    { z: centerZ + 2.4, tier: 1, team: 'blue' },
+    { z: centerZ - 1.6, tier: 2, team: 'red' },
+    { z: centerZ + 0.2, tier: 2, team: 'blue' },
+    { z: centerZ + 1.8, tier: 2, team: 'red' },
   ];
 
   for (let i = 0; i < spectatorConfigs.length; i++) {
     const cfg = spectatorConfigs[i];
-    const spec = worker(cfg.color, {
-      shirt: cfg.shirt,
-      cap: cfg.cap,
-      overalls: '#303952',
-      boots: '#f5f6fa',
-    });
+    const spec = playerKid(PLAYER_KID, {
+      jersey: TEAM_COLORS[cfg.team],
+    }).model;
 
     const posX = cfg.tier === 1 ? bleacherX : bleacherX + 1.0;
     const posY = cfg.tier === 1 ? 0.45 : 1.35;

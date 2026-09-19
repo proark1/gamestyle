@@ -1,6 +1,8 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
+import { liveKid } from '../../shared/rendering/avatars/kid';
 import { basketballPlayer } from './models';
+import { TEAMS } from './types';
 
 export function poseBasketballWorker(
   model: T.Object3D,
@@ -27,11 +29,14 @@ export function poseBasketballWorker(
   >;
   if (!rig?.body) return;
 
-  // Reset standard body positioning
+  // Reset standard body positioning. Every pose sets the swing of each
+  // limb, but only some spread them, so the spread starts from rest.
   rig.body.position.y = 0;
   rig.body.position.x = 0;
   rig.body.position.z = 0;
   rig.body.rotation.y = 0;
+  for (const limb of [rig.armL, rig.armR, rig.legL, rig.legR])
+    limb.rotation.set(0, 0, 0);
 
   // Apply banking tilt into turns
   const bankingTilt = pose.tilt ?? 0;
@@ -186,26 +191,28 @@ export function poseSpectatorWorker(
   }
 }
 
-export const basketballAvatars: readonly AvatarLook[] = [
-  {
-    key: 'baller',
-    label: 'Street Baller',
+/** The kid in each team kit, built by the scene's own builder so the preview cannot drift. */
+export const basketballAvatars: readonly AvatarLook[] = TEAMS.map(
+  (team, i) => ({
+    key: `baller-${team}`,
+    label: `${team[0].toUpperCase()}${team.slice(1)} kit`,
     dressable: true,
     create(look) {
-      // The scene's own builder in the red kit, so the preview cannot drift.
-      const root = basketballPlayer('red', look);
+      const root = basketballPlayer(team, look);
       return {
         root,
-        pose: (time, walking) =>
+        pose: (time, walking) => {
           poseBasketballWorker(root, time, {
             moving: walking,
             shooting: false,
             dunking: false,
             dribbling: false,
-            color: 0,
+            color: i,
             still: false,
-          }),
+          });
+          liveKid(root, time, walking);
+        },
       };
     },
-  },
-];
+  }),
+);

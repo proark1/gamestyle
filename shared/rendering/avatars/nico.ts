@@ -1,7 +1,15 @@
 import * as T from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { WorkerOutfit } from '../worker';
-import { SKULL, dome, hoopKid, inClay, runHoopKid } from './hoop-kid';
+import {
+  HAT_BRIM,
+  SKULL,
+  dome,
+  hoopKid,
+  inClay,
+  runHoopKid,
+  type KidStyle,
+} from './hoop-kid';
 import { surface } from './soft-parts';
 
 /** Three browns, so the curls read as separate clumps. */
@@ -12,15 +20,17 @@ const TILT = 0.65;
 const REACH = 1.45;
 const CURLS = 200;
 
-let mop: T.BufferGeometry[] | undefined;
+const mops = new Map<boolean, T.BufferGeometry[]>();
 
 /**
  * The curls, merged into one shared buffer per shade so a crowd of Nicos
  * stays cheap. Points spread evenly over a sphere (a Fibonacci lattice) and
  * keep those inside the hair's reach: tall on top, close-cropped low down.
+ * Under a hat the crown is left bare for the hat to cover.
  */
-function curlyMop() {
-  if (mop) return mop;
+function curlyMop(hat: boolean) {
+  const cached = mops.get(hat);
+  if (cached) return cached;
   const axis = new T.Vector3(0, Math.cos(TILT), -Math.sin(TILT));
   const centre = new T.Vector3(...SKULL.centre);
   const radii = new T.Vector3(...SKULL.radii);
@@ -42,8 +52,10 @@ function curlyMop() {
     const position = dir
       .clone()
       .multiply(radii)
-      .multiplyScalar(1.03 + 0.16 * top ** 1.5)
+      .multiplyScalar(1.03 + (hat ? 0 : 0.16 * top ** 1.5))
       .add(centre);
+    // Under a hat only the curls below its brim show.
+    if (hat && position.y > HAT_BRIM) continue;
     const curl = ball.clone();
     curl.applyMatrix4(
       new T.Matrix4().compose(
@@ -55,25 +67,34 @@ function curlyMop() {
     parts[i % SHADES.length].push(curl);
   }
   ball.dispose();
-  mop = parts.map((list) => {
+  const mop = parts.map((list) => {
     const merged = mergeGeometries(list)!;
     for (const part of list) part.dispose();
     merged.userData.shared = true;
     return merged;
   });
+  mops.set(hat, mop);
   return mop;
 }
 
 /**
  * Nico, the boy from the court picture, going up for the dunk: the clay
  * basketball kid with a mop of dark curls, ears showing and a toothy grin.
- * The kit (`outfit`) and rig are the kid's; see `hoopKid`.
+ * The kit (`outfit`), `style` and rig are the kid's; see `hoopKid`.
  */
-export function nico(color = 0, outfit: WorkerOutfit = {}) {
-  const kid = hoopKid(color, outfit, { teeth: true, ears: true });
+export function nico(
+  color = 0,
+  outfit: WorkerOutfit = {},
+  style: KidStyle = {},
+) {
+  const kid = hoopKid(color, outfit, {
+    teeth: true,
+    ears: true,
+    trousers: style.trousers,
+  });
   // A dark cap under the curls, so no scalp shows between them.
   dome(kid.head, REACH - 0.08, [0.318, 0.3, 0.29], TILT, SKULL.centre, UNDER);
-  for (const [i, geometry] of curlyMop().entries()) {
+  for (const [i, geometry] of curlyMop(!!style.hat).entries()) {
     const curls = new T.Mesh(geometry, surface(SHADES[i], 0.6));
     curls.castShadow = true;
     curls.receiveShadow = true;
