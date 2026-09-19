@@ -56,8 +56,8 @@ export function updateCarryOnBots(
       if (dist > REACH_DISTANCE * 0.7) {
         ix = dx / dist;
         iz = dz / dist;
-      } else {
-        // Near sizer box: insert bag!
+      } else if (world.sizer.status === 'idle') {
+        // Near an empty sizer box: insert bag! Otherwise wait for it to clear.
         carryOnAction(
           world,
           bot.id,
@@ -166,7 +166,14 @@ export function updateCarryOnBots(
 
     // 4. Check for completed zipped suitcases ready to go to sizer
     const zippedSc = world.suitcases.find(
-      (s) => s.zipped >= 0.95 && !s.approved && !s.heldBy,
+      // Never the bag being sized (pulling it out restarts the scan) and never
+      // a rejected one, which needs repacking first.
+      (s) =>
+        s.zipped >= 0.95 &&
+        !s.approved &&
+        !s.rejected &&
+        !s.heldBy &&
+        s.id !== world.sizer.insertedSuitcase,
     );
     if (zippedSc) {
       const dist = Math.hypot(zippedSc.x - bot.x, zippedSc.z - bot.z);

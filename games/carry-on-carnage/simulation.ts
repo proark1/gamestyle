@@ -23,6 +23,9 @@ import {
   type Traveler,
 } from './types';
 
+/** How long a sizing result stays in the cage before the bag moves on. */
+const SIZER_RESULT_MS = 1500;
+
 let nextItemId = 1;
 function makeItem(
   kind: ItemKind,
@@ -310,8 +313,10 @@ export function carryOnAction(
             player.z - SIZER_Z,
           );
 
+          // An approved bag has already scored; it cannot be sized again.
           if (
             sc &&
+            !sc.approved &&
             distToSizer < REACH_DISTANCE &&
             world.sizer.status === 'idle'
           ) {
@@ -698,6 +703,30 @@ export function advanceCarryOn(
         });
       }
     }
+  }
+
+  // A finished bag leaves the cage once its result has shown, so the sizer is
+  // free for the next one: approved bags go through to the jetway, rejected
+  // ones come back out in front of the cage to be repacked.
+  if (
+    (world.sizer.status === 'approved' || world.sizer.status === 'rejected') &&
+    now >= world.sizer.timer + SIZER_RESULT_MS
+  ) {
+    const sc = world.suitcases.find(
+      (s) => s.id === world.sizer.insertedSuitcase,
+    );
+    if (sc && !sc.heldBy) {
+      if (sc.approved) {
+        sc.x = SIZER_X + 2.05;
+        sc.z = -0.9 + 0.6 * ((world.approvedCount - 1) % 4);
+      } else {
+        sc.x = SIZER_X - 1.3;
+        sc.z = SIZER_Z;
+      }
+      sc.y = 0;
+    }
+    world.sizer.insertedSuitcase = null;
+    world.sizer.status = 'idle';
   }
 
   // 4. Flight departure countdown
