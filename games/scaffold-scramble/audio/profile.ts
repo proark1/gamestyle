@@ -1,32 +1,30 @@
-import type { AudioManifest } from '../../../shared/audio/types';
 import type { AudioProfile } from '../../../shared/audio/profile';
-import { scaffoldScrambleCatalog } from './catalog';
 
-export const SCAFFOLD_DEFAULT_AUDIO: AudioManifest['cues'] = Object.fromEntries(
-  scaffoldScrambleCatalog.map((c) => [
-    c.id,
-    {
-      url: `/audio/scaffold-scramble/${c.id}.wav`,
-      volume: c.volume,
-      category: c.category,
-      loop: c.loop,
-    },
-  ]),
-);
+/** Frequently repeated handling sounds get a little pitch spread per play. */
+const VARIED = /^(crank|step|soap|squeegee)\.|^(bucket\.slide|hazard\.slip)/;
 
+/** Decoded before they are first needed, so the busiest sounds are never late. */
+const WARM =
+  /^(crank|soap|squeegee|hazard\.slip)|^(event\.(start|tick)|window\.clean|speech\.(start|ten))$/;
+
+/**
+ * Only recordings generated in the Admin workshop play. There are no bundled
+ * defaults: a cue without a recording falls back to the small synthesized
+ * stand-in in `synth.ts` until the owner generates it.
+ */
 export const scaffoldScrambleAudioProfile: AudioProfile = {
-  crossfadeMusic: false,
+  availableVariants: true,
+  crossfadeMusic: true,
   effectLimit: 24,
-  bufferLimit: 40,
+  bufferLimit: 48,
   warmLimit: 32,
   musicVolume: 1,
-  ambienceVolume: 0.75,
-  preload: () => true,
+  ambienceVolume: 0.8,
+  seamless: () => true,
+  preload: (id) => WARM.test(id),
+  // The whole cradle is ten metres wide; everything on it stays audible.
   range: () => 60,
-  attenuation: (_id, distance) => Math.max(0.25, 1 - distance / 50),
+  attenuation: (_id, distance) => Math.max(0.3, 1 - distance / 40),
   cooldownKey: (id, sourceId) => (sourceId ? `${id}:${sourceId}` : id),
-  prepareManifest: (manifest) => ({
-    ...manifest,
-    cues: { ...SCAFFOLD_DEFAULT_AUDIO, ...manifest.cues },
-  }),
+  playbackRate: (id) => (VARIED.test(id) ? 0.94 + Math.random() * 0.12 : 1),
 };

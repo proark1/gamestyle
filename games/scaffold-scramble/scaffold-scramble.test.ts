@@ -10,6 +10,7 @@ import { reconcileScaffoldBots, stepScaffoldBot } from './bots';
 import {
   stepBucketPhysics,
   stepCradleKinematics,
+  stepPigeonBehavior,
   stepPlayerPhysics,
 } from './physics';
 import {
@@ -329,4 +330,21 @@ void test('avatar looks catalog exposes high-rise cleaner model', () => {
   const instance = look.create();
   assert.ok(instance.root);
   instance.pose?.(1.0, true);
+});
+
+void test('a pigeon lands on its perch, so a worker below cannot shoo it back into the sky', (t) => {
+  t.mock.method(Math, 'random', () => 0.1);
+  const world = freshScaffoldWorld(Date.now());
+  const pigeon = world.pigeons[0];
+  pigeon.y = 106;
+  const events: GameEvent[] = [];
+  stepPigeonBehavior(pigeon, world.cradle, 0.016, events, { current: 0 });
+  assert.ok(pigeon.perched);
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ['pigeon_land'],
+  );
+  assert.equal(pigeon.target, 'cable-left');
+  assert.equal(pigeon.x, -CRADLE_WIDTH / 2);
+  assert.equal(pigeon.y, world.cradle.leftHeight + 1.2);
 });

@@ -1,113 +1,148 @@
 import { SiteAudio } from '../../shared/audio/player';
+import type { AudioPreferences } from '../../shared/audio/preferences';
+import { audioPreferencesSnapshot } from '../../shared/audio/preferences';
+import type { Point } from '../../shared/audio/world';
+import {
+  playerPoint,
+  scaffoldAudioEvents,
+  scaffoldLoops,
+  scaffoldMusic,
+  type ScaffoldCue,
+} from './audio-events';
 import { scaffoldScrambleAudioProfile } from './audio/profile';
-import type { GameEvent, ScaffoldScrambleWorld } from './types';
+import { ScaffoldSynth } from './audio/synth';
+import type { ScaffoldScrambleWorld } from './types';
 export { scaffoldScrambleCatalog } from './audio/catalog';
 
-const CUES: Record<GameEvent['type'], string | null> = {
-  crank: 'crank.ratchet',
-  tilt_warning: 'hazard.tilt_warning',
-  slip: 'hazard.slip',
-  dangle: 'hazard.dangle',
-  climb_up: 'crank.ratchet',
-  bucket_slide: 'bucket.slide',
-  bucket_spill: 'bucket.spill',
-  soap_apply: 'soap.foam',
-  window_clean: 'window.clean',
-  pigeon_land: 'hazard.pigeon',
-  pigeon_shoo: 'hazard.pigeon',
-  wind_gust: 'hazard.wind',
-  win: 'event.win',
-  timeout: 'event.fail',
-};
+/** At most one incidental narrator line this often. */
+export const NARRATOR_GAP_MS = 7_000;
+/** The same incidental line does not come back sooner than this. */
+export const LINE_REPEAT_MS = 40_000;
 
+/**
+ * Plays the Admin recordings for Scaffold Scramble: one-shots from
+ * `scaffoldAudioEvents`, the score from `scaffoldMusic` and the layered beds
+ * from `scaffoldLoops`. A cue with no recording yet falls back to its
+ * synthesized stand-in; once any take exists, only the recording plays.
+ */
 export class ScaffoldScrambleSound extends SiteAudio {
-  private lastEvent = 0;
-  private lastPhase: ScaffoldScrambleWorld['phase'] = 'lobby';
+  private previous: ScaffoldScrambleWorld | null = null;
+  private synth = new ScaffoldSynth();
+  private here: Point = { x: 0, y: 0, z: 0 };
+  private lastLine = -Infinity;
+  private lines = new Map<string, number>();
+  /** Stand-ins wait for the first manifest, so they never double a recording. */
+  private manifestChecked = false;
 
   constructor() {
     super('scaffold-scramble', scaffoldScrambleAudioProfile);
+    this.synth.level = audioPreferencesSnapshot().volume;
     this.update(null);
   }
 
+  override async refresh() {
+    await super.refresh();
+    this.manifestChecked = true;
+  }
+
+  override applyPreferences(preferences: AudioPreferences) {
+    super.applyPreferences(preferences);
+    // The base constructor calls this before the synth exists.
+    if (this.synth) this.synth.level = preferences.volume;
+  }
+
+  override unlock() {
+    super.unlock();
+    this.synth.unlock();
+  }
+
+  /** The game's own mute silences recordings and stand-ins together. */
+  setMuted(muted: boolean) {
+    this.enabled = !muted;
+    this.synth.muted = muted;
+  }
+
   update(world: ScaffoldScrambleWorld | null, localId?: string) {
-    const me = world?.players.find((p) => p.id === localId);
-    const centerPos = {
-      x: 0,
-      y: world ? world.cradle.centerHeight : 50,
-      z: 2.0,
-    };
-    this.listen(
-      me
-        ? {
-            x: me.deckX,
-            y: world ? world.cradle.centerHeight + me.deckY : 50,
-            z: 2.0,
-          }
-        : centerPos,
-      0,
-    );
+    if (!world) {
+      this.previous = null;
+      this.mix(null);
+      return;
+    }
+    const previous = this.previous;
+    // A frame older than the last one is ignored instead of rewinding.
+    if (
+      previous &&
+      previous.started === world.started &&
+      world.clock < previous.clock
+    )
+      return;
+    this.previous = world;
+    const me = world.players.find((p) => p.id === localId);
+    this.here = me
+      ? playerPoint(world, me)
+      : { x: 0, y: world.cradle.centerHeight, z: 1.2 };
+    this.listen(this.here, 0);
+    this.perform(scaffoldAudioEvents(previous, world, localId));
+    this.mix(world);
+  }
 
-    const playing = world?.phase === 'playing';
-    this.setLoop('sky', playing ? 'ambience.sky' : null, 0.4);
+  private recorded(id: string) {
+    return !!this.preferredCue(id, '');
+  }
 
-    // Helicopter sound gets louder as it approaches the roof
-    if (playing && world) {
-      const helicopterDist = Math.max(
-        0,
-        world.helicopter.y - world.cradle.centerHeight,
+  private perform(cues: ScaffoldCue[]) {
+    const now = performance.now();
+    // One narrator line per frame: an urgent one first, else a quip if the
+    // narrator has been quiet long enough and has not just said it.
+    const line =
+      cues.find((cue) => cue.urgent && this.recorded(cue.id)) ??
+      cues.find(
+        (cue) =>
+          cue.id.startsWith('speech.') &&
+          !cue.urgent &&
+          this.recorded(cue.id) &&
+          now - this.lastLine >= NARRATOR_GAP_MS &&
+          now - (this.lines.get(cue.id) ?? -Infinity) >= LINE_REPEAT_MS,
       );
-      const chopperVol = Math.max(
-        0.1,
-        Math.min(0.65, 1.0 - helicopterDist / 70),
+    if (line) {
+      if (line.urgent) this.interruptSpeech();
+      this.lastLine = now;
+      this.lines.set(line.id, now);
+      this.play(line.id);
+    }
+    for (const cue of cues) if (!cue.id.startsWith('speech.')) this.effect(cue);
+  }
+
+  private effect(cue: ScaffoldCue) {
+    const strength = cue.strength ?? 1;
+    const takes = cue.variant
+      ? [cue.id, `${cue.id}.1`, `${cue.id}.2`, `${cue.id}.3`]
+      : [cue.id];
+    if (takes.some((id) => this.recorded(id))) {
+      if (cue.variant)
+        this.variant(cue.id, strength, cue.position, cue.sourceId);
+      else this.play(cue.id, strength, cue.position, cue.sourceId);
+    } else if (this.manifestChecked)
+      this.synth.play(
+        cue.id,
+        strength,
+        cue.position ? (cue.position.x - this.here.x) / 12 : 0,
       );
-      this.setLoop('helicopter', 'ambience.helicopter', chopperVol);
-    } else {
-      this.setLoop('helicopter', null, 0);
-    }
+  }
 
-    if (!world) return;
-
-    for (const event of world.events) {
-      if (event.id <= this.lastEvent) continue;
-      this.lastEvent = event.id;
-      const cue = CUES[event.type];
-      if (cue) {
-        const player = world.players.find((p) => p.id === event.playerId);
-        const eventPos = player
-          ? {
-              x: player.deckX,
-              y: world.cradle.centerHeight + player.deckY,
-              z: 2.0,
-            }
-          : centerPos;
-
-        // Subtle pitch variation for mechanical clicks and suds slathers
-        const pitch =
-          event.type === 'crank'
-            ? 0.94 + (event.id % 5) * 0.03
-            : event.type === 'soap_apply'
-              ? 0.96 + (event.id % 4) * 0.025
-              : 1.0;
-
-        this.play(cue, pitch, eventPos, String(event.id));
-      }
-    }
-
-    if (world.phase !== this.lastPhase) {
-      if (world.phase === 'ended') {
-        if (world.winner === 'crew') {
-          this.play('event.win', 1);
-        } else {
-          this.play('event.fail', 1);
-        }
-      }
-      this.lastPhase = world.phase;
-    }
+  private mix(world: ScaffoldScrambleWorld | null) {
+    this.setLoop('music', scaffoldMusic(world));
+    for (const loop of scaffoldLoops(world))
+      this.setLoop(loop.channel, loop.id, loop.level);
   }
 
   override reset() {
     super.reset();
-    this.lastEvent = 0;
-    this.lastPhase = 'lobby';
+    this.previous = null;
+  }
+
+  override dispose() {
+    super.dispose();
+    this.synth.dispose();
   }
 }

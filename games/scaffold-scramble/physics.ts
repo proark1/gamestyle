@@ -297,6 +297,28 @@ export function stepPlayerPhysics(
   player.deckX = clamp(player.deckX, -maxDeckX, maxDeckX);
 }
 
+/** Keeps a perched pigeon on its cable or railing as the cradle moves. */
+function anchorPigeon(pigeon: Pigeon, cradle: CradleState) {
+  switch (pigeon.target) {
+    case 'cable-left':
+      pigeon.x = -CRADLE_WIDTH / 2;
+      pigeon.y = cradle.leftHeight + 1.2;
+      break;
+    case 'cable-right':
+      pigeon.x = CRADLE_WIDTH / 2;
+      pigeon.y = cradle.rightHeight + 1.2;
+      break;
+    case 'railing-left':
+      pigeon.x = -CRADLE_WIDTH / 2 + 1.0;
+      pigeon.y = cradle.leftHeight + 1.1;
+      break;
+    case 'railing-right':
+      pigeon.x = CRADLE_WIDTH / 2 - 1.0;
+      pigeon.y = cradle.rightHeight + 1.1;
+      break;
+  }
+}
+
 export function stepPigeonBehavior(
   pigeon: Pigeon,
   cradle: CradleState,
@@ -309,25 +331,7 @@ export function stepPigeonBehavior(
   if (pigeon.perched) {
     pigeon.timeToLeave -= dt;
 
-    // Anchor pigeon position to target
-    switch (pigeon.target) {
-      case 'cable-left':
-        pigeon.x = -CRADLE_WIDTH / 2;
-        pigeon.y = cradle.leftHeight + 1.2;
-        break;
-      case 'cable-right':
-        pigeon.x = CRADLE_WIDTH / 2;
-        pigeon.y = cradle.rightHeight + 1.2;
-        break;
-      case 'railing-left':
-        pigeon.x = -CRADLE_WIDTH / 2 + 1.0;
-        pigeon.y = cradle.leftHeight + 1.1;
-        break;
-      case 'railing-right':
-        pigeon.x = CRADLE_WIDTH / 2 - 1.0;
-        pigeon.y = cradle.rightHeight + 1.1;
-        break;
-    }
+    anchorPigeon(pigeon, cradle);
 
     // Violent tilt scares pigeon away
     if (
@@ -359,6 +363,10 @@ export function stepPigeonBehavior(
             : Math.random() < 0.5
               ? 'railing-left'
               : 'railing-right';
+        // It lands where it perches. Left high above the cradle for a frame,
+        // a worker below could shoo it by x alone and it would land again,
+        // many times a second.
+        anchorPigeon(pigeon, cradle);
 
         events.push({
           id: ++eventIdRef.current,
