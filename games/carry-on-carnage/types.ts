@@ -159,6 +159,8 @@ export type Traveler = {
   seen: number;
   input: PlayerInput;
   bot?: boolean;
+  /** World time this traveller's jammed zipper was last reported. */
+  jamReportedAt?: number;
 };
 
 export type TsaCheckpoint = {
@@ -234,7 +236,12 @@ export type CarryOnAction =
   | { type: 'start' }
   | { type: 'restart' }
   | { type: 'input'; input: PlayerInput }
-  | { type: 'interact'; action: 'grab' | 'compress' | 'zip' | 'drop' };
+  | {
+      type: 'interact';
+      action: 'grab' | 'compress' | 'zip' | 'drop';
+      /** Act on this item or suitcase only; without it, the first one in reach. */
+      target?: string;
+    };
 
 export type CarryOnSnapshot = {
   code: string;

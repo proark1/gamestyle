@@ -1,22 +1,31 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { carryOnCarnageAvatars } from './avatar';
+import { reconcileCarryOnBots, updateCarryOnBots } from './bots';
 import { createEngine } from './peer';
-import { updateCarryOnBots } from './bots';
 import {
   burstSuitcase,
   checkSizerFit,
   computeSuitcaseBulge,
   SIZER_X,
   SIZER_Z,
+  STEP,
 } from './physics';
 import {
+  EVENT_HISTORY,
+  JAM_REPORT_MS,
   advanceCarryOn,
   carryOnAction,
   freshCarryOnWorld,
   newTraveler,
 } from './simulation';
-import { ITEM_CONFIGS, type LuggageItem, type Suitcase } from './types';
+import {
+  ITEM_CONFIGS,
+  PASSED_REWARD,
+  type CarryOnWorld,
+  type LuggageItem,
+  type Suitcase,
+} from './types';
 
 function makeTestSuitcase(): Suitcase {
   return {
@@ -341,7 +350,7 @@ void test('a bot sizes a ready bag once, the sizer clears, and an approved bag c
   // Six seconds of bots: before the fix a bot pulled the bag back out of the
   // cage every frame, so it was inserted hundreds of times and never sized.
   for (let frame = 0; frame < 360; frame++) {
-    updateCarryOnBots(world, world.clock, eventIdRef);
+    updateCarryOnBots(world, eventIdRef);
     advanceCarryOn(world, 1 / 60, eventIdRef);
   }
   assert.equal(inserted(), 1);
@@ -365,4 +374,181 @@ void test('a bot sizes a ready bag once, the sizer clears, and an approved bag c
   assert.equal(inserted(), 1);
   assert.equal(world.sizer.status, 'idle');
   assert.equal(world.approvedCount, 1);
+});
+
+const interact = (
+  world: CarryOnWorld,
+  who: string,
+  action: 'grab' | 'compress' | 'zip' | 'drop',
+  ref: { current: number },
+) => carryOnAction(world, who, { type: 'interact', action }, ref);
+
+/** A solo round: one person, who does nothing, and the bots that join them. */
+function soloRound() {
+  const world = freshCarryOnWorld(1000);
+  world.players.push(newTraveler('me', 'Me', 0, 1000));
+  reconcileCarryOnBots(world, 1000);
+  return world;
+}
+
+function playBots(
+  world: CarryOnWorld,
+  seconds: number,
+  ref = { current: 100 },
+) {
+  for (let t = 0; t < seconds && world.phase === 'packing'; t += STEP) {
+    updateCarryOnBots(world, ref);
+    advanceCarryOn(world, STEP, ref);
+  }
+}
+
+void test('a zipper jammed every frame is reported once per interval, and the event list stays short', () => {
+  const world = freshCarryOnWorld(1000);
+  const sc = world.suitcases[0];
+  // Too full to zip unsquashed, not full enough to burst.
+  for (const kind of ['flamingo', 'racket'] as const) {
+    const item = world.items.find((it) => it.kind === kind)!;
+    item.packedIn = sc.id;
+    sc.items.push(item.id);
+  }
+  const player = newTraveler('p1', 'Zipper', 0, 1000);
+  Object.assign(player, { x: sc.x + 0.6, z: sc.z });
+  world.players.push(player);
+  const ref = { current: 100 };
+
+  // Pulling for three seconds is two reports, not one per frame.
+  for (let frame = 0; frame < 180; frame++) {
+    interact(world, player.id, 'zip', ref);
+    advanceCarryOn(world, STEP, ref);
+  }
+  const jams = world.events.filter((event) => event.detail === 'jammed');
+  assert.equal(jams.length, Math.ceil(3_000 / JAM_REPORT_MS));
+
+  // Two events a frame for a hundred frames: the list keeps only the newest,
+  // ids keep rising, and a reader that tracks the last id misses none.
+  sc.items = [];
+  for (const item of world.items) item.packedIn = null;
+  const shirt = world.items.find((it) => it.kind === 'clothes')!;
+  Object.assign(shirt, { x: player.x, z: player.z });
+  let seen = Math.max(...world.events.map((event) => event.id));
+  let read = 0;
+  for (let frame = 0; frame < 100; frame++) {
+    interact(world, player.id, 'grab', ref); // pick up (or unpack) the shirt
+    interact(world, player.id, 'grab', ref); // pack it
+    advanceCarryOn(world, STEP, ref);
+    assert.ok(world.events.length <= EVENT_HISTORY, `${world.events.length}`);
+    for (const event of world.events)
+      if (event.id > seen) {
+        seen = event.id;
+        read++;
+      }
+  }
+  assert.equal(read, 199, 'one pack, then an unpack and a pack each frame');
+  const ids = world.events.map((event) => event.id);
+  assert.deepEqual(
+    ids,
+    [...ids].sort((a, b) => a - b),
+  );
+  assert.equal(ids.at(-1), ref.current);
+});
+
+void test('an approved bag pulled back out of the sizer box never scores again', () => {
+  const world = freshCarryOnWorld(1000);
+  const sc = world.suitcases[0];
+  const shirt = world.items.find((it) => it.kind === 'clothes')!;
+  shirt.packedIn = sc.id;
+  sc.items.push(shirt.id);
+  Object.assign(sc, { zipped: 1, open: false });
+  const player = newTraveler('p1', 'Sizer', 0, 1000);
+  Object.assign(player, { x: sc.x + 0.6, z: sc.z });
+  world.players.push(player);
+  const ref = { current: 100 };
+
+  interact(world, player.id, 'grab', ref); // lift the zipped bag
+  Object.assign(player, { x: SIZER_X - 1.2, z: SIZER_Z });
+  interact(world, player.id, 'grab', ref); // insert it
+  for (let t = 0; t < 1.4; t += STEP) advanceCarryOn(world, STEP, ref);
+  assert.equal(world.approvedCount, 1);
+  assert.equal(world.totalScore, PASSED_REWARD);
+
+  interact(world, player.id, 'grab', ref); // pull it back out
+  assert.equal(player.holdingSuitcase, sc.id);
+  interact(world, player.id, 'grab', ref); // try it again: it is set down
+  assert.equal(world.sizer.insertedSuitcase, null);
+  assert.equal(player.holdingSuitcase, null);
+  for (let t = 0; t < 2; t += STEP) advanceCarryOn(world, STEP, ref);
+  assert.equal(world.approvedCount, 1);
+  assert.equal(world.totalScore, PASSED_REWARD);
+});
+
+void test('bots never re-size an approved bag lying next to the one they want', () => {
+  // The case that scored twice: an approved bag set down beside a zipped one,
+  // and a bot reaching for the zipped one lifted whichever came first.
+  const world = soloRound();
+  const [me, bot] = world.players;
+  world.players = [me, bot];
+  Object.assign(me, { x: -8, z: 4 });
+  Object.assign(bot, { x: -1.2, z: -1.0 });
+  const [approved, zipped] = world.suitcases;
+  Object.assign(approved, { zipped: 1, open: false, approved: true });
+  Object.assign(zipped, { zipped: 1, open: false });
+  Object.assign(world, { approvedCount: 1, totalScore: PASSED_REWARD });
+  const ref = { current: 100 };
+  const sized = new Set<string>();
+  for (let t = 0; t < 30; t += STEP) {
+    playBots(world, STEP, ref);
+    if (world.sizer.status === 'testing')
+      sized.add(world.sizer.insertedSuitcase!);
+  }
+  assert.ok(sized.has(zipped.id), 'the zipped bag was sized');
+  assert.ok(!sized.has(approved.id), 'the approved bag stayed out');
+  assert.equal(
+    world.approvedCount,
+    world.suitcases.filter((sc) => sc.approved).length,
+  );
+});
+
+void test('with the person idle, bots pack and size every bag but the last, which the person can finish', () => {
+  const world = soloRound();
+  const ref = { current: 100 };
+  playBots(world, 60, ref);
+
+  // Before the fix the bots stood pinned against a bench and the scale.
+  assert.equal(world.approvedCount, world.targetBags - 1);
+  assert.equal(world.feesPaid, 0);
+  assert.ok(world.events.length <= EVENT_HISTORY + 2);
+  const last = world.suitcases.find((sc) => !sc.approved)!;
+  assert.ok(last.zipped >= 0.95, 'the last bag is packed and zipped');
+  assert.equal(last.heldBy, null);
+  assert.ok(last.x < 0, 'and still where it was packed');
+  assert.equal(world.sizer.insertedSuitcase, null, 'the cage is cleared');
+
+  // The last bag is the person's to bring to the gate.
+  const me = world.players.find((player) => !player.bot)!;
+  Object.assign(me, { x: last.x - 0.8, z: last.z });
+  interact(world, me.id, 'grab', ref);
+  assert.equal(me.holdingSuitcase, last.id);
+  Object.assign(me, { x: SIZER_X - 1.2, z: SIZER_Z });
+  interact(world, me.id, 'grab', ref);
+  playBots(world, 1.4, ref);
+  assert.equal(world.approvedCount, world.targetBags);
+});
+
+void test('a restart empties all hands and keeps event ids rising', () => {
+  const world = soloRound();
+  const ref = { current: 100 };
+  playBots(world, 5, ref);
+  const bot = world.players.find((player) => player.bot)!;
+  Object.assign(bot, { holdingItem: world.items[0].id, sittingOn: 'sc-1' });
+  const last = ref.current;
+
+  carryOnAction(world, 'me', { type: 'restart' }, ref);
+  for (const player of world.players) {
+    assert.equal(player.holdingItem, null);
+    assert.equal(player.holdingSuitcase, null);
+    assert.equal(player.sittingOn, null);
+  }
+  assert.ok(world.events[0].id > last, 'the new boarding call is new');
+  playBots(world, 30, ref);
+  assert.ok(world.approvedCount > 0, 'the bots carry on in the new round');
 });
