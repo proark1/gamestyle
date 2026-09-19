@@ -596,6 +596,7 @@ void test('the game plays each new event once, resets on a new round and follows
   audio.setLoop = (channel, id) => void loops.set(channel, id);
   try {
     await audio.refresh();
+    audio.unlock();
     const first = snap(round());
     audio.update(first, [], 0);
     assert.deepEqual(played, [
@@ -692,6 +693,53 @@ void test('synthesized stand-ins play only for cues without a recording, and the
       audio.dispose();
       restore();
     }
+  }
+});
+
+void test('the opening waits for the first tap, missing lines never spend the turn, and a missing score stops', async () => {
+  const missing = ['speech.start', 'music.win', 'music.tension'];
+  const restore = stubBrowser(
+    Object.fromEntries(
+      Object.entries(everything).filter(([id]) => !missing.includes(id)),
+    ),
+  );
+  const audio = new SampleStampedeSound();
+  const played: string[] = [];
+  const loops = new Map<string, string | null>();
+  audio.play = (id) => void played.push(id);
+  audio.variant = (id) => void played.push(id);
+  audio.setLoop = (channel, id) => void loops.set(channel, id);
+  try {
+    await audio.refresh();
+    const start = performance.now();
+    const first = snap(round());
+    // Page load: the round is running but the browser has not allowed sound.
+    audio.update(first, [], start);
+    assert.deepEqual(played, []);
+    audio.unlock();
+    const tapped = later(first);
+    audio.update(tapped, [], performance.now() + 300);
+    assert.deepEqual(played, ['event.round_start', 'stampede.sample_bell']);
+
+    // The unrecorded start line did not use up the narrator's turn.
+    played.length = 0;
+    const slip = event('plate_slip', red(first.world), { team: 'red' });
+    audio.update(later(tapped), [slip], performance.now() + 400);
+    assert.ok((played as string[]).includes('speech.slip'), played.join());
+
+    // No tension track yet: the play score carries on. No win sting: silence.
+    const tense = later(tapped, (w) => (w.timeRemaining = 5), 32);
+    audio.update(tense, [], performance.now() + 500);
+    assert.equal(loops.get('music'), 'stampede.store_muzak');
+    const ended = later(tense, (w) => {
+      w.status = 'finished';
+      w.teamScores.red = 800;
+    });
+    audio.update(ended, [], performance.now() + 600);
+    assert.equal(loops.get('music'), null);
+  } finally {
+    audio.dispose();
+    restore();
   }
 });
 

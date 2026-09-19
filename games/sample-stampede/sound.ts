@@ -18,6 +18,9 @@ import { sampleStampedeAudioProfile } from './audio/profile';
 import { StampedeSynth } from './audio/synth';
 import type { SampleStampedeSnapshot, StampedeEvent } from './types';
 
+/** Opening cues held for the first tap still fit this far into a round. */
+const OPENING_WINDOW_S = 20;
+
 /**
  * Sample Stampede on the shared player: workshop recordings, the owner's mix,
  * speech ducking, hidden-tab pause and disposal. The original synthesized
@@ -33,6 +36,9 @@ export class SampleStampedeSound extends SiteAudio {
   private spacing: ReadonlyMap<string, number> = new Map();
   private ear = { x: 0, z: 0 };
   private synth = new StampedeSynth();
+  private unlockedAt = 0;
+  /** A round's opening cues, held until the first tap lets audio play. */
+  private opening: { started: number; cues: AudioEvent[] } | null = null;
 
   constructor() {
     super('sample-stampede', sampleStampedeAudioProfile);
@@ -41,6 +47,7 @@ export class SampleStampedeSound extends SiteAudio {
   override unlock() {
     super.unlock();
     this.synth.unlock();
+    this.unlockedAt ||= performance.now();
   }
 
   /** Mutes recordings and the synthesized stand-ins together. */
@@ -129,11 +136,35 @@ export class SampleStampedeSound extends SiteAudio {
       now,
       this.spacing,
     );
-    const cues = spaced.cues;
+    let cues = spaced.cues;
     this.spacing = spaced.last;
+    // The first round starts on page load, before the browser allows sound:
+    // keep its opening for the first tap instead of losing it.
+    if (!continuous && !this.unlockedAt && cues.length) {
+      this.opening = { started: w.started, cues };
+      cues = [];
+    }
+    if (this.opening && this.unlockedAt && now - this.unlockedAt > 250) {
+      const opening = this.opening;
+      this.opening = null;
+      if (
+        opening.started === w.started &&
+        w.status === 'active' &&
+        w.matchDuration - w.timeRemaining < OPENING_WINDOW_S
+      )
+        cues = [...opening.cues, ...cues];
+    }
     const steps = stampedeFootsteps(this.strides, next);
     this.strides = steps.memory;
-    const line = pickLine(cues, now, this.lastLineAt, this.spoken);
+    // Only recorded lines compete, so a missing one never spends the turn.
+    const line = pickLine(
+      cues.filter(
+        (cue) => !cue.id.startsWith('speech.') || this.recorded(cue.id),
+      ),
+      now,
+      this.lastLineAt,
+      this.spoken,
+    );
     if (line) {
       if (line.urgent) this.interruptSpeech();
       this.lastLineAt = now;
@@ -146,10 +177,17 @@ export class SampleStampedeSound extends SiteAudio {
 
     // Score and beds. Procedural muzak only while no score is recorded.
     this.synth.setMuzak(!MUSIC_CUES.some((id) => this.recorded(id)));
-    this.setLoop(
-      'music',
-      stampedeMusic(next, this.finishedAt === null ? 0 : now - this.finishedAt),
+    // A missing tension track keeps the play score; any other missing track
+    // stops the score rather than leaving the previous one playing on.
+    const wanted = stampedeMusic(
+      next,
+      this.finishedAt === null ? 0 : now - this.finishedAt,
     );
+    const music =
+      wanted === 'music.tension' && !this.recorded(wanted)
+        ? 'stampede.store_muzak'
+        : wanted;
+    this.setLoop('music', this.recorded(music) ? music : null);
     const beds = stampedeAmbience(next);
     for (const [channel, id] of Object.entries(BED_CUES) as [
       keyof typeof BED_CUES,

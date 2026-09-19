@@ -528,7 +528,7 @@ void test('the sound plays each cue once, follows the round with music and ratio
     await audio.refresh();
     const idle = lobby();
     audio.update(idle, 'me');
-    assert.equal(loops.get('music'), 'music.menu');
+    assert.equal(loops.get('music'), null, 'no score until one is recorded');
     assert.equal(loops.get('sky'), 'ambience.sky');
     const start = playing();
     audio.update(start, 'me');
@@ -608,6 +608,57 @@ void test('the sound plays each cue once, follows the round with music and ratio
     assert.equal(audio.enabled, false);
     audio.setMuted(false);
     assert.equal(audio.enabled, true);
+  } finally {
+    audio.dispose();
+    globalThis.document = oldDocument;
+    globalThis.fetch = oldFetch;
+  }
+});
+
+void test('a partly recorded score falls back to play for tension and stops for a missing result', async () => {
+  const oldDocument = globalThis.document;
+  const oldFetch = globalThis.fetch;
+  globalThis.document = {
+    hidden: false,
+    addEventListener() {},
+    removeEventListener() {},
+  } as unknown as Document;
+  globalThis.fetch = async () =>
+    Response.json({
+      settings: DEFAULT_SETTINGS,
+      cues: {
+        'music.play': {
+          url: `/api/audio/${game}/file/play.mp3`,
+          volume: 0.6,
+          loop: true,
+          category: 'music',
+        },
+      },
+    });
+  const audio = new ScaffoldScrambleSound();
+  const music: (string | null)[] = [];
+  audio.setLoop = (channel, id) => {
+    if (channel === 'music') music.push(id);
+  };
+  try {
+    await audio.refresh();
+    const start = playing();
+    audio.update(start, 'me');
+    assert.equal(music.at(-1), 'music.play');
+    audio.update(
+      frame(start, (w) => (w.clock = w.endsAt - 5_000)),
+      'me',
+    );
+    assert.equal(music.at(-1), 'music.play', 'tension falls back to play');
+    audio.update(
+      frame(start, (w) => {
+        w.clock = w.endsAt - 4_000;
+        w.phase = 'ended';
+        w.winner = 'failed';
+      }),
+      'me',
+    );
+    assert.equal(music.at(-1), null, 'the play score stops for the result');
   } finally {
     audio.dispose();
     globalThis.document = oldDocument;

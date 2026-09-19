@@ -130,7 +130,14 @@ void test('Drive-Thru audio catalog is registered, unique, generatable and keeps
   assert.ok(cues.some((c) => c.id === 'event.ui'));
 });
 
-void test('every Drive-Thru catalog cue is reachable from the planner, and the planner names only catalog cues', () => {
+void test('every Drive-Thru catalog cue is reachable from the planner, and the planner names only catalog cues', (t) => {
+  // The bots and physics roll dice; a fixed sequence keeps the simulated
+  // rounds below (which must end in a grease fire) the same on every run.
+  let seed = 0x2f6e2b1;
+  t.mock.method(Math, 'random', () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 2 ** 32;
+  });
   const heard = new Set<string>(['event.ui']); // SiteAudio plays it on every button.
   const hear = (cues: DriveThruCue[]) => {
     for (const cue of cues) heard.add(cue.id);
@@ -703,6 +710,55 @@ void test('DriveThruSound plays recordings, holds the opening for the first tap,
     assert.equal(audio.enabled, false);
     audio.setMuted(false);
     assert.equal(audio.enabled, true);
+  } finally {
+    audio.dispose();
+    globalThis.document = oldDocument;
+    globalThis.fetch = oldFetch;
+  }
+});
+
+void test('DriveThruSound stops the score for a result sting that is not recorded yet', async () => {
+  const oldDocument = globalThis.document;
+  const oldFetch = globalThis.fetch;
+  globalThis.document = {
+    hidden: false,
+    addEventListener() {},
+    removeEventListener() {},
+  } as unknown as Document;
+  const rush = driveThruCatalog.find(
+    (cue) => cue.id === 'music.drive-thru-rush',
+  )!;
+  globalThis.fetch = async () =>
+    Response.json({
+      settings: DEFAULT_SETTINGS,
+      cues: {
+        [rush.id]: {
+          url: `/api/audio/drive-thru/file/${rush.id}.mp3`,
+          volume: rush.volume,
+          loop: rush.loop,
+          category: rush.category,
+        },
+      },
+    } satisfies AudioManifest);
+  const audio = new DriveThruSound();
+  const music: (string | null)[] = [];
+  audio.setLoop = (channel, id) => {
+    if (channel === 'music') music.push(id);
+  };
+  try {
+    await audio.refresh();
+    const w = freshDriveThruWorld(T0);
+    w.players = [newDriveThruPlayer(LOCAL, 'Me', 0, 'driver')];
+    audio.update(w, LOCAL);
+    assert.equal(music.at(-1), 'music.drive-thru-rush');
+    w.clock += 16;
+    w.phase = 'meltdown';
+    audio.update(w, LOCAL);
+    assert.equal(
+      music.at(-1),
+      null,
+      'the rush does not play on under the result',
+    );
   } finally {
     audio.dispose();
     globalThis.document = oldDocument;
