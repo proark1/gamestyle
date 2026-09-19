@@ -339,7 +339,8 @@ export default function SampleStampede() {
         // The solo world does not keep its events, so sound gets this frame's.
         audio.update(snap, events);
         if (hud.current.due(snap)) setSnapshot(snap);
-        scene.render(snap);
+        // The solo world keeps no events, so the scene gets this frame's.
+        scene.render(snap, events);
       }
     };
 

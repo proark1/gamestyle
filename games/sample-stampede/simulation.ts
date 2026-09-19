@@ -634,10 +634,17 @@ export function getOrCreatePhysics(
   return physics;
 }
 
+// A room's snapshots repeat its recent events; viewers skip ids they have
+// already played.
+const ROOM_EVENT_LIMIT = 24;
+
 export function advanceSampleStampedeTick(w: SampleStampedeWorld, now: number) {
   const lastTime = w.clock > 0 ? w.clock : now;
   const dt = Math.min(Math.max((now - lastTime) / 1000, 1 / 60), 0.1);
   const physics = getOrCreatePhysics(w);
+  // Trim before advancing, so this tick's events all reach the next snapshot.
+  if (w.events.length > ROOM_EVENT_LIMIT)
+    w.events = w.events.slice(-ROOM_EVENT_LIMIT);
   advanceSampleStampedeWorld(w, physics, dt, w.events);
 }
 

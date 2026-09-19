@@ -107,8 +107,8 @@ function computeDriverBotInput(
   while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
   while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-  // Steering: counteract the wobbling squeaky wheel if needed
-  const steer = Math.max(-1, Math.min(1, -angleDiff * 1.6));
+  // Positive steer turns left, toward a larger heading, like the A key.
+  const steer = Math.max(-1, Math.min(1, angleDiff * 1.6));
 
   // Throttle
   let throttle = 0.9;
