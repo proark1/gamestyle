@@ -344,3 +344,39 @@ void test('farm Web Audio applies distance filtering, natural variation and mute
     globalThis.AudioContext = oldAudio;
   }
 });
+
+void test('a focused button clicks for Enter, Space and pointer presses, never for game keys', () => {
+  const oldDocument = globalThis.document,
+    oldFetch = globalThis.fetch;
+  const listeners = new Map<string, (event: Event) => void>();
+  globalThis.document = {
+    hidden: false,
+    addEventListener(type: string, listener: (event: Event) => void) {
+      listeners.set(type, listener);
+    },
+    removeEventListener() {},
+  } as unknown as Document;
+  globalThis.fetch = async () => new Response(null, { status: 404 });
+  const clicks: string[] = [];
+  class Recording extends SiteAudio {
+    override play(id: string) {
+      clicks.push(id);
+    }
+  }
+  const audio = new Recording('drive-thru');
+  try {
+    const button = { closest: (selector: string) => selector === 'button' };
+    const press = (type: string, key?: string) =>
+      listeners.get(type)!({ type, key, target: button } as unknown as Event);
+    for (const key of ['w', 'ArrowUp', 'e', 'Shift']) press('keydown', key);
+    assert.deepEqual(clicks, []);
+    press('keydown', 'Enter');
+    press('keydown', ' ');
+    press('pointerdown');
+    assert.deepEqual(clicks, ['event.ui', 'event.ui', 'event.ui']);
+  } finally {
+    audio.dispose();
+    globalThis.document = oldDocument;
+    globalThis.fetch = oldFetch;
+  }
+});
