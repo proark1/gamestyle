@@ -13,7 +13,7 @@ import {
   Hamburger,
 } from 'lucide-react';
 import { DriveThruScene } from './scene';
-import { DriveThruAudio } from './audio';
+import { DriveThruSound } from './audio';
 import {
   advanceDriveThruWorld,
   driveThruAction,
@@ -61,7 +61,7 @@ export default function DriveThruGame() {
   const strings = t(DRIVE_THRU_TRANSLATIONS);
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<DriveThruScene | null>(null);
-  const audioRef = useRef<DriveThruAudio | null>(null);
+  const audioRef = useRef<DriveThruSound | null>(null);
   const worldRef = useRef<DriveThruWorld>(freshDriveThruWorld());
   const localPlayerIdRef = useRef<string>('player-human');
 
@@ -95,7 +95,7 @@ export default function DriveThruGame() {
     worldRef.current = w;
 
     // Initialize Audio
-    const audio = new DriveThruAudio();
+    const audio = new DriveThruSound();
     audioRef.current = audio;
 
     // Initialize Scene
@@ -152,7 +152,7 @@ export default function DriveThruGame() {
 
       if (hud.current.due(snap)) setSnapshot(snap);
       scene.update(snap);
-      audio.update(currentWorld);
+      audio.update(currentWorld, localPlayerIdRef.current);
 
       animId = requestAnimationFrame(loop);
     };
@@ -186,7 +186,7 @@ export default function DriveThruGame() {
     const next = !audioEnabled;
     setAudioEnabled(next);
     if (audioRef.current) {
-      audioRef.current.enabled = next;
+      audioRef.current.setMuted(!next);
     }
   };
 

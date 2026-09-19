@@ -2,7 +2,14 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { carryOnCarnageAvatars } from './avatar';
 import { createEngine } from './peer';
-import { burstSuitcase, checkSizerFit, computeSuitcaseBulge } from './physics';
+import { updateCarryOnBots } from './bots';
+import {
+  burstSuitcase,
+  checkSizerFit,
+  computeSuitcaseBulge,
+  SIZER_X,
+  SIZER_Z,
+} from './physics';
 import {
   advanceCarryOn,
   carryOnAction,
@@ -310,4 +317,52 @@ void test('player can unpack / remove an item from an open suitcase', () => {
     'Item should no longer be packed in suitcase',
   );
   assert.equal(sc.items.length, 0, 'Suitcase items array should be empty');
+});
+
+void test('a bot sizes a ready bag once, the sizer clears, and an approved bag cannot score twice', () => {
+  const now = 1_000_000;
+  const world = freshCarryOnWorld(now);
+  const bot = newTraveler('bot-1', 'Bot', 1, now);
+  bot.bot = true;
+  const human = newTraveler('human', 'Human', 0, now);
+  human.x = -8;
+  world.players = [bot, human];
+  const sc = world.suitcases[0];
+  sc.open = false;
+  sc.zipped = 1;
+  sc.heldBy = bot.id;
+  bot.holdingSuitcase = sc.id;
+  bot.x = SIZER_X - 1;
+  bot.z = SIZER_Z;
+  const eventIdRef = { current: 100 };
+  const inserted = () =>
+    world.events.filter((e) => e.detail === 'inserted').length;
+
+  // Six seconds of bots: before the fix a bot pulled the bag back out of the
+  // cage every frame, so it was inserted hundreds of times and never sized.
+  for (let frame = 0; frame < 360; frame++) {
+    updateCarryOnBots(world, world.clock, eventIdRef);
+    advanceCarryOn(world, 1 / 60, eventIdRef);
+  }
+  assert.equal(inserted(), 1);
+  assert.equal(sc.approved, true);
+  assert.equal(world.approvedCount, 1);
+  assert.equal(world.sizer.status, 'idle');
+  assert.equal(world.sizer.insertedSuitcase, null);
+  assert.ok(sc.x > SIZER_X + 1, 'the approved bag went through to the jetway');
+
+  // A human carrying the approved bag back cannot size it a second time.
+  sc.heldBy = human.id;
+  human.holdingSuitcase = sc.id;
+  human.x = SIZER_X - 1;
+  human.z = SIZER_Z;
+  carryOnAction(
+    world,
+    human.id,
+    { type: 'interact', action: 'grab' },
+    eventIdRef,
+  );
+  assert.equal(inserted(), 1);
+  assert.equal(world.sizer.status, 'idle');
+  assert.equal(world.approvedCount, 1);
 });

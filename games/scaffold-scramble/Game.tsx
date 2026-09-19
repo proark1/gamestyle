@@ -290,7 +290,7 @@ export default function ScaffoldScrambleGame() {
     setMuted(next);
     if (sound.current) {
       sound.current.unlock();
-      sound.current.enabled = !next;
+      sound.current.setMuted(next);
     }
   };
 

@@ -1,219 +1,304 @@
 import { SiteAudio } from '../../shared/audio/player';
 import { driveThruAudioProfile } from './audio/profile';
+import {
+  audioCopy,
+  driveThruAmbience,
+  driveThruAudioDiscontinuity,
+  driveThruAudioEvents,
+  driveThruDanger,
+  driveThruListener,
+  driveThruMusic,
+  driveThruResultCues,
+  isEndedPhase,
+  TENSION_HOLD_MS,
+  type AmbienceChannel,
+  type DriveThruCue,
+} from './audio-events';
 import type { DriveThruWorld } from './types';
 
 export { driveThruCatalog } from './audio/catalog';
 export { driveThruAudioProfile } from './audio/profile';
 
-export class DriveThruAudio {
-  private clips: SiteAudio;
-  private available = new Set<string>();
+/** Incidental narration waits this long after the previous line. */
+export const SPEECH_GAP_MS = 6000;
+/** The same incidental line does not come back within this window. */
+export const LINE_REPEAT_MS = 20000;
+/** Round-start cues held for the first tap still fit this far into a round. */
+const INTRO_WINDOW_MS = 20000;
+/** Audio needs a moment to resume after the first tap before it is heard. */
+const UNLOCK_SETTLE_MS = 300;
+
+/**
+ * Synthesized stand-ins for a few key moments, heard only while the workshop
+ * has no recording of that cue yet. Once a recording is published the synth
+ * stays silent for it, so the game is never double-voiced.
+ */
+class DriveThruSynth {
   private context: AudioContext | null = null;
-  private masterGain: GainNode | null = null;
-  private noiseBuffer: AudioBuffer | null = null;
-  private enabledState = true;
-  private lastProcessedEventId = 0;
+  private master: GainNode | null = null;
+  private noise: AudioBuffer | null = null;
+  muted = false;
 
-  constructor() {
-    this.clips = new SiteAudio('drive-thru', {
-      ...driveThruAudioProfile,
-      prepareManifest: (manifest) => {
-        this.available = new Set(Object.keys(manifest.cues));
-        return manifest;
-      },
-    });
-  }
-
-  get enabled(): boolean {
-    return this.enabledState;
-  }
-
-  set enabled(v: boolean) {
-    this.enabledState = v;
-    this.clips.enabled = v;
-    if (this.masterGain && this.context) {
-      this.masterGain.gain.setTargetAtTime(
-        v ? 0.2 : 0,
-        this.context.currentTime,
-        0.03,
-      );
-    }
-  }
-
-  unlock(): void {
-    this.clips.unlock();
+  unlock() {
     try {
       if (!this.context) {
-        const AudioCtx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext })
+        const Context =
+          window.AudioContext ??
+          (window as unknown as { webkitAudioContext?: typeof AudioContext })
             .webkitAudioContext;
-        this.context = new AudioCtx();
-        this.masterGain = this.context.createGain();
-        this.masterGain.gain.value = this.enabledState ? 0.2 : 0;
-        this.masterGain.connect(this.context.destination);
-
-        // Pre-create 1-second white noise buffer for crackles & sizzles
-        const bufferSize = this.context.sampleRate;
-        this.noiseBuffer = this.context.createBuffer(
-          1,
-          bufferSize,
-          this.context.sampleRate,
-        );
-        const data = this.noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          data[i] = Math.random() * 2 - 1;
-        }
+        if (!Context) return;
+        this.context = new Context();
+        this.master = this.context.createGain();
+        this.master.gain.value = 0.2;
+        this.master.connect(this.context.destination);
+        const size = this.context.sampleRate;
+        this.noise = this.context.createBuffer(1, size, size);
+        const data = this.noise.getChannelData(0);
+        for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
       }
-      if (this.context.state === 'suspended') {
-        void this.context.resume();
-      }
+      if (this.context.state === 'suspended') void this.context.resume();
     } catch {
-      // AudioContext unavailable
+      // Browser audio is optional.
     }
   }
 
-  update(world: DriveThruWorld | null): void {
-    if (!world) return;
-
-    // Check for newly fired events
-    for (const event of world.events) {
-      if (event.id > this.lastProcessedEventId) {
-        this.lastProcessedEventId = event.id;
-        this.triggerEventAudio(event.kind);
-      }
-    }
+  private tone(
+    wave: OscillatorType,
+    from: number,
+    to: number,
+    at: number,
+    length: number,
+    level: number,
+    ramp: 'exponential' | 'wobble' = 'exponential',
+  ) {
+    const ctx = this.context!;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = wave;
+    osc.frequency.setValueAtTime(from, at);
+    if (ramp === 'wobble') {
+      osc.frequency.linearRampToValueAtTime(to, at + length / 3);
+      osc.frequency.linearRampToValueAtTime(from, at + (length * 2) / 3);
+    } else osc.frequency.exponentialRampToValueAtTime(to, at + length * 0.8);
+    gain.gain.setValueAtTime(0.001, at);
+    gain.gain.linearRampToValueAtTime(level, at + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, at + length);
+    osc.connect(gain);
+    gain.connect(this.master!);
+    osc.start(at);
+    osc.stop(at + length + 0.03);
   }
 
-  triggerEventAudio(kind: string): void {
-    const cueId = `event.${kind.replace('_', '-')}`;
-    if (this.available.has(cueId)) {
-      this.clips.play(cueId);
-    } else {
-      this.playSynthesizedFallback(kind);
-    }
-  }
-
-  playSynthesizedFallback(kind: string): void {
-    if (!this.context || !this.masterGain || !this.enabledState) return;
+  play(id: string, strength = 1) {
     const ctx = this.context;
+    if (
+      !ctx ||
+      !this.master ||
+      this.muted ||
+      ctx.state !== 'running' ||
+      (typeof document !== 'undefined' && document.hidden)
+    )
+      return;
     const t = ctx.currentTime;
-
-    switch (kind) {
-      case 'horn_honked': {
-        // Dual-tone car horn (392Hz + 440Hz)
-        for (const freq of [392, 440]) {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(freq, t);
-          gain.gain.setValueAtTime(0.001, t);
-          gain.gain.linearRampToValueAtTime(0.18, t + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-          osc.connect(gain);
-          gain.connect(this.masterGain);
-          osc.start(t);
-          osc.stop(t + 0.38);
-        }
+    const s = Math.max(0, Math.min(1, strength));
+    switch (id) {
+      case 'event.car-horn':
+        // Dual-tone car horn.
+        this.tone('sawtooth', 392, 392, t, 0.35, 0.18 * s);
+        this.tone('sawtooth', 440, 440, t, 0.35, 0.18 * s);
         break;
-      }
-
-      case 'patty_flipped': {
-        // Slapdown wet slap
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(220, t);
-        osc.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-        gain.gain.setValueAtTime(0.3, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        osc.connect(gain);
-        gain.connect(this.masterGain);
-        osc.start(t);
-        osc.stop(t + 0.18);
+      case 'event.patty-flip':
+        // Wet spatula slap.
+        this.tone('triangle', 220, 45, t, 0.15, 0.3 * s);
         break;
-      }
-
-      case 'shake_vented': {
-        // Pressurized steam hiss
-        if (!this.noiseBuffer) return;
+      case 'event.shake-vent': {
+        // Pressurised hiss.
+        if (!this.noise) return;
         const noise = ctx.createBufferSource();
-        noise.buffer = this.noiseBuffer;
+        noise.buffer = this.noise;
         const filter = ctx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(2800, t);
-        filter.Q.setValueAtTime(4.0, t);
+        filter.frequency.value = 2800;
+        filter.Q.value = 4;
         const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.setValueAtTime(0.25 * s, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
         noise.connect(filter);
         filter.connect(gain);
-        gain.connect(this.masterGain);
+        gain.connect(this.master);
         noise.start(t);
         noise.stop(t + 0.38);
         break;
       }
-
-      case 'pole_crashed': {
-        // Heavy metallic dent and crunch
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(140, t);
-        osc.frequency.exponentialRampToValueAtTime(30, t + 0.4);
-        gain.gain.setValueAtTime(0.4, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-        osc.connect(gain);
-        gain.connect(this.masterGain);
-        osc.start(t);
-        osc.stop(t + 0.55);
+      case 'event.pole-crash':
+        // Heavy metal crunch.
+        this.tone('sawtooth', 140, 30, t, 0.5, 0.4 * s);
         break;
-      }
-
-      case 'order_delivered':
-      case 'round_win': {
-        // Cheerful register bell (523Hz -> 659Hz)
-        [523, 659].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          const start = t + idx * 0.12;
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, start);
-          gain.gain.setValueAtTime(0.001, start);
-          gain.gain.linearRampToValueAtTime(0.3, start + 0.01);
-          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
-          osc.connect(gain);
-          gain.connect(this.masterGain!);
-          osc.start(start);
-          osc.stop(start + 0.5);
-        });
+      case 'event.order-served':
+        // Cheerful register bell.
+        this.tone('sine', 523, 523, t, 0.45, 0.3 * s);
+        this.tone('sine', 659, 659, t + 0.12, 0.45, 0.3 * s);
         break;
-      }
-
-      case 'meltdown':
-      case 'grease_fire': {
-        // High panic siren
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(700, t);
-        osc.frequency.linearRampToValueAtTime(950, t + 0.25);
-        osc.frequency.linearRampToValueAtTime(700, t + 0.5);
-        gain.gain.setValueAtTime(0.35, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
-        osc.connect(gain);
-        gain.connect(this.masterGain);
-        osc.start(t);
-        osc.stop(t + 0.75);
+      case 'event.grease-fire':
+      case 'event.curb-plop':
+        // Panic siren.
+        this.tone('sawtooth', 700, 950, t, 0.7, 0.35 * s, 'wobble');
         break;
-      }
     }
   }
 
-  dispose(): void {
-    this.clips.dispose();
-    if (this.context) {
-      void this.context.close().catch(() => {});
+  dispose() {
+    void this.context?.close().catch(() => {});
+    this.context = null;
+    this.master = null;
+  }
+}
+
+/**
+ * Drive-Thru Static's sound: the Admin recordings, the owner's mixer, speech
+ * ducking and lifecycle from SiteAudio, driven by the pure rules in
+ * `audio-events.ts`.
+ */
+export class DriveThruSound extends SiteAudio {
+  private previous: DriveThruWorld | null = null;
+  private synth = new DriveThruSynth();
+  private cueAt = new Map<string, number>();
+  private lineAt = new Map<string, number>();
+  private lastLineAt = -Infinity;
+  private dangerAt = -Infinity;
+  private endedAt: number | null = null;
+  private endedFor = -1;
+  private unlockRequested = false;
+  private readyAt: number | null = null;
+  private intro: { started: number; cues: DriveThruCue[] } | null = null;
+
+  constructor() {
+    super('drive-thru', driveThruAudioProfile);
+  }
+
+  override unlock() {
+    super.unlock();
+    this.synth.unlock();
+    this.unlockRequested = true;
+  }
+
+  /** The game's sound toggle mutes recordings and synthesized cues together. */
+  setMuted(muted: boolean) {
+    this.enabled = !muted;
+    this.synth.muted = muted;
+  }
+
+  /** Call once per frame with the live world and the local player's id. */
+  update(world: DriveThruWorld | null, localId: string) {
+    if (!world) return;
+    const previous = this.previous;
+    // A stale frame of the same round never rewinds the comparison.
+    if (previous?.started === world.started && world.clock < previous.clock)
+      return;
+    if (!previous || previous.started !== world.started) this.newRound();
+    const cues = driveThruAudioEvents(previous, world, localId);
+    this.previous = audioCopy(world);
+
+    const listener = driveThruListener(world, localId);
+    this.listen(listener.position, listener.yaw);
+
+    // The first round starts before the browser lets audio play; keep its
+    // opening cues for the first tap instead of losing them.
+    const ready = this.ready(world.clock);
+    const opening = !previous || driveThruAudioDiscontinuity(previous, world);
+    if (opening && cues.length && !ready)
+      this.intro = { started: world.started, cues };
+    else this.perform(cues, world.clock);
+    if (this.intro && ready) {
+      const intro = this.intro;
+      this.intro = null;
+      if (
+        intro.started === world.started &&
+        world.clock - world.started < INTRO_WINDOW_MS
+      )
+        this.perform(intro.cues, world.clock);
     }
+
+    const endedBefore = this.endedFor;
+    if (isEndedPhase(world.phase)) this.endedAt ??= world.clock;
+    else this.endedAt = null;
+    this.endedFor = this.endedAt === null ? -1 : world.clock - this.endedAt;
+    this.perform(
+      driveThruResultCues(world, endedBefore, this.endedFor),
+      world.clock,
+    );
+
+    if (driveThruDanger(world)) this.dangerAt = world.clock;
+    this.setLoop(
+      'music',
+      driveThruMusic(
+        world,
+        this.endedFor,
+        world.clock - this.dangerAt < TENSION_HOLD_MS,
+      ),
+    );
+    const mix = driveThruAmbience(world, localId);
+    for (const channel of Object.keys(mix) as AmbienceChannel[]) {
+      const loop = mix[channel];
+      this.setLoop(channel, loop?.id ?? null, loop?.level ?? 1);
+    }
+  }
+
+  private newRound() {
+    this.reset();
+    this.cueAt.clear();
+    this.lineAt.clear();
+    this.lastLineAt = -Infinity;
+    this.dangerAt = -Infinity;
+    this.endedAt = null;
+    this.endedFor = -1;
+    this.intro = null;
+  }
+
+  private ready(clock: number) {
+    if (!this.unlockRequested) return false;
+    this.readyAt ??= clock + UNLOCK_SETTLE_MS;
+    return clock >= this.readyAt;
+  }
+
+  /** Any published take of a cue: `id`, `id.1`, `id.2` or `id.3`. */
+  private recorded(id: string) {
+    return [id, `${id}.1`, `${id}.2`, `${id}.3`].some(
+      (take) => this.preferredCue(take, '') !== '',
+    );
+  }
+
+  private perform(cues: DriveThruCue[], clock: number) {
+    // One line at a time: an urgent line cuts in, anything else waits its turn.
+    const lines = cues.filter(
+      (cue) => cue.id.startsWith('speech.') && this.recorded(cue.id),
+    );
+    const line =
+      lines.find((cue) => cue.urgent) ??
+      lines.find(
+        (cue) =>
+          clock - this.lastLineAt >= SPEECH_GAP_MS &&
+          clock - (this.lineAt.get(cue.id) ?? -Infinity) >= LINE_REPEAT_MS,
+      );
+    if (line) {
+      if (line.urgent) this.interruptSpeech();
+      this.lastLineAt = clock;
+      this.lineAt.set(line.id, clock);
+      this.play(line.id);
+    }
+    for (const cue of cues) {
+      if (cue.id.startsWith('speech.')) continue;
+      if (cue.gap && clock - (this.cueAt.get(cue.id) ?? -Infinity) < cue.gap)
+        continue;
+      this.cueAt.set(cue.id, clock);
+      if (this.recorded(cue.id))
+        this.variant(cue.id, cue.strength ?? 1, cue.position);
+      else this.synth.play(cue.id, cue.strength ?? 1);
+    }
+  }
+
+  override dispose() {
+    super.dispose();
+    this.synth.dispose();
   }
 }

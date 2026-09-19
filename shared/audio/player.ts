@@ -238,6 +238,13 @@ export class SiteAudio {
   }
   private gesture = (event: Event) => {
     this.unlock();
+    // A button keeps focus after a click; game keys pressed afterwards must not
+    // click it again. Only Enter and Space actually press a focused button.
+    if (
+      event.type === 'keydown' &&
+      !['Enter', ' '].includes((event as KeyboardEvent).key)
+    )
+      return;
     if ((event.target as HTMLElement)?.closest?.('button'))
       this.play('event.ui');
   };

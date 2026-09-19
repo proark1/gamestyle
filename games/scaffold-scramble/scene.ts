@@ -139,6 +139,7 @@ export class ScaffoldScene {
   private animId = 0;
   private lastTime = performance.now();
   private lastHandledEventId = 0;
+  private handledRound = -1;
   private prevLeftHeight = 50;
   private prevRightHeight = 50;
 
@@ -598,6 +599,11 @@ export class ScaffoldScene {
     const { world } = snapshot;
     const nowSec = performance.now() * 0.001;
 
+    // Event ids restart at 1 each round, so a new round starts a fresh count.
+    if (world.started !== this.handledRound) {
+      this.handledRound = world.started;
+      this.lastHandledEventId = 0;
+    }
     // Handle incoming game events for visual FX triggers
     for (const evt of world.events) {
       if (evt.id <= this.lastHandledEventId) continue;

@@ -13,7 +13,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { SampleStampedeScene } from './scene';
-import { SampleStampedeAudio } from './audio';
+import { SampleStampedeSound } from './sound';
 import {
   advanceSampleStampedeWorld,
   freshSampleStampedeWorld,
@@ -184,7 +184,7 @@ export default function SampleStampede() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SampleStampedeScene | null>(null);
-  const audioRef = useRef<SampleStampedeAudio | null>(null);
+  const audioRef = useRef<SampleStampedeSound | null>(null);
   const physicsRef = useRef<SampleStampedePhysics | null>(null);
   const worldRef = useRef<SampleStampedeWorld | null>(null);
   // The scene is handed every snapshot directly; the HUD is paced, so a
@@ -217,7 +217,7 @@ export default function SampleStampede() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const audio = new SampleStampedeAudio();
+    const audio = new SampleStampedeSound();
     audioRef.current = audio;
     audio.setMuted(!soundEnabledRef.current);
 
@@ -300,20 +300,7 @@ export default function SampleStampede() {
           events,
         );
 
-        // Process audio events & squeaky wheel
         const meCart = worldRef.current.carts.find((c) => c.id === selfCartId);
-        if (meCart && soundEnabledRef.current) {
-          const speed = Math.sqrt(
-            meCart.vx * meCart.vx + meCart.vz * meCart.vz,
-          );
-          audio.updateSqueak(speed, meCart.wobbleIntensity, dt);
-        }
-
-        if (soundEnabledRef.current) {
-          for (const ev of events) {
-            audio.playEvent(ev);
-          }
-        }
 
         // Check for receipt approval/rejection events for local player's cart/team
         for (const ev of events) {
@@ -349,6 +336,8 @@ export default function SampleStampede() {
           selfId,
           1,
         );
+        // The solo world does not keep its events, so sound gets this frame's.
+        audio.update(snap, events);
         if (hud.current.due(snap)) setSnapshot(snap);
         scene.render(snap);
       }
@@ -362,7 +351,7 @@ export default function SampleStampede() {
       window.removeEventListener('pointerdown', unlockAudio);
       window.removeEventListener('keydown', unlockAudio);
       scene.destroy();
-      audio.destroy();
+      audio.dispose();
       physics.destroy();
     };
   }, [selfId, selfCartId]);
@@ -375,7 +364,6 @@ export default function SampleStampede() {
     worldRef.current = fresh;
     physicsRef.current.destroy();
     physicsRef.current = new SampleStampedePhysics(fresh);
-    audioRef.current?.playAnnouncementBell();
   };
 
   const handleDriftPress = () => {

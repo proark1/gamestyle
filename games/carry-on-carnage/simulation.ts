@@ -23,6 +23,9 @@ import {
   type Traveler,
 } from './types';
 
+/** How long a sizing result stays in the cage before the bag moves on. */
+const SIZER_RESULT_MS = 1500;
+
 let nextItemId = 1;
 function makeItem(
   kind: ItemKind,
@@ -217,6 +220,7 @@ export function freshCarryOnWorld(now: number): CarryOnWorld {
         id: 1,
         type: 'pack',
         text: 'Flight 707 to Ibiza is BOARDING! Pack and size carry-ons to avoid $150 fees!',
+        detail: 'boarding',
       },
     ],
     approvedCount: 0,
@@ -285,6 +289,8 @@ export function carryOnAction(
               text: `Packed ${cfg.name} into luggage!`,
               pos: [nearbySuitcase.x, nearbySuitcase.y + 0.6, nearbySuitcase.z],
               color: cfg.color,
+              item: item.kind,
+              detail: 'packed',
             });
             return;
           }
@@ -307,8 +313,10 @@ export function carryOnAction(
             player.z - SIZER_Z,
           );
 
+          // An approved bag has already scored; it cannot be sized again.
           if (
             sc &&
+            !sc.approved &&
             distToSizer < REACH_DISTANCE &&
             world.sizer.status === 'idle'
           ) {
@@ -328,6 +336,7 @@ export function carryOnAction(
               text: 'Inserted bag into Sizer Box! Measuring dimensions...',
               pos: [SIZER_X, 1.2, SIZER_Z],
               color: '#38bdf8',
+              detail: 'inserted',
             });
             return;
           }
@@ -384,6 +393,8 @@ export function carryOnAction(
                 text: `Removed ${cfg.name} from luggage!`,
                 pos: [sc.x, sc.y + 0.6, sc.z],
                 color: '#f59e0b',
+                item: item.kind,
+                detail: 'unpacked',
               });
             }
           }
@@ -440,6 +451,8 @@ export function carryOnAction(
                 text: `Removed ${cfg.name} from luggage!`,
                 pos: [nearbySc.x, nearbySc.y + 0.6, nearbySc.z],
                 color: '#f59e0b',
+                item: item.kind,
+                detail: 'unpacked',
               });
             }
           }
@@ -500,6 +513,7 @@ export function carryOnAction(
                 text: 'ZIPPER CLOSED! Carry-on secured!',
                 pos: [sc.x, sc.y + 0.6, sc.z],
                 color: '#10b981',
+                detail: 'closed',
               });
             } else {
               world.events.push({
@@ -508,6 +522,7 @@ export function carryOnAction(
                 text: `Zipping... ${Math.round(sc.zipped * 100)}% closed!`,
                 pos: [sc.x, sc.y + 0.6, sc.z],
                 color: '#38bdf8',
+                detail: 'progress',
               });
             }
           } else {
@@ -520,6 +535,7 @@ export function carryOnAction(
                 : '⚠️ Zipper jammed! Bulging too much—someone must SIT on it [R]!',
               pos: [sc.x, sc.y + 0.6, sc.z],
               color: '#f97316',
+              detail: 'jammed',
             });
           }
         }
@@ -577,6 +593,7 @@ export function advanceCarryOn(
           text: '🚨 BEEP BEEP! Tin foil shoes set off TSA alarm! Guards distracted!',
           pos: [TSA_GATE_X, 2.2, 0],
           color: '#eab308',
+          detail: 'alarm',
         });
       }
 
@@ -606,6 +623,7 @@ export function advanceCarryOn(
               text: '🤫 SNEAKED PAST TSA while guard was distracted with tin foil shoes!',
               pos: [p.x, p.y + 1.2, p.z],
               color: '#38bdf8',
+              detail: 'sneak',
             });
           }
         } else {
@@ -624,6 +642,7 @@ export function advanceCarryOn(
                 text: '👮 TSA ALERT! Contraband seized by airport security!',
                 pos: [TSA_GATE_X, 1.5, 0],
                 color: '#ef4444',
+                item: it.kind,
               });
             }
           }
@@ -684,6 +703,30 @@ export function advanceCarryOn(
         });
       }
     }
+  }
+
+  // A finished bag leaves the cage once its result has shown, so the sizer is
+  // free for the next one: approved bags go through to the jetway, rejected
+  // ones come back out in front of the cage to be repacked.
+  if (
+    (world.sizer.status === 'approved' || world.sizer.status === 'rejected') &&
+    now >= world.sizer.timer + SIZER_RESULT_MS
+  ) {
+    const sc = world.suitcases.find(
+      (s) => s.id === world.sizer.insertedSuitcase,
+    );
+    if (sc && !sc.heldBy) {
+      if (sc.approved) {
+        sc.x = SIZER_X + 2.05;
+        sc.z = -0.9 + 0.6 * ((world.approvedCount - 1) % 4);
+      } else {
+        sc.x = SIZER_X - 1.3;
+        sc.z = SIZER_Z;
+      }
+      sc.y = 0;
+    }
+    world.sizer.insertedSuitcase = null;
+    world.sizer.status = 'idle';
   }
 
   // 4. Flight departure countdown

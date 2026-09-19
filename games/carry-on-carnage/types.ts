@@ -195,7 +195,22 @@ export type CarryOnEvent = {
   text: string;
   pos?: [number, number, number];
   color?: string;
+  /** The item packed, unpacked or confiscated, so each one can sound like itself. */
+  item?: ItemKind;
+  /** Which moment of a shared event type this is; the text is only for people. */
+  detail?: CarryOnEventDetail;
 };
+
+export type CarryOnEventDetail =
+  | 'boarding'
+  | 'packed'
+  | 'unpacked'
+  | 'inserted'
+  | 'progress'
+  | 'closed'
+  | 'jammed'
+  | 'alarm'
+  | 'sneak';
 
 export type CarryOnWorld = {
   phase: 'lobby' | 'packing' | 'flight_departed';
