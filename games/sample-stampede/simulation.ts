@@ -37,18 +37,22 @@ export function createDefaultManifest(): ShoppingManifest {
   };
 }
 
-export function createRandomManifest(round: number): ShoppingManifest {
+/**
+ * `sampleKinds`: the samples the store's kiosks serve. A list never asks for
+ * one no kiosk hands out.
+ */
+export function createRandomManifest(
+  round: number,
+  sampleKinds: readonly SampleItemKind[] = [
+    'sample_taquito',
+    'sample_pizza_bagel',
+  ],
+): ShoppingManifest {
   const bulkKinds: BulkItemKind[] = [
     'paper_towels',
     'kibble_50lb',
     'mega_soda',
     'cereal_box',
-  ];
-  const sampleKinds: SampleItemKind[] = [
-    'sample_taquito',
-    'sample_pizza_bagel',
-    'sample_churro',
-    'sample_cheese',
   ];
 
   const pickedBulk1 = bulkKinds[round % bulkKinds.length];
@@ -441,10 +445,11 @@ function triggerSampleFrenzy(
   physics: SampleStampedePhysics,
   events: StampedeEvent[],
 ) {
-  // Pick next inactive kiosk
-  const availableKiosks = world.kiosks;
+  // Kiosks take turns: the idle one that rang longest ago serves next.
   const targetKiosk =
-    availableKiosks.find((k) => !k.active) || availableKiosks[0];
+    world.kiosks
+      .filter((k) => !k.active)
+      .sort((a, b) => a.bellDingTime - b.bellDingTime)[0] ?? world.kiosks[0];
 
   targetKiosk.active = true;
   targetKiosk.frenzyTimeRemaining = 30;
@@ -615,7 +620,10 @@ function checkReceiptGauntlet(
 
       // Clear checked out items and assign next manifest
       cart.items = [];
-      cart.manifest = createRandomManifest(Math.floor(cart.score / 500) + 1);
+      cart.manifest = createRandomManifest(
+        Math.floor(cart.score / 500) + 1,
+        world.kiosks.map((k) => k.sampleKind),
+      );
       cart.rejectedUntil = world.clock + 2000;
     }
   }
