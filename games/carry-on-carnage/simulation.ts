@@ -26,6 +26,27 @@ import {
 /** How long a sizing result stays in the cage before the bag moves on. */
 const SIZER_RESULT_MS = 1500;
 
+/**
+ * Events kept in the world. Every reader remembers the newest id it has seen,
+ * so older ones only weigh down the copy of the world made every frame.
+ */
+export const EVENT_HISTORY = 32;
+/** A traveller pulling a jammed zipper is told again only after this long. */
+export const JAM_REPORT_MS = 1_500;
+
+/** The first of `things` in the traveller's reach, or only `target` if named. */
+function reachable<T extends { id: string; x: number; z: number }>(
+  player: Traveler,
+  things: readonly T[],
+  target: string | undefined,
+) {
+  return things.find(
+    (thing) =>
+      (target === undefined || thing.id === target) &&
+      Math.hypot(thing.x - player.x, thing.z - player.z) < REACH_DISTANCE,
+  );
+}
+
 let nextItemId = 1;
 function makeItem(
   kind: ItemKind,
@@ -247,7 +268,17 @@ export function carryOnAction(
   if (action.type === 'restart') {
     const players = world.players;
     const fresh = freshCarryOnWorld(world.clock);
+    // Last round's items and bags are gone, so nobody may still be holding one.
+    for (const player of players)
+      Object.assign(player, {
+        sittingOn: null,
+        zippingSuitcase: null,
+        holdingItem: null,
+        holdingSuitcase: null,
+      });
     fresh.players = players;
+    // Ids keep rising across rounds, or readers would skip the boarding call.
+    for (const event of fresh.events) event.id = ++eventIdRef.current;
     Object.assign(world, fresh);
     return;
   }
@@ -262,17 +293,17 @@ export function carryOnAction(
 
   if (action.type === 'interact') {
     const now = world.clock;
+    const target = action.target;
 
     switch (action.action) {
       case 'grab': {
         // 1. If holding an item, check if near an open suitcase to pack it
         if (player.holdingItem) {
           const item = world.items.find((it) => it.id === player.holdingItem);
-          const nearbySuitcase = world.suitcases.find(
-            (sc) =>
-              sc.open &&
-              !sc.burst &&
-              Math.hypot(sc.x - player.x, sc.z - player.z) < REACH_DISTANCE,
+          const nearbySuitcase = reachable(
+            player,
+            world.suitcases.filter((sc) => sc.open && !sc.burst),
+            target,
           );
 
           if (item && nearbySuitcase) {
@@ -351,7 +382,10 @@ export function carryOnAction(
 
         // 3. Hands are empty: pick up suitcase or item
         // Check sizer box to retrieve tested bag
-        if (world.sizer.insertedSuitcase) {
+        if (
+          world.sizer.insertedSuitcase &&
+          (target === undefined || target === world.sizer.insertedSuitcase)
+        ) {
           const distToSizer = Math.hypot(
             player.x - SIZER_X,
             player.z - SIZER_Z,
@@ -371,7 +405,10 @@ export function carryOnAction(
         }
 
         // Check if sitting on a suitcase to unpack top item
-        if (player.sittingOn) {
+        if (
+          player.sittingOn &&
+          (target === undefined || target === player.sittingOn)
+        ) {
           const sc = world.suitcases.find((s) => s.id === player.sittingOn);
           if (sc && sc.items.length > 0 && sc.zipped < 0.95) {
             const removedItemId = sc.items.pop()!;
@@ -402,11 +439,10 @@ export function carryOnAction(
         }
 
         // Check nearby loose item first
-        const nearbyItem = world.items.find(
-          (it) =>
-            !it.packedIn &&
-            !it.heldBy &&
-            Math.hypot(it.x - player.x, it.z - player.z) < REACH_DISTANCE,
+        const nearbyItem = reachable(
+          player,
+          world.items.filter((it) => !it.packedIn && !it.heldBy),
+          target,
         );
 
         if (nearbyItem) {
@@ -419,10 +455,10 @@ export function carryOnAction(
         }
 
         // Check nearby suitcase (pick up if zipped, or unpack item if open with items)
-        const nearbySc = world.suitcases.find(
-          (sc) =>
-            !sc.heldBy &&
-            Math.hypot(sc.x - player.x, sc.z - player.z) < REACH_DISTANCE,
+        const nearbySc = reachable(
+          player,
+          world.suitcases.filter((sc) => !sc.heldBy),
+          target,
         );
 
         if (nearbySc) {
@@ -468,10 +504,10 @@ export function carryOnAction(
           return;
         }
 
-        const sc = world.suitcases.find(
-          (s) =>
-            !s.burst &&
-            Math.hypot(s.x - player.x, s.z - player.z) < REACH_DISTANCE,
+        const sc = reachable(
+          player,
+          world.suitcases.filter((s) => !s.burst),
+          target,
         );
 
         if (sc) {
@@ -489,10 +525,10 @@ export function carryOnAction(
 
       case 'zip': {
         // Zip up the nearest suitcase or the suitcase the player is sitting on
-        let sc = world.suitcases.find(
-          (s) =>
-            !s.burst &&
-            Math.hypot(s.x - player.x, s.z - player.z) < REACH_DISTANCE,
+        let sc = reachable(
+          player,
+          world.suitcases.filter((s) => !s.burst),
+          target,
         );
         if (!sc && player.sittingOn) {
           sc = world.suitcases.find((s) => s.id === player.sittingOn);
@@ -525,7 +561,12 @@ export function carryOnAction(
                 detail: 'progress',
               });
             }
-          } else {
+          } else if (
+            player.jamReportedAt === undefined ||
+            now - player.jamReportedAt >= JAM_REPORT_MS
+          ) {
+            // Held down, or pulled every frame, a jam is still one moment.
+            player.jamReportedAt = now;
             const isComp = sc.sittingCount > 0 || player.sittingOn === sc.id;
             world.events.push({
               id: ++eventIdRef.current,
@@ -573,6 +614,8 @@ export function advanceCarryOn(
 ) {
   const now = world.clock + dt * 1000;
   world.clock = now;
+  if (world.events.length > EVENT_HISTORY)
+    world.events.splice(0, world.events.length - EVENT_HISTORY);
 
   if (world.phase !== 'packing') return;
 

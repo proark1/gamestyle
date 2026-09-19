@@ -64,7 +64,7 @@ const adapter: GameAdapter<CarryOnWorld, CarryOnSnapshot> = {
   // clock, which the simulation keeps in ms.
   advance: (w, now) => {
     const dt = Math.min(0.1, Math.max(0, (now - w.clock) / 1000));
-    updateCarryOnBots(w, w.clock, eventIdRef);
+    updateCarryOnBots(w, eventIdRef);
     advanceCarryOn(w, dt, eventIdRef);
   },
   act: (w, id, a) => {

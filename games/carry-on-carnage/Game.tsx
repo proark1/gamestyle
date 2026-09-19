@@ -154,10 +154,9 @@ export default function CarryOnCarnageGame() {
 
       if (localWorld.current) {
         const w = localWorld.current;
-        const now = Date.now();
 
         // Update bots & simulation
-        updateCarryOnBots(w, now, eventIdRef);
+        updateCarryOnBots(w, eventIdRef);
         advanceCarryOn(w, dt, eventIdRef);
 
         // Visual burst particles and toasts for new events
