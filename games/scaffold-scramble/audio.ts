@@ -131,7 +131,14 @@ export class ScaffoldScrambleSound extends SiteAudio {
   }
 
   private mix(world: ScaffoldScrambleWorld | null) {
-    this.setLoop('music', scaffoldMusic(world));
+    // A missing tension track keeps the play score; any other missing track
+    // stops the score rather than leaving the previous one playing on.
+    const wanted = scaffoldMusic(world);
+    const music =
+      wanted === 'music.tension' && !this.recorded(wanted)
+        ? 'music.play'
+        : wanted;
+    this.setLoop('music', this.recorded(music) ? music : null);
     for (const loop of scaffoldLoops(world))
       this.setLoop(loop.channel, loop.id, loop.level);
   }

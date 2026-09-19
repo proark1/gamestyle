@@ -6,7 +6,11 @@ import { promptLimit } from '../../shared/audio/limits';
 import { generationRequest } from '../../shared/audio/provider';
 import { DEFAULT_SETTINGS } from '../../shared/audio/types';
 import { Footsteps, type AudioEvent } from '../../shared/audio/world';
-import { CARRY_ON_SYNTH_CUES, carryOnCarnageCatalog } from './audio';
+import {
+  CARRY_ON_SYNTH_CUES,
+  CarryOnSound,
+  carryOnCarnageCatalog,
+} from './audio';
 import {
   CarryOnCueGate,
   FINAL_CALL_MS,
@@ -496,4 +500,71 @@ void test('the narrator stays sparse, urgent lines interrupt, and repeated effec
 
   gate.reset();
   assert.equal(gate.admit({ id: 'speech.approved' }, 200_001), 'play');
+});
+
+void test('with a partly recorded library, missing lines never spend the turn and a missing score stops', async () => {
+  const oldDocument = globalThis.document;
+  const oldFetch = globalThis.fetch;
+  globalThis.document = {
+    hidden: false,
+    addEventListener() {},
+    removeEventListener() {},
+  } as unknown as Document;
+  const recorded = ['speech.burst', 'music.play'];
+  globalThis.fetch = async () =>
+    Response.json({
+      settings: DEFAULT_SETTINGS,
+      cues: Object.fromEntries(
+        carryOnCarnageCatalog
+          .filter((cue) => recorded.includes(cue.id))
+          .map((cue) => [
+            cue.id,
+            {
+              url: `/api/audio/carry-on-carnage/file/${cue.id}.mp3`,
+              volume: cue.volume,
+              loop: cue.loop,
+              category: cue.category,
+            },
+          ]),
+      ),
+    });
+  const audio = new CarryOnSound();
+  const played: string[] = [];
+  const music: (string | null)[] = [];
+  audio.play = (id) => void played.push(id);
+  audio.variant = (id) => void played.push(id);
+  audio.setLoop = (channel, id) => {
+    if (channel === 'music') music.push(id);
+  };
+  const cue = (
+    audio as unknown as {
+      cue: (event: AudioEvent, clock: number) => void;
+    }
+  ).cue.bind(audio);
+  try {
+    await audio.refresh();
+    // An urgent line with no recording must not silence a recorded one.
+    cue({ id: 'speech.ten-seconds' }, 1_000);
+    cue({ id: 'speech.burst' }, 1_001);
+    assert.deepEqual(played, ['speech.burst']);
+
+    const world = freshCarryOnWorld(1_000_000);
+    world.players = [newTraveler('me', 'Me', 0, world.clock)];
+    world.phase = 'packing';
+    audio.update(structuredClone(world), 'me');
+    assert.equal(music.at(-1), 'music.play');
+    const late = structuredClone(world);
+    late.clock = late.deadline - FINAL_CALL_MS + 1_000;
+    audio.update(late, 'me');
+    assert.equal(music.at(-1), 'music.play', 'tension falls back to play');
+    const departed = structuredClone(late);
+    departed.clock = departed.deadline + 100;
+    departed.phase = 'flight_departed';
+    audio.update(departed, 'me');
+    assert.equal(music.at(-1), null, 'no sting recorded: the score stops');
+  } finally {
+    audio.dispose();
+    globalThis.document = oldDocument;
+    globalThis.fetch = oldFetch;
+  }
 });

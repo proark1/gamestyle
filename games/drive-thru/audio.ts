@@ -229,14 +229,18 @@ export class DriveThruSound extends SiteAudio {
     );
 
     if (driveThruDanger(world)) this.dangerAt = world.clock;
-    this.setLoop(
-      'music',
-      driveThruMusic(
-        world,
-        this.endedFor,
-        world.clock - this.dangerAt < TENSION_HOLD_MS,
-      ),
+    // A missing tension track keeps the play score; any other missing track
+    // stops the score rather than leaving the previous one playing on.
+    const wanted = driveThruMusic(
+      world,
+      this.endedFor,
+      world.clock - this.dangerAt < TENSION_HOLD_MS,
     );
+    const music =
+      wanted === 'music.tension' && !this.recorded(wanted)
+        ? 'music.drive-thru-rush'
+        : wanted;
+    this.setLoop('music', this.recorded(music) ? music : null);
     const mix = driveThruAmbience(world, localId);
     for (const channel of Object.keys(mix) as AmbienceChannel[]) {
       const loop = mix[channel];

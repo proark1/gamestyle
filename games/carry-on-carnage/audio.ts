@@ -227,7 +227,14 @@ export class CarryOnSound extends SiteAudio {
     for (const cue of carryOnMovement(this.footsteps, world, localId))
       this.cue(cue, world.clock);
 
-    this.setLoop('music', carryOnMusic(world));
+    // A missing tension track keeps the play score; any other missing track
+    // stops the score rather than leaving the previous one playing on.
+    const wanted = carryOnMusic(world);
+    const music =
+      wanted === 'music.tension' && !this.recorded(wanted)
+        ? 'music.play'
+        : wanted;
+    this.setLoop('music', this.recorded(music) ? music : null);
     for (const [channel, loop] of Object.entries(
       carryOnAmbience(world, localId),
     ))
@@ -235,6 +242,8 @@ export class CarryOnSound extends SiteAudio {
   }
 
   private cue(event: AudioEvent, clock: number) {
+    // An unrecorded line must not spend the narrator's turn or cut one off.
+    if (event.id.startsWith('speech.') && !this.recorded(event.id)) return;
     const verdict = this.gate.admit(event, clock);
     if (!verdict) return;
     if (verdict === 'interrupt') this.interruptSpeech();
