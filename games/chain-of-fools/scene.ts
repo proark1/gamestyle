@@ -111,6 +111,7 @@ export class ChainScene {
   private readonly chainNext = new T.Vector3();
   private readonly chainTangent = new T.Vector3();
   private readonly chainTwist = new T.Quaternion();
+  private readonly listenerLook = new T.Vector3();
 
   constructor(
     private container: HTMLElement,
@@ -237,6 +238,15 @@ export class ChainScene {
 
   get cameraMode() {
     return this.mode;
+  }
+
+  /**
+   * Stereo heading for the sound: the angle at which screen-right lies in the
+   * world, in the convention `SiteAudio.listen` pans by.
+   */
+  listenerYaw() {
+    const look = this.camera.getWorldDirection(this.listenerLook);
+    return Math.atan2(-look.x, -look.z);
   }
 
   resetInput = () => {

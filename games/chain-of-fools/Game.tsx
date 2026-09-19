@@ -266,7 +266,7 @@ export default function ChainOfFoolsGame() {
       current.clock,
     );
     scene.current?.update(snap);
-    sound.current?.update(current, SESSION.id);
+    sound.current?.update(current, SESSION.id, scene.current?.listenerYaw());
 
     if (pacer.due(current) || force) {
       // A copy, so React sees a new object and the HUD re-renders.

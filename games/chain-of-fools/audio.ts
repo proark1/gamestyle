@@ -1,28 +1,24 @@
 import { SiteAudio } from '../../shared/audio/player';
-import { chainOfFoolsAudioProfile } from './audio/profile';
-import type { ChainWorld, GameEvent } from './types';
+import { audioPreferencesSnapshot } from '../../shared/audio/preferences';
+import { SITE_RANGE, chainOfFoolsAudioProfile } from './audio/profile';
+import {
+  admitLine,
+  chainAmbience,
+  chainAudioStep,
+  chainMusic,
+  type ChainAudioFrame,
+  type ChainCue,
+} from './audio-events';
+import type { ChainWorld } from './types';
 export { chainOfFoolsCatalog } from './audio/catalog';
 
-const CUES: Record<GameEvent['type'], string | null> = {
-  jump: 'move.jump',
-  land: 'move.land',
-  chain_taut: 'chain.yank',
-  chain_yank: 'chain.yank',
-  brace: 'event.ping',
-  dangle: 'chain.dangle',
-  haul_start: 'chain.haul',
-  haul_done: 'chain.saved',
-  limp: 'hazard.limp',
-  revive: 'chain.saved',
-  clip: 'chain.clip',
-  unclip: 'chain.clip',
-  checkpoint: 'event.checkpoint',
-  wipe: 'event.wipe',
-  pendulum_swing: 'hazard.wrecking',
-  plank_tip: 'hazard.plank',
-  win: 'event.win',
-  timeout: 'event.fail',
-};
+/**
+ * Stereo heading for the default crew camera, which looks down the course
+ * (+x) with +z on the right of the screen. The scene passes its live camera.
+ */
+export const COURSE_YAW = -Math.PI / 2;
+
+const LOOP_CHANNELS = ['music', 'site', 'wind', 'crane', 'chain', 'strain'];
 
 type Tone = {
   wave: OscillatorType;
@@ -194,6 +190,35 @@ const SYNTH: Record<string, Tone[]> = {
     { wave: 'sawtooth', from: 220, to: 150, length: 1.2, level: 0.14 },
     { wave: 'sawtooth', from: 165, to: 110, length: 1.2, level: 0.1 },
   ],
+  'chain.unclip': [
+    { wave: 'triangle', from: 900, to: 1400, length: 0.06, level: 0.12 },
+    {
+      wave: 'square',
+      from: 1600,
+      to: 2200,
+      length: 0.03,
+      level: 0.1,
+      delay: 0.06,
+    },
+  ],
+  'chain.taut': [
+    { wave: 'square', from: 1100, to: 650, length: 0.04, level: 0.08 },
+    { wave: 'triangle', from: 200, to: 120, length: 0.08, level: 0.16 },
+  ],
+  'event.tick': [
+    { wave: 'square', from: 1500, to: 1400, length: 0.03, level: 0.08 },
+  ],
+  'event.clockin': [
+    { wave: 'triangle', from: 660, to: 660, length: 0.12, level: 0.18 },
+    {
+      wave: 'triangle',
+      from: 990,
+      to: 990,
+      length: 0.25,
+      level: 0.16,
+      delay: 0.1,
+    },
+  ],
 };
 
 class SiteSynth {
@@ -217,6 +242,9 @@ class SiteSynth {
     const context = this.context;
     if (!tones || !context || this.muted || context.state !== 'running') return;
     if (typeof document !== 'undefined' && document.hidden) return;
+    // The site-wide volume the recordings follow applies to the stand-ins too.
+    const level = strength * audioPreferencesSnapshot().volume;
+    if (level <= 0.001) return;
     const start = context.currentTime;
     for (const tone of tones) {
       const at = start + (tone.delay ?? 0);
@@ -229,7 +257,7 @@ class SiteSynth {
         at + tone.length,
       );
       gain.gain.setValueAtTime(0.0001, at);
-      gain.gain.exponentialRampToValueAtTime(tone.level * strength, at + 0.01);
+      gain.gain.exponentialRampToValueAtTime(tone.level * level, at + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, at + tone.length);
       osc.connect(gain).connect(context.destination);
       osc.start(at);
@@ -243,20 +271,23 @@ class SiteSynth {
   }
 }
 
-/** Events a player hears from anywhere; the rest fade with distance. */
-const EVERYWHERE = new Set<GameEvent['type']>([
-  'checkpoint',
-  'wipe',
-  'win',
-  'timeout',
-  'dangle',
-]);
+type Point = { x: number; y: number; z: number };
 
+/**
+ * Chain of Fools on the collection's audio runtime: workshop recordings, the
+ * owner's mix, speech ducking, pausing on a hidden tab. `audio-events.ts`
+ * decides what sounds; this class only plays it, falling back to the
+ * synthesized stand-ins for anything nobody has recorded yet.
+ */
 export class ChainOfFoolsSound extends SiteAudio {
-  private lastEvent = 0;
-  private lastPhase: ChainWorld['phase'] = 'lobby';
+  private frame: ChainAudioFrame | null = null;
   private synth = new SiteSynth();
   private synthRecent = new Map<string, number>();
+  private ear: Point = { x: 0, y: 0, z: 0 };
+  /** World clock of the last line the commentator was allowed to say. */
+  private lastLine = -Infinity;
+  /** World clock each line was last said, so the same joke is not repeated. */
+  private said = new Map<string, number>();
 
   constructor() {
     super('chain-of-fools', chainOfFoolsAudioProfile);
@@ -273,69 +304,108 @@ export class ChainOfFoolsSound extends SiteAudio {
     this.synth.muted = muted;
   }
 
-  /** A workshop recording when there is one, otherwise the synthesized cue. */
-  private cue(
-    id: string,
-    at?: { x: number; y: number; z: number },
-    source?: string,
-    strength = 1,
-  ) {
-    if (this.preferredCue(id, '')) {
-      this.play(id, strength, at, source);
+  /**
+   * One tick of the shift. `yaw` is the camera's stereo heading, so a sound on
+   * the right of the screen comes out of the right speaker.
+   */
+  update(world: ChainWorld | null, localId = '', yaw = COURSE_YAW) {
+    if (!world) {
+      this.frame = null;
+      for (const channel of LOOP_CHANNELS) this.setLoop(channel, null);
       return;
     }
+    const previous = this.frame;
+    // A late packet from the same shift never rewinds the comparison.
+    if (
+      previous &&
+      previous.started === world.started &&
+      world.clock < previous.clock
+    )
+      return;
+    const step = chainAudioStep(previous, world, localId);
+    if (step.fresh) this.reset();
+    else if (
+      world.phase === 'playing' &&
+      world.startedAt !== previous?.startedAt
+    )
+      this.forgetLines();
+    this.frame = step.frame;
+
+    const me = world.players.find((p) => p.id === localId) ?? world.players[0];
+    if (me) {
+      this.ear = { x: me.x, y: me.y, z: me.z };
+      this.listen(this.ear, yaw);
+    }
+    for (const cue of step.cues) this.emit(cue, world.clock);
+
+    // A missing tension track keeps the gameplay score going; a missing
+    // result sting lets the score stop rather than play on under the result.
+    const wanted = chainMusic(world);
+    const music = this.preferredCue(
+      wanted,
+      wanted === 'music.tension' ? this.preferredCue('music.play', '') : '',
+    );
+    this.setLoop('music', music || null);
+    for (const layer of chainAmbience(world, localId))
+      this.setLoop(layer.channel, layer.id, layer.level);
+  }
+
+  private emit(cue: ChainCue, now: number) {
+    const strength = cue.strength ?? 1;
+    if (cue.id.startsWith('speech.')) {
+      const admitted = admitLine(
+        cue.id,
+        now,
+        this.lastLine,
+        this.said.get(cue.id),
+      );
+      if (!admitted || !this.preferredCue(cue.id, '')) return;
+      if (admitted === 'urgent') this.interruptSpeech();
+      this.lastLine = now;
+      this.said.set(cue.id, now);
+      this.play(cue.id, strength);
+      return;
+    }
+    if (this.recorded(cue)) {
+      if (cue.variant) this.variant(cue.id, strength, cue.position, cue.source);
+      else this.play(cue.id, strength, cue.position, cue.source);
+      return;
+    }
+    this.fallback(cue.id, strength, cue.position);
+  }
+
+  /** Whether the workshop has this cue, or any take of it. */
+  private recorded(cue: ChainCue) {
+    const takes = cue.variant
+      ? [cue.id, `${cue.id}.1`, `${cue.id}.2`, `${cue.id}.3`]
+      : [cue.id];
+    return takes.some((id) => this.preferredCue(id, '') !== '');
+  }
+
+  /** The synthesized stand-in, fading with distance like a recording would. */
+  private fallback(id: string, strength: number, at?: Point) {
+    if (!SYNTH[id]) return;
+    const distance = at
+      ? Math.hypot(at.x - this.ear.x, at.y - this.ear.y, at.z - this.ear.z)
+      : 0;
+    if (distance >= SITE_RANGE) return;
     const now = performance.now();
     if (now - (this.synthRecent.get(id) ?? -1000) < 70) return;
     this.synthRecent.set(id, now);
-    this.synth.play(id, strength);
+    this.synth.play(id, strength * (at ? Math.max(0.2, 1 - distance / 40) : 1));
   }
 
-  update(world: ChainWorld | null, localId?: string) {
-    const me = world?.players.find((p) => p.id === localId);
-    this.listen(me ? { x: me.x, y: me.y, z: me.z } : { x: 0, y: 0, z: 0 }, 0);
-    this.setLoop(
-      'site',
-      world?.phase === 'playing' && this.preferredCue('ambience.site', '')
-        ? 'ambience.site'
-        : null,
-      0.4,
-    );
-    if (!world) return;
-
-    for (const event of world.events) {
-      if (event.id <= this.lastEvent) continue;
-      this.lastEvent = event.id;
-      const id = CUES[event.type];
-      if (!id) continue;
-      // Only the local worker's own footsteps; four sets of them is noise.
-      if (
-        (event.type === 'jump' || event.type === 'land') &&
-        event.playerId !== localId
-      )
-        continue;
-
-      const player = world.players.find((p) => p.id === event.playerId);
-      const at = EVERYWHERE.has(event.type)
-        ? undefined
-        : event.pos
-          ? { x: event.pos[0], y: event.pos[1], z: event.pos[2] }
-          : player
-            ? { x: player.x, y: player.y, z: player.z }
-            : undefined;
-      if (at && me && Math.hypot(at.x - me.x, at.z - me.z) > 40) continue;
-      this.cue(id, at, String(event.id));
-    }
-
-    if (world.phase !== this.lastPhase) {
-      if (world.phase === 'playing') this.cue('event.start');
-      this.lastPhase = world.phase;
-    }
-  }
-
+  /** Forget the shift: the next world is heard as a fresh start. */
   override reset() {
     super.reset();
-    this.lastEvent = 0;
-    this.lastPhase = 'lobby';
+    this.frame = null;
+    this.forgetLines();
+  }
+
+  /** A new shift gets the whole script again. */
+  private forgetLines() {
+    this.lastLine = -Infinity;
+    this.said.clear();
   }
 
   override dispose() {
