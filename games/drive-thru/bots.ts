@@ -1,5 +1,6 @@
 import {
   CAR_BODY_RADIUS,
+  computeWindowReachGap,
   SPEAKER_POLE_POS,
   SPEAKER_POLE_RADIUS,
   stepCarPhysics,
@@ -57,35 +58,57 @@ export function reconcileDriveThruBots(w: DriveThruWorld): void {
 // Where the bot driver parks: a short stop beside the pickup window.
 const PARK_X = 0.4;
 const PARK_Z = 0.5;
+/**
+ * Where along the lane the bot driver may stop, in order of preference: a car
+ * angled at the window that cannot straighten out in time pulls on past it.
+ */
+const PARK_DEPTHS = [PARK_Z, -0.5, -1.5];
 /** Metres ahead on the lane line that the bot driver steers toward. */
 const LANE_LOOKAHEAD = 4;
 const STEER_GAIN = 2.5;
 const CRUISE_SPEED = 5;
+const BACKUP_SPEED = 3;
 /** Deceleration the bot driver plans its stop around (coasting gives 3.2). */
 const PLANNED_BRAKING = 2.5;
 /** Seconds of driving the bot previews before it commits to a manoeuvre. */
 const PREVIEW_SECONDS = 2.5;
+/** Seconds of approach the bot previews to see where the car comes to rest. */
+const APPROACH_SECONDS = 10;
 const PREVIEW_STEP = 1 / 30;
+/**
+ * The passenger reaches the sill from 2.2 m. The bot driver stops backing up
+ * once an approach would park the passenger window this close, and otherwise
+ * keeps to an approach within the looser bound, so it does not dither.
+ */
+const PLANNED_GAP = 1.6;
+const KEPT_GAP = 2;
 /** Room the bot driver keeps between the car body and the speaker pole. */
 const POLE_MARGIN = 0.3;
 /** The lane to the window runs on this side (+x) of the speaker pole. */
 const WINDOW_SIDE = 1;
 
 type Drive = { throttle: boolean; reverse: boolean; steer: number };
+type Plan = (car: SedanState) => Drive;
 
-/** Follow the lane to the pickup window and stop beside it. */
-function laneDrive(car: SedanState): Drive {
+function clampSteer(steer: number): number {
+  return Math.max(-1, Math.min(1, steer));
+}
+
+function angleTo(target: number, yaw: number): number {
+  return Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
+}
+
+/** Follow the lane to the pickup window and stop beside it at `parkZ`. */
+function laneDrive(car: SedanState, parkZ = PARK_Z): Drive {
   // The lane runs toward -z, so this is how far there is still to go.
-  const toPark = car.z - PARK_Z;
+  const toPark = car.z - parkZ;
   if (toPark < -1) {
     // Rolled past the window: creep straight back.
     return { throttle: false, reverse: car.speed > -1, steer: 0 };
   }
-  const heading = Math.atan2(PARK_X - car.x, LANE_LOOKAHEAD);
-  const error = Math.atan2(
-    Math.sin(heading - car.yaw),
-    Math.cos(heading - car.yaw),
-  );
+  // Close to the stop, aim at it rather than down the lane line.
+  const lookahead = Math.max(1, Math.min(LANE_LOOKAHEAD, toPark));
+  const heading = Math.atan2(PARK_X - car.x, lookahead);
   const target = Math.min(
     CRUISE_SPEED,
     Math.sqrt(2 * PLANNED_BRAKING * Math.max(0, toPark)),
@@ -93,8 +116,56 @@ function laneDrive(car: SedanState): Drive {
   return {
     throttle: car.speed < target - 0.3,
     reverse: car.speed > target + 1 && car.speed > 0.5,
-    steer: Math.max(-1, Math.min(1, error * STEER_GAIN)),
+    steer: clampSteer(angleTo(heading, car.yaw) * STEER_GAIN),
   };
+}
+
+/**
+ * Reverse up the lane, steering the tail onto the lane line, for a longer run
+ * at the window. Reversing turns the car the same way as driving forward with
+ * the same steer, so this is `laneDrive` with the heading mirrored.
+ */
+function backUp(car: SedanState): Drive {
+  const heading = -Math.atan2(PARK_X - car.x, LANE_LOOKAHEAD);
+  return {
+    throttle: false,
+    reverse: car.speed > -BACKUP_SPEED,
+    steer: clampSteer(angleTo(heading, car.yaw) * STEER_GAIN),
+  };
+}
+
+/** Whether the passenger can take the tray with the car parked here. */
+function windowWithin(car: SedanState, gap: number): boolean {
+  // The passenger bot reaches out from z = 2, the handoff counts from z = -3.
+  return (
+    car.z <= 2 && car.z >= -3 && computeWindowReachGap(car).gapDistance <= gap
+  );
+}
+
+/**
+ * Previews following the lane to `parkZ` with the real car physics: whether
+ * the car comes to rest with the window within `gap`.
+ */
+function approachReaches(car: SedanState, parkZ: number, gap: number): boolean {
+  const preview = { ...car };
+  for (let t = 0; t < APPROACH_SECONDS; t += PREVIEW_STEP) {
+    const drive = laneDrive(preview, parkZ);
+    if (preview.speed === 0 && !drive.throttle && !drive.reverse) {
+      return windowWithin(preview, gap);
+    }
+    stepCarPhysics(
+      preview,
+      drive.throttle,
+      drive.reverse,
+      drive.steer,
+      PREVIEW_STEP,
+    );
+    // The pole preview steers round the pole; the approach is judged again
+    // from the far side.
+    if (poleGap(preview) < 0.01) return true;
+  }
+  // Never came to rest: grinding along an edge or shuttling, not parking.
+  return false;
 }
 
 function poleGap(car: SedanState): number {
@@ -108,19 +179,44 @@ function poleGap(car: SedanState): number {
 /**
  * The car starts right behind the speaker pole, and even a full-lock turn
  * from there clips it, so the bot follows the lane only while that stays
- * clear, otherwise swerves toward the window side, otherwise backs up.
+ * clear, otherwise swerves toward the window side, otherwise backs up
+ * turning toward the lane (reversing turns the car the same way), which
+ * also works a car round that sits across the lane.
  */
-const DRIVER_PLANS: ((car: SedanState) => Drive)[] = [
-  laneDrive,
+function approachPlans(parkZ: number): Plan[] {
+  return [
+    (car) => laneDrive(car, parkZ),
+    (car) => ({ ...laneDrive(car, parkZ), steer: WINDOW_SIDE }),
+    (car) => ({
+      ...laneDrive(car, parkZ),
+      throttle: false,
+      reverse: car.speed > -BACKUP_SPEED,
+    }),
+  ];
+}
+
+/**
+ * Backing up toward the pole, the bot swings its tail to the window side
+ * (reversing with the opposite steer), otherwise round the far side of the
+ * pole, otherwise pulls forward again.
+ */
+const BACKUP_PLANS: Plan[] = [
+  backUp,
+  (car) => ({ ...backUp(car), steer: -WINDOW_SIDE }),
+  (car) => ({ ...backUp(car), steer: WINDOW_SIDE }),
   (car) => ({ ...laneDrive(car), steer: WINDOW_SIDE }),
-  () => ({ throttle: false, reverse: true, steer: 0 }),
+];
+
+/** Parked within the passenger's reach: wait there for the tray. */
+const WAIT_PLANS: Plan[] = [
+  () => ({ throttle: false, reverse: false, steer: 0 }),
 ];
 
 /**
  * Previews `plan` with the real car physics: seconds until it brings the car
  * to the pole, or Infinity if it stays clear.
  */
-function timeToPole(car: SedanState, plan: (car: SedanState) => Drive): number {
+function timeToPole(car: SedanState, plan: Plan): number {
   // A car already inside the margin (a human left mid-scrape) may still pull
   // away; only plans that close in on the pole count against it.
   const limit = Math.max(1e-6, Math.min(POLE_MARGIN, poleGap(car) / 2));
@@ -139,11 +235,27 @@ function timeToPole(car: SedanState, plan: (car: SedanState) => Drive): number {
   return Infinity;
 }
 
+/**
+ * Where the bot driver is headed: nowhere once parked within reach, else down
+ * the lane to the first stop that leaves the window in the passenger's reach,
+ * or, when none does (a bot took the wheel from a human off the lane line, and
+ * the turning circle is ~7 m), back up the lane for another run.
+ */
+function driverRoute(car: SedanState): Plan[] {
+  if (Math.abs(car.speed) < 0.05 && windowWithin(car, KEPT_GAP)) {
+    return WAIT_PLANS;
+  }
+  const gap = car.speed < 0 ? PLANNED_GAP : KEPT_GAP;
+  const parkZ = PARK_DEPTHS.find((z) => approachReaches(car, z, gap));
+  return parkZ === undefined ? BACKUP_PLANS : approachPlans(parkZ);
+}
+
 /** The first plan that stays clear of the pole, or the one that hits it last. */
 function driverDrive(car: SedanState): Drive {
-  let best = DRIVER_PLANS[0];
+  const plans = driverRoute(car);
+  let best = plans[0];
   let latest = -1;
-  for (const plan of DRIVER_PLANS) {
+  for (const plan of plans) {
     const t = timeToPole(car, plan);
     if (t === Infinity) return plan(car);
     if (t > latest) {

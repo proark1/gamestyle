@@ -18,7 +18,7 @@ import { reconcileDriveThruBots, stepDriveThruBot } from './bots';
 import { createEngine } from './peer';
 import { driveThruCatalog } from './audio/catalog';
 import { promptLimit } from '../../shared/audio/limits';
-import type { DriveThruSnapshot, Patty } from './types';
+import type { DriveThruSnapshot, Patty, SedanState } from './types';
 
 void test('Drive-Thru: fresh world initializes with ordering phase and 60s timer', () => {
   const w = freshDriveThruWorld();
@@ -45,6 +45,24 @@ void test('Drive-Thru: sedan steering and throttle physics advance position', ()
   stepCarPhysics(w.car, true, false, 0, 1.0);
   assert.ok(w.car.speed > 0);
   assert.ok(w.car.z < initialZ, 'Forward car moves along negative Z');
+});
+
+void test('Drive-Thru: a car scraping the curb keeps the same speed at any frame rate', () => {
+  // Scraping cost a flat 15% of the speed per step, so a car pressed on the
+  // curb crawled at 1.23 m/s at 30 fps but 0.26 m/s at 144 fps.
+  const scrapeSpeed = (hz: number) => {
+    const car = { ...freshDriveThruWorld().car, x: 1.8, yaw: Math.PI / 2 };
+    for (let i = 0; i < hz; i++) stepCarPhysics(car, true, false, 0, 1 / hz);
+    return car.speed;
+  };
+  const at60 = scrapeSpeed(60);
+  for (const hz of [30, 144]) {
+    const speed = scrapeSpeed(hz);
+    assert.ok(
+      Math.abs(speed - at60) < 0.1,
+      `${hz} Hz: ${speed.toFixed(2)} m/s on the curb, ${at60.toFixed(2)} at 60 Hz`,
+    );
+  }
 });
 
 void test('Drive-Thru: reversing into speaker pole triggers pole_crash fail state', () => {
@@ -101,6 +119,24 @@ void test('Drive-Thru: unvented deep fryer ignites into grease_fire after timer 
   advanceDriveThruWorld(w, 1.0);
   assert.equal(w.kitchen.fryerGreaseFire, true);
   assert.equal(w.failState, 'grease_fire');
+  assert.equal(w.phase, 'meltdown');
+});
+
+void test('Drive-Thru: a meltdown ends the round even with the car stopped by the window', () => {
+  // The window check used to run after the fail checks and flip the phase
+  // back to 'reaching', so the round carried on after the fire.
+  const w = freshDriveThruWorld();
+  Object.assign(w.car, { x: -1.23, z: 0.52, yaw: -0.54, speed: 0 });
+  Object.assign(w.kitchen.patties[0], {
+    state: 'burnt',
+    sizzleProgress: 1,
+    burnProgress: 1,
+  });
+
+  advanceDriveThruWorld(w, 0.1, w.clock + 100);
+  assert.equal(w.failState, 'grease_fire');
+  assert.equal(w.phase, 'meltdown');
+  advanceDriveThruWorld(w, 0.1, w.clock + 100);
   assert.equal(w.phase, 'meltdown');
 });
 
@@ -184,6 +220,50 @@ void test('Drive-Thru: a bots-only round steers around the speaker pole and serv
     assert.equal(w.ordersServed, 1);
     assert.equal(w.car.bumperDamage, 0, `${hz} Hz: the car hit the pole`);
   }
+});
+
+/**
+ * Plays a bots-only round with the car handed over at `start`, at 30, 60 and
+ * 144 Hz, and requires the order served within 10 simulated seconds without
+ * touching the speaker pole.
+ */
+function assertBotsServeFrom(start: Pick<SedanState, 'x' | 'z' | 'yaw'>) {
+  for (const hz of [30, 60, 144]) {
+    const w = freshDriveThruWorld();
+    reconcileDriveThruBots(w);
+    Object.assign(w.car, start, { speed: 0 });
+    let seconds = 0;
+    while (w.phase !== 'completed' && w.phase !== 'meltdown' && seconds < 10) {
+      for (const p of w.players) if (p.bot) stepDriveThruBot(p, w, 1 / hz);
+      advanceDriveThruWorld(w, 1 / hz, w.clock + 1000 / hz);
+      seconds += 1 / hz;
+    }
+    const from = `from (${start.x}, ${start.z}) at ${hz} Hz`;
+    assert.equal(
+      w.phase,
+      'completed',
+      `${from}: ${w.phase} after ${seconds.toFixed(1)} s (${w.failReason})`,
+    );
+    assert.equal(w.ordersServed, 1);
+    assert.equal(w.car.bumperDamage, 0, `${from}: the car hit the pole`);
+  }
+}
+
+void test('Drive-Thru: a bot taking the wheel off the lane line by the window still serves the order', () => {
+  // A human driver can leave the car beside the window but metres off the
+  // lane line, too close for the ~7 m turning circle to line it up. The bot
+  // used to stop there out of the passenger's reach, stalling the round.
+  assertBotsServeFrom({ x: -3, z: 1.5, yaw: 0.8 }); // pulls on past the stop
+  assertBotsServeFrom({ x: -1.23, z: 0.52, yaw: -0.54 }); // backs up, comes round
+  assertBotsServeFrom({ x: -4.5, z: 1.5, yaw: 0.3 }); // backs up past the pole
+});
+
+void test('Drive-Thru: a bot handed a car across the lane works it round and serves the order', () => {
+  // Behind the pole against the curb, every forward turn clips the pole, and
+  // nosed into the far edge the car only grinds along it. The bot used to
+  // stall in both; now it reverses while turning toward the lane.
+  assertBotsServeFrom({ x: 1, z: 14.5, yaw: -1.2 });
+  assertBotsServeFrom({ x: -8, z: 5.5, yaw: -1.2 });
 });
 
 void test('Drive-Thru: peer engine creates room, accepts actions, and builds snapshot', () => {
