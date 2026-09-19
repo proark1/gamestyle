@@ -34,17 +34,27 @@ export const EVENT_HISTORY = 32;
 /** A traveller pulling a jammed zipper is told again only after this long. */
 export const JAM_REPORT_MS = 1_500;
 
-/** The first of `things` in the traveller's reach, or only `target` if named. */
-function reachable<T extends { id: string; x: number; z: number }>(
+/**
+ * The nearest of `things` in the traveller's reach, or only `target` if named.
+ * The bags stand closer together than the reach, so the first one in reach is
+ * often a neighbour of the bag the traveller is standing at.
+ */
+export function reachable<T extends { id: string; x: number; z: number }>(
   player: Traveler,
   things: readonly T[],
-  target: string | undefined,
+  target?: string,
 ) {
-  return things.find(
-    (thing) =>
-      (target === undefined || thing.id === target) &&
-      Math.hypot(thing.x - player.x, thing.z - player.z) < REACH_DISTANCE,
-  );
+  let nearest: T | undefined;
+  let nearestDist = REACH_DISTANCE;
+  for (const thing of things) {
+    if (target !== undefined && thing.id !== target) continue;
+    const dist = Math.hypot(thing.x - player.x, thing.z - player.z);
+    if (dist < nearestDist) {
+      nearest = thing;
+      nearestDist = dist;
+    }
+  }
+  return nearest;
 }
 
 let nextItemId = 1;
@@ -524,15 +534,20 @@ export function carryOnAction(
       }
 
       case 'zip': {
-        // Zip up the nearest suitcase or the suitcase the player is sitting on
-        let sc = reachable(
-          player,
-          world.suitcases.filter((s) => !s.burst),
-          target,
+        // Zip up the suitcase the player is sitting on, else the nearest one
+        const seat = world.suitcases.find(
+          (s) =>
+            s.id === player.sittingOn &&
+            !s.burst &&
+            (target === undefined || s.id === target),
         );
-        if (!sc && player.sittingOn) {
-          sc = world.suitcases.find((s) => s.id === player.sittingOn);
-        }
+        const sc =
+          seat ??
+          reachable(
+            player,
+            world.suitcases.filter((s) => !s.burst),
+            target,
+          );
 
         if (sc) {
           player.zippingSuitcase = sc.id;
