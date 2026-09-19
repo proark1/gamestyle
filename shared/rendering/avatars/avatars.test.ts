@@ -9,6 +9,8 @@ import { milo, walkMilo } from './milo';
 import { jelly, walkJelly } from './jelly';
 import { pip, walkPip } from './pip';
 import { pals, walkPals } from './pals';
+import { lola, walkLola } from './lola';
+import { nico, walkNico } from './nico';
 
 const AVATARS = [
   { name: 'Bumble', build: bumble, walk: walkBumble },
@@ -18,6 +20,8 @@ const AVATARS = [
   { name: 'Jelly', build: jelly, walk: walkJelly },
   { name: 'Pip', build: pip, walk: walkPip },
   { name: 'Pals', build: pals, walk: walkPals },
+  { name: 'Lola', build: lola, walk: walkLola },
+  { name: 'Nico', build: nico, walk: walkNico },
 ];
 
 function lowestPoint(root: T.Object3D) {
