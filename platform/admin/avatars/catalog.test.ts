@@ -69,14 +69,24 @@ function wearsItems(root: T.Object3D) {
   return found;
 }
 
-void test('the avatar lineup covers every game in the admin catalog and seven potential avatars', () => {
+void test('the avatar lineup covers every game in the admin catalog and nine potential avatars', () => {
   assert.deepEqual(
     AVATAR_GAMES.map((game) => game.id),
     GAMES.map((game) => game.id),
   );
   assert.deepEqual(
     POTENTIAL_AVATARS.map((card) => card.tag),
-    ['Funny', 'Cute', 'Scary', 'Human', 'Party', 'Co-op', 'Animals'],
+    [
+      'Funny',
+      'Cute',
+      'Scary',
+      'Human',
+      'Party',
+      'Co-op',
+      'Animals',
+      'Girl',
+      'Boy',
+    ],
   );
   const keys = [...POTENTIAL_AVATARS, ...AVATAR_GAMES].flatMap((card) =>
     card.looks.map((look) => `${card.id}:${look.key}`),
