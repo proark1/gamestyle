@@ -239,7 +239,7 @@ export type StampedePlayer = {
 export type PlayerInput = {
   x: number; // steer
   z: number; // throttle
-  steer: number; // -1 (left) to 1 (right)
+  steer: number; // 1 turns left (the A key), -1 right (the D key)
   throttle: number; // -1 (reverse/brake) to 1 (forward drive)
   drift: boolean; // handbrake / sharp drift turn
   grabberAction: boolean; // reach / swat / snag item

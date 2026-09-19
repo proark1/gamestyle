@@ -12,6 +12,14 @@ import {
 
 export const STEP = 1 / 60;
 const GRAB_COOLDOWN = 0.8;
+// The pole reaches this far out, and snags what lies within GRAB_RADIUS of
+// its claw.
+export const GRAB_REACH = 2.4;
+export const GRAB_RADIUS = 1.4;
+// A hit against a wall, rack or cart at this closing speed (m/s) is a crash
+// that shakes an item out of the basket.
+const CRASH_SPEED = 6;
+const CRASH_COOLDOWN = 0.6;
 export const WAREHOUSE_BOUNDS = {
   minX: -26,
   maxX: 26,
@@ -33,6 +41,11 @@ export class SampleStampedePhysics {
   // Per cart: whether GRAB was held last step, and how long a fresh press
   // still waits for the pole.
   private grabPresses = new Map<string, { held: boolean; wait: number }>();
+  // Per cart: the hardest hit this step, and how long until it can crash again.
+  private impacts = new Map<string, number>();
+  private crashCooldowns = new Map<string, number>();
+  // What a cart can crash into: walls, racks and other carts, not stock.
+  private solidBodies = new Set<C.Body>();
 
   constructor(public state: SampleStampedeWorld) {
     this.world = new C.World({
@@ -146,9 +159,28 @@ export class SampleStampedePhysics {
       body.addShape(shape);
       body.angularFactor = new C.Vec3(0, 1, 0);
       body.quaternion.setFromAxisAngle(new C.Vec3(0, 1, 0), cart.rotY);
+      // cannon-es reports each new contact once, before the solver, so the
+      // closing speed is the speed of the hit.
+      body.addEventListener(
+        'collide',
+        (e: { body: C.Body; contact: C.ContactEquation }) => {
+          if (!this.solidBodies.has(e.body)) return;
+          const speed = Math.abs(e.contact.getImpactVelocityAlongNormal());
+          this.impacts.set(
+            cart.id,
+            Math.max(this.impacts.get(cart.id) ?? 0, speed),
+          );
+        },
+      );
       this.world.addBody(body);
       this.cartBodies.set(cart.id, body);
     }
+    for (const b of [
+      ...this.wallBodies,
+      ...this.shelfBodies,
+      ...this.cartBodies.values(),
+    ])
+      this.solidBodies.add(b);
   }
 
   private setupItems() {
@@ -320,14 +352,14 @@ export class SampleStampedePhysics {
       const riderInput = grabberPlayer && inputs.get(grabberPlayer.id);
       this.handleGrabberAction(
         cart,
-        riderIsHuman ? !!riderInput?.grabberAction : input.grabberAction,
-        !riderIsHuman && !!riderInput?.grabberAction,
+        riderIsHuman ? riderInput : input,
+        riderIsHuman ? undefined : riderInput,
         dt,
         events,
       );
 
-      // High-speed collision check: risk of dropping items if rammed hard
-      this.checkCartCollisions(cart, events);
+      // A hard hit against a wall, rack or cart shakes an item loose
+      this.checkCartCollisions(cart, dt, events);
     }
 
     // Sync dynamic ground item bodies
@@ -387,10 +419,14 @@ export class SampleStampedePhysics {
     }
   }
 
+  /**
+   * `presser`: the crew member whose GRAB presses count (a human rider, or
+   * else the driver). `bot`: a bot rider's input, which aims for itself.
+   */
   private handleGrabberAction(
     cart: ShoppingCart,
-    pressed: boolean,
-    botAsks: boolean,
+    presser: PlayerInput | undefined,
+    bot: PlayerInput | undefined,
     dt: number,
     events: StampedeEvent[],
   ) {
@@ -400,23 +436,27 @@ export class SampleStampedePhysics {
 
     // A fresh press waits out the cooldown instead of being dropped, so a
     // tap just after the bot rider's swing still swings.
+    const pressed = !!presser?.grabberAction;
     const press = this.grabPresses.get(cart.id) ?? { held: false, wait: 0 };
     press.wait =
       pressed && !press.held ? GRAB_COOLDOWN : Math.max(0, press.wait - dt);
     press.held = pressed;
     this.grabPresses.set(cart.id, press);
 
-    if ((pressed || botAsks || press.wait > 0) && cart.grabberCooldown <= 0) {
+    const pressing = pressed || press.wait > 0;
+    if ((pressing || bot?.grabberAction) && cart.grabberCooldown <= 0) {
       press.wait = 0;
       cart.grabberCooldown = GRAB_COOLDOWN;
       cart.grabberReach = 1.0;
       cart.grabberSwatting = true;
+      // The pole swings where its user aims, relative to the cart's heading.
+      cart.grabberAngle =
+        (pressing ? presser?.grabberAngle : bot?.grabberAngle) ?? 0;
 
       // Determine reach position in world space
-      const reachDist = 2.4;
-      const reachAngle = cart.rotY + (cart.grabberAngle || 0);
-      const reachX = cart.x + Math.cos(reachAngle) * reachDist;
-      const reachZ = cart.z - Math.sin(reachAngle) * reachDist;
+      const reachAngle = cart.rotY + cart.grabberAngle;
+      const reachX = cart.x + Math.cos(reachAngle) * GRAB_REACH;
+      const reachZ = cart.z - Math.sin(reachAngle) * GRAB_REACH;
 
       events.push({
         id: Date.now() + Math.random(),
@@ -439,6 +479,7 @@ export class SampleStampedePhysics {
       cart.grabberReach = Math.max(0, cart.grabberReach - dt * 2.5);
       if (cart.grabberReach <= 0.1) {
         cart.grabberSwatting = false;
+        cart.grabberAngle = 0;
       }
     }
   }
@@ -449,58 +490,61 @@ export class SampleStampedePhysics {
     reachZ: number,
     events: StampedeEvent[],
   ) {
-    for (let i = 0; i < this.state.groundItems.length; i++) {
-      const item = this.state.groundItems[i];
-      const dx = reachX - item.x;
-      const dz = reachZ - item.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-
-      if (dist < 1.4) {
-        // Snagged item into basket!
-        const carried: CarriedItem = {
-          id: item.id,
-          kind: item.kind,
-          relX: (Math.random() - 0.5) * 0.4,
-          relY: 0.15 + cart.items.length * 0.12,
-          relZ: (Math.random() - 0.5) * 0.3,
-          rotY: Math.random() * Math.PI,
-        };
-        cart.items.push(carried);
-
-        // Remove from physics world
-        const b = this.itemBodies.get(item.id);
-        if (b) {
-          this.world.removeBody(b);
-          this.itemBodies.delete(item.id);
-        }
-        this.state.groundItems.splice(i, 1);
-
-        // Check if sample item grants sugar rush boost
-        if (ITEM_DEFS[item.kind].isSample) {
-          cart.sugarRushTimer = 4.5;
-          events.push({
-            id: Date.now() + Math.random(),
-            type: 'sugar_rush',
-            x: cart.x,
-            y: cart.y,
-            z: cart.z,
-            text: 'SUGAR RUSH!',
-            team: cart.team,
-          });
-        }
-
-        events.push({
-          id: Date.now() + Math.random(),
-          type: 'item_snagged',
-          x: cart.x,
-          y: cart.y + 0.5,
-          z: cart.z,
-          text: `+ ${ITEM_DEFS[item.kind].name}`,
-          team: cart.team,
-        });
-        break;
+    // The claw closes on the item nearest to it.
+    let i = -1;
+    let nearest = GRAB_RADIUS;
+    this.state.groundItems.forEach((item, index) => {
+      const dist = Math.hypot(reachX - item.x, reachZ - item.z);
+      if (dist < nearest) {
+        nearest = dist;
+        i = index;
       }
+    });
+    const item = this.state.groundItems[i];
+    if (!item) return;
+
+    // Snagged item into basket!
+    const carried: CarriedItem = {
+      id: item.id,
+      kind: item.kind,
+      relX: (Math.random() - 0.5) * 0.4,
+      relY: 0.15 + cart.items.length * 0.12,
+      relZ: (Math.random() - 0.5) * 0.3,
+      rotY: Math.random() * Math.PI,
+    };
+    cart.items.push(carried);
+
+    // Remove from physics world
+    const b = this.itemBodies.get(item.id);
+    if (b) {
+      this.world.removeBody(b);
+      this.itemBodies.delete(item.id);
     }
+    this.state.groundItems.splice(i, 1);
+
+    // Check if sample item grants sugar rush boost
+    if (ITEM_DEFS[item.kind].isSample) {
+      cart.sugarRushTimer = 4.5;
+      events.push({
+        id: Date.now() + Math.random(),
+        type: 'sugar_rush',
+        x: cart.x,
+        y: cart.y,
+        z: cart.z,
+        text: 'SUGAR RUSH!',
+        team: cart.team,
+      });
+    }
+
+    events.push({
+      id: Date.now() + Math.random(),
+      type: 'item_snagged',
+      x: cart.x,
+      y: cart.y + 0.5,
+      z: cart.z,
+      text: `+ ${ITEM_DEFS[item.kind].name}`,
+      team: cart.team,
+    });
   }
 
   private trySwatRivalCart(
@@ -605,30 +649,39 @@ export class SampleStampedePhysics {
     }
   }
 
-  private checkCartCollisions(cart: ShoppingCart, events: StampedeEvent[]) {
-    const speed = Math.sqrt(cart.vx * cart.vx + cart.vz * cart.vz);
-    if (speed > 7.5 && cart.items.length > 0 && Math.random() < 0.08) {
-      // Violent crash dumps an item
-      const dropped = cart.items.pop();
-      if (dropped) {
-        this.spawnGroundItem(
-          dropped.kind,
-          cart.x + (Math.random() - 0.5) * 1.8,
-          0.6,
-          cart.z + (Math.random() - 0.5) * 1.8,
-          false,
-        );
-        events.push({
-          id: Date.now() + Math.random(),
-          type: 'cart_crash',
-          x: cart.x,
-          y: cart.y,
-          z: cart.z,
-          text: 'CRASH!',
-          intensity: 1.0,
-        });
-      }
+  private checkCartCollisions(
+    cart: ShoppingCart,
+    dt: number,
+    events: StampedeEvent[],
+  ) {
+    const impact = this.impacts.get(cart.id) ?? 0;
+    this.impacts.delete(cart.id);
+    const cooldown = Math.max(0, (this.crashCooldowns.get(cart.id) ?? 0) - dt);
+    this.crashCooldowns.set(cart.id, cooldown);
+    if (impact < CRASH_SPEED || cooldown > 0) return;
+    this.crashCooldowns.set(cart.id, CRASH_COOLDOWN);
+
+    // Violent crash dumps an item, behind the cart where there is room
+    const dropped = cart.items.pop();
+    if (dropped) {
+      this.spawnGroundItem(
+        dropped.kind,
+        cart.x - Math.cos(cart.rotY) * 1.5 + (Math.random() - 0.5) * 0.8,
+        0.6,
+        cart.z + Math.sin(cart.rotY) * 1.5 + (Math.random() - 0.5) * 0.8,
+        false,
+      );
     }
+    events.push({
+      id: Date.now() + Math.random(),
+      type: 'cart_crash',
+      x: cart.x,
+      y: cart.y,
+      z: cart.z,
+      text: 'CRASH!',
+      intensity: Math.min(1, impact / (CRASH_SPEED * 2)),
+      team: cart.team,
+    });
   }
 
   spawnGroundItem(

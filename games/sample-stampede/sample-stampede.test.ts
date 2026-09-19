@@ -10,7 +10,13 @@ import {
 import { SampleStampedePhysics } from './physics';
 import { createEngine } from './peer';
 import { eventsToShow } from './scene';
-import { type PlayerInput, type StampedeEvent } from './types';
+import {
+  ITEM_DEFS,
+  type ItemKind,
+  type PlayerInput,
+  type ShoppingCart,
+  type StampedeEvent,
+} from './types';
 
 // The solo game's red crew: the player drives, a bot rides in the basket.
 function soloWorld() {
@@ -321,9 +327,13 @@ void test("the solo player's GRAB works the pole beside a bot rider", () => {
   const world = soloWorld();
   const cart = world.carts[0];
   const physics = new SampleStampedePhysics(world);
-  // Within the pole's reach, but too far for the bot rider to try.
-  const spot = ahead(cart, 3.5);
-  physics.spawnGroundItem('sample_taquito', spot.x, 0.5, spot.z, false);
+  // In the pole's reach, but not on the list, so the bot rider leaves it.
+  const spot = ahead(cart, 2.4);
+  physics.spawnGroundItem('cereal_box', spot.x, 0.5, spot.z, false);
+
+  const idle: StampedeEvent[] = [];
+  advanceSampleStampedeWorld(world, physics, 1 / 60, idle);
+  assert.equal(redSwings(idle), 0);
 
   const me = world.players[0];
   me.input = { ...me.input, grabberAction: true };
@@ -331,7 +341,7 @@ void test("the solo player's GRAB works the pole beside a bot rider", () => {
   advanceSampleStampedeWorld(world, physics, 1 / 60, events);
 
   assert.equal(redSwings(events), 1);
-  assert.ok(cart.items.some((it) => it.kind === 'sample_taquito'));
+  assert.ok(cart.items.some((it) => it.kind === 'cereal_box'));
   physics.destroy();
 });
 
@@ -448,5 +458,171 @@ void test('a bot driver turns toward the item it wants', () => {
     advanceSampleStampedeWorld(world, physics, 1 / 60, []);
 
   assert.ok(distance() < 8, `still ${distance().toFixed(1)} m away`);
+  physics.destroy();
+});
+
+// A point `distance` from the cart, `angle` off its heading (left positive).
+function offHeading(cart: ShoppingCart, angle: number, distance: number) {
+  return {
+    x: cart.x + Math.cos(cart.rotY + angle) * distance,
+    z: cart.z - Math.sin(cart.rotY + angle) * distance,
+  };
+}
+
+function load(cart: ShoppingCart, kinds: ItemKind[]) {
+  for (const kind of kinds)
+    cart.items.push({
+      id: `held-${cart.items.length}`,
+      kind,
+      relX: 0,
+      relY: 0.2,
+      relZ: 0,
+      rotY: 0,
+    });
+}
+
+const crashes = (events: StampedeEvent[]) =>
+  events.filter((e) => e.type === 'cart_crash').length;
+
+void test('speed alone sheds no stock; a hard hit into a rack sheds one item', () => {
+  // Full throttle up the open lane between aisles 2 and 3.
+  const open = freshSampleStampedeWorld(1000);
+  open.players.push(
+    newStampedePlayer('me', 'You', 0, 'red', 'cart-red', 'driver'),
+  );
+  const runner = open.carts[0];
+  load(runner, ['paper_towels', 'kibble_50lb', 'mega_soda']);
+  const openPhysics = new SampleStampedePhysics(open);
+  open.players[0].input = { ...open.players[0].input, throttle: 1, z: 1 };
+  const fast: StampedeEvent[] = [];
+  for (let frame = 0; frame < 60; frame++)
+    advanceSampleStampedeWorld(open, openPhysics, 1 / 60, fast);
+  assert.ok(Math.hypot(runner.vx, runner.vz) > 7.5, 'the cart got going');
+  assert.equal(runner.items.length, 3);
+  assert.equal(crashes(fast), 0);
+  openPhysics.destroy();
+
+  // Full throttle into the end of aisle 2's south rack, 3 m ahead.
+  const world = freshSampleStampedeWorld(1000);
+  world.players.push(
+    newStampedePlayer('me', 'You', 0, 'red', 'cart-red', 'driver'),
+  );
+  const cart = world.carts[0];
+  cart.x = -9;
+  cart.z = 22;
+  load(cart, ['paper_towels', 'kibble_50lb', 'mega_soda']);
+  const physics = new SampleStampedePhysics(world);
+  world.players[0].input = { ...world.players[0].input, throttle: 1, z: 1 };
+  const events: StampedeEvent[] = [];
+  for (let frame = 0; frame < 60; frame++)
+    advanceSampleStampedeWorld(world, physics, 1 / 60, events);
+  assert.equal(crashes(events), 1, 'one crash, however long it pushes on');
+  assert.equal(cart.items.length, 2);
+  assert.ok(world.groundItems.some((it) => it.kind === 'mega_soda'));
+  physics.destroy();
+});
+
+void test('the bot rider aims at a listed item beside the cart and leaves a teddy', () => {
+  const world = soloWorld();
+  const cart = world.carts[0];
+  const physics = new SampleStampedePhysics(world);
+
+  const right = offHeading(cart, -Math.PI / 2, 2.5);
+  physics.spawnGroundItem('giant_teddy', right.x, 0.5, right.z, false);
+  const quiet: StampedeEvent[] = [];
+  advanceSampleStampedeWorld(world, physics, 1 / 60, quiet);
+  assert.equal(redSwings(quiet), 0, 'a teddy is not on the list');
+
+  const left = offHeading(cart, Math.PI / 2, 2.5);
+  physics.spawnGroundItem('paper_towels', left.x, 0.5, left.z, false);
+  const events: StampedeEvent[] = [];
+  advanceSampleStampedeWorld(world, physics, 1 / 60, events);
+  assert.equal(redSwings(events), 1);
+  assert.ok(Math.abs(cart.grabberAngle - Math.PI / 2) < 0.2, 'aimed left');
+  assert.deepEqual(
+    cart.items.map((it) => it.kind),
+    ['paper_towels'],
+  );
+  physics.destroy();
+});
+
+void test('the kiosks take turns, so pizza bagels come out too', () => {
+  const world = freshSampleStampedeWorld(1000);
+  const physics = new SampleStampedePhysics(world);
+  const served: string[] = [];
+  for (let round = 0; round < 3; round++) {
+    for (const kiosk of world.kiosks) kiosk.active = false;
+    world.nextSampleFrenzyTime = world.clock;
+    advanceSampleStampedeWorld(world, physics, 1 / 60, []);
+    served.push(world.kiosks.find((k) => k.active)!.sampleKind);
+  }
+  assert.deepEqual(served, [
+    'sample_pizza_bagel',
+    'sample_taquito',
+    'sample_pizza_bagel',
+  ]);
+  assert.ok(world.groundItems.some((it) => it.kind === 'sample_pizza_bagel'));
+  physics.destroy();
+});
+
+void test('a finished list is followed by one the kiosks can fill', () => {
+  const world = freshSampleStampedeWorld(1000);
+  const cart = world.carts[0];
+  load(
+    cart,
+    cart.manifest.targetItems.map((t) => t.kind),
+  );
+  cart.x = world.exitGauntlet.x;
+  cart.z = world.exitGauntlet.z;
+  const physics = new SampleStampedePhysics(world);
+  const events: StampedeEvent[] = [];
+  advanceSampleStampedeWorld(world, physics, 1 / 60, events);
+  assert.ok(events.some((e) => e.type === 'receipt_approved'));
+
+  const served = new Set<ItemKind>(world.kiosks.map((k) => k.sampleKind));
+  const samples = cart.manifest.targetItems.filter(
+    (t) => ITEM_DEFS[t.kind].isSample,
+  );
+  assert.ok(samples.length > 0);
+  for (const t of samples) assert.ok(served.has(t.kind), `${t.kind} is served`);
+  physics.destroy();
+});
+
+void test('bots finish shopping lists, never check out a teddy and do not stall', () => {
+  const world = freshSampleStampedeWorld(1000);
+  world.players.push(
+    newStampedePlayer('a', 'A', 0, 'red', 'cart-red', 'driver', true),
+    newStampedePlayer('b', 'B', 1, 'red', 'cart-red', 'grabber', true),
+    newStampedePlayer('c', 'C', 2, 'blue', 'cart-blue', 'driver', true),
+    newStampedePlayer('d', 'D', 3, 'blue', 'cart-blue', 'grabber', true),
+  );
+  const physics = new SampleStampedePhysics(world);
+  const events: StampedeEvent[] = [];
+  // Longest run of frames each cart stood still away from the kiosks,
+  // where waiting for samples is fair.
+  const still = new Map<string, number>();
+  const longest = new Map<string, number>();
+  for (let frame = 0; frame < 60 * 120; frame++) {
+    advanceSampleStampedeWorld(world, physics, 1 / 60, events);
+    for (const c of world.carts) {
+      const byKiosk = world.kiosks.some(
+        (k) => Math.hypot(k.x - c.x, k.z - c.z) < 6,
+      );
+      const run =
+        Math.hypot(c.vx, c.vz) < 0.5 && !byKiosk
+          ? (still.get(c.id) ?? 0) + 1
+          : 0;
+      still.set(c.id, run);
+      longest.set(c.id, Math.max(longest.get(c.id) ?? 0, run));
+    }
+  }
+
+  assert.ok(
+    world.teamScores.red > 0 && world.teamScores.blue > 0,
+    `scores ${world.teamScores.red} / ${world.teamScores.blue}`,
+  );
+  assert.equal(events.filter((e) => e.type === 'receipt_rejected').length, 0);
+  for (const [id, frames] of longest)
+    assert.ok(frames < 60 * 10, `${id} stood still ${frames / 60} s`);
   physics.destroy();
 });
