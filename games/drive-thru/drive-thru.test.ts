@@ -14,7 +14,7 @@ import {
   stepCarPhysics,
   stepPattyPhysics,
 } from './physics';
-import { reconcileDriveThruBots } from './bots';
+import { reconcileDriveThruBots, stepDriveThruBot } from './bots';
 import { createEngine } from './peer';
 import { driveThruCatalog } from './audio/catalog';
 import { promptLimit } from '../../shared/audio/limits';
@@ -161,6 +161,29 @@ void test('Drive-Thru: bot reconciliation ensures all 4 roles have players', () 
   assert.ok(roles.includes('passenger'));
   assert.ok(roles.includes('grill'));
   assert.ok(roles.includes('barista'));
+});
+
+void test('Drive-Thru: a bots-only round steers around the speaker pole and serves the order', () => {
+  // The car starts right behind the pole. The bot driver used to grind into
+  // it: free after half a minute at 60 fps, and at 144 fps a patty caught
+  // fire before it ever got loose.
+  for (const hz of [30, 60, 144]) {
+    const w = freshDriveThruWorld();
+    reconcileDriveThruBots(w);
+    let seconds = 0;
+    while (w.phase !== 'completed' && w.phase !== 'meltdown' && seconds < 12) {
+      for (const p of w.players) if (p.bot) stepDriveThruBot(p, w, 1 / hz);
+      advanceDriveThruWorld(w, 1 / hz, w.clock + 1000 / hz);
+      seconds += 1 / hz;
+    }
+    assert.equal(
+      w.phase,
+      'completed',
+      `${hz} Hz: ${w.phase} after ${seconds.toFixed(1)} s (${w.failReason})`,
+    );
+    assert.equal(w.ordersServed, 1);
+    assert.equal(w.car.bumperDamage, 0, `${hz} Hz: the car hit the pole`);
+  }
 });
 
 void test('Drive-Thru: peer engine creates room, accepts actions, and builds snapshot', () => {

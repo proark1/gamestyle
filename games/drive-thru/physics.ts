@@ -2,6 +2,8 @@ import type { SedanState, Patty } from './types';
 
 export const SPEAKER_POLE_POS = { x: -3.8, z: 10.5 };
 export const SPEAKER_POLE_RADIUS = 0.45;
+/** How far the sedan's body reaches from its centre when it meets the pole. */
+export const CAR_BODY_RADIUS = 1.2;
 
 export const WINDOW_SILL_POS = { x: 2.2, z: 0.0, y: 1.1 };
 export const CURB_X = 1.4;
@@ -70,9 +72,9 @@ export function stepCarPhysics(
     car.x - SPEAKER_POLE_POS.x,
     car.z - SPEAKER_POLE_POS.z,
   );
-  if (distToPole < SPEAKER_POLE_RADIUS + 1.2) {
+  if (distToPole < SPEAKER_POLE_RADIUS + CAR_BODY_RADIUS) {
     // Collision impact!
-    const overlap = SPEAKER_POLE_RADIUS + 1.2 - distToPole;
+    const overlap = SPEAKER_POLE_RADIUS + CAR_BODY_RADIUS - distToPole;
     const nx = (car.x - SPEAKER_POLE_POS.x) / (distToPole || 1);
     const nz = (car.z - SPEAKER_POLE_POS.z) / (distToPole || 1);
     car.x += nx * overlap;
