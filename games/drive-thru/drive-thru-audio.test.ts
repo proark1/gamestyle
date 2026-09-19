@@ -471,17 +471,20 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
   assert.ok(driveThruAmbience(fire, LOCAL).fire);
   assert.equal(driveThruAmbience(shift(), LOCAL).fire, null);
 
-  // Full simulated shifts: bots only (their driver ends up pinned on the
-  // speaker pole, so it never finishes), and an idle driver whose grill
-  // catches fire. Everything they produce must be in the catalog too.
+  // Full simulated shifts: bots only (their driver backs up, steers around
+  // the speaker pole and gets the order served), and an idle driver whose
+  // grill catches fire. Everything they produce must be in the catalog too.
+  // Each plays on until its result music has finished, and rolls its own
+  // dice: the fire comes 20 to 55 s in, depending on the sequence.
   for (const role of [null, 'driver'] as const) {
+    seed = 0x2f6e2b1;
     const sim = freshDriveThruWorld(T0);
     sim.players = role ? [newDriveThruPlayer(LOCAL, 'Me', 0, role)] : [];
     reconcileDriveThruBots(sim);
     let previous = audioCopy(sim);
     let endedAt = -1;
     let endedFor = -1;
-    for (let i = 0; i < 60 * 45; i++) {
+    for (let i = 0; i < 60 * 120 && endedFor < RESULT_MUSIC_MS; i++) {
       for (const p of sim.players) if (p.bot) stepDriveThruBot(p, sim, 1 / 60);
       advanceDriveThruWorld(sim, 1 / 60, sim.clock + 1000 / 60);
       const listener = role ? LOCAL : 'bot-driver';
@@ -499,6 +502,8 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
     if (role) {
       assert.equal(sim.failState, 'grease_fire');
       assert.ok(heard.has('speech.fail') && heard.has('music.fail'));
+    } else {
+      assert.equal(sim.phase, 'completed');
     }
   }
 
