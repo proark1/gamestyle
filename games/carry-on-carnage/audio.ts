@@ -1,387 +1,258 @@
-import type { Cue } from '../../shared/audio/types';
-import type { CarryOnEvent } from './types';
+import { SiteAudio } from '../../shared/audio/player';
+import { Footsteps, type AudioEvent } from '../../shared/audio/world';
+import {
+  CarryOnCueGate,
+  ROUND_START,
+  carryOnAmbience,
+  carryOnAudioDiscontinuity,
+  carryOnAudioEvents,
+  carryOnMovement,
+  carryOnMusic,
+} from './audio-events';
+import { carryOnAudioProfile } from './audio/profile';
+import type { CarryOnWorld } from './types';
 
-export const carryOnCarnageCatalog: Cue[] = [
-  {
-    id: 'carryon.airport_chime',
-    name: 'Airport Chime',
-    group: 'terminal',
-    category: 'event',
-    prompt:
-      'Two-tone bright airport paging chime ding-dong over public terminal speakers',
-    text: 'ding-dong',
-    duration: 1.5,
-    loop: false,
-    volume: 0.8,
-  },
-  {
-    id: 'carryon.zipper_pull',
-    name: 'Zipper Pull',
-    group: 'luggage',
-    category: 'material',
-    prompt:
-      'Fast metal luggage zipper teeth sliding quickly along fabric seam with tight zip sound',
-    text: 'zip',
-    duration: 0.8,
-    loop: false,
-    volume: 0.75,
-  },
-  {
-    id: 'carryon.compress_groan',
-    name: 'Suitcase Compression',
-    group: 'luggage',
-    category: 'material',
-    prompt:
-      'Overstuffed bulging suitcase fabric groaning and squeaking under heavy human weight',
-    text: 'squish',
-    duration: 1.2,
-    loop: false,
-    volume: 0.7,
-  },
-  {
-    id: 'carryon.burst_pinata',
-    name: 'Piñata Luggage Burst',
-    group: 'luggage',
-    category: 'event',
-    prompt:
-      'Violent explosive pop of overstuffed suitcase bursting open launching items with party horn confetti',
-    text: 'pop',
-    duration: 1.8,
-    loop: false,
-    volume: 1.0,
-  },
-  {
-    id: 'carryon.tsa_alarm',
-    name: 'TSA Metal Detector Alarm',
-    group: 'terminal',
-    category: 'event',
-    prompt:
-      'Urgent high-pitched electronic security gate alarm beeping rapidly',
-    text: 'beep-beep',
-    duration: 2.0,
-    loop: false,
-    volume: 0.85,
-  },
-  {
-    id: 'carryon.sizer_reject',
-    name: 'Sizer Box Rejection Buzzer',
-    group: 'gate',
-    category: 'event',
-    prompt:
-      'Harsh low electronic game show buzzer signaling failed oversized baggage',
-    text: 'buzzer',
-    duration: 1.2,
-    loop: false,
-    volume: 0.9,
-  },
-  {
-    id: 'carryon.sizer_pass',
-    name: 'Sizer Box Approval Chime',
-    group: 'gate',
-    category: 'event',
-    prompt:
-      'Cheerful sparkling major chord chime signaling approved carry-on luggage',
-    text: 'ding',
-    duration: 1.5,
-    loop: false,
-    volume: 0.85,
-  },
-  {
-    id: 'carryon.lobster_pinch',
-    name: 'Lobster Claw Snap',
-    group: 'items',
-    category: 'material',
-    prompt:
-      'Sharp organic wooden claw snap of a lively lobster pincers clicking',
-    text: 'snap',
-    duration: 0.5,
-    loop: false,
-    volume: 0.75,
-  },
+export { carryOnCarnageCatalog } from './audio/catalog';
+
+type Tone = {
+  wave: OscillatorType;
+  from: number;
+  to: number;
+  length: number;
+  level: number;
+  delay?: number;
+};
+
+const THUMP: Tone[] = [
+  { wave: 'triangle', from: 140, to: 45, length: 0.18, level: 0.35 },
+];
+const ZIP: Tone[] = [
+  { wave: 'sawtooth', from: 420, to: 860, length: 0.22, level: 0.2 },
+];
+const CHIME: Tone[] = [
+  { wave: 'sine', from: 587.33, to: 587.33, length: 0.6, level: 0.3 },
+  { wave: 'sine', from: 440, to: 440, length: 0.85, level: 0.3, delay: 0.35 },
 ];
 
-/** Procedural Web Audio synthesizer for immediate, zero-latency airport effects */
-export class CarryOnAudio {
-  private ctx: AudioContext | null = null;
+/**
+ * The game's original synthesized effects, kept only as stand-ins: each plays
+ * for its cue until the workshop has a recording of it, then never again.
+ */
+const SYNTH: Record<string, Tone[]> = {
+  'item.clothes.pack': THUMP,
+  'item.flamingo.pack': THUMP,
+  'item.racket.pack': THUMP,
+  'item.shoes.pack': THUMP,
+  'item.lobster.pack': THUMP,
+  'item.shampoo.pack': THUMP,
+  'item.snowglobe.pack': THUMP,
+  'gate.sizer_insert': THUMP,
+  'item.duck.pack': [
+    { wave: 'sine', from: 1400, to: 850, length: 0.16, level: 0.35 },
+  ],
+  'carryon.compress_groan': [
+    { wave: 'sine', from: 90, to: 160, length: 0.12, level: 0.4 },
+    { wave: 'sine', from: 160, to: 75, length: 0.18, level: 0.4, delay: 0.12 },
+  ],
+  'carryon.zipper_pull': ZIP,
+  'luggage.zip_closed': ZIP,
+  'luggage.zip_jam': ZIP,
+  'carryon.burst_pinata': [
+    { wave: 'sine', from: 280, to: 30, length: 0.4, level: 0.65 },
+    {
+      wave: 'triangle',
+      from: 520,
+      to: 1200,
+      length: 0.25,
+      level: 0.3,
+      delay: 0.05,
+    },
+  ],
+  'carryon.tsa_alarm': [0, 1, 2, 3].map((beep) => ({
+    wave: 'square',
+    from: 1320,
+    to: 1320,
+    length: 0.12,
+    level: 0.25,
+    delay: beep * 0.18,
+  })),
+  'security.whistle': [
+    { wave: 'sawtooth', from: 180, to: 180, length: 0.5, level: 0.4 },
+  ],
+  'carryon.sizer_pass': [523.25, 659.25, 783.99, 1046.5].map((note, index) => ({
+    wave: 'sine',
+    from: note,
+    to: note,
+    length: 0.7,
+    level: 0.25,
+    delay: index * 0.08,
+  })),
+  'carryon.sizer_reject': [110, 116].map((note) => ({
+    wave: 'sawtooth',
+    from: note,
+    to: note,
+    length: 0.6,
+    level: 0.35,
+  })),
+  'carryon.airport_chime': CHIME,
+  'terminal.takeoff': CHIME,
+};
 
-  public unlock() {
-    if (!this.ctx) {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
+/** Cue ids that have a synthesized stand-in. */
+export const CARRY_ON_SYNTH_CUES = Object.keys(SYNTH);
+
+class CarryOnSynth {
+  private context: AudioContext | null = null;
+  muted = false;
+
+  unlock() {
+    if (!this.context) {
+      const Context =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
           .webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-      }
+      if (Context) this.context = new Context();
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      void this.ctx.resume();
-    }
+    if (this.context?.state === 'suspended')
+      void this.context.resume().catch(() => {});
   }
 
-  public playEvent(event: CarryOnEvent) {
-    if (!this.ctx) return;
+  play(id: string, strength = 1) {
+    const tones = SYNTH[id];
+    const context = this.context;
+    if (
+      !tones ||
+      !context ||
+      this.muted ||
+      context.state !== 'running' ||
+      document.hidden
+    )
+      return;
     try {
-      switch (event.type) {
-        case 'pack':
-          if (event.text?.toLowerCase().includes('duck')) {
-            this.playDuckSqueak();
-          } else {
-            this.playPackThump();
-          }
-          break;
-        case 'compress':
-          this.playCompressGroan();
-          break;
-        case 'zip':
-          this.playZipperPull();
-          break;
-        case 'burst':
-          this.playBurstExplosion();
-          break;
-        case 'tsa_alarm':
-        case 'tsa_distracted':
-          this.playTsaAlarm();
-          break;
-        case 'tsa_caught':
-          this.playTsaBuzzer();
-          break;
-        case 'sizer_passed':
-          this.playSizerPass();
-          break;
-        case 'sizer_rejected':
-          this.playSizerReject();
-          break;
-        case 'flight_departed':
-          this.playAirportChime();
-          break;
+      const start = context.currentTime;
+      for (const tone of tones) {
+        const at = start + (tone.delay ?? 0);
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.type = tone.wave;
+        osc.frequency.setValueAtTime(tone.from, at);
+        osc.frequency.exponentialRampToValueAtTime(tone.to, at + tone.length);
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(
+          Math.max(0.0002, tone.level * strength),
+          at + 0.01,
+        );
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + tone.length);
+        osc.connect(gain).connect(context.destination);
+        osc.start(at);
+        osc.stop(at + tone.length + 0.02);
       }
     } catch {
-      // Ignore audio synthesis errors on locked audio devices
+      // A locked or closing audio device simply stays quiet.
     }
   }
 
-  /** Pleasant two-tone airport chime */
-  private playAirportChime() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
+  dispose() {
+    void this.context?.close().catch(() => {});
+    this.context = null;
+  }
+}
 
-    const osc1 = this.ctx.createOscillator();
-    const gain1 = this.ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(587.33, now); // D5
-    gain1.gain.setValueAtTime(0.3, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-    osc1.connect(gain1);
-    gain1.connect(this.ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.6);
+/**
+ * Plays the Admin recordings (mixer, ducking, hidden-tab pause) for whatever
+ * the planner in `audio-events.ts` hears in each world state.
+ */
+export class CarryOnSound extends SiteAudio {
+  private previous: CarryOnWorld | null = null;
+  private readonly footsteps = new Footsteps();
+  private readonly gate = new CarryOnCueGate();
+  private readonly synth = new CarryOnSynth();
+  private unlockedAt = 0;
+  /** The round whose boarding call is waiting for the first key press. */
+  private boardingCall: number | null = null;
 
-    const osc2 = this.ctx.createOscillator();
-    const gain2 = this.ctx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(440.0, now + 0.35); // A4
-    gain2.gain.setValueAtTime(0.3, now + 0.35);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-    osc2.connect(gain2);
-    gain2.connect(this.ctx.destination);
-    osc2.start(now + 0.35);
-    osc2.stop(now + 1.2);
+  constructor() {
+    super('carry-on-carnage', carryOnAudioProfile);
   }
 
-  /** Zipper sliding pull sound */
-  private playZipperPull() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(420, now);
-    osc.frequency.linearRampToValueAtTime(860, now + 0.18);
-
-    gain.gain.setValueAtTime(0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.22);
+  override unlock() {
+    super.unlock();
+    this.synth.unlock();
+    if (!this.unlockedAt) this.unlockedAt = performance.now();
   }
 
-  /** Soft thump when dropping item into suitcase */
-  private playPackThump() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.exponentialRampToValueAtTime(45, now + 0.15);
-
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.18);
+  /** Mutes the recordings and the synthesized stand-ins together. */
+  setMuted(muted: boolean) {
+    this.enabled = !muted;
+    this.synth.muted = muted;
   }
 
-  /** Squeaky rubber duck sound */
-  private playDuckSqueak() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1400, now);
-    osc.frequency.exponentialRampToValueAtTime(850, now + 0.12);
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.16);
-  }
-
-  /** Suitcase springy compression groan */
-  private playCompressGroan() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(90, now);
-    osc.frequency.linearRampToValueAtTime(160, now + 0.12);
-    osc.frequency.linearRampToValueAtTime(75, now + 0.28);
-
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.3);
-  }
-
-  /** Violent piñata burst pop! */
-  private playBurstExplosion() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-
-    // Deep punchy bass pop
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(280, now);
-    osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
-    gain.gain.setValueAtTime(0.65, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.4);
-
-    // Spring ping
-    const spring = this.ctx.createOscillator();
-    const sGain = this.ctx.createGain();
-    spring.type = 'triangle';
-    spring.frequency.setValueAtTime(520, now + 0.05);
-    spring.frequency.linearRampToValueAtTime(1200, now + 0.25);
-    sGain.gain.setValueAtTime(0.3, now + 0.05);
-    sGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    spring.connect(sGain);
-    sGain.connect(this.ctx.destination);
-    spring.start(now + 0.05);
-    spring.stop(now + 0.3);
-  }
-
-  /** High pitched TSA metal detector beeps */
-  private playTsaAlarm() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    for (let i = 0; i < 4; i++) {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const t = now + i * 0.18;
-
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(1320, t);
-      gain.gain.setValueAtTime(0.25, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.12);
+  /** Call with a fresh copy of the world each frame, never the live object. */
+  update(world: CarryOnWorld, localId: string) {
+    const previous = this.previous;
+    // A late packet from the same round must not rewind the comparison.
+    if (
+      previous &&
+      previous.started === world.started &&
+      world.clock < previous.clock
+    )
+      return;
+    const fresh = !previous || carryOnAudioDiscontinuity(previous, world);
+    if (previous && fresh) this.reset();
+    if (fresh) {
+      this.footsteps.reset();
+      this.gate.reset();
+      this.boardingCall = null;
     }
+    this.previous = world;
+    const me = world.players.find((player) => player.id === localId);
+    if (me) this.listen({ x: me.x, y: me.y, z: me.z }, 0);
+
+    let cues = carryOnAudioEvents(previous, world, localId);
+    // Solo rounds start on page load, before the browser allows any sound.
+    if (!this.unlockedAt && cues.some((cue) => cue.id === 'speech.start')) {
+      this.boardingCall = world.started;
+      cues = cues.filter((cue) => !ROUND_START.includes(cue));
+    }
+    if (
+      this.boardingCall === world.started &&
+      this.unlockedAt &&
+      performance.now() - this.unlockedAt > 250
+    ) {
+      this.boardingCall = null;
+      if (world.phase === 'packing' && world.clock - world.started < 20_000)
+        cues = [...ROUND_START, ...cues];
+    }
+    for (const cue of cues) this.cue(cue, world.clock);
+    for (const cue of carryOnMovement(this.footsteps, world, localId))
+      this.cue(cue, world.clock);
+
+    this.setLoop('music', carryOnMusic(world));
+    for (const [channel, loop] of Object.entries(
+      carryOnAmbience(world, localId),
+    ))
+      this.setLoop(channel, loop.id, loop.level);
   }
 
-  /** Harsh TSA caught buzzer */
-  private playTsaBuzzer() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(180, now);
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.5);
+  private cue(event: AudioEvent, clock: number) {
+    const verdict = this.gate.admit(event, clock);
+    if (!verdict) return;
+    if (verdict === 'interrupt') this.interruptSpeech();
+    const strength = event.strength ?? 1;
+    if (this.recorded(event.id))
+      this.variant(event.id, strength, event.position, event.sourceId);
+    else this.synth.play(event.id, strength);
   }
 
-  /** Sizer box approval chime (triumphant major chord) */
-  private playSizerPass() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-
-    notes.forEach((freq, idx) => {
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const t = now + idx * 0.08;
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0.25, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.7);
-    });
+  /** Whether any take of this cue has been recorded in the workshop. */
+  private recorded(id: string) {
+    return [id, `${id}.2`, `${id}.3`].some(
+      (take) => this.preferredCue(take, '') === take,
+    );
   }
 
-  /** Sizer box rejection buzzer (harsh dual sawtooth buzzer) */
-  private playSizerReject() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const freqs = [110, 116]; // dissonant beat
-
-    freqs.forEach((freq) => {
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.6);
-    });
+  override dispose() {
+    super.dispose();
+    this.synth.dispose();
   }
 }

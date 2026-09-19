@@ -17,7 +17,7 @@ import {
 import type { PeerGameConnection } from '../../shared/peer/connection';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { carryOnCarnageAnalytics } from './analytics';
-import { CarryOnAudio } from './audio';
+import { CarryOnSound } from './audio';
 import { reconcileCarryOnBots, updateCarryOnBots } from './bots';
 import { CarryOnScene } from './scene';
 import {
@@ -59,7 +59,7 @@ export default function CarryOnCarnageGame() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CarryOnScene | null>(null);
-  const audioRef = useRef<CarryOnAudio | null>(null);
+  const audioRef = useRef<CarryOnSound | null>(null);
   const networkRef = useRef<PeerGameConnection<CarryOnSnapshot> | null>(null);
   const localWorld = useRef<CarryOnWorld | null>(null);
   const currentInput = useRef<PlayerInput>(idleInput());
@@ -71,6 +71,7 @@ export default function CarryOnCarnageGame() {
 
   const [snapshot, setSnapshot] = useState<CarryOnSnapshot | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(soundEnabled);
   const [toast, setToast] = useState<{ text: string; id: number } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -98,11 +99,13 @@ export default function CarryOnCarnageGame() {
     }
   }, []);
 
-  // Initialize scene and synthesized audio
+  // Initialize scene and audio once; muting must not rebuild the round.
   useEffect(() => {
     if (!containerRef.current) return;
 
-    audioRef.current = new CarryOnAudio();
+    const audio = new CarryOnSound();
+    audio.setMuted(!soundEnabledRef.current);
+    audioRef.current = audio;
 
     sceneRef.current = new CarryOnScene(containerRef.current, {
       input: (inp: PlayerInput) => {
@@ -157,13 +160,10 @@ export default function CarryOnCarnageGame() {
         updateCarryOnBots(w, now, eventIdRef);
         advanceCarryOn(w, dt, eventIdRef);
 
-        // Process audio events & visual burst particles
+        // Visual burst particles and toasts for new events
         for (const evt of w.events) {
           if (evt.id > lastEventSeenRef.current) {
             lastEventSeenRef.current = evt.id;
-            if (soundEnabled) {
-              audioRef.current?.playEvent(evt);
-            }
 
             if (evt.type === 'burst' && evt.pos && sceneRef.current) {
               sceneRef.current.spawnBurstParticles(evt.pos);
@@ -186,6 +186,7 @@ export default function CarryOnCarnageGame() {
         );
         if (hud.current.due(snap)) setSnapshot(snap);
         sceneRef.current?.render(snap, sessionRef.current.id);
+        audio.update(snap.world, sessionRef.current.id);
       }
 
       animId = requestAnimationFrame(loop);
@@ -196,8 +197,15 @@ export default function CarryOnCarnageGame() {
     return () => {
       cancelAnimationFrame(animId);
       sceneRef.current?.dispose();
+      audio.dispose();
+      if (audioRef.current === audio) audioRef.current = null;
     };
-  }, [dispatchAction, soundEnabled]);
+  }, [dispatchAction]);
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+    audioRef.current?.setMuted(!soundEnabled);
+  }, [soundEnabled]);
 
   const world = snapshot?.world;
   const me = world?.players.find((p) => p.id === sessionRef.current.id);
