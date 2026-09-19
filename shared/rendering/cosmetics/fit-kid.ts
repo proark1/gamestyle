@@ -16,6 +16,7 @@ import {
 import { material } from '../primitives';
 import { addPart, lookGroup, modelsOf, partTop, type Worn } from './dress';
 import { PLAYER, type ItemModel, type Part } from './items';
+import { KID_ITEMS } from './kid-items';
 
 /**
  * Wardrobe items are modelled on the worker's blocky body. This puts the same
@@ -516,7 +517,19 @@ function wearKidHat(head: T.Object3D, hat: ItemModel, player: string) {
 export function dressKid(model: T.Object3D, player: string, look?: Look): Worn {
   const models = modelsOf(look);
   const rig = model.userData as Record<string, T.Object3D>;
-  for (const [slot, item] of Object.entries(models) as [Slot, ItemModel][])
+  for (const [slot, item] of Object.entries(models) as [Slot, ItemModel][]) {
+    // An item the kid has his own model for is built from his own shapes.
+    const own = KID_ITEMS[look?.[slot] ?? ''];
+    if (own) {
+      own({
+        body: lookGroup(rig.body),
+        legs: [lookGroup(rig.legL), lookGroup(rig.legR)],
+        sleeves: [lookGroup(rig.sleeveL), lookGroup(rig.sleeveR)],
+        head: lookGroup(rig.head),
+        player,
+      });
+      continue;
+    }
     for (const part of item.parts) {
       if (part.on === 'face') placeOnFace(lookGroup(rig.head), part, player);
       else if (part.on === 'body')
@@ -531,6 +544,7 @@ export function dressKid(model: T.Object3D, player: string, look?: Look): Worn {
           placeOn(lookGroup(limb), mirrored(part, side), frame, player);
       }
     }
+  }
   if (models.hat) {
     wearKidHat(lookGroup(rig.head), models.hat, player);
     const top = Math.max(

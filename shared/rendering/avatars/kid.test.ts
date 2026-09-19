@@ -4,6 +4,7 @@ import * as T from 'three';
 import { ITEMS } from '../../wardrobe/catalog';
 import { LOOK_GROUP } from '../cosmetics/dress';
 import { ITEM_MODELS } from '../cosmetics/items';
+import { KID_ITEMS } from '../cosmetics/kid-items';
 import { KIT, SEAT_KITS, TEAM, WARDROBE_COLOURS, seatKit } from '../palette';
 import { HEAD_Y, HIP, SKULL, TROUSER_HEM } from './hoop-kid';
 import { PLAYER_KID, liveKid, playerKid, type KidId } from './kid';
@@ -70,13 +71,15 @@ void test('every kid wears every wardrobe item where it belongs', () => {
           box.min.y < SCALP && box.max.y > SCALP,
           `${name} sits over the head`,
         );
+      // Glasses stay on the face; a beard may hang as far as the chest.
       if (item.slot === 'face' || item.slot === 'beard')
         assert.ok(
-          box.min.y > 0.7 && box.max.z > 0.25,
+          box.min.y > (item.slot === 'beard' ? 0.55 : 0.9) && box.max.z > 0.25,
           `${name} is on the front of the head`,
         );
+      // From the hem of the jersey up to the collar, a bow tie included.
       if (item.slot === 'top')
-        assert.ok(box.min.y < 0.9 && box.max.y > 0.6, `${name} is on the body`);
+        assert.ok(box.min.y < 1.0 && box.max.y > 0.6, `${name} is on the body`);
       if (item.slot === 'legs')
         assert.ok(box.min.y < 0.35, `${name} reaches down the legs`);
       // Rain boots add only a band round the ankle; the rest is the colour.
@@ -179,6 +182,18 @@ void test('four seats wear four kits, and teams keep red and blue', () => {
   assert.deepEqual([0, 1, 2, 3].map(seatKit), [...SEAT_KITS]);
   assert.equal(seatKit(4), seatKit(0));
   for (const colour of SEAT_KITS) assert.ok(WARDROBE_COLOURS.includes(colour));
+});
+
+void test('the kid’s own models are for items that exist, in the same slot', () => {
+  for (const id of Object.keys(KID_ITEMS)) {
+    const item = ITEMS.find((entry) => entry.id === id);
+    assert.ok(item, `${id} is a real item`);
+    assert.ok(ITEM_MODELS[id], `${id} still has a worker model for the shop`);
+  }
+  // The clothes a player sees most are worth modelling for him.
+  for (const slot of ['top', 'legs', 'shoes'] as const)
+    for (const item of ITEMS.filter((entry) => entry.slot === slot))
+      assert.ok(KID_ITEMS[item.id], `${item.id} has a model made for the kid`);
 });
 
 void test('every player is the boy, and each kid says which it is', () => {
