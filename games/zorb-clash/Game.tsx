@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RotateCcw, Shield, Zap, Flame, Volleyball } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import GameToolbar from '../../shared/ui/GameToolbar';
@@ -12,6 +12,7 @@ import {
   advanceZorbClash,
   freshZorbWorld,
   newZorbPlayer,
+  restartZorbMatch,
   zorbClashSnapshot,
 } from './simulation';
 import { ZorbClashPhysics } from './physics';
@@ -28,6 +29,7 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { zorbClashAnalytics } from './analytics';
 import './style.css';
+import { TouchControls } from './TouchControls';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { ZORB_CLASH_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
@@ -50,10 +52,12 @@ function PitchRadar({
   players,
   ball,
   selfId,
+  label,
 }: {
   players: ZorbPlayer[];
   ball: ZorbBall;
   selfId: string;
+  label: string;
 }) {
   const radarW = 110;
   const radarH = 170;
@@ -75,9 +79,9 @@ function PitchRadar({
   const ballPos = toRadar(ball.x, ball.z);
 
   return (
-    <div className="zorb-radar" aria-label="Pitch Mini-Radar">
+    <div className="zorb-radar" aria-label={label}>
       <div className="zorb-radar-header">
-        <span>RADAR</span>
+        <span>{label}</span>
       </div>
       <svg
         className="zorb-radar-svg"
@@ -193,6 +197,39 @@ export default function ZorbClash() {
   const [selfId] = useState('local-player');
   const [muted, setMuted] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const blocked = !started || helpOpen || paused;
+  const blockedRef = useRef(true);
+  const cancelInput = useCallback(() => {
+    const p = worldRef.current?.players.find((pl) => pl.id === selfId);
+    if (p) {
+      p.dashCharge = 0;
+      p.input = { x: 0, z: 0, dash: false, brace: false };
+    }
+    sceneRef.current?.clearInput();
+  }, [selfId]);
+
+  useEffect(() => {
+    blockedRef.current = blocked;
+    sceneRef.current?.setInputEnabled(!blocked);
+    if (blocked) cancelInput();
+  }, [blocked, cancelInput]);
+  useEffect(() => {
+    const pause = () => {
+      cancelInput();
+      if (started) setPaused(true);
+    };
+    const visibility = () => {
+      if (document.hidden) pause();
+    };
+    window.addEventListener('blur', pause);
+    document.addEventListener('visibilitychange', visibility);
+    return () => {
+      window.removeEventListener('blur', pause);
+      document.removeEventListener('visibilitychange', visibility);
+    };
+  }, [started, cancelInput]);
 
   const lastFrameTime = useRef(0);
   const animId = useRef(0);
@@ -237,38 +274,46 @@ export default function ZorbClash() {
       },
     });
     sceneRef.current = scene;
+    scene.setInputEnabled(false);
+    physics.resetPlayers();
 
     lastFrameTime.current = performance.now();
 
     // Main animation & simulation tick
     const tick = (timeMs: number) => {
       animId.current = requestAnimationFrame(tick);
-      const dt = Math.min((timeMs - lastFrameTime.current) / 1000, 0.05);
+      const dt = Math.max(
+        0,
+        Math.min((timeMs - lastFrameTime.current) / 1000, 0.05),
+      );
       lastFrameTime.current = timeMs;
 
       if (worldRef.current && physicsRef.current) {
-        advanceZorbClash(
-          worldRef.current,
-          physicsRef.current,
-          dt,
-          audioRef.current,
-          (x, y, z, intensity) => {
-            sceneRef.current?.emitImpactSparks(
-              x,
-              y,
-              z,
-              Math.floor(intensity * 25),
-            );
-          },
-          (x, y, z) => {
-            sceneRef.current?.emitConfetti(x, y, z);
-          },
-        );
+        if (!blockedRef.current)
+          advanceZorbClash(
+            worldRef.current,
+            physicsRef.current,
+            dt,
+            audioRef.current,
+            (x, y, z, intensity) => {
+              sceneRef.current?.emitImpactSparks(
+                x,
+                y,
+                z,
+                Math.floor(intensity * 25),
+              );
+            },
+            (x, y, z) => {
+              sceneRef.current?.emitConfetti(x, y, z);
+            },
+          );
 
         // Update sound for local player dash charge
         const me = worldRef.current.players.find((p) => p.id === selfId);
         if (me) {
-          audioRef.current?.setDashCharge(me.dashCharge);
+          audioRef.current?.setDashCharge(
+            blockedRef.current ? 0 : me.dashCharge,
+          );
         }
 
         const snap = zorbClashSnapshot(
@@ -297,13 +342,9 @@ export default function ZorbClash() {
 
   const handleRestart = () => {
     if (!worldRef.current || !physicsRef.current) return;
-    worldRef.current.score = { red: 0, blue: 0 };
-    worldRef.current.timeRemaining = 180;
-    worldRef.current.status = 'playing';
-    worldRef.current.bonkCount = 0;
-    worldRef.current.lastGoal = null;
-    physicsRef.current.resetBall();
-    physicsRef.current.resetPlayers();
+    restartZorbMatch(worldRef.current, physicsRef.current);
+    cancelInput();
+    setPaused(false);
     audioRef.current?.whistle();
   };
 
@@ -314,38 +355,16 @@ export default function ZorbClash() {
     audioRef.current?.setMuted(next);
   };
 
-  const setPlayerInput = (patch: Partial<PlayerInput>) => {
-    const p = worldRef.current?.players.find((pl) => pl.id === selfId);
-    if (p) {
-      Object.assign(p.input, patch);
-    }
-  };
-
-  // Touch stick tracking
-  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const t = e.touches[0];
-    touchStartPos.current = { x: t.clientX, y: t.clientY };
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!touchStartPos.current || !sceneRef.current) return;
-    const t = e.touches[0];
-    const dx = t.clientX - touchStartPos.current.x;
-    const dy = t.clientY - touchStartPos.current.y;
-    const maxDist = 50;
-    const normX = Math.max(-1, Math.min(1, dx / maxDist));
-    const normZ = Math.max(-1, Math.min(1, -dy / maxDist));
-
-    // Screen-relative mapping: right is world -X, left is world +X
-    setPlayerInput({ x: -normX, z: normZ });
-  };
-
-  const handleTouchEnd = () => {
-    touchStartPos.current = null;
-    setPlayerInput({ x: 0, z: 0 });
-  };
+  const setPlayerInput = useCallback(
+    (patch: Partial<PlayerInput>) => {
+      if (blockedRef.current) return;
+      const world = worldRef.current;
+      if (world?.status !== 'playing') return;
+      const p = world.players.find((pl) => pl.id === selfId);
+      if (p) Object.assign(p.input, patch);
+    },
+    [selfId],
+  );
 
   const me = snapshot?.world.players.find((p) => p.id === selfId);
   const isTurtle = me?.turtle ?? false;
@@ -365,7 +384,7 @@ export default function ZorbClash() {
           : null,
       )}
     >
-      <div ref={containerRef} className="zorb-canvas-wrapper" />
+      <div ref={containerRef} tabIndex={-1} className="zorb-canvas-wrapper" />
       <header className="topbar">
         <a href="/" className="wordmark">
           <span className="zorb-mark">
@@ -412,14 +431,26 @@ export default function ZorbClash() {
           players={snapshot.world.players}
           ball={snapshot.world.ball}
           selfId={selfId}
+          label={strings.radar}
         />
       )}
 
       {/* Comical Upside-Down Turtle Alert */}
       {isTurtle && (
         <div className="zorb-turtle-banner">
-          {strings.turtled}
-          <small>{strings.turtledSub}</small>
+          {me?.posture === 'recovering' ? strings.recovering : strings.turtled}
+          <small>
+            {touchActive ? strings.recoveryHint : strings.turtledSub}
+          </small>
+          <progress
+            aria-label={strings.recovering}
+            max={1}
+            value={
+              me?.posture === 'recovering'
+                ? 0.6 + (me.recovery ?? 0) * 0.4
+                : (me?.wiggleProgress ?? 0) * 0.6
+            }
+          />
         </div>
       )}
 
@@ -428,13 +459,23 @@ export default function ZorbClash() {
         <div className="zorb-goal-banner">
           <h1 className="zorb-goal-title">{strings.goal}</h1>
           <div className="zorb-goal-subtitle">
-            {strings.goalSub
-              .replace('{scorer}', lastGoal.scorerName)
-              .replace('{team}', lastGoal.team.toUpperCase())}
+            {(lastGoal.ownGoal
+              ? strings.ownGoalSub
+              : lastGoal.scorerName
+                ? strings.goalSub
+                : strings.teamGoal
+            )
+              .replace(
+                '{scorer}',
+                lastGoal.scorerId === selfId
+                  ? strings.you
+                  : lastGoal.scorerName,
+              )
+              .replace(
+                '{team}',
+                lastGoal.team === 'red' ? strings.red : strings.blue,
+              )}
           </div>
-          {lastGoal.isTurtleGoal && (
-            <div className="zorb-goal-turtle-badge">{strings.turtleGoal}</div>
-          )}
         </div>
       )}
 
@@ -476,38 +517,45 @@ export default function ZorbClash() {
       </div>
 
       {/* Mobile Touch Overlay */}
-      {touchActive && (
-        <div className="zorb-touch-controls">
-          <div
-            className="zorb-touch-stick"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            <div className="zorb-touch-thumb" />
-          </div>
-
-          <div className="zorb-touch-actions">
-            <button
-              type="button"
-              className="zorb-touch-btn brace"
-              onTouchStart={() => setPlayerInput({ brace: true })}
-              onTouchEnd={() => setPlayerInput({ brace: false })}
-            >
-              {strings.brace}
-            </button>
-
-            <button
-              type="button"
-              className="zorb-touch-btn dash"
-              onTouchStart={() => setPlayerInput({ dash: true })}
-              onTouchEnd={() => setPlayerInput({ dash: false })}
-            >
-              {strings.dash}
-            </button>
-          </div>
-        </div>
+      {touchActive && !blocked && snapshot?.world.status === 'playing' && (
+        <TouchControls
+          enabled
+          moveLabel={strings.roll}
+          braceLabel={strings.brace}
+          dashLabel={strings.dash}
+          onInput={setPlayerInput}
+          onCancel={cancelInput}
+        />
       )}
+
+      {me?.posture === 'unstable' && !blocked && (
+        <output className="zorb-balance-hint">{strings.unstable}</output>
+      )}
+
+      <Dialog open={(!started || (paused && !isEnded)) && !helpOpen}>
+        <DialogContent
+          className="game-dialog zorb-modal"
+          showCloseButton={false}
+          finalFocus={containerRef}
+        >
+          <DialogTitle>{started ? strings.paused : 'Zorb Clash'}</DialogTitle>
+          {!started && <p>{strings.intro}</p>}
+          <p>{touchActive ? strings.touchHelp : strings.keyboardHelp}</p>
+          <button
+            type="button"
+            className="zorb-btn primary-button"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              cancelInput();
+              setStarted(true);
+              setPaused(false);
+              audioRef.current?.unlock();
+            }}
+          >
+            {started ? strings.resume : strings.start}
+          </button>
+        </DialogContent>
+      </Dialog>
 
       {/* Match Over Modal */}
       {isEnded && (
@@ -549,34 +597,15 @@ export default function ZorbClash() {
       )}
 
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
-        <DialogContent className="game-dialog">
+        <DialogContent className="game-dialog" finalFocus={containerRef}>
           <DialogTitle>Zorb Clash</DialogTitle>
-          <ul className="zorb-help">
-            <li>
-              <span>
-                <span className="house-key">W</span>
-                <span className="house-key">A</span>
-                <span className="house-key">S</span>
-                <span className="house-key">D</span>
-              </span>
-              {strings.roll}
-            </li>
-            <li>
-              <span>
-                <span className="house-key">Space</span>
-              </span>
-              {strings.bumperDash}
-            </li>
-            <li>
-              <span>
-                <span className="house-key">Shift</span>
-              </span>
-              {strings.braceAnchor}
-            </li>
-          </ul>
+          <p>{strings.intro}</p>
+          <p>{touchActive ? strings.touchHelp : strings.keyboardHelp}</p>
           <p className="help-note">
-            <strong>{strings.turtled}</strong> {strings.turtledSub}
+            <strong>{strings.turtled}</strong>{' '}
+            {touchActive ? strings.recoveryHint : strings.turtledSub}
           </p>
+          <p className="help-note">{strings.paused}</p>
         </DialogContent>
       </Dialog>
     </main>

@@ -44,6 +44,7 @@ void test('bumper dash charges and releases explosive impulse', () => {
   const physics = new ZorbClashPhysics(w);
 
   // Hold dash for 1 second to charge
+  for (let i = 0; i < 30; i++) physics.step(1 / 60);
   p.input.dash = true;
   p.input.z = 1;
   for (let i = 0; i < 60; i++) {
@@ -67,17 +68,18 @@ void test('brace anchor stance increases damping and stability', () => {
 
   const physics = new ZorbClashPhysics(w);
 
+  for (let i = 0; i < 30; i++) physics.step(1 / 60);
   p.input.brace = true;
   physics.step(1 / 60);
 
   assert.equal(p.braced, true, 'Player is in braced state');
   const body = physics.playerBodies.get(p.id)!;
   assert.ok(
-    body.mass > 200,
-    'Mass increased to anchor against incoming impacts',
+    body.mass === 70,
+    'Bracing does not change body mass or inject collision energy',
   );
   assert.ok(
-    body.linearDamping > 0.8,
+    body.linearDamping >= 0.8,
     'High linear damping prevents getting launched',
   );
 });
@@ -110,17 +112,22 @@ void test('scoring a goal updates score and triggers celebration phase', () => {
   const w = freshZorbWorld(1000);
   const physics = new ZorbClashPhysics(w);
 
-  // Position ball inside the Blue goal (North: +Z)
-  physics.ballBody.position.set(0, 1.0, PITCH_LENGTH / 2 + 1.5);
+  // Move through the opening from the field until the entire ball crosses.
+  physics.ballBody.position.set(
+    0,
+    BALL_RADIUS,
+    PITCH_LENGTH / 2 - BALL_RADIUS - 0.2,
+  );
+  physics.ballBody.velocity.z = 12;
 
-  advanceZorbClash(w, physics, 1 / 60);
+  for (let i = 0; i < 25; i++) advanceZorbClash(w, physics, 1 / 60);
 
   assert.equal(w.score.red, 1, 'Red team scored a goal!');
   assert.equal(w.status, 'goal_scored', 'World entered goal celebration phase');
   assert.ok(w.celebrationTimer > 0, 'Celebration timer running');
 });
 
-void test('turtle goal gives style points when a turtle is punted into net', () => {
+void test('a fallen player in the net never scores', () => {
   const w = freshZorbWorld(1000);
   const p = newZorbPlayer('p1', 'Victim', 0, 'blue', false);
   p.turtle = true;
@@ -134,12 +141,8 @@ void test('turtle goal gives style points when a turtle is punted into net', () 
 
   advanceZorbClash(w, physics, 1 / 60);
 
-  assert.equal(w.score.blue, 1, 'Blue team scored!');
-  assert.equal(
-    w.lastGoal?.isTurtleGoal,
-    true,
-    'Scored as a hilarious TURTLE GOAL',
-  );
+  assert.equal(w.score.blue, 0);
+  assert.equal(w.lastGoal, null);
 });
 
 void test('bot AI wiggles when turtle and chases ball when upright', () => {

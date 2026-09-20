@@ -1,3 +1,4 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import {
   BALL_RADIUS,
@@ -8,6 +9,8 @@ import {
 } from './types';
 import { createZorbAvatar, poseZorbWorker, type ZorbMeshRig } from './avatar';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
+import { cameraTarget } from './controls';
+import { FENCE_HEIGHT } from './physics';
 import { createStadium, type StadiumRig } from './stadium';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import {
@@ -87,6 +90,9 @@ export class ZorbClashScene {
     wiggle: false,
   };
   private keysDown = new Set<string>();
+  private inputEnabled = true;
+  private inputCleanup: (() => void) | undefined;
+  private renderClock = 0;
 
   constructor(
     container: HTMLElement,
@@ -258,6 +264,26 @@ export class ZorbClashScene {
         pad.castShadow = true;
         pad.receiveShadow = true;
         group.add(pad);
+
+        // The visible mesh matches the physical catch fence above the padded boards.
+        const fence = new T.Mesh(
+          new T.BoxGeometry(
+            c.width,
+            FENCE_HEIGHT - 1.9,
+            c.depth,
+            isEastWest ? 1 : Math.ceil(c.width),
+            6,
+            isEastWest ? Math.ceil(c.depth) : 1,
+          ),
+          new T.MeshBasicMaterial({
+            color: '#46685d',
+            wireframe: true,
+            transparent: true,
+            opacity: 0.16,
+          }),
+        );
+        fence.position.y = (FENCE_HEIGHT + 1.9) / 2 - c.y;
+        group.add(fence);
 
         // Accordion Springs
         const springs: T.Mesh[] = [];
@@ -547,20 +573,31 @@ export class ZorbClashScene {
       }
 
       rig.root.position.set(player.x, player.y, player.z);
-      rig.root.quaternion.set(player.qx, player.qy, player.qz, player.qw);
+      rig.root.quaternion.identity();
+      rig.shell.quaternion.set(player.qx, player.qy, player.qz, player.qw);
+      if (rig.shadow) rig.shadow.position.y = 0.025 - player.y;
 
       // Keep overhead name badge and indicator facing the camera
       if (rig.overheadIndicator) {
         rig.overheadIndicator.quaternion.copy(this.camera.quaternion);
       }
 
-      const speed = Math.hypot(player.vx, player.vz);
-      poseZorbWorker(rig, world.clock, {
+      const speed =
+        player.grounded && Math.hypot(player.input.x, player.input.z) > 0.1
+          ? Math.hypot(player.vx, player.vz)
+          : 0;
+      poseZorbWorker(rig, world.clock / 1000, {
         speed,
         turtle: player.turtle,
         braced: player.braced,
         dashCharge: player.dashCharge,
         dashing: player.dashing > 0,
+        heading: player.heading,
+        gait: player.gait,
+        balance: player.balance,
+        recovery: player.recovery,
+        fallX: player.fallX,
+        fallZ: player.fallZ,
       });
     }
 
@@ -572,45 +609,83 @@ export class ZorbClashScene {
       }
     }
 
-    // Dynamic Camera Tracking: focus between local player and ball
     const localPlayer = world.players.find((p) => p.id === selfId);
-    let targetX = world.ball.x * 0.3;
-    let targetZ = world.ball.z * 0.3;
-    if (localPlayer) {
-      targetX = localPlayer.x * 0.7 + world.ball.x * 0.3;
-      targetZ = localPlayer.z * 0.7 + world.ball.z * 0.3;
-    }
+    const target = cameraTarget(localPlayer, world.ball, this.camera.aspect);
+    const dt = this.renderClock
+      ? Math.max(0, Math.min(0.1, (world.clock - this.renderClock) / 1000))
+      : 1;
+    this.renderClock = world.clock;
+    const blend = 1 - Math.exp(-5 * dt);
+    this.camera.position.lerp(
+      new T.Vector3(target.x, target.height, target.z - target.height),
+      blend,
+    );
+    this.camera.lookAt(target.x, 1.2, target.z);
+  }
 
-    const desiredCamX = targetX * 0.5;
-    const desiredCamZ = targetZ - 26;
-    const desiredCamY = 25 + Math.abs(targetZ) * 0.15;
+  clearInput() {
+    this.keysDown.clear();
+    this.currentInput = {
+      x: 0,
+      z: 0,
+      dash: false,
+      brace: false,
+      wiggle: false,
+    };
+    this.callbacks.input(this.currentInput);
+  }
 
-    this.camera.position.x += (desiredCamX - this.camera.position.x) * 0.08;
-    this.camera.position.y += (desiredCamY - this.camera.position.y) * 0.08;
-    this.camera.position.z += (desiredCamZ - this.camera.position.z) * 0.08;
-    this.camera.lookAt(targetX * 0.8, 1.2, targetZ);
+  setInputEnabled(enabled: boolean) {
+    if (this.inputEnabled === enabled) return;
+    this.inputEnabled = enabled;
+    this.clearInput();
   }
 
   private setupKeyboardListeners() {
+    const gameKeys = new Set([
+      'KeyW',
+      'KeyA',
+      'KeyS',
+      'KeyD',
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      'Space',
+      'ShiftLeft',
+      'ShiftRight',
+    ]);
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!this.inputEnabled || !gameKeys.has(e.code)) return;
       if (
-        ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
-          e.code,
+        e.target instanceof Element &&
+        e.target.closest(
+          'input, textarea, select, button, a, [contenteditable="true"], [role="dialog"]',
         )
-      ) {
-        e.preventDefault();
-      }
+      )
+        return;
+      e.preventDefault();
       this.keysDown.add(e.code);
       this.updateInput();
     };
-
     const onKeyUp = (e: KeyboardEvent) => {
-      this.keysDown.delete(e.code);
+      if (!this.keysDown.delete(e.code)) return;
       this.updateInput();
     };
-
+    const clear = () => this.clearInput();
+    const visibility = () => {
+      if (document.hidden) clear();
+    };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', clear);
+    document.addEventListener('visibilitychange', visibility);
+    this.inputCleanup = () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', clear);
+      document.removeEventListener('visibilitychange', visibility);
+    };
   }
 
   private updateInput() {
@@ -658,8 +733,8 @@ export class ZorbClashScene {
     // 2. Camera Screen Shake
     if (this.screenShake > 0.001) {
       const trauma = this.screenShake ** 2;
-      this.camera.position.x += (Math.random() - 0.5) * 1.2 * trauma;
-      this.camera.position.y += (Math.random() - 0.5) * 1.2 * trauma;
+      this.camera.position.x += (Math.random() - 0.5) * 0.25 * trauma;
+      this.camera.position.y += (Math.random() - 0.5) * 0.25 * trauma;
       this.screenShake = Math.max(0, this.screenShake - dt * 2.8);
     }
 
@@ -728,6 +803,8 @@ export class ZorbClashScene {
   destroy() {
     cancelAnimationFrame(this.animFrame);
     this.resizeObserver.disconnect();
+    disposeObject(this.scene);
+    this.inputCleanup?.();
     this.renderer.dispose();
     this.container.innerHTML = '';
   }

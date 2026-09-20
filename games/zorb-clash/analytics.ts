@@ -11,7 +11,6 @@ export const zorbClashAnalytics: GameAnalytics = {
     { key: 'first-bonk', label: 'First explosive zorb collision' },
     { key: 'first-turtle', label: 'First player tipped into turtle state' },
     { key: 'first-goal', label: 'First goal scored' },
-    { key: 'turtle-goal', label: 'Turtle player punted into the net' },
     { key: 'bumper-dash-score', label: 'Bumper dash launch leading to goal' },
   ],
   reasons: {
@@ -39,7 +38,6 @@ export function zorbClashPlayState(
   if (world.players.some((p) => p.turtle)) milestones.push('first-turtle');
   if (world.score.red > 0 || world.score.blue > 0)
     milestones.push('first-goal');
-  if (world.lastGoal?.isTurtleGoal) milestones.push('turtle-goal');
 
   if (
     world.status === 'playing' ||
