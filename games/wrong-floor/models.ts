@@ -280,6 +280,8 @@ export function buildHotel() {
   );
   return {
     root,
+    exit,
+    vote,
     mouth,
     smile,
     eyes,

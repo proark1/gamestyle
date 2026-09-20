@@ -17,6 +17,7 @@ export const hotelAnalytics: GameAnalytics = {
   reasons: {
     'checked-out': 'Cleared all five stops',
     'three-mistakes': 'Three wrong calls',
+    timeout: 'Nobody voted before the deadline',
     'nobody-escaped': 'Nobody reached the elevator',
   },
   actions: {
@@ -57,7 +58,12 @@ export function hotelPlayState(
         ? { outcome: 'won', reason: 'checked-out', score: world.cleared }
         : {
             outcome: 'lost',
-            reason: world.mistakes >= 3 ? 'three-mistakes' : 'nobody-escaped',
+            reason:
+              world.endedBy === 'timeout'
+                ? 'timeout'
+                : world.mistakes >= 3
+                  ? 'three-mistakes'
+                  : 'nobody-escaped',
             score: world.cleared,
           },
   };

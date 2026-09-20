@@ -11,13 +11,11 @@ import {
   Copy,
   DoorOpen,
   Eye,
-  Footprints,
   Hotel,
   KeyRound,
   LoaderCircle,
   MessageCircle,
   ShieldCheck,
-  Timer,
   Users,
 } from 'lucide-react';
 import {
@@ -32,13 +30,7 @@ import {
   PeerGameConnection,
   enterPeerRoom,
 } from '../../shared/peer/connection';
-import {
-  advanceHotel,
-  freshHotel,
-  newGuest,
-  hotelAction,
-  hotelSnapshot,
-} from './simulation';
+import { freshHotel, newGuest, hotelAction, hotelSnapshot } from './simulation';
 import {
   COLORS,
   STATIONS,
@@ -56,7 +48,9 @@ import type { HotelScene } from './scene';
 import type { HotelCameraMode } from './camera';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import { WRONG_FLOOR_TRANSLATIONS } from './translations';
+import { hotelText, hotelError, type HotelText } from './translations';
+import { clueText, legacyFinding, stationName } from './evidence';
+import { advancePractice } from './practice';
 import {
   GameTracker,
   useGameTracker,
@@ -78,8 +72,8 @@ const countdown = (ms: number) =>
 const tracker = new GameTracker(hotelAnalytics);
 
 export default function WrongFloor() {
-  const { t } = useLanguage();
-  const strings = t(WRONG_FLOOR_TRANSLATIONS);
+  const { language } = useLanguage();
+  const say = (text: HotelText) => hotelText(text, language);
   useGameTracker(tracker);
   const container = useRef<HTMLDivElement>(null),
     scene = useRef<HotelScene | null>(null),
@@ -111,9 +105,12 @@ export default function WrongFloor() {
     'online',
   );
   const [modal, setModal] = useState<
-      'help' | 'join' | 'invite' | 'leave' | null
+      'help' | 'intro' | 'join' | 'invite' | 'leave' | null
     >(null),
     [reportsOpen, setReportsOpen] = useState(false);
+  const paused = useRef(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [readStop, setReadStop] = useState<number | null>(null);
   const [cameraMode, setCameraMode] = useState<HotelCameraMode>('first-person');
   const w = snapshot?.world,
     me = w?.players.find((p) => p.id === session?.id),
@@ -129,7 +126,7 @@ export default function WrongFloor() {
     ? Math.hypot(me.x - station.x, me.z - station.z) < 3
     : false;
   const nearVote = me ? Math.hypot(me.x, me.z + 23.5) < 4 : false;
-  const disabled = !!modal || status !== 'online';
+  const disabled = !!modal || settingsOpen || status !== 'online';
   function accept(next: HotelSnapshot) {
     if (!active.current) return;
     tracker.observe(hotelPlayState(next, active.current));
@@ -214,7 +211,7 @@ export default function WrongFloor() {
               );
               localTick.current = realNow;
               if (local.current && active.current) {
-                advanceHotel(local.current, local.current.clock + delta);
+                advancePractice(local.current, delta, paused.current);
                 accept(
                   hotelSnapshot(
                     local.current,
@@ -273,7 +270,7 @@ export default function WrongFloor() {
         'wrong-floor',
         {
           op,
-          name: name.trim() || 'Guest',
+          name: name.trim() || say('Guest'),
           ...(op === 'join' ? { code: code.toUpperCase().trim() } : {}),
         },
         () => import('./peer'),
@@ -304,8 +301,13 @@ export default function WrongFloor() {
     const now = Date.now(),
       world = freshHotel(now),
       s = { id: 'practice-guest', code: 'PRACTICE', token: '' };
-    world.players.push(newGuest(s.id, name.trim() || 'You', 0, now));
+    world.players.push(newGuest(s.id, name.trim() || say('You'), 0, now));
     hotelAction(world, s.id, { type: 'start' }, s.id);
+    world.training = true;
+    paused.current = true;
+    setModal('intro');
+    setReadStop(null);
+    setReportsOpen(false);
     local.current = world;
     active.current = s;
     latest.current = null;
@@ -322,13 +324,18 @@ export default function WrongFloor() {
     accept(hotelSnapshot(world, s.code, s.id, s.id, now));
   }
   function action(a: HotelAction) {
-    if (modal || !active.current || status !== 'online') return;
+    if (modal || settingsOpen || !active.current || status !== 'online') return;
     tracker.action(a.type);
     setNotice('');
     sound.current?.unlock();
     try {
       if (local.current) {
         hotelAction(local.current, active.current.id, a, active.current.id);
+        if (a.type === 'restart') {
+          local.current.training = true;
+          setReadStop(null);
+          setReportsOpen(false);
+        }
         accept(
           hotelSnapshot(
             local.current,
@@ -347,8 +354,12 @@ export default function WrongFloor() {
     actionRef.current = action;
   });
   useEffect(() => {
-    scene.current?.setBlocked(!!modal || status !== 'online');
-  }, [modal, status, ready]);
+    paused.current = !!modal || settingsOpen;
+    scene.current?.setBlocked(!!modal || settingsOpen || status !== 'online');
+  }, [modal, settingsOpen, status, ready]);
+  useEffect(() => {
+    scene.current?.setLanguage(language);
+  }, [language, ready]);
   useEffect(() => {
     scene.current?.setGentle(gentle);
   }, [gentle, ready]);
@@ -391,18 +402,35 @@ export default function WrongFloor() {
       setNotice('Copy the room code and share it with your friends.');
     }
   }
-  const currentHint = escape
-    ? me?.safe
-      ? 'Hold the door. Your friends are still out there.'
-      : me?.caught
-        ? 'The hotel caught you. A friend can still save the stay.'
-        : 'RUN TO THE BRASS ELEVATOR. Your camera has turned toward the exit.'
-    : you?.inspected
-      ? 'Share your finding, then meet at the far-end panel.'
-      : `Follow the gold ring to ${station.name.toLowerCase()}. Press E to inspect.`;
+  const reports = w?.players.filter((p) => p.report).length ?? 0;
+  const readReports = readStop === w?.stopAt;
+  const targetName = stationName(you?.station ?? 0, language);
+  const normalClue = clueText(
+    { station: you?.station ?? 0, odd: false, variant: 0 },
+    language,
+  );
+  const ownClue = you?.inspected
+    ? clueText(
+        { station: you.station, odd: you.anomaly, variant: you.variant ?? 0 },
+        language,
+      )
+    : '';
+  const nextStep = !you?.inspected
+    ? say('Find your clue')
+    : !me?.report
+      ? say('Share finding')
+      : !readReports
+        ? say('Read the crew findings')
+        : say('Go to the voting panel');
+  const showReports = () => {
+    setReportsOpen(!reportsOpen);
+    if (!reportsOpen && w) setReadStop(w.stopAt);
+  };
+  const decisionClues = w?.lastDecision?.clues;
   return (
     <main
-      className={`hotel-game${session ? ' in-session' : ''}${escape ? ' escaping' : ''}`}
+      className={`hotel-game${session ? ' in-session' : ''}${escape ? ' escaping' : ''}${gentle ? ' gentle' : ''}${inspect && nearVote ? ' at-panel' : ''}`}
+      lang={language}
       {...partyRound(
         !!session && done,
         w
@@ -417,169 +445,189 @@ export default function WrongFloor() {
       <header className="hotel-header">
         <a href="/" className="hotel-brand">
           <span>
-            <Hotel size={22} />
+            <Hotel size={20} />
           </span>{' '}
           WRONG FLOOR<b>.</b>
         </a>
-        <GameToolbar
-          muted={muted}
-          onToggleSound={() => {
-            setMuted(!muted);
-            if (sound.current) {
-              sound.current.unlock();
-              sound.current.enabled = muted;
-            }
-            savePrefs(!muted);
-          }}
-          onHelp={() => setModal('help')}
-          onLeave={session ? () => setModal('leave') : undefined}
-          workshop="/wrong-floor/admin"
-          voice={
-            session?.peer && w
-              ? {
-                  session: { ...session, game: 'wrong-floor' },
-                  onSpeaking: (active) => sound.current?.duck(active),
-                  snapshot: {
-                    players: w.players.filter((p) => !p.bot),
-                    nearby: false,
-                  },
+        <div className="hotel-tools">
+          <button
+            onClick={() => setModal('help')}
+            aria-label={say('How to play')}
+          >
+            <Eye size={17} />
+            <span>{say('How to play')}</span>
+          </button>
+          {session && (
+            <button onClick={() => setModal('leave')}>{say('Leave')}</button>
+          )}
+          <details
+            className="hotel-settings"
+            onToggle={(e) => setSettingsOpen(e.currentTarget.open)}
+          >
+            <summary>{say('Settings')}</summary>
+            <div className="hotel-settings-panel">
+              <GameToolbar
+                muted={muted}
+                onToggleSound={() => {
+                  setMuted(!muted);
+                  if (sound.current) {
+                    sound.current.unlock();
+                    sound.current.enabled = muted;
+                  }
+                  savePrefs(!muted);
+                }}
+                onHelp={() => setModal('help')}
+                voice={
+                  session?.peer && w
+                    ? {
+                        session: { ...session, game: 'wrong-floor' },
+                        onSpeaking: (active) => sound.current?.duck(active),
+                        snapshot: {
+                          players: w.players.filter((p) => !p.bot),
+                          nearby: false,
+                        },
+                      }
+                    : undefined
                 }
-              : undefined
-          }
-          voiceHint="Check in with friends to use voice chat. Computer guests share written findings."
-        />
+                voiceHint={say(
+                  'Check in with friends to use voice chat. Computer guests share written findings.',
+                )}
+              />
+              {session && (
+                <p>
+                  {say(
+                    practice
+                      ? 'Practice is paused while this window is open.'
+                      : 'The online round continues while this window is open.',
+                  )}
+                </p>
+              )}
+            </div>
+          </details>
+        </div>
       </header>
       {!session ? (
         <section className="hotel-menu">
           <div className="hotel-menu-copy">
             <span className="hotel-kicker">
-              <KeyRound size={15} /> THE HOTEL WOULD LIKE YOU TO STAY
+              <KeyRound size={15} />
+              {say('THE HOTEL WOULD LIKE YOU TO STAY')}
             </span>
-            <h1>
-              Why can only
-              <br />
-              <em>you</em> see that?
-            </h1>
-            <p>
-              Four friends. Five elevator stops.
-              <br />
-              You are not all seeing the same hotel.
-            </p>
+            <h1>{say('Something is wrong on this floor.')}</h1>
+            <p>{say('Four guests. Five stops. Only you can see your clue.')}</p>
+            <div className="hotel-rule">
+              <strong>{say('Inspect. Share. Decide together.')}</strong>
+              <p>
+                {say('Anything unusual? Retreat. Everything normal? Advance.')}
+              </p>
+              <small>
+                {say('A wrong call means 12 seconds to reach the elevator.')}
+              </small>
+            </div>
             <div className="hotel-meta">
-              <span>
-                <Users size={16} /> 1–4 guests
-              </span>
-              <span>
-                <Timer size={16} /> 5 stops to escape
-              </span>
+              <Users size={16} />
+              {say('1–4 guests · 5 stops to escape')}
             </div>
             <label className="hotel-field">
-              Your guest name
+              {say('Your guest name')}
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={18}
-                placeholder="Definitely checking out"
+                placeholder={say('Guest')}
                 autoComplete="nickname"
               />
             </label>
             <button
               className="hotel-primary"
               disabled={!ready || busy}
-              onClick={() => void enter('create')}
+              onClick={startPractice}
             >
-              {busy ? (
-                <LoaderCircle className="hotel-spin" size={19} />
-              ) : (
-                <KeyRound size={19} />
-              )}{' '}
-              {strings.createParty} <ArrowUpRight size={20} />
+              <Eye size={18} />
+              {say('Learn with 3 NPCs')}
+              <ArrowUpRight size={18} />
             </button>
             <div className="hotel-secondary">
               <button
                 disabled={!ready || busy}
+                onClick={() => void enter('create')}
+              >
+                {busy ? say('Checking in…') : say('Create a room')}
+              </button>
+              <button
+                disabled={!ready || busy}
                 onClick={() => setModal('join')}
               >
-                Join a room
-              </button>
-              <button disabled={!ready || busy} onClick={startPractice}>
-                Try with 3 NPCs
+                {say('Join a room')}
               </button>
             </div>
-            <span className="hotel-menu-note">
-              Compare clues. Trust your friends. Know when to run.
-            </span>
+            <p className="hotel-menu-note">
+              {say(
+                'Friends can join with your room code. Empty places become NPCs.',
+              )}
+            </p>
           </div>
           <figure className="hotel-menu-art">
             <img
               src="/images/wrong-floor.png"
-              alt="Four toy hotel guests at a brass elevator. Only one sees a tall shadow running down the hallway behind them."
+              alt={say(
+                'Four hotel guests at a brass elevator. A shadow waits behind them.',
+              )}
               width={1536}
               height={1024}
               fetchPriority="high"
             />
             <figcaption>
-              <span>“THE HALLWAY IS EMPTY.”</span>
-              <strong>Three out of four guests agree.</strong>
+              <span>{say('“THE HALLWAY IS EMPTY.”')}</span>
+              <strong>{say('Three out of four guests agree.')}</strong>
             </figcaption>
             <span className="hotel-art-key">
-              <KeyRound size={21} /> 013
+              <KeyRound size={20} />
+              013
             </span>
           </figure>
-          <div className="hotel-menu-rule">
-            <Eye size={22} />
-            <p>
-              <strong>Something impossible? Retreat.</strong>
-              <span>
-                Everything normal? Advance. A wrong call gives you 12 seconds to
-                run.
-              </span>
-            </p>
-          </div>
         </section>
       ) : (
         <>
-          <section className="hotel-progress" aria-label="Checkout progress">
-            <div>
-              <span className="hotel-kicker">
-                {practice ? 'PRACTICE STAY' : `ROOM ${session.code}`}
-              </span>
-              <strong>
-                {w?.phase === 'won'
-                  ? 'Lobby'
-                  : `Stop ${Math.min(STOPS, (w?.cleared ?? 0) + 1)}`}
-                <small> / {STOPS}</small>
-              </strong>
-            </div>
+          <section className="hotel-progress" aria-label={say('Stops cleared')}>
+            <span className="hotel-kicker">
+              {practice ? say('PRACTICE') : `${say('Room')} ${session.code}`}
+            </span>
+            <strong>
+              {say('Stop')} {Math.min(STOPS, (w?.cleared ?? 0) + 1)}
+              <small> / {STOPS}</small>
+            </strong>
             <div
               className="hotel-stop-dots"
-              aria-label={`${w?.cleared ?? 0} stops cleared`}
+              aria-label={`${w?.cleared ?? 0}/5`}
             >
               {Array.from({ length: STOPS }, (_, i) => (
                 <span
                   key={i}
                   className={(w?.cleared ?? 0) > i ? 'cleared' : ''}
                 >
-                  {(w?.cleared ?? 0) > i ? <Check size={13} /> : i + 1}
+                  {(w?.cleared ?? 0) > i ? <Check size={12} /> : i + 1}
                 </span>
               ))}
             </div>
-            <span className="hotel-chances">
-              {3 - (w?.mistakes ?? 0)} chances left
-            </span>
+            <small>
+              {Math.max(0, 3 - (w?.mistakes ?? 0))} {say('chances left')}
+            </small>
           </section>
-          {w && w.phase !== 'lobby' && !done && (
+          {w && (inspect || escape) && (
             <div className={`hotel-timer${escape ? ' urgent' : ''}`}>
               <span>
-                {escape
-                  ? 'ELEVATOR CLOSES IN'
-                  : travel
-                    ? 'GOING DOWN'
-                    : 'DECIDE IN'}
+                {say(
+                  escape
+                    ? 'ELEVATOR CLOSES IN'
+                    : w.training
+                      ? 'LEARN AT YOUR PACE'
+                      : 'DECIDE IN',
+                )}
               </span>
               <strong>
-                {travel ? (
-                  <DoorOpen size={30} />
+                {w.training && !escape ? (
+                  <span className="hotel-untimed">{say('No time limit')}</span>
                 ) : (
                   countdown(
                     escape
@@ -590,90 +638,118 @@ export default function WrongFloor() {
               </strong>
             </div>
           )}
-          <aside
-            className={`hotel-reports${reportsOpen ? ' expanded' : ''}`}
-            aria-label="Crew findings"
-          >
-            <div className="hotel-reports-heading">
-              <button
-                onClick={() => setReportsOpen(!reportsOpen)}
-                aria-expanded={reportsOpen}
-              >
-                <Users size={16} /> Crew findings{' '}
-                <span>{w?.players.filter((p) => p.report).length ?? 0}/4</span>
-              </button>
-              {!practice && (
+          {!done && !escape && (
+            <aside
+              className={`hotel-reports${reportsOpen ? ' expanded' : ''}`}
+              aria-label={say('Crew findings')}
+            >
+              <div className="hotel-reports-heading">
                 <button
-                  className="hotel-invite"
-                  onClick={() => {
-                    setCopied(false);
-                    setModal('invite');
-                  }}
+                  onClick={showReports}
+                  aria-expanded={reportsOpen}
+                  aria-controls="hotel-findings"
                 >
-                  Invite
+                  <Users size={16} />
+                  {say('Crew findings')}
+                  <span aria-live="polite">{reports}/4</span>
                 </button>
-              )}
-            </div>
-            <div className="hotel-report-list">
-              {w?.players.map((p) => (
-                <div className="hotel-report" key={p.id}>
-                  <i style={{ background: COLORS[p.color] }} />
-                  <div>
-                    <strong>
-                      {p.name}
-                      {p.id === session.id ? ' (you)' : ''}
-                      <small>
-                        {p.bot
-                          ? 'NPC'
-                          : p.safe
-                            ? 'SAFE'
-                            : p.caught
-                              ? 'CAUGHT'
+                {!practice && (
+                  <button
+                    className="hotel-invite"
+                    onClick={() => {
+                      setCopied(false);
+                      setModal('invite');
+                    }}
+                  >
+                    {say('Invite')}
+                  </button>
+                )}
+              </div>
+              {reportsOpen && (
+                <div id="hotel-findings" className="hotel-report-list">
+                  {w?.players.map((p) => (
+                    <div className="hotel-report" key={p.id}>
+                      <i style={{ background: COLORS[p.color] }} />
+                      <div>
+                        <strong>
+                          {p.name} {p.id === session.id ? say('(you)') : ''}
+                          <small>
+                            {p.bot
+                              ? 'NPC'
                               : p.vote
-                                ? p.vote.toUpperCase()
+                                ? say(
+                                    p.vote === 'advance'
+                                      ? 'Advance'
+                                      : 'Retreat',
+                                  )
                                 : ''}
-                      </small>
-                    </strong>
-                    <p>{p.report || 'Has not shared a finding.'}</p>
-                  </div>
+                          </small>
+                        </strong>
+                        <p>
+                          {p.reportClue
+                            ? clueText(p.reportClue, language)
+                            : p.report
+                              ? legacyFinding(p.report, language)
+                              : say('Has not shared a finding.')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="hotel-crew-note">
+                    {say(
+                      practice
+                        ? 'NPCs share clues. You decide.'
+                        : 'Human votes decide. A tie retreats. No votes ends the stay.',
+                    )}
+                  </p>
                 </div>
-              ))}
-              <p className="hotel-crew-note">
-                {practice
-                  ? 'NPCs report what they see. You make the call.'
-                  : 'Humans decide by majority. A tied vote retreats.'}
-              </p>
-            </div>
-          </aside>
+              )}
+            </aside>
+          )}
           {w?.phase === 'lobby' && (
             <section className="hotel-center hotel-lobby">
-              <KeyRound size={29} />
-              <span className="hotel-kicker">YOUR RESERVATION IS READY</span>
-              <h2>Everyone checked in?</h2>
+              <KeyRound size={28} />
+              <h2>{say('Everyone checked in?')}</h2>
               <p>
-                Share this code. Empty places become computer guests when the
-                host starts.
+                {say(
+                  'Friends can join with your room code. Empty places become NPCs.',
+                )}
               </p>
               <button
                 className="hotel-room-code"
                 onClick={() => void copyInvite()}
+                aria-label={say('Copy invite link')}
               >
                 {session.code}
                 {copied ? <Check size={19} /> : <Copy size={19} />}
               </button>
+              {copied && <output>{say('Copied')}</output>}
               <p>
-                {w.players.filter((p) => !p.bot).length}/4 friends checked in
+                {w.players.filter((p) => !p.bot).length}/4{' '}
+                {say('guests checked in')}
               </p>
+              <div className="hotel-rule">
+                <strong>{say('Inspect. Share. Decide together.')}</strong>
+                <p>
+                  {say(
+                    'Anything unusual? Retreat. Everything normal? Advance.',
+                  )}
+                </p>
+                <small>
+                  {say('A wrong call means 12 seconds to reach the elevator.')}
+                </small>
+              </div>
               {host ? (
                 <button
                   className="hotel-primary"
                   disabled={disabled}
                   onClick={() => action({ type: 'start' })}
                 >
-                  Enter the elevator <ArrowDown size={19} />
+                  {say('Enter the elevator')}
+                  <ArrowDown size={19} />
                 </button>
               ) : (
-                <p>Waiting for the host to enter the elevator…</p>
+                <p>{say('Waiting for the host…')}</p>
               )}
             </section>
           )}
@@ -681,94 +757,136 @@ export default function WrongFloor() {
             <>
               <button
                 className="hotel-camera"
-                aria-label={
-                  cameraMode === 'first-person'
-                    ? 'Switch to follow camera'
-                    : 'Switch to first-person camera'
-                }
-                title={
-                  cameraMode === 'first-person'
-                    ? 'First person · V to follow your guest'
-                    : 'Follow guest · V for first person'
-                }
+                aria-label={say('Switch camera')}
+                title={say('Switch camera')}
                 onClick={() => scene.current?.changeCamera()}
               >
                 <Camera size={17} />
                 <span>
-                  {cameraMode === 'first-person'
-                    ? 'First person'
-                    : 'Follow guest'}{' '}
+                  {say(
+                    cameraMode === 'first-person'
+                      ? 'First person'
+                      : 'Follow guest',
+                  )}{' '}
                   <kbd>V</kbd>
                 </span>
               </button>
               <section
                 className={`hotel-evidence${escape ? ' danger' : ''}`}
-                aria-label="Your private evidence"
+                aria-label={say('YOUR NEXT STEP')}
               >
-                <span className="hotel-kicker">
-                  {escape ? <DoorOpen size={16} /> : <Eye size={16} />}
-                  {escape
-                    ? me?.safe
-                      ? 'YOU MADE IT'
-                      : me?.caught
-                        ? 'WAIT FOR YOUR CREW'
-                        : 'DO NOT LOOK BACK'
-                    : `ONLY YOU / ${station.name.toUpperCase()}`}
-                </span>
-                <strong>
-                  {escape ? currentHint : you?.observation || currentHint}
-                </strong>
-                {!escape && you?.inspected && (
-                  <small>
-                    {me?.report
-                      ? 'Shared with your crew.'
-                      : 'Your friends cannot see this. Tell them.'}
-                  </small>
-                )}
-                {!escape && (
-                  <div className="hotel-evidence-actions">
-                    <button
-                      disabled={disabled || !nearClue || !!you?.inspected}
-                      onClick={() => action({ type: 'inspect' })}
-                    >
-                      <Eye size={17} />
-                      {you?.inspected ? 'Inspected' : 'Inspect'}
-                      <kbd>E</kbd>
-                    </button>
-                    <button
-                      disabled={disabled || !you?.inspected || !!me?.report}
-                      onClick={() => action({ type: 'report' })}
-                    >
-                      <MessageCircle size={17} />
-                      {me?.report ? 'Shared' : 'Share finding'}
-                      <kbd>R</kbd>
-                    </button>
-                  </div>
-                )}
-                {escape && !me?.safe && !me?.caught && (
-                  <small>
-                    You sprint automatically. Move toward the gold EXIT sign.
-                  </small>
+                {escape ? (
+                  <>
+                    <span className="hotel-kicker">
+                      <DoorOpen size={17} />
+                      {say(
+                        me?.safe
+                          ? 'YOU MADE IT'
+                          : me?.caught
+                            ? 'WAIT FOR YOUR CREW'
+                            : 'RUN TO THE ELEVATOR',
+                      )}
+                    </span>
+                    <strong>
+                      {say(
+                        me?.safe
+                          ? 'Hold the door. A single survivor saves the crew.'
+                          : me?.caught
+                            ? 'The hotel caught you. A friend can still save everyone.'
+                            : 'Follow the gold EXIT sign. Hold forward; you sprint automatically.',
+                      )}
+                    </strong>
+                  </>
+                ) : (
+                  <>
+                    <span className="hotel-kicker">
+                      <Eye size={16} />
+                      {targetName}
+                    </span>
+                    <strong>{nextStep}</strong>
+                    {!you?.inspected ? (
+                      <>
+                        <p>
+                          {say('Follow the gold ring. Move closer to inspect.')}
+                        </p>
+                        <small>
+                          {say('Normally:')} {normalClue}
+                        </small>
+                        <div className="hotel-evidence-actions">
+                          <button
+                            disabled={disabled || !nearClue}
+                            onClick={() => action({ type: 'inspect' })}
+                          >
+                            <Eye size={16} />
+                            {say('Inspect')}
+                            <kbd>E</kbd>
+                          </button>
+                        </div>
+                      </>
+                    ) : !me?.report ? (
+                      <>
+                        <p>{ownClue}</p>
+                        <small>
+                          {say(
+                            'Share this with your crew. They cannot see your clue.',
+                          )}
+                        </small>
+                        <div className="hotel-evidence-actions">
+                          <button
+                            disabled={disabled}
+                            onClick={() => action({ type: 'report' })}
+                          >
+                            <MessageCircle size={16} />
+                            {say('Share finding')}
+                            <kbd>R</kbd>
+                          </button>
+                        </div>
+                      </>
+                    ) : !readReports ? (
+                      <>
+                        <p>
+                          {say(
+                            'Compare all four reports. One unusual clue is enough to retreat.',
+                          )}
+                        </p>
+                        <div className="hotel-evidence-actions">
+                          <button onClick={showReports}>
+                            <Users size={16} />
+                            {say('Crew findings')} {reports}/4
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <p>
+                        {say(
+                          'Follow the gold ring to the far end of the hall.',
+                        )}
+                      </p>
+                    )}
+                  </>
                 )}
               </section>
-              {inspect && (
+              {inspect && nearVote && (
                 <div className="hotel-voting">
                   <span>
-                    {nearVote ? 'MAKE THE CALL' : 'VOTE AT THE FAR-END PANEL'}
-                    {me?.vote ? ` / YOU VOTED ${me.vote.toUpperCase()}` : ''}
+                    {say('MAKE THE CALL')}
+                    {me?.vote
+                      ? ` / ${say('You voted:')} ${say(me.vote === 'advance' ? 'Advance' : 'Retreat')}`
+                      : ''}
                   </span>
                   <div>
                     <button
                       className={me?.vote === 'advance' ? 'selected' : ''}
                       aria-pressed={me?.vote === 'advance'}
-                      disabled={disabled || !nearVote}
+                      disabled={disabled}
                       onClick={() =>
                         action({ type: 'vote', choice: 'advance' })
                       }
                     >
                       <ArrowDown size={19} />
                       <span>
-                        Advance<small>Everything normal</small>
+                        {say('Advance')}
+                        <small>{say('Everything normal')}</small>
                       </span>
                       <kbd>1</kbd>
                     </button>
@@ -777,14 +895,15 @@ export default function WrongFloor() {
                         me?.vote === 'retreat' ? 'selected retreat' : 'retreat'
                       }
                       aria-pressed={me?.vote === 'retreat'}
-                      disabled={disabled || !nearVote}
+                      disabled={disabled}
                       onClick={() =>
                         action({ type: 'vote', choice: 'retreat' })
                       }
                     >
                       <ArrowUp size={19} />
                       <span>
-                        Retreat<small>Someone saw something</small>
+                        {say('Retreat')}
+                        <small>{say('Something unusual')}</small>
                       </span>
                       <kbd>2</kbd>
                     </button>
@@ -797,54 +916,76 @@ export default function WrongFloor() {
                 jump={() => {}}
               />
               <div className="hotel-movement">
-                WASD / arrows move · Shift sprint · Drag to look up/down · V
-                camera
+                <span className="hotel-desktop-hint">
+                  {say(
+                    'WASD / arrows: move · Drag: look · Shift: sprint · V: camera',
+                  )}
+                </span>
+                <span className="hotel-touch-hint">
+                  {say('Joystick: move · Drag the hallway: look')}
+                </span>
               </div>
             </>
           )}
           {travel && (
             <section className="hotel-center hotel-travel">
-              <ShieldCheck size={34} />
+              <ShieldCheck size={30} />
               <span className="hotel-kicker">
-                {w?.lastDecision?.correct ? 'GOOD CALL' : 'YOU HELD THE DOOR'}
+                {say(
+                  w?.lastDecision?.correct ? 'GOOD CALL' : 'YOU HELD THE DOOR',
+                )}
               </span>
               <h2>
-                {w?.lastDecision?.correct
-                  ? 'Going down.'
-                  : 'Still checking out.'}
+                {say(
+                  w?.lastDecision?.correct
+                    ? 'Going down.'
+                    : 'The crew is back.',
+                )}
               </h2>
-              <p>{w?.lastDecision?.evidence}</p>
+              <p>
+                {decisionClues
+                  ? decisionClues
+                      .filter((c) => !decisionClues.some((d) => d.odd) || c.odd)
+                      .map((c) => clueText(c, language))
+                      .join(' ')
+                  : legacyFinding(w?.lastDecision?.evidence ?? '', language)}
+              </p>
               <small>
                 {w?.lastDecision?.correct
-                  ? `${w.cleared} of 5 stops cleared.`
-                  : 'The crew is back. New evidence on the same stop.'}
+                  ? `${w.cleared}/5 ${say('Stops cleared')}`
+                  : say('New clues. Same stop.')}
               </small>
             </section>
           )}
           {done && (
             <section className="hotel-center hotel-results">
-              <DoorOpen size={34} />
-              <span className="hotel-kicker">
-                {w?.phase === 'won'
-                  ? 'RESERVATION CANCELLED'
-                  : 'RESERVATION EXTENDED'}
-              </span>
+              <DoorOpen size={30} />
               <h2>
-                {w?.phase === 'won'
-                  ? 'You checked out.'
-                  : 'Wrong floor. Again.'}
+                {say(
+                  w?.phase === 'won'
+                    ? 'You checked out.'
+                    : 'The hotel is keeping you.',
+                )}
               </h2>
               <p>
-                {w?.phase === 'won'
-                  ? 'Five stops. Four guests. One very relieved elevator.'
-                  : w?.events.at(-1)?.text}
+                {say(
+                  w?.phase === 'won'
+                    ? 'Five stops. Four guests. One way out.'
+                    : w?.endedBy === 'timeout'
+                      ? 'Nobody voted in time. Reach the far-end panel and make a choice.'
+                      : (w?.mistakes ?? 0) >= 3
+                        ? 'Three wrong calls. Your reservation has been extended.'
+                        : 'Nobody reached the elevator. Follow the exit sign and keep running.',
+                )}
               </p>
               <div className="hotel-result-stats">
                 <span>
-                  <strong>{w?.cleared}/5</strong>stops cleared
+                  <strong>{w?.cleared}/5</strong>
+                  {say('Stops cleared')}
                 </span>
                 <span>
-                  <strong>{w?.mistakes}</strong>wrong calls
+                  <strong>{w?.mistakes}</strong>
+                  {say('wrong calls')}
                 </span>
               </div>
               {host && (
@@ -853,7 +994,8 @@ export default function WrongFloor() {
                   disabled={disabled}
                   onClick={() => action({ type: 'restart' })}
                 >
-                  Another stay <KeyRound size={19} />
+                  {say('Another stay')}
+                  <KeyRound size={18} />
                 </button>
               )}
               <button
@@ -861,7 +1003,7 @@ export default function WrongFloor() {
                 disabled={busy}
                 onClick={() => void leave()}
               >
-                Back to check-in
+                {say('Back to check-in')}
               </button>
             </section>
           )}
@@ -869,25 +1011,33 @@ export default function WrongFloor() {
       )}
       {status !== 'online' && session && (
         <output className="hotel-connection">
-          {status === 'expired'
-            ? 'This room has closed.'
-            : 'Reconnecting to your crew…'}
+          {say(
+            status === 'expired'
+              ? 'This room has closed.'
+              : 'Reconnecting to your crew…',
+          )}
           {status === 'expired' && (
-            <button onClick={() => void leave()}>Back to check-in</button>
+            <button onClick={() => void leave()}>
+              {say('Back to check-in')}
+            </button>
           )}
         </output>
       )}
       {notice && (
         <output className="hotel-notice">
-          {notice}
-          <button aria-label="Dismiss message" onClick={() => setNotice('')}>
+          {hotelError(notice, language)}
+          <button
+            aria-label={say('Dismiss message')}
+            onClick={() => setNotice('')}
+          >
             ×
           </button>
         </output>
       )}
       {!ready && !notice && (
         <div className="hotel-loading">
-          <LoaderCircle size={18} className="hotel-spin" /> Opening the hotel…
+          <LoaderCircle size={18} className="hotel-spin" />
+          {say('Opening the hotel…')}
         </div>
       )}
       <Dialog
@@ -896,68 +1046,101 @@ export default function WrongFloor() {
           if (!open) setModal(null);
         }}
       >
-        <DialogContent className="hotel-dialog">
+        <DialogContent className="hotel-dialog" showCloseButton={false}>
+          <button
+            className="hotel-dialog-close"
+            aria-label={say('Close')}
+            onClick={() => setModal(null)}
+          >
+            ×
+          </button>
           <DialogTitle>
-            {modal === 'help'
-              ? 'How to check out'
-              : modal === 'join'
-                ? 'Find your friends'
-                : modal === 'invite'
-                  ? 'Share your reservation'
-                  : 'Leave the hotel?'}
+            {say(
+              modal === 'intro'
+                ? 'Before the doors open'
+                : modal === 'help'
+                  ? 'How to check out'
+                  : modal === 'join'
+                    ? 'Find your friends'
+                    : modal === 'invite'
+                      ? 'Share your reservation'
+                      : 'Leave the hotel?',
+            )}
           </DialogTitle>
           <DialogDescription>
-            {modal === 'help'
-              ? 'You share a hallway. You do not share a reality.'
-              : modal === 'join'
-                ? 'Enter the six-character room code from your host.'
-                : modal === 'invite'
-                  ? 'Friends can join before the elevator starts.'
-                  : 'Your crew can keep playing. A computer guest will take your place.'}
+            {say(
+              modal === 'intro' || modal === 'help'
+                ? 'You share a hallway. You do not share a reality.'
+                : modal === 'join'
+                  ? 'Enter the six-character room code from your host.'
+                  : modal === 'invite'
+                    ? 'Friends can join before the elevator starts.'
+                    : 'Your crew can continue with an NPC in your place.',
+            )}
           </DialogDescription>
-          {modal === 'help' && (
+          {(modal === 'help' || modal === 'intro') && (
             <div className="hotel-help">
+              <ol>
+                <li>
+                  <strong>{say('Inspect your own clue.')}</strong>
+                  <p>
+                    {say(
+                      'Follow the gold ring. Use E or the Inspect button near your object.',
+                    )}
+                  </p>
+                </li>
+                <li>
+                  <strong>{say('Know the normal hotel.')}</strong>
+                  <p>
+                    {say(
+                      'Dry carpet. Still, unsmiling portrait. Silent room 309. Clock stopped at 12:00.',
+                    )}
+                  </p>
+                </li>
+                <li>
+                  <strong>{say('Share and compare.')}</strong>
+                  <p>
+                    {say(
+                      'Use R or Share finding. Read all four crew reports. NPCs report automatically; no microphone is needed.',
+                    )}
+                  </p>
+                </li>
+                <li>
+                  <strong>{say('Vote at the far-end panel.')}</strong>
+                  <p>
+                    {say(
+                      'One anomaly means Retreat. All normal means Advance. Reach five stops to escape.',
+                    )}
+                  </p>
+                </li>
+              </ol>
               <p>
-                <Eye size={20} />
-                <span>
-                  <strong>Inspect your own clue.</strong> Follow the gold ring
-                  to your assigned carpet, portrait, door, or clock. The normal
-                  hotel has dry carpet, a still unsmiling portrait, a silent
-                  room 309, and a clock stopped at 12:00.
-                </span>
+                <strong>{say('A wrong call means run.')}</strong>{' '}
+                {say(
+                  'The camera turns to the exit. Run forward to the brass elevator within 12 seconds. One survivor saves everyone. Three wrong calls end the stay.',
+                )}
               </p>
               <p>
-                <MessageCircle size={20} />
-                <span>
-                  <strong>Compare evidence.</strong> Press E to inspect, then R
-                  to share. Voice chat is in the toolbar. Computer guests share
-                  written findings. No microphone is needed.
-                </span>
+                {say(
+                  'Human votes decide. A tie retreats. No votes ends the stay.',
+                )}
               </p>
-              <p>
-                <KeyRound size={20} />
-                <span>
-                  <strong>Vote at the far-end panel.</strong> Advance if
-                  everything is normal. Retreat if anyone has an anomaly.
-                  Majority of human votes wins; ties and no votes retreat. You
-                  have 90 seconds.
-                </span>
-              </p>
-              <p>
-                <Footprints size={20} />
-                <span>
-                  <strong>A wrong call means run.</strong> Your camera turns
-                  toward the brass elevator. Reach it in 12 seconds. One human
-                  holding the door brings the whole crew back. Three wrong calls
-                  or nobody escaping ends the stay.
-                </span>
-              </p>
-              <p>
-                The ventilation hums and the pipes settle on every floor.
-                Failing lights and an unfamiliar figure mean something is wrong.
-                Listen for your friends’ footsteps and sounds from your clue.
-                The brass elevator stays lit during a chase.
-              </p>
+              {practice && (
+                <p>
+                  {say(
+                    'Your first practice stop has no timer. The next stops give you 90 seconds.',
+                  )}
+                </p>
+              )}
+              {session && (
+                <output className="hotel-pause-note">
+                  {say(
+                    practice
+                      ? 'Practice is paused while this window is open.'
+                      : 'The online round continues while this window is open.',
+                  )}
+                </output>
+              )}
               <label className="hotel-gentle">
                 <input
                   type="checkbox"
@@ -967,15 +1150,19 @@ export default function WrongFloor() {
                     savePrefs(muted, e.target.checked);
                   }}
                 />
-                Steady lights &amp; gentler motion
+                {say('Steady lights & gentler motion')}
               </label>
-              <p>
-                You start in first person, at your guest’s eye level. Drag to
-                look up, down or around. WASD / arrows move, Shift sprints, and
-                V switches to a close follow camera. On touch screens, use the
-                joystick to move and drag the hallway to look. You automatically
-                sprint during escapes.
+              <p className="hotel-desktop-hint">
+                {say(
+                  'WASD / arrows: move · Drag: look · Shift: sprint · V: camera',
+                )}
               </p>
+              <p className="hotel-touch-hint">
+                {say('Joystick: move · Drag the hallway: look')}
+              </p>
+              <button className="hotel-primary" onClick={() => setModal(null)}>
+                {say(modal === 'intro' ? 'Start exploring' : 'Close')}
+              </button>
             </div>
           )}
           {modal === 'join' && (
@@ -987,17 +1174,17 @@ export default function WrongFloor() {
               }}
             >
               <label className="hotel-field">
-                Guest name
+                {say('Your guest name')}
                 <input
                   maxLength={18}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="nickname"
-                  placeholder="Guest"
+                  placeholder={say('Guest')}
                 />
               </label>
               <label className="hotel-field">
-                Room code
+                {say('Room code')}
                 <input
                   value={code}
                   onChange={(e) =>
@@ -1019,7 +1206,7 @@ export default function WrongFloor() {
                 disabled={busy || !ready || code.length !== 6}
                 type="submit"
               >
-                {busy ? 'Checking in…' : 'Join the hotel'}
+                {say(busy ? 'Checking in…' : 'Join the hotel')}
                 <ArrowUpRight size={18} />
               </button>
             </form>
@@ -1033,34 +1220,23 @@ export default function WrongFloor() {
                 {session?.code}
                 {copied ? <Check size={19} /> : <Copy size={19} />}
               </button>
-              <p>
-                {copied
-                  ? 'Invite link copied.'
-                  : 'Tap the code to copy the invite link.'}
-              </p>
+              <p>{say(copied ? 'Invite link copied.' : 'Copy invite link')}</p>
             </>
           )}
           {modal === 'leave' && (
-            <div className="hotel-join">
-              <button
-                className="hotel-primary"
-                disabled={busy}
-                onClick={() => void leave()}
-              >
-                Back to check-in
-              </button>
-              <button
-                className="hotel-text-button"
-                disabled={busy}
-                onClick={() => {
-                  void leave().then(() => location.assign('/'));
-                }}
-              >
-                All games
-              </button>
-            </div>
+            <button
+              className="hotel-primary"
+              disabled={busy}
+              onClick={() => void leave()}
+            >
+              {say('Back to check-in')}
+            </button>
           )}
-          {notice && <output className="hotel-dialog-notice">{notice}</output>}
+          {notice && (
+            <output className="hotel-dialog-notice">
+              {hotelError(notice, language)}
+            </output>
+          )}
         </DialogContent>
       </Dialog>
     </main>

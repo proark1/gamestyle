@@ -1,3 +1,4 @@
+import { clueText } from './evidence';
 import { clamp } from '../../shared/math/clamp';
 import {
   STATIONS,
@@ -39,7 +40,7 @@ export function newGuest(
     color: color % 4,
     slot,
     bot,
-    x: (slot - 1.5) * 0.8,
+    x: (slot - 1.5) * 0.34,
     z: 3.2,
     facing: Math.PI,
     seen: now,
@@ -76,11 +77,16 @@ export function freshHotel(now: number): HotelWorld {
 export function stationFor(w: HotelWorld, p: Guest) {
   return (p.slot + w.cleared) % 4;
 }
-function observation(w: HotelWorld, p: Guest) {
+function evidence(w: HotelWorld, p: Guest) {
   const station = stationFor(w, p);
-  return w.plan.anomalies.includes(station)
-    ? STATIONS[station].odd
-    : STATIONS[station].normal;
+  return {
+    station,
+    odd: w.plan.anomalies.includes(station),
+    variant: w.plan.variants?.[station] ?? 0,
+  };
+}
+function observation(w: HotelWorld, p: Guest) {
+  return clueText(evidence(w, p), 'en');
 }
 function stop(w: HotelWorld) {
   w.phase = 'playing';
@@ -97,13 +103,15 @@ function stop(w: HotelWorld) {
   };
   if (cursed && random(w) < 0.5)
     w.plan.anomalies.push((first + 1 + Math.floor(random(w) * 3)) % 4);
+  w.plan.variants = STATIONS.map(() => Math.floor(random(w) * 2));
   w.ghostZ = -29;
   for (const p of w.players) {
-    p.x = (p.slot - 1.5) * 0.8;
+    p.x = (p.slot - 1.5) * 0.34;
     p.z = 3.2;
     p.facing = Math.PI;
     p.inspected = false;
     p.report = '';
+    p.reportClue = undefined;
     p.vote = null;
     p.safe = false;
     p.caught = false;
@@ -124,6 +132,8 @@ function start(w: HotelWorld) {
         newGuest(`hotel-bot-${slot}`, names[slot], slot, w.clock, slot, true),
       );
   w.started = w.clock;
+  w.endedBy = undefined;
+  w.training = false;
   w.cleared = 0;
   w.mistakes = 0;
   w.run++;
@@ -188,6 +198,7 @@ export function hotelAction(
       throw new Error('Inspect your clue before sharing a finding.');
     if (!p.report) {
       p.report = observation(w, p);
+      p.reportClue = evidence(w, p);
       event(w, 'report', `${p.name} shared a finding.`);
     }
   } else if (a.type === 'vote') {
@@ -205,13 +216,31 @@ function resolve(w: HotelWorld) {
   const humans = w.players.filter((p) => !p.bot);
   const advance = humans.filter((p) => p.vote === 'advance').length;
   const retreat = humans.filter((p) => p.vote === 'retreat').length;
-  // A tie or no votes chooses retreat. Computer guests advise; humans decide.
+  // Silence is not a decision. Never reward an unattended stay.
+  if (!advance && !retreat) {
+    w.phase = 'lost';
+    w.endedBy = 'timeout';
+    event(w, 'finish', 'Nobody voted before the doors closed.');
+    return;
+  }
+  w.training = false;
+  // A tied submitted vote retreats. Computer guests advise; humans decide.
   const choice: Choice = advance > retreat ? 'advance' : 'retreat';
   const correct = choice === (w.plan.anomalies.length ? 'retreat' : 'advance');
   const evidence = w.plan.anomalies.length
     ? w.plan.anomalies.map((n) => STATIONS[n].short).join(' · ')
     : 'Dry carpet. Still portrait. Silent door. Clock at 12:00.';
-  w.lastDecision = { choice, correct, evidence, escaped: 0 };
+  w.lastDecision = {
+    choice,
+    correct,
+    evidence,
+    escaped: 0,
+    clues: w.players.map((p) => ({
+      station: stationFor(w, p),
+      odd: w.plan.anomalies.includes(stationFor(w, p)),
+      variant: w.plan.variants?.[stationFor(w, p)] ?? 0,
+    })),
+  };
   for (const p of w.players) p.input = idleInput();
   if (correct) {
     w.cleared++;
@@ -287,6 +316,7 @@ function botStep(w: HotelWorld, p: Guest, dt: number) {
   ) {
     p.inspected = true;
     p.report = observation(w, p);
+    p.reportClue = evidence(w, p);
     event(w, 'report', `${p.name} shared a finding.`);
   }
 }
@@ -320,7 +350,12 @@ export function advanceHotel(w: HotelWorld, now: number) {
           step / 1000,
         );
     }
-    if (w.phase === 'playing' && w.clock - w.stopAt >= INSPECT_MS) resolve(w);
+    if (
+      !w.training &&
+      w.phase === 'playing' &&
+      w.clock - w.stopAt >= INSPECT_MS
+    )
+      resolve(w);
     if (w.phase === 'escape') {
       w.ghostZ = -29 + Math.max(0, w.clock - w.escapeAt - 1800) * 0.0041;
       for (const p of w.players) {
@@ -373,6 +408,7 @@ export function hotelSnapshot(
     },
     you: {
       station,
+      variant: me ? (w.plan.variants?.[station] ?? 0) : 0,
       inspected: me?.inspected ?? false,
       observation: active && me?.inspected ? observation(w, me) : '',
       anomaly: active && !!me && w.plan.anomalies.includes(station),

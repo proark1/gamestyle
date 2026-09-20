@@ -255,7 +255,7 @@ export class HotelSound {
     this.clips.setLoop(
       'music',
       `music.${music}`,
-      w.phase === 'playing' ? 0.35 : 0.65,
+      w.phase === 'playing' ? 0.18 + w.cleared * 0.035 : 0.65,
     );
     const bed =
       w.phase === 'playing' && w.stage === 'travel'
@@ -343,7 +343,7 @@ export class HotelSound {
         'wet-step',
         {
           x: -2.3 + (h.wetStep % 2 ? 0.17 : -0.17),
-          z: -2.5 - h.wetStep * 0.52,
+          z: -2.5 - (h.reversePrints ? 9 - h.wetStep : h.wetStep) * 0.52,
         },
         0.9,
       );
@@ -386,7 +386,7 @@ export class HotelSound {
           undefined,
           0.55,
         );
-        if (you.apparition && w.clock - w.escapeAt > 1800)
+        if (w.clock - w.escapeAt > 1800)
           this.once(
             'pursuer',
             String(Math.floor((w.clock - w.escapeAt - 1800) / 470)),

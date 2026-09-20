@@ -1,3 +1,4 @@
+import { hotelText } from './translations';
 import * as T from 'three';
 import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import {
@@ -29,6 +30,7 @@ type Callbacks = {
   listen: (position: { x: number; z: number }, yaw: number) => void;
 };
 export class HotelScene {
+  private language = 'en';
   private scene = new T.Scene();
   private camera = new T.PerspectiveCamera(65, 1, 0.08, 90);
   private renderer: T.WebGLRenderer;
@@ -150,6 +152,31 @@ export class HotelScene {
     this.mode = this.mode === 'first-person' ? 'follow' : 'first-person';
     this.snapCamera = true;
     this.cb.camera(this.mode);
+  }
+  setLanguage(language: string) {
+    if (this.language === language) return;
+    this.language = language;
+    for (const [sign, text] of [
+      [this.hotel.exit, 'ELEVATOR / EXIT'],
+      [this.hotel.vote, 'ADVANCE     RETREAT'],
+    ] as const) {
+      const replacement = label(
+        hotelText(text, language),
+        '#e6bb70',
+        '#303841',
+        text === 'ELEVATOR / EXIT' ? 2.8 : 2.7,
+      );
+      sign.material.map?.dispose();
+      sign.material.dispose();
+      sign.material = replacement.material;
+    }
+    this.renderer.domElement.setAttribute(
+      'aria-label',
+      hotelText(
+        'First-person hotel corridor. WASD or arrows move, E inspects, drag to look up, down and around. V switches camera.',
+        language,
+      ),
+    );
   }
   setGentle(value: boolean) {
     this.gentle = value;
@@ -323,7 +350,10 @@ export class HotelScene {
         this.people.set(p.id, model);
         this.scene.add(model);
       }
-      model.visible = !p.caught && !(p.id === this.id && firstPerson);
+      // Guests can share a narrow elevator; never render a face through the camera.
+      model.visible =
+        !p.caught &&
+        !(firstPerson && me && Math.hypot(p.x - me.x, p.z - me.z) < 1.1);
       // Your own name would hang right in front of the follow camera.
       (model.userData.tag as T.Sprite).visible = p.id !== this.id;
       const moving =
@@ -347,7 +377,8 @@ export class HotelScene {
       station = snapshot?.you.station;
     this.hotel.prints.visible = !!anomaly && station === 0 && !!horror?.active;
     for (let i = 0; i < this.hotel.prints.children.length; i++)
-      this.hotel.prints.children[i].visible = (horror?.wetStep ?? -1) >= i;
+      this.hotel.prints.children[i].visible =
+        (horror?.wetStep ?? -1) >= (horror?.reversePrints ? 9 - i : i);
     this.hotel.mouth.visible = !(anomaly && station === 1);
     this.hotel.smile.visible = !!anomaly && station === 1;
     this.hotel.eyes.forEach((eye, i) => {
@@ -358,12 +389,18 @@ export class HotelScene {
           : 0);
     });
     this.hotel.hands.rotation.z =
-      anomaly && station === 3 ? ((horror?.clockStep ?? 0) * Math.PI) / 6 : 0;
+      anomaly && station === 3
+        ? ((horror?.clockStep ?? 0) *
+            Math.PI *
+            (snapshot?.you.variant === 1 ? -1 : 1)) /
+          6
+        : 0;
     this.hotel.handle.rotation.x = horror?.handle ?? 0;
     this.hotel.roomDoor.position.x = 4.67 + (horror?.doorShake ?? 0);
     this.hotel.portrait.rotation.z =
       horror?.portrait && !gentle
-        ? Math.sin(horror.encounterTime / 900) * 0.045
+        ? Math.sin(horror.elapsed / 900) *
+          (snapshot?.you.variant === 1 ? 0.12 : 0.045)
         : 0;
     const inspect = w?.phase === 'playing' && w.stage === 'inspect';
     const cue = STATIONS[station ?? 0];

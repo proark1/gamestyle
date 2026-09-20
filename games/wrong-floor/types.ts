@@ -42,6 +42,7 @@ export const STATIONS = [
 export type Input = { x: number; z: number; sprint: boolean; seq: number };
 export const idleInput = (): Input => ({ x: 0, z: 0, sprint: false, seq: 0 });
 export type Choice = 'advance' | 'retreat';
+export type Clue = { station: number; odd: boolean; variant: number };
 export type Guest = {
   id: string;
   name: string;
@@ -55,6 +56,7 @@ export type Guest = {
   input: Input;
   inspected: boolean;
   report: string;
+  reportClue?: Clue;
   vote: Choice | null;
   safe: boolean;
   caught: boolean;
@@ -68,6 +70,7 @@ export type StopPlan = {
   anomalies: number[];
   witness: number;
   wallpaper: number;
+  variants?: number[];
 };
 export type HotelWorld = {
   clock: number;
@@ -92,7 +95,10 @@ export type HotelWorld = {
     correct: boolean;
     evidence: string;
     escaped: number;
+    clues?: Clue[];
   } | null;
+  training?: boolean;
+  endedBy?: 'timeout';
 };
 export type PublicGuest = Omit<Guest, 'input' | 'seen' | 'inspected' | 'slot'>;
 export type HotelSnapshot = {
@@ -109,6 +115,7 @@ export type HotelSnapshot = {
     observation: string;
     anomaly: boolean;
     apparition: boolean;
+    variant?: number;
   };
 };
 export type HotelAction = {
