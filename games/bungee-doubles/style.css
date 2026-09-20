@@ -2,9 +2,11 @@
    (shared/styles/game-ui.css) and its house HUD tokens (--hud-*). Only the
    court's own chrome lives here; the team colours come from app/globals.css. */
 .bungee-game {
+  --bungee-safe-top: env(safe-area-inset-top, 0px);
+  --bungee-safe-bottom: env(safe-area-inset-bottom, 0px);
   position: relative;
   height: 100dvh;
-  min-height: 600px;
+  min-height: 0;
   overflow: hidden;
   background: #6eaee0;
   color: var(--hud-ink);
@@ -459,7 +461,8 @@
   right: 24px;
   z-index: 15;
   display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
   gap: 14px;
 }
 
@@ -602,5 +605,330 @@
   }
   .bungee-banner h2 {
     font-size: 28px;
+  }
+}
+/* Controls occupy their own edges; court framing reserves the space between. */
+.bungee-mobile-input {
+  display: none;
+}
+.bungee-player-label {
+  position: absolute;
+  left: 50%;
+  top: 202px;
+  transform: translateX(-50%);
+  color: var(--hud-ink);
+  background: var(--hud-card);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: 600 11px/1.2 var(--hud-body);
+  pointer-events: none;
+}
+.bungee-game button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.bungee-help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #142f38a6;
+}
+.bungee-help {
+  position: fixed;
+  z-index: 101;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(580px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 24px;
+  border-radius: 20px;
+  background: #fff9df;
+  color: #263d3a;
+  box-shadow: 0 18px 60px #0004;
+  font: 15px/1.5 var(--hud-body);
+}
+.bungee-help h2 {
+  font-family: var(--hud-display);
+  margin: 0 0 14px;
+}
+.bungee-help p {
+  margin: 0 0 14px;
+}
+.bungee-help button {
+  min-height: 44px;
+}
+@media (max-width: 900px), (any-pointer: coarse) {
+  .bungee-mobile-input {
+    display: block;
+  }
+  .bungee-dock .bungee-play-action {
+    display: none;
+  }
+  .bungee-dock {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    max-width: calc(100% - 20px);
+    width: max-content;
+    flex-wrap: nowrap;
+    padding: 4px;
+  }
+  .bungee-dock .bungee-btn {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+  .bungee-dock .house-key {
+    display: none;
+  }
+  .bungee-camera-hint {
+    display: none;
+  }
+  .bungee-game .touch-controls {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    pointer-events: none;
+  }
+  .bungee-game .joystick {
+    position: absolute;
+    left: max(16px, env(safe-area-inset-left));
+    bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    background: var(--hud-card);
+    border: 1px solid var(--hud-edge);
+    color: var(--hud-ink);
+    box-shadow: var(--hud-shadow);
+    pointer-events: auto;
+  }
+  .bungee-game .joystick > span {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--hud-accent);
+  }
+  .bungee-game .joystick > small {
+    font-size: 9px;
+  }
+  .bungee-touch-controls {
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(70px, calc(env(safe-area-inset-bottom) + 62px));
+    gap: 8px;
+  }
+  .bungee-action-circle {
+    width: 52px;
+    height: 52px;
+    font-size: 10px;
+    touch-action: manipulation;
+  }
+  .bungee-player-label {
+    top: 194px;
+  }
+  .bungee-tension-card {
+    top: 130px;
+  }
+}
+@media (max-width: 560px) {
+  .bungee-player-label {
+    top: 180px;
+  }
+  .bungee-hud {
+    top: 62px;
+  }
+  .bungee-tension-card {
+    top: 118px;
+  }
+}
+@media (max-height: 500px) {
+  .bungee-topbar {
+    max-height: 52px;
+  }
+  .bungee-topbar .wordmark {
+    font-size: 14px;
+  }
+  .bungee-hud {
+    top: 54px;
+    gap: 5px;
+  }
+  .bungee-team-score {
+    min-width: 0;
+    padding: 3px 9px;
+    gap: 8px;
+  }
+  .bungee-score-meta {
+    font-size: 8px;
+  }
+  .bungee-score-val {
+    font-size: 22px;
+  }
+  .bungee-center-badge {
+    min-width: 0;
+    padding: 3px 8px;
+  }
+  .bungee-center-label {
+    font-size: 8px;
+  }
+  .bungee-rally-val {
+    font-size: 18px;
+  }
+  .bungee-tension-card {
+    left: 12px;
+    top: 92px;
+    transform: none;
+    min-width: 0;
+    padding: 5px 8px;
+  }
+  .bungee-tension-hint {
+    display: none;
+  }
+  .bungee-player-label {
+    left: 12px;
+    top: 144px;
+    transform: none;
+    font-size: 9px;
+  }
+  .bungee-game .joystick {
+    bottom: max(14px, env(safe-area-inset-bottom));
+    width: 90px;
+    height: 90px;
+  }
+  .bungee-touch-controls {
+    bottom: max(14px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+  .bungee-action-circle {
+    width: 48px;
+    height: 48px;
+  }
+  .bungee-dock {
+    max-width: calc(100% - 244px);
+  }
+  .bungee-dock .bungee-btn {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+  .bungee-banner {
+    max-width: min(420px, calc(100% - 240px));
+    padding: 12px 18px;
+  }
+  .bungee-banner h2 {
+    font-size: 24px;
+  }
+}
+.bungee-player-label {
+  top: 218px;
+}
+@media (max-width: 900px), (any-pointer: coarse) {
+  .bungee-game .touch-controls {
+    display: block;
+  }
+  .bungee-player-label {
+    top: 186px;
+  }
+}
+@media (max-width: 700px) {
+  .bungee-topbar .game-toolbar {
+    gap: 3px;
+  }
+  .bungee-topbar .voice-trigger span {
+    display: none;
+  }
+  .bungee-topbar .game-toolbar .voice-trigger {
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+  }
+  .bungee-topbar .game-toolbar-button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+  }
+  .bungee-topbar .game-graphics-controls summary {
+    font-size: 0;
+  }
+  .bungee-topbar .game-graphics-controls summary::after {
+    content: '⚙';
+    font-size: 21px;
+  }
+  .bungee-topbar .game-graphics-controls > div {
+    right: 0;
+    width: min(260px, calc(100vw - 24px));
+  }
+  .bungee-topbar.topbar:has(.game-toolbar) {
+    gap: 3px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .bungee-mark {
+    padding: 7px;
+    margin-right: 0;
+  }
+}
+@media (max-width: 370px) {
+  .bungee-topbar .game-toolbar {
+    gap: 2px;
+  }
+  .bungee-topbar .game-toolbar-button,
+  .bungee-topbar .game-toolbar .voice-trigger {
+    width: 38px;
+    min-width: 38px;
+    height: 40px;
+  }
+}
+@media (max-height: 500px) {
+  .bungee-player-label {
+    top: 144px;
+  }
+}
+.bungee-game .touch-controls[data-touch-controls] .joystick {
+  position: absolute;
+  top: auto;
+}
+/* Notched screens reserve the same top/bottom space in the camera and HUD. */
+.bungee-hud {
+  top: calc(88px + var(--bungee-safe-top));
+}
+.bungee-tension-card {
+  top: calc(164px + var(--bungee-safe-top));
+}
+.bungee-player-label {
+  top: calc(218px + var(--bungee-safe-top));
+}
+@media (max-width: 900px), (any-pointer: coarse) {
+  .bungee-hud {
+    top: calc(72px + var(--bungee-safe-top));
+  }
+  .bungee-tension-card {
+    top: calc(130px + var(--bungee-safe-top));
+  }
+  .bungee-player-label {
+    top: calc(186px + var(--bungee-safe-top));
+  }
+}
+@media (max-width: 560px) {
+  .bungee-hud {
+    top: calc(62px + var(--bungee-safe-top));
+  }
+  .bungee-tension-card {
+    top: calc(118px + var(--bungee-safe-top));
+  }
+}
+@media (max-height: 500px) {
+  .bungee-topbar.topbar:has(.game-toolbar) {
+    height: calc(52px + var(--bungee-safe-top));
+    max-height: none;
+  }
+  .bungee-hud {
+    top: calc(54px + var(--bungee-safe-top));
+  }
+  .bungee-tension-card {
+    top: calc(92px + var(--bungee-safe-top));
+  }
+  .bungee-player-label {
+    top: calc(144px + var(--bungee-safe-top));
   }
 }

@@ -4,13 +4,14 @@ import {
   type GameAdapter,
 } from '../../shared/peer/engine';
 import {
-  advanceBungee,
   bungeeAction,
   bungeeSnapshot,
   freshBungeeWorld,
   newPlayer,
+  prepareServe,
 } from './simulation';
-import { reconcileBungeeBots, stepBungeeBot } from './bots';
+import { reconcileBungeeBots } from './bots';
+import { createBungeeRunner } from './runner';
 import {
   idleInput,
   type BungeeAction,
@@ -19,13 +20,14 @@ import {
   type TeamId,
 } from './types';
 
-const adapter: GameAdapter<BungeeWorld, BungeeSnapshot> = {
+const adapter: Omit<GameAdapter<BungeeWorld, BungeeSnapshot>, 'advance'> = {
   game: 'bungee-doubles',
   autonomous: (p) => !!p.bot,
   actions: ['start', 'restart', 'switchTeam', 'swing', 'smash', 'dive', 'jump'],
   create: (now) => {
     const w = freshBungeeWorld(now);
     reconcileBungeeBots(w);
+    prepareServe(w, 'red');
     return w;
   },
   add: (w, m) => {
@@ -44,19 +46,34 @@ const adapter: GameAdapter<BungeeWorld, BungeeSnapshot> = {
       w.players.splice(botIdx, 1);
     }
 
-    w.players.push(newPlayer(m.id, m.name, m.color, team, false, redHumans));
+    w.players.push(
+      newPlayer(
+        m.id,
+        m.name,
+        m.color,
+        team,
+        false,
+        team === 'red' ? redHumans : blueHumans,
+      ),
+    );
     reconcileBungeeBots(w);
+    if (w.phase === 'serving') prepareServe(w, w.serverTeam);
   },
   remove: (w, id) => {
     w.players = w.players.filter((p) => p.id !== id);
     reconcileBungeeBots(w);
+    if (w.phase !== 'ended') prepareServe(w, w.serverTeam);
   },
   input(w, id, raw) {
     const player = w.players.find((p) => p.id === id);
     if (!player) return;
     player.input = {
-      x: Number(raw.x) || 0,
-      z: Number(raw.z) || 0,
+      x: Number.isFinite(Number(raw.x))
+        ? Math.max(-1, Math.min(1, Number(raw.x)))
+        : 0,
+      z: Number.isFinite(Number(raw.z))
+        ? Math.max(-1, Math.min(1, Number(raw.z)))
+        : 0,
       swing: raw.swing === true,
       smash: raw.smash === true,
       dive: raw.dive === true,
@@ -68,23 +85,23 @@ const adapter: GameAdapter<BungeeWorld, BungeeSnapshot> = {
   idle(p) {
     p.input = idleInput();
   },
-  // The engine passes an absolute time in ms, not a step, so the step is
-  // recovered from the world clock. Timers compare against wall-clock ms because
-  // actions stamp them with Date.now(). The bots run here as the solo loop runs
-  // them; the simulation does not.
-  advance: (w, now) => {
-    const dt = Math.min(0.05, Math.max(0, (now - w.clock) / 1000));
-    const wall = Date.now();
-    for (const p of w.players) if (p.bot) stepBungeeBot(p, w, dt, wall);
-    advanceBungee(w, dt, wall);
-  },
   act: (w, id, a, _host) => {
-    bungeeAction(w, id, a as BungeeAction);
+    bungeeAction(w, id, a as BungeeAction, w.clock);
   },
   snapshot: (w, code, host, id, version) =>
     bungeeSnapshot(w, code, host, id, version),
 };
 
 export function createEngine(now: number, checkpoint?: EngineCheckpoint) {
-  return new PeerEngine(adapter, now, checkpoint);
+  const run = createBungeeRunner();
+  return new PeerEngine(
+    {
+      ...adapter,
+      advance: (w, clock) => {
+        run(w, (clock - w.clock) / 1000);
+      },
+    },
+    now,
+    checkpoint,
+  );
 }

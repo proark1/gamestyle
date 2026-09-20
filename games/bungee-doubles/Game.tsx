@@ -9,24 +9,24 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import type { PeerGameConnection } from '../../shared/peer/connection';
+import { Dialog } from '@base-ui/react/dialog';
+import { TouchControls } from '../../shared/input/TouchControls';
+import { gameActive } from '../../shared/browser/game-lifecycle';
+import { createBungeeRunner } from './runner';
 import {
-  advanceBungee,
-  autoServe,
+  prepareServe,
   bungeeAction,
   bungeeSnapshot,
   freshBungeeWorld,
   newPlayer,
 } from './simulation';
-import { reconcileBungeeBots, stepBungeeBot } from './bots';
+import { reconcileBungeeBots } from './bots';
 import {
-  idleInput,
   type BungeeAction,
   type BungeeSession,
   type BungeeSnapshot,
   type BungeeWorld,
   type PlayerInput,
-  type TeamId,
 } from './types';
 import { BungeeDoublesSound } from './audio';
 import { BungeeScene } from './scene';
@@ -53,9 +53,7 @@ export default function BungeeDoublesGame() {
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<BungeeScene | null>(null);
   const sound = useRef<BungeeDoublesSound | null>(null);
-  const network = useRef<PeerGameConnection<BungeeSnapshot> | null>(null);
   const localWorld = useRef<BungeeWorld | null>(null);
-  const currentInput = useRef(idleInput());
   // The scene is handed every snapshot directly; the HUD is paced, so a
   // 20Hz feed does not rebuild it twenty times a second.
   const hud = useRef(
@@ -66,15 +64,9 @@ export default function BungeeDoublesGame() {
   );
 
   const [snapshot, setSnapshot] = useState<BungeeSnapshot | null>(null);
-  const [team, setTeam] = useState<TeamId>('red');
   const [muted, setMuted] = useState(false);
-  // The toolbar's help button shows or hides the camera hint.
-  const [hint, setHint] = useState(true);
-  const [banner, setBanner] = useState<{
-    text: string;
-    subtext: string;
-    team?: TeamId;
-  } | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const paused = useRef(false);
 
   const sessionRef = useRef<BungeeSession>({
     id: 'p-local',
@@ -87,10 +79,14 @@ export default function BungeeDoublesGame() {
   const dispatchAction = useCallback((act: BungeeAction) => {
     tracker.action(act.type);
     sound.current?.unlock();
-    if (network.current) {
-      void network.current.action(act);
-    } else if (localWorld.current) {
-      bungeeAction(localWorld.current, sessionRef.current.id, act);
+    if (paused.current) return;
+    if (localWorld.current) {
+      bungeeAction(
+        localWorld.current,
+        sessionRef.current.id,
+        act,
+        localWorld.current.clock,
+      );
       const snap = bungeeSnapshot(
         localWorld.current,
         'SOLO',
@@ -112,7 +108,6 @@ export default function BungeeDoublesGame() {
 
     scene.current = new BungeeScene(container.current, {
       input: (inp: PlayerInput) => {
-        currentInput.current = inp;
         if (localWorld.current) {
           const p = localWorld.current.players.find(
             (pl) => pl.id === sessionRef.current.id,
@@ -130,6 +125,7 @@ export default function BungeeDoublesGame() {
     const w = freshBungeeWorld(now);
     w.players.push(newPlayer(sessionRef.current.id, 'You', 0, 'red', false, 0));
     reconcileBungeeBots(w);
+    prepareServe(w, 'red');
     localWorld.current = w;
 
     const initialSnap = bungeeSnapshot(
@@ -144,7 +140,7 @@ export default function BungeeDoublesGame() {
 
     // You are red's named server, so an idle party player would hold the
     // match at the serve forever. A party round serves after five seconds.
-    const serve = inPartyMode() ? autoServe(5000) : null;
+    const run = createBungeeRunner(inPartyMode() ? 5000 : undefined);
 
     // Solo game simulation loop (60 FPS)
     let lastTick = performance.now();
@@ -152,24 +148,16 @@ export default function BungeeDoublesGame() {
 
     const tick = () => {
       animId = requestAnimationFrame(tick);
-      if (!localWorld.current || network.current) return;
+      if (!localWorld.current) return;
 
       const currentTime = performance.now();
-      const dt = Math.min((currentTime - lastTick) / 1000, 0.05);
+      const dt = Math.min((currentTime - lastTick) / 1000, 0.1);
       lastTick = currentTime;
 
+      if (paused.current || !gameActive()) return;
       const world = localWorld.current;
-      const stepNow = Date.now();
-
-      // Step bots
-      for (const p of world.players) {
-        if (p.bot) {
-          stepBungeeBot(p, world, dt, stepNow);
-        }
-      }
-      serve?.(world, stepNow);
-
-      advanceBungee(world, dt, stepNow);
+      const stepNow = world.clock + dt * 1000;
+      run(world, dt);
 
       const snap = bungeeSnapshot(
         world,
@@ -182,11 +170,6 @@ export default function BungeeDoublesGame() {
       if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(world, sessionRef.current.id);
-
-      if (world.scoreBanner) {
-        setBanner(world.scoreBanner);
-        world.scoreBanner = null;
-      }
     };
 
     animId = requestAnimationFrame(tick);
@@ -195,17 +178,23 @@ export default function BungeeDoublesGame() {
       cancelAnimationFrame(animId);
       scene.current?.destroy();
       scene.current = null;
+      sound.current?.dispose();
       sound.current = null;
+      localWorld.current = null;
     };
   }, [dispatchAction]);
 
   useEffect(() => {
-    if (!banner) return;
-    const t = setTimeout(() => setBanner(null), 1800);
-    return () => clearTimeout(t);
-  }, [banner]);
+    paused.current = helpOpen;
+    scene.current?.setInputEnabled(!helpOpen);
+  }, [helpOpen]);
 
   const world = snapshot?.world;
+  const team =
+    world?.players.find((p) => p.id === snapshot?.localId)?.team ?? 'red';
+  const banner = world?.phase === 'scored' ? world.scoreBanner : null;
+  const blocked =
+    !world || !['serving', 'rally'].includes(world.phase) || helpOpen;
   const tether = world?.tethers[team];
   const tensionVal = tether ? Math.round(tether.tension * 100) : 0;
   const tensionClass =
@@ -239,12 +228,12 @@ export default function BungeeDoublesGame() {
         <GameToolbar
           muted={muted}
           onToggleSound={toggleSound}
-          onHelp={() => setHint((shown) => !shown)}
+          onHelp={() => setHelpOpen(true)}
         />
       </header>
 
       {/* 360 Camera Orbit Helper Badge */}
-      {hint && (
+      {!helpOpen && (
         <div className="bungee-camera-hint">
           <Camera size={13} />
           <span>{strings.orbitHint}</span>
@@ -341,9 +330,10 @@ export default function BungeeDoublesGame() {
       )}
 
       {/* Bottom Action Dock */}
-      <div className="bungee-dock">
+      <div className="bungee-dock" aria-label={strings.controls}>
         <button
-          className="bungee-btn primary"
+          className="bungee-btn primary bungee-play-action"
+          disabled={blocked}
           onClick={() => dispatchAction({ type: 'swing' })}
         >
           <Flame size={14} />
@@ -351,7 +341,8 @@ export default function BungeeDoublesGame() {
           <kbd className="bungee-kbd house-key">SPACE</kbd>
         </button>
         <button
-          className="bungee-btn smash-btn"
+          className="bungee-btn smash-btn bungee-play-action"
+          disabled={blocked}
           onClick={() => dispatchAction({ type: 'smash' })}
         >
           <Zap size={14} />
@@ -359,19 +350,24 @@ export default function BungeeDoublesGame() {
           <kbd className="bungee-kbd house-key">E</kbd>
         </button>
         <button
-          className="bungee-btn"
+          className="bungee-btn bungee-play-action"
+          disabled={blocked}
           onClick={() => dispatchAction({ type: 'dive' })}
         >
           <span>{strings.dive}</span>
           <kbd className="bungee-kbd house-key">SHIFT</kbd>
         </button>
         <button
+          className="bungee-btn bungee-play-action"
+          disabled={blocked}
+          onClick={() => dispatchAction({ type: 'jump' })}
+        >
+          <span>{strings.jump}</span>
+          <kbd className="bungee-kbd house-key">J</kbd>
+        </button>
+        <button
           className="bungee-btn"
-          onClick={() => {
-            const next = team === 'red' ? 'blue' : 'red';
-            setTeam(next);
-            dispatchAction({ type: 'switchTeam' });
-          }}
+          onClick={() => dispatchAction({ type: 'switchTeam' })}
         >
           <Users size={14} />
           <span>{strings.switchTeam}</span>
@@ -394,46 +390,57 @@ export default function BungeeDoublesGame() {
         </button>
       </div>
 
-      {/* Touch Action Dock (for mobile) */}
-      <div className="bungee-touch-controls">
-        <button
-          className="bungee-action-circle cam"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            scene.current?.cycleCameraView();
-          }}
-          title="Rotate Camera 360°"
-        >
-          CAM
-        </button>
-        <button
-          className="bungee-action-circle smash"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            dispatchAction({ type: 'smash' });
-          }}
-        >
-          SMASH
-        </button>
-        <button
-          className="bungee-action-circle dive"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            dispatchAction({ type: 'dive' });
-          }}
-        >
-          DIVE
-        </button>
-        <button
-          className="bungee-action-circle hit"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            dispatchAction({ type: 'swing' });
-          }}
-        >
-          HIT
-        </button>
+      <div className="bungee-mobile-input">
+        <TouchControls
+          disabled={blocked}
+          showJump={false}
+          jump={() => dispatchAction({ type: 'jump' })}
+          moveLabel={strings.move}
+          joystickLabel={strings.joystick}
+          move={(vector) => scene.current?.setTouchMovement(vector)}
+        />
+        <div className="bungee-touch-controls" aria-label={strings.controls}>
+          {(['jump', 'smash', 'dive', 'swing'] as const).map((action) => (
+            <button
+              key={action}
+              type="button"
+              className={
+                'bungee-action-circle ' + (action === 'swing' ? 'hit' : action)
+              }
+              disabled={blocked}
+              onClick={() => dispatchAction({ type: action })}
+            >
+              {action === 'swing'
+                ? strings.touchHit
+                : action === 'jump'
+                  ? strings.jump
+                  : action === 'smash'
+                    ? strings.touchSmash
+                    : strings.touchDive}
+            </button>
+          ))}
+        </div>
       </div>
+      <div className="bungee-player-label">
+        {strings.you}: {strings[team]} · {strings.playerRing}
+      </div>
+      <Dialog.Root open={helpOpen} onOpenChange={setHelpOpen}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="bungee-help-backdrop" />
+          <Dialog.Popup className="bungee-help" aria-describedby={undefined}>
+            <Dialog.Title>{strings.helpTitle}</Dialog.Title>
+            <p>{strings.helpMove}</p>
+            <p>{strings.helpActions}</p>
+            <p>{strings.helpRules}</p>
+            <p>{strings.helpBungee}</p>
+            <p>{strings.helpCamera}</p>
+            <p>{strings.helpSwitch}</p>
+            <Dialog.Close className="primary-button">
+              {strings.close}
+            </Dialog.Close>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }
