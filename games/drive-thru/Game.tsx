@@ -38,6 +38,7 @@ import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { DRIVE_THRU_TRANSLATIONS } from './translations';
+import { computeWindowReachGap } from './physics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
@@ -74,6 +75,8 @@ export default function DriveThruGame() {
   );
   const [snapshot, setSnapshot] = useState<DriveThruSnapshot | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(true);
+  const paused = useRef(true);
   const [selectedRole, setSelectedRole] = useState<RoleId>('driver');
 
   useGameTracker(tracker);
@@ -132,14 +135,21 @@ export default function DriveThruGame() {
       const currentWorld = worldRef.current;
 
       // 1. Run bot decisions
-      for (const p of currentWorld.players) {
-        if (p.bot) {
-          stepDriveThruBot(p, currentWorld, dt);
+      if (!paused.current && !document.hidden) {
+        for (const p of currentWorld.players) {
+          if (p.bot) {
+            stepDriveThruBot(p, currentWorld, dt);
+          }
         }
-      }
 
-      // 2. Advance world physics & simulation
-      advanceDriveThruWorld(currentWorld, dt, Date.now());
+        // 2. Advance world physics & simulation
+        advanceDriveThruWorld(currentWorld, dt, Date.now());
+      }
+      scene.setEnabled(
+        !paused.current &&
+          currentWorld.phase !== 'meltdown' &&
+          currentWorld.phase !== 'completed',
+      );
 
       // 3. Take snapshot
       const snap = driveThruSnapshot(
@@ -169,6 +179,7 @@ export default function DriveThruGame() {
   }, []);
 
   const handleRoleChange = (newRole: RoleId) => {
+    sceneRef.current?.resetInput();
     setSelectedRole(newRole);
     const w = worldRef.current;
     const human = w.players.find((p) => p.id === localPlayerIdRef.current);
@@ -191,6 +202,7 @@ export default function DriveThruGame() {
   };
 
   const handleRestart = () => {
+    sceneRef.current?.resetInput();
     const w = freshDriveThruWorld();
     const human = newDriveThruPlayer(
       localPlayerIdRef.current,
@@ -228,9 +240,11 @@ export default function DriveThruGame() {
         <GameToolbar
           muted={!audioEnabled}
           onToggleSound={handleToggleAudio}
-          // Drive-Thru has no rules panel yet; the role bar and the action
-          // dock already show every control.
-          onHelp={() => {}}
+          onHelp={() => {
+            paused.current = true;
+            sceneRef.current?.setEnabled(false);
+            setHelpOpen(true);
+          }}
           voiceHint="Use your group call to talk with friends. In-game voice is not available in Drive-Thru Static yet."
         />
       </header>
@@ -244,7 +258,8 @@ export default function DriveThruGame() {
               {snapshot.ticket.orderNumber}
             </span>
             <span>
-              {strings.timeLeft} <strong>{snapshot.phaseTimer}s</strong>
+              {strings.timeLeft}{' '}
+              <strong>{Math.max(0, Math.ceil(snapshot.phaseTimer))}s</strong>
             </span>
             <span>
               {strings.score} <strong>{snapshot.score}</strong>
@@ -259,6 +274,28 @@ export default function DriveThruGame() {
         </div>
       )}
 
+      {selectedRole === 'driver' && snapshot && (
+        <div className="drive-thru-driving-status">
+          <strong>
+            {Math.round(Math.abs(snapshot.car.speed) * 3.6)} <small>km/h</small>
+          </strong>
+          <span>
+            {Math.abs(snapshot.car.speed) < 0.1
+              ? 'PARKED'
+              : snapshot.car.speed < 0
+                ? 'REVERSE'
+                : 'DRIVE'}
+          </span>
+          <p>
+            {computeWindowReachGap(snapshot.car).canReach
+              ? 'At the window — stop for pickup'
+              : snapshot.car.z < -2
+                ? 'Reverse toward the pickup bay'
+                : 'Follow the lane to the striped pickup bay'}
+          </p>
+          <small>WASD / arrows · S to brake & reverse</small>
+        </div>
+      )}
       {/* Role Switcher Tabs */}
       <div className="drive-thru-role-bar">
         <button
@@ -339,6 +376,43 @@ export default function DriveThruGame() {
       <div className="drive-thru-controls-bar">
         {selectedRole === 'driver' && (
           <>
+            {(
+              [
+                ['ArrowLeft', '←', 'Steer left'],
+                ['ArrowRight', '→', 'Steer right'],
+                ['ArrowDown', '↓', 'Brake / reverse'],
+                ['ArrowUp', '↑', 'Accelerate'],
+              ] as const
+            ).map(([code, icon, title]) => (
+              <button
+                key={code}
+                className="drive-thru-action-btn drive-thru-pedal"
+                aria-label={title}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  sceneRef.current?.holdControl(code, true);
+                }}
+                onPointerUp={() => sceneRef.current?.holdControl(code, false)}
+                onPointerCancel={() =>
+                  sceneRef.current?.holdControl(code, false)
+                }
+                onLostPointerCapture={() =>
+                  sceneRef.current?.holdControl(code, false)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    sceneRef.current?.holdControl(code, true);
+                  }
+                }}
+                onKeyUp={() => sceneRef.current?.holdControl(code, false)}
+                onBlur={() => sceneRef.current?.holdControl(code, false)}
+              >
+                <b>{icon}</b>
+                <span>{title}</span>
+              </button>
+            ))}
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'honk' })}
@@ -400,6 +474,12 @@ export default function DriveThruGame() {
           <>
             <button
               className="drive-thru-action-btn"
+              onClick={() => handleAction({ type: 'pourDrink' })}
+            >
+              <KeyHint text="Pour drink (R)" />
+            </button>
+            <button
+              className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'ventMilkshake' })}
             >
               <AlertTriangle size={17} />{' '}
@@ -415,6 +495,57 @@ export default function DriveThruGame() {
         )}
       </div>
 
+      {helpOpen && (
+        <div className="drive-thru-modal-backdrop">
+          <dialog
+            className="drive-thru-modal"
+            ref={(element) => {
+              if (element && !element.open) element.showModal();
+            }}
+            onCancel={() => {
+              paused.current = false;
+              setHelpOpen(false);
+              sceneRef.current?.setEnabled(true);
+            }}
+            aria-labelledby="drive-help-title"
+          >
+            <div className="drive-thru-help-badge">WELCOME TO JUMBLE DINER</div>
+            <h1 id="drive-help-title">
+              One car. Four jobs.
+              <br />
+              Lunch is on the line.
+            </h1>
+            <p>
+              Drive to the striped pickup bay, stop beside the window and let
+              your passenger collect the order. Bots handle the other jobs until
+              you take over.
+            </p>
+            <dl className="drive-thru-help-controls">
+              <dt>Driver</dt>
+              <dd>
+                W / ↑ accelerate · S / ↓ brake & reverse · A / D steer · H honk
+              </dd>
+              <dt>Passenger</dt>
+              <dd>Space reach · R swat toy · E wipers</dd>
+              <dt>Grill</dt>
+              <dd>Arrows move spatula · Space flip · R lift fryer · E stack</dd>
+              <dt>Barista</dt>
+              <dd>Space vent · R pour drinks · E send tray</dd>
+            </dl>
+            <button
+              autoFocus
+              className="drive-thru-btn-restart"
+              onClick={() => {
+                paused.current = false;
+                setHelpOpen(false);
+                sceneRef.current?.setEnabled(true);
+              }}
+            >
+              Let&apos;s drive
+            </button>
+          </dialog>
+        </div>
+      )}
       {/* Game Over / Meltdown / Victory Modal */}
       {(snapshot?.phase === 'meltdown' || snapshot?.phase === 'completed') && (
         <div className="drive-thru-modal-backdrop">
@@ -432,7 +563,7 @@ export default function DriveThruGame() {
             </div>
             <div className="drive-thru-modal-body">
               {snapshot.phase === 'completed'
-                ? `Order fulfilled successfully with crisp buns and four drinks intact! Final Score: ${snapshot.score}`
+                ? `Order delivered! Final score: ${snapshot.score}`
                 : snapshot.failReason ||
                   'The shift ended in catastrophic fast-food disaster!'}
             </div>

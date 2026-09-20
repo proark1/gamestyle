@@ -227,13 +227,20 @@ void test('Drive-Thru: a bots-only round steers around the speaker pole and serv
  * 144 Hz, and requires the order served within 10 simulated seconds without
  * touching the speaker pole.
  */
-function assertBotsServeFrom(start: Pick<SedanState, 'x' | 'z' | 'yaw'>) {
+function assertBotsServeFrom(
+  start: Pick<SedanState, 'x' | 'z' | 'yaw'>,
+  deadline = 10,
+) {
   for (const hz of [30, 60, 144]) {
     const w = freshDriveThruWorld();
     reconcileDriveThruBots(w);
     Object.assign(w.car, start, { speed: 0 });
     let seconds = 0;
-    while (w.phase !== 'completed' && w.phase !== 'meltdown' && seconds < 10) {
+    while (
+      w.phase !== 'completed' &&
+      w.phase !== 'meltdown' &&
+      seconds < deadline
+    ) {
       for (const p of w.players) if (p.bot) stepDriveThruBot(p, w, 1 / hz);
       advanceDriveThruWorld(w, 1 / hz, w.clock + 1000 / hz);
       seconds += 1 / hz;
@@ -262,8 +269,9 @@ void test('Drive-Thru: a bot handed a car across the lane works it round and ser
   // Behind the pole against the curb, every forward turn clips the pole, and
   // nosed into the far edge the car only grinds along it. The bot used to
   // stall in both; now it reverses while turning toward the lane.
-  assertBotsServeFrom({ x: 1, z: 14.5, yaw: -1.2 });
-  assertBotsServeFrom({ x: -8, z: 5.5, yaw: -1.2 });
+  // Full-size body and correct reverse steering require a three-point turn.
+  assertBotsServeFrom({ x: 1, z: 14.5, yaw: -1.2 }, 22);
+  assertBotsServeFrom({ x: -8, z: 5.5, yaw: -1.2 }, 22);
 });
 
 void test('Drive-Thru: peer engine creates room, accepts actions, and builds snapshot', () => {

@@ -189,9 +189,9 @@ export function freshDriveThruWorld(now = Date.now()): DriveThruWorld {
     phaseTimer: 60,
     ticket: generateOrderTicket(1),
     car: {
-      x: -3.8,
+      x: -1.2,
       y: 0,
-      z: 14.0, // Just before the intercom speaker pole
+      z: 14.0, // Clear lane beside the ordering speaker
       yaw: 0,
       speed: 0,
       steer: 0,
@@ -327,12 +327,16 @@ export function driveThruAction(
       );
       break;
 
+    case 'pourDrink':
+      w.kitchen.sodasPoured = Math.min(4, w.kitchen.sodasPoured + 1);
+      break;
+
     case 'pushTray':
       w.kitchen.trayAtWindow = true;
       break;
 
     case 'reachTray':
-      w.car.passengerReach = Math.min(1.0, w.car.passengerReach + 0.3);
+      w.car.passengerReach = 1;
       break;
 
     case 'toggleWipers':

@@ -15,7 +15,9 @@ import {
   type PlayerInput,
   type RoleId,
 } from './types';
-import { GRILL_BOUNDS, TRAY_LEDGE_POS } from './physics';
+import { CAR, carPoint, GRILL_BOUNDS, TRAY_LEDGE_POS } from './physics';
+import { keyboardInput } from './controls';
+import { poseDriver, poseCook } from './avatar';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
@@ -48,6 +50,32 @@ export class DriveThruScene {
   private currentInput: PlayerInput = idleInput();
   private localRole: RoleId = 'driver';
   private wiperAngle = 0;
+  private trayKey = '';
+  private wheelAngle = 0;
+  private updateTime = performance.now();
+  private cameraReady = false;
+  private cameraTarget = new T.Vector3();
+  private cameraLook = new T.Vector3();
+  private held = new Set<string>();
+  private enabled = false;
+
+  public resetInput(): void {
+    this.keys.clear();
+    this.held.clear();
+    this.updateInput();
+  }
+
+  public setEnabled(enabled: boolean): void {
+    if (this.enabled === enabled) return;
+    this.enabled = enabled;
+    if (!enabled) this.resetInput();
+  }
+
+  public holdControl(code: string, down: boolean): void {
+    if (down) this.held.add(code);
+    else this.held.delete(code);
+    this.updateInput();
+  }
 
   constructor(
     private container: HTMLDivElement,
@@ -108,6 +136,16 @@ export class DriveThruScene {
   }
 
   private bindEvents(): void {
+    window.addEventListener('blur', () => this.resetInput(), {
+      signal: this.abort.signal,
+    });
+    document.addEventListener(
+      'visibilitychange',
+      () => {
+        if (document.hidden) this.resetInput();
+      },
+      { signal: this.abort.signal },
+    );
     window.addEventListener('keydown', this.onKeyDown, {
       signal: this.abort.signal,
     });
@@ -118,10 +156,22 @@ export class DriveThruScene {
 
   private onKeyDown = (e: KeyboardEvent): void => {
     if (
+      !this.enabled ||
+      (e.target instanceof HTMLElement &&
+        (e.target.isContentEditable ||
+          ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)))
+    )
+      return;
+    if (
       ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)
     ) {
       e.preventDefault();
     }
+    if (
+      e.target instanceof HTMLButtonElement &&
+      (e.code === 'Space' || e.code === 'Enter')
+    )
+      return;
     this.keys.add(e.code);
     this.updateInput();
   };
@@ -132,29 +182,10 @@ export class DriveThruScene {
   };
 
   private updateInput(): void {
-    let x = 0;
-    let z = 0;
-
-    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) x -= 1;
-    if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) x += 1;
-    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) z -= 1;
-    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) z += 1;
-
-    const action1 = this.keys.has('Space') || this.keys.has('KeyW');
-    const action2 =
-      this.keys.has('KeyR') ||
-      this.keys.has('KeyS') ||
-      this.keys.has('ShiftLeft');
-    const action3 = this.keys.has('KeyE') || this.keys.has('KeyH');
-
-    this.currentInput = {
-      x,
-      z,
-      action1,
-      action2,
-      action3,
-      seq: this.currentInput.seq + 1,
-    };
+    const next = this.enabled
+      ? keyboardInput(new Set([...this.keys, ...this.held]), this.localRole)
+      : idleInput();
+    this.currentInput = { ...next, seq: this.currentInput.seq + 1 };
 
     this.cb.input(this.currentInput);
   }
@@ -168,11 +199,25 @@ export class DriveThruScene {
   }
 
   public update(snapshot: DriveThruSnapshot): void {
-    this.localRole = snapshot.myRole;
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - this.updateTime) / 1000);
+    this.updateTime = now;
+    if (this.localRole !== snapshot.myRole) {
+      this.localRole = snapshot.myRole;
+      this.resetInput();
+    }
 
     // 1. Update Sedan
     this.sedanMesh.position.set(snapshot.car.x, snapshot.car.y, snapshot.car.z);
-    this.sedanMesh.rotation.y = snapshot.car.yaw;
+    this.sedanMesh.rotation.y = -snapshot.car.yaw;
+    if (snapshot.phase !== 'completed' && snapshot.phase !== 'meltdown')
+      this.wheelAngle -= (snapshot.car.speed * dt) / CAR.wheelRadius;
+    for (let i = 0; i < 4; i++) {
+      const pivot = this.sedanMesh.getObjectByName(`wheel-${i}`);
+      const roll = this.sedanMesh.getObjectByName(`wheel-roll-${i}`);
+      if (pivot) pivot.rotation.y = i < 2 ? -snapshot.car.steer : 0;
+      if (roll) roll.rotation.x = this.wheelAngle;
+    }
 
     // Windshield Splat
     const splat = this.sedanMesh.getObjectByName('windshield-splat') as T.Mesh;
@@ -192,9 +237,10 @@ export class DriveThruScene {
 
     // Speaker pole knock down animation if reversed into
     const speakerPole = this.envGroup.getObjectByName('speaker-pole');
-    if (speakerPole && snapshot.car.reversedIntoPole) {
-      speakerPole.rotation.z = Math.min(1.4, speakerPole.rotation.z + 0.1);
-    }
+    if (speakerPole)
+      speakerPole.rotation.z = snapshot.car.reversedIntoPole
+        ? Math.min(1.4, speakerPole.rotation.z + dt * 3)
+        : 0;
 
     // 2. Update Patties
     snapshot.kitchen.patties.forEach((p, i) => {
@@ -226,41 +272,50 @@ export class DriveThruScene {
       snapshot.kitchen.spatulaZ,
     );
 
-    // 4. Update Tray
-    if (
-      snapshot.kitchen.trayStack.length > 0 ||
-      snapshot.kitchen.sodasPoured > 0
-    ) {
+    // Only rebuild food when its contents change, not every frame.
+    const trayKey = `${snapshot.kitchen.trayStack.join(',')}:${snapshot.kitchen.sodasPoured}`;
+    if (trayKey !== this.trayKey) {
+      this.trayKey = trayKey;
       if (this.trayMesh) {
         this.scene.remove(this.trayMesh);
+        disposeObject(this.trayMesh);
       }
-      this.trayMesh = createOrderTray(
-        snapshot.kitchen.trayStack,
-        snapshot.kitchen.sodasPoured,
-      );
-
+      this.trayMesh =
+        snapshot.kitchen.trayStack.length || snapshot.kitchen.sodasPoured
+          ? createOrderTray(
+              snapshot.kitchen.trayStack,
+              snapshot.kitchen.sodasPoured,
+            )
+          : null;
+      if (this.trayMesh) this.scene.add(this.trayMesh);
+    }
+    if (this.trayMesh) {
+      this.trayMesh.rotation.set(0, 0, 0);
       if (snapshot.kitchen.trayDroppedInCurb) {
-        // Dropped down drain
-        this.trayMesh.position.set(1.5, -0.4, 0);
-        this.trayMesh.rotation.set(0.6, 0.4, 0.5);
+        this.trayMesh.position.set(1.5, 0.12, 0);
+        this.trayMesh.rotation.set(0.3, 0.4, 0.3);
       } else if (snapshot.kitchen.trayGrabbed) {
-        // In car passenger hands
-        this.trayMesh.position.set(snapshot.car.x + 0.4, 0.85, snapshot.car.z);
-      } else if (snapshot.kitchen.trayAtWindow) {
-        // On window sill ledge
+        const p = carPoint(snapshot.car, 0.5, -0.5);
+        this.trayMesh.position.set(p.x, 1.2, p.z);
+        this.trayMesh.rotation.y = -snapshot.car.yaw;
+      } else if (snapshot.kitchen.trayAtWindow)
         this.trayMesh.position.set(
           TRAY_LEDGE_POS.x,
           TRAY_LEDGE_POS.y,
           TRAY_LEDGE_POS.z,
         );
-      } else {
-        // On kitchen prep counter
-        this.trayMesh.position.set(4.4, 0.95, -0.2);
-      }
-      this.scene.add(this.trayMesh);
+      else this.trayMesh.position.set(4.4, 0.95, -0.2);
     }
 
     // 5. Update Worker Avatars
+    for (const [id, worker] of this.workerMeshes) {
+      const player = snapshot.players.find((p) => p.id === id);
+      if (!player || worker.userData.role !== player.role) {
+        worker.removeFromParent();
+        disposeObject(worker);
+        this.workerMeshes.delete(id);
+      }
+    }
     for (const p of snapshot.players) {
       let worker = this.workerMeshes.get(p.id);
       if (!worker) {
@@ -271,57 +326,67 @@ export class DriveThruScene {
           p.color,
           mine ? getEquippedLook() : undefined,
         );
+        worker.userData.role = p.role;
         this.workerMeshes.set(p.id, worker);
         this.scene.add(worker);
       }
 
-      // Position worker according to role
-      if (p.role === 'driver') {
-        worker.position.set(
-          snapshot.car.x - 0.45,
-          snapshot.car.y + 0.25,
-          snapshot.car.z - 0.1,
+      worker.rotation.set(0, 0, 0);
+      if (p.role === 'driver' || p.role === 'passenger') {
+        const reach = p.role === 'passenger' ? snapshot.car.passengerReach : 0;
+        const point = carPoint(
+          snapshot.car,
+          (p.role === 'driver' ? -0.5 : 0.5) + reach * 0.65,
+          -0.12,
         );
-        worker.rotation.y = snapshot.car.yaw;
-      } else if (p.role === 'passenger') {
-        // Ragdoll lean out the right window
-        const reach = snapshot.car.passengerReach;
-        const leanX = snapshot.car.x + 0.55 + reach * 0.75;
-        const leanY = snapshot.car.y + 0.25 - reach * 0.2;
-        worker.position.set(leanX, leanY, snapshot.car.z);
-        worker.rotation.y = snapshot.car.yaw;
-        worker.rotation.z = -reach * 0.55; // Leaning out window
-      } else if (p.role === 'grill') {
-        worker.position.set(5.8, 0, -0.5);
-        worker.rotation.y = -Math.PI / 2; // Facing grill
-      } else if (p.role === 'barista') {
-        worker.position.set(3.4, 0, 0);
-        worker.rotation.y = -Math.PI; // Facing window
+        worker.position.set(
+          point.x,
+          snapshot.car.y + 0.23 - reach * 0.13,
+          point.z,
+        );
+        worker.scale.setScalar(0.9);
+        // Avatars face +Z; the car faces -Z.
+        worker.rotation.set(0, Math.PI - snapshot.car.yaw, reach * 0.45);
+        poseDriver(worker, now / 1000, false);
+        const rig = worker.userData;
+        for (const leg of [rig.legL, rig.legR]) if (leg) leg.rotation.x = -1.25;
+        if (p.role === 'passenger' && rig.armL)
+          rig.armL.rotation.set(-0.65, 0, 0.15 + reach * 1.1);
+      } else {
+        worker.scale.setScalar(1);
+        worker.position.set(
+          p.role === 'grill' ? 5.7 : 3.8,
+          0.05,
+          p.role === 'grill' ? -0.5 : 1.5,
+        );
+        worker.rotation.y = -Math.PI / 2;
+        poseCook(worker, now / 1000, false);
       }
     }
 
     // 6. Camera Placement
-    this.updateCamera(snapshot);
+    this.updateCamera(snapshot, dt);
   }
 
-  private updateCamera(snapshot: DriveThruSnapshot): void {
+  private updateCamera(snapshot: DriveThruSnapshot, dt: number): void {
+    const c = snapshot.car;
+    const portrait = this.camera.aspect < 1;
     if (this.localRole === 'driver' || this.localRole === 'passenger') {
-      // Dynamic chase camera following sedan
-      const targetCamX = snapshot.car.x - Math.sin(snapshot.car.yaw) * 6.5;
-      const targetCamZ = snapshot.car.z + Math.cos(snapshot.car.yaw) * 6.5;
-      const targetCamY = 3.6;
-
-      this.camera.position.lerp(
-        new T.Vector3(targetCamX, targetCamY, targetCamZ),
-        0.12,
-      );
-      this.camera.lookAt(snapshot.car.x, 1.2, snapshot.car.z);
+      const behind = portrait ? 11.5 : 9.5;
+      const point = carPoint(c, -3.4, behind);
+      this.cameraTarget.set(point.x, portrait ? 7.4 : 6.3, point.z);
+      const focus = carPoint(c, 0.5, -2.2);
+      this.cameraLook.set(focus.x, 0.9, focus.z);
     } else {
-      // Kitchen grill view
-      const kitchenCam = new T.Vector3(6.5, 3.2, 0);
-      this.camera.position.lerp(kitchenCam, 0.1);
-      this.camera.lookAt(2.8, 1.1, 0);
+      this.cameraTarget.set(-3, portrait ? 6.5 : 5, 6.5);
+      this.cameraLook.set(4.4, 1, -0.2);
     }
+    if (!this.cameraReady) {
+      this.camera.position.copy(this.cameraTarget);
+      this.cameraReady = true;
+    }
+    this.camera.position.lerp(this.cameraTarget, 1 - Math.exp(-5 * dt));
+    this.camera.lookAt(this.cameraLook);
   }
 
   private renderLoop = (time: number): void => {

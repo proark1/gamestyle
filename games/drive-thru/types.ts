@@ -208,6 +208,7 @@ export type DriveThruAction =
   | { type: 'ventMilkshake' }
   | { type: 'liftFryer' }
   | { type: 'pushTray' }
+  | { type: 'pourDrink' }
   | { type: 'reachTray' }
   | { type: 'toggleWipers' }
   | { type: 'swatDistraction' };

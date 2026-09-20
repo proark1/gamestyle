@@ -1,8 +1,6 @@
 import {
-  CAR_BODY_RADIUS,
   computeWindowReachGap,
-  SPEAKER_POLE_POS,
-  SPEAKER_POLE_RADIUS,
+  poleClearance,
   stepCarPhysics,
 } from './physics';
 import { newDriveThruPlayer } from './simulation';
@@ -56,7 +54,7 @@ export function reconcileDriveThruBots(w: DriveThruWorld): void {
 }
 
 // Where the bot driver parks: a short stop beside the pickup window.
-const PARK_X = 0.4;
+const PARK_X = 0.15;
 const PARK_Z = 0.5;
 /**
  * Where along the lane the bot driver may stop, in order of preference: a car
@@ -122,15 +120,14 @@ function laneDrive(car: SedanState, parkZ = PARK_Z): Drive {
 
 /**
  * Reverse up the lane, steering the tail onto the lane line, for a longer run
- * at the window. Reversing turns the car the same way as driving forward with
- * the same steer, so this is `laneDrive` with the heading mirrored.
+ * at the window. Signed reverse velocity turns the nose oppositely; mirror heading and steering.
  */
 function backUp(car: SedanState): Drive {
   const heading = -Math.atan2(PARK_X - car.x, LANE_LOOKAHEAD);
   return {
     throttle: false,
     reverse: car.speed > -BACKUP_SPEED,
-    steer: clampSteer(angleTo(heading, car.yaw) * STEER_GAIN),
+    steer: clampSteer(-angleTo(heading, car.yaw) * STEER_GAIN),
   };
 }
 
@@ -169,20 +166,10 @@ function approachReaches(car: SedanState, parkZ: number, gap: number): boolean {
 }
 
 function poleGap(car: SedanState): number {
-  return (
-    Math.hypot(car.x - SPEAKER_POLE_POS.x, car.z - SPEAKER_POLE_POS.z) -
-    SPEAKER_POLE_RADIUS -
-    CAR_BODY_RADIUS
-  );
+  return poleClearance(car);
 }
 
-/**
- * The car starts right behind the speaker pole, and even a full-lock turn
- * from there clips it, so the bot follows the lane only while that stays
- * clear, otherwise swerves toward the window side, otherwise backs up
- * turning toward the lane (reversing turns the car the same way), which
- * also works a car round that sits across the lane.
- */
+/** Try a direct approach, a wider turn, then backing up for more room. */
 function approachPlans(parkZ: number): Plan[] {
   return [
     (car) => laneDrive(car, parkZ),
@@ -250,6 +237,72 @@ function driverRoute(car: SedanState): Plan[] {
   return parkZ === undefined ? BACKUP_PLANS : approachPlans(parkZ);
 }
 
+type RecoveryPlan = { targetZ: number; until: number; drive: Drive };
+const recoveries = new WeakMap<SedanState, RecoveryPlan>();
+function recoveryDrive(car: SedanState, dt: number): Drive | null {
+  let recovery = recoveries.get(car);
+  if (!recovery && Math.abs(angleTo(0, car.yaw)) > 0.9 && car.z > 3) {
+    recovery = {
+      targetZ: Math.max(15, car.z + 1),
+      until: 0,
+      drive: { throttle: false, reverse: false, steer: 0 },
+    };
+    recoveries.set(car, recovery);
+  }
+  if (!recovery) return null;
+  if (Math.abs(angleTo(0, car.yaw)) < 0.25 && car.x > -1.2) {
+    recoveries.delete(car);
+    return null;
+  }
+  recovery.until -= dt;
+  if (recovery.until > 0) return recovery.drive;
+  const targetZ = recovery.targetZ;
+  const drives: Drive[] = [-1, 1].flatMap((direction) =>
+    [-1, 0, 1].map((steer) => ({
+      throttle: direction > 0,
+      reverse: direction < 0,
+      steer,
+    })),
+  );
+  type Node = { car: SedanState; first: Drive; cost: number; penalty: number };
+  let beam: Node[] = [
+    { car: { ...car }, first: drives[0], cost: 0, penalty: 0 },
+  ];
+  for (let depth = 0; depth < 4; depth++) {
+    const next: Node[] = [];
+    for (const node of beam)
+      for (const drive of drives) {
+        const preview = { ...node.car };
+        let penalty = node.penalty;
+        for (let i = 0; i < 18; i++) {
+          stepCarPhysics(
+            preview,
+            drive.throttle,
+            drive.reverse,
+            drive.steer,
+            1 / 30,
+          );
+          if (poleClearance(preview) < 0.08) penalty += 4;
+        }
+        const cost =
+          Math.hypot(preview.x + 0.3, (preview.z - targetZ) * 0.65) +
+          Math.abs(angleTo(0, preview.yaw)) * 3 +
+          penalty;
+        next.push({
+          car: preview,
+          first: depth === 0 ? drive : node.first,
+          cost,
+          penalty,
+        });
+      }
+    next.sort((a, b) => a.cost - b.cost);
+    beam = next.slice(0, 8);
+  }
+  recovery.drive = beam[0].first;
+  recovery.until = 0.22;
+  return recovery.drive;
+}
+
 /** The first plan that stays clear of the pole, or the one that hits it last. */
 function driverDrive(car: SedanState): Drive {
   const plans = driverRoute(car);
@@ -285,7 +338,7 @@ export function stepDriveThruBot(
 
   switch (bot.role) {
     case 'driver': {
-      const drive = driverDrive(w.car);
+      const drive = recoveryDrive(w.car, _dt) ?? driverDrive(w.car);
       bot.input.action1 = drive.throttle;
       bot.input.action2 = drive.reverse;
       bot.input.x = drive.steer;

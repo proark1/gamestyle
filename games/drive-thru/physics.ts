@@ -22,9 +22,31 @@ export const TRAY_LEDGE_POS = {
   z: 0.0,
 };
 
-/**
- * Step car kinematics with realistic inertia, steering lag, and collision against the speaker pole.
- */
+/** Shared body dimensions in metres; yaw is clockwise from forward (-Z). */
+export const CAR = {
+  halfWidth: 1.1,
+  halfLength: 2.45,
+  wheelbase: 2.9,
+  wheelRadius: 0.43,
+};
+export function carPoint(car: SedanState, x: number, z: number) {
+  return {
+    x: car.x + Math.cos(car.yaw) * x - Math.sin(car.yaw) * z,
+    z: car.z + Math.sin(car.yaw) * x + Math.cos(car.yaw) * z,
+  };
+}
+export function poleClearance(car: SedanState): number {
+  const dx = SPEAKER_POLE_POS.x - car.x,
+    dz = SPEAKER_POLE_POS.z - car.z;
+  const x = Math.cos(car.yaw) * dx + Math.sin(car.yaw) * dz;
+  const z = -Math.sin(car.yaw) * dx + Math.cos(car.yaw) * dz;
+  return (
+    Math.hypot(
+      Math.max(0, Math.abs(x) - CAR.halfWidth),
+      Math.max(0, Math.abs(z) - CAR.halfLength),
+    ) - SPEAKER_POLE_RADIUS
+  );
+}
 export function stepCarPhysics(
   car: SedanState,
   throttle: boolean,
@@ -32,79 +54,71 @@ export function stepCarPhysics(
   steerInput: number,
   dt: number,
 ): void {
-  // Acceleration & Braking
-  const accel = 6.5;
-  const maxSpeed = 11.0;
-  const reverseMaxSpeed = -4.5;
-  const drag = 3.2;
-
-  if (throttle) {
-    car.speed = Math.min(maxSpeed, car.speed + accel * dt);
-  } else if (reverse) {
-    car.speed = Math.max(reverseMaxSpeed, car.speed - accel * dt);
-  } else {
-    // Natural friction drag
-    if (car.speed > 0) {
-      car.speed = Math.max(0, car.speed - drag * dt);
-    } else if (car.speed < 0) {
-      car.speed = Math.min(0, car.speed + drag * dt);
+  if (!Number.isFinite(dt) || dt <= 0) return;
+  const steps = Math.ceil(Math.min(dt, 1) * 120),
+    h = Math.min(dt, 1) / steps;
+  for (let i = 0; i < steps; i++) {
+    const direction = Number(throttle) - Number(reverse);
+    const braking =
+      direction !== 0 &&
+      Math.sign(car.speed) !== direction &&
+      Math.abs(car.speed) > 0.01;
+    if (braking || (throttle && reverse))
+      car.speed =
+        Math.sign(car.speed) * Math.max(0, Math.abs(car.speed) - 11 * h);
+    else if (direction)
+      car.speed = Math.max(-3.2, Math.min(7, car.speed + direction * 4.8 * h));
+    else
+      car.speed =
+        Math.sign(car.speed) * Math.max(0, Math.abs(car.speed) - 3.2 * h);
+    const targetSteer = Math.max(-1, Math.min(1, steerInput)) * 0.6;
+    car.steer += (targetSteer - car.steer) * (1 - Math.exp(-9 * h));
+    car.yaw += ((Math.tan(car.steer) * car.speed) / CAR.wheelbase) * h;
+    car.x += Math.sin(car.yaw) * car.speed * h;
+    car.z -= Math.cos(car.yaw) * car.speed * h;
+    // Circle against the oriented body rectangle.
+    const c = Math.cos(car.yaw),
+      s = Math.sin(car.yaw);
+    const dx = SPEAKER_POLE_POS.x - car.x,
+      dz = SPEAKER_POLE_POS.z - car.z;
+    const px = c * dx + s * dz,
+      pz = -s * dx + c * dz;
+    const qx = Math.max(-CAR.halfWidth, Math.min(CAR.halfWidth, px));
+    const qz = Math.max(-CAR.halfLength, Math.min(CAR.halfLength, pz));
+    let nx = px - qx,
+      nz = pz - qz;
+    const distance = Math.hypot(nx, nz);
+    if (distance < SPEAKER_POLE_RADIUS) {
+      let overlap = SPEAKER_POLE_RADIUS - distance;
+      if (distance > 1e-6) {
+        nx /= distance;
+        nz /= distance;
+      } else if (CAR.halfWidth - Math.abs(px) < CAR.halfLength - Math.abs(pz)) {
+        nx = Math.sign(px) || 1;
+        nz = 0;
+        overlap += CAR.halfWidth - Math.abs(px);
+      } else {
+        nx = 0;
+        nz = Math.sign(pz) || 1;
+        overlap += CAR.halfLength - Math.abs(pz);
+      }
+      car.x -= (c * nx - s * nz) * (overlap + 0.001);
+      car.z -= (s * nx + c * nz) * (overlap + 0.001);
+      if (car.speed < -1) car.reversedIntoPole = true;
+      if (Math.abs(car.speed) > 0.8)
+        car.bumperDamage = Math.min(100, car.bumperDamage + 10);
+      car.speed = 0;
     }
+    const extentX = Math.abs(c) * CAR.halfWidth + Math.abs(s) * CAR.halfLength;
+    const extentZ = Math.abs(s) * CAR.halfWidth + Math.abs(c) * CAR.halfLength;
+    const x = Math.max(-8 + extentX, Math.min(CURB_X - extentX, car.x));
+    const z = Math.max(-12 + extentZ, Math.min(24 - extentZ, car.z));
+    if (x !== car.x || z !== car.z) car.speed *= Math.exp(-14 * h);
+    car.x = x;
+    car.z = z;
   }
-
-  // Steering: speed-dependent turn rate with smooth interpolation
-  const targetSteer = steerInput * 0.65;
-  car.steer += (targetSteer - car.steer) * Math.min(1, 10 * dt);
-
-  if (Math.abs(car.speed) > 0.05) {
-    const turnSign = car.speed >= 0 ? 1 : -1;
-    car.yaw += car.steer * (car.speed / maxSpeed) * turnSign * 2.4 * dt;
-  }
-
-  // Movement along forward direction (-Z in local car space, facing drive-thru lane)
-  const forwardX = Math.sin(car.yaw);
-  const forwardZ = -Math.cos(car.yaw);
-
-  car.x += forwardX * car.speed * dt;
-  car.z += forwardZ * car.speed * dt;
-
-  // Speaker pole collision
-  const distToPole = Math.hypot(
-    car.x - SPEAKER_POLE_POS.x,
-    car.z - SPEAKER_POLE_POS.z,
-  );
-  if (distToPole < SPEAKER_POLE_RADIUS + CAR_BODY_RADIUS) {
-    // Collision impact!
-    const overlap = SPEAKER_POLE_RADIUS + CAR_BODY_RADIUS - distToPole;
-    const nx = (car.x - SPEAKER_POLE_POS.x) / (distToPole || 1);
-    const nz = (car.z - SPEAKER_POLE_POS.z) / (distToPole || 1);
-    car.x += nx * overlap;
-    car.z += nz * overlap;
-
-    // If reversing into pole with speed, trigger pole crash!
-    if (car.speed < -1.0) {
-      car.reversedIntoPole = true;
-    }
-    car.speed = -car.speed * 0.35;
-    car.bumperDamage = Math.min(100, car.bumperDamage + 25);
-  }
-
-  // Track drive-thru lane bounds (X: [-8, 2.0], Z: [-12, 24]). Scraping an
-  // edge keeps 85% of the speed per 1/60 s, whatever the frame rate: a flat
-  // 0.85 per step pinned a car on the curb at 0.26 m/s at 144 Hz.
-  const scrape = Math.pow(0.85, dt * 60);
-  if (car.x > 1.8) {
-    // Rubbing curb
-    car.x = 1.8;
-    car.speed *= scrape;
-  } else if (car.x < -8.0) {
-    car.x = -8.0;
-    car.speed *= scrape;
-  }
-
-  // Windshield wipers auto-clear splat
-  if (car.wipersActive && car.windshieldSplat > 0) {
+  if (car.wipersActive)
     car.windshieldSplat = Math.max(0, car.windshieldSplat - 0.45 * dt);
-  }
 }
 
 /**
@@ -156,8 +170,7 @@ export function computeWindowReachGap(car: SedanState): {
   canReach: boolean;
 } {
   // Passenger window is on the right side (+X in local car space)
-  const windowWorldX = car.x + Math.cos(car.yaw) * 0.95;
-  const windowWorldZ = car.z + Math.sin(car.yaw) * 0.95;
+  const { x: windowWorldX, z: windowWorldZ } = carPoint(car, 1.05, -0.2);
 
   const dx = WINDOW_SILL_POS.x - windowWorldX;
   const dz = WINDOW_SILL_POS.z - windowWorldZ;
