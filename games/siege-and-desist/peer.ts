@@ -36,6 +36,7 @@ export function getConfiguredMode(): GameMode {
 
 const adapter: GameAdapter<SiegeWorld, SiegeSnapshot> = {
   game: 'siege-and-desist',
+  snapshotDetached: true,
   autonomous: (p) => !!p.bot,
   actions: [
     'start',

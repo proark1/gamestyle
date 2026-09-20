@@ -1,3 +1,4 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import {
   createCraneMesh,
@@ -481,6 +482,7 @@ export class CraneClashScene {
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);
     this.container.removeEventListener('wheel', this.onWheel);
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

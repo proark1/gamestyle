@@ -127,6 +127,7 @@ export function inClay<Model extends T.Object3D>(root: Model) {
         bumpMap: clayBump(),
         bumpScale: 1.2,
       });
+      clay.userData.shared = true;
       clays.set(key, clay);
     }
     mesh.material = clay;

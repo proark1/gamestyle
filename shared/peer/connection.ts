@@ -10,6 +10,7 @@ import { openCheckpoint, sealCheckpoint } from './crypto';
 import { acquireMesh, peerRequest, type PeerMesh } from './mesh';
 import { PeerError, type PeerView } from './types';
 import type { NpcAction } from '../rooms/npc-slots';
+import { bindGameLifecycle } from '../browser/game-lifecycle';
 
 export async function enterPeerRoom<S>(
   game: GameId,
@@ -110,6 +111,24 @@ export class PeerGameConnection<S> {
     if (this.mesh.view) this.onView(this.mesh.view);
     this.mesh.start();
     this.timer = setInterval(() => this.tick(), 50);
+    if (typeof window !== 'undefined') {
+      let transition = Promise.resolve();
+      this.unsubscribe.push(
+        bindGameLifecycle((active) => {
+          transition = transition
+            .catch(() => {})
+            .then(async () => {
+              if (this.stopped) return;
+              this.lastTick = performance.now();
+              if (!active && this.authoritative())
+                await this.commit().catch(() => {});
+              if (!this.stopped)
+                await this.mesh.rpc(active ? 'resume' : 'suspend');
+            })
+            .catch(() => this.status('reconnecting'));
+        }),
+      );
+    }
   }
   private notice(message: string) {
     if (typeof window !== 'undefined')

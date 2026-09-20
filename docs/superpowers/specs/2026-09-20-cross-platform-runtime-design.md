@@ -1,0 +1,11 @@
+**Cross-platform runtime implementation**
+
+The user approved implementing the 20 September performance audit. Preserve the existing TypeScript/Three.js games, their routes, persisted data, and ongoing unrelated edits. Targeted runtime changes offer the lowest migration risk; a wholesale engine rewrite discards working game logic, while fixing only isolated games leaves platform inconsistencies in place.
+
+Implement in stages: (1) resource ownership and refresh-independent continuous damping, with numerical/resource regression tests; (2) shared graphics telemetry, adaptive quality, lifecycle/input release and native invite parsing; (3) bounded decoded-audio caching and independently backpressured state transport, preserving reliable actions and older peers; (4) locally bundled client distribution with explicit API routing, mobile/desktop packaging and controller input; (5) automated browser/build checks and documented real-device release criteria.
+
+Game-specific rules remain in games. Shared owns reusable rendering, input, transport and browser facilities. Platform owns the multi-game installed client registry. Local clients must serve their assets without an internet connection and send online requests to the configured trusted server. No embedded secrets. Production websites continue using same-origin requests. Native/desktop identities and invite routes are validated separately from content URLs.
+
+Performance policy starts with the existing device tier, measures sustained frame timing, lowers quality with hysteresis, and exposes diagnostics. Backgrounding clears controls and suppresses draws. Network leases/checkpoints remain authoritative; no simulation is advanced through unbounded wall-time gaps. Resource disposal respects explicitly shared caches.
+
+Verification covers owned/shared resource disposal, model reuse over hundreds of snapshots, refresh-rate damping invariance, bounded audio memory, invite parsing, quality hysteresis and transport flow control. Run existing game tests, architecture, TypeScript, lint, production and installed-client builds. Physical-device thermal/FPS results, real-internet TURN configuration, signed native releases and Steam account integration require their actual environments and are not inferred from unit tests.

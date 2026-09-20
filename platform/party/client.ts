@@ -1,9 +1,10 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import type { PartyResult } from '../../shared/ui/party-round';
 import type { GameId } from '../../shared/audio/types';
 import type { PartyAction, PartyPass, PartyRoomState } from './types';
 
 async function partyRequest<T>(action: PartyAction): Promise<T> {
-  const res = await fetch('/api/party', {
+  const res = await apiFetch('/api/party', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(action),

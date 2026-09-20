@@ -1,3 +1,4 @@
+import { apiFetch } from '../browser/api-fetch';
 import {
   PeerError,
   type DeliveredSignal,
@@ -12,7 +13,7 @@ export async function peerRequest(
   body: object,
   keepalive = false,
 ): Promise<PeerReply> {
-  const response = await fetch('/api/peer', {
+  const response = await apiFetch('/api/peer', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -32,6 +33,7 @@ type Link = {
   member: Member;
   pc: RTCPeerConnection;
   channel?: RTCDataChannel;
+  stateChannel?: RTCDataChannel;
   sender: RTCRtpSender;
   created: number;
   candidates: RTCIceCandidateInit[];
@@ -208,19 +210,32 @@ export class PeerMesh {
       for (const listener of this.listeners.track)
         listener(member.id, event.track);
     };
-    if (initiator)
+    if (initiator) {
       this.attachChannel(link, pc.createDataChannel('game', { ordered: true }));
+      this.attachChannel(
+        link,
+        pc.createDataChannel('state', { ordered: false, maxRetransmits: 0 }),
+      );
+    }
     return link;
   }
   private attachChannel(link: Link, channel: RTCDataChannel) {
-    if (channel.label !== 'game' || link.channel) {
+    const state = channel.label === 'state';
+    if (
+      (!state && channel.label !== 'game') ||
+      (state ? link.stateChannel : link.channel)
+    ) {
       channel.close();
       return;
     }
-    link.channel = channel;
+    if (state) link.stateChannel = channel;
+    else link.channel = channel;
     channel.onopen = () => {
-      for (const listener of this.listeners.connected) listener(link.member.id);
+      if (!state)
+        for (const listener of this.listeners.connected)
+          listener(link.member.id);
     };
+    const chunks: Link['chunks'] = state ? new Map() : link.chunks;
     channel.onmessage = (event) => {
       if (
         this.closed ||
@@ -244,18 +259,22 @@ export class PeerMesh {
             typeof message.data !== 'string'
           )
             return;
-          for (const [id, chunk] of link.chunks)
-            if (performance.now() - chunk.at > 5000) link.chunks.delete(id);
-          let chunk = link.chunks.get(message.id);
+          for (const [id, chunk] of chunks)
+            if (performance.now() - chunk.at > 5000) chunks.delete(id);
+          let chunk = chunks.get(message.id);
           if (!chunk) {
-            if (link.chunks.size >= 4) return;
+            if (chunks.size >= 4) {
+              if (!state) return;
+              // A lost unreliable fragment must not block newer complete snapshots.
+              chunks.delete(chunks.keys().next().value!);
+            }
             chunk = {
               at: performance.now(),
               parts: [],
               total: message.total,
               size: 0,
             };
-            link.chunks.set(message.id, chunk);
+            chunks.set(message.id, chunk);
           }
           if (
             chunk.total !== message.total ||
@@ -265,7 +284,7 @@ export class PeerMesh {
           chunk.parts[message.index] = message.data;
           chunk.size += message.data.length;
           if (chunk.size > 280000) {
-            link.chunks.delete(message.id);
+            chunks.delete(message.id);
             return;
           }
           if (
@@ -273,7 +292,7 @@ export class PeerMesh {
               (p) => typeof p === 'string',
             )
           ) {
-            link.chunks.delete(message.id);
+            chunks.delete(message.id);
             for (const listener of this.listeners.message)
               listener(link.member.id, JSON.parse(chunk.parts.join('')));
           }
@@ -360,11 +379,17 @@ export class PeerMesh {
     }
   }
   send(id: string, message: unknown): boolean {
-    const channel = this.links.get(id)?.channel;
+    const link = this.links.get(id);
+    const type = (message as { type?: string } | null)?.type;
+    const replaceable = type === 'snapshot' || type === 'input';
+    const channel =
+      replaceable && link?.stateChannel?.readyState === 'open'
+        ? link.stateChannel
+        : link?.channel;
     if (
       this.closed ||
       channel?.readyState !== 'open' ||
-      channel.bufferedAmount > 256000
+      channel.bufferedAmount > (replaceable ? 32000 : 256000)
     )
       return false;
     const text = JSON.stringify(message);
@@ -416,6 +441,7 @@ export class PeerMesh {
       link.pc.onicecandidate = null;
       link.pc.ontrack = null;
       link.channel?.close();
+      link.stateChannel?.close();
       link.pc.close();
     }
     this.tracks.delete(id);

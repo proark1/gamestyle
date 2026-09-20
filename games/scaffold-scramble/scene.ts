@@ -1,3 +1,4 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { CLOTH } from '../../shared/rendering/palette';
 import { cleaner, poseScaffoldWorker } from './avatar';
@@ -987,6 +988,7 @@ export class ScaffoldScene {
     this.destroyed = true;
     cancelAnimationFrame(this.animId);
     this.unbindEvents();
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

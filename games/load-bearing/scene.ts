@@ -1,3 +1,4 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
@@ -506,6 +507,7 @@ export class LoadBearingScene {
     cancelAnimationFrame(this.frame);
     this.abort.abort();
     this.observer.disconnect();
+    disposeObject(this.scene);
     this.renderer.dispose();
     this.renderer.domElement.remove();
     this.cb.input(idleInput());

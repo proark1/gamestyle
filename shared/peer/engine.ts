@@ -40,6 +40,8 @@ export type EngineCheckpoint<W extends PeerWorld = PeerWorld> = {
 /** Game rules are injected; the transport never imports another game's simulation. */
 export interface GameAdapter<W extends PeerWorld, S extends GameSnapshot> {
   game: GameId;
+  /** Adapter already creates a fully detached snapshot; avoid a second deep copy. */
+  snapshotDetached?: boolean;
   /** Optional game-owned entities; they are never network members. */
   autonomous?(player: W['players'][number]): boolean;
   roster?(world: W, roster: NpcRoster): void;
@@ -278,14 +280,13 @@ export class PeerEngine<
   }
 
   snapshot(code: string, host: string, id: string, epoch: number): S {
-    return structuredClone(
-      this.adapter.snapshot(
-        this.world,
-        code,
-        host,
-        id,
-        epoch * 1_000_000_000 + this.seq,
-      ),
+    const snapshot = this.adapter.snapshot(
+      this.world,
+      code,
+      host,
+      id,
+      epoch * 1_000_000_000 + this.seq,
     );
+    return this.adapter.snapshotDetached ? snapshot : structuredClone(snapshot);
   }
 }

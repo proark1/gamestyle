@@ -1,3 +1,4 @@
+import { apiFetch } from '../browser/api-fetch';
 import {
   ACCOUNT_CHANNEL,
   type AccountMessage,
@@ -122,7 +123,9 @@ function retryLater() {
 async function loadAccount(first: boolean) {
   const asked = ++generation;
   try {
-    const response = await fetch('/api/account/session', { cache: 'no-store' });
+    const response = await apiFetch('/api/account/session', {
+      cache: 'no-store',
+    });
     if (!response.ok) throw new Error(`Session answered ${response.status}`);
     const reply = (await response.json()) as SessionReply;
     if (asked !== generation) return;
@@ -174,7 +177,7 @@ export class AccountRequestError extends Error {
 async function send<T>(path: string, body: object): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await apiFetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

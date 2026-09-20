@@ -53,12 +53,14 @@ function remove(room: Room, id: string) {
 }
 function elect(room: Room, now: number) {
   const host = room.members.find((m) => m.id === room.host);
-  if (host && now - host.seen < HOST_LEASE_MS) return;
-  if (host) remove(room, host.id);
-  room.host =
+  if (host && !host.suspended && now - host.seen < HOST_LEASE_MS) return;
+  if (host && !host.suspended) remove(room, host.id);
+  const nextHost =
     room.members
-      .filter((m) => m.instance && now - m.seen < HOST_LEASE_MS)
+      .filter((m) => !m.suspended && m.instance && now - m.seen < HOST_LEASE_MS)
       .sort((a, b) => a.order - b.order)[0]?.id ?? '';
+  if (room.host === nextHost) return;
+  room.host = nextHost;
   room.epoch++;
   room.key = newCheckpointKey();
 }
@@ -191,6 +193,8 @@ export async function handlePeerRoom(
       'lock',
       'leave',
       'npc',
+      'suspend',
+      'resume',
     ].includes(String(op))
   )
     throw new PeerError('Unknown room operation.');
@@ -268,7 +272,8 @@ export async function handlePeerRoom(
     // Expire authority before refreshing the caller: an old host cannot revive a dead lease.
     elect(room, now);
     for (const m of room.members)
-      if (now - m.seen >= MEMBER_TTL_MS) remove(room, m.id);
+      if (now - m.seen >= (m.suspended ? 120000 : MEMBER_TTL_MS))
+        remove(room, m.id);
     if (joining) {
       if (!room.host)
         throw new PeerError('This room has ended. Create a new room.', 404);
@@ -334,6 +339,10 @@ export async function handlePeerRoom(
           401,
         );
       member.seen = now;
+      if (op === 'suspend' || op === 'resume' || op === 'hello') {
+        member.suspended = op === 'suspend';
+        elect(room, now);
+      }
       if (op === 'npc') {
         if (!supportsNpcRoster(game))
           throw new PeerError('NPC slots are not supported by this game.');

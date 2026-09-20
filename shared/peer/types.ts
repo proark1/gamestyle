@@ -14,6 +14,7 @@ export type Member = {
   color: number;
   instance: string;
   seen: number;
+  suspended?: boolean;
 };
 export type Signal = {
   id: string;

@@ -1,3 +1,4 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { traveler } from './avatar';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
@@ -581,6 +582,7 @@ export class CarryOnScene {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     cancelAnimationFrame(this.animFrameId);
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

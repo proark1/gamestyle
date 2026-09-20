@@ -1,3 +1,4 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import {
   PeerGameConnection,
   enterPeerRoom,
@@ -21,7 +22,7 @@ type Reply = { session?: FarmSession; snapshot?: FarmSnapshot; error?: string };
 export async function requestFarm(body: object): Promise<Reply> {
   // Hidden-role rooms run on the server. A player hosting a peer simulation
   // would otherwise hold every cow identity and inventory on their device.
-  const res = await fetch('/api/act-natural', {
+  const res = await apiFetch('/api/act-natural', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

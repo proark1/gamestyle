@@ -1,4 +1,6 @@
 'use client';
+import { apiFetch } from '../browser/api-fetch';
+
 /* oxlint-disable react/react-compiler, typescript/unbound-method */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -298,7 +300,7 @@ export default function PartyRibbon() {
       if (!partyCode || !playerId) return Promise.resolve(false);
       if (reporting.current) return reporting.current;
       setReport('saving');
-      const sent = fetch('/api/party', {
+      const sent = apiFetch('/api/party', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -339,7 +341,7 @@ export default function PartyRibbon() {
     if (!standingsOpen || !partyCode) return;
     let live = true;
     const load = () =>
-      fetch('/api/party', {
+      apiFetch('/api/party', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ op: 'get', code: partyCode }),

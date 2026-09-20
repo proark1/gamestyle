@@ -1,3 +1,4 @@
+import { apiFetch } from '../browser/api-fetch';
 import {
   Room,
   RoomEvent,
@@ -68,7 +69,7 @@ export class VoiceClient {
       };
       // Autoplay can wait for another gesture. It must not stall room joining.
       void context.resume().catch(() => this.emit({ audioBlocked: true }));
-      const res = await fetch('/api/voice/token', {
+      const res = await apiFetch('/api/voice/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(this.session),

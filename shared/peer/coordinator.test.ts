@@ -35,6 +35,23 @@ export class PeerMemoryStore implements RoomStore {
 }
 const NOW = 1_000_000;
 
+void test('background hosts yield authority without losing their seat and can resume', async () => {
+  const { sessions, call } = await crew('stack-or-sink');
+  const sleeping = await call(0, 'suspend', NOW + 1);
+  assert.equal(sleeping.view.host, sessions[1].id);
+  assert.equal(sleeping.view.members.length, 4);
+  assert.equal(
+    sleeping.view.members.find((m) => m.id === sessions[0].id)?.suspended,
+    true,
+  );
+  const resumed = await call(0, 'resume', NOW + 2);
+  assert.equal(resumed.view.host, sessions[1].id);
+  assert.equal(
+    resumed.view.members.find((m) => m.id === sessions[0].id)?.suspended,
+    false,
+  );
+});
+
 void test('peer signals strip unrecognized fields and bound the total persisted queue', async () => {
   const { store, sessions, call } = await crew('stack-or-sink');
   const signal = (id: string) => ({

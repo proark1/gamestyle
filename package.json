@@ -27,10 +27,15 @@
     "pretest": "npm run check:architecture",
     "check": "npm run format:check && npm run typecheck && npm run lint && npm test",
     "format:check": "oxfmt --check app games shared platform db scripts hooks lib vite.config.ts package.json .oxlintrc.json",
-    "cap:sync": "node scripts/prepare-native.mjs && cap sync",
+    "cap:sync": "npm run build:client && node scripts/prepare-native.mjs && cap sync",
     "cap:open:android": "cap open android",
     "cap:open:ios": "cap open ios",
-    "deploy": "node scripts/deploy.mjs"
+    "deploy": "node scripts/deploy.mjs",
+    "build:client": "vite build --config vite.client.config.ts",
+    "preview:client": "vite preview --config vite.client.config.ts --host 127.0.0.1",
+    "desktop:dev": "npm run build:client && electron desktop/main.cjs",
+    "build:desktop": "npm run build:client && node scripts/package-desktop.mjs",
+    "test:browser": "node scripts/browser-smoke.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
@@ -72,9 +77,11 @@
     "vinext": "^1.0.0-beta.9"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.54.5",
-    "@cloudflare/workers-types": "5.20260908.1",
+    "@cloudflare/vite-plugin": "1.56.0",
+    "@cloudflare/workers-types": "5.20260920.1",
+    "@electron/packager": "^20.3.0",
     "@openai/sites-vite-plugin": "0.2.0",
+    "@playwright/test": "^1.63.0",
     "@roamhq/wrtc": "0.10.0",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
@@ -83,6 +90,7 @@
     "@vitejs/plugin-react": "6.0.2",
     "@vitejs/plugin-rsc": "^0.5.34",
     "drizzle-kit": "0.31.10",
+    "electron": "^44.4.3",
     "oxfmt": "0.61.0",
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",
@@ -90,9 +98,12 @@
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vite": "^8.2.2",
-    "wrangler": "4.129.1"
+    "wrangler": "4.135.0"
   },
   "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    },
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.12"
     }

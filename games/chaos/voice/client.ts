@@ -1,3 +1,4 @@
+import { apiFetch } from '../../../shared/browser/api-fetch';
 import {
   Room,
   RoomEvent,
@@ -62,7 +63,7 @@ export class VoiceClient {
       this.context = context;
       this.output = context.createMediaStreamDestination();
       await context.resume();
-      const res = await fetch('/api/handwerker/voice/token', {
+      const res = await apiFetch('/api/handwerker/voice/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(this.session),

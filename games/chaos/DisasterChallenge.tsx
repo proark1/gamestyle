@@ -1,4 +1,6 @@
 'use client';
+import { apiFetch } from '../../shared/browser/api-fetch';
+
 import { useEffect, useRef, useState } from 'react';
 import type { Snapshot } from './model';
 import type { Session } from './connection';
@@ -31,7 +33,7 @@ export function DisasterChallenge({
     saving.current = abort;
     setBusy(true);
     try {
-      const response = await fetch('/api/handwerker/builds', {
+      const response = await apiFetch('/api/handwerker/builds', {
         method: 'POST',
         signal: abort.signal,
         headers: { 'Content-Type': 'application/json' },

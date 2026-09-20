@@ -1,3 +1,4 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { liveKid } from '../../shared/rendering/avatars/kid';
@@ -698,6 +699,7 @@ export class BasketballScene {
     cancelAnimationFrame(this.frameId);
     this.abort.abort();
     this.observer.disconnect();
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

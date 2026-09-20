@@ -17,6 +17,7 @@ import {
 } from '../audio/preferences';
 import { useWakeLock } from '../browser/wake-lock';
 import './toolbar.css';
+import GraphicsControls from '../rendering/GraphicsControls';
 
 const DEFAULT_LABELS = {
   controls: 'Game controls',
@@ -126,6 +127,7 @@ export default function GameToolbar({
       <WardrobeButton variant="toolbar" />
       <AccountButton variant="toolbar" />
       <LanguageSwitcher variant="toolbar" />
+      <GraphicsControls />
       <button
         className="game-toolbar-button"
         onClick={onHelp}

@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { renderQuality } from '../browser/device';
 
 /**
  * The collection's light, taken from Stack or Sink: a warm sun over a
@@ -62,7 +63,8 @@ export function addHouseLight(
   const sun = new T.DirectionalLight(SUN_COLOUR, SUN_INTENSITY);
   sun.position.set(-13, 24, 12);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  const size = renderQuality().shadowMapSize;
+  sun.shadow.mapSize.set(size, size);
   sun.shadow.normalBias = 0.05;
   scene.add(hemisphere, sun);
   return { hemisphere, sun };
