@@ -506,7 +506,7 @@ function arm(body: T.Group, side: number, kit: string) {
 }
 
 /** How a wardrobe look changes the kid: long trousers, or a hat to fit under. */
-export type KidStyle = { trousers?: boolean; hat?: boolean };
+export type KidStyle = { trousers?: boolean; hat?: boolean | string };
 
 export type HoopKid = {
   root: T.Group;

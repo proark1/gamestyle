@@ -68,7 +68,8 @@ void test('every kid wears every wardrobe item where it belongs', () => {
       assert.ok(box.min.y > -0.05 && box.max.y < 2.3, `${name} stays upright`);
       if (item.slot === 'hat')
         assert.ok(
-          box.min.y < SCALP && box.max.y > SCALP,
+          box.min.y < SCALP + (character === 'nico' ? 0.08 : 0) &&
+            box.max.y > SCALP,
           `${name} sits over the head`,
         );
       // Glasses stay on the face; a beard may hang as far as the chest.
@@ -89,6 +90,31 @@ void test('every kid wears every wardrobe item where it belongs', () => {
           `${name} is on the feet`,
         );
     }
+});
+
+void test('every hat leaves Nico’s front curls visible, including the party cone', () => {
+  const shades = new Set(['#3f261b', '#4d2f21', '#5b3928']);
+  for (const item of ITEMS.filter((item) => item.slot === 'hat')) {
+    const { model } = playerKid('nico', { jersey: KIT.red }, { hat: item.id });
+    model.updateMatrixWorld(true);
+    let visible = 0;
+    // Cast from the viewer towards the forehead. A curl counts only if it is
+    // the first surface hit, so hair hidden inside the skull/hat cannot pass.
+    for (const x of [-0.18, -0.12, -0.06, 0, 0.06, 0.12, 0.18]) {
+      for (const y of [0.45, 0.48, 0.51]) {
+        const ray = new T.Raycaster(
+          new T.Vector3(x, HEAD_Y + y, 2),
+          new T.Vector3(0, 0, -1),
+        );
+        const hit = ray.intersectObject(model, true)[0];
+        if (hit && shades.has(hex(hit.object as T.Mesh))) visible++;
+      }
+    }
+    assert.ok(
+      visible >= 6,
+      `${item.id} preserves a visible fringe (${visible}/21 samples)`,
+    );
+  }
 });
 
 void test('a legs item gives the kid long trousers in its colour', () => {

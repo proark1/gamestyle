@@ -450,9 +450,15 @@ function domeWidth(bottom: number, height: number, y: number) {
  * the kid's round one a rounded block becomes a dome, a flat one a round brim
  * or band, and a band round a dome hugs it. Anything else is kept as it is.
  */
-function wearKidHat(head: T.Object3D, hat: ItemModel, player: string) {
+function wearKidHat(
+  head: T.Object3D,
+  hat: ItemModel,
+  player: string,
+  seat: number,
+) {
   const group = new T.Group();
   group.position.set(...HAT_AT);
+  group.position.y = seat;
   group.scale.setScalar(HAT_FIT);
   head.add(group);
   const centred = (part: Part): part is Box =>
@@ -546,11 +552,12 @@ export function dressKid(model: T.Object3D, player: string, look?: Look): Worn {
     }
   }
   if (models.hat) {
-    wearKidHat(lookGroup(rig.head), models.hat, player);
+    const seat = (model.userData.hatSeat as number | undefined) ?? HAT_AT[1];
+    wearKidHat(lookGroup(rig.head), models.hat, player, seat);
     const top = Math.max(
       ...models.hat.parts.filter((p) => p.on === 'head').map(partTop),
     );
-    model.userData.hatTop = HEAD_Y + HAT_AT[1] + HAT_FIT * top;
+    model.userData.hatTop = HEAD_Y + seat + HAT_FIT * top;
   }
   return Object.fromEntries(
     SLOTS.map((slot) => [slot, !!models[slot]]),

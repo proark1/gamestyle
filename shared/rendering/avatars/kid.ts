@@ -60,7 +60,7 @@ export function playerKid(kid: KidId, kit: Kit, look?: Look) {
       overalls: models.legs?.overalls ?? kit.shorts,
       boots: models.shoes?.boots ?? kit.shoes,
     },
-    { trousers: !!models.legs, hat: !!models.hat },
+    { trousers: !!models.legs, hat: models.hat ? look?.hat : undefined },
   );
   const worn = dressKid(model, kit.jersey, look);
   inClay(model);
