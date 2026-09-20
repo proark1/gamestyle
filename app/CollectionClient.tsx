@@ -39,11 +39,11 @@ import {
 import './collection.css';
 import {
   ClubhouseWelcome,
-  ClubhouseHowTo,
   ClubhouseParty,
 } from '@/shared/clubhouse/ClubhouseWelcome';
 import { CastGuide } from '@/shared/clubhouse/Cast';
 import { CLUBHOUSE_COPY } from '@/shared/clubhouse/copy';
+import { AdventureDesk } from '@/shared/clubhouse/AdventureDesk';
 
 interface CardStaticConfig {
   slug: string;
@@ -406,6 +406,26 @@ export default function CollectionClient({ order }: { order: string[] }) {
   const { t } = useLanguage();
   const strings = t(LANDING_TRANSLATIONS);
   const clubhouse = t(CLUBHOUSE_COPY);
+  const adventures = order.flatMap((slug) => {
+    const config = CARD_CONFIGS[slug];
+    const dictionary = CARDS_TRANSLATIONS[slug];
+    if (!config || !dictionary) return [];
+    const copy = t(dictionary);
+    return [
+      {
+        slug,
+        href: config.href,
+        image: config.imgSrc,
+        title:
+          `${copy.titleMain}${copy.titleHighlight ?? ''}${copy.titleSuffix ?? ''}`.replace(
+            /\.$/,
+            '',
+          ),
+        players: copy.players,
+        cta: copy.cta,
+      },
+    ];
+  });
 
   return (
     <main className="collection">
@@ -428,7 +448,7 @@ export default function CollectionClient({ order }: { order: string[] }) {
       </header>
 
       <ClubhouseWelcome count={order.length} />
-      <ClubhouseHowTo />
+      <AdventureDesk games={adventures} />
       <ClubhouseParty />
 
       <div className="clubhouse-shelf-heading" id="games">

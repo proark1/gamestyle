@@ -12,6 +12,7 @@ import { Cast } from './Cast';
 import { CLUBHOUSE_COPY } from './copy';
 import { useLanguage } from '../language/useLanguage';
 import { LANDING_TRANSLATIONS } from '../language/translations/landing';
+import { InteractiveCrew } from './InteractiveCrew';
 
 export function ClubhouseWelcome({ count }: { count: number }) {
   const { t } = useLanguage();
@@ -43,16 +44,7 @@ export function ClubhouseWelcome({ count }: { count: number }) {
         </div>
         <p className="clubhouse-guest-note">{facts.statNoAccount}</p>
       </div>
-      <div className="clubhouse-stage">
-        <p className="cast-speech clubhouse-hero-speech">{copy.bubble}</p>
-        <div className="clubhouse-sun" aria-hidden="true" />
-        <div className="clubhouse-court" aria-hidden="true" />
-        <Cast pose="mail" className="hero-cast hero-cast-mail" eager />
-        <Cast pose="point" className="hero-cast hero-cast-point" eager />
-        <Cast pose="wave" className="hero-cast hero-cast-wave" eager />
-        <Cast pose="cheer" className="hero-cast hero-cast-cheer" eager />
-        <span className="clubhouse-crew-tag">{copy.crew}</span>
-      </div>
+      <InteractiveCrew />
       <ul className="clubhouse-facts">
         <li>
           <Gamepad2 size={17} />
