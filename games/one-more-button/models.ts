@@ -1,9 +1,9 @@
 import * as T from 'three';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { box, material, label } from '../../shared/rendering/primitives';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { GAME_HEAD_TOP as WORKER_HEAD_TOP } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import type { Hazard } from './types';
 
@@ -40,21 +40,21 @@ function cylinder(
 export function contestant(color: string, look?: Look) {
   const { model: g, worn } = dressedWorker(
     0,
-    { shirt: color, overalls: CLOTH.teal, boots: CLOTH.cream, cap: false },
+    { shirt: color, overalls: CLOTH.teal, boots: CLOTH.cream, cap: true },
     look,
   );
   const body = g.userData.body as T.Group;
   if (!worn.hat) {
-    box(
-      body,
-      [0.55, 0.12, 0.53],
-      [0, WORKER_HEAD_TOP + 0.04, 0],
-      CLOTH.brown,
-      true,
+    const band = new T.Mesh(
+      new T.TorusGeometry(0.31, 0.035, 8, 32),
+      material(CLOTH.cream),
     );
-    box(body, [0.56, 0.07, 0.54], [0, WORKER_HEAD_TOP - 0.06, 0], CLOTH.cream);
+    band.rotation.x = Math.PI / 2;
+    band.scale.y = 0.94;
+    band.position.y = WORKER_HEAD_TOP - 0.08;
+    body.add(band);
   }
-  box(body, [0.22, 0.14, 0.02], [0, 0.9, 0.29], CLOTH.cream);
+  box(body, [0.18, 0.11, 0.02], [0, 0.8, 0.19], CLOTH.cream);
   return g;
 }
 /** Walks a contestant, arms up while airborne; `now` is in milliseconds. */

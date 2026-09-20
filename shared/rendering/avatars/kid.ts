@@ -11,7 +11,14 @@ import { nico } from './nico';
  * What a game dresses a kid in: the jersey, and shorts and sneakers that match
  * it unless set. Team games use a `TEAM` colour, other games `seatKit`.
  */
-export type Kit = { jersey: string; shorts?: string; shoes?: string };
+export type Kit = {
+  jersey: string;
+  shorts?: string;
+  shoes?: string;
+  trousers?: boolean;
+  /** Reserve space for a game-supplied hat when no wardrobe hat is worn. */
+  hat?: boolean;
+};
 
 /** The clay kids from the owner's court picture. */
 const KIDS = { lola, nico } as const;
@@ -60,12 +67,20 @@ export function playerKid(kid: KidId, kit: Kit, look?: Look) {
       overalls: models.legs?.overalls ?? kit.shorts,
       boots: models.shoes?.boots ?? kit.shoes,
     },
-    { trousers: !!models.legs, hat: models.hat ? look?.hat : undefined },
+    {
+      trousers: !!models.legs || kit.trousers,
+      hat: models.hat ? look?.hat : kit.hat,
+    },
   );
   const worn = dressKid(model, kit.jersey, look);
   inClay(model);
   batchRig(model);
   model.userData.kid = kid;
+  model.userData.kit = {
+    jersey: kit.jersey,
+    trousers: models.legs?.overalls ?? kit.shorts ?? kit.jersey,
+    shoes: models.shoes?.boots ?? kit.shoes ?? kit.jersey,
+  };
   return { model, worn };
 }
 

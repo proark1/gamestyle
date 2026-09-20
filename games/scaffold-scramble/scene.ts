@@ -858,8 +858,10 @@ export class ScaffoldScene {
         // Tool models
         const toolSqueegee = createSqueegeeMesh();
         const toolSponge = createSpongeMesh();
-        root.add(toolSqueegee);
-        root.add(toolSponge);
+        const hand = root.userData.sleeveR as T.Group;
+        hand.add(toolSqueegee, toolSponge);
+        toolSqueegee.position.set(0, -0.39, 0.04);
+        toolSponge.position.set(0, -0.39, 0.04);
 
         // Safety harness tether line (high-visibility safety orange lanyard)
         const tetherGeo = new T.BufferGeometry().setFromPoints([
@@ -886,21 +888,13 @@ export class ScaffoldScene {
       if (player.tool === 'squeegee') {
         pObj.toolSqueegee.visible = true;
         pObj.toolSponge.visible = false;
-        pObj.toolSqueegee.position.set(0.25 * player.facing, 0.6, 0.3);
       } else if (player.tool === 'sponge') {
         pObj.toolSqueegee.visible = false;
         pObj.toolSponge.visible = true;
-        pObj.toolSponge.position.set(0.25 * player.facing, 0.6, 0.3);
       } else {
         pObj.toolSqueegee.visible = false;
         pObj.toolSponge.visible = false;
       }
-
-      // Safety tether line connecting player back to overhead rail
-      const tetherPos = pObj.tetherLine.geometry.attributes.position;
-      tetherPos.setXYZ(0, player.deckX, RAILING_HEIGHT + 0.9, -0.9);
-      tetherPos.setXYZ(1, player.deckX, player.deckY + 0.95, 0.25);
-      tetherPos.needsUpdate = true;
 
       // Pose avatar limbs
       poseScaffoldWorker(pObj.root, nowSec, {
@@ -909,6 +903,17 @@ export class ScaffoldScene {
         color: player.color,
         facing: player.facing,
       });
+      // Follow the animated back ring in cradle coordinates, including avatar scale.
+      pObj.root.updateWorldMatrix(true, true);
+      const ring = pObj.root.userData.harnessRing as T.Object3D;
+      const anchor = this.cradleGroup.worldToLocal(
+        ring.getWorldPosition(new T.Vector3()),
+      );
+      const tetherPos = pObj.tetherLine.geometry.attributes.position;
+      tetherPos.setXYZ(0, player.deckX, RAILING_HEIGHT + 0.9, -0.9);
+      tetherPos.setXYZ(1, anchor.x, anchor.y, anchor.z);
+      tetherPos.needsUpdate = true;
+      pObj.tetherLine.geometry.computeBoundingSphere();
     }
 
     // 11. Vertigo Camera Follow with Screen Shake

@@ -1,7 +1,7 @@
 import * as T from 'three';
 import { box, beam, label, material } from '../../shared/rendering/primitives';
 import { sofa as createSofa } from '../../shared/rendering/sofa';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import {
@@ -72,16 +72,7 @@ export function deliverySofa() {
 }
 /** A mover: the shared worker in a player's look, with its torso merged. */
 export function deliveryWorker(color: number, look?: Look) {
-  const g = dressedWorker(color, {}, look).model,
-    body = g.userData.body as T.Group;
-  const limbs = ['legL', 'legR', 'armL', 'armR'].map(
-    (key) => g.userData[key] as T.Group,
-  );
-  // Merge the rigid torso while preserving each animated limb's pivot.
-  limbs.forEach((limb) => limb.removeFromParent());
-  batchScenery(body);
-  limbs.forEach((limb) => body.add(limb));
-  return g;
+  return dressedWorker(color, {}, look).model;
 }
 /** Walks a mover, arms out to grip the sofa; `now` is in milliseconds. */
 export function poseDeliveryWorker(

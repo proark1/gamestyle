@@ -1,8 +1,8 @@
 import * as T from 'three';
-import { worker, type WorkerOutfit } from '../../shared/rendering/worker';
+import type { WorkerOutfit } from '../../shared/rendering/worker';
+import { dressedGameAvatar } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { dressWorker } from '../../shared/rendering/cosmetics/dress';
 import { CLOTH, TEAM } from '../../shared/rendering/palette';
 import { ZORB_RADIUS, type TeamId } from './types';
 
@@ -140,24 +140,21 @@ export function createZorbAvatar(
     cap: true,
   };
 
-  const workerModel = worker(colorIndex, outfit);
-  if (look) {
-    dressWorker(workerModel, outfit.shirt ?? TEAM.red, look);
-  }
+  const { model: workerModel } = dressedGameAvatar(colorIndex, outfit, look);
 
   // Add safety harness chest straps to worker
   const strapMat = new T.MeshStandardMaterial({
     color: CLOTH.ink,
     roughness: 0.7,
   });
-  const strapGeoL = new T.BoxGeometry(0.08, 0.48, 0.06);
+  const strapGeoL = new T.BoxGeometry(0.06, 0.32, 0.04);
   const strapL = new T.Mesh(strapGeoL, strapMat);
-  strapL.position.set(-0.16, 0.92, 0.23);
-  workerModel.add(strapL);
+  strapL.position.set(-0.13, 0.8, 0.18);
+  workerModel.userData.body.add(strapL);
 
   const strapR = new T.Mesh(strapGeoL, strapMat);
-  strapR.position.set(0.16, 0.92, 0.23);
-  workerModel.add(strapR);
+  strapR.position.set(0.13, 0.8, 0.18);
+  workerModel.userData.body.add(strapR);
 
   // Center worker inside workerGroup around center of mass (y = 0.96, z = 0.03)
   workerModel.position.set(0, -0.96, -0.03);

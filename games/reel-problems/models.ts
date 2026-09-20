@@ -1,7 +1,7 @@
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { GAME_HEAD_TOP as WORKER_HEAD_TOP } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import * as THREE from 'three';
 import {
@@ -279,7 +279,7 @@ export function createAngler(color: string, look?: Look) {
   );
   const body = g.userData.body as THREE.Group;
   if (!worn.top)
-    box(body, [0.56, 0.42, 0.07], [0, 0.98, 0.255], material(CLOTH.hivis));
+    box(body, [0.43, 0.3, 0.05], [0, 0.78, 0.18], material(CLOTH.hivis));
   if (!worn.hat) {
     const hat = material(color);
     const brim = cylinder(

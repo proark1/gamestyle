@@ -1,6 +1,6 @@
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { poseWrecker } from './avatar';
 import { SiteMotion, emptyPose } from './motion';
