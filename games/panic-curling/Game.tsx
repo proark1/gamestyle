@@ -1,7 +1,14 @@
 'use client';
 /* oxlint-disable react/react-compiler -- WebGL host syncs scene controllers */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -59,6 +66,32 @@ import {
 import { inPartyMode } from '../../shared/ui/party-mode';
 
 const tracker = new GameTracker(panicCurlingAnalytics);
+
+function holdControl(change: (held: boolean) => void) {
+  return {
+    onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0) return;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      change(true);
+    },
+    onPointerUp: () => change(false),
+    onPointerCancel: () => change(false),
+    onLostPointerCapture: () => change(false),
+    onBlur: () => change(false),
+    onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        change(true);
+      }
+    },
+    onKeyUp: (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        change(false);
+      }
+    },
+  };
+}
 
 export default function PanicCurlingGame() {
   const { t } = useLanguage();
@@ -354,7 +387,15 @@ export default function PanicCurlingGame() {
   // Keyboard shortcuts: Space to deliver or sweep, Arrow keys or A/D to aim or steer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return;
+      if (
+        e.repeat ||
+        e.defaultPrevented ||
+        (e.target instanceof HTMLElement &&
+          e.target.closest(
+            'button, input, textarea, select, [contenteditable]',
+          ))
+      )
+        return;
       if (e.code === 'Space') {
         e.preventDefault();
         const current = localWorld.current;
@@ -423,6 +464,21 @@ export default function PanicCurlingGame() {
   const isDeliverPhase =
     world?.phase === 'aiming' && role === 'deliverer' && isMyTurn;
   const isSlidePhase = world?.phase === 'sliding';
+  useEffect(() => {
+    const release = () => {
+      setIsSweeping(false);
+      isSweepingRef.current = false;
+      setSteerDir(0);
+      steerDirRef.current = 0;
+    };
+    if (!isSlidePhase) release();
+    window.addEventListener('blur', release);
+    document.addEventListener('visibilitychange', release);
+    return () => {
+      window.removeEventListener('blur', release);
+      document.removeEventListener('visibilitychange', release);
+    };
+  }, [isSlidePhase]);
   const myPlayer = world?.players.find((p) => p.id === sessionRef.current.id);
 
   return (
@@ -464,7 +520,10 @@ export default function PanicCurlingGame() {
         </button>
 
         {showTactics && (
-          <div className="curling-tactics-menu">
+          <fieldset
+            className="curling-tactics-menu"
+            disabled={world?.phase !== 'aiming' && world?.phase !== 'warmup'}
+          >
             <span className="curling-tactics-section-title">
               {strings.selectTeam}
             </span>
@@ -521,7 +580,7 @@ export default function PanicCurlingGame() {
                 Defender
               </button>
             </div>
-          </div>
+          </fieldset>
         )}
       </div>
 
@@ -563,7 +622,8 @@ export default function PanicCurlingGame() {
               <span>{world.turnTeam === 'red' ? '🔴 RED' : '🔵 BLUE'}</span>
               <span>•</span>
               <span>
-                ROCK {world.throwIndex + 1}/{world.totalThrowsPerEnd}
+                ROCK {Math.min(world.throwIndex + 1, world.totalThrowsPerEnd)}/
+                {world.totalThrowsPerEnd}
               </span>
             </div>
 
@@ -578,6 +638,51 @@ export default function PanicCurlingGame() {
             <span className="curling-team-name">{TEAM_NAMES.blue}</span>
             <span className="curling-team-badge blue">🔵</span>
           </div>
+        </div>
+      )}
+
+      {world && (
+        <div className="curling-overview house-card">
+          <svg
+            viewBox="0 0 64 400"
+            // SVG needs its image role for an accessible, dynamic overview.
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+            role="img"
+            aria-label={strings.overviewLabel}
+          >
+            <rect
+              x="1"
+              y="1"
+              width="62"
+              height="398"
+              rx="8"
+              fill="#e5f2f5"
+              stroke="#547a82"
+            />
+            <circle cx="32" cy="58" r="29" fill="#417aa7" />
+            <circle cx="32" cy="58" r="20" fill="#fffaf0" />
+            <circle cx="32" cy="58" r="11" fill="#b54939" />
+            <circle cx="32" cy="58" r="4" fill="#f3c742" />
+            <path
+              d="M32 5V390 M2 148H62 M2 308H62"
+              stroke="#8a9fa3"
+              strokeWidth="1"
+            />
+            {world.stones
+              .filter((stone) => !stone.outOfBounds)
+              .map((stone) => (
+                <circle
+                  key={stone.id}
+                  cx={32 + stone.x * 9}
+                  cy={368 - stone.z * 10}
+                  r={stone.id === world.activeStoneId ? 4.5 : 3.5}
+                  fill={stone.team === 'red' ? '#b54939' : '#235db7'}
+                  stroke="#fff"
+                  strokeWidth="1.5"
+                />
+              ))}
+          </svg>
+          <span>{strings.targetLabel}</span>
         </div>
       )}
 
@@ -672,9 +777,9 @@ export default function PanicCurlingGame() {
                 {strings.launchPower}: {Math.round(power * 100)}%
               </span>
               <span className="curling-power-zone-tag">
-                {power < 0.35
+                {power < 0.4
                   ? strings.guardShot
-                  : power < 0.72
+                  : power < 0.55
                     ? strings.drawToHouse
                     : strings.highTakeout}
               </span>
@@ -745,132 +850,106 @@ export default function PanicCurlingGame() {
       )}
 
       {/* Sweeper Cockpit & Gadget Dock */}
-      {isSlidePhase && (role === 'sweeper' || isMyTurn) && (
-        <div className="curling-sweeper-cockpit">
-          {/* Real-time Slide Telemetry */}
-          {(() => {
-            const activeStone = world?.stones.find(
-              (s) => s.id === world?.activeStoneId,
-            );
-            if (!activeStone) return null;
-            return (
-              <div className="curling-slide-telemetry">
-                <div className="curling-telemetry-item">
-                  <span className="curling-telemetry-label">SPEED</span>
-                  <span className="curling-telemetry-val">
-                    {Math.hypot(activeStone.vx, activeStone.vz).toFixed(1)} m/s
-                  </span>
+      {isSlidePhase &&
+        isMyTurn &&
+        (role === 'sweeper' || role === 'deliverer') && (
+          <div className="curling-sweeper-cockpit">
+            {/* Real-time Slide Telemetry */}
+            {(() => {
+              const activeStone = world?.stones.find(
+                (s) => s.id === world?.activeStoneId,
+              );
+              if (!activeStone) return null;
+              const sweeper = world?.players.find(
+                (p) => p.team === activeStone.team && p.role === 'sweeper',
+              );
+              const sweeping =
+                sweeper?.status === 'sweeping' && sweeper.sweepIntensity > 0;
+              return (
+                <div className="curling-slide-telemetry">
+                  <div className="curling-telemetry-item">
+                    <span className="curling-telemetry-label">SPEED</span>
+                    <span className="curling-telemetry-val">
+                      {Math.hypot(activeStone.vx, activeStone.vz).toFixed(1)}{' '}
+                      m/s
+                    </span>
+                  </div>
+                  <div className="curling-telemetry-item">
+                    <span className="curling-telemetry-label">TO TEE</span>
+                    <span className="curling-telemetry-val">
+                      {activeStone.distanceToTee.toFixed(1)} m
+                    </span>
+                  </div>
+                  <div className="curling-telemetry-item">
+                    <span className="curling-telemetry-label">
+                      SWEEP STATUS
+                    </span>
+                    <span
+                      className={`curling-telemetry-val ${sweeping ? 'is-sweeping' : 'is-idle'}`}
+                    >
+                      {sweeping
+                        ? `🔥 SWEEPING (-${Math.round(GADGET_CONFIGS[sweeper.gadget].frictionCut * 100)}%)`
+                        : 'HOLD TO EXTEND'}
+                    </span>
+                  </div>
                 </div>
-                <div className="curling-telemetry-item">
-                  <span className="curling-telemetry-label">TO TEE</span>
-                  <span className="curling-telemetry-val">
-                    {activeStone.distanceToTee.toFixed(1)} m
-                  </span>
-                </div>
-                <div className="curling-telemetry-item">
-                  <span className="curling-telemetry-label">SWEEP STATUS</span>
-                  <span
-                    className={`curling-telemetry-val ${isSweeping ? 'is-sweeping' : 'is-idle'}`}
-                  >
-                    {isSweeping
-                      ? `🔥 SWEEPING (-${Math.round(GADGET_CONFIGS[activeGadget].frictionCut * 100)}%)`
-                      : 'HOLD TO EXTEND'}
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
 
-          {/* Tactile Gadget Selector */}
-          <div className="curling-gadget-dock">
-            {(['broom', 'hairdryer', 'blowtorch'] as GadgetId[]).map((g) => (
+            {/* Tactile Gadget Selector */}
+            <div className="curling-gadget-dock">
+              {(['broom', 'hairdryer', 'blowtorch'] as GadgetId[]).map((g) => (
+                <button
+                  key={g}
+                  className={`curling-gadget-btn ${activeGadget === g ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveGadget(g);
+                    activeGadgetRef.current = g;
+                    dispatchAction({ type: 'switchGadget', gadget: g });
+                  }}
+                >
+                  {g === 'broom' && <Wind size={15} />}
+                  {g === 'hairdryer' && <Zap size={15} />}
+                  {g === 'blowtorch' && <Flame size={15} />}
+                  <span>{GADGET_CONFIGS[g].name}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Sweeper Steer & Scrub Controls */}
+            <div className="curling-sweeper-hud">
               <button
-                key={g}
-                className={`curling-gadget-btn ${activeGadget === g ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveGadget(g);
-                  activeGadgetRef.current = g;
-                  dispatchAction({ type: 'switchGadget', gadget: g });
-                }}
+                className={`curling-steer-btn ${steerDir === -1 ? 'active' : ''}`}
+                {...holdControl((held) => {
+                  setSteerDir(held ? -1 : 0);
+                  steerDirRef.current = held ? -1 : 0;
+                })}
               >
-                {g === 'broom' && <Wind size={15} />}
-                {g === 'hairdryer' && <Zap size={15} />}
-                {g === 'blowtorch' && <Flame size={15} />}
-                <span>{GADGET_CONFIGS[g].name}</span>
+                {strings.steerLeft}
               </button>
-            ))}
+
+              <button
+                className={`curling-sweep-btn ${isSweeping ? 'active' : ''}`}
+                {...holdControl((held) => {
+                  setIsSweeping(held);
+                  isSweepingRef.current = held;
+                })}
+              >
+                <Sparkles size={24} /> {strings.sweepHarder}
+              </button>
+
+              <button
+                className={`curling-steer-btn ${steerDir === 1 ? 'active' : ''}`}
+                {...holdControl((held) => {
+                  setSteerDir(held ? 1 : 0);
+                  steerDirRef.current = held ? 1 : 0;
+                })}
+              >
+                {strings.steerRight}
+              </button>
+            </div>
           </div>
-
-          {/* Sweeper Steer & Scrub Controls */}
-          <div className="curling-sweeper-hud">
-            <button
-              className={`curling-steer-btn ${steerDir === -1 ? 'active' : ''}`}
-              onMouseDown={() => {
-                setSteerDir(-1);
-                steerDirRef.current = -1;
-              }}
-              onMouseUp={() => {
-                setSteerDir(0);
-                steerDirRef.current = 0;
-              }}
-              onTouchStart={() => {
-                setSteerDir(-1);
-                steerDirRef.current = -1;
-              }}
-              onTouchEnd={() => {
-                setSteerDir(0);
-                steerDirRef.current = 0;
-              }}
-            >
-              {strings.steerLeft}
-            </button>
-
-            <button
-              className={`curling-sweep-btn ${isSweeping ? 'active' : ''}`}
-              onMouseDown={() => {
-                setIsSweeping(true);
-                isSweepingRef.current = true;
-              }}
-              onMouseUp={() => {
-                setIsSweeping(false);
-                isSweepingRef.current = false;
-              }}
-              onTouchStart={() => {
-                setIsSweeping(true);
-                isSweepingRef.current = true;
-              }}
-              onTouchEnd={() => {
-                setIsSweeping(false);
-                isSweepingRef.current = false;
-              }}
-            >
-              <Sparkles size={24} /> {strings.sweepHarder}
-            </button>
-
-            <button
-              className={`curling-steer-btn ${steerDir === 1 ? 'active' : ''}`}
-              onMouseDown={() => {
-                setSteerDir(1);
-                steerDirRef.current = 1;
-              }}
-              onMouseUp={() => {
-                setSteerDir(0);
-                steerDirRef.current = 0;
-              }}
-              onTouchStart={() => {
-                setSteerDir(1);
-                steerDirRef.current = 1;
-              }}
-              onTouchEnd={() => {
-                setSteerDir(0);
-                steerDirRef.current = 0;
-              }}
-            >
-              {strings.steerRight}
-            </button>
-          </div>
-        </div>
-      )}
+        )}
 
       {/* Banana Sabotage Button */}
       {myPlayer && myPlayer.bananasLeft > 0 && (

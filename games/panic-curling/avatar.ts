@@ -65,7 +65,7 @@ export function poseCurler(
       rig.legR.rotation.set(0.35, 0, -0.1);
       // Arms aggressively pumping broom handle
       rig.armL.rotation.set(-1.2 + scrub * 0.5, 0, 0.35);
-      rig.armR.rotation.set(-1.2 - scrub * 0.5, 0, -0.35);
+      rig.armR.rotation.set(-1.2 + scrub * 0.5, 0, -0.35);
       break;
     }
 
