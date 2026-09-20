@@ -203,6 +203,7 @@ export function createPalletRack(
 export function createAisleSign(
   aisleNumber: number,
   title: string,
+  language = 'en',
 ): THREE.Group {
   const group = new THREE.Group();
 
@@ -223,7 +224,11 @@ export function createAisleSign(
   ctx.font = 'bold 110px Fredoka, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(`AISLE ${aisleNumber}`, 256, 115);
+  ctx.fillText(
+    `${language === 'de' ? 'GANG' : 'AISLE'} ${aisleNumber}`,
+    256,
+    115,
+  );
 
   // Category Title
   ctx.fillStyle = '#ffffff';
@@ -255,6 +260,7 @@ export function createAisleSign(
 export function createSampleKiosk(
   aisleName: string,
   sampleName: string,
+  language = 'en',
 ): THREE.Group {
   const group = new THREE.Group();
 
@@ -316,7 +322,11 @@ export function createSampleKiosk(
   ctx.font = 'bold 44px Fredoka, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('FREE SAMPLE STATION', 256, 42);
+  ctx.fillText(
+    language === 'de' ? 'GRATIS KOSTPROBEN' : 'FREE SAMPLE STATION',
+    256,
+    42,
+  );
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 30px Fredoka, sans-serif';
   ctx.fillText(sampleName.toUpperCase(), 256, 92);
@@ -876,7 +886,7 @@ export function createPaperPlateHazard(kind: 'plate' | 'spill'): THREE.Group {
 /**
  * Exit Receipt Gauntlet Checkout Counter & Gate with overhead LED gantry
  */
-export function createExitGauntlet(): THREE.Group {
+export function createExitGauntlet(language = 'en'): THREE.Group {
   const group = new THREE.Group();
 
   // Polished barrier railings
@@ -943,9 +953,20 @@ export function createExitGauntlet(): THREE.Group {
   ctx.font = 'bold 50px Fredoka, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('EXIT RECEIPT CHECK', 256, 46);
+  ctx.fillText(
+    language === 'de' ? 'KASSE · KONTROLLE' : 'EXIT RECEIPT CHECK',
+    256,
+    46,
+  );
   ctx.font = 'bold 30px Fredoka, sans-serif';
-  ctx.fillText('HAVE CART READY FOR INSPECTION', 256, 95);
+  ctx.fillText(
+    language === 'de'
+      ? 'WAGEN ZUR KONTROLLE BEREITHALTEN'
+      : 'HAVE CART READY FOR INSPECTION',
+    256,
+    95,
+    490,
+  );
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;

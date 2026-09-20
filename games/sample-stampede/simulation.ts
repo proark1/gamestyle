@@ -427,16 +427,10 @@ export function advanceSampleStampedeWorld(
   // 6. Match Completion Check
   if (world.timeRemaining <= 0) {
     world.status = 'finished';
-    // Determine winner
-    let topTeam: TeamId = 'red';
-    let topScore = -1;
-    for (const [team, score] of Object.entries(world.teamScores)) {
-      if (score > topScore) {
-        topScore = score;
-        topTeam = team as TeamId;
-      }
-    }
-    world.winnerTeam = topTeam;
+    const scores = Object.entries(world.teamScores);
+    const highest = Math.max(...scores.map(([, score]) => score));
+    const leaders = scores.filter(([, score]) => score === highest);
+    world.winnerTeam = leaders.length === 1 ? (leaders[0][0] as TeamId) : null;
   }
 }
 

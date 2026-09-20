@@ -18,7 +18,17 @@ import {
 import { useWakeLock } from '../browser/wake-lock';
 import './toolbar.css';
 
+const DEFAULT_LABELS = {
+  controls: 'Game controls',
+  soundOn: 'Enable game sound',
+  soundOff: 'Mute game sound',
+  musicOn: 'Turn music on',
+  musicOff: 'Turn music off',
+  volume: 'Sound volume',
+  help: 'How to play',
+};
 export default function GameToolbar({
+  labels = DEFAULT_LABELS,
   voice,
   voiceHint,
   onVoice,
@@ -28,6 +38,7 @@ export default function GameToolbar({
   onLeave: _onLeave,
   workshop: _workshop,
 }: {
+  labels?: typeof DEFAULT_LABELS;
   voice?: {
     session: VoiceSession;
     snapshot: VoiceSnapshot;
@@ -54,7 +65,7 @@ export default function GameToolbar({
   const change = (patch: Partial<AudioPreferences>) =>
     applyAudioPreferences({ ...audioPreferencesSnapshot(), ...patch });
   return (
-    <nav className="game-toolbar" aria-label="Game controls">
+    <nav className="game-toolbar" aria-label={labels.controls}>
       <HostNotice
         key={voice?.session.code ?? 'menu'}
         session={voice?.session}
@@ -82,8 +93,8 @@ export default function GameToolbar({
       <button
         className="game-toolbar-button"
         onClick={onToggleSound}
-        aria-label={muted ? 'Enable game sound' : 'Mute game sound'}
-        title={muted ? 'Enable game sound' : 'Mute game sound'}
+        aria-label={muted ? labels.soundOn : labels.soundOff}
+        title={muted ? labels.soundOn : labels.soundOff}
         aria-pressed={muted}
       >
         {muted ? <VolumeX size={19} /> : <Volume2 size={19} />}
@@ -99,15 +110,15 @@ export default function GameToolbar({
         onChange={(event) =>
           change({ volume: Number(event.target.value) / 100 })
         }
-        aria-label="Sound volume"
-        title="Sound volume"
+        aria-label={labels.volume}
+        title={labels.volume}
       />
       <button
         className={`game-toolbar-button${audio.music ? '' : ' is-off'}`}
         onClick={() => change({ music: !audio.music })}
         disabled={muted}
-        aria-label={audio.music ? 'Turn music off' : 'Turn music on'}
-        title={audio.music ? 'Turn music off' : 'Turn music on'}
+        aria-label={audio.music ? labels.musicOff : labels.musicOn}
+        title={audio.music ? labels.musicOff : labels.musicOn}
         aria-pressed={audio.music}
       >
         <AudioLines size={19} />
@@ -118,8 +129,8 @@ export default function GameToolbar({
       <button
         className="game-toolbar-button"
         onClick={onHelp}
-        aria-label="How to play"
-        title="How to play"
+        aria-label={labels.help}
+        title={labels.help}
       >
         <CircleHelp size={19} />
       </button>
