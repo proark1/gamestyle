@@ -327,6 +327,12 @@ export default function PartyRibbon() {
     if (result) void sendReport(result);
   }, [result, sendReport]);
 
+  // A saved result returns to the shared podium/vote automatically.
+  useEffect(() => {
+    if (report !== 'saved' || !partyCode) return;
+    window.location.href = `/party?room=${partyCode}`;
+  }, [report, partyCode]);
+
   // Standings open over the game: going to the party page mid-round would
   // send this player straight back into a fresh match.
   useEffect(() => {

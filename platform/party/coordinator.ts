@@ -6,6 +6,8 @@ import {
 } from '../../shared/rooms/identity';
 import { parsePartyResult } from '../../shared/ui/party-round';
 import { generatePlaylist, getPartyGameInfo } from './playlist';
+import { intermissionDue, progressIntermission } from './intermission';
+import type { GameId } from '../../shared/audio/types';
 import {
   calculateRoundPoints,
   roundTeams,
@@ -124,14 +126,14 @@ export async function createPartyRoom(
 export async function getPartyRoom(
   store: RoomStore,
   code: string,
+  now = Date.now(),
 ): Promise<PartyRoomState | null> {
   const row = await store.get(partyStorageKey(code.toUpperCase()));
   if (!row) return null;
-  try {
-    return readParty(row.state).room;
-  } catch {
-    return null;
-  }
+  const room = readParty(row.state).room;
+  return intermissionDue(room, now)
+    ? updatePartyRoom(store, code, null, (current) => current, now)
+    : { ...room, serverNow: now, revision: row.version };
 }
 
 /**
@@ -154,7 +156,11 @@ async function updatePartyRoom(
     const { room, passes } = readParty(row.state);
     if (actor) checkPass(passes, actor.id, hash);
     const nextPasses = passes && { ...passes };
-    const next = { ...updater(room, nextPasses), updated: now };
+    const current = progressIntermission(room, now);
+    const next = {
+      ...progressIntermission(updater(current, nextPasses), now),
+      updated: now,
+    };
     const stored: StoredParty = nextPasses
       ? { ...next, passes: nextPasses }
       : next;
@@ -169,7 +175,7 @@ async function updatePartyRoom(
       row.version,
     );
 
-    if (ok) return next;
+    if (ok) return { ...next, serverNow: now, revision: row.version + 1 };
   }
   throw new Error('Party room update conflict. Please retry.');
 }
@@ -284,6 +290,8 @@ export async function addBotToParty(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can add bots.');
       }
+      if (room.status !== 'lobby')
+        throw new Error('Bots can only join in the lobby.');
       if (room.players.length >= 4) {
         throw new Error('The party room is already full.');
       }
@@ -361,6 +369,7 @@ export async function startPartyTournament(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can start the tournament.');
       }
+      if (room.status !== 'lobby') return room;
       if (room.players.length < 2) {
         throw new Error('Need at least 2 players to start a party tournament.');
       }
@@ -445,6 +454,11 @@ function finishRound(
       winnerId = pId;
     }
   }
+  if (
+    Object.values(pointsAwarded).filter((pts) => pts === highestPts).length > 1
+  ) {
+    winnerId = undefined;
+  }
 
   const result: RoundResult = {
     round,
@@ -461,14 +475,13 @@ function finishRound(
     score: p.score + (pointsAwarded[p.id] ?? 0),
   }));
 
-  const isLastRound = round >= 5;
-
   return {
     ...room,
     players: updatedPlayers,
     roundResults: [...room.roundResults, result],
     reports: undefined,
-    status: isLastRound ? 'finished' : 'intermission',
+    status: 'intermission',
+    intermission: undefined,
   };
 }
 
@@ -599,17 +612,8 @@ export async function advanceToNextRound(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can advance the round.');
       }
-      const nextRound = room.currentRound + 1;
-      if (nextRound >= 6) {
-        return { ...room, status: 'finished' };
-      }
-      return {
-        ...room,
-        currentRound: nextRound,
-        reports: undefined,
-        status: 'countdown',
-        countdownUntil: now + 4000,
-      };
+      // Compatibility for old clients: deadlines, not host clicks, advance.
+      return room;
     },
     now,
   );
@@ -629,6 +633,8 @@ export async function rematchParty(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can trigger a rematch.');
       }
+      if (room.status !== 'finished')
+        throw new Error('Finish the tournament before starting a rematch.');
       const resetPlayers = room.players.map((p) => ({
         ...p,
         score: 0,
@@ -641,8 +647,48 @@ export async function rematchParty(
         currentRound: 0,
         roundResults: [],
         reports: undefined,
+        intermission: undefined,
         status: 'lobby',
         countdownUntil: undefined,
+      };
+    },
+    now,
+  );
+}
+
+export async function voteForNextGame(
+  store: RoomStore,
+  code: string,
+  round: number,
+  player: PartyPass,
+  game: GameId,
+  now = Date.now(),
+): Promise<PartyRoomState> {
+  return updatePartyRoom(
+    store,
+    code,
+    player,
+    (room) => {
+      const voter = room.players.find((seat) => seat.id === player.id);
+      if (!voter || voter.isBot)
+        throw new Error('Only a player in this party can vote.');
+      const ballot = room.intermission;
+      if (
+        room.currentRound !== round ||
+        room.status !== 'intermission' ||
+        ballot?.phase !== 'voting' ||
+        now >= ballot.endsAt
+      ) {
+        throw new Error('Voting is closed for this round.');
+      }
+      if (!ballot.candidates.includes(game))
+        throw new Error('Choose one of the three games.');
+      return {
+        ...room,
+        intermission: {
+          ...ballot,
+          votes: { ...ballot.votes, [player.id]: game },
+        },
       };
     },
     now,

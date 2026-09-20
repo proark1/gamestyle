@@ -31,6 +31,11 @@ export type RoundResult = {
 };
 
 export type PartyRoomState = {
+  intermission?: PartyIntermission;
+  /** Response-only server clock reference. */
+  serverNow?: number;
+  /** Response-only store version, for ordering concurrent client responses. */
+  revision?: number;
   code: string;
   hostId: string;
   status: PartyStatus;
@@ -54,8 +59,26 @@ export type PartyRoomState = {
  */
 export type PartyPass = { id: string; token: string };
 
+export type PartyIntermission = {
+  phase: 'podium' | 'voting' | 'tie-break' | 'reveal';
+  startedAt: number;
+  endsAt: number;
+  candidates: GameId[];
+  votes: Record<string, GameId>;
+  tied: GameId[];
+  winner?: GameId;
+};
+
 /** Every action taken as a player carries that player's party pass token. */
 export type PartyAction =
+  | {
+      op: 'vote';
+      code: string;
+      round: number;
+      playerId: string;
+      token: string;
+      game: GameId;
+    }
   | { op: 'create'; hostName: string; color: number }
   | { op: 'join'; code: string; name: string; color: number }
   | { op: 'leave'; code: string; playerId: string; token: string }

@@ -1,4 +1,5 @@
 import type { PartyResult } from '../../shared/ui/party-round';
+import type { GameId } from '../../shared/audio/types';
 import type { PartyAction, PartyPass, PartyRoomState } from './types';
 
 async function partyRequest<T>(action: PartyAction): Promise<T> {
@@ -130,6 +131,22 @@ export function nextPartyRound(
     code,
     hostId: host.id,
     token: host.token,
+  });
+}
+
+export function voteForPartyGame(
+  code: string,
+  round: number,
+  player: PartyPass,
+  game: GameId,
+): Promise<PartyRoomState> {
+  return stateOf({
+    op: 'vote',
+    code,
+    round,
+    playerId: player.id,
+    token: player.token,
+    game,
   });
 }
 

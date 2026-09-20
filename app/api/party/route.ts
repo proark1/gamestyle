@@ -19,6 +19,7 @@ import {
   advanceToNextRound,
   rematchParty,
   getPartyRoom,
+  voteForNextGame,
 } from '@/platform/party/coordinator';
 import type { PartyAction } from '@/platform/party/types';
 
@@ -124,6 +125,20 @@ async function handleRequest(request: Request) {
           id: body.hostId,
           token: body.token,
         });
+        return json({ state });
+      }
+
+      case 'vote': {
+        const state = await voteForNextGame(
+          store,
+          body.code,
+          body.round,
+          {
+            id: body.playerId,
+            token: body.token,
+          },
+          body.game,
+        );
         return json({ state });
       }
 

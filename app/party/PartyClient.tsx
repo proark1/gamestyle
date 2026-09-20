@@ -1,7 +1,7 @@
 'use client';
 /* oxlint-disable react/react-compiler */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Gamepad2,
   Users,
@@ -26,7 +26,6 @@ import {
   addPartyBot,
   removePartyPlayer,
   startParty,
-  nextPartyRound,
   rematchParty,
   leaveParty,
   closePartyRound,
@@ -36,8 +35,11 @@ import type {
   PartyPlayer,
   PartyRoomState,
 } from '@/platform/party/types';
+import PartyPodium from './PartyPodium';
+import PartyIntermission from './PartyIntermission';
 import './party.css';
 import { CastGuide } from '@/shared/clubhouse/Cast';
+import './party-intermission.css';
 
 const SESSION_KEY = 'jumbleyard-party-session-v1';
 
@@ -56,7 +58,26 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   const [room, setRoom] = useState<PartyRoomState | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
 
-  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [connectionError, setConnectionError] = useState('');
+  const clock = useRef({ server: Date.now(), local: Date.now() });
+  const latestRoomTime = useRef(0);
+  const latestRevision = useRef(0);
+  const acceptRoom = useCallback((fresh: PartyRoomState) => {
+    const stamp = fresh.serverNow ?? fresh.updated;
+    const revision = fresh.revision ?? 0;
+    if (
+      revision < latestRevision.current ||
+      (revision === latestRevision.current && stamp < latestRoomTime.current)
+    )
+      return;
+    latestRevision.current = revision;
+    latestRoomTime.current = stamp;
+    clock.current = {
+      server: fresh.serverNow ?? Date.now(),
+      local: Date.now(),
+    };
+    setRoom(fresh);
+  }, []);
 
   // Load saved name/color from localStorage
   useEffect(() => {
@@ -83,12 +104,12 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
           setPlayerId(saved.playerId);
           if (typeof saved.token === 'string') setToken(saved.token);
           void getParty(saved.code).then((st) => {
-            if (st) setRoom(st);
+            if (st) acceptRoom(st);
           });
         }
       }
     } catch {}
-  }, []);
+  }, [acceptRoom]);
 
   // Save session to sessionStorage
   useEffect(() => {
@@ -110,24 +131,28 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     }
   }, [room?.code, room?.players, room?.hostId, playerId, token, name, color]);
 
-  // Polling loop to sync state across all 4 players
+  // Serial polling avoids overlapping requests and updates clocks after reconnect.
   useEffect(() => {
     if (!room?.code) return;
-
+    let live = true;
+    let timer: ReturnType<typeof setTimeout>;
     const fetchState = async () => {
-      try {
-        const fresh = await getParty(room.code);
-        if (fresh) {
-          setRoom(fresh);
-        }
-      } catch {}
+      const fresh = await getParty(room.code);
+      if (!live) return;
+      if (fresh) {
+        acceptRoom(fresh);
+        setConnectionError('');
+      } else {
+        setConnectionError('Connection interrupted. Retrying automatically…');
+      }
+      timer = setTimeout(fetchState, 750);
     };
-
-    pollTimer.current = setInterval(fetchState, 1500);
+    void fetchState();
     return () => {
-      if (pollTimer.current) clearInterval(pollTimer.current);
+      live = false;
+      clearTimeout(timer);
     };
-  }, [room?.code]);
+  }, [room?.code, acceptRoom]);
 
   // This player has already reported their result for the round in play.
   const reported =
@@ -141,7 +166,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
       return;
     }
     const interval = setInterval(() => {
-      const msLeft = (room.countdownUntil ?? 0) - Date.now();
+      const msLeft =
+        (room.countdownUntil ?? 0) -
+        (clock.current.server + Date.now() - clock.current.local);
       if (msLeft <= 0) {
         setCountdown(0);
         clearInterval(interval);
@@ -177,7 +204,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
       const res = await createParty(name || 'Player 1', color);
       setPlayerId(res.playerId);
       setToken(res.token);
-      setRoom(res.state);
+      acceptRoom(res.state);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create party.');
     } finally {
@@ -197,7 +224,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
       );
       setPlayerId(res.playerId);
       setToken(res.token);
-      setRoom(res.state);
+      acceptRoom(res.state);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not join party.');
     } finally {
@@ -218,7 +245,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     if (!room || !pass) return;
     try {
       const next = await togglePartyReady(room.code, pass, !me?.ready);
-      setRoom(next);
+      acceptRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle ready.');
     }
@@ -228,7 +255,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     if (!room || !pass || !isHost) return;
     try {
       const next = await addPartyBot(room.code, pass);
-      setRoom(next);
+      acceptRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add bot.');
     }
@@ -238,7 +265,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     if (!room || !pass || !isHost) return;
     try {
       const next = await removePartyPlayer(room.code, pass, targetId);
-      setRoom(next);
+      acceptRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not remove player.');
     }
@@ -248,29 +275,16 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     if (!room || !pass || !isHost) return;
     try {
       const next = await startParty(room.code, pass);
-      setRoom(next);
+      acceptRoom(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start party.');
-    }
-  };
-
-  const handleNextRound = async () => {
-    if (!room || !pass || !isHost) return;
-    try {
-      const next = await nextPartyRound(room.code, pass);
-      setRoom(next);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Could not advance to next round.',
-      );
     }
   };
 
   const handleCloseRound = async () => {
     if (!room || !pass || !isHost) return;
     try {
-      const next = await closePartyRound(room.code, room.currentRound, pass);
-      setRoom(next);
+      acceptRoom(await closePartyRound(room.code, room.currentRound, pass));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not close round.');
     }
@@ -280,7 +294,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     if (!room || !pass || !isHost) return;
     try {
       const next = await rematchParty(room.code, pass);
-      setRoom(next);
+      acceptRoom(next);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Could not trigger rematch.',
@@ -294,6 +308,8 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
       await leaveParty(room.code, pass);
     } catch {}
     sessionStorage.removeItem(SESSION_KEY);
+    latestRoomTime.current = 0;
+    latestRevision.current = 0;
     setRoom(null);
     setPlayerId(null);
     setToken('');
@@ -322,7 +338,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
               className="party-cast-guide"
             />
             <p className="party-subtitle">
-              Assemble 4 players, battle across 6 random mini-games, and crown
+              Assemble 4 players, vote your way through 6 mini-games, and crown
               the Party Champion!
             </p>
           </div>
@@ -610,159 +626,25 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     );
   }
 
-  // 4. INTERMISSION / STANDINGS VIEW
+  // The server owns the phase and winner; this view animates its snapshot.
   if (room.status === 'intermission') {
-    const lastResult = room.roundResults[room.roundResults.length - 1];
-    const lastGameInfo = lastResult
-      ? getPartyGameInfo(lastResult.game)
-      : undefined;
-    const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
-    const nextGameId = room.playlist[room.currentRound + 1];
-    const nextGameInfo = nextGameId ? getPartyGameInfo(nextGameId) : undefined;
-    const nameOf = (id: string) =>
-      room.players.find((p) => p.id === id)?.name ?? 'Someone';
-
     return (
-      <div className="party-root">
-        <header className="party-header">
-          <span className="party-brand">
-            <span className="party-brand-icon">
-              <Gamepad2 size={22} color="#294a43" />
-            </span>
-            JUMBLEYARD
-          </span>
-          <span className="party-badge">
-            GAME {room.currentRound + 1} OF 6 COMPLETED
-          </span>
-        </header>
-
-        <main className="party-main">
-          <div className="party-title-wrap">
-            <h1 className="party-title">Tournament Standings</h1>
-            {lastGameInfo && (
-              <p className="party-subtitle">
-                {lastGameInfo.name} complete! Here is how the leaderboard
-                stands:
-              </p>
-            )}
-            {lastResult?.teams && (
-              <p className="party-subtitle" style={{ fontSize: 15 }}>
-                Teams this round: {lastResult.teams[0].map(nameOf).join(' & ')}{' '}
-                vs {lastResult.teams[1].map(nameOf).join(' & ')}
-              </p>
-            )}
-          </div>
-
-          <div className="party-card">
-            <table className="party-standings-table">
-              <tbody>
-                {sortedPlayers.map((player, idx) => {
-                  const ptsWon = lastResult?.pointsAwarded[player.id] ?? 0;
-                  return (
-                    <tr key={player.id}>
-                      <td style={{ width: 60 }}>
-                        <span className={`party-rank-badge rank-${idx + 1}`}>
-                          {idx + 1}
-                        </span>
-                      </td>
-                      <td>
-                        <div
-                          className="party-player-name-cell"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 14,
-                              height: 14,
-                              borderRadius: '50%',
-                              backgroundColor: COLORS[player.color] ?? '#999',
-                              display: 'inline-block',
-                            }}
-                          />
-                          {player.name}
-                          {player.id === playerId && (
-                            <span style={{ color: '#ca8038', fontSize: 12 }}>
-                              (You)
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ color: '#27ae60', fontWeight: 700 }}>
-                        +{ptsWon} pts
-                      </td>
-                      <td className="party-score-cell">
-                        {player.score}{' '}
-                        <span style={{ fontSize: 14, color: '#888' }}>PTS</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {nextGameInfo && (
-              <div className="party-playlist-preview">
-                <div className="party-playlist-header">
-                  <span>Up Next: Round {room.currentRound + 2} of 6</span>
-                  <span>
-                    {nextGameInfo.teams ? '2v2 Team Match' : 'Beat the Game'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div style={{ font: '700 20px Fredoka', color: '#294a43' }}>
-                    {nextGameInfo.name}
-                  </div>
-                  <div style={{ color: '#6b805f', fontSize: 14 }}>
-                    {nextGameInfo.tagline}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: 20,
-              }}
-            >
-              <button
-                type="button"
-                className="party-btn party-btn-ghost"
-                onClick={handleLeave}
-              >
-                <LogOut size={18} /> Leave Party
-              </button>
-
-              {isHost ? (
-                <button
-                  type="button"
-                  className="party-btn party-btn-primary"
-                  onClick={handleNextRound}
-                >
-                  Launch Round {room.currentRound + 2} <ArrowRight size={18} />
-                </button>
-              ) : (
-                <span style={{ color: '#71806b', fontWeight: 600 }}>
-                  Waiting for party host to launch next round…
-                </span>
-              )}
-            </div>
-          </div>
-        </main>
-      </div>
+      <PartyIntermission
+        room={room}
+        pass={pass}
+        onRoom={acceptRoom}
+        onLeave={handleLeave}
+        connectionError={connectionError}
+      />
     );
   }
 
   // 5. GRAND FINALE / WINNER PODIUM
   if (room.status === 'finished') {
     const podium = [...room.players].sort((a, b) => b.score - a.score);
-    const champion = podium[0];
+    const champions = podium.filter(
+      (player) => player.score === podium[0]?.score,
+    );
 
     return (
       <div className="party-root">
@@ -779,7 +661,8 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
         <main className="party-main">
           <div className="party-title-wrap">
             <h1 className="party-title" style={{ fontSize: 44 }}>
-              👑 {champion?.name} Wins!
+              👑 {champions.map((player) => player.name).join(' & ')}{' '}
+              {champions.length > 1 ? 'Share the Win!' : 'Wins!'}
             </h1>
             <p className="party-subtitle">
               The 6-game gauntlet has finished! All hail the Party Champion!
@@ -787,86 +670,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
           </div>
 
           <div className="party-card">
-            {/* 3D-styled Victory Podium */}
-            <div className="party-podium">
-              {/* 2nd Place */}
-              {podium[1] && (
-                <div className="party-podium-step step-2">
-                  <div
-                    className="party-podium-avatar"
-                    style={{ backgroundColor: COLORS[podium[1].color] }}
-                  >
-                    🥈
-                  </div>
-                  <div style={{ fontSize: 15 }}>{podium[1].name}</div>
-                  <div className="party-podium-label">
-                    {podium[1].score} pts
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>2nd Place</div>
-                </div>
-              )}
-
-              {/* 1st Place Champion */}
-              {champion && (
-                <div className="party-podium-step step-1">
-                  <div
-                    className="party-podium-avatar"
-                    style={{
-                      backgroundColor: COLORS[champion.color],
-                      transform: 'scale(1.2)',
-                    }}
-                  >
-                    👑
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800 }}>
-                    {champion.name}
-                  </div>
-                  <div className="party-podium-label" style={{ fontSize: 28 }}>
-                    {champion.score} pts
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      textTransform: 'uppercase',
-                      letterSpacing: 1,
-                    }}
-                  >
-                    Champion!
-                  </div>
-                </div>
-              )}
-
-              {/* 3rd Place */}
-              {podium[2] && (
-                <div className="party-podium-step step-3">
-                  <div
-                    className="party-podium-avatar"
-                    style={{ backgroundColor: COLORS[podium[2].color] }}
-                  >
-                    🥉
-                  </div>
-                  <div style={{ fontSize: 15 }}>{podium[2].name}</div>
-                  <div className="party-podium-label">
-                    {podium[2].score} pts
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>3rd Place</div>
-                </div>
-              )}
-            </div>
-
-            {/* 4th Place note if present */}
-            {podium[3] && (
-              <div
-                style={{
-                  textAlign: 'center',
-                  color: '#777',
-                  fontWeight: 600,
-                  marginBottom: 30,
-                }}
-              >
-                4th Place: {podium[3].name} ({podium[3].score} pts)
-              </div>
-            )}
+            <PartyPodium players={room.players} playerId={playerId} />
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
               {isHost && (
@@ -1043,8 +847,8 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
           {/* 6-Game Playlist Preview */}
           <div className="party-playlist-preview">
             <div className="party-playlist-header">
-              <span>Tournament Playlist (6 Random Games)</span>
-              <span>{room.playlist.length} Games Selected</span>
+              <span>Six rounds. Your party picks.</span>
+              <span>Vote after each round</span>
             </div>
             <div className="party-games-row">
               {room.playlist.map((gameId, idx) => {
@@ -1052,7 +856,11 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
                 return (
                   <div key={`${gameId}-${idx}`} className="party-game-pill">
                     <span className="pill-round">GAME {idx + 1}</span>
-                    <span>{info?.name ?? gameId}</span>
+                    <span>
+                      {idx === 0
+                        ? (info?.name ?? gameId)
+                        : 'You decide by vote'}
+                    </span>
                   </div>
                 );
               })}
