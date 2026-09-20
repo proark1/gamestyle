@@ -1,6 +1,6 @@
 .party-root {
   min-height: 100dvh;
-  background: #e7e9d6;
+  background: linear-gradient(180deg, #cfedf1, #edf0db 720px);
   color: #294a43;
   padding: 0 4%;
   font-family:
@@ -65,11 +65,13 @@
 }
 
 .party-card {
-  background: #f4f5ea;
-  border: 2px solid rgba(41, 74, 67, 0.12);
+  background: #fff6df;
+  border: 2px solid #fffdf3;
   border-radius: 24px;
   padding: 36px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 7px 0 #b9cdb2,
+    0 16px 30px #2449430a;
 }
 
 .party-title-wrap {
@@ -94,13 +96,13 @@
 /* Join & Create Form */
 .party-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px;
 }
 
 @media (max-width: 768px) {
   .party-form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -139,6 +141,8 @@
 }
 
 .party-input {
+  min-width: 0;
+  width: 100%;
   background: #f9faf4;
   border: 2px solid #e1e4d0;
   border-radius: 12px;
@@ -157,6 +161,7 @@
 .party-color-picker {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .party-color-dot {
@@ -198,18 +203,19 @@
 }
 
 .party-btn-primary {
-  background: #ca8038;
+  background: #287c80;
   color: white;
-  box-shadow: 0 4px 12px rgba(202, 128, 56, 0.3);
+  box-shadow: 0 4px 0 #1b565b;
 }
 
 .party-btn-primary:hover {
-  background: #b5702c;
+  background: #216b70;
 }
 
 .party-btn-secondary {
-  background: #d8dec3;
+  background: #fff6df;
   color: #294a43;
+  box-shadow: 0 3px 0 #c9b58f;
 }
 
 .party-btn-secondary:hover {
@@ -564,4 +570,40 @@
   font:
     700 22px 'Fredoka',
     sans-serif;
+}
+
+@media (max-width: 500px) {
+  .party-header {
+    height: auto;
+    min-height: 80px;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 0;
+  }
+  .party-brand {
+    font-size: 20px;
+  }
+  .party-main {
+    margin-top: 28px;
+    min-width: 0;
+  }
+  .party-card {
+    padding: 18px;
+    min-width: 0;
+  }
+  .party-panel {
+    padding: 18px;
+    min-width: 0;
+  }
+  .party-panel h2 {
+    font-size: 21px;
+  }
+  .party-code-banner {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+  }
+  .party-title {
+    font-size: 31px;
+  }
 }

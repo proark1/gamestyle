@@ -19,12 +19,10 @@ import {
   Bot,
   Shuffle,
   Hammer,
-  WifiOff,
   Snowflake,
   Zap,
   Luggage,
   Utensils,
-  Trophy,
   Building2,
   Link2,
 } from 'lucide-react';
@@ -39,6 +37,13 @@ import {
   type CardTranslation,
 } from '@/shared/language/translations/cards';
 import './collection.css';
+import {
+  ClubhouseWelcome,
+  ClubhouseHowTo,
+  ClubhouseParty,
+} from '@/shared/clubhouse/ClubhouseWelcome';
+import { CastGuide } from '@/shared/clubhouse/Cast';
+import { CLUBHOUSE_COPY } from '@/shared/clubhouse/copy';
 
 interface CardStaticConfig {
   slug: string;
@@ -400,6 +405,7 @@ function LocalizedGameCard({
 export default function CollectionClient({ order }: { order: string[] }) {
   const { t } = useLanguage();
   const strings = t(LANDING_TRANSLATIONS);
+  const clubhouse = t(CLUBHOUSE_COPY);
 
   return (
     <main className="collection">
@@ -421,59 +427,21 @@ export default function CollectionClient({ order }: { order: string[] }) {
         </div>
       </header>
 
-      <section className="collection-intro">
-        <div className="collection-kicker">
-          <span className="live-dot" /> {strings.kicker}
-        </div>
-        <h1>
-          {strings.heroTitleMain}
-          <br />
-          <span>{strings.heroTitleChaos}</span>
-        </h1>
-        <p>{strings.heroDesc}</p>
-        <ul className="collection-stats">
-          <li>
-            <Gamepad2 size={14} />{' '}
-            {strings.statGames.replace('{count}', String(order.length))}
-          </li>
-          <li>
-            <Users size={14} /> {strings.statPlayers}
-          </li>
-          <li>
-            <Timer size={14} /> {strings.statMinutes}
-          </li>
-          <li>
-            <WifiOff size={14} /> {strings.statNoAccount}
-          </li>
-        </ul>
-      </section>
+      <ClubhouseWelcome count={order.length} />
+      <ClubhouseHowTo />
+      <ClubhouseParty />
 
-      <aside className="party-mode-lead" aria-label="Party mode tournament">
-        <div className="party-lead-info">
-          <div className="party-lead-icon">
-            <Trophy size={28} />
-          </div>
-          <div className="party-lead-text">
-            <h3>Party Mode: 4 Players • 6 Random Games</h3>
-            <p>
-              Assemble your crew in a waiting room, battle across 6 mini-games,
-              and crown the overall champion!
-            </p>
-          </div>
+      <div className="clubhouse-shelf-heading" id="games">
+        <div>
+          <h2>{clubhouse.shelf}</h2>
+          <p>
+            <Shuffle size={13} /> {strings.shelfLeadSubtitle}
+          </p>
         </div>
-        <a className="party-lead-btn" href="/party">
-          Play Party Mode <ArrowUpRight size={18} />
-        </a>
-      </aside>
-
-      <div className="shelf-lead">
-        <h2>{strings.shelfLeadTitle}</h2>
-        <span>
-          <Shuffle size={13} /> {strings.shelfLeadSubtitle}
-        </span>
+        <CastGuide message="shelfHint" />
       </div>
 
-      <section className="game-shelf" id="games" aria-label="Choose a game">
+      <section className="game-shelf" aria-label={clubhouse.pick}>
         {order.map((slug) => {
           const config = CARD_CONFIGS[slug];
           const cardTransDict = CARDS_TRANSLATIONS[slug];

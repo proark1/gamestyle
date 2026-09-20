@@ -37,6 +37,7 @@ import type {
   PartyRoomState,
 } from '@/platform/party/types';
 import './party.css';
+import { CastGuide } from '@/shared/clubhouse/Cast';
 
 const SESSION_KEY = 'jumbleyard-party-session-v1';
 
@@ -315,6 +316,11 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
         <main className="party-main">
           <div className="party-title-wrap">
             <h1 className="party-title">Party Mode Tournament</h1>
+            <CastGuide
+              pose="wave"
+              message="partyEntry"
+              className="party-cast-guide"
+            />
             <p className="party-subtitle">
               Assemble 4 players, battle across 6 random mini-games, and crown
               the Party Champion!
@@ -917,6 +923,11 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
       <main className="party-main">
         <div className="party-title-wrap">
           <h1 className="party-title">Party Waiting Room</h1>
+          <CastGuide
+            pose={me?.ready ? 'cheer' : 'mail'}
+            message={me?.ready ? 'partyReady' : 'partyWaiting'}
+            className="party-cast-guide"
+          />
           <p className="party-subtitle">
             Invite friends or add bots. Once 4 players are assembled, launch the
             tournament!

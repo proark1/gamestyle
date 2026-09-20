@@ -1,6 +1,12 @@
 .collection {
   min-height: 100dvh;
-  background: #e7e9d6;
+  background: linear-gradient(
+    180deg,
+    #cfedf1 0,
+    #e3efd9 640px,
+    #edf0db 1150px,
+    #edf0db 100%
+  );
   color: #294a43;
   padding: 0 5.5%;
   overflow: hidden;
@@ -12,7 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 22px;
+  gap: 16px;
   border-bottom: 1px solid #294a431a;
 }
 .collection-brand {
@@ -54,7 +60,53 @@
 .collection-header-actions {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
+}
+@media (max-width: 700px) {
+  .collection-header .collection-nav {
+    display: none;
+  }
+  .collection-header-actions {
+    gap: 7px;
+  }
+  .collection-header .collection-brand {
+    font-size: 18px;
+    gap: 5px;
+  }
+  .collection-header .wardrobe-header-button > span,
+  .collection-header .account-header-button > span {
+    display: none;
+  }
+  .collection-header .wardrobe-header-button,
+  .collection-header .account-header-button {
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+@media (max-width: 370px) {
+  .collection-header {
+    gap: 8px;
+  }
+  .collection-header .collection-brand {
+    font-size: 14px;
+  }
+  .collection-header .collection-brand > span:first-child {
+    width: 30px;
+    height: 32px;
+  }
+  .collection-header-actions {
+    gap: 4px;
+  }
+  .collection-header .language-header-button {
+    width: 38px;
+    justify-content: center;
+    padding: 0;
+  }
+  .collection-header .language-header-button svg {
+    display: none;
+  }
 }
 /* The brand, "Pick a game" and the account button need 368px side by side, so
    below about a 410px screen the link wraps and the button is clipped. The
@@ -108,17 +160,17 @@
 .game-card {
   display: block;
   background: #fff8e6;
-  border: 1px solid #ffffffa6;
-  border-radius: 21px;
+  border: 3px solid #fffcf0;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 6px 0 #607b4d0b;
+  box-shadow: 0 6px 0 #b9cdb2;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
 }
 .game-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 11px 0 #607b4d14;
+  box-shadow: 0 10px 0 #aec5a6;
 }
 .game-card-art {
   position: relative;
@@ -285,6 +337,11 @@
   align-items: center;
   font-size: 11px;
   white-space: nowrap;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #287c80;
+  color: white;
+  box-shadow: 0 3px 0 #1b565b;
 }
 .collection-footer {
   max-width: 1280px;
