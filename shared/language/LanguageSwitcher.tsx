@@ -47,8 +47,8 @@ export default function LanguageSwitcher({
           type="button"
           className="game-toolbar-button language-toolbar-button"
           onClick={() => setOpen((o) => !o)}
-          aria-label={`Change language (currently ${activeOption.label})`}
-          title={`Language: ${activeOption.label}`}
+          aria-label={`${language === 'de' ? 'Sprache ändern (aktuell' : 'Change language (currently'} ${activeOption.label})`}
+          title={`${language === 'de' ? 'Sprache' : 'Language'}: ${activeOption.label}`}
           aria-expanded={open}
           aria-haspopup="listbox"
         >
@@ -62,8 +62,8 @@ export default function LanguageSwitcher({
           type="button"
           className="language-header-button"
           onClick={() => setOpen((o) => !o)}
-          aria-label={`Change language (currently ${activeOption.label})`}
-          title={`Language: ${activeOption.label}`}
+          aria-label={`${language === 'de' ? 'Sprache ändern (aktuell' : 'Change language (currently'} ${activeOption.label})`}
+          title={`${language === 'de' ? 'Sprache' : 'Language'}: ${activeOption.label}`}
           aria-expanded={open}
           aria-haspopup="listbox"
         >
@@ -75,7 +75,11 @@ export default function LanguageSwitcher({
       )}
 
       {open && (
-        <div className="language-menu" role="menu" aria-label="Select language">
+        <div
+          className="language-menu"
+          role="menu"
+          aria-label={language === 'de' ? 'Sprache wählen' : 'Select language'}
+        >
           {supportedLanguages.map((option) => {
             const isSelected = option.code === language;
             return (

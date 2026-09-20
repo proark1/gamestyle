@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { AudioLines, CircleHelp, Radio, Volume2, VolumeX } from 'lucide-react';
+import { useLanguage } from '../language/useLanguage';
 import VoicePanel from '../voice/VoicePanel';
 import HostNotice from '../peer/HostNotice';
 import AccountButton from '../accounts/AccountButton';
@@ -54,6 +55,8 @@ export default function GameToolbar({
   workshop?: string;
 }) {
   useWakeLock();
+  const { language } = useLanguage();
+  const de = language === 'de' && labels === DEFAULT_LABELS;
   // Stored preferences are external state: the server and the hydrating client
   // both see the defaults, then React re-reads once hydration finishes.
   const audio = useSyncExternalStore(
@@ -66,7 +69,10 @@ export default function GameToolbar({
   const change = (patch: Partial<AudioPreferences>) =>
     applyAudioPreferences({ ...audioPreferencesSnapshot(), ...patch });
   return (
-    <nav className="game-toolbar" aria-label={labels.controls}>
+    <nav
+      className="game-toolbar"
+      aria-label={de ? 'Spielsteuerung' : labels.controls}
+    >
       <HostNotice
         key={voice?.session.code ?? 'menu'}
         session={voice?.session}
@@ -75,8 +81,8 @@ export default function GameToolbar({
         <button
           className="game-toolbar-button voice-trigger"
           onClick={onVoice}
-          aria-label="Voice chat"
-          title="Voice chat"
+          aria-label={de ? 'Sprachchat' : 'Voice chat'}
+          title={de ? 'Sprachchat' : 'Voice chat'}
         >
           <Radio size={18} /> <span>Voice</span>
         </button>
@@ -94,8 +100,24 @@ export default function GameToolbar({
       <button
         className="game-toolbar-button"
         onClick={onToggleSound}
-        aria-label={muted ? labels.soundOn : labels.soundOff}
-        title={muted ? labels.soundOn : labels.soundOff}
+        aria-label={
+          muted
+            ? de
+              ? 'Spielton einschalten'
+              : labels.soundOn
+            : de
+              ? 'Spielton stummschalten'
+              : labels.soundOff
+        }
+        title={
+          muted
+            ? de
+              ? 'Spielton einschalten'
+              : labels.soundOn
+            : de
+              ? 'Spielton stummschalten'
+              : labels.soundOff
+        }
         aria-pressed={muted}
       >
         {muted ? <VolumeX size={19} /> : <Volume2 size={19} />}
@@ -111,28 +133,45 @@ export default function GameToolbar({
         onChange={(event) =>
           change({ volume: Number(event.target.value) / 100 })
         }
-        aria-label={labels.volume}
-        title={labels.volume}
+        aria-label={de ? 'Lautstärke' : labels.volume}
+        title={de ? 'Lautstärke' : labels.volume}
       />
       <button
         className={`game-toolbar-button${audio.music ? '' : ' is-off'}`}
         onClick={() => change({ music: !audio.music })}
         disabled={muted}
-        aria-label={audio.music ? labels.musicOff : labels.musicOn}
-        title={audio.music ? labels.musicOff : labels.musicOn}
+        aria-label={
+          audio.music
+            ? de
+              ? 'Musik ausschalten'
+              : labels.musicOff
+            : de
+              ? 'Musik einschalten'
+              : labels.musicOn
+        }
+        title={
+          audio.music
+            ? de
+              ? 'Musik ausschalten'
+              : labels.musicOff
+            : de
+              ? 'Musik einschalten'
+              : labels.musicOn
+        }
         aria-pressed={audio.music}
       >
         <AudioLines size={19} />
       </button>
       <WardrobeButton variant="toolbar" />
+
       <AccountButton variant="toolbar" />
       <LanguageSwitcher variant="toolbar" />
       <GraphicsControls />
       <button
         className="game-toolbar-button"
         onClick={onHelp}
-        aria-label={labels.help}
-        title={labels.help}
+        aria-label={de ? 'So wird gespielt' : labels.help}
+        title={de ? 'So wird gespielt' : labels.help}
       >
         <CircleHelp size={19} />
       </button>
