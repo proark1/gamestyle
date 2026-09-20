@@ -52,8 +52,8 @@ void test('haunted sightings arrive early, recur with quiet gaps, and recover id
   s.world.phase = 'escape';
   assert.equal(
     hotelHorror(s).ghost,
-    false,
-    'only the selected witness sees the pursuer',
+    true,
+    'all guests see the pursuer during a shared escape',
   );
   s.you.apparition = true;
   s.world.ghostZ = -7;

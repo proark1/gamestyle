@@ -1,3 +1,4 @@
+import { clueText } from './evidence';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -175,7 +176,7 @@ void test('a normal floor punishes retreat and an anomalous floor punishes advan
     assert.equal(w.cleared, 0);
   }
 });
-void test('deadline uses submitted votes and no votes default to retreat', () => {
+void test('deadline uses submitted votes but silence cannot clear a floor', () => {
   const w = game(2);
   w.plan.anomalies = [];
   vote(w, 'advance');
@@ -185,8 +186,10 @@ void test('deadline uses submitted votes and no votes default to retreat', () =>
   const empty = game();
   empty.plan.anomalies = [1];
   tick(empty, 90.1);
-  assert.equal(empty.cleared, 1);
-  assert.equal(empty.lastDecision?.choice, 'retreat');
+  assert.equal(empty.cleared, 0);
+  assert.equal(empty.phase, 'lost');
+  assert.equal(empty.endedBy, 'timeout');
+  assert.equal(empty.lastDecision, null);
 });
 void test('one human can run the entire corridor in time and hold the elevator for a caught friend', () => {
   const w = game(2);
@@ -234,7 +237,14 @@ void test('NPCs visit their stations and share truthful distinct observations wi
     const n = stationFor(w, p);
     assert.equal(
       p.report,
-      w.plan.anomalies.includes(n) ? STATIONS[n].odd : STATIONS[n].normal,
+      clueText(
+        {
+          station: n,
+          odd: w.plan.anomalies.includes(n),
+          variant: w.plan.variants?.[n] ?? 0,
+        },
+        'en',
+      ),
     );
     assert.ok(p.z < -20, `${p.name} reaches the vote panel`);
   }
@@ -252,9 +262,7 @@ void test('an entire five-stop solo playthrough works using movement, inspection
     tick(w, 9);
     const visible = hotelSnapshot(w, 'PRACTICE', '0', '0', 2);
     assert.ok(visible.world.players.every((p) => p.report));
-    const odd = visible.world.players.some((p) =>
-      STATIONS.some((s) => s.odd === p.report),
-    );
+    const odd = visible.world.players.some((p) => p.reportClue?.odd);
     hotelAction(
       w,
       '0',

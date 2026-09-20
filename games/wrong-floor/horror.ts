@@ -8,10 +8,10 @@ export function hotelHorror(snapshot: HotelSnapshot) {
   const inspect = w.phase === 'playing' && w.stage === 'inspect';
   const elapsed = Math.max(0, w.clock - w.stopAt);
   const seed = (Math.floor(w.stopAt) + w.run * 137 + w.cleared * 71) >>> 0;
-  const period = 13000 + (seed % 5000);
+  const period = 17000 - w.cleared * 900 + (seed % 6000);
   const cycle = Math.floor(elapsed / period);
   const time = elapsed % period;
-  const onset = 5200 + ((seed + cycle * 977) % 2200);
+  const onset = 4800 + ((seed + cycle * 1777) % (cycle === 0 ? 1800 : 4200));
   const encounterTime = time - onset;
   const disturbed = inspect && (you.anomaly || you.apparition);
   const encounter = disturbed && encounterTime >= 0 && encounterTime < 4100;
@@ -22,11 +22,13 @@ export function hotelHorror(snapshot: HotelSnapshot) {
   const lightDip = encounter
     ? fade * (encounterTime < 1200 || encounterTime > 2400 ? 0.86 : 0.35)
     : 0;
+  const variant = you.variant ?? 0;
   const doorTime = elapsed % 6700;
+  const knockSpacing = variant === 1 ? 180 : 300;
   const door = inspect && you.anomaly && you.station === 2;
   const knock =
     door && doorTime >= 900 && doorTime < 1800
-      ? Math.floor((doorTime - 900) / 300)
+      ? Math.floor((doorTime - 900) / knockSpacing)
       : -1;
   const handle =
     door && doorTime >= 2100 && doorTime < 3100
@@ -34,10 +36,11 @@ export function hotelHorror(snapshot: HotelSnapshot) {
       : 0;
   const wetStep = Math.floor((elapsed % 7600) / 560);
   const ghost =
-    you.apparition &&
-    (w.phase === 'escape' || (encounter && encounterTime > 500));
+    w.phase === 'escape' ||
+    (you.apparition && encounter && encounterTime > 500);
   return {
     elapsed,
+    reversePrints: variant === 1,
     cycle,
     encounter,
     encounterTime,
@@ -71,9 +74,13 @@ export function hotelHorror(snapshot: HotelSnapshot) {
         : '',
     clockStep:
       inspect && you.anomaly && you.station === 3
-        ? Math.floor(elapsed / 720)
+        ? Math.floor(elapsed / (variant === 1 ? 240 : 720))
         : 0,
-    portrait: inspect && you.anomaly && you.station === 1 && encounter,
+    portrait:
+      inspect &&
+      you.anomaly &&
+      you.station === 1 &&
+      (encounter || variant === 1),
     active: inspect || w.phase === 'escape',
   };
 }
