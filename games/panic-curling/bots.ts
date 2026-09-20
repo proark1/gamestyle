@@ -1,6 +1,7 @@
 import { launchDelivery, newCurlingPlayer } from './simulation';
 import {
   FAR_HOG_Z,
+  HACK_Z,
   STONE_CONFIGS,
   TEE_Z,
   type CurlingPlayer,
@@ -29,15 +30,18 @@ export function reconcileCurlingBots(world: PanicCurlingWorld) {
   let nameIndex = 0;
 
   for (const team of teams) {
-    // If a human deliverer exists on this team, remove any AI deliverer on this team
-    const hasHumanDeliverer = world.players.some(
-      (p) => !p.bot && p.team === team && p.role === 'deliverer',
+    // A human takes over any role, including sweeping and defending.
+    world.players = world.players.filter(
+      (p) =>
+        !(
+          p.bot &&
+          p.team === team &&
+          world.players.some(
+            (human) =>
+              !human.bot && human.team === team && human.role === p.role,
+          )
+        ),
     );
-    if (hasHumanDeliverer) {
-      world.players = world.players.filter(
-        (p) => !(p.bot && p.team === team && p.role === 'deliverer'),
-      );
-    }
 
     for (const role of neededRoles) {
       const exists = world.players.some(
@@ -98,17 +102,17 @@ export function updateCurlingBots(world: PanicCurlingWorld, dt: number) {
   }
 }
 
-function botDeliverStone(world: PanicCurlingWorld, bot: CurlingPlayer) {
+function botDeliverStone(world: PanicCurlingWorld, _bot: CurlingPlayer) {
   // Target center of the house
   const targetX = (Math.random() - 0.5) * 0.4;
   const targetZ = TEE_Z + (Math.random() - 0.5) * 0.6;
 
-  const dx = targetX - bot.x;
-  const dz = targetZ - bot.z;
+  const dx = targetX;
+  const dz = targetZ - (HACK_Z + 0.8);
   const angle = Math.atan2(dx, dz);
 
   // Power calibration (roughly 0.48 to 0.62)
-  const power = 0.52 + (Math.random() - 0.5) * 0.12;
+  const power = 0.46 + (Math.random() - 0.5) * 0.04;
   const spin = Math.random() < 0.5 ? 1 : -1;
 
   // Pick stone

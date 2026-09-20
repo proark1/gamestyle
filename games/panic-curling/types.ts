@@ -48,7 +48,7 @@ export const STONE_CONFIGS: Record<StoneKind, StoneConfig> = {
     mass: 20,
     radius: 0.38,
     height: 0.28,
-    baseFriction: 0.016,
+    baseFriction: 0.055,
     curlMultiplier: 1.0,
     iceStressMultiplier: 1.0,
     wobble: 0.0,
@@ -59,7 +59,7 @@ export const STONE_CONFIGS: Record<StoneKind, StoneConfig> = {
     mass: 55,
     radius: 0.45,
     height: 0.42,
-    baseFriction: 0.022,
+    baseFriction: 0.065,
     curlMultiplier: 0.45,
     iceStressMultiplier: 2.8,
     wobble: 0.02,
@@ -70,7 +70,7 @@ export const STONE_CONFIGS: Record<StoneKind, StoneConfig> = {
     mass: 14,
     radius: 0.42,
     height: 0.72,
-    baseFriction: 0.014,
+    baseFriction: 0.045,
     curlMultiplier: 1.8,
     iceStressMultiplier: 0.75,
     wobble: 0.15,
@@ -211,6 +211,7 @@ export type GamePhase =
   | 'aiming'
   | 'delivering'
   | 'sliding'
+  | 'shot_result'
   | 'end_summary'
   | 'match_over';
 

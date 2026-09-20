@@ -111,22 +111,22 @@ export function createCurlingRinkMesh(): T.Group {
     {
       r: HOUSE_RINGS.twelveFoot.radius,
       color: HOUSE_RINGS.twelveFoot.color,
-      y: -0.09,
+      y: 0.025,
     },
     {
       r: HOUSE_RINGS.eightFoot.radius,
       color: HOUSE_RINGS.eightFoot.color,
-      y: -0.085,
+      y: 0.03,
     },
     {
       r: HOUSE_RINGS.fourFoot.radius,
       color: HOUSE_RINGS.fourFoot.color,
-      y: -0.08,
+      y: 0.035,
     },
     {
       r: HOUSE_RINGS.button.radius,
       color: HOUSE_RINGS.button.color,
-      y: -0.075,
+      y: 0.04,
     },
   ];
 
@@ -140,17 +140,17 @@ export function createCurlingRinkMesh(): T.Group {
 
   // 4. Painted lines on the ice
   // Center line (lengthwise down the sheet)
-  box(g, [0.05, 0.02, RINK_LENGTH + 4], [0, -0.07, 16], '#1b3a4b');
+  box(g, [0.05, 0.02, RINK_LENGTH + 4], [0, 0.015, 16], '#1b3a4b');
   // Hack line (z = -2)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, -0.07, -2.0], '#1b3a4b');
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, 0.015, -2.0], '#1b3a4b');
   // Near Hog line (z = 6)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, -0.07, 6.0], TEAM_COLORS.red);
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, 0.015, 6.0], TEAM_COLORS.red);
   // Far Hog line (z = 22)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, -0.07, 22.0], TEAM_COLORS.red);
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.12], [0, 0.015, 22.0], TEAM_COLORS.red);
   // Tee line (crosswise through center of house, z = 31)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, -0.07, TEE_Z], '#1b3a4b');
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, 0.015, TEE_Z], '#1b3a4b');
   // Back line (z = 35.5)
-  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, -0.07, 35.5], TEAM_COLORS.blue);
+  box(g, [RINK_WIDTH - 0.4, 0.02, 0.06], [0, 0.015, 35.5], TEAM_COLORS.blue);
 
   // Hack footrests at the starting end
   for (const x of [-0.4, 0.4]) {
@@ -219,7 +219,10 @@ export function createCurlingRinkMesh(): T.Group {
 }
 
 /** Cozy timber curling clubhouse behind the delivery hacks. */
-function createClubhouse(g: T.Group) {
+function createClubhouse(parent: T.Group) {
+  const g = new T.Group();
+  g.userData.cameraOccluder = true;
+  parent.add(g);
   const cz = -9.0;
   // Main timber walls
   box(g, [8.4, 3.2, 5.0], [0, 1.6, cz], '#422818', true);
@@ -361,11 +364,14 @@ function createFanSpectator(
 }
 
 /** Overhead rustic timber arches with festoon Edison fairy string lights. */
-function createFestoonArches(g: T.Group, halfW: number) {
+function createFestoonArches(parent: T.Group, halfW: number) {
   const archZList = [-1.0, 11.0, 23.0, 34.0];
   const postX = halfW + 1.2;
 
   for (const az of archZList) {
+    const g = new T.Group();
+    g.userData.cameraOccluder = true;
+    parent.add(g);
     // Left & right rustic timber posts
     box(g, [0.25, 4.2, 0.25], [-postX, 2.1, az], '#4a3322');
     box(g, [0.25, 4.2, 0.25], [postX, 2.1, az], '#4a3322');
@@ -456,7 +462,7 @@ export function createGadgetMesh(gadget: GadgetId): T.Group {
 
   if (gadget === 'broom') {
     // Aluminum handle
-    beam(g, [0, 0, 0], [0, 1.3, 0], 0.045, '#cfd8dc');
+    g.userData.shaft = beam(g, [0, 0, 0], [0, 1.3, 0], 0.045, '#cfd8dc');
     // Swivel head bracket
     box(g, [0.08, 0.08, 0.08], [0, 0.04, 0], '#222222');
     // Broom sweeping pad
