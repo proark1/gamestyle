@@ -125,7 +125,7 @@ function view(
       : {}),
   };
 }
-function validateSignal(value: unknown): Signal {
+export function validateSignal(value: unknown): Signal {
   if (!value || typeof value !== 'object')
     throw new PeerError('Invalid connection signal.');
   const s = value as Signal;

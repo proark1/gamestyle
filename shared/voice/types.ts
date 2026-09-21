@@ -13,3 +13,15 @@ export type VoiceSnapshot = {
   proximity?: { active: boolean; radio: Record<string, unknown> };
   audioConsent?: string[];
 };
+
+export type VoiceState = {
+  status: string;
+  connected: boolean;
+  mic: boolean;
+  speaking: string[];
+  level: number;
+  error?: string;
+  audioBlocked?: boolean;
+  ready?: boolean;
+  mode?: 'open' | 'push';
+};

@@ -1,3 +1,4 @@
+import type { Game } from '../games/identity';
 import type { GameId } from '../audio/types';
 import type { Session } from '../rooms/session';
 import type { NpcRoster } from '../rooms/npc-slots';
@@ -38,7 +39,7 @@ export type SealedCheckpoint = {
 };
 export type PeerView = {
   code: string;
-  game: GameId;
+  game: Game;
   host: string;
   epoch: number;
   members: Member[];

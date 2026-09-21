@@ -2,7 +2,8 @@ import { acquireMesh, type PeerMesh } from '../peer/mesh';
 import { isGameId } from '../audio/types';
 import { PeerError } from '../peer/types';
 import type { VoiceSession, VoiceSnapshot } from './types';
-import type { VoiceState } from './client';
+import type { VoiceState } from './types';
+import { serverRoomVoiceMesh } from './peer-mesh';
 
 type PeerAudio = {
   source: MediaStreamAudioSourceNode;
@@ -10,6 +11,7 @@ type PeerAudio = {
   analyser: AnalyserNode;
   values: Uint8Array<ArrayBuffer>;
   element: HTMLAudioElement;
+  record?: GainNode;
 };
 export class VoiceClient {
   state: VoiceState = {
@@ -20,6 +22,9 @@ export class VoiceClient {
     level: 0,
   };
   private context?: AudioContext;
+  private output?: MediaStreamAudioDestinationNode;
+  private selfRecord?: GainNode;
+  private captureVoices = false;
   private mesh?: PeerMesh;
   private release?: () => void;
   private unsubscribe: (() => void)[] = [];
@@ -51,16 +56,18 @@ export class VoiceClient {
     try {
       const context = new AudioContext();
       this.context = context;
+      this.output = context.createMediaStreamDestination();
       context.onstatechange = () =>
         this.emit({ audioBlocked: context.state !== 'running' });
       void context.resume().catch(() => this.emit({ audioBlocked: true }));
-      if (!isGameId(this.session.game))
-        throw new Error('This game uses server voice.');
-      const lease = acquireMesh({
-        ...this.session,
-        game: this.session.game,
-        peer: true,
-      });
+      const lease =
+        this.session.peer && isGameId(this.session.game)
+          ? acquireMesh({
+              ...this.session,
+              game: this.session.game,
+              peer: true,
+            })
+          : serverRoomVoiceMesh(this.session);
       this.mesh = lease.mesh;
       this.release = lease.release;
       this.unsubscribe.push(
@@ -114,7 +121,12 @@ export class VoiceClient {
     source.connect(analyser);
     source.connect(gain);
     gain.connect(this.context.destination);
+    const record = this.context.createGain();
+    record.gain.value = 0;
+    gain.connect(record);
+    record.connect(this.output!);
     this.peers.set(id, {
+      record,
       source,
       gain,
       analyser,
@@ -128,6 +140,7 @@ export class VoiceClient {
     if (!peer) return;
     peer.source.disconnect();
     peer.gain.disconnect();
+    peer.record?.disconnect();
     peer.analyser.disconnect();
     peer.element.srcObject = null;
     peer.element.remove();
@@ -184,6 +197,10 @@ export class VoiceClient {
             this.source = this.context.createMediaStreamSource(stream);
             this.analyser = this.context.createAnalyser();
             this.source.connect(this.analyser);
+            this.selfRecord = this.context.createGain();
+            this.selfRecord.gain.value = 0;
+            this.source.connect(this.selfRecord);
+            this.selfRecord.connect(this.output!);
           }
           track.onended = () => {
             if (this.stream === stream) {
@@ -213,6 +230,8 @@ export class VoiceClient {
       track.stop();
     }
     this.stream = undefined;
+    this.selfRecord?.disconnect();
+    this.selfRecord = undefined;
     this.source?.disconnect();
     this.analyser?.disconnect();
     this.source = undefined;
@@ -257,6 +276,10 @@ export class VoiceClient {
         this.source = this.context.createMediaStreamSource(stream);
         this.analyser = this.context.createAnalyser();
         this.source.connect(this.analyser);
+        this.selfRecord = this.context.createGain();
+        this.selfRecord.gain.value = 0;
+        this.source.connect(this.selfRecord);
+        this.selfRecord.connect(this.output!);
       }
       this.prepared = true;
       track.onended = () => {
@@ -295,6 +318,7 @@ export class VoiceClient {
     )
       return;
     track.enabled = enabled;
+    if (!enabled && this.selfRecord) this.selfRecord.gain.value = 0;
     this.emit({ mic: enabled, level: 0 });
   }
   async devices() {
@@ -323,6 +347,13 @@ export class VoiceClient {
     this.deafened = value;
     this.mix();
   }
+  capture(enabled: boolean) {
+    this.captureVoices = enabled;
+    this.mix();
+  }
+  get captureStream() {
+    return this.output?.stream;
+  }
   private mix() {
     if (!this.context || this.destroyed) return;
     const members =
@@ -349,6 +380,23 @@ export class VoiceClient {
           1,
           Math.max(0, (24 - Math.hypot(me.x - other.x, me.z - other.z)) / 20),
         );
+      if (
+        this.snapshot?.proximity?.active &&
+        !this.snapshot.proximity.radio[id] &&
+        me?.x !== undefined &&
+        me.z !== undefined &&
+        other?.x !== undefined &&
+        other.z !== undefined
+      )
+        volume *= Math.min(
+          1,
+          Math.max(0, (18 - Math.hypot(me.x - other.x, me.z - other.z)) / 14),
+        );
+      if (peer.record)
+        peer.record.gain.value =
+          this.captureVoices && this.snapshot?.audioConsent?.includes(id)
+            ? 1
+            : 0;
       peer.gain.gain.setTargetAtTime(volume, this.context.currentTime, 0.08);
       peer.analyser.getByteTimeDomainData(peer.values);
       const rms = Math.sqrt(
@@ -357,6 +405,13 @@ export class VoiceClient {
       );
       if (volume > 0 && rms > 0.015) speaking.push(id);
     }
+    if (this.selfRecord)
+      this.selfRecord.gain.value =
+        this.captureVoices &&
+        this.state.mic &&
+        this.snapshot?.audioConsent?.includes(this.session.id)
+          ? 1
+          : 0;
     let level = 0;
     if (this.analyser && this.state.mic) {
       const values = new Uint8Array(this.analyser.fftSize);
@@ -393,6 +448,7 @@ export class VoiceClient {
     }
     this.release?.();
     this.context = undefined;
+    this.output = undefined;
     this.mesh = undefined;
     this.state = {
       status: 'Voice off',
