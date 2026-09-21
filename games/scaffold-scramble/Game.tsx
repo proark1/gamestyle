@@ -22,8 +22,9 @@ import {
   GameTracker,
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
-import type { PeerGameConnection } from '../../shared/peer/connection';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { scaffoldScrambleAnalytics } from './analytics';
 import { ScaffoldScrambleSound } from './audio';
@@ -81,7 +82,6 @@ export default function ScaffoldScrambleGame() {
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<ScaffoldScene | null>(null);
   const sound = useRef<ScaffoldScrambleSound | null>(null);
-  const network = useRef<PeerGameConnection<ScaffoldSnapshot> | null>(null);
   const localWorld = useRef<ScaffoldScrambleWorld | null>(null);
   const currentInput = useRef(idleInput());
   // The scene is handed every snapshot directly; the HUD is paced, so a
@@ -104,35 +104,62 @@ export default function ScaffoldScrambleGame() {
     color: 0,
   });
 
-  const dispatchAction = useCallback((act: ScaffoldAction) => {
-    tracker.action(act.type);
-    sound.current?.unlock();
-
-    // Haptic feedback
-    if (act.type === 'crank') {
-      triggerHaptic(15);
-    } else if (act.type === 'useTool') {
-      triggerHaptic(35);
-    } else if (act.type === 'switchTool') {
-      triggerHaptic(20);
-    }
-
-    if (network.current) {
-      void network.current.action(act);
-    } else if (localWorld.current) {
-      scaffoldScrambleAction(localWorld.current, sessionRef.current.id, act);
-      const snap = scaffoldScrambleSnapshot(
-        localWorld.current,
-        'SOLO',
-        sessionRef.current.id,
-        sessionRef.current.id,
-        Date.now(),
-      );
+  const room = usePeerRoom<ScaffoldSnapshot>({
+    game: 'scaffold-scramble',
+    loadEngine: () => import('./peer'),
+    readInput: () => (help ? idleInput() : currentInput.current),
+    idleInput,
+    onAttach: (next) => {
+      localWorld.current = null;
+      currentInput.current = idleInput();
+      sessionRef.current = { ...sessionRef.current, ...next };
+      hud.current.reset();
+    },
+    receive: (snap) => {
       if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(snap.world, sessionRef.current.id);
-    }
-  }, []);
+      const me = snap.world.players.find((p) => p.id === sessionRef.current.id);
+      if (me) {
+        setRole(me.role);
+        sessionRef.current.role = me.role;
+        scene.current?.setLocalPlayer(me.id, me.role);
+      }
+    },
+  });
+  const { send, active } = room;
+
+  const dispatchAction = useCallback(
+    (act: ScaffoldAction) => {
+      tracker.action(act.type);
+      sound.current?.unlock();
+
+      // Haptic feedback
+      if (act.type === 'crank') {
+        triggerHaptic(15);
+      } else if (act.type === 'useTool') {
+        triggerHaptic(35);
+      } else if (act.type === 'switchTool') {
+        triggerHaptic(20);
+      }
+
+      if (send(act)) return;
+      if (localWorld.current) {
+        scaffoldScrambleAction(localWorld.current, sessionRef.current.id, act);
+        const snap = scaffoldScrambleSnapshot(
+          localWorld.current,
+          'SOLO',
+          sessionRef.current.id,
+          sessionRef.current.id,
+          Date.now(),
+        );
+        if (hud.current.due(snap)) setSnapshot(snap);
+        scene.current?.render(snap);
+        sound.current?.update(snap.world, sessionRef.current.id);
+      }
+    },
+    [send],
+  );
 
   // Initialize scene and sound
   useEffect(() => {
@@ -187,7 +214,7 @@ export default function ScaffoldScrambleGame() {
       const dt = Math.min(0.1, (currentTick - lastTick) * 0.001);
       lastTick = currentTick;
 
-      if (!network.current && localWorld.current) {
+      if (!active.current && localWorld.current) {
         const timeNow = Date.now();
 
         // Step bots
@@ -218,7 +245,7 @@ export default function ScaffoldScrambleGame() {
       sound.current?.dispose();
       scene.current?.destroy();
     };
-  }, [dispatchAction]);
+  }, [dispatchAction, active]);
 
   const world = snapshot?.world;
   const isPlaying = world?.phase === 'playing';
@@ -327,6 +354,8 @@ export default function ScaffoldScrambleGame() {
           SCAFFOLD SCRAMBLE<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={muted}
           onToggleSound={toggleSound}
           onHelp={() => setHelp(true)}

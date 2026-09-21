@@ -626,7 +626,14 @@ export default function Game() {
         <div className={styles.headerActions}>
           <GameToolbar
             workshop="/first-person/admin"
-            voiceHint="Use your group call to talk with friends. In-game voice is not available in Brick by Hand yet."
+            voice={
+              session && snapshot
+                ? {
+                    session: { ...session, game: 'first-person' },
+                    snapshot: { players: snapshot.players, nearby: false },
+                  }
+                : undefined
+            }
             muted={muted}
             onToggleSound={() => setMuted((value) => !value)}
             onHelp={() => {

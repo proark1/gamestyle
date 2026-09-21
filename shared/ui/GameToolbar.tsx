@@ -1,9 +1,10 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import { AudioLines, CircleHelp, Radio, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '../language/useLanguage';
-import VoicePanel from '../voice/VoicePanel';
+import VoicePanel, { type VoiceController } from '../voice/VoicePanel';
+import type { VoiceState } from '../voice/client';
 import HostNotice from '../peer/HostNotice';
 import AccountButton from '../accounts/AccountButton';
 import WardrobeButton from '../wardrobe/WardrobeButton';
@@ -33,6 +34,7 @@ export default function GameToolbar({
   labels = DEFAULT_LABELS,
   voice,
   voiceHint,
+  multiplayer,
   onVoice,
   muted,
   onToggleSound,
@@ -45,8 +47,11 @@ export default function GameToolbar({
     session: VoiceSession;
     snapshot: VoiceSnapshot;
     onSpeaking?: (active: boolean) => void;
+    onClient?: (client: VoiceController | null) => void;
+    onState?: (state: VoiceState) => void;
   };
   voiceHint?: string;
+  multiplayer?: ReactNode;
   onVoice?: () => void;
   muted: boolean;
   onToggleSound: () => void;
@@ -77,6 +82,7 @@ export default function GameToolbar({
         key={voice?.session.code ?? 'menu'}
         session={voice?.session}
       />
+      {multiplayer}
       {onVoice ? (
         <button
           className="game-toolbar-button voice-trigger"

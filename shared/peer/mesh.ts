@@ -34,7 +34,7 @@ type Link = {
   pc: RTCPeerConnection;
   channel?: RTCDataChannel;
   stateChannel?: RTCDataChannel;
-  sender: RTCRtpSender;
+  sender?: RTCRtpSender;
   created: number;
   candidates: RTCIceCandidateInit[];
   chunks: Map<
@@ -183,7 +183,10 @@ export class PeerMesh {
     const pc = new RTCPeerConnection({
       iceServers: this.view?.iceServers ?? [],
     });
-    const sender = pc.addTransceiver('audio', { direction: 'sendrecv' }).sender;
+    // The answerer reuses the transceiver created by the remote offer.
+    const sender = initiator
+      ? pc.addTransceiver('audio', { direction: 'sendrecv' }).sender
+      : undefined;
     const link: Link = {
       id,
       pc,
@@ -194,7 +197,7 @@ export class PeerMesh {
       chunks: new Map(),
     };
     this.links.set(member.id, link);
-    if (this.localTrack)
+    if (this.localTrack && sender)
       void sender
         .replaceTrack(this.localTrack)
         .catch((error) => this.error(error));
@@ -352,6 +355,14 @@ export class PeerMesh {
       }
       if (link.pc.remoteDescription) return;
       await link.pc.setRemoteDescription(signal.description);
+      const audio = link.pc
+        .getTransceivers()
+        .find((t) => t.receiver.track.kind === 'audio');
+      if (audio) {
+        audio.direction = 'sendrecv';
+        link.sender = audio.sender;
+        await audio.sender.replaceTrack(this.localTrack);
+      }
       for (const candidate of link.candidates.splice(0))
         await link.pc.addIceCandidate(candidate);
       await link.pc.setLocalDescription(await link.pc.createAnswer());
@@ -425,7 +436,7 @@ export class PeerMesh {
     await Promise.all(
       [...this.links.values()].map(async (link) => {
         try {
-          await link.sender.replaceTrack(track);
+          await link.sender?.replaceTrack(track);
         } catch (error) {
           // A departure can close a sender while the microphone is being switched.
           if (this.links.get(link.member.id) === link && !this.closed)

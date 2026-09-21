@@ -4,14 +4,23 @@ import {
   TrackSource,
 } from 'livekit-server-sdk';
 import { roomStore } from '@/db/rooms';
+import { getBinding } from '@/db/index';
+import { constructionVoiceStore } from './server-store';
+import type { Game } from '../games/identity';
 import { voiceConfig } from './config';
 import {
   authorizeVoice,
   parseVoiceRoomName,
   storageCode,
+  voiceRoomName,
   type VoiceRoom,
 } from './membership';
 import type { VoiceSession } from './types';
+function storeFor(game: Game) {
+  return game === 'chaos' || game === 'first-person'
+    ? constructionVoiceStore(getBinding(), game)
+    : roomStore();
+}
 
 function service() {
   const c = voiceConfig();
@@ -31,7 +40,9 @@ export async function sweepVoice() {
       const match = parseVoiceRoomName(live.name);
       if (!match) continue;
       try {
-        const row = await roomStore().get(storageCode(match.game, match.code));
+        const row = await storeFor(match.game).get(
+          storageCode(match.game, match.code),
+        );
         if (!row || Date.now() - row.updated > 60000) {
           await api.deleteRoom(live.name);
           continue;
@@ -61,8 +72,13 @@ function startSweep() {
   }
 }
 startSweep();
+export async function leaveVoice(game: Game, code: string, id: string) {
+  await service()
+    ?.removeParticipant(voiceRoomName(game, code), id)
+    .catch(() => {});
+}
 export async function voiceToken(body: VoiceSession & { op?: string }) {
-  const { player, name } = await authorizeVoice(roomStore(), body);
+  const { player, name } = await authorizeVoice(storeFor(body?.game), body);
   const c = voiceConfig(),
     api = service();
   if (!api)

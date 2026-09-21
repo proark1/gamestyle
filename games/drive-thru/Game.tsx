@@ -37,6 +37,9 @@ import { driveThruAnalytics } from './analytics';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
+import { idleInput } from './types';
 import { DRIVE_THRU_TRANSLATIONS } from './translations';
 import { computeWindowReachGap } from './physics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
@@ -73,11 +76,42 @@ export default function DriveThruGame() {
       (s) => `${s.phase}:${s.score}:${s.failState}:${s.ticket?.id ?? ''}`,
     ),
   );
+  const currentInput = useRef(idleInput());
   const [snapshot, setSnapshot] = useState<DriveThruSnapshot | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [helpOpen, setHelpOpen] = useState(true);
   const paused = useRef(true);
   const [selectedRole, setSelectedRole] = useState<RoleId>('driver');
+
+  const room = usePeerRoom<DriveThruSnapshot>({
+    game: 'drive-thru',
+    onOpen: () => {
+      setHelpOpen(false);
+      paused.current = false;
+    },
+    loadEngine: () => import('./peer'),
+    idleInput,
+    readInput: () => (paused.current ? idleInput() : currentInput.current),
+    onAttach: (next) => {
+      localPlayerIdRef.current = next.id;
+      currentInput.current = idleInput();
+      setHelpOpen(false);
+      paused.current = false;
+      hud.current.reset();
+    },
+    receive: (snap) => {
+      if (hud.current.due(snap)) setSnapshot(snap);
+      setSelectedRole(snap.myRole);
+      sceneRef.current?.setEnabled(
+        !paused.current &&
+          snap.phase !== 'meltdown' &&
+          snap.phase !== 'completed',
+      );
+      sceneRef.current?.update(snap);
+      audioRef.current?.update(snap.world, localPlayerIdRef.current);
+    },
+  });
+  const { send, active } = room;
 
   useGameTracker(tracker);
 
@@ -104,13 +138,15 @@ export default function DriveThruGame() {
     // Initialize Scene
     const scene = new DriveThruScene(containerRef.current, {
       input: (inp: PlayerInput) => {
+        currentInput.current = inp;
         const p = worldRef.current.players.find(
           (item) => item.id === localPlayerIdRef.current,
         );
         if (p) p.input = inp;
       },
       action: (act: DriveThruAction) => {
-        driveThruAction(worldRef.current, localPlayerIdRef.current, act);
+        if (!send(act))
+          driveThruAction(worldRef.current, localPlayerIdRef.current, act);
       },
     });
     sceneRef.current = scene;
@@ -132,6 +168,10 @@ export default function DriveThruGame() {
       const dt = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
 
+      if (active.current) {
+        animId = requestAnimationFrame(loop);
+        return;
+      }
       const currentWorld = worldRef.current;
 
       // 1. Run bot decisions
@@ -176,11 +216,12 @@ export default function DriveThruGame() {
       scene.dispose();
       audio.dispose();
     };
-  }, []);
+  }, [send, active]);
 
   const handleRoleChange = (newRole: RoleId) => {
     sceneRef.current?.resetInput();
     setSelectedRole(newRole);
+    if (send({ type: 'switchRole', role: newRole })) return;
     const w = worldRef.current;
     const human = w.players.find((p) => p.id === localPlayerIdRef.current);
     if (human) {
@@ -190,6 +231,7 @@ export default function DriveThruGame() {
   };
 
   const handleAction = (act: DriveThruAction) => {
+    if (send(act)) return;
     driveThruAction(worldRef.current, localPlayerIdRef.current, act);
   };
 
@@ -202,6 +244,7 @@ export default function DriveThruGame() {
   };
 
   const handleRestart = () => {
+    if (send({ type: 'restart' })) return;
     sceneRef.current?.resetInput();
     const w = freshDriveThruWorld();
     const human = newDriveThruPlayer(
@@ -238,6 +281,8 @@ export default function DriveThruGame() {
           DRIVE-THRU STATIC<span className="drive-thru-title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={!audioEnabled}
           onToggleSound={handleToggleAudio}
           onHelp={() => {
@@ -245,7 +290,6 @@ export default function DriveThruGame() {
             sceneRef.current?.setEnabled(false);
             setHelpOpen(true);
           }}
-          voiceHint="Use your group call to talk with friends. In-game voice is not available in Drive-Thru Static yet."
         />
       </header>
 
@@ -510,6 +554,15 @@ export default function DriveThruGame() {
             aria-labelledby="drive-help-title"
           >
             <div className="drive-thru-help-badge">WELCOME TO JUMBLE DINER</div>
+            <button
+              onClick={() => {
+                setHelpOpen(false);
+                paused.current = false;
+                room.setOpen(true);
+              }}
+            >
+              Multiplayer
+            </button>
             <h1 id="drive-help-title">
               One car. Four jobs.
               <br />

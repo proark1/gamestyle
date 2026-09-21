@@ -41,6 +41,8 @@ import { StampedeModal } from './Modal';
 import { STAMPEDE_UI, ITEM_NAMES } from './ui-copy';
 import { displayedSpeed, neutralInput } from './controls';
 import { useLanguage } from '../../shared/language/useLanguage';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import { SAMPLE_STAMPEDE_TRANSLATIONS } from './translations';
 import { hudPacer } from '../../shared/ui/hud-pacer';
@@ -212,6 +214,7 @@ export default function SampleStampede() {
     ),
   );
 
+  const currentInput = useRef(neutralInput());
   const [snapshot, setSnapshot] = useState<SampleStampedeSnapshot | null>(null);
   const [selfId] = useState('player-local');
   const [selfCartId] = useState('cart-red');
@@ -253,6 +256,28 @@ export default function SampleStampede() {
       window.removeEventListener('keydown', keyboard);
     };
   }, []);
+
+  const room = usePeerRoom<SampleStampedeSnapshot>({
+    game: 'sample-stampede',
+    onOpen: () => setScreen('playing'),
+    loadEngine: () => import('./peer'),
+    idleInput: neutralInput,
+    readInput: () =>
+      playingRef.current ? currentInput.current : neutralInput(),
+    onAttach: () => {
+      currentInput.current = neutralInput();
+      setScreen('playing');
+      hud.current.reset();
+      sceneRef.current?.resetRound();
+      audioRef.current?.reset();
+    },
+    receive: (snap) => {
+      if (hud.current.due(snap)) setSnapshot(snap);
+      sceneRef.current?.render(snap, snap.world.events);
+      if (playingRef.current) audioRef.current?.update(snap, snap.world.events);
+    },
+  });
+  const { send, active } = room;
 
   const lastFrameTime = useRef(0);
   const animId = useRef(0);
@@ -326,6 +351,7 @@ export default function SampleStampede() {
     try {
       scene = new SampleStampedeScene(containerRef.current, {
         input: (inp: PlayerInput) => {
+          currentInput.current = inp;
           const p = worldRef.current?.players.find((pl) => pl.id === selfId);
           if (p) {
             p.input = inp;
@@ -363,7 +389,7 @@ export default function SampleStampede() {
       );
       lastFrameTime.current = timeMs;
 
-      if (worldRef.current && physicsRef.current) {
+      if (!active.current && worldRef.current && physicsRef.current) {
         const events: StampedeEvent[] = [];
         if (playingRef.current)
           advanceSampleStampedeWorld(
@@ -434,9 +460,13 @@ export default function SampleStampede() {
       audio.dispose();
       physics.destroy();
     };
-  }, [selfId, selfCartId]);
+  }, [selfId, selfCartId, active]);
 
   const handleRestart = () => {
+    if (send({ type: 'reset' })) {
+      setScreen('playing');
+      return;
+    }
     if (!worldRef.current || !physicsRef.current) return;
     const now = Date.now();
     const fresh = freshSampleStampedeWorld(now);
@@ -476,7 +506,10 @@ export default function SampleStampede() {
     }, 200);
   };
 
-  const myCart = snapshot?.world.carts.find((c) => c.id === selfCartId);
+  const playerCartId =
+    snapshot?.world.players.find((p) => p.id === (room.session?.id ?? selfId))
+      ?.cartId ?? selfCartId;
+  const myCart = snapshot?.world.carts.find((c) => c.id === playerCartId);
   const myManifest = myCart?.manifest;
   const hasContraband = myCart?.items.some(
     (it) => ITEM_DEFS[it.kind].isContraband,
@@ -543,6 +576,7 @@ export default function SampleStampede() {
           <span>Sample Stampede</span>
         </a>
         <div className="stampede-tools">
+          <PeerRoomControls room={room} withVoice />
           <button
             className="stampede-icon-btn"
             onClick={() => setScreen('paused')}
@@ -680,7 +714,7 @@ export default function SampleStampede() {
       {snapshot && (
         <WarehouseRadar
           snapshot={snapshot}
-          selfCartId={selfCartId}
+          selfCartId={playerCartId}
           label={strings.aisleRadar}
           legend={`${copy.you} ● · ${copy.checkout} ▧`}
         />
@@ -792,6 +826,17 @@ export default function SampleStampede() {
             }
             close={screen === 'ready' ? undefined : resume}
           >
+            {screen === 'ready' && (
+              <button
+                className="stampede-modal-btn"
+                onClick={() => {
+                  setScreen('playing');
+                  room.setOpen(true);
+                }}
+              >
+                Multiplayer
+              </button>
+            )}
             {instructions && (
               <>
                 <p>{copy.objective}</p>
@@ -826,11 +871,7 @@ export default function SampleStampede() {
                   muted={!soundEnabled}
                   onToggleSound={() => setSoundEnabled((value) => !value)}
                   onHelp={() => setScreen('help')}
-                  voiceHint={
-                    language === 'de'
-                      ? 'Dieses Spiel spielst du mit KI-Partnern. Sprachchat ist hier nicht verfügbar.'
-                      : 'This game is played with AI partners. Voice chat is not available here.'
-                  }
+                  voice={room.voice}
                 />
               </div>
             )}

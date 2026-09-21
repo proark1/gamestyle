@@ -1,4 +1,5 @@
 import { acquireMesh, type PeerMesh } from '../peer/mesh';
+import { isGameId } from '../audio/types';
 import { PeerError } from '../peer/types';
 import type { VoiceSession, VoiceSnapshot } from './types';
 import type { VoiceState } from './client';
@@ -31,6 +32,8 @@ export class VoiceClient {
   private deafened = false;
   private destroyed = false;
   private desired = false;
+  private preparation = 0;
+  private prepared = false;
   private queue: Promise<unknown> = Promise.resolve();
   private timer?: ReturnType<typeof setInterval>;
   constructor(
@@ -51,7 +54,13 @@ export class VoiceClient {
       context.onstatechange = () =>
         this.emit({ audioBlocked: context.state !== 'running' });
       void context.resume().catch(() => this.emit({ audioBlocked: true }));
-      const lease = acquireMesh({ ...this.session, peer: true });
+      if (!isGameId(this.session.game))
+        throw new Error('This game uses server voice.');
+      const lease = acquireMesh({
+        ...this.session,
+        game: this.session.game,
+        peer: true,
+      });
       this.mesh = lease.mesh;
       this.release = lease.release;
       this.unsubscribe.push(
@@ -125,6 +134,8 @@ export class VoiceClient {
     this.peers.delete(id);
   }
   microphone(enabled: boolean, deviceId?: string): Promise<void> {
+    this.preparation++;
+    this.prepared = false;
     this.desired = enabled;
     if (!enabled)
       for (const track of this.stream?.getTracks() ?? []) track.enabled = false;
@@ -208,22 +219,83 @@ export class VoiceClient {
     this.analyser = undefined;
   }
   async prepareMicrophone(deviceId?: string) {
+    const request = ++this.preparation;
+    this.prepared = false;
+    this.desired = false;
+    for (const track of this.stream?.getTracks() ?? []) track.enabled = false;
+    let stream: MediaStream | undefined;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+      await this.queue.catch(() => {});
+      if (this.destroyed || request !== this.preparation) return false;
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+        },
         video: false,
       });
-      for (const track of stream.getTracks()) track.stop();
-      if (this.destroyed || !this.state.connected) return false;
-      this.emit({ error: undefined });
+      const track = stream.getAudioTracks()[0];
+      track.enabled = false;
+      if (
+        this.destroyed ||
+        !this.state.connected ||
+        request !== this.preparation
+      ) {
+        stream.getTracks().forEach((t) => t.stop());
+        return false;
+      }
+      this.stopMicrophone();
+      this.stream = stream;
+      await this.mesh?.microphone(track);
+      if (this.destroyed || request !== this.preparation) {
+        stream.getTracks().forEach((t) => t.stop());
+        return false;
+      }
+      if (this.context) {
+        this.source = this.context.createMediaStreamSource(stream);
+        this.analyser = this.context.createAnalyser();
+        this.source.connect(this.analyser);
+      }
+      this.prepared = true;
+      track.onended = () => {
+        this.prepared = false;
+        void this.microphone(false);
+        this.emit({
+          mic: false,
+          level: 0,
+          error:
+            'Microphone disconnected. Enable push to talk to reconnect it.',
+        });
+      };
+      this.emit({ mic: false, level: 0, error: undefined });
       return true;
     } catch {
+      stream?.getTracks().forEach((track) => track.stop());
+      if (this.destroyed || request !== this.preparation) return false;
+      this.stopMicrophone();
+      await this.mesh?.microphone(null).catch(() => {});
       this.emit({
+        mic: false,
+        level: 0,
         error:
           'Allow microphone access in your browser settings, then enable it again.',
       });
       return false;
     }
+  }
+  async setTalking(enabled: boolean) {
+    const track = this.stream?.getAudioTracks()[0];
+    if (
+      this.destroyed ||
+      !this.prepared ||
+      !track ||
+      track.readyState === 'ended'
+    )
+      return;
+    track.enabled = enabled;
+    this.emit({ mic: enabled, level: 0 });
   }
   async devices() {
     return (await navigator.mediaDevices.enumerateDevices()).filter(
@@ -307,6 +379,8 @@ export class VoiceClient {
   async dispose() {
     if (this.destroyed) return;
     this.destroyed = true;
+    this.preparation++;
+    this.prepared = false;
     this.desired = false;
     clearInterval(this.timer);
     this.stopMicrophone();

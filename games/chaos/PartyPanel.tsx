@@ -11,14 +11,15 @@ import {
 } from 'react';
 import type { Snapshot } from './model';
 import type { MobilePanel } from './Game';
-import { ChevronDown, X, Mic, MicOff, Radio } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import { HeldInputs } from './touch';
 import { HoldControl } from './HoldControl';
 import { TouchActionButton } from './TouchActionButton';
 import type { Connection, Session } from './connection';
 import type { GameScene } from './scene';
 import type { GameAudio } from './sound';
-import type { VoiceClient, VoiceState } from './voice/client';
+import type { VoiceState } from '../../shared/voice/client';
+import type { VoiceController } from '../../shared/voice/VoicePanel';
 import {
   CREW_JOBS,
   challengeLink,
@@ -47,7 +48,8 @@ type Props = {
   invite: () => void;
   checklist: () => void;
   inputBlocked?: boolean;
-  voiceRequest?: number;
+  voice: VoiceState;
+  voiceClient: VoiceController | null;
 };
 export function PartyPanel({
   snapshot: s,
@@ -63,9 +65,13 @@ export function PartyPanel({
   invite,
   checklist,
   inputBlocked = false,
-  voiceRequest = 0,
+  voice,
+  voiceClient,
 }: Props) {
-  const voiceDetails = useRef<HTMLDetailsElement>(null);
+  const voiceRef = useRef(voiceClient);
+  useLayoutEffect(() => {
+    voiceRef.current = voiceClient;
+  }, [voiceClient]);
   const p = s.world.party!;
   const host = s.host === session.id,
     role = p.task.roles.indexOf(session.id),
@@ -74,19 +80,6 @@ export function PartyPanel({
   useLayoutEffect(() => {
     live.current = { s, connection, scene, notify };
   }, [s, connection, scene, notify]);
-  const [voice, setVoice] = useState<VoiceState>({
-    status: 'Voice off',
-    connected: false,
-    mic: false,
-    speaking: [],
-    level: 0,
-  });
-  const voiceRef = useRef<VoiceClient | null>(null),
-    connecting = useRef(false);
-  const [armed, setArmed] = useState(false),
-    [ptt, setPtt] = useState(false),
-    [pttKey, setPttKey] = useState('KeyT'),
-    [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [duck, setDuck] = useState(true),
     [cardOpen, setCardOpen] = useState(false),
     [showNames, setShowNames] = useState(false),
@@ -101,13 +94,6 @@ export function PartyPanel({
   } | null>(null);
   const [mediaOpen, setMediaOpen] = useState(false),
     [mediaBusy, setMediaBusy] = useState(false);
-  useEffect(() => {
-    if (voiceRequest && voiceDetails.current) {
-      setMediaOpen(false);
-      voiceDetails.current.open = true;
-      voiceDetails.current.querySelector('summary')?.focus();
-    }
-  }, [voiceRequest]);
   const [crewOpen, setCrewOpen] = useState(true);
   const [shortRecording, setShortRecording] = useState(false);
   const [savedBuildId, setSavedBuildId] = useState('');
@@ -155,9 +141,6 @@ export function PartyPanel({
       if (discrete) pendingCommands.current.delete(action.op);
     }
   }, []);
-  useEffect(() => {
-    voiceRef.current?.update(s);
-  }, [s]);
 
   useEffect(() => {
     audio?.duck(duck && voice.speaking.length > 0);
@@ -209,42 +192,11 @@ export function PartyPanel({
       window.removeEventListener('blur', clear);
       window.removeEventListener('pagehide', hidePage);
       document.removeEventListener('visibilitychange', visibility);
-      void voiceRef.current?.dispose();
       void recorder.current?.stop();
       scene.speaking.clear();
     };
   }, [session.id, scene]);
 
-  useEffect(() => {
-    if (!armed || !ptt) return;
-    const down = (e: KeyboardEvent) => {
-      if (
-        e.code !== pttKey ||
-        e.repeat ||
-        (e.target as HTMLElement)?.closest(
-          'input,textarea,[contenteditable=true]',
-        )
-      )
-        return;
-      e.preventDefault();
-      void voiceRef.current?.microphone(true);
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code === pttKey) void voiceRef.current?.microphone(false);
-    };
-    const release = () => {
-      void voiceRef.current?.microphone(false);
-    };
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
-    window.addEventListener('blur', release);
-    return () => {
-      window.removeEventListener('keydown', down);
-      window.removeEventListener('keyup', up);
-      window.removeEventListener('blur', release);
-      release();
-    };
-  }, [armed, ptt, pttKey]);
   useEffect(() => {
     if (role < 0 || !active || inputBlocked || p.task.phase !== 'working')
       return;
@@ -295,49 +247,13 @@ export function PartyPanel({
           .catch(() => {});
     };
   }, [role, active, scene, session.id, inputBlocked, p.task.phase]);
-  async function joinVoice() {
-    if (connecting.current) return;
-    connecting.current = true;
-    try {
-      if (!voiceRef.current) {
-        const { VoiceClient } = await import('./voice/client');
-        if (!mounted.current) return;
-        voiceRef.current = new VoiceClient(session, (value) => {
-          if (mounted.current) {
-            setVoice(value);
-            if (!value.connected) setArmed(false);
-          }
-        });
-      }
-      await voiceRef.current.connect();
-      voiceRef.current.update(live.current.s);
-    } catch {
-      notify('Voice could not connect. Please try again.');
-    } finally {
-      connecting.current = false;
-    }
-  }
-  async function microphone() {
-    const client = voiceRef.current;
-    if (!client) return;
-    if (armed) {
-      setArmed(false);
-      await client.microphone(false);
-      return;
-    }
-    await client.microphone(true);
-    if (!client.state.mic) return;
-    setDevices(await client.devices());
-    setArmed(true);
-    if (ptt) await client.microphone(false);
-  }
   const radio = useCallback(
     (enabled: boolean) => {
       if (enabled && !radioOn.current) audio?.play('voice.radio');
       radioOn.current = enabled;
       if (radioTimer.current) clearInterval(radioTimer.current);
-      if (enabled && armed) {
-        void voiceRef.current?.microphone(true);
+      if (enabled && voice.ready) {
+        voiceRef.current?.hold?.('site-radio', true);
         void act({ type: 'party', op: 'radio', enabled: true });
         radioTimer.current = setInterval(
           () => void act({ type: 'party', op: 'radio', enabled: true }),
@@ -345,10 +261,10 @@ export function PartyPanel({
         );
       } else {
         void act({ type: 'party', op: 'radio', enabled: false });
-        if (ptt) void voiceRef.current?.microphone(false);
+        voiceRef.current?.hold?.('site-radio', false);
       }
     },
-    [armed, ptt, act, audio],
+    [voice.ready, act, audio],
   );
   async function startRecording() {
     if (s.recordingEnabled === false) {
@@ -372,7 +288,7 @@ export function PartyPanel({
           setHighlights([]);
         },
         () => {
-          voiceRef.current?.capture(false);
+          voiceRef.current?.capture?.(false);
           if (mounted.current) {
             setRecording(false);
             void act({ type: 'party', op: 'recording', enabled: false });
@@ -398,7 +314,7 @@ export function PartyPanel({
         throw new Error(
           'Recording stopped because the game is no longer visible.',
         );
-      voiceRef.current?.capture(includeVoice);
+      voiceRef.current?.capture?.(includeVoice);
       await rec.start(streams);
       audio?.play('capture.start');
       setRecording(true);
@@ -412,7 +328,7 @@ export function PartyPanel({
   const stopRecording = useCallback(async () => {
     await recorder.current?.stop();
     setRecording(false);
-    voiceRef.current?.capture(false);
+    voiceRef.current?.capture?.(false);
     await act({ type: 'party', op: 'recording', enabled: false });
   }, [act]);
   useEffect(() => {
@@ -443,7 +359,6 @@ export function PartyPanel({
       if (document.hidden) {
         controls.current = { x: 0, z: 0, turn: 0, work: false };
         void voiceRef.current?.microphone(false);
-        setArmed(false);
         radio(false);
         void stopRecording();
       }
@@ -1382,39 +1297,6 @@ export function PartyPanel({
               )}
           </section>
         )}
-      {compact && voice.connected && !inputBlocked && (
-        <div className="mobile-voice-controls" aria-label="Voice controls">
-          {ptt ? (
-            <HoldControl
-              disabled={!armed}
-              onHeld={(held) => {
-                void voiceRef.current?.microphone(held);
-              }}
-              label="Hold to talk"
-            >
-              <Mic size={16} />
-              <span>Hold to talk</span>
-            </HoldControl>
-          ) : (
-            <button
-              onClick={() => void microphone()}
-              aria-label={voice.mic ? 'Mute microphone' : 'Unmute microphone'}
-            >
-              {voice.mic ? <Mic size={18} /> : <MicOff size={18} />}
-            </button>
-          )}
-          {p.voiceMode === 'proximity' && active && (
-            <HoldControl
-              disabled={!armed}
-              onHeld={(held) => radio(held)}
-              label="Hold site radio"
-            >
-              <Radio size={16} />
-              <span>Radio</span>
-            </HoldControl>
-          )}
-        </div>
-      )}
       <aside className="party-voice">
         {compact && (
           <div className="mobile-sheet-heading">
@@ -1430,123 +1312,28 @@ export function PartyPanel({
             </button>
           </div>
         )}
-        <details ref={voiceDetails}>
-          <summary>
-            <span className={voice.connected ? 'voice-dot on' : 'voice-dot'} />
-            {voice.status}
-            {voice.mic ? ' · mic on' : ''}
-          </summary>
-          {!voice.connected ? (
-            <button
-              className="party-primary"
-              disabled={voice.status === 'Connecting…'}
-              onClick={() => void joinVoice()}
+        <details>
+          <summary>Voice in game clips</summary>
+          <p>
+            Use Voice in the game toolbar to join, mute or choose push to talk.
+          </p>
+          <label>
+            <input
+              type="checkbox"
+              checked={duck}
+              onChange={(e) => setDuck(e.target.checked)}
+            />{' '}
+            Lower game audio during conversations
+          </label>
+          {p.voiceMode === 'proximity' && active && (
+            <HoldControl
+              disabled={!voice.ready}
+              onHeld={(held) => radio(held)}
+              label="Hold site radio · everyone hears"
             >
-              Join voice
-            </button>
-          ) : (
-            <>
-              <button onClick={() => void microphone()}>
-                {armed ? 'Disable microphone' : 'Enable microphone'}
-              </button>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={ptt}
-                  onChange={(e) => {
-                    setPtt(e.target.checked);
-                    if (armed)
-                      void voiceRef.current?.microphone(!e.target.checked);
-                  }}
-                />{' '}
-                Push-to-talk
-              </label>
-              {ptt && (
-                <>
-                  <label>
-                    Talk key
-                    <select
-                      value={pttKey}
-                      onChange={(e) => setPttKey(e.target.value)}
-                    >
-                      <option value="KeyT">T</option>
-                      <option value="KeyG">G</option>
-                      <option value="KeyH">H</option>
-                    </select>
-                  </label>
-                  <HoldControl
-                    disabled={!armed}
-                    onHeld={(held) => {
-                      void voiceRef.current?.microphone(held);
-                    }}
-                    label="Hold to talk"
-                  >
-                    Hold to talk
-                  </HoldControl>
-                </>
-              )}
-              {!!devices.length && (
-                <label>
-                  Microphone
-                  <select
-                    onChange={(e) =>
-                      void voiceRef.current?.microphone(
-                        armed && !ptt,
-                        e.target.value,
-                      )
-                    }
-                  >
-                    {devices.map((d) => (
-                      <option key={d.deviceId} value={d.deviceId}>
-                        {d.label || 'Microphone'}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <label>
-                Microphone level
-                <meter value={voice.level} min="0" max="1" />
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={duck}
-                  onChange={(e) => setDuck(e.target.checked)}
-                />{' '}
-                Lower game audio during conversations
-              </label>
-              {s.players
-                .filter((v) => v.id !== session.id)
-                .map((v) => (
-                  <label key={v.id}>
-                    {voice.speaking.includes(v.id) ? '● ' : ''}
-                    {v.name}
-                    <input
-                      type="range"
-                      aria-label={`${v.name} volume; zero mutes`}
-                      min="0"
-                      max="2"
-                      step=".05"
-                      defaultValue="1"
-                      onChange={(e) =>
-                        voiceRef.current?.volume(v.id, Number(e.target.value))
-                      }
-                    />
-                  </label>
-                ))}
-              {p.voiceMode === 'proximity' && active && (
-                <HoldControl
-                  disabled={!armed}
-                  onHeld={(held) => radio(held)}
-                  label="Hold site radio · everyone hears"
-                >
-                  Hold site radio · everyone hears
-                </HoldControl>
-              )}
-            </>
+              Hold site radio · everyone hears
+            </HoldControl>
           )}
-          {voice.error && <output>{voice.error}</output>}
           <label>
             <input
               type="checkbox"

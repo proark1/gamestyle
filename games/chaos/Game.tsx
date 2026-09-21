@@ -90,6 +90,8 @@ import { woodenSurface } from './levels';
 import { BuildShelf } from './BuildShelf';
 import './saved-build.css';
 import { PartyPanel } from './PartyPanel';
+import type { VoiceController } from '../../shared/voice/VoicePanel';
+import type { VoiceState } from '../../shared/voice/client';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import './mobile-play.css';
 import { useLanguage } from '../../shared/language/useLanguage';
@@ -162,10 +164,36 @@ export default function Game() {
   const [broadcast, setBroadcast] = useState(false);
   const [gameVolume, setGameVolume] = useState(0.8);
   const [help, setHelp] = useState(false);
-  const [voiceRequest, setVoiceRequest] = useState(0);
+  const [voiceClient, setVoiceClient] = useState<VoiceController | null>(null);
+  const [voiceState, setVoiceState] = useState<VoiceState>({
+    status: 'Voice off',
+    connected: false,
+    mic: false,
+    speaking: [],
+    level: 0,
+  });
   const [settings, setSettings] = useState(false);
   const [joining, setJoining] = useState(false);
   const [state, setState] = useState<Snapshot | null>(null);
+  const voiceSnapshot = useMemo(
+    () =>
+      state
+        ? {
+            players: state.players,
+            nearby: false,
+            audioConsent: state.world.party?.audioConsent,
+            proximity: state.world.party
+              ? {
+                  active:
+                    state.world.party.voiceMode === 'proximity' &&
+                    ['building', 'lastCall'].includes(state.world.party.phase),
+                  radio: state.world.party.radio,
+                }
+              : undefined,
+          }
+        : undefined,
+    [state],
+  );
   const [session, setSession] = useState<Session | null>(null);
   const [connectionStatus, setConnectionStatus] = useState('online');
   const [category, setCategory] = useState('House');
@@ -1607,7 +1635,8 @@ export default function Game() {
         <PartyPanel
           key={session.id}
           snapshot={state}
-          voiceRequest={voiceRequest}
+          voiceClient={voiceClient}
+          voice={voiceState}
           compact={compact}
           mobilePanel={mobilePanel}
           onMobilePanel={openMobilePanel}
@@ -1685,15 +1714,16 @@ export default function Game() {
           )}
           <GameToolbar
             workshop="/chaos/admin"
-            onVoice={
-              session && state?.world.party
-                ? () => {
-                    setVoiceRequest((value) => value + 1);
-                    if (compact) openMobilePanel('social');
+            voice={
+              session && state
+                ? {
+                    session: { ...session, game: 'chaos' },
+                    snapshot: voiceSnapshot!,
+                    onClient: setVoiceClient,
+                    onState: setVoiceState,
                   }
                 : undefined
             }
-            voiceHint="Voice chat is available in Crew Jobs. Create or join a Crew Jobs room to talk with friends."
             muted={!sound}
             onToggleSound={() => setSound((value) => !value)}
             onHelp={() => setHelp(true)}

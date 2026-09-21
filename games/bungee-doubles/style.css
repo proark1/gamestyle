@@ -932,3 +932,43 @@
     top: calc(144px + var(--bungee-safe-top));
   }
 }
+.bungee-room-controls {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  top: calc(110px + var(--bungee-safe-top, 0px));
+  z-index: 25;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(280px, 48vw);
+}
+.bungee-room-controls output {
+  background: #fffaf0;
+  color: #253832;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.bungee-room-dialog {
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+.bungee-room-dialog label,
+.bungee-room-dialog form {
+  display: grid;
+  gap: 8px;
+  margin-block: 12px;
+}
+.bungee-room-dialog input {
+  min-height: 44px;
+  border: 2px solid #647a68;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fffaf0;
+  color: #253832;
+  font: inherit;
+}
+.bungee-room-dialog > button {
+  margin: 4px;
+}

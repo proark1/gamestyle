@@ -26,8 +26,9 @@ import {
   GameTracker,
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
-import type { PeerGameConnection } from '../../shared/peer/connection';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import { panicCurlingAnalytics } from './analytics';
 import { CurlingAudio } from './audio';
 import { reconcileCurlingBots, updateCurlingBots } from './bots';
@@ -101,9 +102,7 @@ export default function PanicCurlingGame() {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<PanicCurlingScene | null>(null);
   const audioRef = useRef<CurlingAudio | null>(null);
-  const networkRef = useRef<PeerGameConnection<PanicCurlingSnapshot> | null>(
-    null,
-  );
+  const onlineWorld = useRef<PanicCurlingWorld | null>(null);
   const localWorld = useRef<PanicCurlingWorld | null>(null);
   const currentInput = useRef<PlayerInput>(idleInput());
   // The scene is handed every snapshot directly; the HUD is paced, so a
@@ -161,27 +160,73 @@ export default function PanicCurlingGame() {
     name: 'Captain Curl',
   });
 
-  const dispatchAction = useCallback((act: PanicCurlingAction) => {
-    tracker.action(act.type);
-    audioRef.current?.unlock();
-
-    if (networkRef.current) {
-      void networkRef.current.action(act);
-    } else if (localWorld.current) {
-      panicCurlingAction(localWorld.current, sessionRef.current.id, act, true);
-      if (act.type === 'switchRole' || act.type === 'switchTeam') {
-        reconcileCurlingBots(localWorld.current);
-      }
-      const snap = panicCurlingSnapshot(
-        localWorld.current,
-        'SOLO',
-        sessionRef.current.id,
-        sessionRef.current.id,
-        Date.now(),
-      );
+  const room = usePeerRoom<PanicCurlingSnapshot>({
+    game: 'panic-curling',
+    loadEngine: () => import('./peer'),
+    readInput: () => ({
+      ...currentInput.current,
+      aimAngle: aimAngleRef.current,
+      power: powerRef.current,
+      spin: spinRef.current,
+      stoneKind: stoneKindRef.current,
+      sweep: isSweepingRef.current,
+      steer: steerDirRef.current,
+    }),
+    idleInput,
+    onAttach: (next) => {
+      localWorld.current = null;
+      currentInput.current = idleInput();
+      sessionRef.current = { ...sessionRef.current, ...next };
+      hud.current.reset();
+      sceneRef.current?.setLocalPlayer(next.id);
+    },
+    receive: (snap) => {
       if (hud.current.due(snap)) setSnapshot(snap);
-    }
-  }, []);
+      sceneRef.current?.render(snap);
+
+      onlineWorld.current = snap.world;
+      const me = snap.world.players.find((p) => p.id === sessionRef.current.id);
+      if (me) {
+        setTeam(me.team);
+        setRole(me.role);
+        teamRef.current = me.team;
+        roleRef.current = me.role;
+      }
+      if (soundEnabledRef.current)
+        for (const event of snap.world.events)
+          audioRef.current?.playEvent(event);
+    },
+  });
+  const { send } = room;
+
+  const dispatchAction = useCallback(
+    (act: PanicCurlingAction) => {
+      tracker.action(act.type);
+      audioRef.current?.unlock();
+
+      if (send(act)) return;
+      if (localWorld.current) {
+        panicCurlingAction(
+          localWorld.current,
+          sessionRef.current.id,
+          act,
+          true,
+        );
+        if (act.type === 'switchRole' || act.type === 'switchTeam') {
+          reconcileCurlingBots(localWorld.current);
+        }
+        const snap = panicCurlingSnapshot(
+          localWorld.current,
+          'SOLO',
+          sessionRef.current.id,
+          sessionRef.current.id,
+          Date.now(),
+        );
+        if (hud.current.due(snap)) setSnapshot(snap);
+      }
+    },
+    [send],
+  );
 
   // Initialize Scene, Audio, and Local World (runs once)
   useEffect(() => {
@@ -320,7 +365,7 @@ export default function PanicCurlingGame() {
     if (!powerOscillating) return;
     let up = true;
     const interval = setInterval(() => {
-      const current = localWorld.current;
+      const current = localWorld.current ?? onlineWorld.current;
       if (
         !current ||
         current.phase !== 'aiming' ||
@@ -398,7 +443,7 @@ export default function PanicCurlingGame() {
         return;
       if (e.code === 'Space') {
         e.preventDefault();
-        const current = localWorld.current;
+        const current = localWorld.current ?? onlineWorld.current;
         if (
           current?.phase === 'aiming' &&
           role === 'deliverer' &&
@@ -410,7 +455,7 @@ export default function PanicCurlingGame() {
           isSweepingRef.current = true;
         }
       } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-        const current = localWorld.current;
+        const current = localWorld.current ?? onlineWorld.current;
         if (current?.phase === 'aiming') {
           setAimAngle((a) => {
             const next = Math.max(-0.35, a - 0.05);
@@ -422,7 +467,7 @@ export default function PanicCurlingGame() {
           steerDirRef.current = -1;
         }
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-        const current = localWorld.current;
+        const current = localWorld.current ?? onlineWorld.current;
         if (current?.phase === 'aiming') {
           setAimAngle((a) => {
             const next = Math.min(0.35, a + 0.05);
@@ -497,6 +542,8 @@ export default function PanicCurlingGame() {
           PANIC CURLING<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={!soundEnabled}
           onToggleSound={toggleSound}
           onHelp={() => {}}

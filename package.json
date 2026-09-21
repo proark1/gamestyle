@@ -8,6 +8,7 @@
   "scripts": {
     "dev:peer": "node scripts/dev-peer.mjs",
     "test:peer": "node scripts/peer-integration.mjs",
+    "test:voice:browser": "node --import tsx scripts/voice-browser-integration.mjs",
     "test:load": "node --import tsx scripts/load-test.mjs",
     "dev:voice": "node scripts/dev-voice.mjs",
     "audio:prompts": "node --import tsx scripts/export-audio-prompts.mjs",

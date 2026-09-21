@@ -420,7 +420,14 @@ export default function ShelfControl() {
           )}
           <GameToolbar
             workshop="/act-natural/admin"
-            voiceHint="Use your group call to talk with friends. In-game voice is not available in Shelf Control yet."
+            voice={
+              session && snapshot
+                ? {
+                    session: { ...session, game: 'shelf-control' },
+                    snapshot: { players: snapshot.players, nearby: false },
+                  }
+                : undefined
+            }
             muted={muted}
             onToggleSound={() => setMuted((v) => !v)}
             onHelp={() => {

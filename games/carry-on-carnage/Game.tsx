@@ -14,8 +14,9 @@ import {
   GameTracker,
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
-import type { PeerGameConnection } from '../../shared/peer/connection';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import { TouchControls } from '../../shared/input/TouchControls';
 import { CarryOnModal } from './Modal';
 import { CARRY_ON_UI, eventMessage } from './ui-text';
@@ -67,7 +68,6 @@ export default function CarryOnCarnageGame() {
   const hudRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CarryOnScene | null>(null);
   const audioRef = useRef<CarryOnSound | null>(null);
-  const networkRef = useRef<PeerGameConnection<CarryOnSnapshot> | null>(null);
   const localWorld = useRef<CarryOnWorld | null>(null);
   const currentInput = useRef<PlayerInput>(idleInput());
   const eventIdRef = useRef(100);
@@ -93,22 +93,45 @@ export default function CarryOnCarnageGame() {
     color: 0,
   });
 
-  const dispatchAction = useCallback((act: CarryOnAction) => {
-    if (act.type === 'interact' && pausedRef.current) return;
-    tracker.action(act.type);
-    audioRef.current?.unlock();
+  const room = usePeerRoom<CarryOnSnapshot>({
+    game: 'carry-on-carnage',
+    onOpen: () => setHelpOpen(false),
+    loadEngine: () => import('./peer'),
+    readInput: () => currentInput.current,
+    idleInput,
+    onAttach: (next) => {
+      localWorld.current = null;
+      currentInput.current = idleInput();
+      sessionRef.current = { ...sessionRef.current, ...next };
+      hud.current.reset();
+      setHelpOpen(false);
+    },
+    receive: (snap) => {
+      if (hud.current.due(snap)) setSnapshot(snap);
+      sceneRef.current?.render(snap, sessionRef.current.id);
+      audioRef.current?.update(snap.world, sessionRef.current.id);
+    },
+  });
+  const { send } = room;
 
-    if (networkRef.current) {
-      void networkRef.current.action(act);
-    } else if (localWorld.current) {
-      carryOnAction(
-        localWorld.current,
-        sessionRef.current.id,
-        act,
-        eventIdRef.current ? eventIdRef : { current: 100 },
-      );
-    }
-  }, []);
+  const dispatchAction = useCallback(
+    (act: CarryOnAction) => {
+      if (act.type === 'interact' && pausedRef.current) return;
+      tracker.action(act.type);
+      audioRef.current?.unlock();
+
+      if (send(act)) return;
+      if (localWorld.current) {
+        carryOnAction(
+          localWorld.current,
+          sessionRef.current.id,
+          act,
+          eventIdRef.current ? eventIdRef : { current: 100 },
+        );
+      }
+    },
+    [send],
+  );
 
   // Measure the actual translated HUD, including fee badges and notifications.
   // This keeps the playfield below it without guessing every text height.
@@ -317,6 +340,8 @@ export default function CarryOnCarnageGame() {
           CARRY-ON CARNAGE<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={!soundEnabled}
           onToggleSound={() => setSoundEnabled((v) => !v)}
           onHelp={() => setHelpOpen(true)}
@@ -551,6 +576,15 @@ export default function CarryOnCarnageGame() {
         >
           <h2>{ui.help}</h2>
           <p>{ui.intro}</p>
+          <button
+            className="carryon-restart-btn"
+            onClick={() => {
+              setHelpOpen(false);
+              room.setOpen(true);
+            }}
+          >
+            {language === 'de' ? 'Mehrspieler' : 'Multiplayer'}
+          </button>
           <ol>
             {ui.steps.map((step) => (
               <li key={step}>{step}</li>

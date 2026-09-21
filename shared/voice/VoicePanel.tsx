@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Headphones, LoaderCircle, Mic, MicOff, Radio } from 'lucide-react';
 import {
   Dialog,
@@ -11,6 +11,13 @@ import {
 import type { VoiceClient, VoiceState } from './client';
 import type { VoiceSession, VoiceSnapshot } from './types';
 import './voice.css';
+import { bindPushToTalk } from './push-to-talk';
+import {
+  voiceControls,
+  serverControls,
+  subscribeControls,
+  saveControls,
+} from './preferences';
 const initial: VoiceState = {
   status: 'Voice off',
   connected: false,
@@ -20,28 +27,36 @@ const initial: VoiceState = {
 };
 const emptySnapshot: VoiceSnapshot = { players: [], nearby: false };
 const ignoreSpeaking = (_active: boolean) => {};
-type VoiceController = Pick<
+export type VoiceController = Pick<
   VoiceClient,
   | 'state'
   | 'connect'
   | 'dispose'
   | 'microphone'
   | 'prepareMicrophone'
+  | 'setTalking'
   | 'devices'
   | 'resumeAudio'
   | 'update'
   | 'volume'
   | 'deafen'
->;
+> &
+  Partial<Pick<VoiceClient, 'capture' | 'captureStream'>> & {
+    hold?: (source: string, active: boolean) => void;
+  };
 export default function VoicePanel({
   session,
   snapshot = emptySnapshot,
   onSpeaking = ignoreSpeaking,
+  onClient,
+  onState,
   unavailableReason = 'Create or join a multiplayer room to talk with friends.',
 }: {
   session?: VoiceSession;
   snapshot?: VoiceSnapshot;
   onSpeaking?: (active: boolean) => void;
+  onClient?: (client: VoiceController | null) => void;
+  onState?: (state: VoiceState) => void;
   unavailableReason?: string;
 }) {
   const client = useRef<VoiceController | null>(null),
@@ -50,20 +65,35 @@ export default function VoicePanel({
     attempt = useRef(0),
     speechAttempt = useRef(0),
     microphoneBusy = useRef(false);
-  const latest = useRef({ snapshot, onSpeaking });
+  const latest = useRef({ snapshot, onSpeaking, onClient, onState });
   useEffect(() => {
-    latest.current = { snapshot, onSpeaking };
-  }, [snapshot, onSpeaking]);
+    latest.current = { snapshot, onSpeaking, onClient, onState };
+  }, [snapshot, onSpeaking, onClient, onState]);
   const [state, setState] = useState(initial),
     [open, setOpen] = useState(false),
     [armed, setArmed] = useState(false),
-    [mode, setMode] = useState<'open' | 'push'>('open'),
     [deafened, setDeafened] = useState(false);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]),
     [device, setDevice] = useState(''),
     [nearby, setNearby] = useState(false);
   const [volumes, setVolumes] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+  const { mode, shortcut } = useSyncExternalStore(
+    subscribeControls,
+    voiceControls,
+    serverControls,
+  );
+  useEffect(() => {
+    latest.current.onState?.({ ...state, ready: armed, mode });
+  }, [state, armed, mode]);
+  const holds = useRef<ReturnType<typeof bindPushToTalk> | null>(null);
+  function changeMode(next: 'open' | 'push') {
+    holds.current?.reset();
+    speechAttempt.current++;
+    void client.current?.microphone(false);
+    setArmed(false);
+    saveControls(next, shortcut);
+  }
   useEffect(() => {
     alive.current = true;
     const cancelJoin = () => {
@@ -74,6 +104,7 @@ export default function VoicePanel({
       cancelJoin();
       const c = client.current;
       client.current = null;
+      latest.current.onClient?.(null);
       void c?.dispose();
       latest.current.onSpeaking(false);
     };
@@ -91,42 +122,35 @@ export default function VoicePanel({
     );
   }, [state.connected, state.speaking, deafened, session?.id, volumes]);
   useEffect(() => {
+    if (!state.connected || !armed || mode !== 'push') return;
+    const binding = bindPushToTalk(window, shortcut, (active) => {
+      void client.current?.setTalking(active);
+    });
+    holds.current = binding;
+    return () => {
+      binding.dispose();
+      holds.current = null;
+    };
+  }, [state.connected, armed, mode, shortcut]);
+  useEffect(() => {
     const stop = () => {
       speechAttempt.current++;
-      void client.current?.microphone(false);
-      if (mode === 'open') setArmed(false);
-    };
-    const down = (e: KeyboardEvent) => {
-      if (
-        e.code !== 'KeyT' ||
-        e.repeat ||
-        !armed ||
-        mode !== 'push' ||
-        (e.target as HTMLElement)?.closest(
-          'input,textarea,select,[contenteditable]',
-        )
-      )
-        return;
-      e.preventDefault();
-      void client.current?.microphone(true, device || undefined);
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code === 'KeyT' && mode === 'push') stop();
+      holds.current?.reset();
+      if (mode === 'open') {
+        void client.current?.microphone(false);
+        setArmed(false);
+      }
     };
     const hidden = () => {
       if (document.hidden) stop();
     };
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
     window.addEventListener('blur', stop);
     document.addEventListener('visibilitychange', hidden);
     return () => {
-      window.removeEventListener('keydown', down);
-      window.removeEventListener('keyup', up);
       window.removeEventListener('blur', stop);
       document.removeEventListener('visibilitychange', hidden);
     };
-  }, [armed, mode, device]);
+  }, [mode]);
   async function join(speak: boolean) {
     if (joining.current || !session) return;
     joining.current = true;
@@ -144,10 +168,17 @@ export default function VoicePanel({
       const c = new VoiceClient(session, (s) => {
         if (alive.current && client.current === c) {
           setState(s);
-          if (!s.connected) setArmed(false);
+          if (!s.connected || s.error) setArmed(false);
         }
       });
       client.current = c;
+      Object.assign(c, {
+        hold: (source: string, active: boolean) => {
+          if (active) holds.current?.press(source);
+          else holds.current?.release(source);
+        },
+      });
+      latest.current.onClient?.(c);
       c.update({ ...latest.current.snapshot, nearby });
       c.deafen(deafened);
       for (const [id, volume] of Object.entries(volumes)) c.volume(id, volume);
@@ -208,11 +239,13 @@ export default function VoicePanel({
     }
   }
   function leave() {
+    holds.current?.reset();
     attempt.current++;
     speechAttempt.current++;
     joining.current = false;
     const c = client.current;
     client.current = null;
+    latest.current.onClient?.(null);
     void c?.dispose();
     setState(initial);
     setArmed(false);
@@ -220,26 +253,52 @@ export default function VoicePanel({
     onSpeaking(false);
   }
   const microphoneEnabled = mode === 'push' ? armed : state.mic;
+  const keyLabel = shortcut.slice(3);
+  function holdButton(inPanel: boolean) {
+    return (
+      <button
+        type="button"
+        data-voice-hold="true"
+        className={`${inPanel ? 'voice-hold-inline' : 'voice-hold'} ${state.mic ? 'voice-live' : ''}`}
+        onPointerDown={(e) => {
+          if (e.button !== 0 || !e.isPrimary) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          holds.current?.press(`pointer:${e.pointerId}`);
+        }}
+        onPointerUp={(e) => holds.current?.release(`pointer:${e.pointerId}`)}
+        onPointerCancel={(e) =>
+          holds.current?.release(`pointer:${e.pointerId}`)
+        }
+        onLostPointerCapture={(e) =>
+          holds.current?.release(`pointer:${e.pointerId}`)
+        }
+        onContextMenu={(e) => e.preventDefault()}
+        aria-label={`Hold ${keyLabel} or this button to talk`}
+        aria-pressed={state.mic}
+        aria-keyshortcuts={keyLabel}
+      >
+        <Mic size={18} aria-hidden="true" />
+        <span>{state.mic ? 'Talking' : 'Hold to talk'}</span>
+        <kbd>{keyLabel}</kbd>
+      </button>
+    );
+  }
   return (
     <>
-      {state.connected && armed && mode === 'push' && (
-        <button
-          className={`voice-hold ${state.mic ? 'voice-live' : ''}`}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            e.currentTarget.setPointerCapture(e.pointerId);
-            void client.current?.microphone(true, device || undefined);
-          }}
-          onPointerUp={() => void client.current?.microphone(false)}
-          onPointerCancel={() => void client.current?.microphone(false)}
-          onLostPointerCapture={() => void client.current?.microphone(false)}
-          onContextMenu={(e) => e.preventDefault()}
-          aria-label="Hold to talk"
-        >
-          <Mic size={16} /> Hold to talk · T
-        </button>
-      )}
-      <Dialog open={open} onOpenChange={setOpen}>
+      {state.connected &&
+        armed &&
+        mode === 'push' &&
+        !open &&
+        holdButton(false)}
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          holds.current?.reset();
+          setOpen(next);
+        }}
+      >
         <DialogTrigger
           className="game-toolbar-button voice-trigger"
           aria-label={
@@ -269,18 +328,72 @@ export default function VoicePanel({
           <DialogTitle>Room voice</DialogTitle>
           <DialogDescription>
             {session
-              ? 'Talk with everyone in this game room. Join voice turns on your microphone after you allow access. You can mute or leave at any time.'
+              ? 'Choose how you want to talk, or join just to listen.'
               : unavailableReason}
           </DialogDescription>
           {session && (
             <>
+              <fieldset className="voice-modes" disabled={busy}>
+                <legend>Microphone mode</legend>
+                <label
+                  aria-label="Push to talk"
+                  data-selected={mode === 'push'}
+                >
+                  <input
+                    type="radio"
+                    name="voice-mode"
+                    checked={mode === 'push'}
+                    onChange={() => changeMode('push')}
+                  />
+                  <span>
+                    <strong>Push to talk</strong>
+                    <small>Only while you hold a key or button</small>
+                  </span>
+                </label>
+                <label aria-label="Open mic" data-selected={mode === 'open'}>
+                  <input
+                    type="radio"
+                    name="voice-mode"
+                    checked={mode === 'open'}
+                    onChange={() => changeMode('open')}
+                  />
+                  <span>
+                    <strong>Open mic</strong>
+                    <small>Talk freely until you mute</small>
+                  </span>
+                </label>
+              </fieldset>
+              {mode === 'push' && (
+                <label className="voice-shortcut">
+                  Talk key
+                  <select
+                    aria-label="Talk key"
+                    value={shortcut}
+                    disabled={busy}
+                    onChange={(e) => {
+                      holds.current?.reset();
+                      saveControls(mode, e.target.value);
+                    }}
+                  >
+                    {['T', 'V', 'B'].map((key) => (
+                      <option key={key} value={`Key${key}`}>
+                        {key}
+                      </option>
+                    ))}
+                  </select>
+                  <small>
+                    While voice is ready, this key is reserved for talking. It
+                    won’t activate while typing.
+                  </small>
+                </label>
+              )}
               <output aria-live="polite">
                 {state.status}
                 {state.connected
                   ? state.mic
-                    ? ' · Microphone live'
+                    ? ' · Talking'
                     : microphoneEnabled
-                      ? ' · Hold to talk'
+                      ? ` · Ready · Hold ${keyLabel} to talk`
                       : ' · Microphone off'
                   : ''}
               </output>
@@ -302,7 +415,11 @@ export default function VoicePanel({
                     ) : (
                       <Mic size={17} />
                     )}
-                    {busy ? 'Joining…' : 'Join voice'}
+                    {busy
+                      ? 'Joining…'
+                      : mode === 'push'
+                        ? 'Join with push to talk'
+                        : 'Join with open mic'}
                   </button>
                   <button disabled={busy} onClick={() => void join(false)}>
                     <Headphones size={17} /> Listen only
@@ -321,30 +438,24 @@ export default function VoicePanel({
                       {busy
                         ? 'Setting up microphone…'
                         : microphoneEnabled
-                          ? 'Mute microphone'
-                          : 'Enable microphone'}
+                          ? mode === 'push'
+                            ? 'Disable push to talk'
+                            : 'Mute microphone'
+                          : mode === 'push'
+                            ? 'Enable push to talk'
+                            : 'Enable microphone'}
                     </button>
                     <button onClick={leave}>Leave voice</button>
                   </div>
-                  <label>
-                    Speaking mode
-                    <select
-                      disabled={busy}
-                      value={mode}
-                      onChange={(e) => {
-                        setMode(e.target.value as 'open' | 'push');
-                        void client.current?.microphone(false);
-                        setArmed(false);
-                      }}
-                    >
-                      <option value="open">
-                        Open microphone · talk naturally
-                      </option>
-                      <option value="push">
-                        Push to talk · hold T or the talk button
-                      </option>
-                    </select>
-                  </label>
+                  {mode === 'push' && armed && (
+                    <>
+                      {holdButton(true)}
+                      <p className="voice-note">
+                        Your microphone is ready but silent until you hold.
+                        Release to stop talking.
+                      </p>
+                    </>
+                  )}
                   {devices.length > 0 && (
                     <label>
                       Microphone

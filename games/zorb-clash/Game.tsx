@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RotateCcw, Shield, Zap, Flame, Volleyball } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { idleInput } from './types';
 import { useMediaQuery } from '../../shared/browser/use-media-query';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
 import { ZorbClashScene } from './scene';
@@ -190,6 +193,7 @@ export default function ZorbClash() {
     ),
   );
 
+  const currentInput = useRef(idleInput());
   const [snapshot, setSnapshot] = useState<ZorbClashSnapshot | null>(null);
   // Decided after hydration: the server snapshot is false, so a touch phone's
   // first client render matches the server's and only then shows the stick.
@@ -231,6 +235,29 @@ export default function ZorbClash() {
     };
   }, [started, cancelInput]);
 
+  const room = usePeerRoom<ZorbClashSnapshot>({
+    game: 'zorb-clash',
+    loadEngine: () => import('./peer'),
+    idleInput,
+    readInput: () => (blockedRef.current ? idleInput() : currentInput.current),
+    onAttach: () => {
+      currentInput.current = idleInput();
+      setStarted(true);
+      setPaused(false);
+      setHelpOpen(false);
+      hud.current.reset();
+    },
+    receive: (snap) => {
+      if (hud.current.due(snap)) setSnapshot(snap);
+      sceneRef.current?.render(snap);
+      const me = snap.world.players.find((p) => p.id === snap.selfId);
+      audioRef.current?.setDashCharge(
+        blockedRef.current ? 0 : (me?.dashCharge ?? 0),
+      );
+    },
+  });
+  const { send, active } = room;
+
   const lastFrameTime = useRef(0);
   const animId = useRef(0);
 
@@ -266,6 +293,7 @@ export default function ZorbClash() {
 
     const scene = new ZorbClashScene(containerRef.current, {
       input: (inp: PlayerInput) => {
+        currentInput.current = inp;
         const p = world.players.find((pl) => pl.id === selfId);
         if (p) {
           p.input = inp;
@@ -288,7 +316,7 @@ export default function ZorbClash() {
       );
       lastFrameTime.current = timeMs;
 
-      if (worldRef.current && physicsRef.current) {
+      if (!active.current && worldRef.current && physicsRef.current) {
         if (!blockedRef.current)
           advanceZorbClash(
             worldRef.current,
@@ -338,9 +366,13 @@ export default function ZorbClash() {
       scene.destroy();
       audio.destroy();
     };
-  }, [selfId]);
+  }, [selfId, active]);
 
   const handleRestart = () => {
+    if (send({ type: 'reset' })) {
+      setPaused(false);
+      return;
+    }
     if (!worldRef.current || !physicsRef.current) return;
     restartZorbMatch(worldRef.current, physicsRef.current);
     cancelInput();
@@ -358,15 +390,20 @@ export default function ZorbClash() {
   const setPlayerInput = useCallback(
     (patch: Partial<PlayerInput>) => {
       if (blockedRef.current) return;
+      if (active.current) {
+        sceneRef.current?.setTouchInput({ ...currentInput.current, ...patch });
+        return;
+      }
       const world = worldRef.current;
       if (world?.status !== 'playing') return;
       const p = world.players.find((pl) => pl.id === selfId);
       if (p) Object.assign(p.input, patch);
     },
-    [selfId],
+    [selfId, active],
   );
 
-  const me = snapshot?.world.players.find((p) => p.id === selfId);
+  const playerId = snapshot?.selfId ?? selfId;
+  const me = snapshot?.world.players.find((p) => p.id === playerId);
   const isTurtle = me?.turtle ?? false;
   const isBraced = me?.braced ?? false;
   const dashCharge = me?.dashCharge ?? 0;
@@ -393,6 +430,8 @@ export default function ZorbClash() {
           ZORB CLASH<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={muted}
           onToggleSound={toggleSound}
           onHelp={() => setHelpOpen(true)}
@@ -430,7 +469,7 @@ export default function ZorbClash() {
         <PitchRadar
           players={snapshot.world.players}
           ball={snapshot.world.ball}
-          selfId={selfId}
+          selfId={playerId}
           label={strings.radar}
         />
       )}
@@ -467,7 +506,7 @@ export default function ZorbClash() {
             )
               .replace(
                 '{scorer}',
-                lastGoal.scorerId === selfId
+                lastGoal.scorerId === playerId
                   ? strings.you
                   : lastGoal.scorerName,
               )
@@ -532,7 +571,9 @@ export default function ZorbClash() {
         <output className="zorb-balance-hint">{strings.unstable}</output>
       )}
 
-      <Dialog open={(!started || (paused && !isEnded)) && !helpOpen}>
+      <Dialog
+        open={(!started || (paused && !isEnded)) && !helpOpen && !room.open}
+      >
         <DialogContent
           className="game-dialog zorb-modal"
           showCloseButton={false}
@@ -553,6 +594,13 @@ export default function ZorbClash() {
             }}
           >
             {started ? strings.resume : strings.start}
+          </button>
+          <button
+            type="button"
+            className="zorb-btn"
+            onClick={() => room.setOpen(true)}
+          >
+            Multiplayer
           </button>
         </DialogContent>
       </Dialog>

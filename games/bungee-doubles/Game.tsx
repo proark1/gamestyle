@@ -42,11 +42,23 @@ import {
 import { bungeeDoublesAnalytics } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyRound, partyVersus } from '../../shared/ui/party-round';
+import {
+  PeerGameConnection,
+  enterPeerRoom,
+} from '../../shared/peer/connection';
+import {
+  inviteCode,
+  sessionStore,
+  type Session,
+} from '../../shared/rooms/session';
+import { idleInput } from './types';
 
 const tracker = new GameTracker(bungeeDoublesAnalytics);
+const sessions = sessionStore('bungee-doubles-session-v1');
 
 export default function BungeeDoublesGame() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const de = language === 'de';
   const strings = t(BUNGEE_DOUBLES_TRANSLATIONS);
   useGameTracker(tracker);
 
@@ -54,6 +66,19 @@ export default function BungeeDoublesGame() {
   const scene = useRef<BungeeScene | null>(null);
   const sound = useRef<BungeeDoublesSound | null>(null);
   const localWorld = useRef<BungeeWorld | null>(null);
+  const network = useRef<PeerGameConnection<BungeeSnapshot> | null>(null);
+  const currentInput = useRef(idleInput());
+  const mounted = useRef(false);
+  const entering = useRef(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [roomOpen, setRoomOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [status, setStatus] = useState<'online' | 'reconnecting' | 'expired'>(
+    'online',
+  );
   // The scene is handed every snapshot directly; the HUD is paced, so a
   // 20Hz feed does not rebuild it twenty times a second.
   const hud = useRef(
@@ -80,7 +105,11 @@ export default function BungeeDoublesGame() {
     tracker.action(act.type);
     sound.current?.unlock();
     if (paused.current) return;
-    if (localWorld.current) {
+    if (network.current) {
+      void network.current
+        .action(act)
+        .catch((error: Error) => setNotice(error.message));
+    } else if (localWorld.current) {
       bungeeAction(
         localWorld.current,
         sessionRef.current.id,
@@ -100,14 +129,136 @@ export default function BungeeDoublesGame() {
     }
   }, []);
 
+  const attach = useCallback((next: Session, preview?: BungeeSnapshot) => {
+    network.current?.stop();
+    localWorld.current = null;
+    currentInput.current = idleInput();
+    sessionRef.current = { ...next, name: 'Player', team: 'red' };
+    setSession(next);
+    setStatus('reconnecting');
+    sessions.save(next);
+    const accept = (snap: BungeeSnapshot) => {
+      if (hud.current.due(snap)) setSnapshot(snap);
+      scene.current?.render(snap);
+      sound.current?.update(snap.world, next.id);
+    };
+    network.current = new PeerGameConnection(
+      'bungee-doubles',
+      next,
+      () => currentInput.current,
+      accept,
+      setStatus,
+      () => import('./peer'),
+    );
+    if (preview) {
+      setSnapshot(preview);
+      accept(preview);
+    }
+    network.current.start();
+  }, []);
+
+  async function enter(op: 'create' | 'join') {
+    if (entering.current) return;
+    entering.current = true;
+    setBusy(true);
+    setNotice('');
+    sound.current?.unlock();
+    try {
+      const reply = await enterPeerRoom<BungeeSnapshot>(
+        'bungee-doubles',
+        {
+          op,
+          name: name.trim() || 'Player',
+          ...(op === 'join' ? { code: code.trim().toUpperCase() } : {}),
+        },
+        () => import('./peer'),
+      );
+      if (!mounted.current) return;
+      if (!reply.session)
+        throw new Error(
+          de ? 'Beitritt fehlgeschlagen.' : 'Could not join the room.',
+        );
+      attach(reply.session, reply.snapshot);
+      setRoomOpen(false);
+      const url = new URL(location.href);
+      url.searchParams.set('room', reply.session.code);
+      history.replaceState(null, '', url);
+    } catch (error) {
+      if (mounted.current)
+        setNotice(
+          error instanceof Error ? error.message : 'Could not connect.',
+        );
+    } finally {
+      entering.current = false;
+      if (mounted.current) setBusy(false);
+    }
+  }
+
+  async function leave() {
+    if (entering.current) return;
+    entering.current = true;
+    setBusy(true);
+    try {
+      await network.current?.leave();
+    } catch {
+      network.current?.stop();
+    } finally {
+      network.current = null;
+      sessions.clear();
+      entering.current = false;
+      if (mounted.current) {
+        sessionRef.current = {
+          id: 'p-local',
+          token: 'solo-token',
+          code: 'SOLO',
+          name: 'Player',
+          team: 'red',
+        };
+        const w = freshBungeeWorld(Date.now());
+        w.players.push(
+          newPlayer('p-local', name.trim() || 'You', 0, 'red', false, 0),
+        );
+        reconcileBungeeBots(w);
+        prepareServe(w, 'red');
+        localWorld.current = w;
+        currentInput.current = idleInput();
+        setSnapshot(bungeeSnapshot(w, 'SOLO', 'p-local', 'p-local', w.clock));
+        setSession(null);
+        setStatus('online');
+        setNotice('');
+        setBusy(false);
+        setRoomOpen(false);
+        const url = new URL(location.href);
+        url.searchParams.delete('room');
+        history.replaceState(null, '', url);
+      }
+    }
+  }
+
+  async function copyInvite() {
+    if (!session) return;
+    try {
+      await navigator.clipboard.writeText(
+        `${location.origin}/bungee-doubles?room=${session.code}`,
+      );
+      setNotice(de ? 'Einladungslink kopiert.' : 'Invite link copied.');
+    } catch {
+      setNotice(
+        de ? `Raumcode: ${session.code}` : `Room code: ${session.code}`,
+      );
+    }
+  }
+
   // Initialize scene and sound
   useEffect(() => {
     if (!container.current) return;
+    mounted.current = true;
 
     sound.current = new BungeeDoublesSound();
 
     scene.current = new BungeeScene(container.current, {
       input: (inp: PlayerInput) => {
+        currentInput.current = inp;
         if (localWorld.current) {
           const p = localWorld.current.players.find(
             (pl) => pl.id === sessionRef.current.id,
@@ -137,6 +288,16 @@ export default function BungeeDoublesGame() {
     );
     setSnapshot(initialSnap);
     scene.current.render(initialSnap);
+
+    const invite = inviteCode();
+    const saved = sessions.loadPeer();
+    if (!inPartyMode()) {
+      if (saved && (!invite || invite === saved.code)) attach(saved);
+      else if (invite) {
+        setCode(invite);
+        setRoomOpen(true);
+      }
+    }
 
     // You are red's named server, so an idle party player would hold the
     // match at the serve forever. A party round serves after five seconds.
@@ -175,6 +336,9 @@ export default function BungeeDoublesGame() {
     animId = requestAnimationFrame(tick);
 
     return () => {
+      mounted.current = false;
+      network.current?.stop();
+      network.current = null;
       cancelAnimationFrame(animId);
       scene.current?.destroy();
       scene.current = null;
@@ -182,19 +346,27 @@ export default function BungeeDoublesGame() {
       sound.current = null;
       localWorld.current = null;
     };
-  }, [dispatchAction]);
+  }, [dispatchAction, attach]);
 
   useEffect(() => {
-    paused.current = helpOpen;
-    scene.current?.setInputEnabled(!helpOpen);
-  }, [helpOpen]);
+    const blocked =
+      helpOpen || roomOpen || busy || (session !== null && status !== 'online');
+    paused.current = blocked;
+    scene.current?.setInputEnabled(!blocked);
+    if (blocked) currentInput.current = idleInput();
+  }, [helpOpen, roomOpen, busy, session, status]);
 
   const world = snapshot?.world;
   const team =
     world?.players.find((p) => p.id === snapshot?.localId)?.team ?? 'red';
   const banner = world?.phase === 'scored' ? world.scoreBanner : null;
   const blocked =
-    !world || !['serving', 'rally'].includes(world.phase) || helpOpen;
+    !world ||
+    !['serving', 'rally'].includes(world.phase) ||
+    helpOpen ||
+    roomOpen ||
+    busy ||
+    (session !== null && status !== 'online');
   const tether = world?.tethers[team];
   const tensionVal = tether ? Math.round(tether.tension * 100) : 0;
   const tensionClass =
@@ -226,11 +398,152 @@ export default function BungeeDoublesGame() {
           BUNGEE DOUBLES<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          voice={
+            session?.peer && world
+              ? {
+                  session: { ...session, game: 'bungee-doubles' },
+                  snapshot: {
+                    players: world.players.filter((p) => !p.bot),
+                    nearby: false,
+                  },
+                }
+              : undefined
+          }
           muted={muted}
           onToggleSound={toggleSound}
           onHelp={() => setHelpOpen(true)}
         />
       </header>
+
+      <div className="bungee-room-controls">
+        <button className="bungee-btn" onClick={() => setRoomOpen(true)}>
+          <Users size={14} />
+          {session
+            ? `${session.code} · ${world?.players.filter((p) => !p.bot).length ?? 1}/4`
+            : de
+              ? 'Mehrspieler'
+              : 'Multiplayer'}
+        </button>
+        {session && status !== 'online' && (
+          <output>
+            {status === 'expired'
+              ? de
+                ? 'Sitzung abgelaufen. Bitte erneut beitreten.'
+                : 'Session expired. Please rejoin.'
+              : de
+                ? 'Verbindung wird hergestellt…'
+                : 'Reconnecting…'}
+          </output>
+        )}
+        {notice && <output>{notice}</output>}
+      </div>
+
+      <Dialog.Root
+        open={roomOpen}
+        onOpenChange={(open) => {
+          if (!busy) setRoomOpen(open);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="bungee-help-backdrop" />
+          <Dialog.Popup
+            className="bungee-help bungee-room-dialog"
+            aria-describedby={undefined}
+          >
+            <Dialog.Title>
+              {de ? 'Mit Freunden spielen' : 'Play with friends'}
+            </Dialog.Title>
+            {session ? (
+              <>
+                <p>
+                  {de ? 'Raumcode' : 'Room code'}:{' '}
+                  <strong>{session.code}</strong>
+                </p>
+                <ul>
+                  {world?.players.map((p) => (
+                    <li key={p.id}>
+                      {p.name} · {strings[p.team]}
+                      {p.bot ? ' (NPC)' : ''}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  className="primary-button"
+                  onClick={() => void copyInvite()}
+                >
+                  {de ? 'Einladungslink kopieren' : 'Copy invite link'}
+                </button>
+                <button
+                  className="bungee-btn"
+                  disabled={busy}
+                  onClick={() => void leave()}
+                >
+                  {de
+                    ? 'Raum verlassen · Solo spielen'
+                    : 'Leave room · Play solo'}
+                </button>
+              </>
+            ) : (
+              <>
+                <p>
+                  {de
+                    ? 'Bis zu vier Spieler. NPCs füllen freie Plätze.'
+                    : 'Up to four players. NPCs fill empty spots.'}
+                </p>
+                <label>
+                  {de ? 'Dein Name' : 'Your name'}
+                  <input
+                    value={name}
+                    maxLength={24}
+                    autoComplete="off"
+                    onChange={(event) => setName(event.target.value)}
+                    disabled={busy}
+                  />
+                </label>
+                <button
+                  className="primary-button"
+                  disabled={busy}
+                  onClick={() => void enter('create')}
+                >
+                  {de ? 'Raum erstellen' : 'Create room'}
+                </button>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void enter('join');
+                  }}
+                >
+                  <label>
+                    {de ? 'Raumcode' : 'Room code'}
+                    <input
+                      value={code}
+                      maxLength={6}
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                      onChange={(event) =>
+                        setCode(event.target.value.toUpperCase())
+                      }
+                      disabled={busy}
+                    />
+                  </label>
+                  <button
+                    className="bungee-btn"
+                    disabled={busy || !code.trim()}
+                    type="submit"
+                  >
+                    {de ? 'Raum beitreten' : 'Join room'}
+                  </button>
+                </form>
+              </>
+            )}
+            {notice && <output>{notice}</output>}
+            {busy && <output>{de ? 'Verbinden…' : 'Connecting…'}</output>}
+            <Dialog.Close className="bungee-btn" disabled={busy}>
+              {strings.close}
+            </Dialog.Close>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* 360 Camera Orbit Helper Badge */}
       {!helpOpen && (
