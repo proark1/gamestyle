@@ -185,6 +185,7 @@ void test('games dress Nico in wardrobe items over their own clothes', () => {
     'load-bearing:wrecker',
     'one-more-button:contestant',
     'panic-curling:curler',
+    'reel-problems-2:angler',
     'reel-problems:angler',
     'sample-stampede:rider',
     'sample-stampede:shopper',

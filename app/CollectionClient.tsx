@@ -154,6 +154,18 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     tagIcon: Mountain,
     metaIcon1: Users,
   },
+  'reel-problems-2': {
+    slug: 'reel-problems-2',
+    href: '/reel-problems-2',
+    cardClass: 'reel-card',
+    imgSrc: '/images/court-cast-v1/reel-problems.jpg',
+    imgAlt:
+      'Four clay friends in life jackets reel in an enormous fish from a rocking orange boat.',
+    fetchPriority: 'high',
+    tagIcon: Fish,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   'reel-problems': {
     slug: 'reel-problems',
     href: '/reel-problems',

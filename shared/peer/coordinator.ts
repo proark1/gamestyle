@@ -43,7 +43,8 @@ const nameOf = (value: unknown) => playerName(value, 'Player');
 const supportsNpcRoster = (game: string) =>
   game === 'uphill-delivery' ||
   game === 'four-brain-cells' ||
-  game === 'reel-problems';
+  game === 'reel-problems' ||
+  game === 'reel-problems-2';
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' && /^[a-zA-Z0-9-]{1,80}$/.test(value);
 function remove(room: Room, id: string) {
@@ -359,7 +360,7 @@ export async function handlePeerRoom(
             throw new PeerError(
               game === 'four-brain-cells'
                 ? 'Finish this breakfast before changing NPCs.'
-                : game === 'reel-problems'
+                : game === 'reel-problems' || game === 'reel-problems-2'
                   ? 'Finish this tournament before changing NPCs.'
                   : 'Finish this delivery before changing NPCs.',
               409,

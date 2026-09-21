@@ -22,6 +22,7 @@ import { siteAvatars } from '../../../games/first-person/avatar';
 import { breakfastAvatars } from '../../../games/four-brain-cells/avatar';
 import { loadBearingAvatars } from '../../../games/load-bearing/avatar';
 import { buttonAvatars } from '../../../games/one-more-button/avatar';
+import { reelAvatars as reel2Avatars } from '../../../games/reel-problems-2/avatar';
 import { reelAvatars } from '../../../games/reel-problems/avatar';
 import { shelfAvatars } from '../../../games/shelf-control/avatar';
 import { siegeAvatars } from '../../../games/siege-and-desist/avatar';
@@ -210,6 +211,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'four-brain-cells': {
     looks: breakfastAvatars,
     note: 'One robot for the whole team; each player steers a limb.',
+  },
+  'reel-problems-2': {
+    looks: reel2Avatars,
+    note: 'Experimental Reel Problems 2 angler.',
   },
   'reel-problems': {
     looks: reelAvatars,

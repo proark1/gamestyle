@@ -237,6 +237,33 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
     },
   },
 
+  'reel-problems-2': {
+    en: {
+      tag: 'FISH · DELIVER · REBUILD',
+      isNew: true,
+      newTag: 'NEW TO JUMBLEYARD',
+      players: '1–4 anglers',
+      duration: '8-minute delivery mission',
+      titleMain: 'Reel Problems 2',
+      titleSuffix: '.',
+      desc: 'Catch fish for the harbour café, keep your boat afloat, and build an emergency raft when things go wrong.',
+      tagline: 'Four friends. One very questionable boat.',
+      cta: 'Play Reel Problems 2',
+    },
+    de: {
+      tag: 'ANGELN · LIEFERN · BAUEN',
+      isNew: true,
+      newTag: 'NEU IN JUMBLEYARD',
+      players: '1–4 Angler',
+      duration: '8-Minuten-Liefermission',
+      titleMain: 'Reel Problems 2',
+      titleSuffix: '.',
+      desc: 'Fangt Fische für das Hafencafé, haltet euer Boot über Wasser und baut ein Notfloß, wenn etwas schiefgeht.',
+      tagline: 'Vier Freunde. Ein höchst fragwürdiges Boot.',
+      cta: 'Reel Problems 2 spielen',
+    },
+  },
+
   'reel-problems': {
     en: {
       tag: 'THE FISH CAUGHT US',

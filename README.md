@@ -18,6 +18,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Wrong Floor       | `/wrong-floor`         | `games/wrong-floor/`         | `app/wrong-floor/`               |
 | One More Button   | `/one-more-button`     | `games/one-more-button/`     | `app/one-more-button/`           |
 | Four Brain Cells  | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
+| Reel Problems 2 | `/reel-problems-2` | `games/reel-problems-2/` | `app/reel-problems-2/` |
 | Reel Problems     | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
 | Shelf Control     | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
 | Load Bearing      | `/load-bearing`        | `games/load-bearing/`        | `app/load-bearing/`              |
