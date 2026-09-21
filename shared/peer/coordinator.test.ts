@@ -35,6 +35,20 @@ export class PeerMemoryStore implements RoomStore {
 }
 const NOW = 1_000_000;
 
+void test('a suspended player can reload a heavy scene beyond the heartbeat timeout', async () => {
+  const { sessions, call } = await crew('stack-or-sink');
+  await call(1, 'suspend', NOW + 1);
+  for (let elapsed = 5000; elapsed <= 45000; elapsed += 5000)
+    await call(0, 'poll', NOW + elapsed);
+  const reloaded = await call(1, 'hello', NOW + 45001, {
+    instance: 'reloaded-browser',
+  });
+  const member = reloaded.view.members.find((m) => m.id === sessions[1].id);
+  assert.ok(member);
+  assert.equal(member.suspended, false);
+  assert.equal(member.instance, 'reloaded-browser');
+});
+
 void test('background hosts yield authority without losing their seat and can resume', async () => {
   const { sessions, call } = await crew('stack-or-sink');
   const sleeping = await call(0, 'suspend', NOW + 1);

@@ -112,6 +112,23 @@ export class PeerGameConnection<S> {
     this.mesh.start();
     this.timer = setInterval(() => this.tick(), 50);
     if (typeof window !== 'undefined') {
+      // Reload can take longer than the ordinary heartbeat lease on 3D scenes.
+      // Use the existing suspended-member grace period, even after navigation.
+      const pagehide = () => {
+        if (this.stopped || this.leaving) return;
+        void peerRequest(
+          {
+            ...this.mesh.session,
+            instance: this.mesh.instance,
+            op: 'suspend',
+          },
+          true,
+        ).catch(() => {});
+      };
+      window.addEventListener('pagehide', pagehide);
+      this.unsubscribe.push(() =>
+        window.removeEventListener('pagehide', pagehide),
+      );
       let transition = Promise.resolve();
       this.unsubscribe.push(
         bindGameLifecycle((active) => {

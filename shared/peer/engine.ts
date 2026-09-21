@@ -42,6 +42,8 @@ export interface GameAdapter<W extends PeerWorld, S extends GameSnapshot> {
   game: GameId;
   /** Adapter already creates a fully detached snapshot; avoid a second deep copy. */
   snapshotDetached?: boolean;
+  /** Games with replaceable bots can accept friends during a round. */
+  canJoin?(world: W): boolean;
   /** Optional game-owned entities; they are never network members. */
   autonomous?(player: W['players'][number]): boolean;
   roster?(world: W, roster: NpcRoster): void;
@@ -138,7 +140,10 @@ export class PeerEngine<
   }
 
   get open() {
-    return !['playing', 'escape'].includes(this.world.phase);
+    return (
+      this.adapter.canJoin?.(this.world) ??
+      !['playing', 'escape'].includes(this.world.phase)
+    );
   }
 
   reconcile(members: Member[], roster?: NpcRoster) {
