@@ -607,12 +607,12 @@
 }
 @media (max-width: 700px) {
   .drive-thru-topbar {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 5px;
     padding: 8px;
   }
-  .drive-thru-topbar .wordmark {
-    font-size: 12px;
+  .drive-thru-topbar.topbar .wordmark {
+    font-size: 0;
     padding-right: 8px;
   }
   .drive-thru-ticket-banner {

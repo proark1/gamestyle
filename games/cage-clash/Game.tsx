@@ -35,6 +35,7 @@ import { hudPacer } from '../../shared/ui/hud-pacer';
 import type { CageScene } from './scene';
 import { CageAudio } from './audio';
 import { CageControls } from './controls';
+import { GrappleReadout } from './GrappleReadout';
 import { cageAnalytics, cagePlayState } from './analytics';
 import {
   advanceWorld,
@@ -313,7 +314,10 @@ export default function CageGame() {
     ended = w?.phase === 'ended',
     g = w?.grapple,
     ground = !!g && g.mode !== 'clinch',
-    top = g?.top === me?.id;
+    top = g?.top === me?.id,
+    submitting = !!g?.submissionBy,
+    attackingSubmission = !!g && g.submissionBy === me?.id,
+    pulse = !!g && g.age % 1.4 < 0.45;
   const hold = (
     key: keyof Pick<Input, 'punch' | 'kick' | 'grapple' | 'guard' | 'dodge'>,
   ) => ({
@@ -344,29 +348,74 @@ export default function CageGame() {
     },
   });
   const context = g?.submissionBy
-    ? say(
-        'Time your hold with the gold pulse. Guard or escape to resist.',
-        'Halte im goldenen Zeitfenster. Mit Deckung oder Flucht widerstehen.',
-      )
+    ? attackingSubmission
+      ? pulse
+        ? say(
+            'SQUEEZE NOW — hold E. Release between gold pulses.',
+            'JETZT ZIEHEN — E halten. Zwischen goldenen Pulsen loslassen.',
+          )
+        : say(
+            'Wait for gold. Save stamina for the next squeeze.',
+            'Warte auf Gold. Spare Ausdauer für den nächsten Zug.',
+          )
+      : pulse
+        ? say(
+            'DEFEND NOW — hold Shift, or hold Q to escape.',
+            'JETZT ABWEHREN — Shift halten oder Q zur Flucht halten.',
+          )
+        : say(
+            'Hold Q to escape. Hold Shift on gold to stop the submission.',
+            'Q zum Entkommen halten. Shift im goldenen Fenster stoppt den Griff.',
+          )
     : ground
       ? top
         ? say(
             'F: improve position · E: submission · Q: stand up',
             'F: Position verbessern · E: Aufgabegriff · Q: aufstehen',
           )
-        : say(
-            'F: reverse · Q: escape · E: submission from guard',
-            'F: umdrehen · Q: entkommen · E: Aufgabegriff aus Guard',
-          )
+        : g?.mode === 'mount'
+          ? say(
+              'Hold F or Q to recover guard. Shift blocks strikes.',
+              'F oder Q halten für Guard. Shift blockt Schläge.',
+            )
+          : say(
+              'Hold F to reverse · Q to escape · E for submission',
+              'F halten zum Umdrehen · Q zur Flucht · E für Aufgabegriff',
+            )
       : g
-        ? say(
-            'Hold E to drive a takedown. Shift defends; Q breaks away.',
-            'E halten für Takedown. Shift verteidigt; Q löst den Griff.',
-          )
-        : say(
-            'Tap Space for combinations. Hold and release for a hook.',
-            'Leertaste tippen für Kombinationen. Halten und loslassen für einen Haken.',
-          );
+        ? top
+          ? say(
+              'Hold E to drive a takedown. Shift defends; Q breaks away.',
+              'E halten für Takedown. Shift verteidigt; Q löst den Griff.',
+            )
+          : say(
+              'Hold Shift to resist. Hold Q to break free; tap E when they rest to reverse.',
+              'Shift halten zur Abwehr. Q halten zum Lösen; E tippen, wenn der Gegner pausiert, zum Umdrehen.',
+            )
+        : me?.charge
+          ? me.charge >= 0.4
+            ? say(
+                'HOOK READY — release Punch. Guard cancels.',
+                'HAKEN BEREIT — Schlag loslassen. Deckung bricht ab.',
+              )
+            : say(
+                'Hold Punch to load a hook. Release for a quick strike.',
+                'Schlag halten für einen Haken. Kurz loslassen für einen schnellen Schlag.',
+              )
+          : me?.queuedMove
+            ? say(
+                'NEXT STRIKE QUEUED — guard or dodge to cancel.',
+                'NÄCHSTER ANGRIFF VORGEMERKT — Deckung oder Ausweichen bricht ab.',
+              )
+            : me && me.stamina < 19
+              ? say(
+                  'LOW STAMINA — create space and recover.',
+                  'WENIG AUSDAUER — Abstand schaffen und erholen.',
+                )
+              : say(
+                  'Tap Punch for jab–cross. Queue your next strike as you recover.',
+                  'Schlag tippen für Jab–Cross. Folgeangriff kurz vor der Erholung eingeben.',
+                );
   return (
     <main className="cage-game">
       <div className="cage-canvas" ref={host} />
@@ -604,12 +653,22 @@ export default function CageGame() {
             <div>
               <strong>
                 {g?.submissionBy
-                  ? say('SUBMISSION', 'AUFGABEGRIFF')
+                  ? attackingSubmission
+                    ? say('FINISH THE HOLD', 'GRIFF VOLLENDEN')
+                    : say('ESCAPE THE HOLD', 'GRIFF LÖSEN')
                   : g
-                    ? `${g.mode.toUpperCase()} · ${top ? say('TOP', 'OBEN') : say('BOTTOM', 'UNTEN')}`
+                    ? g.mode === 'clinch'
+                      ? top
+                        ? say('CLINCH · IN CONTROL', 'CLINCH · KONTROLLE')
+                        : say('CLINCH · DEFENDING', 'CLINCH · ABWEHR')
+                      : `${g.mode.toUpperCase()} · ${top ? say('YOU ON TOP', 'DU BIST OBEN') : say('YOU UNDERNEATH', 'DU BIST UNTEN')}`
                     : me.down
                       ? say('DOWN — COVER UP', 'AM BODEN')
-                      : say('ON YOUR FEET', 'AUF DEN BEINEN')}
+                      : me.guarding
+                        ? say('GUARD UP', 'DECKUNG OBEN')
+                        : me.attack || me.cooldown
+                          ? say('RECOVERING', 'ERHOLUNG')
+                          : say('READY', 'BEREIT')}
               </strong>
               <span>
                 {Math.round(me.stamina)}% {say('stamina', 'Ausdauer')}
@@ -622,17 +681,15 @@ export default function CageGame() {
               value={me.stamina}
             />
             <p>{context}</p>
-            {g && (
-              <div
-                className={`cage-grapple-track ${g.submissionBy && g.age % 1.4 < 0.45 ? 'pulse' : ''}`}
-              >
-                <i
-                  style={{
-                    width: `${g.submissionBy ? g.submission * 100 : (g.progress + 1) * 50}%`,
-                  }}
-                />
-              </div>
+            {!g && me.charge > 0 && (
+              <meter
+                aria-label={say('Hook charge', 'Haken laden')}
+                min={0}
+                max={0.4}
+                value={Math.min(0.4, me.charge)}
+              />
             )}
+            {g && <GrappleReadout grapple={g} player={me.id} de={de} />}
           </section>
           {touch && (
             <TouchControls
@@ -649,7 +706,11 @@ export default function CageGame() {
           >
             <button
               className="cage-strike"
-              disabled={disabled || w?.phase !== 'playing'}
+              disabled={disabled || w?.phase !== 'playing' || submitting}
+              data-active={
+                me.input.punch ||
+                (!!me.attack && ['jab', 'cross', 'hook'].includes(me.move))
+              }
               {...hold('punch')}
             >
               <Hand />
@@ -662,8 +723,12 @@ export default function CageGame() {
             </button>
             <button
               disabled={
-                disabled || w?.phase !== 'playing' || g?.mode === 'clinch'
+                disabled ||
+                w?.phase !== 'playing' ||
+                g?.mode === 'clinch' ||
+                submitting
               }
+              data-active={me.input.kick || (!!me.attack && me.move === 'kick')}
               {...hold('kick')}
             >
               <Footprints />
@@ -671,40 +736,62 @@ export default function CageGame() {
                 {ground
                   ? top
                     ? say('ADVANCE', 'VORRÜCKEN')
-                    : say('REVERSE', 'UMDREHEN')
+                    : g?.mode === 'mount'
+                      ? say('RECOVER', 'BEFREIEN')
+                      : say('REVERSE', 'UMDREHEN')
                   : say('KICK', 'TRITT')}
               </span>
               <kbd>F</kbd>
             </button>
             <button
-              disabled={disabled || w?.phase !== 'playing'}
+              disabled={
+                disabled ||
+                w?.phase !== 'playing' ||
+                (submitting && !attackingSubmission) ||
+                (g?.mode === 'mount' && !top)
+              }
+              data-active={me.input.grapple}
               {...hold('grapple')}
             >
               <Grip />
               <span>
-                {ground
-                  ? say('SUBMIT', 'AUFGABE')
-                  : g
-                    ? say('TAKEDOWN', 'TAKEDOWN')
-                    : say('GRAPPLE', 'GREIFEN')}
+                {attackingSubmission
+                  ? say('SQUEEZE', 'ZIEHEN')
+                  : ground
+                    ? say('SUBMIT', 'AUFGABE')
+                    : g
+                      ? say('TAKEDOWN', 'TAKEDOWN')
+                      : say('GRAPPLE', 'GREIFEN')}
               </span>
               <kbd>E</kbd>
             </button>
             <button
               disabled={disabled || w?.phase !== 'playing'}
+              data-active={me.guarding}
               {...hold('guard')}
             >
               <Shield />
-              <span>{say('GUARD', 'DECKUNG')}</span>
+              <span>
+                {submitting && !attackingSubmission
+                  ? say('DEFEND', 'ABWEHR')
+                  : g?.mode === 'clinch' && !top
+                    ? say('RESIST', 'ABWEHR')
+                    : say('GUARD', 'DECKUNG')}
+              </span>
               <kbd>Shift</kbd>
             </button>
             <button
               disabled={disabled || w?.phase !== 'playing'}
+              data-active={!!me.dodge || (g && me.input.dodge)}
               {...hold('dodge')}
             >
               <Zap />
               <span>
-                {g ? say('ESCAPE', 'FLUCHT') : say('DODGE', 'AUSWEICHEN')}
+                {g
+                  ? ground && top && !submitting
+                    ? say('STAND UP', 'AUFSTEHEN')
+                    : say('ESCAPE', 'FLUCHT')
+                  : say('DODGE', 'AUSWEICHEN')}
               </span>
               <kbd>Q</kbd>
             </button>

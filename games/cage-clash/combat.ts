@@ -43,7 +43,14 @@ export const MOVES = {
     recovery: 0.35,
   },
 } as const;
+export const INPUT_BUFFER = 0.22;
+export function clearQueuedStrike(p: Fighter) {
+  p.queuedMove = null;
+  p.queueTime = 0;
+  p.charge = 0;
+}
 export function clearCombat(p: Fighter) {
+  clearQueuedStrike(p);
   p.attack = p.charge = p.cooldown = p.dodge = p.stagger = p.counter = 0;
   p.guarding = false;
   p.vx = p.vz = 0;
@@ -68,13 +75,16 @@ export function hurt(
     w.grapple ? 'jab' : attacker.move,
   );
 }
+export function strikeCost(p: Fighter, move: Move) {
+  return (
+    MOVES[move].cost *
+    (p.style === 'boxer' && ['jab', 'cross', 'hook'].includes(move) ? 0.85 : 1)
+  );
+}
 function startAttack(p: Fighter, move: Move) {
   const profile = MOVES[move],
-    cost =
-      profile.cost *
-      (p.style === 'boxer' && ['jab', 'cross', 'hook'].includes(move)
-        ? 0.85
-        : 1);
+    cost = strikeCost(p, move);
+  clearQueuedStrike(p);
   if (p.stamina < cost) return;
   p.stamina -= cost;
   p.move = move;
@@ -99,6 +109,8 @@ export function standingStep(w: World) {
       'down',
     ] as const)
       p[key] = Math.max(0, p[key] - STEP);
+    p.queueTime = Math.max(0, p.queueTime - STEP);
+    if (!p.queueTime) p.queuedMove = null;
     p.stamina = Math.min(
       100,
       p.stamina + STEP * (p.attack || p.charge ? 0 : p.input.guard ? 3 : 11),
@@ -109,7 +121,8 @@ export function standingStep(w: World) {
     p.guarding =
       !p.down && !p.attack && !p.stagger && p.input.guard && p.stamina > 4;
     p.guardAge = p.guarding ? (wasGuard ? p.guardAge + STEP : 0) : 0;
-    if (p.input.cancel || p.guarding) p.charge = 0;
+    if (p.input.cancel || p.input.guard || p.down || p.stagger || p.dodge)
+      clearQueuedStrike(p);
     if (p.attack === 0) {
       const angle = Math.atan2(foe.x - p.x, foe.z - p.z);
       const delta = Math.atan2(
@@ -134,7 +147,7 @@ export function standingStep(w: World) {
       p.stamina -= 18;
       p.dodge = 0.24;
       p.dodgeCooldown = 0.85;
-      p.charge = 0;
+      clearQueuedStrike(p);
       const length = Math.hypot(p.input.x, p.input.z);
       p.vx = (length > 0 ? p.input.x / length : -Math.sin(p.heading)) * 7;
       p.vz = (length > 0 ? p.input.z / length : -Math.cos(p.heading)) * 7;
@@ -147,26 +160,23 @@ export function standingStep(w: World) {
       p.vx += ((p.stagger ? 0 : p.input.x * speed) - p.vx) * 0.2;
       p.vz += ((p.stagger ? 0 : p.input.z * speed) - p.vz) * 0.2;
     }
-    if (
-      !p.attack &&
-      !p.cooldown &&
-      !p.stagger &&
-      !p.dodge &&
-      !p.guarding &&
-      !p.input.cancel
-    ) {
-      if (p.input.grapple && !p.previous.grapple) startAttack(p, 'clinch');
-      else if (p.input.kick && !p.previous.kick) startAttack(p, 'kick');
+    if (!p.stagger && !p.dodge && !p.input.guard && !p.input.cancel) {
+      const queue = (move: Move) => {
+        p.queuedMove = move;
+        p.queueTime = INPUT_BUFFER;
+        p.charge = 0;
+      };
+      if (p.input.grapple && !p.previous.grapple) queue('clinch');
+      else if (p.input.kick && !p.previous.kick) queue('kick');
       else if (p.input.punch) p.charge = Math.min(1, p.charge + STEP);
-      else if (p.charge > 0)
-        startAttack(
-          p,
-          p.charge >= 0.4
-            ? 'hook'
-            : p.combo === 1 && p.comboTime > 0
-              ? 'cross'
-              : 'jab',
-        );
+      else if (p.charge > 0) queue(p.charge >= 0.4 ? 'hook' : 'jab');
+      if (!p.attack && !p.cooldown && p.queuedMove) {
+        const move =
+          p.queuedMove === 'jab' && p.combo === 1 && p.comboTime > 0
+            ? 'cross'
+            : p.queuedMove;
+        startAttack(p, move);
+      }
     }
     if (p.attack > 0) {
       const profile = MOVES[p.move];

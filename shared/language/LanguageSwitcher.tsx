@@ -53,9 +53,10 @@ export default function LanguageSwitcher({
           aria-haspopup="menu"
         >
           <Globe size={18} />
-          <span className="language-toolbar-badge">
-            {activeOption.shortLabel}
+          <span className="language-toolbar-label">
+            {language === 'de' ? 'Sprache' : 'Language'}
           </span>
+          <span className="language-toolbar-badge">{activeOption.label}</span>
         </button>
       ) : (
         <button

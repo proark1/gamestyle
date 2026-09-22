@@ -47,6 +47,8 @@ export type Fighter = {
   struck: boolean;
   whiffed: boolean;
   charge: number;
+  queuedMove: Move | null;
+  queueTime: number;
   cooldown: number;
   dodge: number;
   dodgeCooldown: number;

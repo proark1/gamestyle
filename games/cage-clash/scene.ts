@@ -12,11 +12,13 @@ import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { createCage, createFighter, poseFighter } from './models';
 import { animateCrowd } from './ringside';
 import { label } from './signage';
+import { FightCamera } from './camera';
 import type { Snapshot } from './types';
 export class CageScene {
   private scene = new T.Scene();
   private renderer: T.WebGLRenderer;
   private camera = new T.PerspectiveCamera(40, 1, 0.1, 120);
+  private fightCamera = new FightCamera();
   private observer: ResizeObserver;
   private cage = createCage();
   private fighters = new Map<string, ReturnType<typeof createFighter>>();
@@ -117,9 +119,7 @@ export class CageScene {
       height = Math.max(1, this.host.clientHeight);
     this.renderer.setSize(width, height);
     this.camera.aspect = width / height;
-    const distance = Math.max(17, 13 / this.camera.aspect);
-    this.camera.position.set(0, distance * 0.85, distance * 0.78);
-    this.camera.lookAt(0, 0, 0);
+    this.fightCamera.update(this.camera, this.latest?.world ?? null, 0, true);
     this.camera.updateProjectionMatrix();
     for (const fence of this.cage.fences)
       fence.material.opacity = fence.z > 0 ? 0.1 : 0.4;
@@ -137,6 +137,19 @@ export class CageScene {
       this.reduced.matches,
     );
     const w = this.latest?.world;
+    const focus = this.fightCamera.update(
+      this.camera,
+      w ?? null,
+      dt,
+      this.reduced.matches,
+    );
+    for (const fence of this.cage.fences) {
+      const foreground = fence.x * 1.25 + fence.z * 0.35 > 0;
+      fence.material.opacity =
+        (fence.z > 0 ? 0.1 : 0.4) * (foreground ? 1 - focus * 0.9 : 1);
+      for (const material of fence.frameMaterials)
+        material.opacity = foreground ? 1 - focus * 0.94 : 1;
+    }
     if (w)
       for (const p of w.players) {
         const v = this.fighters.get(p.id)!;
@@ -159,6 +172,7 @@ export class CageScene {
       }
       if (!this.reduced.matches) fx.mesh.position.y += dt * 0.35;
       const material = fx.mesh.material as T.MeshBasicMaterial;
+      fx.mesh.lookAt(this.camera.position);
       material.transparent = true;
       material.opacity = Math.min(1, fx.life * 3);
     }

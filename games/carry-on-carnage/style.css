@@ -775,7 +775,7 @@
     padding-right: max(6px, env(safe-area-inset-right));
   }
   .carryon-container .carryon-topbar .wordmark {
-    display: none;
+    display: flex;
   }
   .carryon-container .game-toolbar {
     gap: 1px;
@@ -970,10 +970,10 @@
 }
 @media (max-width: 380px) {
   .carryon-container .carryon-topbar {
-    height: 108px;
+    height: 64px;
   }
   .carryon-container .game-toolbar {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     max-width: 100%;
   }

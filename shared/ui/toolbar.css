@@ -1,69 +1,85 @@
+/* Shared game chrome. Keep game-specific styling out of the control geometry. */
 .game-toolbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex: 0 0 auto;
-  gap: 7px;
+  gap: 6px;
   position: relative;
   font:
-    600 14px 'DM Sans',
+    600 13px/1.3 'DM Sans',
     sans-serif;
-}
-.peer-host-notice {
-  position: fixed;
-  top: calc(88px + env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 46;
-  width: max-content;
-  max-width: calc(100vw - 32px);
-  padding: 12px 18px;
-  border-radius: 14px;
-  border: 1px solid #bfcfba;
-  background: #fff8e8;
-  box-shadow: 0 4px 20px #203a2920;
   color: #294a43;
-  font:
-    600 14px/1.5 'DM Sans',
-    sans-serif;
 }
-.topbar:has(.game-toolbar),
-.farm-topbar:has(.game-toolbar),
-.delivery-topbar:has(.game-toolbar),
-.giant-topbar:has(.game-toolbar) {
-  height: 80px;
+:is(.topbar, .farm-topbar, .delivery-topbar, .giant-topbar):has(.game-toolbar) {
+  height: 72px;
   padding: 0 24px;
+  gap: 16px;
 }
 .game-toolbar .game-toolbar-button {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  gap: 7px;
+  gap: 8px;
   width: 44px;
   height: 44px;
   min-width: 44px;
   padding: 0;
   color: #294a43;
-  background: #fff8e8;
-  border: 2px solid #d3d6bf;
-  border-radius: 50%;
+  background: #fffaf0;
+  border: 1px solid #cdd5c7;
+  border-radius: 12px;
+  font: inherit;
+  line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
   touch-action: manipulation;
-  box-shadow: 0 3px 0 #b9cdb2;
+  box-shadow: 0 1px 2px #203a290a;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+.game-toolbar .game-toolbar-button svg {
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
 }
 .game-toolbar .game-toolbar-button:hover {
-  background: #ffefc7;
+  background: #eaf0e4;
+  border-color: #9eb59d;
 }
 .game-toolbar .game-toolbar-button:focus-visible {
-  outline: 3px solid #b87821;
+  outline: 3px solid #a86e25;
   outline-offset: 3px;
 }
-.game-toolbar .voice-trigger {
+.game-toolbar .game-toolbar-button:active {
+  background: #dce7d7;
+}
+.game-toolbar .game-toolbar-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.game-toolbar .game-toolbar-button.is-off {
+  color: #718072;
+  background: #f2f1e7;
+}
+.game-toolbar .peer-room-trigger,
+.game-toolbar .voice-trigger,
+.game-toolbar .toolbar-options-trigger {
   width: auto;
-  padding: 0 13px;
-  border-radius: 24px;
+  padding-inline: 13px;
+  white-space: nowrap;
+}
+.game-toolbar .peer-room-trigger {
+  background: #315e53;
+  border-color: #315e53;
+  color: #fffaf0;
+}
+.game-toolbar .peer-room-trigger:hover {
+  background: #244b41;
+  border-color: #244b41;
 }
 .game-toolbar .voice-trigger[data-connected='true'] {
   border-color: #427b64;
@@ -83,29 +99,291 @@
   border-radius: 50%;
   background: currentColor;
 }
+.game-toolbar .toolbar-options-trigger[aria-expanded='true'] {
+  background: #e6ecdf;
+  border-color: #809c82;
+}
+.toolbar-options {
+  display: flex;
+  align-items: center;
+}
+.toolbar-options-panel {
+  box-sizing: border-box;
+  display: none;
+  position: absolute;
+  top: calc(100% + 12px);
+  right: var(--toolbar-panel-offset, 0px);
+  z-index: 100;
+  width: min(
+    300px,
+    calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right))
+  );
+  max-height: var(
+    --toolbar-panel-height,
+    calc(
+      100dvh - 100px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    )
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #cdd5c7;
+  border-radius: 16px;
+  background: #fffaf0;
+  box-shadow: 0 12px 32px #203a2924;
+  color: #294a43;
+}
+.toolbar-options-panel[data-open='true'] {
+  display: grid;
+  gap: 6px;
+}
+.toolbar-settings-title {
+  float: left;
+  width: 100%;
+  padding: 0 4px 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.toolbar-volume-setting {
+  display: grid;
+  gap: 8px;
+  padding: 6px 4px 10px;
+}
+.toolbar-volume-setting > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+.toolbar-volume-setting output {
+  color: #697966;
+  font-variant-numeric: tabular-nums;
+}
+.game-toolbar .toolbar-volume-setting .game-toolbar-volume {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  accent-color: #315e53;
+  cursor: pointer;
+  touch-action: pan-x;
+}
+.game-toolbar-volume:focus-visible {
+  outline: 3px solid #a86e25;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.game-toolbar-volume:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.toolbar-settings-divider {
+  display: block;
+  height: 1px;
+  margin: 5px 4px;
+  background: #dde2d5;
+}
+.game-toolbar .toolbar-options-panel .game-toolbar-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  height: auto;
+  border-color: transparent;
+  border-radius: 9px;
+  padding: 11px 10px;
+  justify-content: flex-start;
+  box-shadow: none;
+  white-space: normal;
+  text-align: left;
+}
+.toolbar-options-panel button[aria-label]::after {
+  content: attr(aria-label);
+  font-size: 13px;
+  text-align: left;
+}
+.toolbar-options-panel .language-toolbar-badge {
+  display: inline;
+  margin-left: auto;
+  font-size: 11px;
+  color: #697966;
+}
+.game-toolbar .toolbar-options-panel .language-toolbar-button::after {
+  content: none;
+}
+.toolbar-options-panel .graphics-label {
+  display: inline;
+}
+.toolbar-options-panel .language-switcher {
+  display: block;
+  min-width: 0;
+}
+.game-graphics-controls > summary::-webkit-details-marker {
+  display: none;
+}
+.game-graphics-panel {
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #d6dfd0;
+  border-radius: 10px;
+  background: #eef2e8;
+  color: #294a43;
+  font-size: 12px;
+}
+.game-graphics-panel label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.game-graphics-panel label:last-child {
+  margin-bottom: 0;
+}
+.game-graphics-panel select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  font: inherit;
+  font-size: 16px;
+  border: 1px solid #afc2ad;
+  border-radius: 7px;
+  background: #fffaf0;
+  color: #294a43;
+}
+.toolbar-options-panel .language-menu,
+.game-toolbar .toolbar-options-panel .game-graphics-panel {
+  position: static;
+  width: 100%;
+  box-shadow: none;
+  margin-top: 4px;
+}
+.peer-host-notice {
+  position: fixed;
+  top: calc(88px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 46;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid #bfcfba;
+  background: #fff8e8;
+  box-shadow: 0 4px 20px #203a2920;
+  color: #294a43;
+  font:
+    600 14px/1.5 'DM Sans',
+    sans-serif;
+}
+/* Menus that already live inside a settings screen do not need a second popup. */
+.game-toolbar[data-embedded='true'] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-content: stretch;
+  width: 100%;
+}
+.game-toolbar[data-embedded='true'] .toolbar-options {
+  display: contents;
+}
+.game-toolbar[data-embedded='true'] .toolbar-options-trigger {
+  display: none;
+}
+.game-toolbar[data-embedded='true'] .toolbar-options-panel {
+  display: grid;
+  position: static;
+  grid-column: 1 / -1;
+  width: 100%;
+  max-height: none;
+  gap: 6px;
+  box-shadow: none;
+}
+.game-toolbar[data-embedded='true'] .toolbar-settings-title {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .handwerker .topbar:has(.game-toolbar) .topbar-center,
+  .handwerker .topbar:has(.game-toolbar) .wordmark > span:last-child,
+  .topbar:has(.game-toolbar) .top-note {
+    display: none;
+  }
+  .topbar:has(.game-toolbar) .crew-member b {
+    max-width: 45px;
+  }
+}
+@media (max-width: 900px), (pointer: coarse) {
+  .game-toolbar .peer-room-trigger,
+  .game-toolbar .voice-trigger,
+  .game-toolbar .toolbar-options-trigger {
+    width: 44px;
+    padding: 0;
+    gap: 0;
+  }
+  .game-toolbar .peer-room-trigger > span,
+  .game-toolbar .voice-trigger > span,
+  .game-toolbar .toolbar-options-trigger > span {
+    display: none;
+  }
+  /* Act Natural already provides a native mobile game menu. */
+  .farm-toolbar-options .toolbar-options,
+  .farm-toolbar-options .toolbar-options-panel {
+    display: contents;
+  }
+  .farm-toolbar-options .game-toolbar .toolbar-options-trigger,
+  .farm-toolbar-options .toolbar-settings-title,
+  .farm-toolbar-options .toolbar-settings-divider {
+    display: none;
+  }
+  .farm-toolbar-options .toolbar-volume-setting {
+    grid-column: 1 / -1;
+  }
+  .farm-toolbar-options .game-toolbar .voice-trigger > span {
+    display: inline;
+  }
+  .farm-toolbar-options
+    .toolbar-options-panel
+    .game-toolbar-button.language-toolbar-button::after,
+  .farm-toolbar-options
+    .toolbar-options-panel
+    .game-graphics-controls
+    .game-toolbar-button::after {
+    content: none;
+  }
+  .farm-toolbar-options .toolbar-options-panel .language-toolbar-badge {
+    margin-left: 0;
+  }
+}
 @media (max-width: 700px) {
   .game-toolbar {
     gap: 4px;
   }
-  .game-toolbar .voice-trigger {
-    padding: 0 10px;
-    gap: 5px;
-  }
-  .topbar:has(.game-toolbar),
-  .farm-topbar:has(.game-toolbar),
-  .delivery-topbar:has(.game-toolbar),
-  .giant-topbar:has(.game-toolbar) {
+  :is(.topbar, .farm-topbar, .delivery-topbar, .giant-topbar):has(
+    .game-toolbar
+  ) {
     height: calc(64px + env(safe-area-inset-top));
     padding-top: env(safe-area-inset-top);
     padding-left: max(10px, env(safe-area-inset-left));
     padding-right: max(10px, env(safe-area-inset-right));
     gap: 8px;
   }
-  .topbar:has(.game-toolbar) .wordmark,
-  .delivery-topbar:has(.game-toolbar) .delivery-wordmark,
-  .farm-topbar:has(.game-toolbar) .farm-wordmark {
-    font-size: 0;
-    gap: 0;
+  :is(.topbar, .delivery-topbar, .farm-topbar):has(.game-toolbar)
+    :is(.wordmark, .delivery-wordmark, .farm-wordmark) {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    gap: 6px;
+  }
+  .topbar:has(.game-toolbar) .wordmark > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar:has(.game-toolbar) .wordmark > svg {
     flex-shrink: 0;
   }
   .topbar:has(.game-toolbar) .wordmark-or,
@@ -122,211 +400,28 @@
     display: none;
   }
 }
-@media (max-width: 1100px) {
-  .handwerker .topbar:has(.game-toolbar) .topbar-center,
-  .handwerker .topbar:has(.game-toolbar) .wordmark > span:last-child {
-    display: none;
-  }
-  .topbar:has(.game-toolbar) .top-note {
-    display: none;
-  }
-  .topbar:has(.game-toolbar) .crew-member b {
-    max-width: 45px;
-  }
-}
 @media (max-width: 380px) {
   .game-toolbar {
     gap: 3px;
-  }
-  .game-toolbar .voice-trigger {
-    width: 76px;
-    padding: 0 8px;
   }
   .voice-trigger-dot {
     display: none;
   }
   .topbar:has(.game-toolbar) .wordmark,
   .farm-topbar:has(.game-toolbar) .farm-wordmark,
-  .delivery-topbar:has(.game-toolbar) .delivery-wordmark,
-  .giant-topbar:has(.game-toolbar) .giant-brand {
+  .delivery-topbar:has(.game-toolbar) .delivery-wordmark {
+    font-size: 0;
+    gap: 0;
+  }
+  .topbar:has(.game-toolbar) .wordmark > span:not(:has(svg)) {
     display: none;
   }
   .shelf-header:has(.game-toolbar) .shelf-brand {
-    display: none;
-  }
-  .shelf-header:has(.game-toolbar) {
-    justify-content: flex-end;
-  }
-  .topbar:has(.game-toolbar),
-  .farm-topbar:has(.game-toolbar),
-  .delivery-topbar:has(.game-toolbar),
-  .giant-topbar:has(.game-toolbar) {
-    justify-content: flex-end;
+    font-size: 0;
   }
 }
-.game-toolbar .game-toolbar-button.is-off {
-  color: #7d8c80;
-  background: #f2efe2;
-  border-style: dashed;
-}
-.game-toolbar .game-toolbar-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.game-toolbar-volume {
-  flex: 0 0 auto;
-  width: 92px;
-  height: 6px;
-  margin: 0 2px;
-  padding: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  background: #e6e3cf;
-  border: 1px solid #c3cfb9;
-  border-radius: 4px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.game-toolbar-volume::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: #fff8e8;
-  border: 1px solid #b87821;
-  box-shadow: 0 2px 6px #203a2912;
-  cursor: pointer;
-}
-.game-toolbar-volume::-moz-range-thumb {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: #fff8e8;
-  border: 1px solid #b87821;
-  box-shadow: 0 2px 6px #203a2912;
-  cursor: pointer;
-}
-.game-toolbar-volume:focus-visible {
-  outline: 3px solid #b87821;
-  outline-offset: 3px;
-}
-.game-toolbar-volume:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-@media (max-width: 720px), (pointer: coarse) {
-  .game-toolbar-volume {
-    display: none;
-  }
-}
-
-.toolbar-options,
-.toolbar-options-panel {
-  display: flex;
-  align-items: center;
-  gap: inherit;
-}
-.toolbar-options-panel {
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-  border: 0;
-}
-.game-toolbar .toolbar-options-trigger,
-.graphics-label {
-  display: none;
-}
-.game-graphics-controls > summary::-webkit-details-marker {
-  display: none;
-}
-.game-graphics-panel {
-  position: absolute;
-  right: 0;
-  z-index: 100;
-  width: min(260px, calc(100vw - 32px));
-  padding: 16px;
-  border: 1px solid #c3cfb9;
-  border-radius: 12px;
-  background: #fff6df;
-  color: #294a43;
-  box-shadow: 0 8px 24px #203a2920;
-}
-.game-graphics-panel label {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.game-graphics-panel select {
-  width: 100%;
-  min-height: 44px;
-  font: inherit;
-  font-size: 16px;
-}
-@media (max-width: 900px), (pointer: coarse) {
-  .game-toolbar .toolbar-options-trigger {
-    display: inline-flex;
-  }
-  .toolbar-options-panel {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 60;
-    width: min(280px, calc(100vw - 24px - var(--sal) - var(--sar)));
-    max-height: calc(100dvh - 100px - var(--sat) - var(--sab));
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 12px;
-    border: 1px solid #c3cfb9;
-    border-radius: 16px;
-    background: #fff8e8;
-    box-shadow: 0 8px 24px #203a2930;
-  }
-  .toolbar-options-panel[data-open='true'] {
-    display: grid;
-    gap: 8px;
-  }
-  .game-toolbar .toolbar-options-panel .game-toolbar-button {
-    width: 100%;
-    min-height: 44px;
-    height: auto;
-    border-radius: 10px;
-    padding: 10px 12px;
-    justify-content: flex-start;
-    box-shadow: none;
-  }
-  .toolbar-options-panel button[aria-label]::after {
-    content: attr(aria-label);
-    font-size: 13px;
-    text-align: left;
-  }
-  .toolbar-options-panel .graphics-label {
-    display: inline;
-  }
-  .toolbar-options-panel .language-switcher {
-    display: block;
-  }
-  .toolbar-options-panel .language-menu,
-  .game-toolbar .toolbar-options-panel .game-graphics-panel {
-    position: static;
-    width: 100%;
-    box-shadow: none;
-    margin-top: 8px;
-  }
-  .game-toolbar .voice-trigger {
-    width: 44px;
-    padding: 0;
-  }
-  .game-toolbar .voice-trigger > span {
-    display: none;
-  }
-  /* Act Natural already places the toolbar in its own mobile popover. */
-  .farm-toolbar-options .toolbar-options,
-  .farm-toolbar-options .toolbar-options-panel {
-    display: contents;
-  }
-  .farm-toolbar-options .game-toolbar .toolbar-options-trigger {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .game-toolbar .game-toolbar-button {
+    transition: none;
   }
 }

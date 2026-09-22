@@ -11,6 +11,7 @@ export class CageControls {
   private cancelled = false;
   key(code: string, down: boolean) {
     if (down) {
+      if (this.keys.has(code)) return;
       this.keys.add(code);
       if (code === 'Space') this.punchUntil = performance.now() + 85;
       if (code === 'KeyE') this.grappleUntil = performance.now() + 120;

@@ -1,6 +1,7 @@
 'use client';
 import { useSyncExternalStore } from 'react';
 import { Monitor } from 'lucide-react';
+import { useLanguage } from '../language/useLanguage';
 import {
   graphicsPreferences,
   defaultGraphicsPreferences,
@@ -9,6 +10,8 @@ import {
   type GraphicsPreferences,
 } from './preferences';
 export default function GraphicsControls() {
+  const { language } = useLanguage();
+  const de = language === 'de';
   const value = useSyncExternalStore(
     subscribeGraphicsPreferences,
     graphicsPreferences,
@@ -18,15 +21,15 @@ export default function GraphicsControls() {
     <details className="game-graphics-controls">
       <summary
         className="game-toolbar-button"
-        aria-label="Graphics"
-        title="Graphics"
+        aria-label={de ? 'Grafik' : 'Graphics'}
+        title={de ? 'Grafik' : 'Graphics'}
       >
         <Monitor size={19} />
-        <span className="graphics-label">Graphics</span>
+        <span className="graphics-label">{de ? 'Grafik' : 'Graphics'}</span>
       </summary>
       <div className="game-graphics-panel">
         <label>
-          Quality{' '}
+          {de ? 'Qualität' : 'Quality'}{' '}
           <select
             value={value.quality}
             onChange={(e) =>
@@ -36,13 +39,15 @@ export default function GraphicsControls() {
               })
             }
           >
-            <option value="auto">Automatic</option>
-            <option value="low">Battery saver</option>
-            <option value="high">Full detail</option>
+            <option value="auto">{de ? 'Automatisch' : 'Automatic'}</option>
+            <option value="low">
+              {de ? 'Energiesparend' : 'Battery saver'}
+            </option>
+            <option value="high">{de ? 'Volle Details' : 'Full detail'}</option>
           </select>
         </label>{' '}
         <label>
-          Frame limit{' '}
+          {de ? 'Bildrate' : 'Frame limit'}{' '}
           <select
             value={value.fps}
             onChange={(e) =>

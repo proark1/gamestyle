@@ -337,23 +337,74 @@
   font-size: 11px;
   margin: 6px 0 0;
 }
-.cage-grapple-track {
-  height: 7px;
+.cage-grapple-readout {
+  margin-top: 9px;
+  border-top: 1px solid #d8d9c8;
+  padding-top: 7px;
+}
+.cage-grapple-caption,
+.cage-grapple-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 9px;
+  margin: 4px 0;
+}
+.cage-game meter.cage-position-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.cage-grapple-ends {
+  font-size: 8px;
+  color: #66725c;
+}
+.cage-position-track,
+.cage-pulse-timeline {
+  position: relative;
+  height: 9px;
   background: #d4d9c5;
-  border-radius: 10px;
-  margin-top: 8px;
+  border-radius: 5px;
   overflow: hidden;
 }
-.cage-grapple-track i {
+.cage-position-track i {
+  position: absolute;
+  top: 0;
   height: 100%;
+  background: #bd775e;
+}
+.cage-position-track i[data-winning='true'] {
+  background: #527e6c;
+}
+.cage-position-track b {
+  position: absolute;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 100%;
+  background: #fff7e4;
+}
+.cage-pulse-timeline > span {
   display: block;
-  background: #719276;
+  width: 32.143%;
+  height: 100%;
+  background: #e3b657;
 }
-.cage-grapple-track.pulse {
-  outline: 3px solid #e6b54d;
+.cage-pulse-timeline i {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: #304c44;
+  transform: translateX(-50%);
 }
-.cage-grapple-track.pulse i {
-  background: #d4a13f;
+.cage-pulse-timeline.is-gold {
+  outline: 2px solid #ba852a;
+  outline-offset: 1px;
+}
+.cage-game .cage-danger-meter::-webkit-meter-optimum-value {
+  background: #bd775e;
 }
 .cage-actions {
   position: absolute;
@@ -667,4 +718,19 @@
     animation: none !important;
     scroll-behavior: auto;
   }
+}
+
+.cage-actions button[data-active='true'] {
+  background: #f0cb78;
+  border-color: #8c6526;
+  box-shadow: inset 0 -3px 0 #c29b4e;
+  transform: translateY(2px);
+}
+.cage-actions button:focus-visible {
+  outline: 3px solid #f2c35e;
+  outline-offset: 3px;
+}
+.cage-status meter[aria-label='Hook charge']::-webkit-meter-optimum-value,
+.cage-status meter[aria-label='Haken laden']::-webkit-meter-optimum-value {
+  background: #c4973d;
 }

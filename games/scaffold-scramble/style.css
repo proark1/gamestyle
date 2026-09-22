@@ -1006,62 +1006,34 @@
     animation: sc-feedback 2.4s both !important;
   }
 }
-/* Text-bearing toolbar controls need room beyond the circular icon buttons. */
-.sc-game .game-toolbar .peer-room-trigger,
-.sc-game .game-toolbar .game-graphics-controls > summary {
-  width: auto;
-  padding-inline: 12px;
-  border-radius: 24px;
-}
-.sc-game .game-graphics-controls {
-  position: relative;
-}
-.sc-game .game-graphics-controls > div {
-  right: 0;
-  width: 240px;
-}
 @media (max-width: 1100px) {
-  .sc-game .sc-topbar .wordmark {
+  .sc-game .sc-topbar.topbar .wordmark {
     font-size: 0;
     flex-shrink: 0;
   }
   .sc-game .sc-topbar .title-dot {
     display: none;
   }
-  .sc-game .game-toolbar-volume {
-    display: none;
-  }
 }
 @media (max-width: 700px) {
   .sc-game .sc-topbar {
-    height: auto;
-    min-height: 100px;
-    align-items: flex-start;
-    padding-block: max(10px, env(safe-area-inset-top)) 8px;
+    height: calc(64px + env(safe-area-inset-top));
+    min-height: 64px;
+    align-items: center;
+    padding-block: env(safe-area-inset-top) 0;
   }
   .sc-game .game-toolbar {
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 0;
-    flex-wrap: wrap;
-    gap: 5px;
-  }
-  .sc-game .game-toolbar .game-toolbar-button {
-    height: 38px;
-    min-width: 38px;
-    width: 38px;
-  }
-  .sc-game .game-toolbar .peer-room-trigger,
-  .sc-game .game-toolbar .voice-trigger,
-  .sc-game .game-toolbar .game-graphics-controls > summary {
-    width: auto;
-    padding-inline: 10px;
+    flex-wrap: nowrap;
+    gap: 4px;
   }
   .sc-hud-stack {
-    top: calc(112px + env(safe-area-inset-top));
+    top: calc(76px + env(safe-area-inset-top));
   }
   .sc-welcome {
-    top: calc(112px + env(safe-area-inset-top));
-    max-height: calc(100dvh - 128px - env(safe-area-inset-top));
+    top: calc(76px + env(safe-area-inset-top));
+    max-height: calc(100dvh - 92px - env(safe-area-inset-top));
   }
   .sc-ended-banner {
     top: calc(50% + 44px);

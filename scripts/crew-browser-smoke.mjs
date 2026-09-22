@@ -76,7 +76,9 @@ try {
     const page = await context.newPage();
     pages.push(page);
     page.on('pageerror', (error) => errors.push(error.message));
-    page.on('console', (message) => { if (message.type() === 'error') console.log('Browser:', message.text()); });
+    page.on('console', (message) => {
+      if (message.type() === 'error') console.log('Browser:', message.text());
+    });
     await page.addInitScript(
       (identity) =>
         sessionStorage.setItem(

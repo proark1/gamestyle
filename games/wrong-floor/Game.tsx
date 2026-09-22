@@ -474,6 +474,7 @@ export default function WrongFloor() {
             <summary>{say('Settings')}</summary>
             <div className="hotel-settings-panel">
               <GameToolbar
+                embedded
                 muted={muted}
                 onToggleSound={() => {
                   setMuted(!muted);

@@ -42,6 +42,7 @@ export default function GameToolbar({
   onHelp,
   onLeave: _onLeave,
   workshop: _workshop,
+  embedded = false,
 }: {
   labels?: typeof DEFAULT_LABELS;
   voice?: {
@@ -59,6 +60,8 @@ export default function GameToolbar({
   onHelp: () => void;
   onLeave?: () => void;
   workshop?: string;
+  /** Settings screens already provide their own container. */
+  embedded?: boolean;
 }) {
   useWakeLock();
   const { language } = useLanguage();
@@ -77,6 +80,7 @@ export default function GameToolbar({
   return (
     <nav
       className="game-toolbar"
+      data-embedded={embedded || undefined}
       aria-label={de ? 'Spielsteuerung' : labels.controls}
     >
       <HostNotice
@@ -129,21 +133,34 @@ export default function GameToolbar({
       >
         {muted ? <VolumeX size={19} /> : <Volume2 size={19} />}
       </button>
-      <input
-        className="game-toolbar-volume"
-        type="range"
-        min={0}
-        max={100}
-        step={1}
-        value={Math.round(audio.volume * 100)}
-        disabled={muted}
-        onChange={(event) =>
-          change({ volume: Number(event.target.value) / 100 })
-        }
-        aria-label={de ? 'Lautstärke' : labels.volume}
-        title={de ? 'Lautstärke' : labels.volume}
-      />
-      <ToolbarOptions label={de ? 'Weitere Einstellungen' : 'More settings'}>
+      <button
+        className="game-toolbar-button"
+        onClick={onHelp}
+        aria-label={de ? 'So wird gespielt' : labels.help}
+        title={de ? 'So wird gespielt' : labels.help}
+      >
+        <CircleHelp size={19} />
+      </button>
+      <ToolbarOptions label={de ? 'Einstellungen' : 'Settings'}>
+        <label className="toolbar-volume-setting">
+          <span>
+            {de ? 'Lautstärke' : labels.volume}
+            <output>{Math.round(audio.volume * 100)}%</output>
+          </span>
+          <input
+            className="game-toolbar-volume"
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={Math.round(audio.volume * 100)}
+            disabled={muted}
+            onChange={(event) =>
+              change({ volume: Number(event.target.value) / 100 })
+            }
+            aria-label={de ? 'Lautstärke' : labels.volume}
+          />
+        </label>
         <button
           className={`game-toolbar-button${audio.music ? '' : ' is-off'}`}
           onClick={() => change({ music: !audio.music })}
@@ -170,19 +187,12 @@ export default function GameToolbar({
         >
           <AudioLines size={19} />
         </button>
+        <span className="toolbar-settings-divider" />
         <WardrobeButton variant="toolbar" />
         <GraphicsControls />
         <AccountButton variant="toolbar" />
         <LanguageSwitcher variant="toolbar" />
       </ToolbarOptions>
-      <button
-        className="game-toolbar-button"
-        onClick={onHelp}
-        aria-label={de ? 'So wird gespielt' : labels.help}
-        title={de ? 'So wird gespielt' : labels.help}
-      >
-        <CircleHelp size={19} />
-      </button>
     </nav>
   );
 }

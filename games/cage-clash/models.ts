@@ -6,8 +6,10 @@ import type { Look } from '../../shared/wardrobe/look';
 import { CAGE_RADIUS, type Fighter, type Grapple } from './types';
 import { cageVertices } from './physics';
 import { MOVES } from './combat';
+import { guardFist, strikeMotion, type Point } from './strike-motion';
 import { label } from './signage';
 import { createRingside } from './ringside';
+import { groundPose } from './ground-pose';
 
 export function createCage() {
   const root = new T.Group();
@@ -37,14 +39,27 @@ export function createCage() {
   sub.position.set(0, 0.095, 0.72);
   root.add(sub);
   const vertices = cageVertices();
-  const fences: { material: T.LineBasicMaterial; x: number; z: number }[] = [];
+  const fences: {
+    material: T.LineBasicMaterial;
+    frameMaterials: T.MeshStandardMaterial[];
+    x: number;
+    z: number;
+  }[] = [];
   for (let i = 0; i < 8; i++) {
     const a = vertices[i],
       b = vertices[(i + 1) % 8];
-    taper(root, 0.11, 0.14, 2.15, [a.x, 1.05, a.z], '#355a55', 10);
-    ball(root, [0.15, 0.15, 0.15], [a.x, 2.16, a.z], '#e0bd70');
-    beam(root, [a.x, 2.1, a.z], [b.x, 2.1, b.z], 0.1, '#355a55');
-    beam(root, [a.x, 0.15, a.z], [b.x, 0.15, b.z], 0.1, '#355a55');
+    const frame = [
+      taper(root, 0.11, 0.14, 2.15, [a.x, 1.05, a.z], '#355a55', 10),
+      ball(root, [0.15, 0.15, 0.15], [a.x, 2.16, a.z], '#e0bd70'),
+      beam(root, [a.x, 2.1, a.z], [b.x, 2.1, b.z], 0.1, '#355a55'),
+      beam(root, [a.x, 0.15, a.z], [b.x, 0.15, b.z], 0.1, '#355a55'),
+    ];
+    const frameMaterials = frame.map((mesh) => {
+      mesh.material = mesh.material.clone();
+      mesh.material.userData.shared = false;
+      mesh.material.transparent = true;
+      return mesh.material;
+    });
     const points: number[] = [];
     for (let j = -18; j <= 18; j++)
       for (const slope of [-1, 1]) {
@@ -83,7 +98,12 @@ export function createCage() {
         material,
       ),
     );
-    fences.push({ material, x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 });
+    fences.push({
+      material,
+      frameMaterials,
+      x: (a.x + b.x) / 2,
+      z: (a.z + b.z) / 2,
+    });
   }
   for (const [x, color] of [
     [-4.5, TEAM.red],
@@ -116,22 +136,18 @@ export function createFighter(p: Fighter, look?: Look) {
   );
   root.add(model);
   const rig = model.userData as Record<string, T.Group>;
-  for (const side of ['L', 'R']) {
-    ball(
-      rig[`sleeve${side}`],
-      [0.14, 0.15, 0.16],
-      [0, -0.39, 0.07],
-      TEAM[p.team],
-      16,
-    );
-    box(
-      rig[`sleeve${side}`],
-      [0.18, 0.1, 0.19],
-      [0, -0.25, 0.04],
-      CLOTH.cream,
-      true,
-    );
-  }
+  const arms = (['L', 'R'] as const).map((side) => {
+    const parent = rig['arm' + side];
+    rig['sleeve' + side].visible = false;
+    const upper = ball(parent, [0.065, 0.1, 0.065], [0, -0.1, 0], '#de9268');
+    const elbow = ball(parent, [0.067, 0.067, 0.067], [0, -0.2, 0], '#de9268');
+    const forearm = ball(parent, [0.064, 0.1, 0.064], [0, -0.3, 0], '#de9268');
+    const glove = new T.Group();
+    parent.add(glove);
+    ball(glove, [0.14, 0.15, 0.16], [0, 0, 0.025], TEAM[p.team], 16);
+    box(glove, [0.17, 0.09, 0.18], [0, -0.1, 0], CLOTH.cream, true);
+    return { upper, elbow, forearm, glove, side: side === 'L' ? -1 : 1 };
+  });
   const ring = new T.Mesh(
     new T.RingGeometry(0.43, 0.51, 32),
     new T.MeshBasicMaterial({
@@ -151,7 +167,17 @@ export function createFighter(p: Fighter, look?: Look) {
   marker.rotation.z = Math.PI;
   marker.position.y = 2.4;
   root.add(marker);
-  return { root, model, rig, marker, ring, team: p.team };
+  const groundLegs = ([-1, 1] as const).map((side) => {
+    const group = new T.Group();
+    root.add(group);
+    const thigh = ball(group, [0.125, 0.1, 0.125], [0, 0, 0], TEAM[p.team]);
+    const knee = ball(group, [0.095, 0.095, 0.095], [0, 0, 0], '#de9268');
+    const shin = ball(group, [0.075, 0.1, 0.075], [0, 0, 0], '#de9268');
+    const foot = ball(group, [0.1, 0.085, 0.17], [0, 0, 0], CLOTH.cream);
+    group.visible = false;
+    return { group, thigh, knee, shin, foot, side };
+  });
+  return { root, model, rig, arms, groundLegs, marker, ring, team: p.team };
 }
 export function poseFighter(
   visual: ReturnType<typeof createFighter>,
@@ -161,6 +187,12 @@ export function poseFighter(
   g: Grapple | null = null,
 ) {
   const { rig, model } = visual;
+  model.position.x = model.position.z = 0;
+  model.rotation.order = 'XYZ';
+  rig.head.rotation.set(0, 0, 0);
+  const grounded = !!g && g.mode !== 'clinch';
+  rig.legL.visible = rig.legR.visible = !grounded;
+  for (const limb of visual.groundLegs) limb.group.visible = grounded;
   const stride = Math.sin(time * 12) * Math.min(1, Math.hypot(p.vx, p.vz) / 3);
   model.position.y = p.down
     ? 0.35
@@ -212,14 +244,104 @@ export function poseFighter(
     rig.body.rotation.x = 0.2;
   } else if (g) {
     const top = g.top === p.id;
-    model.position.y = top ? 0.14 : 0.3;
-    model.rotation.set(top ? 0.6 : -Math.PI / 2, top ? 0 : Math.PI, 0);
-    rig.legL.rotation.x = rig.legR.rotation.x = top ? -1.6 : -0.55;
-    rig.legL.rotation.z = top ? -0.48 : -0.25;
-    rig.legR.rotation.z = top ? 0.48 : 0.25;
-    rig.armL.rotation.x = rig.armR.rotation.x = top ? -1.25 : -1.9;
+    const pose = groundPose(top, g.mode === 'mount');
+    model.position.set(...pose.position);
+    model.rotation.set(...pose.rotation, 'YXZ');
+    rig.body.rotation.set(0, 0, 0);
+    rig.head.rotation.x = top ? 0.38 : 0;
+    rig.armL.rotation.set(top ? -0.45 : -1.8, 0, -0.2);
+    rig.armR.rotation.set(top ? -0.45 : -1.8, 0, 0.2);
     if (p.attack > 0) rig.armR.rotation.x -= Math.sin(p.attack * 10) * 0.6;
     if (g.submissionBy === p.id)
-      rig.armL.rotation.x = rig.armR.rotation.x = -1.9;
+      rig.armL.rotation.x = rig.armR.rotation.x = top ? -0.8 : -1.9;
+    const scale = (model.userData.avatarRig as T.Group).scale.x;
+    for (const limb of visual.groundLegs) {
+      const hip = (limb.side < 0 ? rig.legL : rig.legR).position
+        .clone()
+        .multiplyScalar(scale)
+        .applyQuaternion(model.quaternion)
+        .add(model.position);
+      const side = top ? -limb.side : limb.side;
+      const knee = pose.knee(side),
+        ankle = pose.ankle(side);
+      limb.knee.position.set(...knee);
+      limb.foot.position.set(
+        ankle[0],
+        ankle[1],
+        ankle[2] + (top ? 0.06 : 0.02),
+      );
+      poseSegment(limb.thigh, [hip.x, hip.y, hip.z], knee);
+      poseSegment(limb.shin, knee, ankle);
+    }
   }
+  const standing = !g && !p.down;
+  if (standing) {
+    rig.armL.rotation.set(0, 0, 0);
+    rig.armR.rotation.set(0, 0, 0);
+  }
+  for (const [index, limb] of visual.arms.entries()) {
+    let fist: Point = standing ? guardFist(limb.side) : [0, -0.39, 0.07];
+    if (standing && p.guarding) fist = [-limb.side * 0.04, 0.3, 0.3];
+    if (standing && p.charge > 0 && !p.attack) {
+      const next =
+        p.charge >= 0.4
+          ? 'hook'
+          : p.combo === 1 && p.comboTime > 0
+            ? 'cross'
+            : 'jab';
+      if (index === (next === 'jab' ? 0 : 1))
+        fist = strikeMotion(
+          next,
+          Math.min(1, p.charge / 0.4) * MOVES[next].windup * 0.3,
+          limb.side,
+        ).fist;
+    }
+    if (standing && p.attack > 0) {
+      const motion = strikeMotion(
+        p.move,
+        MOVES[p.move].duration - p.attack,
+        limb.side,
+      );
+      if (
+        ['jab', 'cross', 'hook'].includes(p.move) &&
+        index === (p.move === 'jab' ? 0 : 1)
+      ) {
+        fist = motion.fist;
+        rig.body.rotation.y =
+          limb.side * motion.drive * (p.move === 'hook' ? 0.24 : 0.12);
+      } else if (p.move === 'clinch')
+        fist = [limb.side * 0.05, 0.12, 0.3 + motion.drive * 0.4];
+      if (p.move === 'kick') {
+        rig.legR.rotation.x = -motion.drive * 1.75;
+        rig.legR.rotation.z = motion.drive * 0.4;
+        rig.body.rotation.x = -motion.drive * 0.23;
+        rig.body.rotation.y = -motion.drive * 0.2;
+      }
+    }
+    const elbow: Point = standing
+      ? [
+          fist[0] * 0.45 + limb.side * 0.09,
+          fist[1] * 0.45 - 0.16,
+          fist[2] * 0.43,
+        ]
+      : [0, -0.19, 0];
+    limb.elbow.position.set(...elbow);
+    limb.glove.position.set(...fist);
+    limb.glove.rotation.x = standing ? Math.PI / 2 : 0;
+    poseSegment(limb.upper, [0, 0, 0], elbow);
+    poseSegment(limb.forearm, elbow, fist);
+  }
+}
+
+const segmentDirection = new T.Vector3();
+const segmentUp = new T.Vector3(0, 1, 0);
+function poseSegment(mesh: T.Mesh, from: Point, to: Point) {
+  mesh.position.set(
+    (from[0] + to[0]) / 2,
+    (from[1] + to[1]) / 2,
+    (from[2] + to[2]) / 2,
+  );
+  segmentDirection.set(to[0] - from[0], to[1] - from[1], to[2] - from[2]);
+  mesh.scale.y = segmentDirection.length() / 2 + 0.035;
+  mesh.quaternion.setFromUnitVectors(segmentUp, segmentDirection.normalize());
 }

@@ -863,6 +863,7 @@ export default function SampleStampede() {
             {screen === 'settings' && (
               <div className="stampede-settings">
                 <GameToolbar
+                  embedded
                   labels={
                     language === 'de'
                       ? {

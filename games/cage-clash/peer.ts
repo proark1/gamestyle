@@ -5,6 +5,7 @@ import {
 } from '../../shared/peer/engine';
 import { advanceWorld, fightAction, freshWorld, snapshot } from './simulation';
 import { resetSelection } from './selection';
+import { clearQueuedStrike } from './combat';
 import { cleanInput, idleInput, type World, type Snapshot } from './types';
 const adapter: GameAdapter<World, Snapshot> = {
   game: 'cage-clash',
@@ -46,7 +47,7 @@ const adapter: GameAdapter<World, Snapshot> = {
   idle(p) {
     p.input = { ...idleInput(), cancel: true };
     p.previous = idleInput();
-    p.charge = 0;
+    clearQueuedStrike(p);
   },
   advance: advanceWorld,
   act: (w, id, a, host) => fightAction(w, id, a, host === id),

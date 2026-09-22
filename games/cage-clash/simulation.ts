@@ -46,6 +46,8 @@ export function newFighter(
     struck: false,
     whiffed: false,
     charge: 0,
+    queuedMove: null,
+    queueTime: 0,
     cooldown: 0,
     dodge: 0,
     dodgeCooldown: 0,
