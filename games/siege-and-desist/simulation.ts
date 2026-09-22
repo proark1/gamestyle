@@ -1,6 +1,6 @@
 import { Vec3 } from 'cannon-es';
 import { buildCastle, buildClashCastles, defenderPosts } from './castle';
-import { solverFor } from './physics';
+import { dropSolver, solverFor } from './physics';
 import {
   AMMO,
   AMMO_ORDER,
@@ -362,6 +362,7 @@ export function siegeAction(
     w.engineBlue = fresh.engineBlue;
     w.towers = fresh.towers;
     w.goose = fresh.goose;
+    dropSolver(w);
     if (nextMode === 'clash2v2') {
       reconcileClashBots(w);
     } else {
@@ -411,12 +412,14 @@ export function siegeAction(
     Object.assign(w, freshSiege(w.clock, mode), {
       players,
       phase: 'playing',
+      winner: undefined,
       started: w.clock,
       crewSize: players.length,
       nextPot: w.clock + POT_INTERVAL,
       turn: 0,
       eventId,
     });
+    dropSolver(w);
     w.loaded = drawAmmo(w);
     if (w.engineBlue) w.engineBlue.loaded = drawAmmoBlue(w);
     emit(
@@ -869,6 +872,13 @@ function stepBots(w: SiegeWorld, dt: number) {
 }
 
 function step(w: SiegeWorld, dt: number) {
+  if (w.phase === 'won' || w.phase === 'lost') {
+    // Lock the result, but let the last falling item and debris reach ground.
+    const solver = solverFor(w);
+    solver.step(dt);
+    solver.read(w);
+    return;
+  }
   if (w.phase !== 'playing' && w.phase !== 'relief') return;
   const is2v2 = w.mode === 'clash2v2';
   // A classic siege always ends at dawn; a clash only in a party round.
@@ -1177,10 +1187,9 @@ function step(w: SiegeWorld, dt: number) {
           (b) => b.team === team && b.towerIndex === 0 && b.part === 'mascot',
         );
         if (
-          rooster &&
-          (rooster.y < 2.5 ||
-            Math.hypot(rooster.x - rooster.homeX, rooster.z - rooster.homeZ) >
-              1.8)
+          !rooster ||
+          rooster.y < 2.5 ||
+          Math.hypot(rooster.x - rooster.homeX, rooster.z - rooster.homeZ) > 1.8
         ) {
           w.towers[team][0] = false;
           emit(
@@ -1196,9 +1205,9 @@ function step(w: SiegeWorld, dt: number) {
           (b) => b.team === team && b.towerIndex === 1 && b.part === 'banner',
         );
         if (
-          flag &&
-          (flag.y < 3.2 ||
-            Math.hypot(flag.x - flag.homeX, flag.z - flag.homeZ) > 1.8)
+          !flag ||
+          flag.y < BANNER_DOWN ||
+          Math.hypot(flag.x - flag.homeX, flag.z - flag.homeZ) > 1.8
         ) {
           w.towers[team][1] = false;
           emit(
@@ -1214,12 +1223,12 @@ function step(w: SiegeWorld, dt: number) {
           (b) => b.team === team && b.towerIndex === 2 && b.part === 'mascot',
         );
         if (
-          cheese &&
-          (cheese.y < 2.5 ||
-            Math.hypot(cheese.x - cheese.homeX, cheese.z - cheese.homeZ) > 1.8)
+          !cheese ||
+          cheese.y < 2.5 ||
+          Math.hypot(cheese.x - cheese.homeX, cheese.z - cheese.homeZ) > 1.8
         ) {
           w.towers[team][2] = false;
-          const cheeseBody = solver.blocks.get(cheese.id);
+          const cheeseBody = cheese && solver.blocks.get(cheese.id);
           if (cheeseBody) {
             const impulseZ = team === 'blue' ? 40 : -40;
             cheeseBody.applyImpulse(
@@ -1262,7 +1271,7 @@ function step(w: SiegeWorld, dt: number) {
   } else {
     // Classic banner check
     const flag = banner(w);
-    if (flag && !w.bannerDown && flag.y < BANNER_DOWN) {
+    if (!w.bannerDown && (!flag || flag.y < BANNER_DOWN)) {
       w.bannerDown = true;
       emit(w, 'banner', 'THE BANNER IS DOWN. The keep is yours.');
       finish(w, true);
