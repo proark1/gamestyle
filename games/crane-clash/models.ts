@@ -52,13 +52,33 @@ export function createCraneMesh(team: TeamId) {
   // Slewing ring pivot
   taper(jib, 1.2, 1.2, 0.5, [0, 0, 0], trimColor);
 
-  // Operator Cabin
+  // Open operator cab: the driver and controls remain visible from the yard.
   const cab = new T.Group();
   cab.position.set(1.1, cabinY - boomY + 0.3, 0.9);
-  box(cab, [1.4, 1.8, 1.4], [0, 0, 0], color);
-  // Glass windows
-  box(cab, [0.05, 1.1, 1.1], [0.71, 0.1, 0], '#95cbd8');
-  box(cab, [1.1, 1.1, 0.05], [0, 0.1, 0.71], '#95cbd8');
+  box(cab, [1.8, 0.16, 1.65], [0, -0.9, 0], trimColor);
+  box(cab, [1.85, 0.14, 1.7], [0, 0.92, 0], color);
+  box(cab, [0.08, 0.08, 1.55], [-0.78, -0.24, 0], trimColor);
+  for (const x of [-0.79, 0.79]) {
+    for (const z of [-0.73, 0.73]) {
+      box(cab, [0.09, 1.72, 0.09], [x, 0, z], trimColor);
+    }
+  }
+  for (const z of [-0.73, 0.73]) {
+    box(cab, [1.65, 0.07, 0.07], [0, -0.23, z], trimColor);
+  }
+  // Seat, control console and two exposed steering levers.
+  box(cab, [0.58, 0.12, 0.63], [-0.15, -0.36, 0], '#363b40');
+  box(cab, [0.12, 0.7, 0.63], [-0.48, -0.04, 0], '#363b40');
+  box(cab, [0.32, 0.25, 0.68], [0.48, -0.52, 0], trimColor);
+  for (const z of [-0.22, 0.22]) {
+    beam(cab, [0.42, -0.4, z], [0.53, -0.02, z], 0.055, '#d6a847');
+    ball(cab, [0.085, 0.085, 0.085], [0.53, -0.02, z], '#242725');
+  }
+  const operatorSeat = new T.Group();
+  operatorSeat.position.set(0.96, cabinY - boomY - 0.52, 0.9);
+  operatorSeat.rotation.y = Math.PI / 2;
+  jib.add(operatorSeat);
+  root.userData.operatorSeat = operatorSeat;
   jib.add(cab);
 
   // Tower Peak / Apex

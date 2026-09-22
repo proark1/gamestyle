@@ -17,13 +17,13 @@ export const STEP = 1 / 60;
 export const SWINGER_MASS = 75;
 export const SWINGER_RADIUS = 0.55;
 export const SWINGER_HEIGHT = 1.6;
-export const SWING_FORCE = 250;
-export const SWING_PUMP_BOOST = 220;
+export const SWING_FORCE = 210;
+export const SWING_PUMP_BOOST = 120;
 export const MAX_SWING_ANGLE = 0.73; // ~42 degrees max pendulum angle
 export const MAX_SWING_SPEED = 6.5; // meters per second
-export const SLEW_SPEED = 1.35; // radians per second
-export const TROLLEY_SPEED = 4.2; // meters per second
-export const HOIST_SPEED = 3.5; // meters per second
+export const SLEW_SPEED = 0.85; // radians per second
+export const TROLLEY_SPEED = 3.2; // meters per second
+export const HOIST_SPEED = 2.0; // meters per second
 export const GRAB_REACH = 2.4; // Reach radius to grab an unheld crate
 
 const vec = (x = 0, y = 0, z = 0) => new C.Vec3(x, y, z);
@@ -118,7 +118,7 @@ export class CraneClashPhysics {
       const swinger = new C.Body({
         mass: SWINGER_MASS,
         material: this.swingerMaterial,
-        linearDamping: 0.1,
+        linearDamping: 0.045,
         angularDamping: 0.3,
         allowSleep: false,
       });
@@ -159,6 +159,7 @@ export class CraneClashPhysics {
     const isHeld = !!crate.heldBy;
     const body = new C.Body({
       mass: isHeld ? 0 : config.mass,
+      type: isHeld ? C.Body.KINEMATIC : C.Body.DYNAMIC,
       material: this.crateMaterial,
       linearDamping: 0.08,
       angularDamping: 0.15,
@@ -167,6 +168,7 @@ export class CraneClashPhysics {
       sleepTimeLimit: 0.5,
     });
     body.addShape(new C.Box(vec(config.w / 2, config.h / 2, config.d / 2)));
+    body.collisionResponse = !isHeld;
     body.position.set(crate.x, crate.y, crate.z);
     if (crate.quaternion) {
       body.quaternion.set(
@@ -268,11 +270,25 @@ export class CraneClashPhysics {
         forceFactor = Math.max(0, 1.0 - ratio * ratio);
       }
 
-      // Base directional swing force
+      // Push in the tangent plane of the cable, rather than stretching it.
+      const ropeY = swinger.position.y - hoist.position.y;
+      const ropeLength = Math.max(0.1, Math.hypot(dx, ropeY, dz));
+      const ropeX = dx / ropeLength;
+      const ropeUp = ropeY / ropeLength;
+      const ropeZ = dz / ropeLength;
+      const tangentForce = (x: number, z: number, force: number) => {
+        const radial = x * ropeX + z * ropeZ;
+        return vec(
+          (x - radial * ropeX) * force,
+          -radial * ropeUp * force,
+          (z - radial * ropeZ) * force,
+        );
+      };
+
       const effectiveForce = SWING_FORCE * forceFactor;
       if (effectiveForce > 0) {
         swinger.applyForce(
-          vec(dirX * effectiveForce, 0, dirZ * effectiveForce),
+          tangentForce(dirX, dirZ, effectiveForce),
           swinger.position,
         );
       }
@@ -289,13 +305,15 @@ export class CraneClashPhysics {
           // Pumping in sync with swing motion, bounded by realistic limit
           const pump = SWING_PUMP_BOOST * dot * forceFactor;
           swinger.applyForce(
-            vec(velDirX * pump, 0, velDirZ * pump),
+            tangentForce(velDirX, velDirZ, pump),
             swinger.position,
           );
         } else if (dot < -0.3) {
-          // Braking against swing motion
-          swinger.velocity.x *= 0.94;
-          swinger.velocity.z *= 0.94;
+          // Counter-force slows the pendulum without an abrupt velocity edit.
+          swinger.applyForce(
+            tangentForce(-velDirX, -velDirZ, 160),
+            swinger.position,
+          );
         }
       }
     }
@@ -342,7 +360,9 @@ export class CraneClashPhysics {
       swingerPlayer.holdingCrateId = targetCrate.id;
       const body = this.crateBodies.get(targetCrate.id);
       if (body) {
+        body.type = C.Body.KINEMATIC;
         body.mass = 0;
+        body.collisionResponse = false;
         body.updateMassProperties();
       }
       return targetCrate.id;
@@ -363,7 +383,9 @@ export class CraneClashPhysics {
     const body = this.crateBodies.get(crateId);
     if (body) {
       const config = CRATE_CONFIGS[crate.kind];
+      body.type = C.Body.DYNAMIC;
       body.mass = config.mass;
+      body.collisionResponse = true;
       body.updateMassProperties();
       body.wakeUp();
       if (gentle) {
@@ -389,7 +411,9 @@ export class CraneClashPhysics {
   }
 
   step(dt = STEP) {
-    // Keep held crates attached under swinger
+    this.world.step(STEP, dt, 3);
+
+    // Keep held crates attached to the swinger's new position this frame.
     for (const p of this.state.players) {
       if (p.role === 'swinger' && p.holdingCrateId) {
         const swinger = this.swingers.get(p.team);
@@ -406,8 +430,6 @@ export class CraneClashPhysics {
         }
       }
     }
-
-    this.world.step(STEP, dt, 3);
 
     // Read back crane swinger states
     for (const team of TEAMS) {
