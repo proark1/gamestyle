@@ -25,6 +25,7 @@ export class ButtonAudioDirector {
   private countdown = -1;
   private hazards = new Map<number, number>();
   private motion = new Map<string, Motion>();
+  private hearts = new Map<string, number>();
   reset() {
     this.round = -1;
     this.lastEvent = 0;
@@ -33,6 +34,7 @@ export class ButtonAudioDirector {
     this.countdown = -1;
     this.hazards.clear();
     this.motion.clear();
+    this.hearts.clear();
   }
   update(w: ButtonWorld | null, listenerId?: string): SoundPlan {
     const result: SoundPlan = {
@@ -43,7 +45,10 @@ export class ButtonAudioDirector {
       soap: 0,
       hits: [],
     };
-    if (!w || w.phase === 'lobby') return result;
+    if (!w || w.phase === 'lobby') {
+      this.reset();
+      return result;
+    }
     const fresh = this.round !== w.started;
     if (fresh) {
       this.reset();
@@ -71,7 +76,10 @@ export class ButtonAudioDirector {
         String(e.id),
         e.kind === 'press' ? { x: 0, z: 0 } : undefined,
       );
-      if (e.kind === 'press') hit('event.crowd-gasp', 0.7);
+      if (e.kind === 'press') {
+        hit('event.crowd-gasp', 0.7);
+        hit('event.reward', 0.55);
+      }
       if (e.kind === 'escape' || (e.kind === 'finish' && w.banked))
         hit('event.crowd-cheer', 0.85);
     }
@@ -90,8 +98,11 @@ export class ButtonAudioDirector {
     const listener = w.players.find((p) => p.id === listenerId);
     for (const h of w.hazards) {
       if (h.starts > w.clock) continue;
-      if ((!fresh || w.clock - h.starts < 500) && recent(h.starts))
+      if ((!fresh || w.clock - h.starts < 500) && recent(h.starts)) {
         hit('event.hazard', 0.7, `hazard-${h.id}`, h);
+        if (h.kind === 'conveyor' || h.kind === 'spinner' || h.kind === 'soap')
+          hit(`event.${h.kind}-start`, 0.65, `hazard-${h.id}`, h);
+      }
       const proximity = listener
         ? Math.max(
             0.25,
@@ -125,6 +136,7 @@ export class ButtonAudioDirector {
     const isOpen = doorOpen(w);
     if (isOpen && !this.open && !fresh)
       hit('event.door-open', 0.8, undefined, { x: 0, z: -9 });
+    if (!isOpen && this.open && !fresh) hit('event.door-close', 0.65);
     this.open = isOpen;
     const remaining =
       w.phase === 'escape' ? Math.ceil((w.escapeAt - w.clock) / 1000) : -1;
@@ -132,6 +144,10 @@ export class ButtonAudioDirector {
       hit('event.tick', remaining <= 3 ? 1 : 0.7);
     this.countdown = remaining;
     for (const p of w.players) {
+      const hearts = this.hearts.get(p.id);
+      if (hearts !== undefined && hearts > 1 && p.hearts === 1)
+        hit('event.low-heart', 0.65, p.id, p);
+      this.hearts.set(p.id, p.hearts);
       if (!p.hearts || p.escaped) continue;
       const previous = this.motion.get(p.id),
         speed = Math.hypot(p.vx, p.vz);
@@ -151,7 +167,12 @@ export class ButtonAudioDirector {
         if (p.y === 0 && previous.y > 0.05) hit('event.land', 0.7, p.id, p);
         if (slip && !previous.slip) hit('event.slip', 0.85, p.id, p);
         else if (p.y === 0 && speed > 0.8 && step !== previous.step)
-          hit('event.step', p.id === listenerId ? 0.65 : 0.35, p.id, p);
+          hit(
+            step % 4 === 0 ? 'event.step' : `event.step.${step % 4}`,
+            p.id === listenerId ? 0.65 : 0.35,
+            p.id,
+            p,
+          );
       }
       this.motion.set(p.id, { y: p.y, slip, step });
     }

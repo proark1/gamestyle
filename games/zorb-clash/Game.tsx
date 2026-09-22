@@ -250,9 +250,15 @@ export default function ZorbClash() {
     receive: (snap) => {
       if (hud.current.due(snap)) setSnapshot(snap);
       sceneRef.current?.render(snap);
+      audioRef.current?.update(
+        blockedRef.current ? null : snap.world,
+        snap.selfId,
+      );
       const me = snap.world.players.find((p) => p.id === snap.selfId);
       audioRef.current?.setDashCharge(
-        blockedRef.current ? 0 : (me?.dashCharge ?? 0),
+        blockedRef.current || snap.world.status !== 'playing'
+          ? 0
+          : (me?.dashCharge ?? 0),
       );
     },
   });
@@ -322,7 +328,7 @@ export default function ZorbClash() {
             worldRef.current,
             physicsRef.current,
             dt,
-            audioRef.current,
+            null,
             (x, y, z, intensity) => {
               sceneRef.current?.emitImpactSparks(
                 x,
@@ -336,11 +342,18 @@ export default function ZorbClash() {
             },
           );
 
+        audioRef.current?.update(
+          blockedRef.current ? null : worldRef.current,
+          selfId,
+        );
+
         // Update sound for local player dash charge
         const me = worldRef.current.players.find((p) => p.id === selfId);
         if (me) {
           audioRef.current?.setDashCharge(
-            blockedRef.current ? 0 : me.dashCharge,
+            blockedRef.current || worldRef.current.status !== 'playing'
+              ? 0
+              : me.dashCharge,
           );
         }
 

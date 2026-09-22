@@ -22,7 +22,7 @@ function show() {
 }
 void test('The complete original sound bank is playable stereo PCM with headroom and clean loop seams', () => {
   const hashes = new Set<string>();
-  assert.equal(buttonCatalog.length, 28);
+  assert.equal(buttonCatalog.length, 38);
   for (const cue of buttonCatalog) {
     assert.doesNotThrow(() => parseCue(cue, cue), cue.id);
     const data = readFileSync(`public${BUTTON_DEFAULT_AUDIO[cue.id].url}`);
@@ -83,7 +83,7 @@ void test('Public manifest includes bundled audio, honors saved volume and prefe
   library.cues.find((c) => c.id === 'event.press')!.file =
     'one-more-button/custom.mp3';
   const result = manifest(library);
-  assert.equal(Object.keys(result.cues).length, 28);
+  assert.equal(Object.keys(result.cues).length, buttonCatalog.length);
   assert.equal(result.cues['music.show'].volume, 0.31);
   assert.match(result.cues['event.press'].url, /custom.mp3/);
   assert.equal(
