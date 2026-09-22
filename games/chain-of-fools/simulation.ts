@@ -8,6 +8,7 @@ import {
   checkpointAt,
   nearNet,
   pendulumBall,
+  courseSolids,
 } from './course';
 import {
   HARD_LANDING_SPEED,
@@ -17,6 +18,7 @@ import {
   stepPendulum,
   stepPlank,
   stepPlayer,
+  stepMachinery,
 } from './physics';
 import {
   BRACE_COOLDOWN,
@@ -322,11 +324,14 @@ export function advanceChainOfFools(
   }
 
   let remaining = clamp(elapsed, 0.001, 0.1);
+  world.clock = now - remaining * 1000;
   while (remaining > 0 && world.phase === 'playing') {
     const dt = Math.min(MAX_SUBSTEP, remaining);
     remaining -= dt;
+    world.clock += dt * 1000;
     stepWorld(world, dt, eventIdRef);
   }
+  world.clock = now;
 
   if (world.phase === 'playing' && world.clock >= world.endsAt) {
     world.phase = 'ended';
@@ -348,7 +353,9 @@ function stepWorld(
   eventIdRef: { current: number },
 ) {
   const events = world.events;
+  const solids = courseSolids(world);
 
+  stepMachinery(world, dt);
   stepPlank(world, dt, events, eventIdRef);
   stepPendulum(world, dt, events, eventIdRef);
 
@@ -383,7 +390,7 @@ function stepWorld(
       );
     }
 
-    const result = stepPlayer(player, dt, world.plankTilt);
+    const result = stepPlayer(player, dt, world.plankTilt, solids);
     player.airTime = player.grounded ? 0 : player.airTime + dt;
 
     if (result.jumped) {
@@ -422,7 +429,7 @@ function stepWorld(
 
   for (const player of world.players) {
     if (player.state === 'finished') continue;
-    pushOutOfGeometry(player, world.plankTilt);
+    pushOutOfGeometry(player, world.plankTilt, solids);
   }
 
   resolveStates(world, dt, eventIdRef);
@@ -531,7 +538,7 @@ function resolveHelp(
       target.haulProgress += (HAUL_RATE * pulling.length + kick) * dt;
 
       const lead = pulling[0];
-      haulToward(target, lead, dt, world.plankTilt);
+      haulToward(target, lead, dt, world.plankTilt, courseSolids(world));
 
       if (target.haulProgress >= 1 && target.grounded) {
         target.haulProgress = 0;
@@ -621,7 +628,7 @@ function resolveProgress(
       world.events.push({
         id: ++eventIdRef.current,
         type: 'checkpoint',
-        detail: `Crew banked ${CHECKPOINTS[banked].label}`,
+        detail: `Crew reached ${CHECKPOINTS[banked].label}`,
       });
     }
   }
@@ -630,7 +637,12 @@ function resolveProgress(
     (p) => p.state !== 'finished' && p.respawnAt <= world.clock,
   );
   const allOverNothing =
-    alive.length > 0 && alive.every((p) => p.state === 'dangling');
+    alive.length > 0 &&
+    alive.every((p) => p.state === 'dangling' && !p.anchorId) &&
+    !world.players.some(
+      (p) =>
+        p.state === 'finished' || p.anchorId || p.id === world.pendulumRider,
+    );
   const anyLost = world.players.some((p) => p.y < WIPE_Y);
 
   world.hangTime = allOverNothing ? world.hangTime + dt : 0;
@@ -638,11 +650,19 @@ function resolveProgress(
   if (anyLost || world.hangTime >= WIPE_DELAY) {
     world.wipes++;
     world.hangTime = 0;
-    placeAtCheckpoint(world, world.checkpoint);
+    world.checkpoint = 0;
+    world.startedAt = world.clock;
+    world.endsAt = world.clock + ROUND_TIME_MS;
+    world.endedAt = 0;
+    world.pendulumAngle = PENDULUM.amplitude;
+    world.pendulumVel = 0;
+    world.links = [];
+    placeAtCheckpoint(world, 0);
     world.events.push({
       id: ++eventIdRef.current,
       type: 'wipe',
-      detail: `The whole crew went over — back to ${CHECKPOINTS[world.checkpoint].label}`,
+      detail:
+        'Crew lost! Back to the site gate. No checkpoints — save each other!',
     });
   }
 

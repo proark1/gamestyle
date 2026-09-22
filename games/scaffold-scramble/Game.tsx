@@ -687,7 +687,8 @@ export default function ScaffoldScrambleGame() {
           {world?.winner !== 'crew' && (
             <p className="sc-retry-tip">{copy.retryTip}</p>
           )}
-          <button data-party-setup-action=""
+          <button
+            data-party-setup-action=""
             type="button"
             className="sc-btn primary primary-button"
             onClick={handleRestart}

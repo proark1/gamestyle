@@ -936,7 +936,8 @@ export default function GiantGame() {
               THIEVES ESCAPED
             </span>
           </div>
-          <button data-party-setup-action=""
+          <button
+            data-party-setup-action=""
             className="giant-primary"
             disabled={!host}
             onClick={() => void action({ type: 'restart' })}

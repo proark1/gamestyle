@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { REDUCED_MOTION_QUERY } from '../../shared/browser/device';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import {
   addHouseLight,
@@ -31,7 +32,7 @@ export class BoxingScene {
   private shake = 0;
   private ripple = 0;
   private crowdExcitement = 0;
-  private reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  private reduced = window.matchMedia(REDUCED_MOTION_QUERY);
   private effects: {
     mesh: T.Mesh;
     life: number;

@@ -2,7 +2,7 @@
 
 Approved: implement all 12 concepts proposed in the wardrobe conversation.
 
-Implemented in the local workspace on 22 September 2026. Not deployed.
+Implemented and validated for the production release on 22 September 2026.
 
 | Item | Slot | Coins |
 | --- | --- | ---: |

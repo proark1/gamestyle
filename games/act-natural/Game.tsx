@@ -778,7 +778,7 @@ export default function ActNatural() {
                 >
                   {farmer ? <Eye size={20} /> : <Hand size={20} />}
                   <span className="farm-desktop-hint">
-                    {farmer ? touchHud?.label ?? 'Inspect cow' : 'Interact'}
+                    {farmer ? (touchHud?.label ?? 'Inspect cow') : 'Interact'}
                   </span>
                   <span className="farm-mobile-hint">{touchHud?.label}</span>
                   <kbd>E</kbd>
@@ -1122,7 +1122,8 @@ export default function ActNatural() {
             </span>
           </div>
           {host ? (
-            <button data-party-setup-action=""
+            <button
+              data-party-setup-action=""
               className="primary-button"
               onClick={() => void action({ type: 'restart' })}
             >

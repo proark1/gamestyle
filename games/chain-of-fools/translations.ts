@@ -29,7 +29,9 @@ export interface ChainTranslations {
   sections: Record<string, string>;
   routeHints: Record<string, string>;
   distanceLeft: (metres: number) => string;
-  checkpointSaved: (count: number, total: number) => string;
+  bestDistance: (metres: number) => string;
+  resetNotice: string;
+  sectionProgress: (count: number, total: number) => string;
 
   keys: { desktop: KeyLabels; touch: KeyLabels };
   promptHaul: (name: string, k: KeyLabels) => string;
@@ -73,13 +75,15 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
     rules: [
       'Two braced workers can hold two who fell. One cannot hold three.',
       'Haul danglers back up before the whole line goes over.',
-      'Most obstacles have a fast way and a safe way. Pick as a crew.',
+      'Lose the crew and everyone restarts at the gate. No checkpoints.',
     ],
     startShift: 'Start the shift',
     playAgain: 'Another shift',
 
     hudTime: 'Shift',
-    hudWipes: 'Wipes',
+    hudWipes: 'Attempt',
+    bestDistance: (m) => `Best ${m} m`,
+    resetNotice: 'Crew lost · Back to the gate',
     hudLine: 'Line',
     hudGrip: 'Grip',
     sections: {
@@ -96,17 +100,18 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       office: 'Site office',
     },
     distanceLeft: (m) => `${m} m to go`,
-    checkpointSaved: (n, total) => `Checkpoints ${n}/${total}`,
+    sectionProgress: (n, total) => `Sections ${n}/${total} · No checkpoints`,
     routeHints: {
-      gate: 'Follow the beams ahead. Keep your crew close.',
-      girders: 'Jump the gaps, or drop to the lower catwalk.',
-      scaffold: 'Jump up the steps. Let the rest of the line catch up.',
+      gate: 'One crew. One attempt. A lost crew restarts at the gate.',
+      girders: 'Aim for the offset beams. The lower path twists underneath.',
+      scaffold: 'Climb together. Wait for the suspended load to clear the top.',
       plank: 'Spread your weight across the plank. Move together.',
       wrecking: 'Wait for the ball to pass, then cross as a crew.',
       pipe: 'Single file through the duct. Stay close to avoid a yank.',
       net: 'Walk onto the net, then push forward to climb down.',
-      'yard-run': 'Jump the cargo, or weave around the open ends.',
-      'last-crossing': 'One last gap. Regroup before you jump.',
+      'yard-run': 'Ride the moving deck, then weave around the tall cargo.',
+      'last-crossing':
+        'Regroup at the gap. Watch the load sweeping the far bridge.',
       'office-approach': 'Bring every worker across the chequered line.',
     },
 
@@ -175,13 +180,15 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
     rules: [
       'Zwei, die sich abstemmen, halten zwei Abgestürzte. Einer hält keine drei.',
       'Zieht Hängende hoch, bevor die ganze Kette abrutscht.',
-      'Fast jedes Hindernis hat einen schnellen und einen sicheren Weg. Entscheidet gemeinsam.',
+      'Verliert ihr die Crew, starten alle wieder am Tor. Keine Kontrollpunkte.',
     ],
     startShift: 'Schicht beginnen',
     playAgain: 'Noch eine Schicht',
 
     hudTime: 'Schicht',
-    hudWipes: 'Abstürze',
+    hudWipes: 'Versuch',
+    bestDistance: (m) => `Rekord ${m} m`,
+    resetNotice: 'Crew abgestürzt · Zurück zum Tor',
     hudLine: 'Kette',
     hudGrip: 'Halt',
     sections: {
@@ -198,17 +205,20 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       office: 'Baubüro',
     },
     distanceLeft: (m) => `Noch ${m} m`,
-    checkpointSaved: (n, total) => `Kontrollpunkte ${n}/${total}`,
+    sectionProgress: (n, total) =>
+      `Abschnitte ${n}/${total} · Kein Speicherpunkt`,
     routeHints: {
-      gate: 'Folgt den Trägern. Haltet die Crew zusammen.',
-      girders: 'Springt über die Lücken oder nehmt den unteren Steg.',
-      scaffold: 'Springt die Stufen hoch. Wartet auf den Rest der Crew.',
+      gate: 'Eine Crew. Ein Versuch. Bei einem Absturz zurück zum Tor.',
+      girders: 'Zielt auf die versetzten Träger. Der untere Steg macht Kurven.',
+      scaffold: 'Klettert gemeinsam. Wartet oben auf eine freie Lücke.',
       plank: 'Verteilt euer Gewicht. Geht gemeinsam über das Brett.',
       wrecking: 'Wartet auf die Abrissbirne und geht dann gemeinsam los.',
       pipe: 'Im Gänsemarsch durchs Rohr. Bleibt nah zusammen.',
       net: 'Geht aufs Netz und drückt vorwärts zum Absteigen.',
-      'yard-run': 'Springt über die Fracht oder lauft außen herum.',
-      'last-crossing': 'Noch eine Lücke. Sammelt euch vor dem Sprung.',
+      'yard-run':
+        'Fahrt auf der Frachtplattform. Umgeht dann die hohen Kisten.',
+      'last-crossing':
+        'Sammelt euch am Spalt. Achtet auf die schwingende Last.',
       'office-approach': 'Bringt alle über die Ziellinie.',
     },
 

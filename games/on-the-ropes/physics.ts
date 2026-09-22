@@ -10,7 +10,9 @@ export class BoxingPhysics {
     this.world.defaultContactMaterial.restitution = 0.15;
   }
   step(state: World) {
-    const active = state.players.filter((p) => p.active && p.tagTransition === 0);
+    const active = state.players.filter(
+      (p) => p.active && p.tagTransition === 0,
+    );
     for (const [id, body] of this.bodies)
       if (!active.some((p) => p.id === id)) {
         this.world.removeBody(body);

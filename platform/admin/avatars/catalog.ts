@@ -254,7 +254,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
     looks: driveThruAvatars,
     note: 'Nico as drive-thru driver with cap and kitchen cook with paper hat and apron.',
   },
-  'on-the-ropes': { looks: boxingAvatars, note: 'Nico in red and blue boxing kit with padded gloves.' },
+  'on-the-ropes': {
+    looks: boxingAvatars,
+    note: 'Nico in red and blue boxing kit with padded gloves.',
+  },
   'zorb-clash': {
     looks: zorbAvatars,
     note: 'Nico strapped inside a transparent bumper sphere, one per team.',

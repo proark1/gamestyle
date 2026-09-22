@@ -67,14 +67,12 @@ try {
   const items = await page.evaluate(() => window.collection);
   const expectedLook = {};
   for (const item of items) {
-    const card = page
-      .locator('.wardrobe-item-card')
-      .filter({
-        has: page.getByRole('button', {
-          name: 'Inspect ' + item.name,
-          exact: true,
-        }),
-      });
+    const card = page.locator('.wardrobe-item-card').filter({
+      has: page.getByRole('button', {
+        name: 'Inspect ' + item.name,
+        exact: true,
+      }),
+    });
     await expect(card.locator('img')).toHaveAttribute('src', /^data:image/);
     await card.getByRole('button', { name: 'Try on', exact: true }).click();
     await expect(card).toHaveAttribute('data-fitted', 'true');

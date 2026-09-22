@@ -839,7 +839,8 @@ export default function FourBrainCells() {
                 busy={npcBusy || status !== 'online'}
                 manage={action}
               />
-              <button data-party-setup-action=""
+              <button
+                data-party-setup-action=""
                 className="brain-primary"
                 disabled={!captain || status !== 'online' || npcBusy}
                 onClick={() => action({ type: 'restart' })}

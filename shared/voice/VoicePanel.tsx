@@ -29,6 +29,10 @@ const initial: VoiceState = {
 };
 const emptySnapshot: VoiceSnapshot = { players: [], nearby: false };
 const ignoreSpeaking = (_active: boolean) => {};
+const subscribeEmbedding = () => () => {};
+const serverEmbedding = () => false;
+const embeddedParty = () =>
+  window.parent !== window && new URLSearchParams(location.search).has('party');
 export type VoiceController = Pick<
   VoiceClient,
   | 'state'
@@ -70,6 +74,11 @@ export default function VoicePanel({
   onState?: (state: VoiceState) => void;
   unavailableReason?: string;
 }) {
+  const hideEmbeddedVoice = useSyncExternalStore(
+    subscribeEmbedding,
+    embeddedParty,
+    serverEmbedding,
+  );
   const client = useRef<VoiceController | null>(null),
     alive = useRef(true),
     joining = useRef(false),
@@ -329,12 +338,7 @@ export default function VoicePanel({
       </button>
     );
   }
-  if (
-    typeof window !== 'undefined' &&
-    window.parent !== window &&
-    new URLSearchParams(location.search).has('party')
-  )
-    return null;
+  if (hideEmbeddedVoice) return null;
   return (
     <>
       {state.connected &&

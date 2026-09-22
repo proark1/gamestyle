@@ -607,7 +607,8 @@ export default function LoadBearing() {
               <h2>{w.phase === 'won' ? 'Signed off' : 'Not signed off'}</h2>
               <p>{w.events.at(-1)?.text}</p>
               {foreman && (
-                <button data-party-setup-action=""
+                <button
+                  data-party-setup-action=""
                   className="primary-button"
                   onClick={() => action({ type: 'restart' })}
                 >

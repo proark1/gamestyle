@@ -1,3 +1,4 @@
+import { createSiteDetails, type SiteDetails } from './site-details';
 import * as T from 'three';
 import {
   ball,
@@ -184,20 +185,6 @@ function catwalk(parent: T.Object3D, b: Box) {
     );
     bar.castShadow = false;
   }
-  for (let x = b.minX + 1; x < b.maxX; x += 4) {
-    for (const z of [b.minZ + 0.1, b.maxZ - 0.1]) {
-      beam(parent, [x, b.maxY, z], [x, b.maxY + 0.95, z], 0.05, SITE.hazard);
-    }
-  }
-  for (const z of [b.minZ + 0.1, b.maxZ - 0.1]) {
-    beam(
-      parent,
-      [b.minX + 1, b.maxY + 0.95, z],
-      [b.maxX - 1, b.maxY + 0.95, z],
-      0.05,
-      SITE.hazard,
-    );
-  }
 }
 
 export type SiteModel = {
@@ -210,6 +197,7 @@ export type SiteModel = {
   checkpointFlags: T.Mesh[];
   anchors: Map<string, T.Group>;
   dust: T.Points;
+  details: SiteDetails;
 };
 
 export function createSite(): SiteModel {
@@ -267,6 +255,7 @@ export function createSite(): SiteModel {
   finalCrossing(root);
   skyline(root);
   const dust = dustMotes(root);
+  const details = createSiteDetails(root);
 
   return {
     root,
@@ -277,6 +266,7 @@ export function createSite(): SiteModel {
     checkpointFlags,
     anchors,
     dust,
+    details,
   };
 }
 

@@ -1328,7 +1328,8 @@ export default function Game() {
             </span>
           </div>
           {isHost ? (
-            <button data-party-setup-action=""
+            <button
+              data-party-setup-action=""
               className="primary-button"
               onClick={() => void action({ type: 'restart' })}
             >

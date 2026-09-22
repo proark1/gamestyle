@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { CHECKPOINTS, FINISH_X, SOLIDS, plankSurfaceY } from './course';
+import {
+  CHECKPOINTS,
+  FINISH_X,
+  SOLIDS,
+  courseSolids,
+  type Box,
+  plankSurfaceY,
+} from './course';
 import { reconcileChainBots, stepChainBot } from './bots';
 import { createEngine } from './peer';
 import { moveWithCollisions, stepChain, stepPlayer } from './physics';
@@ -28,8 +35,8 @@ function playing(count = 1) {
   return world;
 }
 
-function assertOutside(player: Player) {
-  for (const b of SOLIDS) {
+function assertOutside(player: Player, solids: readonly Box[] = SOLIDS) {
+  for (const b of solids) {
     if (
       player.y >= b.maxY - 0.002 ||
       player.y + PLAYER_HEIGHT <= b.minY + 0.002
@@ -242,7 +249,7 @@ void test('a bot crew completes every checkpoint with no solid penetrations', ()
     ) {
       for (const p of world.players) stepChainBot(p, world, 1 / rate);
       advanceChainOfFools(world, world.clock + 1000 / rate, 1 / rate);
-      for (const p of world.players) assertOutside(p);
+      for (const p of world.players) assertOutside(p, courseSolids(world));
     }
     assert.equal(world.winner, 'crew', `${rate} Hz, best ${world.bestX}`);
     assert.equal(world.checkpoint, CHECKPOINTS.length - 1);

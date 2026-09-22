@@ -1,5 +1,6 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
 import { Users } from 'lucide-react';
 import { useLanguage } from '../language/useLanguage';
@@ -7,6 +8,10 @@ import VoicePanel from '../voice/VoicePanel';
 import type { PeerRoomUI } from './usePeerRoom';
 import './room-controls.css';
 import { inPartyMode } from '../ui/party-mode';
+
+// Game URLs use full navigation. Keep server and initial client markup identical.
+const subscribePartyMode = () => () => {};
+const serverPartyMode = () => false;
 
 export default function PeerRoomControls({
   room,
@@ -17,7 +22,12 @@ export default function PeerRoomControls({
 }) {
   const { language } = useLanguage();
   const de = language === 'de';
-  if (inPartyMode())
+  const party = useSyncExternalStore(
+    subscribePartyMode,
+    inPartyMode,
+    serverPartyMode,
+  );
+  if (party)
     return room.status !== 'online' ? (
       <output className="peer-room-status">
         {de

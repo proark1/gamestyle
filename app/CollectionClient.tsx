@@ -60,7 +60,18 @@ interface CardStaticConfig {
 }
 
 const CARD_CONFIGS: Record<string, CardStaticConfig> = {
-  'on-the-ropes': { slug: 'on-the-ropes', href: '/on-the-ropes', cardClass: 'bungee-doubles-card', imgSrc: '/images/on-the-ropes.png', imgAlt: 'Red and blue boxers face off in a soft clay boxing ring with teammates waiting at their corners.', loading: 'lazy', tagIcon: Gamepad2, metaIcon1: Users, metaIcon2: Timer },
+  'on-the-ropes': {
+    slug: 'on-the-ropes',
+    href: '/on-the-ropes',
+    cardClass: 'bungee-doubles-card',
+    imgSrc: '/images/on-the-ropes.png',
+    imgAlt:
+      'Red and blue boxers face off in a soft clay boxing ring with teammates waiting at their corners.',
+    loading: 'lazy',
+    tagIcon: Gamepad2,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   'carry-on-carnage': {
     slug: 'carry-on-carnage',
     href: '/carry-on-carnage',

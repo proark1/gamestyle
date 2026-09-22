@@ -593,7 +593,11 @@ export default function DriveThruGame() {
                 : snapshot.failReason ||
                   'The shift ended in catastrophic fast-food disaster!'}
             </div>
-            <button data-party-setup-action="" className="drive-thru-btn-restart" onClick={handleRestart}>
+            <button
+              data-party-setup-action=""
+              className="drive-thru-btn-restart"
+              onClick={handleRestart}
+            >
               <RotateCcw size={18} />
               Start New Shift
             </button>

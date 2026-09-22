@@ -749,7 +749,8 @@ export default function OneMoreButton() {
                   Last press: <strong>{w.lastPresser}</strong>. We remember.
                 </p>
               )}
-              <button data-party-setup-action=""
+              <button
+                data-party-setup-action=""
                 className="omb-primary"
                 disabled={!captain || status !== 'online'}
                 onClick={() => action({ type: 'restart' })}

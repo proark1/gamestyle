@@ -1226,7 +1226,8 @@ export default function ReelProblems() {
                   onAction={(a) => action(a)}
                 />
               )}
-              <button data-party-setup-action=""
+              <button
+                data-party-setup-action=""
                 className="reel-primary"
                 disabled={!captain || busy || npcBusy || status !== 'online'}
                 onClick={() => action({ type: 'restart' })}

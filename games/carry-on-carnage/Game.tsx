@@ -661,7 +661,8 @@ export default function CarryOnCarnageGame() {
               </div>
             </div>
 
-            <button data-party-setup-action=""
+            <button
+              data-party-setup-action=""
               type="button"
               className="carryon-restart-btn"
               onClick={() => dispatchAction({ type: 'restart' })}
