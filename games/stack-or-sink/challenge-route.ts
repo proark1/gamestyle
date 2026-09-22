@@ -3,6 +3,7 @@ import type { AccountConfig } from '../../shared/accounts/server/config';
 import { readSession } from '../../shared/accounts/server/session';
 import { initializeInventory } from '../../shared/commerce/server/inventory';
 import { readStackProgress } from '../../shared/challenges/server/progress';
+import { readRankedStack } from '../../shared/challenges/server/ranked';
 import { RequestBudget } from '../../shared/http/request-budget';
 import { readJsonObject } from '../../shared/http/json-request';
 import { hasAllowedOrigin } from '../../shared/http/request-origin';
@@ -40,7 +41,12 @@ export function createStackChallengeRoutes(deps: {
         );
       const accountId = session.account.id;
       budget.take(accountId, 80, 25, now);
-      if (!write) return json(await readStackProgress(db, accountId, now));
+      if (!write)
+        return json(
+          new URL(request.url).searchParams.has('board')
+            ? await readRankedStack(db, accountId, now)
+            : await readStackProgress(db, accountId, now),
+        );
       const body = await readJsonObject(request, 8192);
       if (body.op === 'create' || body.op === 'join') {
         budget.take(`entry:${accountId}`, 6, 0.1, now);

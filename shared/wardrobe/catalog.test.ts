@@ -3,16 +3,17 @@ import assert from 'node:assert/strict';
 import { GOALS, ITEMS, SLOTS } from './catalog';
 import { parseLook } from './look';
 
-void test('every item has its own id, a real slot, and either a price or a goal', () => {
+void test('every item has its own id, a real slot, and one acquisition path', () => {
   const ids = ITEMS.map((item) => item.id);
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
   for (const item of ITEMS) {
     assert.ok(SLOTS.includes(item.slot), `${item.id} has a real slot`);
     assert.match(item.id, /^[a-z0-9-]+$/);
-    assert.notEqual(
-      item.price === undefined,
-      item.goal === undefined,
-      `${item.id} has a price or a goal, not both`,
+    assert.equal(
+      [item.price, item.goal, item.reward].filter((path) => path !== undefined)
+        .length,
+      1,
+      `${item.id} has exactly one acquisition path`,
     );
     if (item.price !== undefined)
       assert.ok(Number.isInteger(item.price) && item.price > 0, item.id);
@@ -21,6 +22,8 @@ void test('every item has its own id, a real slot, and either a price or a goal'
         GOALS.some((goal) => goal.id === item.goal),
         `${item.id} unlocks through a real goal`,
       );
+    if (item.reward !== undefined)
+      assert.ok(item.reward.length > 0, `${item.id} explains its reward`);
   }
   for (const slot of SLOTS)
     assert.ok(

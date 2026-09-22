@@ -315,6 +315,22 @@ function boot(
 /** Every item the kid has his own model for, by catalog id. */
 export const KID_ITEMS: Record<string, (dress: KidDress) => void> = {
   ...PLAYFUL_KID_ITEMS,
+  'stack-rank-safety-helmet'({ head, hatSeat = 0.2 }) {
+    soft(head, [0.31, 0.06, 0.29], [0, hatSeat + 0.02, 0.02], '#126c78');
+    soft(head, [0.25, 0.14, 0.24], [0, hatSeat + 0.14, 0], '#1b9aa4');
+    soft(head, [0.045, 0.15, 0.23], [0, hatSeat + 0.16, 0], '#fff4cb');
+  },
+  'stack-rank-crown'({ head, hatSeat = 0.2 }) {
+    soft(head, [0.26, 0.07, 0.25], [0, hatSeat + 0.12, 0], '#f0bb42');
+    for (const side of [-1, 0, 1])
+      custom(
+        head,
+        'skyline-point',
+        () => new T.ConeGeometry(0.08, 0.21, 12),
+        [side * 0.2, hatSeat + 0.28 + (side === 0 ? 0.04 : 0), 0],
+        '#ffe49b',
+      );
+  },
   // ---- Tops ----------------------------------------------------------------
   'striped-tee'({ body, sleeves, player }) {
     const shirt = '#f6efdf';

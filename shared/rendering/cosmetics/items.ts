@@ -118,6 +118,32 @@ export const ITEM_MODELS: Record<string, ItemModel> = {
       cube('head', [0.16, 0.14, 0.03], [0, 0.16, 0.29], '#d8573a'),
     ],
   },
+  'stack-rank-safety-helmet': {
+    slot: 'hat',
+    parts: [
+      cube('head', [0.76, 0.08, 0.76], [0, 0.02, 0.04], '#126c78', {
+        rounded: true,
+      }),
+      cube('head', [0.58, 0.27, 0.58], [0, 0.17, 0], '#1b9aa4', {
+        rounded: true,
+      }),
+      cube('head', [0.12, 0.3, 0.6], [0, 0.18, 0], '#fff4cb', {
+        rounded: true,
+      }),
+      cube('head', [0.18, 0.12, 0.04], [0, 0.17, 0.31], '#f4a442'),
+    ],
+  },
+  'stack-rank-crown': {
+    slot: 'hat',
+    parts: [
+      cube('head', [0.59, 0.14, 0.54], [0, 0.18, 0], '#f0bb42', {
+        rounded: true,
+      }),
+      cone('head', [0, 0.11, 0.15], [-0.22, 0.35, 0], '#ffe49b'),
+      cone('head', [0, 0.14, 0.17], [0, 0.39, 0], '#fff2bd'),
+      cone('head', [0, 0.11, 0.15], [0.22, 0.35, 0], '#ffe49b'),
+    ],
+  },
   'striped-tee': {
     slot: 'top',
     parts: [

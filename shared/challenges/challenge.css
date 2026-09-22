@@ -89,3 +89,49 @@
   font-size: 13px;
   font-weight: 600;
 }
+.stack-ranked {
+  border-top: 2px solid #c5cba9;
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.stack-ranked h4 {
+  margin: 0 0 8px;
+  font:
+    19px/1.2 'Fredoka',
+    sans-serif;
+}
+.stack-ranked-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+}
+.stack-ranked-sizes legend {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.stack-ranked .stack-ranked-sizes button {
+  margin: 0;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.stack-ranked-sizes button[aria-pressed='true'] {
+  background: #19464b;
+  color: #fff7df;
+}
+.stack-ranked-list {
+  padding: 0;
+  margin: 8px 0 16px;
+  list-style: none;
+  max-height: 350px;
+  overflow: auto;
+}
+.stack-ranked-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #dedcc3;
+  padding: 5px 0;
+}
