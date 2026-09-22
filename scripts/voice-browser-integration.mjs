@@ -137,11 +137,23 @@ const server = await createServer({
               let body = '';
               for await (const chunk of req) body += chunk;
               const request = JSON.parse(body);
-              const stamp=Date.now();
-              if(process.env.VOICE_TEST_TRACE) console.log('RPC start',stamp,request.op,request.id?.slice(0,5));
+              const stamp = Date.now();
+              if (process.env.VOICE_TEST_TRACE)
+                console.log(
+                  'RPC start',
+                  stamp,
+                  request.op,
+                  request.id?.slice(0, 5),
+                );
               if (earlyJoin && request.op === 'signal') await signalsReady;
               const reply = await handlePeerRoom(store, request);
-              if(process.env.VOICE_TEST_TRACE)console.log('RPC end',Date.now(),request.op,Date.now()-stamp);
+              if (process.env.VOICE_TEST_TRACE)
+                console.log(
+                  'RPC end',
+                  Date.now(),
+                  request.op,
+                  Date.now() - stamp,
+                );
               if (process.env.PEER_RELAY_ONLY !== '1')
                 reply.view.iceServers = [];
               res.setHeader('Content-Type', 'application/json');
@@ -267,7 +279,9 @@ try {
                 release: () => {},
               };
           window.voiceTest = { lease, VoiceClient, session, sessions, i };
-          lease.mesh.on('error', (error) => console.error(error.name,error.message));
+          lease.mesh.on('error', (error) =>
+            console.error(error.name, error.message),
+          );
           if (!earlyJoin) lease.mesh.start();
         },
         { session: sessions[i], sessions, i, earlyJoin },

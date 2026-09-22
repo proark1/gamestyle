@@ -32,3 +32,9 @@ lint and formatting checks. Do not deploy or alter unrelated working changes.
 - Repository typecheck remains blocked by unrelated errors in Wrong Floor and
   Zorb Clash. No errors were reported in the changed wardrobe/avatar files on
   the final typecheck run. No deployment performed.
+
+## Production release validation
+
+The isolated release checkout preserves the latest main branch and excludes
+unrelated working changes. Production build, full TypeScript, lint, architecture
+and formatting checks passed. All 1,447 tests passed before final main sync.

@@ -20,4 +20,3 @@ Fixed Zorb live admission and four-player team balancing; Sample Stampede NPC re
 The Windows native WebRTC test binding occasionally emits an invalid numeric sdpMLineIndex. The test harness clears only invalid indices when a valid sdpMid is present; production candidate validation is unchanged.
 
 These are local changes. No deployment was performed. Physical devices and restrictive external networks were not tested.
-
