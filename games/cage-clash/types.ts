@@ -89,6 +89,7 @@ export type EventKind =
   | 'clinch'
   | 'takedown'
   | 'escape'
+  | 'bridge'
   | 'advance'
   | 'submission'
   | 'bell';

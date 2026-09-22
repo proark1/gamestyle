@@ -322,6 +322,31 @@ void test('guard advances to mount; mount escapes to guard; jiu-jitsu can revers
   run(w, 1.7);
   assert.equal(w.grapple?.top, w.players[1].id);
 });
+void test('a timed bottom bridge gains space once, costs stamina and respects cooldown', () => {
+  const w = fight();
+  ground(w, 'mount');
+  const bottom = w.players[1];
+  bottom.input.guard = true;
+  bottom.input.dodge = true;
+  stepWorld(w);
+  assert.ok(w.grapple!.progress < -0.45);
+  assert.ok(bottom.stamina < 83);
+  assert.equal(w.events.filter((event) => event.kind === 'bridge').length, 1);
+  stepWorld(w);
+  assert.equal(w.events.filter((event) => event.kind === 'bridge').length, 1);
+  bottom.input.dodge = false;
+  stepWorld(w);
+  bottom.input.dodge = true;
+  stepWorld(w);
+  assert.equal(w.events.filter((event) => event.kind === 'bridge').length, 1);
+  w.grapple!.cooldown = 0;
+  bottom.input.dodge = false;
+  stepWorld(w);
+  bottom.input.dodge = true;
+  bottom.stamina = 19;
+  stepWorld(w);
+  assert.equal(w.events.filter((event) => event.kind === 'bridge').length, 1);
+});
 void test('every style can finish a timed unopposed submission', () => {
   for (const style of STYLE_IDS) {
     const w = fight(style);

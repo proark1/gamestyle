@@ -32,6 +32,41 @@
   font-family: Fredoka, sans-serif;
   font-size: 18px;
 }
+.cage-view-control {
+  position: absolute;
+  z-index: 4;
+  left: 18px;
+  bottom: 230px;
+  display: grid;
+  gap: 7px;
+  width: 175px;
+  padding: 10px 12px;
+  border: 1px solid #d5d7bd;
+  border-radius: 12px;
+  background: #fff8e8ee;
+  box-shadow: 0 3px 10px #304b4220;
+  font-size: 10px;
+  font-weight: 700;
+}
+.cage-view-control > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cage-view-control strong {
+  margin-left: auto;
+  font-size: 11px;
+}
+.cage-view-control input {
+  width: 100%;
+  margin: 0;
+  accent-color: #355f4f;
+  cursor: pointer;
+}
+.cage-view-control input:focus-visible {
+  outline: 3px solid #f2c35e;
+  outline-offset: 3px;
+}
 .cage-selection,
 .cage-result {
   position: absolute;
@@ -361,6 +396,12 @@
   font-size: 8px;
   color: #66725c;
 }
+.cage-bridge-cue {
+  margin-top: 6px;
+  color: #355f4f;
+  font-size: 10px;
+  font-weight: 800;
+}
 .cage-position-track,
 .cage-pulse-timeline {
   position: relative;
@@ -654,6 +695,12 @@
   }
 }
 @media (max-width: 380px) {
+  .cage-view-control {
+    left: 10px;
+    bottom: 245px;
+    width: 150px;
+    padding: 8px;
+  }
   .cage-selection {
     padding: 16px;
   }

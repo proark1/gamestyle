@@ -257,14 +257,22 @@ export function poseFighter(
     const top = g.top === p.id;
     const pose = groundPose(top, g.mode === 'mount');
     model.position.set(...pose.position);
+    if (top)
+      model.position.z +=
+        (g.mode === 'guard'
+          ? -Math.max(0, g.progress)
+          : -Math.min(0, g.progress)) * 0.22;
     model.rotation.set(...pose.rotation, 'YXZ');
     rig.body.rotation.set(0, 0, 0);
     rig.head.rotation.x = top ? 0.38 : 0;
-    rig.armL.rotation.set(top ? -0.45 : -1.8, 0, -0.2);
-    rig.armR.rotation.set(top ? -0.45 : -1.8, 0, 0.2);
-    if (p.attack > 0) rig.armR.rotation.x -= Math.sin(p.attack * 10) * 0.6;
-    if (g.submissionBy === p.id)
-      rig.armL.rotation.x = rig.armR.rotation.x = top ? -0.8 : -1.9;
+    rig.armL.rotation.set(0, 0, 0);
+    rig.armR.rotation.set(0, 0, 0);
+    if (!top && p.input.guard && p.input.dodge) {
+      rig.body.rotation.x = -0.28;
+      rig.head.rotation.x = -0.12;
+    } else if (!top && p.input.kick && !reduced) {
+      rig.body.rotation.z = Math.sin(time * 8) * 0.08;
+    }
     const scale = (model.userData.avatarRig as T.Group).scale.x;
     for (const limb of visual.groundLegs) {
       const hip = (limb.side < 0 ? rig.legL : rig.legR).position
@@ -275,6 +283,7 @@ export function poseFighter(
       const side = top ? -limb.side : limb.side;
       const knee = pose.knee(side),
         ankle = pose.ankle(side);
+      if (!top && p.input.guard && p.input.dodge) knee[1] += 0.1;
       limb.knee.position.set(...knee);
       limb.foot.position.set(
         ankle[0],
@@ -292,6 +301,20 @@ export function poseFighter(
   }
   for (const [index, limb] of visual.arms.entries()) {
     let fist: Point = standing ? guardFist(limb.side) : [0, -0.39, 0.07];
+    if (g && g.mode !== 'clinch') {
+      const top = g.top === p.id;
+      const side = limb.side;
+      fist = top ? [side * 0.15, -0.28, 0.22] : [side * 0.12, -0.15, 0.22];
+      if (p.guarding) fist = [side * 0.11, -0.08, 0.27];
+      if (p.input.kick || (p.input.dodge && !p.guarding))
+        fist = [side * 0.18, -0.21, 0.36];
+      if (g.submissionBy === p.id) fist = [side * 0.09, -0.05, 0.39];
+      if (p.attack > 0 && index === p.punches % 2) {
+        const drive = Math.sin(((0.3 - p.attack) / 0.3) * Math.PI);
+        fist = [side * 0.1, -0.19 + drive * 0.09, 0.22 + drive * 0.32];
+        rig.body.rotation.y = side * drive * 0.12;
+      }
+    }
     if (standing && p.guarding) fist = [-limb.side * 0.04, 0.3, 0.3];
     if (standing && p.charge > 0 && !p.attack) {
       const next =
@@ -329,13 +352,20 @@ export function poseFighter(
         rig.body.rotation.y = -motion.drive * 0.2;
       }
     }
-    const elbow: Point = standing
-      ? [
-          fist[0] * 0.45 + limb.side * 0.09,
-          fist[1] * 0.45 - 0.16,
-          fist[2] * 0.43,
-        ]
-      : [0, -0.19, 0];
+    const elbow: Point =
+      g && g.mode !== 'clinch'
+        ? [
+            fist[0] * 0.6 + limb.side * 0.07,
+            fist[1] * 0.55 - 0.17,
+            fist[2] * 0.5,
+          ]
+        : standing
+          ? [
+              fist[0] * 0.45 + limb.side * 0.09,
+              fist[1] * 0.45 - 0.16,
+              fist[2] * 0.43,
+            ]
+          : [0, -0.19, 0];
     limb.elbow.position.set(...elbow);
     limb.glove.position.set(...fist);
     limb.glove.rotation.x = standing ? Math.PI / 2 : 0;

@@ -116,3 +116,34 @@ void test('reduced motion switches immediately and resize remains finite', () =>
       1e-10,
   );
 });
+
+void test('deep zoom becomes the local fighter viewpoint and zooming out restores the arena', () => {
+  const w = grapple();
+  const controller = new FightCamera();
+  const camera = new PerspectiveCamera(40, 16 / 9, 0.1, 120);
+  const eye = new Vector3(0, 1.3, 0.15);
+  const opponent = new Vector3(0, 1.2, 0.8);
+  controller.setZoom(1);
+  controller.update(camera, w, 1 / 60, true, { eye, opponent });
+  assert.ok(controller.firstPerson);
+  assert.ok(camera.position.distanceTo(eye) < 1e-10);
+  assert.ok(
+    camera
+      .getWorldDirection(new Vector3())
+      .dot(opponent.clone().sub(eye).normalize()) > 0.99,
+  );
+  controller.setZoom(0);
+  controller.update(camera, w, 1 / 60, true);
+  assert.equal(controller.firstPerson, false);
+  assert.ok(
+    camera.position.distanceTo(fightCameraFrame(w, camera.aspect).position) <
+      1e-10,
+  );
+  w.phase = 'break';
+  controller.setZoom(1);
+  controller.update(camera, w, 1 / 60, true, { eye, opponent });
+  assert.ok(
+    camera.position.distanceTo(fightCameraFrame(w, camera.aspect).position) <
+      1e-10,
+  );
+});

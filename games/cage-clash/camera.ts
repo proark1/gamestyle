@@ -52,19 +52,58 @@ export class FightCamera {
   private target = new Vector3();
   private focus = 0;
   private ready = false;
+  private zoom = 0;
+
+  setZoom(value: number) {
+    this.zoom = Math.max(0, Math.min(1, value));
+  }
+
+  get firstPerson() {
+    return this.zoom >= 0.8;
+  }
 
   update(
     camera: PerspectiveCamera,
     world: World | null,
     dt: number,
     reduced: boolean,
+    viewpoint?: { eye: Vector3; opponent: Vector3 },
   ) {
     const frame = fightCameraFrame(world, camera.aspect);
+    const active = world?.phase === 'playing' && world.players.length === 2;
+    const near = active ? Math.min(1, this.zoom / 0.7) : 0;
+    const nearTarget = frame.target.clone();
+    if (active && !frame.close) {
+      const [a, b] = world.players;
+      nearTarget.set((a.x + b.x) / 2, 1.05, (a.z + b.z) / 2);
+    }
+    const pair = active
+      ? Math.hypot(
+          world.players[0].x - world.players[1].x,
+          world.players[0].z - world.players[1].z,
+        )
+      : 0;
+    const nearDistance = Math.min(
+      frame.position.distanceTo(frame.target) * (frame.close ? 0.75 : 1),
+      Math.max(5, 5 / Math.max(0.5, camera.aspect), pair * 1.3 + 2),
+    );
+    const position = frame.position
+      .clone()
+      .lerp(nearTarget.clone().addScaledVector(direction, nearDistance), near);
+    const target = frame.target.clone().lerp(nearTarget, near);
+    const amount = Math.max(0, Math.min(1, (this.zoom - 0.72) / 0.28));
+    const pov = active && viewpoint ? amount * amount * (3 - 2 * amount) : 0;
+    if (pov) {
+      position.lerp(viewpoint!.eye, pov);
+      target.lerp(viewpoint!.opponent, pov);
+    }
     const blend =
       !this.ready || reduced ? 1 : 1 - Math.exp(-Math.max(0, dt) * 5);
-    camera.position.lerp(frame.position, blend);
-    this.target.lerp(frame.target, blend);
-    this.focus += ((frame.close ? 1 : 0) - this.focus) * blend;
+    camera.position.lerp(position, blend);
+    this.target.lerp(target, blend);
+    this.focus += ((frame.close ? 1 : near) - this.focus) * blend;
+    camera.fov =
+      40 + (frame.close && world?.grapple?.mode !== 'clinch' ? 10 : 25) * pov;
     // Lift the fighters above the taller ground-control panel, without orbiting.
     const width = 1000 * camera.aspect;
     camera.setViewOffset(width, 1000, 0, 65 * this.focus, width, 1000);

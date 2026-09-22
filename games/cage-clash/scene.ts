@@ -52,6 +52,32 @@ export class CageScene {
   setLocalPlayer(id: string) {
     this.local = id;
   }
+  setZoom(value: number) {
+    this.fightCamera.setZoom(value);
+  }
+  private viewpoint() {
+    const w = this.latest?.world;
+    if (w?.phase !== 'playing') return;
+    const own = this.fighters.get(this.local);
+    const opponent = this.fighters.get(
+      w.players.find((p) => p.id !== this.local)?.id ?? '',
+    );
+    if (!own || !opponent) return;
+    const eye = own.rig.head.getWorldPosition(new T.Vector3());
+    const foe = opponent.rig.head.getWorldPosition(new T.Vector3());
+    const forward = foe.clone().sub(eye).normalize();
+    if (w.grapple && w.grapple.mode !== 'clinch') {
+      // A shoulder-height POV looks through the bodies when one fighter is flat.
+      // Keep a tight elevated angle so hands, guard and the mat stay in view.
+      const a = w.players[0],
+        b = w.players[1];
+      const center = new T.Vector3((a.x + b.x) / 2, 0.8, (a.z + b.z) / 2);
+      eye.copy(center).add(new T.Vector3(3.3, 2.6, 3.1));
+      foe.copy(center);
+    } else eye.addScaledVector(forward, 0.14);
+    if (!w.grapple || w.grapple.mode === 'clinch') foe.y -= 0.1;
+    return { eye, opponent: foe };
+  }
   render(s: Snapshot) {
     this.latest = s;
     for (const p of s.world.players)
@@ -88,6 +114,7 @@ export class CageScene {
         'guard-break': 'GUARD BREAK',
         takedown: 'TAKEDOWN',
         escape: 'ESCAPE',
+        bridge: 'BRIDGE',
         advance: 'POSITION',
         submission: 'SUBMISSION',
         down: 'DOWN!',
@@ -103,7 +130,17 @@ export class CageScene {
               transparent: true,
             }),
           );
-      mesh.position.set(event.x, words[event.kind] ? 2.3 : 1.2, event.z);
+      mesh.position.set(
+        event.x,
+        words[event.kind]
+          ? s.world.grapple && s.world.grapple.mode !== 'clinch'
+            ? 1.65
+            : 2.3
+          : s.world.grapple && s.world.grapple.mode !== 'clinch'
+            ? 0.85
+            : 1.2,
+        event.z,
+      );
       mesh.lookAt(this.camera.position);
       this.scene.add(mesh);
       this.effects.push({ mesh, life: 0.7 });
@@ -119,7 +156,13 @@ export class CageScene {
       height = Math.max(1, this.host.clientHeight);
     this.renderer.setSize(width, height);
     this.camera.aspect = width / height;
-    this.fightCamera.update(this.camera, this.latest?.world ?? null, 0, true);
+    this.fightCamera.update(
+      this.camera,
+      this.latest?.world ?? null,
+      0,
+      true,
+      this.viewpoint(),
+    );
     this.camera.updateProjectionMatrix();
     for (const fence of this.cage.fences)
       fence.material.opacity = fence.z > 0 ? 0.1 : 0.4;
@@ -137,11 +180,28 @@ export class CageScene {
       this.reduced.matches,
     );
     const w = this.latest?.world;
+    if (w)
+      for (const p of w.players) {
+        const v = this.fighters.get(p.id)!;
+        const blend = 1 - Math.exp(-dt * 22);
+        v.root.position.x += (p.x - v.root.position.x) * blend;
+        v.root.position.z += (p.z - v.root.position.z) * blend;
+        poseFighter(v, p, now / 1000, this.reduced.matches, w.grapple);
+        v.marker.visible = p.id === this.local && !this.fightCamera.firstPerson;
+        v.marker.position.y =
+          w.grapple && w.grapple.mode !== 'clinch' ? 1.7 : 2.4;
+        v.rig.head.visible =
+          p.id !== this.local ||
+          w.phase !== 'playing' ||
+          (w.grapple?.mode !== 'clinch' && !!w.grapple) ||
+          !this.fightCamera.firstPerson;
+      }
     const focus = this.fightCamera.update(
       this.camera,
       w ?? null,
       dt,
       this.reduced.matches,
+      this.viewpoint(),
     );
     for (const fence of this.cage.fences) {
       const foreground = fence.x * 1.25 + fence.z * 0.35 > 0;
@@ -150,17 +210,6 @@ export class CageScene {
       for (const material of fence.frameMaterials)
         material.opacity = foreground ? 1 - focus * 0.94 : 1;
     }
-    if (w)
-      for (const p of w.players) {
-        const v = this.fighters.get(p.id)!;
-        const blend = 1 - Math.exp(-dt * 22);
-        v.root.position.x += (p.x - v.root.position.x) * blend;
-        v.root.position.z += (p.z - v.root.position.z) * blend;
-        poseFighter(v, p, now / 1000, this.reduced.matches, w.grapple);
-        v.marker.visible = p.id === this.local;
-        v.marker.position.y =
-          w.grapple && w.grapple.mode !== 'clinch' ? 1.7 : 2.4;
-      }
     for (let i = this.effects.length - 1; i >= 0; i--) {
       const fx = this.effects[i];
       fx.life -= dt;

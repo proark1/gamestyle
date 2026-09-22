@@ -115,7 +115,7 @@ void test('buffer survives checkpoint handover and old rules are rejected', () =
   const restored = createEngine(1000, checkpoint);
   assert.equal(restored.world.players[0].queuedMove, 'kick');
   assert.equal(restored.world.players[0].queueTime, 0.18);
-  assert.equal(compatibility('cage-clash').rules, 2);
+  assert.equal(compatibility('cage-clash').rules, 3);
   assert.throws(
     () => createEngine(1000, { ...checkpoint, rules: 1 }),
     /checkpoint/,

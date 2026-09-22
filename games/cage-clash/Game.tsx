@@ -17,6 +17,7 @@ import {
   Footprints,
   Grip,
   Trophy,
+  Eye,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import GameToolbar from '../../shared/ui/GameToolbar';
@@ -83,7 +84,15 @@ export default function CageGame() {
     [help, setHelp] = useState(false),
     [muted, setMuted] = useState(false),
     [error, setError] = useState(''),
-    [chosen, setChosen] = useState<Style>('mma');
+    [chosen, setChosen] = useState<Style>('mma'),
+    [zoom, setZoom] = useState(0);
+  const zoomRef = useRef(0);
+  const changeZoom = (value: number) => {
+    const next = Math.max(0, Math.min(1, value));
+    zoomRef.current = next;
+    setZoom(next);
+    scene.current?.setZoom(next);
+  };
   const receive = useCallback((s: Snapshot) => {
     latest.current = s;
     scene.current?.render(s);
@@ -254,6 +263,7 @@ export default function CageGame() {
       .then(({ CageScene: Scene }) => {
         if (cancelled || !host.current) return;
         view = new Scene(host.current);
+        view.setZoom(zoomRef.current);
         scene.current = view;
         sound.current = new CageAudio();
         view.setLocalPlayer(self.current);
@@ -375,12 +385,12 @@ export default function CageGame() {
           )
         : g?.mode === 'mount'
           ? say(
-              'Hold F or Q to recover guard. Shift blocks strikes.',
-              'F oder Q halten für Guard. Shift blockt Schläge.',
+              'Hold F to recover guard. Tap Shift + Q to bridge between attacks.',
+              'F halten für Guard. Shift + Q im richtigen Moment für eine Brücke.',
             )
           : say(
-              'Hold F to reverse · Q to escape · E for submission',
-              'F halten zum Umdrehen · Q zur Flucht · E für Aufgabegriff',
+              'F reverses · Shift + Q bridges · Q escapes · E submits',
+              'F dreht um · Shift + Q brückt · Q befreit · E greift an',
             )
       : g
         ? top
@@ -418,7 +428,11 @@ export default function CageGame() {
                 );
   return (
     <main className="cage-game">
-      <div className="cage-canvas" ref={host} />
+      <div
+        className="cage-canvas"
+        ref={host}
+        onWheel={(event) => changeZoom(zoomRef.current - event.deltaY * 0.0015)}
+      />
       <header className="topbar cage-topbar">
         <a href="/" className="wordmark">
           <ArrowLeft size={18} />
@@ -437,6 +451,30 @@ export default function CageGame() {
           onHelp={() => setHelp(true)}
         />
       </header>
+      {me && w?.phase === 'playing' && (
+        <label className="cage-view-control">
+          <span>
+            <Eye size={16} /> {say('VIEW', 'ANSICHT')}
+            <strong>
+              {zoom >= 0.95
+                ? ground
+                  ? say('Close ground', 'Bodennah')
+                  : say('First person', 'Ich-Perspektive')
+                : zoom > 0.35
+                  ? say('Close', 'Nah')
+                  : say('Arena', 'Arena')}
+            </strong>
+          </span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={Math.round(zoom * 100)}
+            onChange={(event) => changeZoom(Number(event.target.value) / 100)}
+            aria-label={say('Camera zoom', 'Kamera-Zoom')}
+          />
+        </label>
+      )}
       {error && (
         <output className="cage-error" role="alert">
           {error}
@@ -790,7 +828,9 @@ export default function CageGame() {
                 {g
                   ? ground && top && !submitting
                     ? say('STAND UP', 'AUFSTEHEN')
-                    : say('ESCAPE', 'FLUCHT')
+                    : ground && !top && me.guarding
+                      ? say('BRIDGE', 'BRÜCKE')
+                      : say('ESCAPE', 'FLUCHT')
                   : say('DODGE', 'AUSWEICHEN')}
               </span>
               <kbd>Q</kbd>
@@ -832,6 +872,12 @@ export default function CageGame() {
             </li>
             <li>
               {say(
+                'Use the View slider or mouse wheel to move closer. Zoom all the way in for first person; zoom back out for the whole cage.',
+                'Mit dem Ansichtsregler oder Mausrad näher herangehen. Ganz hineinzoomen für die Ich-Perspektive; herauszoomen für den ganzen Käfig.',
+              )}
+            </li>
+            <li>
+              {say(
                 'Shift guards. Raise it just before contact to parry. Q dodges. Heavy misses and low stamina leave openings.',
                 'Shift blockt. Kurz vor Kontakt hochziehen: Parade. Q weicht aus. Schwere Fehlschläge und wenig Ausdauer öffnen die Deckung.',
               )}
@@ -844,8 +890,8 @@ export default function CageGame() {
             </li>
             <li>
               {say(
-                'On the ground: Space strikes. Hold F to gain mount from top, or reverse from below. Q escapes; escaping mount first returns to guard. A top fighter can stand up with Q.',
-                'Am Boden: Leertaste schlägt. F halten verbessert oben die Position oder dreht sie unten um. Q befreit; aus Mount geht es zuerst zurück in Guard. Oben kannst du mit Q aufstehen.',
+                'On the ground: Space strikes. Hold F to gain mount from top, or reverse from below. Tap Shift + Q from underneath for a timed bridge that costs stamina. Q escapes; escaping mount first returns to guard. A top fighter can stand up with Q.',
+                'Am Boden: Leertaste schlägt. F halten verbessert oben die Position oder dreht sie unten um. Unten Shift + Q für eine zeitlich abgestimmte Brücke tippen; das kostet Ausdauer. Q befreit; aus Mount zuerst in Guard. Oben kannst du mit Q aufstehen.',
               )}
             </li>
             <li>

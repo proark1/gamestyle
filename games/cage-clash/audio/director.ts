@@ -94,6 +94,7 @@ export class CageAudioDirector {
         for (const e of w.events) {
           if (e.id <= old.event || e.kind === 'bell') continue;
           let cue: string = e.kind;
+          if (e.kind === 'bridge') cue = 'escape';
           if (e.kind === 'hit')
             cue =
               e.move === 'kick'

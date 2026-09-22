@@ -95,6 +95,16 @@ export function GrappleReadout({
         <span>{say('OPPONENT', 'GEGNER')}</span>
         <span>{say('YOU', 'DU')}</span>
       </div>
+      {g.mode !== 'clinch' && g.top !== player && (
+        <div className="cage-bridge-cue">
+          {g.cooldown > 0
+            ? say(
+                `Bridge recovers in ${g.cooldown.toFixed(1)}s`,
+                `Brücke bereit in ${g.cooldown.toFixed(1)}s`,
+              )
+            : say('Bridge ready · Shift + Q', 'Brücke bereit · Shift + Q')}
+        </div>
+      )}
     </div>
   );
 }

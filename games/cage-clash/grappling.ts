@@ -113,6 +113,23 @@ export function grapplingStep(w: World) {
           (escape ? escape - guardTop : 0)) *
         0.6;
       g.progress *= 1 - STEP * 0.05;
+      // A timed bridge gives the lower fighter a burst of space. Holding both
+      // buttons cannot repeat it; another attempt needs a fresh Q press.
+      if (
+        bottom.input.guard &&
+        bottom.input.dodge &&
+        !bottom.previous.dodge &&
+        bottom.stamina >= 20 &&
+        !g.cooldown
+      ) {
+        bottom.stamina -= 18;
+        g.progress = Math.max(
+          -1,
+          g.progress - (g.mode === 'mount' ? 0.48 : 0.38),
+        );
+        g.cooldown = 0.9;
+        emit(w, 'bridge', bottom);
+      }
       if (g.progress >= 1) {
         if (g.mode === 'guard') {
           g.mode = 'mount';
