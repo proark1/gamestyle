@@ -7,7 +7,8 @@ import { CORNERS, type Boxer } from './types';
 import { label } from './signage';
 import { createRingside } from './ringside';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { punchProfile } from './combat';
+import { nextCombo, punchKind, punchProfile, PUNCHES } from './combat';
+import { guardFist, punchMotion, type Point } from './punch-motion';
 import { TAG_TRANSITION } from './tagging';
 
 export function createRing() {
@@ -125,11 +126,25 @@ export function createBoxer(p: Boxer, look?: Look) {
   );
   root.add(model);
   const rig = model.userData as Record<string, T.Group>;
-  for (const side of ['L', 'R']) {
-    const hand = rig[`sleeve${side}`];
-    ball(hand, [0.22, 0.24, 0.25], [0, -0.39, 0.07], TEAM[p.team], 16);
-    box(hand, [0.26, 0.13, 0.29], [0, -0.25, 0.04], CLOTH.cream, true);
-  }
+  const arms = (['L', 'R'] as const).map((side) => {
+    // Only boxing replaces Nico's straight arms with articulated limbs.
+    rig[`sleeve${side}`].visible = false;
+    const parent = rig[`arm${side}`];
+    const upper = ball(parent, [0.065, 0.1, 0.065], [0, -0.1, 0], '#de9268');
+    const elbow = ball(parent, [0.067, 0.067, 0.067], [0, -0.2, 0], '#de9268');
+    const forearm = ball(parent, [0.064, 0.1, 0.064], [0, -0.3, 0], '#de9268');
+    const glove = new T.Group();
+    parent.add(glove);
+    ball(glove, [0.175, 0.19, 0.2], [0, 0, 0.035], TEAM[p.team], 16);
+    box(glove, [0.2, 0.1, 0.22], [0, -0.115, 0], CLOTH.cream, true);
+    ball(
+      glove,
+      [0.07, 0.105, 0.09],
+      [side === 'L' ? 0.12 : -0.12, -0.03, 0.055],
+      TEAM[p.team],
+    );
+    return { upper, elbow, forearm, glove, side: side === 'L' ? -1 : 1 };
+  });
   const ring = new T.Mesh(
     new T.RingGeometry(0.43, 0.51, 32),
     new T.MeshBasicMaterial({
@@ -149,7 +164,7 @@ export function createBoxer(p: Boxer, look?: Look) {
   marker.rotation.z = Math.PI;
   marker.position.y = 2.4;
   root.add(marker);
-  return { root, model, rig, marker, ring, team: p.team };
+  return { root, model, rig, arms, marker, ring, team: p.team };
 }
 export function poseBoxer(
   visual: ReturnType<typeof createBoxer>,
@@ -160,9 +175,6 @@ export function poseBoxer(
   const { rig, model } = visual;
   const moving = Math.min(1, Math.hypot(p.vx, p.vz) / 3);
   const stride = Math.sin(time * 12) * moving;
-  const wobble = reduced
-    ? 0
-    : Math.sin(time * 13) * Math.min(0.24, p.balance / 350);
   model.position.y = p.down
     ? 0.35
     : reduced
@@ -171,9 +183,9 @@ export function poseBoxer(
   model.rotation.set(
     p.down ? -Math.PI / 2 : p.dodge > 0 ? 0.35 : 0,
     0,
-    p.down ? 0.2 : wobble,
+    p.down ? 0.2 : 0,
   );
-  rig.body.rotation.set(p.stagger > 0 ? -0.25 : 0.08, 0, wobble);
+  rig.body.rotation.set(p.stagger > 0 ? -0.12 : 0.08, 0, 0);
   rig.legL.rotation.set(stride * 0.5, 0, -0.06);
   rig.legR.rotation.set(-stride * 0.5, 0, 0.06);
   rig.armL.rotation.set(p.guarding ? -2.4 : -1.15, 0.1, -0.25);
@@ -185,35 +197,58 @@ export function poseBoxer(
       : -0.4;
     rig.legL.rotation.x = rig.legR.rotation.x = 0;
   }
-  const arm = p.hand ? rig.armR : rig.armL;
-  if (p.charge > 0) {
-    const nextHand =
-      p.charge >= 0.45 && p.stamina >= 25
-        ? 1 - p.hand
-        : p.combo === 1 && p.comboTime > 0 && p.stamina >= 12
-          ? 1
-          : 0;
-    const windingArm = nextHand ? rig.armR : rig.armL;
-    windingArm.rotation.x = -0.65;
-    windingArm.rotation.z = nextHand ? 0.65 : -0.65;
-    rig.body.rotation.y = nextHand ? -0.25 : 0.25;
+  const fighting = p.active && !p.down && p.tagTransition === 0;
+  if (fighting) {
+    rig.armL.rotation.set(0, 0, 0);
+    rig.armR.rotation.set(0, 0, 0);
   }
-  if (p.attack > 0) {
-    const profile = punchProfile(p),
-      elapsed = profile.duration - p.attack;
-    const swing =
-      elapsed < profile.windup
-        ? (elapsed / profile.windup) ** 2
-        : Math.max(
-            0,
-            1 -
-              (elapsed - profile.windup) / (profile.duration - profile.windup),
-          );
-    arm.rotation.x = -1.1 - swing * (p.heavy ? 0.75 : 0.95);
-    arm.rotation.y = (p.hand ? -1 : 1) * swing * (p.heavy ? 0.8 : 0.12);
-    rig.body.rotation.y =
-      (p.hand ? 1 : -1) * swing * (p.heavy ? 0.45 : p.combo === 2 ? 0.3 : 0.13);
-    rig.body.rotation.x += swing * (p.heavy ? 0.12 : 0.06);
+  for (const [index, limb] of visual.arms.entries()) {
+    let fist: Point = fighting ? guardFist(limb.side) : [0, -0.39, 0.07];
+    if (fighting && p.guarding) fist = [-limb.side * 0.04, 0.3, 0.3];
+    if (fighting && p.charge > 0) {
+      const charged = p.charge >= 0.45 && p.stamina >= 25;
+      const combo = nextCombo(p);
+      const nextHand = charged ? 1 - p.hand : combo === 2 ? 1 : 0;
+      if (index === nextHand) {
+        const kind = charged
+          ? 'hook'
+          : combo === 3
+            ? 'uppercut'
+            : combo === 2
+              ? 'cross'
+              : 'jab';
+        fist = punchMotion(
+          kind,
+          Math.min(p.charge / 0.45, 1) * 0.3 * PUNCHES[kind].windup,
+          limb.side,
+        ).fist;
+      }
+    }
+    if (fighting && p.attack > 0 && index === p.hand) {
+      const motion = punchMotion(
+        punchKind(p),
+        punchProfile(p).duration - p.attack,
+        limb.side,
+      );
+      fist = motion.fist;
+      rig.body.rotation.y =
+        limb.side *
+        motion.drive *
+        (p.heavy ? 0.18 : p.combo === 2 ? 0.12 : 0.05);
+      rig.body.rotation.x += motion.drive * (p.combo === 3 ? -0.07 : 0.06);
+    }
+    const elbow: Point = fighting
+      ? [
+          fist[0] * 0.45 + limb.side * 0.09,
+          fist[1] * 0.45 - 0.16,
+          fist[2] * 0.43,
+        ]
+      : [0, -0.19, 0];
+    limb.elbow.position.set(...elbow);
+    limb.glove.position.set(...fist);
+    limb.glove.rotation.x = fighting ? Math.PI / 2 : 0;
+    poseSegment(limb.upper, [0, 0, 0], elbow);
+    poseSegment(limb.forearm, elbow, fist);
   }
   if (p.tagTransition > 0 && !reduced) {
     const lift = Math.sin((1 - p.tagTransition / TAG_TRANSITION) * Math.PI);
@@ -227,4 +262,17 @@ export function poseBoxer(
     rig.armL.rotation.set(-0.3, 0, -0.9);
     rig.armR.rotation.set(-0.3, 0, 0.9);
   }
+}
+
+const segmentDirection = new T.Vector3();
+const segmentUp = new T.Vector3(0, 1, 0);
+function poseSegment(mesh: T.Mesh, from: Point, to: Point) {
+  mesh.position.set(
+    (from[0] + to[0]) / 2,
+    (from[1] + to[1]) / 2,
+    (from[2] + to[2]) / 2,
+  );
+  segmentDirection.set(to[0] - from[0], to[1] - from[1], to[2] - from[2]);
+  mesh.scale.y = segmentDirection.length() / 2 + 0.035;
+  mesh.quaternion.setFromUnitVectors(segmentUp, segmentDirection.normalize());
 }

@@ -374,7 +374,7 @@ void test('peer input packets carry a released one-tap request through to an NPC
   }
   assert.equal(caller.tags, 1);
   assert.equal(caller.active, true);
-  const obsolete = { ...engine.checkpoint(), rules: 1 };
-  assert.equal(rulesVersion('on-the-ropes'), 2);
+  const obsolete = { ...engine.checkpoint(), rules: 2 };
+  assert.equal(rulesVersion('on-the-ropes'), 3);
   assert.throws(() => createEngine(1000, obsolete), /checkpoint/);
 });

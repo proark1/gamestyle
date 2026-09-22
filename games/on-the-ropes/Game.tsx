@@ -538,20 +538,27 @@ export default function BoxingGame() {
                   : me.attack > 0
                     ? me.heavy
                       ? say('HEAVY HOOK', 'SCHWERER HAKEN')
-                      : me.combo === 2
-                        ? say('CROSS', 'GERADE')
-                        : 'JAB'
+                      : me.combo === 3
+                        ? say('UPPERCUT', 'AUFWÄRTSHAKEN')
+                        : me.combo === 2
+                          ? say('CROSS', 'GERADE')
+                          : 'JAB'
                     : me.cooldown > 0
                       ? say('Recovering your stance…', 'Stand wiederfinden…')
-                      : me.combo === 1 && me.comboTime > 0
+                      : me.combo === 2 && me.comboTime > 0 && me.attack === 0
                         ? say(
-                            'Follow with a cross',
-                            'Mit einer Geraden nachsetzen',
+                            'Uppercut — close the gap',
+                            'Aufwärtshaken — geh näher ran',
                           )
-                        : say(
-                            'Time your guard. Punish a miss.',
-                            'Deckung timen. Fehlschläge kontern.',
-                          )}
+                        : me.combo === 1 && me.comboTime > 0
+                          ? say(
+                              'Follow with a cross',
+                              'Mit einer Geraden nachsetzen',
+                            )
+                          : say(
+                              'Time your guard. Punish a miss.',
+                              'Deckung timen. Fehlschläge kontern.',
+                            )}
               </div>
             )}
             {!me.active && (
@@ -602,9 +609,11 @@ export default function BoxingGame() {
                   <span>
                     {me.charge >= 0.45
                       ? say('HOOK', 'HAKEN')
-                      : me.combo === 1 && me.comboTime > 0 && me.attack === 0
-                        ? say('CROSS', 'GERADE')
-                        : say('PUNCH', 'SCHLAG')}
+                      : me.combo === 2 && me.comboTime > 0 && me.attack === 0
+                        ? say('UPPERCUT', 'AUFWÄRTSHAKEN')
+                        : me.combo === 1 && me.comboTime > 0 && me.attack === 0
+                          ? say('CROSS', 'GERADE')
+                          : say('PUNCH', 'SCHLAG')}
                   </span>
                   <kbd>{say('Space', 'Leertaste')}</kbd>
                   <i style={{ width: `${me.charge * 100}%` }} />
@@ -691,8 +700,8 @@ export default function BoxingGame() {
             </li>
             <li>
               {say(
-                'Tap Space for a jab, then tap again as you recover for a cross. Hold and release for a heavy hook. Heavy misses have longer recovery. Guard cancels a charge to feint.',
-                'Tippe die Leertaste für einen Jab, dann nach der Erholung erneut für eine Gerade. Halten und loslassen: schwerer Haken. Fehlschläge brauchen länger. Deckung bricht das Aufladen als Finte ab.',
+                'Tap Space for a jab, then tap as you recover for a cross and a close-range uppercut. Hold and release for a heavy hook. Heavy misses have longer recovery. Guard cancels a charge to feint.',
+                'Tippe die Leertaste für Jab, dann nach jeder Erholung für Gerade und Aufwärtshaken aus der Nähe. Halten und loslassen: schwerer Haken. Fehlschläge brauchen länger. Deckung bricht das Aufladen als Finte ab.',
               )}
             </li>
             <li>

@@ -94,7 +94,7 @@ export function updateBots(w: World, dt: number) {
       p.stamina >= 15 &&
       (beat % 65 < 3 ||
         p.counter > 0 ||
-        (p.combo === 1 && p.comboTime > 0.4 && beat < 140))
+        ((p.combo === 1 || p.combo === 2) && p.comboTime > 0.4 && beat < 140))
     ) {
       p.botHold =
         p.stamina >= 35 &&

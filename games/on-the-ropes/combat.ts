@@ -19,6 +19,14 @@ export const PUNCHES = {
     cost: 12,
     recovery: 0.12,
   },
+  uppercut: {
+    duration: 0.64,
+    windup: 0.26,
+    range: 1.25,
+    damage: 26,
+    cost: 18,
+    recovery: 0.17,
+  },
   hook: {
     duration: 0.86,
     windup: 0.36,
@@ -29,7 +37,22 @@ export const PUNCHES = {
   },
 } as const;
 export function punchProfile(p: Boxer) {
-  return p.heavy ? PUNCHES.hook : p.combo === 2 ? PUNCHES.cross : PUNCHES.jab;
+  return PUNCHES[punchKind(p)];
+}
+export function punchKind(p: Boxer) {
+  return p.heavy
+    ? 'hook'
+    : p.combo === 3
+      ? 'uppercut'
+      : p.combo === 2
+        ? 'cross'
+        : 'jab';
+}
+export function nextCombo(p: Boxer) {
+  if (p.comboTime <= 0) return 1;
+  if (p.combo === 1 && p.stamina >= PUNCHES.cross.cost) return 2;
+  if (p.combo === 2 && p.stamina >= PUNCHES.uppercut.cost) return 3;
+  return 1;
 }
 export function resetCombat(p: Boxer) {
   p.attack = p.charge = p.cooldown = p.stagger = p.dodge = p.dodgeCooldown = 0;
@@ -149,10 +172,7 @@ export function combatStep(w: World, dt: number) {
         p.charge = Math.min(1, p.charge + dt);
       else if (p.charge > 0) {
         p.heavy = p.charge >= 0.45 && p.stamina >= 25;
-        p.combo =
-          !p.heavy && p.combo === 1 && p.comboTime > 0 && p.stamina >= 12
-            ? 2
-            : 1;
+        p.combo = p.heavy ? 0 : nextCombo(p);
         const profile = punchProfile(p);
         if (p.stamina >= profile.cost) {
           p.attack = profile.duration;
