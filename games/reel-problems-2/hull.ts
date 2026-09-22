@@ -38,7 +38,8 @@ const CRACKS: Record<LeakCause, string> = {
 
 /** What a held E does for an angler on deck, when it is not reeling. */
 export function handsOnHull(w: ReelWorld, p: Angler): 'patch' | 'bail' | null {
-  if (p.swimming || p.paddle || p.y > 0) return null;
+  if (w.mission?.survival?.jobs || p.swimming || p.paddle || p.y > 0)
+    return null;
   if (w.leak && Math.hypot(p.x - w.leak.x, p.z - w.leak.z) < LEAK_REACH)
     return 'patch';
   if (

@@ -1,3 +1,4 @@
+import { DeckJobsScene } from './deck-jobs-scene';
 import { SurvivalScene } from './survival-scene';
 import { MissionScene } from './mission-scene';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
@@ -50,6 +51,7 @@ export class ReelScene {
   private boat = createBoat();
   private survivalScene = new SurvivalScene();
   private missionScene = new MissionScene(this.boat);
+  private deckJobsScene = new DeckJobsScene(this.boat);
   private sea: SeaScene;
   private yaw = new THREE.Group();
   private anglers = new Map<string, THREE.Group>();
@@ -162,7 +164,11 @@ export class ReelScene {
     this.sea = new SeaScene(this.scene, sun, water.material);
     addShore(this.scene);
     this.yaw.add(this.boat);
-    this.scene.add(this.missionScene.root, this.survivalScene.root);
+    this.scene.add(
+      this.missionScene.root,
+      this.survivalScene.root,
+      this.deckJobsScene.root,
+    );
     this.scene.add(this.yaw);
     this.ring.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.1;
@@ -478,6 +484,7 @@ export class ReelScene {
     this.sea.update(world, now);
     this.missionScene.update(world);
     this.survivalScene.update(world);
+    this.deckJobsScene.update(world);
     const smooth = 1 - Math.exp(-12 * dt);
     // A new boat bobs up at the dock rather than gliding over from the wreck.
     if ((b.hull ?? 0) !== this.hull) {

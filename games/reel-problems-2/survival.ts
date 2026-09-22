@@ -1,9 +1,20 @@
+import {
+  advanceDeckJobs,
+  completeDeckJob,
+  deckJobTarget,
+  deckhandGoal,
+  deckhandInput,
+  freshDeckJobs,
+  heldSupply,
+  type DeckJobs,
+} from './deck-jobs';
 import type { Angler, ReelEvent, ReelWorld, Vector } from './types';
 import { idleInput } from './types';
 import { distance, missionPosition } from './campaign';
 
 type Emit = (w: ReelWorld, kind: ReelEvent['kind'], text: string) => void;
 export type Survival = {
+  jobs?: DeckJobs;
   stage: 'fight' | 'choice' | 'voyage' | 'escape';
   since: number;
   route: 'safe' | 'risk' | null;
@@ -33,6 +44,7 @@ export function prepareSurvival(w: ReelWorld) {
   m.id = 'last-boat-home';
   m.lessonDone = true;
   m.survival = {
+    jobs: freshDeckJobs(),
     stage: 'fight',
     since: w.clock,
     route: null,
@@ -82,7 +94,7 @@ function damage(w: ReelWorld, amount: number, emit: Emit) {
   emit(
     w,
     'bump',
-    'Hull hit! Hold C to bail and patch. Keep someone watching the water.',
+    'Hull hit! Fetch a plank from TIMBER and carry it to the leak. Someone else can bail at the bucket.',
   );
 }
 function rescue(w: ReelWorld, p: Angler) {
@@ -119,6 +131,7 @@ export function survivalWork(w: ReelWorld, p: Angler) {
   );
   if (crate)
     return { id: `salvage:${crate.id}`, label: 'Save the catch!', seconds: 1 };
+  if (a.jobs) return deckJobTarget(w, p);
   if (
     a.stage === 'escape' &&
     distance(w.boat, GATE) < 5 &&
@@ -141,6 +154,7 @@ export function completeSurvivalWork(
 ) {
   const a = w.mission?.survival;
   if (!a) return false;
+  if (completeDeckJob(w, p, target, emit)) return true;
   if (target.startsWith('crew:')) {
     const friend = w.players.find((q) => q.id === target.slice(5));
     if (friend?.swimming && distance(friend, w.boat) < 15) {
@@ -150,7 +164,7 @@ export function completeSurvivalWork(
     }
     return true;
   }
-  if (target === 'storm-repair') {
+  if (!a.jobs && target === 'storm-repair') {
     w.boat.flood = Math.max(0, w.boat.flood - 0.32);
     w.leak = null;
     emit(
@@ -161,6 +175,7 @@ export function completeSurvivalWork(
     return true;
   }
   if (
+    !a.jobs &&
     target === 'escape' &&
     a.stage === 'escape' &&
     distance(w.boat, GATE) < 5 &&
@@ -183,18 +198,29 @@ export function completeSurvivalWork(
 export function advanceSurvival(w: ReelWorld, dt: number, emit: Emit) {
   const m = w.mission!,
     a = m.survival!;
-  if (m.status === 'recovering') return;
+  advanceDeckJobs(w, dt, emit);
+  if (w.phase !== 'playing' || m.status === 'recovering') return;
   const crew = w.players.filter((p) => !p.swimming),
     n = Math.max(1, crew.length);
   const human = crew.filter((p) => !p.bot);
   const steering =
-    human.reduce((sum, p) => sum + p.input.x, 0) / Math.max(1, human.length);
+    human.reduce(
+      (sum, p) =>
+        sum +
+        (!a.jobs || (p.input.reel && !p.input.work && !heldSupply(w, p))
+          ? p.input.x
+          : 0),
+      0,
+    ) / Math.max(1, human.length);
   w.boat.x = Math.max(-9, Math.min(9, w.boat.x + steering * dt * 4));
   w.boat.vx *= 0.7;
   w.boat.vz *= 0.7;
   if (a.stage === 'fight') {
     const surge = surging(w),
-      reeling = crew.filter((p) => p.input.reel && !p.input.brace).length;
+      reeling = crew.filter(
+        (p) =>
+          p.input.reel && !p.input.brace && !p.input.work && !heldSupply(w, p),
+      ).length;
     a.giant = Math.max(
       0,
       Math.min(
@@ -248,11 +274,15 @@ export function advanceSurvival(w: ReelWorld, dt: number, emit: Emit) {
     const risk = a.route === 'risk',
       duration = risk ? 38 : 52;
     const rowers = crew.filter(
-      (p) => p.input.reel && !p.input.brace && !p.input.work,
+      (p) =>
+        p.input.reel && !p.input.brace && !p.input.work && !heldSupply(w, p),
     ).length;
     const pace = 0.12 + (0.88 * rowers) / n;
     a.progress = Math.min(1, a.progress + (dt * pace) / duration);
-    const targetZ = a.departureZ + a.progress * (GATE.z - a.departureZ);
+    const targetZ =
+      a.departureZ +
+      a.progress * (GATE.z - a.departureZ) +
+      (a.jobs?.crossing ?? 0) * 7;
     w.boat.z += (targetZ - w.boat.z) * Math.min(1, dt * 2);
     w.boat.yaw = Math.PI;
     w.weather.kind = a.stage === 'escape' ? 'storm' : 'rain';
@@ -271,7 +301,10 @@ export function advanceSurvival(w: ReelWorld, dt: number, emit: Emit) {
           ((risk ? 0.35 : 0.22) * exposed.length) / Math.max(1, human.length),
           emit,
         );
-        const cargo = m.cargo.find((c) => c.location === 'boat');
+        const cargo = m.cargo.find(
+          (c) =>
+            c.location === 'boat' && !(c.kind === 'monster' && a.jobs?.secured),
+        );
         if (cargo) {
           cargo.location = 'water';
           cargo.x = w.boat.x + 2;
@@ -317,7 +350,9 @@ export function advanceSurvival(w: ReelWorld, dt: number, emit: Emit) {
       emit(
         w,
         'weather',
-        'THE HARBOUR! Steer into the yellow gate. Bring everyone aboard and hold C.',
+        a.jobs
+          ? 'THE HARBOUR! One crew member cranks the bow winch while the others ROW. Solo: latch the gate, then row!'
+          : 'THE HARBOUR! Steer into the yellow gate. Bring everyone aboard and hold C.',
       );
     }
     // Floating cargo drifts alongside briefly, leaving a real rescue decision.
@@ -335,6 +370,12 @@ export function advanceSurvival(w: ReelWorld, dt: number, emit: Emit) {
 export function survivalNpc(w: ReelWorld, p: Angler) {
   const a = w.mission?.survival;
   if (!a || w.mission?.status === 'recovering') return false;
+  if (p.swimming) return false;
+  const goal = deckhandGoal(w, p);
+  if (goal) {
+    deckhandInput(w, p, goal);
+    return true;
+  }
   p.input = {
     ...idleInput(),
     seq: p.input.seq + 1,

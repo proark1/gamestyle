@@ -1,13 +1,16 @@
 'use client';
-import type { ReelAction, ReelWorld } from './types';
+import { gateOpen, giantAboard } from './deck-jobs';
+import type { Angler, ReelAction, ReelWorld } from './types';
 import { roundDuration } from './campaign';
 import { surging } from './survival';
 export default function SurvivalBrief({
   world: w,
+  player,
   action,
   disabled,
 }: {
   world: ReelWorld;
+  player?: Angler;
   action: (a: ReelAction) => void;
   disabled: boolean;
 }) {
@@ -53,17 +56,13 @@ export default function SurvivalBrief({
           </p>
           <div className="reel-build-list">
             {m.components.map((c) => (
-              <span
-                key={
-                  c.id.startsWith('deck')
-                    ? 'Planks'
-                    : c.id === 'barrels'
-                      ? 'Barrels'
-                      : 'Paddle'
-                }
-                className={c.installed ? 'installed' : ''}
-              >
-                {c.installed ? '✓' : '○'} {c.id}
+              <span key={c.id} className={c.installed ? 'installed' : ''}>
+                {c.installed ? '✓' : '○'}{' '}
+                {c.id.startsWith('deck')
+                  ? 'Planks'
+                  : c.id === 'barrels'
+                    ? 'Barrels'
+                    : 'Paddle'}
               </span>
             ))}
           </div>
@@ -77,7 +76,8 @@ export default function SurvivalBrief({
           </div>
           <progress aria-label="Giant catch progress" max={1} value={a.giant} />
           <p>
-            Move left/right to steer around the rocks. Reel: E · Brace: Shift.
+            Hold E and move left/right to steer around rocks. Release E to walk
+            the deck. Brace: Shift.
           </p>
         </>
       ) : a.stage === 'choice' ? (
@@ -109,16 +109,57 @@ export default function SurvivalBrief({
             {wave
               ? `WAVE IN ${Math.max(0, Math.ceil((a.waveAt - w.clock) / 1000))} · HOLD BRACE`
               : a.stage === 'escape'
-                ? 'STEER TO THE YELLOW GATE · HOLD C'
+                ? 'WINCH AT THE BOW · ROW THROUGH TOGETHER'
                 : 'WATCH THE WATER · LOOK AFTER EACH OTHER'}
           </div>
           <p>
             {a.stage === 'escape'
-              ? 'Bring every friend aboard. Hold C at the gate to escape.'
-              : 'Hold Reel to row. Release and Brace for waves. Move left/right to steer. Hold C to rescue or repair.'}
+              ? 'Bring everyone aboard. Hold C at WINCH; a crewmate rows. Solo: latch it, release C, then row.'
+              : 'Hold E to row; move left/right while rowing to steer. Release E to walk. Brace for waves. Carry timber to leaks; bail at the bucket.'}
           </p>
         </>
       )}
+      {!recovering &&
+        a.jobs &&
+        (a.caught || w.leak || w.boat.flood > 0.03 || a.stage === 'escape') && (
+          <div className="reel-deck-jobs" aria-label="Crew jobs">
+            {player && a.jobs.carried[player.id] ? (
+              <strong>
+                Carrying {a.jobs.carried[player.id]}.{' '}
+                {a.jobs.carried[player.id] === 'rope'
+                  ? 'Take it to the fish.'
+                  : 'Take it to the yellow leak.'}
+              </strong>
+            ) : (
+              <strong>Walk to a marked station · hold C to work</strong>
+            )}
+            {giantAboard(w) && (
+              <span className={a.jobs.secured ? 'job-done' : ''}>
+                {a.jobs.secured
+                  ? '✓ Fish tied down'
+                  : 'ROPE → FISH · tie it before it flops!'}
+              </span>
+            )}
+            {w.leak && <span>TIMBER → LEAK · a plank stops the water</span>}
+            {w.boat.flood > 0.03 && (
+              <span>BUCKET · bail while a friend repairs</span>
+            )}
+            {a.stage === 'escape' && (
+              <>
+                <span>
+                  {gateOpen(w)
+                    ? 'GATE OPEN · ROW NOW!'
+                    : 'WINCH · crank it open'}
+                </span>
+                <progress
+                  aria-label="Harbour crossing"
+                  max={1}
+                  value={a.jobs.crossing}
+                />
+              </>
+            )}
+          </div>
+        )}
       <div className="reel-survival-stats">
         <span>
           WATER <b>{Math.round(w.boat.flood * 100)}%</b>

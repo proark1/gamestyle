@@ -68,6 +68,7 @@ export function setCourse(w: ReelWorld, destination: unknown) {
   for (const p of w.players) p.paddle = 0;
 }
 export function releaseMaterial(w: ReelWorld, id: string) {
+  if (w.mission?.survival?.jobs) delete w.mission.survival.jobs.carried[id];
   const m = w.mission;
   if (!m) return;
   const p = w.players.find((p) => p.id === id);

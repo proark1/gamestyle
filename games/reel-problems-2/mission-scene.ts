@@ -129,7 +129,9 @@ export class MissionScene {
       );
     }
     const visible = m.cargo.filter(
-      (c) => c.location === 'water' || c.location === 'boat',
+      (c) =>
+        c.location === 'water' ||
+        (c.location === 'boat' && !(m.survival?.jobs && c.kind === 'monster')),
     );
     for (const [i, crate] of this.crates.entries()) {
       const cargo = visible[i];

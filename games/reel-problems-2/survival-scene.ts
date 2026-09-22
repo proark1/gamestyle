@@ -18,6 +18,7 @@ export class SurvivalScene {
     }),
   );
   private gate = new THREE.Group();
+  private gateBar: THREE.Mesh;
   private rocks: THREE.Mesh[] = [];
   private bonus = createCatch('salmon');
   private label = nameLabel('HOME · ALL CREW ABOARD', '#123f50');
@@ -52,6 +53,7 @@ export class SurvivalScene {
       new THREE.BoxGeometry(8, 0.4, 0.4),
       new THREE.MeshStandardMaterial({ color: '#f4d36a' }),
     );
+    this.gateBar = bar;
     bar.position.y = 3.4;
     this.gate.add(bar);
     const waterMark = new THREE.Mesh(
@@ -99,6 +101,16 @@ export class SurvivalScene {
     this.bonus.visible =
       a.route === 'risk' && !a.bonus && a.progress > 0.25 && a.progress < 0.7;
     this.bonus.position.set(5, 1, w.boat.z + 4);
+    const lift = a.jobs
+      ? Math.max(
+          a.jobs.gateLift,
+          ...Object.values(w.mission!.holds)
+            .filter((h) => h.target === 'gate-winch')
+            .map((h) => h.progress),
+          0,
+        )
+      : 1;
+    this.gateBar.position.y = 0.8 + lift * 2.6;
     this.gate.visible = !fight;
     this.label.visible = this.gate.visible;
   }

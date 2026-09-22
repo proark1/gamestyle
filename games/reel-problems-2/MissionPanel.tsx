@@ -40,6 +40,7 @@ export default function MissionPanel({
   const work = target
     ? de
       ? (labels[target.id] ??
+        (m.survival?.jobs ? target.label : undefined) ??
         (target.id.startsWith('take:')
           ? 'Bauteil aufnehmen'
           : target.id.startsWith('install:')
@@ -61,7 +62,12 @@ export default function MissionPanel({
       aria-label={de ? 'Lieferauftrag' : 'Delivery contract'}
     >
       {m.survival ? (
-        <SurvivalBrief world={w} action={action} disabled={disabled} />
+        <SurvivalBrief
+          world={w}
+          player={p}
+          action={action}
+          disabled={disabled}
+        />
       ) : (
         <>
           <div className="reel-mission-heading">
@@ -200,13 +206,17 @@ export default function MissionPanel({
           value={progress}
         />
       </button>
-      {carrying && (
+      {(carrying || (p && m.survival?.jobs?.carried[p.id])) && (
         <button
           className="reel-drop"
           disabled={disabled}
           onClick={() => action({ type: 'drop' })}
         >
-          {de ? 'Bauteil ablegen' : 'Put component down'}
+          {m.survival?.jobs?.carried[p?.id ?? '']
+            ? 'Return carried supply'
+            : de
+              ? 'Bauteil ablegen'
+              : 'Put component down'}
         </button>
       )}
     </aside>

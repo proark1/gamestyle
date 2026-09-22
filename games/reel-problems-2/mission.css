@@ -443,3 +443,32 @@
 .survival .reel-action-dock > :nth-child(7) {
   display: none;
 }
+.reel-deck-jobs {
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid #557e91;
+  margin-top: 10px;
+  padding-top: 9px;
+  font-size: 11px;
+}
+.reel-deck-jobs strong {
+  color: #f4d36a;
+  font-size: 11px;
+}
+.reel-deck-jobs .job-done {
+  color: #a8d6b1;
+}
+@media (max-width: 700px) {
+  .reel-deck-jobs {
+    gap: 3px;
+    margin-top: 6px;
+    padding-top: 5px;
+    font-size: 10px;
+  }
+  .reel-deck-jobs strong {
+    font-size: 10px;
+  }
+  .reel-deck-jobs .job-done {
+    display: none;
+  }
+}

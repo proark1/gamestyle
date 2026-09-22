@@ -4,7 +4,9 @@ The default cooperative adventure is **Last Boat Home**: hook a giant immediatel
 
 Reel during calm windows and release/brace during the giant's surges. After choosing a route, the Reel button becomes Row. Holding Brace protects the crew but slows the trip; bailing and rescue take hands away from rowing. A wreck leaves floating materials at the sinking position: carry and lash two deck pieces, barrels, and a paddle into an emergency raft.
 
-Controls: WASD/arrows to move and steer, E to reel/row, Shift to brace, C for contextual rescue/repair/salvage/building. Touch buttons provide the same held actions; an optional deckhand supports solo play. Classic tournament remains selectable. Legacy First Delivery checkpoints remain compatible.
+Three deck jobs add movement and shared responsibilities: collect rope and tie down the flopping giant, carry timber to seal leaks while another player bails at the bucket, and crank the harbour winch while crewmates row through. Solo players get a 14-second gate latch. Supplies occupy your hands until used or returned, and the optional deckhand can perform these jobs.
+
+Controls: WASD/arrows to walk, E to reel/row (left/right while holding E steers), Shift to brace, C for contextual pickup/repair/rescue/salvage/building. Release C between jobs. Touch buttons provide the same held actions. Classic tournament remains selectable. Legacy First Delivery and Last Boat Home checkpoints remain compatible.
 
 Play route: `/reel-problems-2`. The original game is separate in `games/reel-problems`. Shared platform infrastructure and artwork are reused; this adventure is excluded from party rotation.
 

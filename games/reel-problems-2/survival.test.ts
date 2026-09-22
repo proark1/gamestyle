@@ -5,6 +5,8 @@ import { surging } from './survival';
 import { beginRecovery, workTarget } from './mission';
 import { materialPoint, recoveryPoint, roundDuration } from './campaign';
 import { createEngine } from './peer';
+import { deckhandGoal, deckhandInput, gateOpen } from './deck-jobs';
+import { idleInput } from './types';
 import type { ReelWorld } from './types';
 function game(count = 1) {
   const w = freshReel(100000);
@@ -33,15 +35,16 @@ function hold(w: ReelWorld, seconds = 2.2) {
   tick(w, 0.1);
 }
 function fight(w: ReelWorld) {
-  tick(w, 60, () => {
-    const a = w.mission!.survival!,
-      p = w.players[0];
-    p.input.reel = !surging(w);
-    p.input.brace = surging(w);
-    p.input.x = w.boat.x < 7 ? 1 : 0;
-    p.input.work = !!workTarget(w, p) && !w.mission!.latched.includes(p.id);
-    if (a.stage !== 'fight') p.input.reel = false;
-  });
+  while (w.mission!.survival!.stage === 'fight' && w.phase === 'playing')
+    tick(w, 0.05, () => {
+      const a = w.mission!.survival!,
+        p = w.players[0];
+      p.input.reel = !surging(w);
+      p.input.brace = surging(w);
+      p.input.x = w.boat.x < 7 ? 1 : 0;
+      p.input.work = !!workTarget(w, p) && !w.mission!.latched.includes(p.id);
+      if (a.stage !== 'fight') p.input.reel = false;
+    });
 }
 void test('Last Boat Home starts immediately with a giant and four-minute deadline; legacy mission stays compatible', () => {
   const w = game();
@@ -60,13 +63,20 @@ void test('solo can fight, steer, brace, repair and escape with normal inputs', 
   assert.ok(w.mission!.survival!.caught);
   if (w.mission!.survival!.stage === 'choice')
     reelAction(w, '0', { type: 'sail', destination: 'home' }, '0');
-  tick(w, 100, () => {
+  tick(w, 160, () => {
     const a = w.mission!.survival!,
       p = w.players[0];
-    p.input.reel = !a.warned;
-    p.input.brace = a.warned;
-    p.input.x = Math.abs(w.boat.x) > 0.5 ? -Math.sign(w.boat.x) : 0;
-    p.input.work = !!workTarget(w, p) && !w.mission!.latched.includes(p.id);
+    p.input = idleInput();
+    if (a.warned) p.input.brace = true;
+    else if (a.stage === 'escape' && gateOpen(w)) p.input.reel = true;
+    else {
+      const goal = deckhandGoal(w, p);
+      if (goal) deckhandInput(w, p, goal);
+      else {
+        p.input.reel = true;
+        p.input.x = Math.abs(w.boat.x) > 0.5 ? -Math.sign(w.boat.x) : 0;
+      }
+    }
   });
   assert.equal(w.phase, 'won');
   assert.equal(w.mission!.delivered, 1);
