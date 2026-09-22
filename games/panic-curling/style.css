@@ -493,9 +493,9 @@
   overflow: hidden;
   background: linear-gradient(
     90deg,
-    var(--hud-good) 0 35%,
-    var(--hud-accent) 35% 72%,
-    var(--hud-danger) 72% 100%
+    var(--hud-good) 0 40%,
+    var(--hud-accent) 40% 55%,
+    var(--hud-danger) 55% 100%
   );
   border: 1px solid var(--hud-edge-strong);
   border-radius: 999px;
@@ -1047,5 +1047,74 @@
   .curling-banana-btn {
     padding: 8px 10px;
     font-size: 11px;
+  }
+}
+
+/* Destination and stones remain readable throughout the camera ride. */
+.curling-overview {
+  position: absolute;
+  right: 18px;
+  top: 210px;
+  padding: 8px;
+  width: 60px;
+  pointer-events: none;
+  text-align: center;
+}
+.curling-overview svg {
+  display: block;
+  width: 40px;
+  height: 230px;
+  margin: auto;
+}
+.curling-overview span {
+  font-size: 11px;
+}
+.curling-tactics-menu {
+  margin: 0;
+  min-width: 0;
+}
+.curling-tactics-menu:disabled {
+  opacity: 0.55;
+}
+.curling-sweep-btn,
+.curling-steer-btn {
+  touch-action: none;
+  user-select: none;
+}
+@media (max-width: 800px) {
+  .curling-overview {
+    top: 218px;
+    right: 10px;
+    width: 42px;
+    padding: 4px;
+  }
+  .curling-overview svg {
+    width: 28px;
+    height: 140px;
+  }
+}
+
+@media (min-width: 1000px) {
+  .curling-deliver-hud {
+    left: 18px;
+    transform: none;
+    width: 340px;
+    padding: 12px;
+    gap: 8px;
+  }
+  .curling-deliver-hud .curling-stone-sub {
+    display: none;
+  }
+  .curling-deliver-hud .curling-aim-btn {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .curling-deliver-hud .curling-power-zones {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  .curling-deliver-hud .curling-launch-btn {
+    font-size: 18px;
+    padding: 10px;
   }
 }

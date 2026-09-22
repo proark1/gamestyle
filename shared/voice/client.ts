@@ -1,3 +1,4 @@
+import { apiFetch } from '../browser/api-fetch';
 import {
   Room,
   RoomEvent,
@@ -9,24 +10,21 @@ import type {
   VoiceSession as Session,
   VoiceSnapshot as Snapshot,
 } from './types';
-export type VoiceState = {
-  status: string;
-  connected: boolean;
-  mic: boolean;
-  speaking: string[];
-  level: number;
-  error?: string;
-  audioBlocked?: boolean;
-};
+import type { VoiceState } from './types';
+export type { VoiceState } from './types';
 type Peer = {
   source: MediaStreamAudioSourceNode;
   gain: GainNode;
   analyser: AnalyserNode;
   element: HTMLAudioElement;
+  record: GainNode;
 };
 export class VoiceClient {
   private room?: Room;
   private context?: AudioContext;
+  private output?: MediaStreamAudioDestinationNode;
+  private selfRecord?: GainNode;
+  private captureVoices = false;
   private peers = new Map<string, Peer>();
   private volumes = new Map<string, number>();
   private selfSource?: MediaStreamAudioSourceNode;
@@ -38,6 +36,7 @@ export class VoiceClient {
   private deafened = false;
   private micQueue: Promise<void> = Promise.resolve();
   private desiredMic = false;
+  private talkDevice?: string;
   private abort = new AbortController();
   state: VoiceState = {
     status: 'Voice off',
@@ -62,13 +61,14 @@ export class VoiceClient {
     try {
       const context = new AudioContext();
       this.context = context;
+      this.output = context.createMediaStreamDestination();
       context.onstatechange = () => {
         if (this.context === context)
           this.emit({ audioBlocked: context.state !== 'running' });
       };
       // Autoplay can wait for another gesture. It must not stall room joining.
       void context.resume().catch(() => this.emit({ audioBlocked: true }));
-      const res = await fetch('/api/voice/token', {
+      const res = await apiFetch('/api/voice/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(this.session),
@@ -187,11 +187,16 @@ export class VoiceClient {
     source.connect(analyser);
     source.connect(gain);
     gain.connect(this.context.destination);
+    const record = this.context.createGain();
+    record.gain.value = 0;
+    gain.connect(record);
+    record.connect(this.output!);
     this.peers.set(participant.identity, {
       source,
       gain,
       analyser,
       element,
+      record,
     });
     this.mix();
   }
@@ -200,6 +205,7 @@ export class VoiceClient {
     if (!p) return;
     p.source.disconnect();
     p.gain.disconnect();
+    p.record.disconnect();
     p.analyser.disconnect();
     p.element.srcObject = null;
     p.element.remove();
@@ -238,6 +244,8 @@ export class VoiceClient {
         enabled = false;
       }
       if (this.destroyed || this.room !== room) return;
+      this.selfRecord?.disconnect();
+      this.selfRecord = undefined;
       this.selfSource?.disconnect();
       this.selfSource = undefined;
       this.analyser?.disconnect();
@@ -252,6 +260,10 @@ export class VoiceClient {
         );
         this.analyser = this.context.createAnalyser();
         this.selfSource.connect(this.analyser);
+        this.selfRecord = this.context.createGain();
+        this.selfRecord.gain.value = 0;
+        this.selfSource.connect(this.selfRecord);
+        this.selfRecord.connect(this.output!);
       }
       this.emit({ mic: enabled, level: 0, error: undefined });
       this.mix();
@@ -281,6 +293,7 @@ export class VoiceClient {
       });
       for (const track of stream.getTracks()) track.stop();
       if (this.destroyed || !this.state.connected) return false;
+      this.talkDevice = deviceId;
       this.emit({ error: undefined });
       return true;
     } catch {
@@ -290,6 +303,9 @@ export class VoiceClient {
       });
       return false;
     }
+  }
+  async setTalking(enabled: boolean) {
+    await this.microphone(enabled, this.talkDevice);
   }
   volume(id: string, value: number) {
     this.volumes.set(id, Math.max(0, Math.min(1, value)));
@@ -302,6 +318,13 @@ export class VoiceClient {
   deafen(value: boolean) {
     this.deafened = value;
     this.mix();
+  }
+  capture(enabled: boolean) {
+    this.captureVoices = enabled;
+    this.mix();
+  }
+  get captureStream() {
+    return this.output?.stream;
   }
   private mix() {
     const s = this.snapshot,
@@ -323,8 +346,31 @@ export class VoiceClient {
           1,
           Math.max(0, (24 - Math.hypot(me.x - other.x, me.z - other.z)) / 20),
         );
+      if (
+        s?.proximity?.active &&
+        !s.proximity.radio[id] &&
+        other &&
+        me &&
+        other.x !== undefined &&
+        other.z !== undefined &&
+        me.x !== undefined &&
+        me.z !== undefined
+      )
+        level *= Math.min(
+          1,
+          Math.max(0, (18 - Math.hypot(me.x - other.x, me.z - other.z)) / 14),
+        );
+      peer.record.gain.value =
+        this.captureVoices && s?.audioConsent?.includes(id) ? 1 : 0;
       peer.gain.gain.setTargetAtTime(level, this.context!.currentTime, 0.08);
     }
+    if (this.selfRecord)
+      this.selfRecord.gain.value =
+        this.captureVoices &&
+        this.state.mic &&
+        s?.audioConsent?.includes(this.session.id)
+          ? 1
+          : 0;
     if (this.analyser && this.state.mic) {
       const values = new Uint8Array(this.analyser.fftSize);
       this.analyser.getByteTimeDomainData(values);
@@ -339,6 +385,9 @@ export class VoiceClient {
     this.timer = undefined;
     for (const id of this.peers.keys()) this.remove(id);
     this.selfSource?.disconnect();
+    this.selfRecord?.disconnect();
+    this.selfRecord = undefined;
+    this.output = undefined;
     this.analyser?.disconnect();
     this.selfSource = undefined;
     this.analyser = undefined;

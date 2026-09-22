@@ -66,7 +66,7 @@ export function createDetailMaterials() {
     water = grain('water');
   return {
     skin: new T.MeshStandardMaterial({
-      color: 0xb77c61,
+      color: 0xde9268,
       roughness: 0.72,
       bumpMap: fine,
       bumpScale: 0.0003,

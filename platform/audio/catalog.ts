@@ -3,6 +3,7 @@ import { stackCatalog } from '../../games/stack-or-sink/audio/catalog';
 import { farmCatalog } from '../../games/act-natural/audio/catalog';
 import { deliveryCatalog } from '../../games/uphill-delivery/audio/catalog';
 import { giantCatalog } from '../../games/dont-wake-the-giant/audio/catalog';
+import { reelCatalog as reel2Catalog } from '../../games/reel-problems-2/audio';
 import { reelCatalog } from '../../games/reel-problems/audio';
 import { hotelCatalog } from '../../games/wrong-floor/audio';
 import { buttonCatalog } from '../../games/one-more-button/audio';
@@ -26,6 +27,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'act-natural': farmCatalog,
   'uphill-delivery': deliveryCatalog,
   'dont-wake-the-giant': giantCatalog,
+  'reel-problems-2': reel2Catalog,
   'reel-problems': reelCatalog,
   'one-more-button': buttonCatalog,
   'four-brain-cells': breakfastCatalog,

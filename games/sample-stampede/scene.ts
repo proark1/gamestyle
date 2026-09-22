@@ -1,4 +1,11 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { batchScenery } from '../../shared/rendering/batch-scenery';
+import { disposeObject } from '../../shared/rendering/dispose-object';
+import { KeyedModels } from '../../shared/rendering/keyed-models';
+import { REDUCED_MOTION_QUERY } from '../../shared/browser/device';
 import * as THREE from 'three';
+import { StampedeControls, GAME_KEYS, cameraTarget } from './controls';
+import { ITEM_NAMES } from './ui-copy';
 import {
   createAisleSign,
   createExitGauntlet,
@@ -99,6 +106,20 @@ export class SampleStampedeScene {
   private npcMeshes = new Map<string, THREE.Group>();
   private kioskMeshes = new Map<string, THREE.Group>();
 
+  private baskets = new WeakMap<
+    THREE.Group,
+    KeyedModels<
+      {
+        id: string;
+        kind: string;
+        relX: number;
+        relY: number;
+        relZ: number;
+        rotY: number;
+      },
+      THREE.Group
+    >
+  >();
   private particles: Particle[] = [];
   private comicPopups: ComicPopup[] = [];
   private skidMarks: SkidMark[] = [];
@@ -106,21 +127,33 @@ export class SampleStampedeScene {
   private shownEvents = new Set<number>();
   private activeSteamSources: { x: number; y: number; z: number }[] = [];
 
-  private currentInput: PlayerInput = {
-    x: 0,
-    z: 0,
-    steer: 0,
-    throttle: 0,
-    drift: false,
-    grabberAction: false,
+  private language = 'en';
+  private signs: { mesh: THREE.Group; aisle: number }[] = [];
+  private checkout: THREE.Group | null = null;
+  private cameraDestination = new THREE.Vector3();
+  private originalCameraMaterials = new Set<THREE.Material>();
+  private controls = new StampedeControls();
+  private reducedMotion = false;
+  private motionQuery: MediaQueryList;
+  private cameraFresh = true;
+  private outfit = '';
+  private occluders: THREE.Object3D[] = [];
+  private faded = new Set<THREE.Object3D>();
+  private ray = new THREE.Raycaster();
+  private cameraLook = new THREE.Vector3();
+  private cameraDirection = new THREE.Vector3();
+  private motionChange = () => {
+    this.reducedMotion = this.motionQuery.matches;
   };
-  private keysDown = new Set<string>();
 
   constructor(
     container: HTMLElement,
     private callbacks: SceneCallbacks,
   ) {
     this.container = container;
+    this.motionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
+    this.motionChange();
+    this.motionQuery.addEventListener('change', this.motionChange);
 
     // Renderer
     this.renderer = createRenderer(container, {
@@ -144,6 +177,8 @@ export class SampleStampedeScene {
     // Input listeners
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
+    window.addEventListener('blur', this.clearInput);
+    document.addEventListener('visibilitychange', this.clearInput);
 
     // Resize handling
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
@@ -230,23 +265,31 @@ export class SampleStampedeScene {
       // North Shelf
       const rackN = createPalletRack(3.2, 4.8, 16.0);
       rackN.position.set(ax, 0, -12);
+      batchScenery(rackN, [], true);
       this.scene.add(rackN);
+      this.occluders.push(rackN);
 
       // South Shelf
       const rackS = createPalletRack(3.2, 4.8, 16.0);
       rackS.position.set(ax, 0, 10);
+      batchScenery(rackS, [], true);
       this.scene.add(rackS);
+      this.occluders.push(rackS);
 
       // Hanging Aisle Sign suspended above the aisle
       const sign = createAisleSign(idx + 1, aisleTitles[idx]);
       sign.position.set(ax, 5.2, 0);
       this.scene.add(sign);
+      this.occluders.push(sign);
+      this.signs.push({ mesh: sign, aisle: idx + 1 });
     });
 
     // Exit Receipt Gauntlet Booth
     const gauntlet = createExitGauntlet();
     gauntlet.position.set(0, 0, 28);
     this.scene.add(gauntlet);
+    this.occluders.push(gauntlet);
+    this.checkout = gauntlet;
 
     // High-bay pendant warehouse lamps
     const lightPositions: [number, number][] = [
@@ -279,19 +322,50 @@ export class SampleStampedeScene {
       );
       girder.position.set(0, 8.8, gz);
       this.scene.add(girder);
+      this.occluders.push(girder);
     }
   }
 
+  private pendingVisualEvents: StampedeEvent[] = [];
   /** `frameEvents`: what the local simulation produced this frame. */
   public render(
     snapshot: SampleStampedeSnapshot,
     frameEvents: readonly StampedeEvent[] = [],
   ) {
+    this.pendingVisualEvents.push(...frameEvents);
+    if (this.pendingVisualEvents.length > 512)
+      this.pendingVisualEvents.splice(0, this.pendingVisualEvents.length - 512);
+    if (!shouldRenderFrame(this.renderer)) return;
+    frameEvents = this.pendingVisualEvents;
+    this.pendingVisualEvents = [];
     const { world, localCartId } = snapshot;
     const now = performance.now();
     const dt = Math.min((now - this.lastTime) / 1000, 0.05);
     this.lastTime = now;
 
+    const lookKey = JSON.stringify(getEquippedLook());
+    if (lookKey !== this.outfit) {
+      this.outfit = lookKey;
+      const id = snapshot.localCartId;
+      const cart = world.carts.find((cart) => cart.id === id);
+      const rig = this.cartRigs.get(id);
+      if (cart && rig) {
+        const meshes =
+          snapshot.myRole === 'grabber' ? this.riderMeshes : this.driverMeshes;
+        const previous = meshes.get(id);
+        if (previous) {
+          previous.removeFromParent();
+          disposeObject(previous);
+        }
+        const replacement = createShopperWorker(cart.team, getEquippedLook());
+        replacement.rotation.y = Math.PI / 2;
+        (snapshot.myRole === 'grabber'
+          ? rig.riderAnchor
+          : rig.driverAnchor
+        ).add(replacement);
+        meshes.set(id, replacement);
+      }
+    }
     // 1. Sync Carts
     for (const cart of world.carts) {
       let rig = this.cartRigs.get(cart.id);
@@ -401,6 +475,7 @@ export class SampleStampedeScene {
     for (const [id, mesh] of this.groundItemMeshes.entries()) {
       if (!currentItemIds.has(id)) {
         this.scene.remove(mesh);
+        disposeObject(mesh);
         this.groundItemMeshes.delete(id);
       }
     }
@@ -419,13 +494,10 @@ export class SampleStampedeScene {
     for (const k of world.kiosks) {
       let km = this.kioskMeshes.get(k.id);
       if (!km) {
-        const sampleName =
-          k.sampleKind === 'sample_taquito'
-            ? 'Taquitos'
-            : k.sampleKind === 'sample_pizza_bagel'
-              ? 'Pizza Bagels'
-              : 'Churros';
-        km = createSampleKiosk(k.aisleName, sampleName);
+        const sampleName = (ITEM_NAMES[this.language] ?? ITEM_NAMES.en)[
+          k.sampleKind
+        ];
+        km = createSampleKiosk(k.aisleName, sampleName, this.language);
         km.position.set(k.x, k.y, k.z);
         this.scene.add(km);
         this.kioskMeshes.set(k.id, km);
@@ -442,6 +514,7 @@ export class SampleStampedeScene {
     for (const [id, mesh] of this.hazardMeshes.entries()) {
       if (!currentHazardIds.has(id)) {
         this.scene.remove(mesh);
+        disposeObject(mesh);
         this.hazardMeshes.delete(id);
       }
     }
@@ -503,7 +576,17 @@ export class SampleStampedeScene {
       }
 
       if (ev.text) {
-        this.spawnComicPopup(ev.x, ev.y + 1.2, ev.z, ev.text);
+        const text =
+          this.language !== 'de'
+            ? ev.text
+            : ev.type === 'receipt_approved'
+              ? 'ABGERECHNET!'
+              : ev.type === 'receipt_rejected'
+                ? 'TEDDY ENTFERNEN!'
+                : ev.type === 'sample_announcement'
+                  ? 'KOSTPROBEN!'
+                  : 'BUMM!';
+        this.spawnComicPopup(ev.x, ev.y + 1.2, ev.z, text);
       }
     }
 
@@ -511,36 +594,70 @@ export class SampleStampedeScene {
     const myCart =
       world.carts.find((c) => c.id === localCartId) || world.carts[0];
     if (myCart) {
-      // Dynamic FOV Zoom during Sugar Rush sprint mode
-      const targetFov = myCart.sugarRushTimer > 0 ? 64 : 52;
-      if (Math.abs(this.camera.fov - targetFov) > 0.05) {
-        this.camera.fov += (targetFov - this.camera.fov) * 0.12;
-        this.camera.updateProjectionMatrix();
-      }
-
-      // Camera sits behind and slightly above the cart
-      const followDist = 9.6;
-      const followH = 5.6;
-      const targetCamX = myCart.x - Math.cos(myCart.rotY) * followDist;
-      const targetCamZ = myCart.z + Math.sin(myCart.rotY) * followDist;
-      const targetCamY = followH;
-
-      this.camera.position.x += (targetCamX - this.camera.position.x) * 0.12;
-      this.camera.position.z += (targetCamZ - this.camera.position.z) * 0.12;
-      this.camera.position.y += (targetCamY - this.camera.position.y) * 0.12;
-
-      // Apply camera screen shake
-      if (this.screenShake > 0.01) {
-        this.camera.position.x += (Math.random() - 0.5) * this.screenShake;
+      const targetFov =
+        !this.reducedMotion && myCart.sugarRushTimer > 0 ? 64 : 58;
+      this.camera.fov +=
+        (targetFov - this.camera.fov) * (1 - Math.exp(-8 * dt));
+      this.camera.updateProjectionMatrix();
+      const target = cameraTarget(
+        myCart.x,
+        myCart.z,
+        myCart.rotY,
+        this.camera.aspect,
+      );
+      const blend = this.cameraFresh ? 1 : 1 - Math.exp(-10 * dt);
+      this.camera.position.lerp(
+        this.cameraDestination.set(target.x, target.y, target.z),
+        blend,
+      );
+      this.cameraFresh = false;
+      if (!this.reducedMotion && this.screenShake > 0.01) {
         this.camera.position.y += (Math.random() - 0.5) * this.screenShake;
-        this.camera.position.z += (Math.random() - 0.5) * this.screenShake;
-        this.screenShake *= Math.pow(0.04, dt);
       }
-
-      // Look slightly ahead of the cart
-      const lookX = myCart.x + Math.cos(myCart.rotY) * 2.5;
-      const lookZ = myCart.z - Math.sin(myCart.rotY) * 2.5;
-      this.camera.lookAt(lookX, 1.2, lookZ);
+      this.screenShake *= Math.pow(0.04, dt);
+      this.cameraLook.set(myCart.x, 1.2, myCart.z);
+      this.camera.lookAt(this.cameraLook);
+      // Fade complete rack/sign assemblies intersecting the line of sight.
+      // Materials are cloned once so a faded rack never changes another rack.
+      this.cameraDirection.subVectors(this.cameraLook, this.camera.position);
+      const distance = this.cameraDirection.length();
+      this.ray.set(this.camera.position, this.cameraDirection.normalize());
+      this.ray.far = distance;
+      this.scene.updateMatrixWorld(true);
+      const obstructing = new Set<THREE.Object3D>();
+      for (const hit of this.ray.intersectObjects(this.occluders, true)) {
+        let root = hit.object;
+        while (root.parent && root.parent !== this.scene) root = root.parent;
+        obstructing.add(root);
+      }
+      for (const root of new Set([...this.faded, ...obstructing])) {
+        const hidden = obstructing.has(root);
+        root.traverse((object) => {
+          if (!(object instanceof THREE.Mesh)) return;
+          if (!object.userData.cameraMaterials) {
+            for (const material of Array.isArray(object.material)
+              ? object.material
+              : [object.material])
+              this.originalCameraMaterials.add(material);
+            object.material = Array.isArray(object.material)
+              ? object.material.map((material) => material.clone())
+              : object.material.clone();
+            for (const material of Array.isArray(object.material)
+              ? object.material
+              : [object.material])
+              material.userData.shared = false;
+            object.userData.cameraMaterials = true;
+          }
+          for (const material of Array.isArray(object.material)
+            ? object.material
+            : [object.material]) {
+            material.transparent = hidden;
+            material.opacity = hidden ? 0.12 : 1;
+            material.depthWrite = !hidden;
+          }
+        });
+      }
+      this.faded = obstructing;
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -557,22 +674,17 @@ export class SampleStampedeScene {
       rotY: number;
     }[],
   ) {
-    // Remove existing item meshes from basket
-    for (let i = basket.children.length - 1; i >= 0; i--) {
-      const child = basket.children[i];
-      if (child.name === 'basket-item') {
-        basket.remove(child);
-      }
+    let models = this.baskets.get(basket);
+    if (!models) {
+      models = new KeyedModels(basket, (item) =>
+        createItemMesh(item.kind as ItemKind),
+      );
+      this.baskets.set(basket, models);
     }
-
-    // Add up-to-date carried items inside the basket
-    for (const it of items) {
-      const itemMesh = createItemMesh(it.kind as ItemKind);
-      itemMesh.name = 'basket-item';
-      itemMesh.position.set(it.relX, it.relY, it.relZ);
-      itemMesh.rotation.y = it.rotY;
-      basket.add(itemMesh);
-    }
+    models.sync(items, (mesh, item) => {
+      mesh.position.set(item.relX, item.relY, item.relZ);
+      mesh.rotation.y = item.rotY;
+    });
   }
 
   public emitSparks(x: number, y: number, z: number, count = 5) {
@@ -583,6 +695,7 @@ export class SampleStampedeScene {
       mesh.position.set(x, y, z);
       this.scene.add(mesh);
 
+      this.trimParticles();
       this.particles.push({
         mesh,
         vx: (Math.random() - 0.5) * 6,
@@ -608,6 +721,7 @@ export class SampleStampedeScene {
       );
       this.scene.add(mesh);
 
+      this.trimParticles();
       this.particles.push({
         mesh,
         vx: (Math.random() - 0.5) * 2,
@@ -642,6 +756,7 @@ export class SampleStampedeScene {
       life: 0,
       maxLife: 0.75,
     });
+    this.trimParticles();
   }
 
   public emitConfetti(x: number, y: number, z: number) {
@@ -656,6 +771,7 @@ export class SampleStampedeScene {
       mesh.position.set(x, y + 1.5, z);
       this.scene.add(mesh);
 
+      this.trimParticles();
       this.particles.push({
         mesh,
         vx: (Math.random() - 0.5) * 9,
@@ -676,6 +792,7 @@ export class SampleStampedeScene {
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(x, y, z);
       this.scene.add(mesh);
+      this.trimParticles();
       this.particles.push({
         mesh,
         vx: (Math.random() - 0.5) * 5,
@@ -706,7 +823,7 @@ export class SampleStampedeScene {
       const old = this.skidMarks.shift();
       if (old) {
         this.scene.remove(old.mesh);
-        old.mesh.geometry.dispose();
+        disposeObject(old.mesh);
       }
     }
   }
@@ -717,7 +834,7 @@ export class SampleStampedeScene {
       sm.life += dt;
       if (sm.life >= sm.maxLife) {
         this.scene.remove(sm.mesh);
-        sm.mesh.geometry.dispose();
+        disposeObject(sm.mesh);
         this.skidMarks.splice(i, 1);
         continue;
       }
@@ -760,6 +877,11 @@ export class SampleStampedeScene {
     mesh.quaternion.copy(this.camera.quaternion); // Billboard towards camera
     this.scene.add(mesh);
 
+    if (this.comicPopups.length >= 12) {
+      const popup = this.comicPopups.shift()!;
+      popup.mesh.removeFromParent();
+      disposeObject(popup.mesh);
+    }
     this.comicPopups.push({
       mesh,
       vy: 2.2,
@@ -769,12 +891,21 @@ export class SampleStampedeScene {
     });
   }
 
+  private trimParticles() {
+    while (this.particles.length >= 160) {
+      const particle = this.particles.shift()!;
+      particle.mesh.removeFromParent();
+      disposeObject(particle.mesh);
+    }
+  }
+
   private updateParticles(dt: number) {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life += dt;
       if (p.life >= p.maxLife) {
         this.scene.remove(p.mesh);
+        disposeObject(p.mesh);
         this.particles.splice(i, 1);
         continue;
       }
@@ -793,6 +924,7 @@ export class SampleStampedeScene {
       cp.life += dt;
       if (cp.life >= cp.maxLife) {
         this.scene.remove(cp.mesh);
+        disposeObject(cp.mesh);
         this.comicPopups.splice(i, 1);
         continue;
       }
@@ -803,53 +935,121 @@ export class SampleStampedeScene {
     }
   }
 
-  private handleKeyDown = (e: KeyboardEvent) => {
-    this.keysDown.add(e.code);
-    this.updateKeyInput();
-  };
-
-  private handleKeyUp = (e: KeyboardEvent) => {
-    this.keysDown.delete(e.code);
-    this.updateKeyInput();
-  };
-
-  private updateKeyInput() {
-    let steer = 0;
-    let throttle = 0;
-
-    if (this.keysDown.has('KeyA') || this.keysDown.has('ArrowLeft')) steer += 1;
-    if (this.keysDown.has('KeyD') || this.keysDown.has('ArrowRight'))
-      steer -= 1;
-    if (this.keysDown.has('KeyW') || this.keysDown.has('ArrowUp'))
-      throttle += 1;
-    if (this.keysDown.has('KeyS') || this.keysDown.has('ArrowDown'))
-      throttle -= 1;
-
-    const drift =
-      this.keysDown.has('ShiftLeft') || this.keysDown.has('ShiftRight');
-    const grabberAction =
-      this.keysDown.has('Space') || this.keysDown.has('KeyE');
-
-    this.currentInput = {
-      x: steer,
-      z: throttle,
-      steer,
-      throttle,
-      drift,
-      grabberAction,
-    };
-    this.callbacks.input(this.currentInput);
+  private acceptsKeyboard(event: KeyboardEvent) {
+    return (
+      this.controls.enabled &&
+      !event.defaultPrevented &&
+      !event.ctrlKey &&
+      !event.altKey &&
+      !event.metaKey &&
+      GAME_KEYS.has(event.code) &&
+      !(
+        event.target instanceof Element &&
+        event.target.closest(
+          'input, textarea, select, [contenteditable="true"], [role="dialog"], dialog',
+        )
+      )
+    );
   }
-
+  private handleKeyDown = (event: KeyboardEvent) => {
+    if (!this.acceptsKeyboard(event)) return;
+    if (
+      event.code === 'Space' &&
+      event.target instanceof Element &&
+      event.target.closest('button, a')
+    )
+      return;
+    event.preventDefault();
+    this.controls.keys.add(event.code);
+    this.callbacks.input(this.controls.read());
+  };
+  private handleKeyUp = (event: KeyboardEvent) => {
+    if (!this.controls.keys.delete(event.code)) return;
+    event.preventDefault();
+    this.callbacks.input(this.controls.read());
+  };
+  private clearInput = () => {
+    this.controls.reset();
+    this.callbacks.input(this.controls.read());
+  };
+  public setInputEnabled(enabled: boolean) {
+    if (enabled === this.controls.enabled) return;
+    this.controls.enabled = enabled;
+    this.clearInput();
+  }
   public setCustomInput(patch: Partial<PlayerInput>) {
-    Object.assign(this.currentInput, patch);
-    this.callbacks.input(this.currentInput);
+    if (!this.controls.enabled) return;
+    Object.assign(this.controls.touch, patch);
+    this.callbacks.input(this.controls.read());
+  }
+  public setLanguage(language: string) {
+    if (language === this.language) return;
+    this.language = language;
+    const titles =
+      language === 'de'
+        ? [
+            'Küchenrollen',
+            'Müsli & Snacks',
+            'Hundefutter',
+            'Getränke',
+            'Überraschungen',
+          ]
+        : [
+            'Bulk Paper Goods',
+            'Snack & Cereal Mountain',
+            'Pet Monster Kibble',
+            'Mega Beverages',
+            'Mystery Mega Deals',
+          ];
+    const replace = (old: THREE.Group, next: THREE.Group) => {
+      next.position.copy(old.position);
+      this.occluders = this.occluders.map((root) =>
+        root === old ? next : root,
+      );
+      this.faded.delete(old);
+      old.removeFromParent();
+      disposeObject(old);
+      this.scene.add(next);
+      return next;
+    };
+    for (const sign of this.signs)
+      sign.mesh = replace(
+        sign.mesh,
+        createAisleSign(sign.aisle, titles[sign.aisle - 1], language),
+      );
+    if (this.checkout)
+      this.checkout = replace(this.checkout, createExitGauntlet(language));
+    for (const mesh of this.kioskMeshes.values()) {
+      mesh.removeFromParent();
+      disposeObject(mesh);
+    }
+    this.kioskMeshes.clear();
+  }
+  public resetRound() {
+    this.clearInput();
+    this.cameraFresh = true;
+    this.shownEvents.clear();
+    this.screenShake = 0;
+    for (const effect of [
+      ...this.particles,
+      ...this.comicPopups,
+      ...this.skidMarks,
+    ]) {
+      effect.mesh.removeFromParent();
+      disposeObject(effect.mesh);
+    }
+    this.particles = [];
+    this.comicPopups = [];
+    this.skidMarks = [];
   }
 
   private handleResize() {
     if (!this.container) return;
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
+    if (w <= 0 || h <= 0) return;
+    this.cameraFresh = true;
+    this.clearInput();
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
@@ -860,15 +1060,21 @@ export class SampleStampedeScene {
     this.resizeObserver.disconnect();
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    window.removeEventListener('blur', this.clearInput);
+    document.removeEventListener('visibilitychange', this.clearInput);
+    this.motionQuery.removeEventListener('change', this.motionChange);
     for (const sm of this.skidMarks) {
       this.scene.remove(sm.mesh);
-      sm.mesh.geometry.dispose();
+      disposeObject(sm.mesh);
     }
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(
         this.renderer.domElement,
       );
     }
+    disposeObject(this.scene);
+    for (const material of this.originalCameraMaterials)
+      if (!material.userData.shared) material.dispose();
     this.renderer.dispose();
   }
 }

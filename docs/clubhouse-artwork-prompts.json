@@ -1,0 +1,22 @@
+{
+  "tool": "Built-in image_gen",
+  "reference": "output/imagegen/style-trials/court-cast-reference.png",
+  "assets": [
+    {
+      "name": "wave",
+      "prompt": "Use case: stylized-concept. Asset: production website mascot, isolated FULL BODY with genuinely transparent alpha background, no colored background, no checkerboard drawn into image, no text, no logos, no scenery, no panel. Reference image is canonical identity and handcrafted clay rendering reference. Preserve exact rounded black oval eyes, rounded nose, rosy cheeks, chunky sculpted hair, youthful sturdy proportions, matte tactile clay surface of that character. Warm soft daylight, friendly expressive face, entire head hair hands and shoes visible, centered with generous clear margin, portrait composition. Character must stand naturally on invisible ground, no platform. Show ONLY the light warm-skinned dark-brown wavy-haired boy who is dunking in the reference. Same hair and face. Coral-red short-sleeved T-shirt with cream neckline, teal shorts, cream sneakers with coral accents. Cheerfully welcoming the viewer, one hand raised waving, other hand on hip. Slight three-quarter turn toward viewer. No ball."
+    },
+    {
+      "name": "point",
+      "prompt": "Use case: stylized-concept. Asset: production website mascot, isolated FULL BODY with genuinely transparent alpha background, no colored background, no checkerboard drawn into image, no text, no logos, no scenery, no panel. Reference image is canonical identity and handcrafted clay rendering reference. Preserve exact rounded black oval eyes, rounded nose, rosy cheeks, chunky sculpted hair, youthful sturdy proportions, matte tactile clay surface of that character. Warm soft daylight, friendly expressive face, entire head hair hands and shoes visible, centered with generous clear margin, portrait composition. Character must stand naturally on invisible ground, no platform. Show ONLY the medium-dark brown-skinned black tightly curled-haired boy on the right in the reference. Same hair and face. Teal-blue short sleeve T-shirt, golden shorts, cream sneakers with blue accents. Friendly guide pose pointing to his right (image left) with one hand while smiling toward viewer, other hand relaxed. No ball."
+    },
+    {
+      "name": "cheer",
+      "prompt": "Use case: stylized-concept. Asset: production website mascot, isolated FULL BODY with genuinely transparent alpha background, no colored background, no checkerboard drawn into image, no text, no logos, no scenery, no panel. Reference image is canonical identity and handcrafted clay rendering reference. Preserve exact rounded black oval eyes, rounded nose, rosy cheeks, chunky sculpted hair, youthful sturdy proportions, matte tactile clay surface of that character. Warm soft daylight, friendly expressive face, entire head hair hands and shoes visible, centered with generous clear margin, portrait composition. Character must stand naturally on invisible ground, no platform. Show ONLY the warm light-skinned brown-haired ponytail girl from left foreground of reference. Preserve swept bangs high chunky ponytail and red hair tie. Coral-red overalls over cream short-sleeve T-shirt, cream sneakers with coral trim. Excited friendly thumbs-up gesture with one hand and other at her side. Slight three-quarter turn toward viewer. No ball."
+    },
+    {
+      "name": "mail",
+      "prompt": "Use case: stylized-concept. Asset: production website mascot, isolated FULL BODY with genuinely transparent alpha background, no colored background, no checkerboard drawn into image, no text, no logos, no scenery, no panel. Reference image is canonical identity and handcrafted clay rendering reference. Preserve exact rounded black oval eyes, rounded nose, rosy cheeks, chunky sculpted hair, youthful sturdy proportions, matte tactile clay surface of that character. Warm soft daylight, friendly expressive face, entire head hair hands and shoes visible, centered with generous clear margin, portrait composition. Character must stand naturally on invisible ground, no platform. Show ONLY the fair-skinned golden/copper curly-haired boy wearing blue headband in reference. Same face hair and headband. Golden yellow short-sleeve T-shirt, teal shorts, cream sneakers with blue trim. Holding one small cream envelope with coral seal in both hands in front of his chest, smiling reassuringly toward viewer. No writing, no ball."
+    }
+  ]
+}

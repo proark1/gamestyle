@@ -1,3 +1,4 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import { MIN_POLL_MS, quantizeAxis } from '../../shared/rooms/input-rate';
 import {
   PeerGameConnection,
@@ -38,7 +39,7 @@ export async function requestRoom(body: object): Promise<Reply> {
         throw error;
     }
   }
-  const response = await fetch('/api/rooms', {
+  const response = await apiFetch('/api/rooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

@@ -116,8 +116,9 @@ export function launchDelivery(
   kind: StoneKind,
 ): Stone {
   const cfg = STONE_CONFIGS[kind];
-  // Speed tuned so 0.5 power travels roughly to the house, 1.0 shoots out back
-  const launchSpeed = 3.2 + power * 5.4;
+  // Calibrate distance for each stone's friction: 50% is a draw to the house.
+  const distance = 12 + Math.max(0, Math.min(1, power)) * 40;
+  const launchSpeed = Math.sqrt(2 * cfg.baseFriction * 9.81 * distance);
   const vx = Math.sin(angle) * launchSpeed;
   const vz = Math.cos(angle) * launchSpeed;
 
@@ -126,7 +127,7 @@ export function launchDelivery(
     kind,
     team: world.turnTeam,
     x: 0,
-    y: cfg.height / 2,
+    y: 0.015,
     z: HACK_Z + 0.8,
     vx,
     vz,
@@ -167,7 +168,7 @@ export function launchDelivery(
     sweeper.z = stone.z + 1.2;
     sweeper.vx = vx;
     sweeper.vz = vz;
-    sweeper.rotation = 0;
+    sweeper.rotation = Math.PI;
   }
 
   world.events.push({
@@ -268,8 +269,8 @@ export function advancePanicCurling(world: PanicCurlingWorld, now: number) {
         (!activeStone || activeStone.stopped || activeStone.outOfBounds) &&
         world.stones.every((s) => s.stopped || s.outOfBounds);
 
-      // Timeout safety: if sliding takes longer than 15s, stop all stones
-      const timeout = world.phaseTimer > 15.0;
+      // Timeout safety: if sliding takes longer than 30s, stop all stones
+      const timeout = world.phaseTimer > 30.0;
 
       if (allStopped || timeout) {
         if (activeStone) {
@@ -282,31 +283,44 @@ export function advancePanicCurling(world: PanicCurlingWorld, now: number) {
           s.distanceToTee = Math.hypot(s.x, s.z - TEE_Z);
         }
 
-        world.throwIndex++;
-
-        if (world.throwIndex >= world.totalThrowsPerEnd) {
-          // End of this round! Score calculation
-          const endResult = computeEndScore(world.stones);
-          world.scores.red += endResult.red;
-          world.scores.blue += endResult.blue;
-          world.endScores.push({ red: endResult.red, blue: endResult.blue });
-
-          world.events.push({
-            type: 'end_scored',
-            redPoints: endResult.red,
-            bluePoints: endResult.blue,
-          });
-
-          world.phase = 'end_summary';
-          world.phaseTimer = 0;
-        } else {
-          // Next throw in current end
-          world.turnTeam = world.turnTeam === 'red' ? 'blue' : 'red';
-          world.phase = 'aiming';
-          world.phaseTimer = 0;
-          world.activeStoneId = null;
-          resetPlayerPositions(world);
+        for (const player of world.players) {
+          player.vx = 0;
+          player.vz = 0;
+          player.sweepIntensity = 0;
+          player.status = 'normal';
         }
+        world.phase = 'shot_result';
+        world.phaseTimer = 0;
+      }
+      break;
+    }
+
+    case 'shot_result': {
+      if (world.phaseTimer < 1.6) break;
+      world.throwIndex++;
+
+      if (world.throwIndex >= world.totalThrowsPerEnd) {
+        // End of this round! Score calculation
+        const endResult = computeEndScore(world.stones);
+        world.scores.red += endResult.red;
+        world.scores.blue += endResult.blue;
+        world.endScores.push({ red: endResult.red, blue: endResult.blue });
+
+        world.events.push({
+          type: 'end_scored',
+          redPoints: endResult.red,
+          bluePoints: endResult.blue,
+        });
+
+        world.phase = 'end_summary';
+        world.phaseTimer = 0;
+      } else {
+        // Next throw in current end
+        world.turnTeam = world.turnTeam === 'red' ? 'blue' : 'red';
+        world.phase = 'aiming';
+        world.phaseTimer = 0;
+        world.activeStoneId = null;
+        resetPlayerPositions(world);
       }
       break;
     }
@@ -324,8 +338,11 @@ export function advancePanicCurling(world: PanicCurlingWorld, now: number) {
           world.hazards = [];
           world.activeStoneId = null;
           world.iceTiles = createIceGrid(); // Fresh pristine ice sheet
-          // Hammer goes to team that did NOT score, or alternates
-          world.turnTeam = world.round % 2 === 1 ? 'red' : 'blue';
+          // The non-scoring team has hammer; a blank end retains it.
+          const lastEnd = world.endScores.at(-1);
+          if (lastEnd?.red) world.hammerTeam = 'blue';
+          else if (lastEnd?.blue) world.hammerTeam = 'red';
+          world.turnTeam = world.hammerTeam === 'red' ? 'blue' : 'red';
           world.phase = 'aiming';
           world.phaseTimer = 0;
           resetPlayerPositions(world);
@@ -344,6 +361,9 @@ function resetPlayerPositions(world: PanicCurlingWorld) {
   for (const p of world.players) {
     p.status = 'normal';
     p.statusTimer = 0;
+    p.sweepIntensity = 0;
+    p.steerDir = 0;
+    p.input = idleInput();
     p.vx = 0;
     p.vz = 0;
 
@@ -396,6 +416,7 @@ export function panicCurlingAction(
     }
 
     case 'switchTeam': {
+      if (world.phase !== 'aiming' && world.phase !== 'warmup') break;
       if (player) {
         player.team = action.team;
         resetPlayerPositions(world);
@@ -404,6 +425,7 @@ export function panicCurlingAction(
     }
 
     case 'switchRole': {
+      if (world.phase !== 'aiming' && world.phase !== 'warmup') break;
       if (player) {
         player.role = action.role;
         resetPlayerPositions(world);

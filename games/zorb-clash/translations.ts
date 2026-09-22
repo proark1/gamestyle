@@ -9,7 +9,18 @@ export interface ZorbClashTranslation {
   turtledSub: string;
   goal: string;
   goalSub: string;
-  turtleGoal: string;
+  ownGoalSub: string;
+  teamGoal: string;
+  intro: string;
+  start: string;
+  paused: string;
+  resume: string;
+  keyboardHelp: string;
+  touchHelp: string;
+  recoveryHint: string;
+  recovering: string;
+  unstable: string;
+  you: string;
   roll: string;
   bumperDash: string;
   braceAnchor: string;
@@ -30,12 +41,28 @@ export const ZORB_CLASH_TRANSLATIONS: Localized<ZorbClashTranslation> = {
     blue: 'Blue',
     bonks: 'BONKS',
     radar: 'RADAR',
-    turtled: "TURTLE'D! 🐢",
-    turtledSub: 'Wiggle WASD to roll over or get rammed by a teammate!',
+    turtled: 'KNOCKED DOWN',
+    turtledSub:
+      'Hold a movement key to get up faster once your ball slows down.',
     goal: 'GOOOAL! ⚽',
     goalSub: '{scorer} scored for {team}!',
-    turtleGoal: '🔥 TURTLE GOAL! BONUS STYLE POINTS! 🔥',
-    roll: 'Roll',
+    ownGoalSub: 'Own goal by {scorer} — point for {team}.',
+    teamGoal: 'Point for {team}!',
+    intro:
+      'You play for Red. Push the beach ball into the Blue goal at the far end. First to 5 goals, or the lead after 3 minutes, wins. Player bubbles never count as goals.',
+    start: 'Start match',
+    paused: 'Match paused',
+    resume: 'Continue',
+    keyboardHelp:
+      'Run with WASD or arrow keys. Hold Space to charge a dash, release to sprint. Hold Shift to brace.',
+    touchHelp:
+      'Drag the left stick to run. Hold Dash to charge, release to sprint. Hold Brace to steady yourself.',
+    recoveryHint:
+      'Hold the stick in any direction to get up faster once your ball slows down.',
+    recovering: 'Getting up…',
+    unstable: 'Losing balance — ease off or brace',
+    you: 'You',
+    roll: 'Run',
     bumperDash: 'Bumper Dash',
     braceAnchor: 'Brace Anchor',
     brace: 'Brace',
@@ -53,12 +80,28 @@ export const ZORB_CLASH_TRANSLATIONS: Localized<ZorbClashTranslation> = {
     blue: 'Blau',
     bonks: 'CRASHES',
     radar: 'RADAR',
-    turtled: 'AUF DEM RÜCKEN! 🐢',
-    turtledSub: 'Mit WASD zappeln oder von Teamkollegen rammen lassen!',
+    turtled: 'UMGEFALLEN',
+    turtledSub:
+      'Eine Richtungstaste halten, um schneller aufzustehen, sobald die Kugel langsamer wird.',
     goal: 'TOOOOR! ⚽',
     goalSub: '{scorer} trifft für {team}!',
-    turtleGoal: '🔥 SCHILDKRÖTEN-TOR! STYLE-BONUS! 🔥',
-    roll: 'Rollen',
+    ownGoalSub: 'Eigentor von {scorer} — Punkt für {team}.',
+    teamGoal: 'Punkt für {team}!',
+    intro:
+      'Du spielst für Rot. Schiebe den Spielball ins blaue Tor am anderen Feldende. Wer zuerst 5 Tore erzielt oder nach 3 Minuten führt, gewinnt. Spielerkugeln zählen nie als Tor.',
+    start: 'Spiel starten',
+    paused: 'Spiel pausiert',
+    resume: 'Weiter',
+    keyboardHelp:
+      'Mit WASD oder Pfeiltasten laufen. Leertaste zum Aufladen halten, zum Sprinten loslassen. Umschalttaste zum Stemmen halten.',
+    touchHelp:
+      'Den linken Stick zum Laufen ziehen. Sprint zum Aufladen halten, zum Sprinten loslassen. Stemmen halten, um stabil zu bleiben.',
+    recoveryHint:
+      'Den Stick in eine Richtung halten, um schneller aufzustehen, sobald die Kugel langsamer wird.',
+    recovering: 'Steht auf…',
+    unstable: 'Gleichgewicht verloren — langsamer laufen oder stemmen',
+    you: 'Du',
+    roll: 'Laufen',
     bumperDash: 'Bumper-Sprint',
     braceAnchor: 'Stemmen',
     brace: 'Stemmen',

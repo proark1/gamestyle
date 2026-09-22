@@ -22,6 +22,7 @@ import { siteAvatars } from '../../../games/first-person/avatar';
 import { breakfastAvatars } from '../../../games/four-brain-cells/avatar';
 import { loadBearingAvatars } from '../../../games/load-bearing/avatar';
 import { buttonAvatars } from '../../../games/one-more-button/avatar';
+import { reelAvatars as reel2Avatars } from '../../../games/reel-problems-2/avatar';
 import { reelAvatars } from '../../../games/reel-problems/avatar';
 import { shelfAvatars } from '../../../games/shelf-control/avatar';
 import { siegeAvatars } from '../../../games/siege-and-desist/avatar';
@@ -157,7 +158,7 @@ export const POTENTIAL_AVATARS: readonly AvatarCard[] = [
     id: 'hoop-boy',
     name: 'Nico',
     tag: 'Boy',
-    note: 'The boy dunking in the clay basketball picture: a mop of dark curls, ears showing and a toothy grin. He is the player in Court Clash, the first game on the kids. Team games dress him in red or blue; a game without teams gives each of four seats its own kit, adding green and yellow. Every wardrobe item fits, and under a hat his curls show only below the brim. Player colour: kit.',
+    note: 'The boy dunking in the clay basketball picture: a mop of dark curls, ears showing and a toothy grin. He is the standard human avatar across the games. Team games dress him in red or blue; a game without teams gives each of four seats its own kit, adding green and yellow. Every wardrobe item fits, and under a hat his curls show only below the brim. Player colour: kit.',
     looks: KITS.map((kit) => kidLook('nico', kit)),
   },
   {
@@ -169,31 +170,31 @@ export const POTENTIAL_AVATARS: readonly AvatarCard[] = [
   },
 ];
 
-const SHARED = 'The shared worker model, unchanged.';
+const SHARED = 'Nico at the standard game height.';
 const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'siege-and-desist': {
     looks: siegeAvatars,
-    note: 'The shared worker with a conical helmet and a nasal bar.',
+    note: 'Nico with a conical helmet and a nasal bar.',
   },
   'stack-or-sink': {
     looks: stackAvatars,
-    note: 'The shared worker in its cap: the template the other games follow.',
+    note: 'Nico at the standard game height: the template the other human avatars follow.',
   },
   'act-natural': {
     looks: farmAvatars,
-    note: 'Players are cows or the farmer, who is the shared worker with a torch.',
+    note: 'Players are cows or the farmer, who is Nico with a torch.',
   },
   'uphill-delivery': {
     looks: deliveryAvatars,
-    note: 'The shared worker, merged into fewer meshes.',
+    note: 'Nico, merged into fewer meshes.',
   },
   'dont-wake-the-giant': {
     looks: giantAvatars,
-    note: 'The shared worker at about half size, with a mask.',
+    note: 'Nico at about half size, with a mask.',
   },
   chaos: {
     looks: chaosAvatars,
-    note: 'The shared worker in a striped hard hat and a tool belt.',
+    note: 'Nico in a striped hard hat and a tool belt.',
   },
   'first-person': {
     looks: siteAvatars,
@@ -201,64 +202,68 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   },
   'wrong-floor': {
     looks: hotelAvatars,
-    note: 'The shared worker in a knitted beanie and brown shoes.',
+    note: 'Nico in a knitted beanie and brown shoes.',
   },
   'one-more-button': {
     looks: buttonAvatars,
-    note: 'The shared worker with a sweatband, sneakers and a contestant card.',
+    note: 'Nico with a sweatband, sneakers and a contestant card.',
   },
   'four-brain-cells': {
     looks: breakfastAvatars,
     note: 'One robot for the whole team; each player steers a limb.',
   },
+  'reel-problems-2': {
+    looks: reel2Avatars,
+    note: 'Experimental Reel Problems 2 angler.',
+  },
   'reel-problems': {
     looks: reelAvatars,
-    note: 'The shared worker with a bucket hat, a life vest and a rod. Height includes the rod.',
+    note: 'Nico with a bucket hat, a life vest and a rod. Height includes the rod.',
   },
   'shelf-control': {
     looks: shelfAvatars,
-    note: 'The shared worker in wood; the guard adds a badge and a torch.',
+    note: 'The wooden mannequin stays a special character; Nico plays the guard with a badge and torch.',
   },
   'load-bearing': { looks: loadBearingAvatars, note: SHARED },
   'crane-clash': {
     looks: craneClashAvatars,
-    note: 'The shared worker wearing team-colored hard hat and safety harness.',
+    note: 'Nico wearing team-colored hard hat and safety harness.',
   },
   basketball: {
     looks: basketballAvatars,
-    note: 'The first game on the clay kids: every player is Nico in the team kit, wearing their own wardrobe items. The fans on the bleachers are kids too.',
+    note: 'Every player is Nico in the team kit, wearing their own wardrobe items. The fans on the bleachers are kids too.',
   },
   'bungee-doubles': {
     looks: bungeeDoublesAvatars,
-    note: 'The shared worker in team polo, tennis shorts, sweatband and sneakers.',
+    note: 'Nico in team polo, tennis shorts, sweatband and sneakers.',
   },
   'panic-curling': {
     looks: curlingAvatars,
-    note: 'The shared worker in winter parka and curling shoes.',
+    note: 'Nico in winter parka and curling shoes.',
   },
   'carry-on-carnage': {
     looks: carryOnCarnageAvatars,
-    note: 'The shared worker as an anxious tourist with bright shirt and denim jeans.',
+    note: 'Nico as an anxious tourist with bright shirt and denim jeans.',
   },
   'sample-stampede': {
     looks: sampleStampedeAvatars,
-    note: 'The shared worker dressed in wholesale club apron and cap, operating carts and grabbers.',
+    note: 'Nico dressed in wholesale club apron and cap, operating carts and grabbers.',
   },
   'drive-thru': {
     looks: driveThruAvatars,
-    note: 'The shared worker as drive-thru driver with cap and kitchen cook with paper hat and apron.',
+    note: 'Nico as drive-thru driver with cap and kitchen cook with paper hat and apron.',
   },
   'zorb-clash': {
     looks: zorbAvatars,
-    note: 'The shared worker strapped inside a transparent bumper sphere, one per team.',
+    note: 'Nico strapped inside a transparent bumper sphere, one per team.',
   },
   'scaffold-scramble': {
     looks: scaffoldAvatars,
-    note: 'The shared worker in high-rise cleaning gear on a suspended platform.',
+    note: 'Nico in high-rise cleaning gear on a suspended platform.',
   },
   'chain-of-fools': {
     looks: chainOfFoolsAvatars,
-    note: 'The shared worker in a yellow hard hat and hi-vis harness with a back D-ring for the safety line.',
+    note: 'Nico in a yellow hard hat and hi-vis harness with a back D-ring for the safety line.',
   },
 };
 
@@ -268,5 +273,5 @@ export const AVATAR_GAMES: readonly AvatarCard[] = GAMES.flatMap((game) => {
   return avatars ? [{ id: game.id, name: game.name, ...avatars }] : [];
 });
 
-/** The lineup opens against the shared worker that six games build on. */
+/** The lineup opens against Nico at the standard game height. */
 export const DEFAULT_TEMPLATE = 'stack-or-sink:stacker';

@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -372,7 +374,7 @@ export default function LoadBearing() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/load-bearing?room=${session?.code}`,
+        `${publicGameOrigin()}/load-bearing?room=${session?.code}`,
       );
       setCopied(true);
     } catch {

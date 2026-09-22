@@ -1,3 +1,4 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { traveler } from './avatar';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
@@ -55,6 +56,26 @@ export class CarryOnScene {
 
   keysDown = new Set<string>();
   disposed = false;
+  inputEnabled = true;
+  touchVector = { x: 0, z: 0 };
+  resizeObserver: ResizeObserver;
+
+  setInputEnabled(enabled: boolean) {
+    if (this.inputEnabled === enabled) return;
+    this.inputEnabled = enabled;
+    if (!enabled) this.resetInput();
+  }
+
+  resetInput = () => {
+    this.keysDown.clear();
+    this.touchVector = { x: 0, z: 0 };
+    this.updateInputFromKeys();
+  };
+
+  moveTouch = (vector: { x: number; z: number }) => {
+    this.touchVector = this.inputEnabled ? vector : { x: 0, z: 0 };
+    this.updateInputFromKeys();
+  };
   animFrameId = 0;
   clock = 0;
 
@@ -103,6 +124,10 @@ export class CarryOnScene {
     window.addEventListener('resize', this.onResize);
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', this.resetInput);
+    window.addEventListener('orientationchange', this.resetInput);
+    this.resizeObserver = new ResizeObserver(this.onResize);
+    this.resizeObserver.observe(container);
   }
 
   onResize = () => {
@@ -115,7 +140,28 @@ export class CarryOnScene {
   };
 
   onKeyDown = (e: KeyboardEvent) => {
-    if (e.repeat) return;
+    if (e.repeat || !this.inputEnabled) return;
+    if (
+      e.target instanceof Element &&
+      e.target.closest(
+        'input, textarea, select, [contenteditable="true"], [role="dialog"], dialog',
+      )
+    )
+      return;
+    if (
+      [
+        'KeyW',
+        'KeyA',
+        'KeyS',
+        'KeyD',
+        'ArrowUp',
+        'ArrowDown',
+        'ArrowLeft',
+        'ArrowRight',
+        'Space',
+      ].includes(e.code)
+    )
+      e.preventDefault();
     this.keysDown.add(e.code);
     this.updateInputFromKeys();
 
@@ -131,8 +177,8 @@ export class CarryOnScene {
   };
 
   updateInputFromKeys() {
-    let ix = 0;
-    let iz = 0;
+    let ix = this.touchVector.x;
+    let iz = this.touchVector.z;
 
     if (this.keysDown.has('KeyW') || this.keysDown.has('ArrowUp')) iz -= 1;
     if (this.keysDown.has('KeyS') || this.keysDown.has('ArrowDown')) iz += 1;
@@ -249,6 +295,15 @@ export class CarryOnScene {
           p.id === localPlayerId ? getEquippedLook() : undefined,
           p.wearingTinFoil,
         );
+        if (p.id === localPlayerId) {
+          const ring = new T.Mesh(
+            new T.RingGeometry(0.55, 0.7, 32),
+            new T.MeshBasicMaterial({ color: '#ffbe38', side: T.DoubleSide }),
+          );
+          ring.rotation.x = -Math.PI / 2;
+          ring.position.y = 0.04;
+          mesh.add(ring);
+        }
         mesh.castShadow = true;
         this.scene.add(mesh);
         this.playerMeshes.set(p.id, mesh);
@@ -556,15 +611,14 @@ export class CarryOnScene {
       }
     }
 
-    // 6. Camera smooth follow local player & screen shake
-    const me = world.players.find((p) => p.id === localPlayerId);
-    if (me) {
-      const targetCamX = me.x * 0.45 + 1.5;
-      const targetCamZ = me.z * 0.35 + 14.0;
-      this.camera.position.x += (targetCamX - this.camera.position.x) * 0.08;
-      this.camera.position.z += (targetCamZ - this.camera.position.z) * 0.08;
-      this.camera.lookAt(me.x * 0.5 + 1.5, 0.8, me.z * 0.2);
-    }
+    // Fit the complete terminal width, including the sizer, at any aspect ratio.
+    // The canvas itself excludes the HUD and touch controls.
+    const distance = Math.max(
+      18,
+      12 / (Math.tan(Math.PI / 8) * this.camera.aspect),
+    );
+    this.camera.position.set(0.75, distance * 0.72, distance * 0.7);
+    this.camera.lookAt(0.75, 0, 0);
 
     if (this.shake > 0.001) {
       this.camera.position.x += (Math.random() - 0.5) * this.shake * 0.5;
@@ -580,7 +634,11 @@ export class CarryOnScene {
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.resetInput);
+    window.removeEventListener('orientationchange', this.resetInput);
+    this.resizeObserver.disconnect();
     cancelAnimationFrame(this.animFrameId);
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

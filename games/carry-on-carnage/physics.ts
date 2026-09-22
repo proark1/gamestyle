@@ -457,8 +457,8 @@ export function stepPhysics(
     it.y += it.vy * dt;
     it.z += it.vz * dt;
 
-    it.vx *= 0.94;
-    it.vz *= 0.94;
+    it.vx *= Math.pow(0.94, dt * 60);
+    it.vz *= Math.pow(0.94, dt * 60);
 
     if (it.y <= 0.15) {
       it.y = 0.15;

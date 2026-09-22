@@ -1,4 +1,6 @@
 'use client';
+import { apiFetch } from '../browser/api-fetch';
+
 /* oxlint-disable react/react-compiler, typescript/unbound-method */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -90,8 +92,6 @@ export default function PartyRibbon() {
   const [standingsOpen, setStandingsOpen] = useState<boolean>(false);
   const [standings, setStandings] = useState<Standings | null>(null);
 
-  const autoStarted = useRef<boolean>(false);
-  const attempts = useRef<number>(0);
   const reporting = useRef<Promise<boolean> | null>(null);
 
   // 1. Initialize party parameters from URL & sessionStorage
@@ -163,109 +163,63 @@ export default function PartyRibbon() {
     };
   }, []);
 
-  // 2. Auto-fill and auto-start logic loop
+  // The host announces the authenticated shared round, independently of menu markup.
   useEffect(() => {
-    if (!partyCode || autoStarted.current) return;
+    const ready = () => {
+      setIntroFading(true);
+      setIntroVisible(false);
+    };
+    window.addEventListener('game:party-ready', ready);
+    return () => window.removeEventListener('game:party-ready', ready);
+  }, []);
 
-    const interval = setInterval(() => {
-      attempts.current++;
-
-      // A. Populate any name input currently in the DOM
-      const nameInputs = document.querySelectorAll<HTMLInputElement>(
-        'input#player-name, input#hotel-name, input#omb-name, input#giant-name, input#lb-name, input#delivery-name, input#farm-name, input#shelf-name, input#sad-name, .hotel-field input, .omb-name input, .brain-name input, .reel-name input',
+  useEffect(() => {
+    if (!partyCode || window.parent === window) return;
+    const held = new Set<string>();
+    const key = (event: KeyboardEvent) => {
+      if (!/^Key[A-Z]$/.test(event.code)) return;
+      if (event.type === 'keydown') {
+        if (
+          event.repeat ||
+          event.altKey ||
+          event.ctrlKey ||
+          event.metaKey ||
+          event.shiftKey ||
+          event.isComposing ||
+          (event.target as HTMLElement)?.closest?.(
+            'input,textarea,select,[contenteditable="true"]',
+          )
+        )
+          return;
+        held.add(event.code);
+      } else if (!held.delete(event.code)) return;
+      window.parent.postMessage(
+        {
+          type: 'party-ptt',
+          code: partyCode,
+          event: event.type,
+          keyCode: event.code,
+        },
+        location.origin,
       );
-      for (const input of nameInputs) {
-        if (input.value !== playerName) {
-          const setter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype,
-            'value',
-          )?.set;
-          setter?.call(input, playerName);
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }
-
-      // B. Look for the practice/solo/start buttons
-      let clicked = false;
-
-      // 1. Direct class matches
-      const directButtons = document.querySelectorAll<HTMLButtonElement>(
-        'button.practice-link, button.giant-text-button, button.cc-btn.primary, button.bb-btn.primary, button.sc-btn.primary, .cof-welcome button.cof-btn.primary',
+    };
+    const reset = () => {
+      held.clear();
+      window.parent.postMessage(
+        { type: 'party-ptt-reset', code: partyCode },
+        location.origin,
       );
-      for (const btn of directButtons) {
-        if (!btn.disabled && !btn.hasAttribute('disabled')) {
-          btn.click();
-          clicked = true;
-          break;
-        }
-      }
-
-      // 2. Secondary menu buttons (e.g. Try with 3 NPCs, Try solo)
-      if (!clicked) {
-        const secondaryBtns = document.querySelectorAll<HTMLButtonElement>(
-          '.hotel-secondary button, .omb-menu-secondary button, .brain-menu-secondary button, .reel-menu-secondary button, .delivery-setup-row button',
-        );
-        for (const btn of secondaryBtns) {
-          if (!btn.disabled && !btn.hasAttribute('disabled')) {
-            const txt = (btn.textContent || '').toLowerCase();
-            if (/solo|npc|practice/i.test(txt)) {
-              btn.click();
-              clicked = true;
-              break;
-            }
-          }
-        }
-      }
-
-      // 3. Fallback to primary create buttons if solo/practice not found
-      if (!clicked) {
-        const primaryBtns = document.querySelectorAll<HTMLButtonElement>(
-          'button.primary-button, button.hotel-primary, button.omb-primary, button.giant-primary, button.brain-primary, button.reel-primary, button.delivery-primary',
-        );
-        for (const btn of primaryBtns) {
-          if (!btn.disabled && !btn.hasAttribute('disabled')) {
-            btn.click();
-            clicked = true;
-            break;
-          }
-        }
-      }
-
-      // 4. If game starts immediately without start panel (e.g. Curling, Bungee, Zorb, Stampede, CarryOn)
-      const hasActiveCanvas = !!document.querySelector(
-        'canvas, .bb-canvas, .cc-canvas, .sc-canvas, .cof-canvas, .curling-viewport, .stampede-canvas-wrapper, .zorb-radar',
-      );
-      const startPanelExists = !!document.querySelector(
-        '.start-panel, .hotel-menu, .omb-menu, .giant-menu, .giant-setup, .brain-menu, .setup-card, .reel-menu, .delivery-setup, .farm-menu, .cc-welcome, .bb-welcome, .sc-welcome, .cof-welcome',
-      );
-
-      if (
-        clicked ||
-        (!startPanelExists && hasActiveCanvas && attempts.current > 3)
-      ) {
-        autoStarted.current = true;
-        clearInterval(interval);
-        // Fade out overlay after short moment
-        setTimeout(() => {
-          setIntroFading(true);
-          setTimeout(() => {
-            setIntroVisible(false);
-          }, 500);
-        }, 500);
-      }
-
-      // Give up after 80 attempts (8 seconds)
-      if (attempts.current > 80) {
-        clearInterval(interval);
-        setIntroFading(true);
-        setTimeout(() => setIntroVisible(false), 500);
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [partyCode, playerName]);
-
+    };
+    window.addEventListener('keydown', key);
+    window.addEventListener('keyup', key);
+    window.addEventListener('blur', reset);
+    return () => {
+      reset();
+      window.removeEventListener('keydown', key);
+      window.removeEventListener('keyup', key);
+      window.removeEventListener('blur', reset);
+    };
+  }, [partyCode]);
   // 3. Listen for round completion: every party game marks its root
   // `data-party-round="ended"` and publishes its result once its match is over
   // (see party-round.ts). Scores such as time left keep drifting after the
@@ -298,8 +252,9 @@ export default function PartyRibbon() {
       if (!partyCode || !playerId) return Promise.resolve(false);
       if (reporting.current) return reporting.current;
       setReport('saving');
-      const sent = fetch('/api/party', {
+      const sent = apiFetch('/api/party', {
         method: 'POST',
+        signal: AbortSignal.timeout(8000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           op: 'report_result',
@@ -327,15 +282,27 @@ export default function PartyRibbon() {
     if (result) void sendReport(result);
   }, [result, sendReport]);
 
+  // A saved result returns to the shared podium/vote automatically.
+  useEffect(() => {
+    if (report !== 'saved' || !partyCode) return;
+    if (window.parent !== window)
+      window.parent.postMessage(
+        { type: 'party-round-finished', code: partyCode },
+        location.origin,
+      );
+    else window.location.href = `/party?room=${partyCode}`;
+  }, [report, partyCode]);
+
   // Standings open over the game: going to the party page mid-round would
   // send this player straight back into a fresh match.
   useEffect(() => {
     if (!standingsOpen || !partyCode) return;
     let live = true;
     const load = () =>
-      fetch('/api/party', {
+      apiFetch('/api/party', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(8000),
         body: JSON.stringify({ op: 'get', code: partyCode }),
       })
         .then((res) => res.json())
@@ -365,8 +332,16 @@ export default function PartyRibbon() {
       return;
     }
     setLeaving(true);
-    await sendReport(result);
-    window.location.href = `/party?room=${partyCode}`;
+    if (!(await sendReport(result))) {
+      setLeaving(false);
+      return;
+    }
+    if (window.parent !== window)
+      window.parent.postMessage(
+        { type: 'party-round-finished', code: partyCode },
+        location.origin,
+      );
+    else window.location.href = `/party?room=${partyCode}`;
   }, [partyCode, leaving, result, confirmGiveUp, sendReport]);
 
   if (!partyCode) return null;

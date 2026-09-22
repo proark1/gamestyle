@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Camera,
@@ -9,24 +11,24 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import type { PeerGameConnection } from '../../shared/peer/connection';
+import { Dialog } from '@base-ui/react/dialog';
+import { TouchControls } from '../../shared/input/TouchControls';
+import { gameActive } from '../../shared/browser/game-lifecycle';
+import { createBungeeRunner } from './runner';
 import {
-  advanceBungee,
-  autoServe,
+  prepareServe,
   bungeeAction,
   bungeeSnapshot,
   freshBungeeWorld,
   newPlayer,
 } from './simulation';
-import { reconcileBungeeBots, stepBungeeBot } from './bots';
+import { reconcileBungeeBots } from './bots';
 import {
-  idleInput,
   type BungeeAction,
   type BungeeSession,
   type BungeeSnapshot,
   type BungeeWorld,
   type PlayerInput,
-  type TeamId,
 } from './types';
 import { BungeeDoublesSound } from './audio';
 import { BungeeScene } from './scene';
@@ -42,20 +44,43 @@ import {
 import { bungeeDoublesAnalytics } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyRound, partyVersus } from '../../shared/ui/party-round';
+import {
+  PeerGameConnection,
+  enterPeerRoom,
+} from '../../shared/peer/connection';
+import {
+  inviteCode,
+  sessionStore,
+  type Session,
+} from '../../shared/rooms/session';
+import { idleInput } from './types';
 
 const tracker = new GameTracker(bungeeDoublesAnalytics);
+const sessions = sessionStore('bungee-doubles-session-v1');
 
 export default function BungeeDoublesGame() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const de = language === 'de';
   const strings = t(BUNGEE_DOUBLES_TRANSLATIONS);
   useGameTracker(tracker);
 
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<BungeeScene | null>(null);
   const sound = useRef<BungeeDoublesSound | null>(null);
-  const network = useRef<PeerGameConnection<BungeeSnapshot> | null>(null);
   const localWorld = useRef<BungeeWorld | null>(null);
+  const network = useRef<PeerGameConnection<BungeeSnapshot> | null>(null);
   const currentInput = useRef(idleInput());
+  const mounted = useRef(false);
+  const entering = useRef(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [roomOpen, setRoomOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [status, setStatus] = useState<'online' | 'reconnecting' | 'expired'>(
+    'online',
+  );
   // The scene is handed every snapshot directly; the HUD is paced, so a
   // 20Hz feed does not rebuild it twenty times a second.
   const hud = useRef(
@@ -66,15 +91,9 @@ export default function BungeeDoublesGame() {
   );
 
   const [snapshot, setSnapshot] = useState<BungeeSnapshot | null>(null);
-  const [team, setTeam] = useState<TeamId>('red');
   const [muted, setMuted] = useState(false);
-  // The toolbar's help button shows or hides the camera hint.
-  const [hint, setHint] = useState(true);
-  const [banner, setBanner] = useState<{
-    text: string;
-    subtext: string;
-    team?: TeamId;
-  } | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const paused = useRef(false);
 
   const sessionRef = useRef<BungeeSession>({
     id: 'p-local',
@@ -87,10 +106,18 @@ export default function BungeeDoublesGame() {
   const dispatchAction = useCallback((act: BungeeAction) => {
     tracker.action(act.type);
     sound.current?.unlock();
+    if (paused.current) return;
     if (network.current) {
-      void network.current.action(act);
+      void network.current
+        .action(act)
+        .catch((error: Error) => setNotice(error.message));
     } else if (localWorld.current) {
-      bungeeAction(localWorld.current, sessionRef.current.id, act);
+      bungeeAction(
+        localWorld.current,
+        sessionRef.current.id,
+        act,
+        localWorld.current.clock,
+      );
       const snap = bungeeSnapshot(
         localWorld.current,
         'SOLO',
@@ -104,9 +131,130 @@ export default function BungeeDoublesGame() {
     }
   }, []);
 
+  const attach = useCallback((next: Session, preview?: BungeeSnapshot) => {
+    network.current?.stop();
+    localWorld.current = null;
+    currentInput.current = idleInput();
+    sessionRef.current = { ...next, name: 'Player', team: 'red' };
+    setSession(next);
+    setStatus('reconnecting');
+    sessions.save(next);
+    const accept = (snap: BungeeSnapshot) => {
+      if (hud.current.due(snap)) setSnapshot(snap);
+      scene.current?.render(snap);
+      sound.current?.update(snap.world, next.id);
+    };
+    network.current = new PeerGameConnection(
+      'bungee-doubles',
+      next,
+      () => currentInput.current,
+      accept,
+      setStatus,
+      () => import('./peer'),
+    );
+    if (preview) {
+      setSnapshot(preview);
+      accept(preview);
+    }
+    network.current.start();
+  }, []);
+
+  async function enter(op: 'create' | 'join') {
+    if (entering.current) return;
+    entering.current = true;
+    setBusy(true);
+    setNotice('');
+    sound.current?.unlock();
+    try {
+      const reply = await enterPeerRoom<BungeeSnapshot>(
+        'bungee-doubles',
+        {
+          op,
+          name: name.trim() || 'Player',
+          ...(op === 'join' ? { code: code.trim().toUpperCase() } : {}),
+        },
+        () => import('./peer'),
+      );
+      if (!mounted.current) return;
+      if (!reply.session)
+        throw new Error(
+          de ? 'Beitritt fehlgeschlagen.' : 'Could not join the room.',
+        );
+      attach(reply.session, reply.snapshot);
+      setRoomOpen(false);
+      const url = new URL(location.href);
+      url.searchParams.set('room', reply.session.code);
+      history.replaceState(null, '', url);
+    } catch (error) {
+      if (mounted.current)
+        setNotice(
+          error instanceof Error ? error.message : 'Could not connect.',
+        );
+    } finally {
+      entering.current = false;
+      if (mounted.current) setBusy(false);
+    }
+  }
+
+  async function leave() {
+    if (entering.current) return;
+    entering.current = true;
+    setBusy(true);
+    try {
+      await network.current?.leave();
+    } catch {
+      network.current?.stop();
+    } finally {
+      network.current = null;
+      sessions.clear();
+      entering.current = false;
+      if (mounted.current) {
+        sessionRef.current = {
+          id: 'p-local',
+          token: 'solo-token',
+          code: 'SOLO',
+          name: 'Player',
+          team: 'red',
+        };
+        const w = freshBungeeWorld(Date.now());
+        w.players.push(
+          newPlayer('p-local', name.trim() || 'You', 0, 'red', false, 0),
+        );
+        reconcileBungeeBots(w);
+        prepareServe(w, 'red');
+        localWorld.current = w;
+        currentInput.current = idleInput();
+        setSnapshot(bungeeSnapshot(w, 'SOLO', 'p-local', 'p-local', w.clock));
+        setSession(null);
+        setStatus('online');
+        setNotice('');
+        setBusy(false);
+        setRoomOpen(false);
+        const url = new URL(location.href);
+        url.searchParams.delete('room');
+        history.replaceState(null, '', url);
+      }
+    }
+  }
+
+  async function copyInvite() {
+    if (!session) return;
+    try {
+      await navigator.clipboard.writeText(
+        `${publicGameOrigin()}/bungee-doubles?room=${session.code}`,
+      );
+      setNotice(de ? 'Einladungslink kopiert.' : 'Invite link copied.');
+    } catch {
+      setNotice(
+        de ? `Raumcode: ${session.code}` : `Room code: ${session.code}`,
+      );
+    }
+  }
+
   // Initialize scene and sound
   useEffect(() => {
     if (!container.current) return;
+    mounted.current = true;
 
     sound.current = new BungeeDoublesSound();
 
@@ -130,6 +278,7 @@ export default function BungeeDoublesGame() {
     const w = freshBungeeWorld(now);
     w.players.push(newPlayer(sessionRef.current.id, 'You', 0, 'red', false, 0));
     reconcileBungeeBots(w);
+    prepareServe(w, 'red');
     localWorld.current = w;
 
     const initialSnap = bungeeSnapshot(
@@ -142,9 +291,19 @@ export default function BungeeDoublesGame() {
     setSnapshot(initialSnap);
     scene.current.render(initialSnap);
 
+    const invite = inviteCode();
+    const saved = sessions.loadPeer();
+    {
+      if (saved && (!invite || invite === saved.code)) attach(saved);
+      else if (invite) {
+        setCode(invite);
+        setRoomOpen(true);
+      }
+    }
+
     // You are red's named server, so an idle party player would hold the
     // match at the serve forever. A party round serves after five seconds.
-    const serve = inPartyMode() ? autoServe(5000) : null;
+    const run = createBungeeRunner(inPartyMode() ? 5000 : undefined);
 
     // Solo game simulation loop (60 FPS)
     let lastTick = performance.now();
@@ -152,24 +311,16 @@ export default function BungeeDoublesGame() {
 
     const tick = () => {
       animId = requestAnimationFrame(tick);
-      if (!localWorld.current || network.current) return;
+      if (!localWorld.current) return;
 
       const currentTime = performance.now();
-      const dt = Math.min((currentTime - lastTick) / 1000, 0.05);
+      const dt = Math.min((currentTime - lastTick) / 1000, 0.1);
       lastTick = currentTime;
 
+      if (paused.current || !gameActive()) return;
       const world = localWorld.current;
-      const stepNow = Date.now();
-
-      // Step bots
-      for (const p of world.players) {
-        if (p.bot) {
-          stepBungeeBot(p, world, dt, stepNow);
-        }
-      }
-      serve?.(world, stepNow);
-
-      advanceBungee(world, dt, stepNow);
+      const stepNow = world.clock + dt * 1000;
+      run(world, dt);
 
       const snap = bungeeSnapshot(
         world,
@@ -182,30 +333,42 @@ export default function BungeeDoublesGame() {
       if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(world, sessionRef.current.id);
-
-      if (world.scoreBanner) {
-        setBanner(world.scoreBanner);
-        world.scoreBanner = null;
-      }
     };
 
     animId = requestAnimationFrame(tick);
 
     return () => {
+      mounted.current = false;
+      network.current?.stop();
+      network.current = null;
       cancelAnimationFrame(animId);
       scene.current?.destroy();
       scene.current = null;
+      sound.current?.dispose();
       sound.current = null;
+      localWorld.current = null;
     };
-  }, [dispatchAction]);
+  }, [dispatchAction, attach]);
 
   useEffect(() => {
-    if (!banner) return;
-    const t = setTimeout(() => setBanner(null), 1800);
-    return () => clearTimeout(t);
-  }, [banner]);
+    const blocked =
+      helpOpen || roomOpen || busy || (session !== null && status !== 'online');
+    paused.current = blocked;
+    scene.current?.setInputEnabled(!blocked);
+    if (blocked) currentInput.current = idleInput();
+  }, [helpOpen, roomOpen, busy, session, status]);
 
   const world = snapshot?.world;
+  const team =
+    world?.players.find((p) => p.id === snapshot?.localId)?.team ?? 'red';
+  const banner = world?.phase === 'scored' ? world.scoreBanner : null;
+  const blocked =
+    !world ||
+    !['serving', 'rally'].includes(world.phase) ||
+    helpOpen ||
+    roomOpen ||
+    busy ||
+    (session !== null && status !== 'online');
   const tether = world?.tethers[team];
   const tensionVal = tether ? Math.round(tether.tension * 100) : 0;
   const tensionClass =
@@ -237,14 +400,155 @@ export default function BungeeDoublesGame() {
           BUNGEE DOUBLES<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          voice={
+            session?.peer && world
+              ? {
+                  session: { ...session, game: 'bungee-doubles' },
+                  snapshot: {
+                    players: world.players.filter((p) => !p.bot),
+                    nearby: false,
+                  },
+                }
+              : undefined
+          }
           muted={muted}
           onToggleSound={toggleSound}
-          onHelp={() => setHint((shown) => !shown)}
+          onHelp={() => setHelpOpen(true)}
         />
       </header>
 
+      <div className="bungee-room-controls">
+        <button className="bungee-btn" onClick={() => setRoomOpen(true)}>
+          <Users size={14} />
+          {session
+            ? `${session.code} · ${world?.players.filter((p) => !p.bot).length ?? 1}/4`
+            : de
+              ? 'Mehrspieler'
+              : 'Multiplayer'}
+        </button>
+        {session && status !== 'online' && (
+          <output>
+            {status === 'expired'
+              ? de
+                ? 'Sitzung abgelaufen. Bitte erneut beitreten.'
+                : 'Session expired. Please rejoin.'
+              : de
+                ? 'Verbindung wird hergestellt…'
+                : 'Reconnecting…'}
+          </output>
+        )}
+        {notice && <output>{notice}</output>}
+      </div>
+
+      <Dialog.Root
+        open={roomOpen}
+        onOpenChange={(open) => {
+          if (!busy) setRoomOpen(open);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="bungee-help-backdrop" />
+          <Dialog.Popup
+            className="bungee-help bungee-room-dialog"
+            aria-describedby={undefined}
+          >
+            <Dialog.Title>
+              {de ? 'Mit Freunden spielen' : 'Play with friends'}
+            </Dialog.Title>
+            {session ? (
+              <>
+                <p>
+                  {de ? 'Raumcode' : 'Room code'}:{' '}
+                  <strong>{session.code}</strong>
+                </p>
+                <ul>
+                  {world?.players.map((p) => (
+                    <li key={p.id}>
+                      {p.name} · {strings[p.team]}
+                      {p.bot ? ' (NPC)' : ''}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  className="primary-button"
+                  onClick={() => void copyInvite()}
+                >
+                  {de ? 'Einladungslink kopieren' : 'Copy invite link'}
+                </button>
+                <button
+                  className="bungee-btn"
+                  disabled={busy}
+                  onClick={() => void leave()}
+                >
+                  {de
+                    ? 'Raum verlassen · Solo spielen'
+                    : 'Leave room · Play solo'}
+                </button>
+              </>
+            ) : (
+              <>
+                <p>
+                  {de
+                    ? 'Bis zu vier Spieler. NPCs füllen freie Plätze.'
+                    : 'Up to four players. NPCs fill empty spots.'}
+                </p>
+                <label>
+                  {de ? 'Dein Name' : 'Your name'}
+                  <input
+                    value={name}
+                    maxLength={24}
+                    autoComplete="off"
+                    onChange={(event) => setName(event.target.value)}
+                    disabled={busy}
+                  />
+                </label>
+                <button
+                  className="primary-button"
+                  disabled={busy}
+                  onClick={() => void enter('create')}
+                >
+                  {de ? 'Raum erstellen' : 'Create room'}
+                </button>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void enter('join');
+                  }}
+                >
+                  <label>
+                    {de ? 'Raumcode' : 'Room code'}
+                    <input
+                      value={code}
+                      maxLength={6}
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                      onChange={(event) =>
+                        setCode(event.target.value.toUpperCase())
+                      }
+                      disabled={busy}
+                    />
+                  </label>
+                  <button
+                    className="bungee-btn"
+                    disabled={busy || !code.trim()}
+                    type="submit"
+                  >
+                    {de ? 'Raum beitreten' : 'Join room'}
+                  </button>
+                </form>
+              </>
+            )}
+            {notice && <output>{notice}</output>}
+            {busy && <output>{de ? 'Verbinden…' : 'Connecting…'}</output>}
+            <Dialog.Close className="bungee-btn" disabled={busy}>
+              {strings.close}
+            </Dialog.Close>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+
       {/* 360 Camera Orbit Helper Badge */}
-      {hint && (
+      {!helpOpen && (
         <div className="bungee-camera-hint">
           <Camera size={13} />
           <span>{strings.orbitHint}</span>
@@ -341,9 +645,10 @@ export default function BungeeDoublesGame() {
       )}
 
       {/* Bottom Action Dock */}
-      <div className="bungee-dock">
+      <div className="bungee-dock" aria-label={strings.controls}>
         <button
-          className="bungee-btn primary"
+          className="bungee-btn primary bungee-play-action"
+          disabled={blocked}
           onClick={() => dispatchAction({ type: 'swing' })}
         >
           <Flame size={14} />
@@ -351,7 +656,8 @@ export default function BungeeDoublesGame() {
           <kbd className="bungee-kbd house-key">SPACE</kbd>
         </button>
         <button
-          className="bungee-btn smash-btn"
+          className="bungee-btn smash-btn bungee-play-action"
+          disabled={blocked}
           onClick={() => dispatchAction({ type: 'smash' })}
         >
           <Zap size={14} />
@@ -359,19 +665,24 @@ export default function BungeeDoublesGame() {
           <kbd className="bungee-kbd house-key">E</kbd>
         </button>
         <button
-          className="bungee-btn"
+          className="bungee-btn bungee-play-action"
+          disabled={blocked}
           onClick={() => dispatchAction({ type: 'dive' })}
         >
           <span>{strings.dive}</span>
           <kbd className="bungee-kbd house-key">SHIFT</kbd>
         </button>
         <button
+          className="bungee-btn bungee-play-action"
+          disabled={blocked}
+          onClick={() => dispatchAction({ type: 'jump' })}
+        >
+          <span>{strings.jump}</span>
+          <kbd className="bungee-kbd house-key">J</kbd>
+        </button>
+        <button
           className="bungee-btn"
-          onClick={() => {
-            const next = team === 'red' ? 'blue' : 'red';
-            setTeam(next);
-            dispatchAction({ type: 'switchTeam' });
-          }}
+          onClick={() => dispatchAction({ type: 'switchTeam' })}
         >
           <Users size={14} />
           <span>{strings.switchTeam}</span>
@@ -394,46 +705,57 @@ export default function BungeeDoublesGame() {
         </button>
       </div>
 
-      {/* Touch Action Dock (for mobile) */}
-      <div className="bungee-touch-controls">
-        <button
-          className="bungee-action-circle cam"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            scene.current?.cycleCameraView();
-          }}
-          title="Rotate Camera 360°"
-        >
-          CAM
-        </button>
-        <button
-          className="bungee-action-circle smash"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            dispatchAction({ type: 'smash' });
-          }}
-        >
-          SMASH
-        </button>
-        <button
-          className="bungee-action-circle dive"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            dispatchAction({ type: 'dive' });
-          }}
-        >
-          DIVE
-        </button>
-        <button
-          className="bungee-action-circle hit"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            dispatchAction({ type: 'swing' });
-          }}
-        >
-          HIT
-        </button>
+      <div className="bungee-mobile-input">
+        <TouchControls
+          disabled={blocked}
+          showJump={false}
+          jump={() => dispatchAction({ type: 'jump' })}
+          moveLabel={strings.move}
+          joystickLabel={strings.joystick}
+          move={(vector) => scene.current?.setTouchMovement(vector)}
+        />
+        <div className="bungee-touch-controls" aria-label={strings.controls}>
+          {(['jump', 'smash', 'dive', 'swing'] as const).map((action) => (
+            <button
+              key={action}
+              type="button"
+              className={
+                'bungee-action-circle ' + (action === 'swing' ? 'hit' : action)
+              }
+              disabled={blocked}
+              onClick={() => dispatchAction({ type: action })}
+            >
+              {action === 'swing'
+                ? strings.touchHit
+                : action === 'jump'
+                  ? strings.jump
+                  : action === 'smash'
+                    ? strings.touchSmash
+                    : strings.touchDive}
+            </button>
+          ))}
+        </div>
       </div>
+      <div className="bungee-player-label">
+        {strings.you}: {strings[team]} · {strings.playerRing}
+      </div>
+      <Dialog.Root open={helpOpen} onOpenChange={setHelpOpen}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="bungee-help-backdrop" />
+          <Dialog.Popup className="bungee-help" aria-describedby={undefined}>
+            <Dialog.Title>{strings.helpTitle}</Dialog.Title>
+            <p>{strings.helpMove}</p>
+            <p>{strings.helpActions}</p>
+            <p>{strings.helpRules}</p>
+            <p>{strings.helpBungee}</p>
+            <p>{strings.helpCamera}</p>
+            <p>{strings.helpSwitch}</p>
+            <Dialog.Close className="primary-button">
+              {strings.close}
+            </Dialog.Close>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

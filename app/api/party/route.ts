@@ -1,3 +1,4 @@
+import { partyGameSession } from '@/platform/party/game-session';
 import {
   readRoomRequest,
   withRequestBudget,
@@ -19,6 +20,7 @@ import {
   advanceToNextRound,
   rematchParty,
   getPartyRoom,
+  voteForNextGame,
 } from '@/platform/party/coordinator';
 import type { PartyAction } from '@/platform/party/types';
 
@@ -44,6 +46,16 @@ async function handleRequest(request: Request) {
     const store = roomStore();
 
     switch (body.op) {
+      case 'game_session':
+        return json({
+          session: await partyGameSession(
+            store,
+            body.code,
+            body.playerId,
+            body.token,
+            body.round,
+          ),
+        });
       case 'create': {
         const { state, playerId, token } = await createPartyRoom(
           store,
@@ -124,6 +136,20 @@ async function handleRequest(request: Request) {
           id: body.hostId,
           token: body.token,
         });
+        return json({ state });
+      }
+
+      case 'vote': {
+        const state = await voteForNextGame(
+          store,
+          body.code,
+          body.round,
+          {
+            id: body.playerId,
+            token: body.token,
+          },
+          body.game,
+        );
         return json({ state });
       }
 

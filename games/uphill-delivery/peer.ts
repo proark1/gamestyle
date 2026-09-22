@@ -15,6 +15,9 @@ import {
 import type { DeliveryAction, DeliverySnapshot, DeliveryWorld } from './types';
 const adapter: GameAdapter<DeliveryWorld, DeliverySnapshot> = {
   game: 'uphill-delivery',
+  party: (w) => {
+    w.timeLimit = 240_000;
+  },
   autonomous: (player) => !!player.bot,
   roster: (world, roster) => reconcileDeliveryNpcs(world, roster.slots),
   actions: ['start', 'restart', 'interact', 'grab', 'release', 'rotate'],

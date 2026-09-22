@@ -1,3 +1,4 @@
+import { inviteTarget } from './invite-url';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { SplashScreen } from '@capacitor/splash-screen';
@@ -94,6 +95,28 @@ export function initNativeApp(
   }
 
   const cleanups: (() => void)[] = [];
+  let disposed = false;
+  const keep = (handle: { remove: () => Promise<void> }) => {
+    if (disposed) void handle.remove();
+    else cleanups.push(() => void handle.remove());
+  };
+  void App.getLaunchUrl()
+    .then((event) => {
+      if (disposed || !event) return;
+      const target = inviteTarget(event.url);
+      if (
+        target &&
+        target !== window.location.pathname + window.location.search
+      )
+        window.location.assign(target);
+    })
+    .catch(() => {});
+  void App.addListener('appStateChange', ({ isActive }) => {
+    window.dispatchEvent(
+      new CustomEvent('game:app-state', { detail: { active: isActive } }),
+    );
+    if (!isActive) window.dispatchEvent(new Event('blur'));
+  }).then(keep);
 
   // Hide splash screen after boot
   void SplashScreen.hide().catch(() => {});
@@ -112,9 +135,7 @@ export function initNativeApp(
     } else {
       void App.exitApp();
     }
-  }).then((handle) => {
-    cleanups.push(() => void handle.remove());
-  });
+  }).then(keep);
 
   // Handle deep linking (custom scheme or Universal/App Links)
   void App.addListener('appUrlOpen', (event) => {
@@ -122,28 +143,13 @@ export function initNativeApp(
       options.onUrlOpen(event.url);
       return;
     }
-    try {
-      const url = new URL(event.url);
-      const target = url.pathname + url.search;
-      if (
-        target &&
-        target !== window.location.pathname + window.location.search
-      ) {
-        window.location.assign(target);
-      }
-    } catch {
-      // Fallback for custom schemes like jumbleyard://stack-or-sink?room=ABCDEF
-      const match = event.url.match(/^jumbleyard:\/\/(.*)$/);
-      if (match?.[1]) {
-        const dest = '/' + match[1];
-        window.location.assign(dest);
-      }
-    }
-  }).then((handle) => {
-    cleanups.push(() => void handle.remove());
-  });
+    const target = inviteTarget(event.url);
+    if (target && target !== window.location.pathname + window.location.search)
+      window.location.assign(target);
+  }).then(keep);
 
   return () => {
+    disposed = true;
     for (const cleanup of cleanups) cleanup();
   };
 }

@@ -6,6 +6,7 @@ import { siteAnalytics } from '../../games/first-person/analytics';
 import { breakfastAnalytics } from '../../games/four-brain-cells/analytics';
 import { loadBearingAnalytics } from '../../games/load-bearing/analytics';
 import { buttonAnalytics } from '../../games/one-more-button/analytics';
+import { reelAnalytics as reel2Analytics } from '../../games/reel-problems-2/analytics';
 import { reelAnalytics } from '../../games/reel-problems/analytics';
 import { shelfAnalytics } from '../../games/shelf-control/analytics';
 import { siegeAnalytics } from '../../games/siege-and-desist/analytics';
@@ -51,6 +52,7 @@ export const GAMES: readonly CatalogGame[] = [
   ['wrong-floor', 'Wrong Floor', hotelAnalytics],
   ['one-more-button', 'One More Button', buttonAnalytics],
   ['four-brain-cells', 'Four Brain Cells', breakfastAnalytics],
+  ['reel-problems-2', 'Reel Problems 2', reel2Analytics],
   ['reel-problems', 'Reel Problems', reelAnalytics],
   ['shelf-control', 'Shelf Control', shelfAnalytics],
   ['load-bearing', 'Load Bearing', loadBearingAnalytics],

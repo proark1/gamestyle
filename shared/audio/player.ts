@@ -1,4 +1,6 @@
+import { apiFetch } from '../browser/api-fetch';
 import type { AudioProfile } from './profile';
+import { AudioBufferCache } from './buffer-cache';
 import { DEFAULT_SETTINGS, type AudioManifest, type GameId } from './types';
 import { seamlessAmbience } from './loop-buffer';
 import {
@@ -25,7 +27,7 @@ export class SiteAudio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   private manifest: AudioManifest = { settings: DEFAULT_SETTINGS, cues: {} };
-  private buffers = new Map<string, Promise<AudioBuffer | null>>();
+  private buffers = new AudioBufferCache();
   private sources = new Set<AudioBufferSourceNode>();
   private spatialVoices = new Map<AudioBufferSourceNode, SpatialVoice>();
   private sourcePositions = new Map<string, AudioPoint>();
@@ -285,7 +287,7 @@ export class SiteAudio {
   }
   async refresh() {
     try {
-      const response = await fetch(`/api/audio/${this.game}?manifest=1`, {
+      const response = await apiFetch(`/api/audio/${this.game}?manifest=1`, {
         cache: 'no-store',
         signal: AbortSignal.timeout(8000),
       });
@@ -345,7 +347,7 @@ export class SiteAudio {
     if (!pending) {
       pending = (async () => {
         try {
-          const res = await fetch(cue.url, {
+          const res = await apiFetch(cue.url, {
             signal: AbortSignal.timeout(12000),
           });
           if (!res.ok || this.disposed) return null;

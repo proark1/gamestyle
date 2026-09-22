@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element -- Local collection illustration on both hosting targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
@@ -421,7 +423,7 @@ export default function SiegeAndDesist() {
     try {
       const modeParam = w?.mode === 'clash2v2' ? '&mode=clash2v2' : '';
       await navigator.clipboard.writeText(
-        `${location.origin}/siege-and-desist?room=${session?.code}${modeParam}`,
+        `${publicGameOrigin()}/siege-and-desist?room=${session?.code}${modeParam}`,
       );
       setCopied(true);
     } catch {

@@ -1,9 +1,9 @@
 import * as T from 'three';
 import { box, label, material } from '../../shared/rendering/primitives';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { GAME_HEAD_TOP as WORKER_HEAD_TOP } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import { COLORS } from './types';
 

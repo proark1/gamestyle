@@ -61,14 +61,17 @@ export class PanicCurlingScene {
 
   private callbacks: SceneCallbacks;
   private time = 0;
+  private frameDt = 1 / 60;
+  private lastRenderTime: number | undefined;
   private localPlayerId = '';
 
   /** Your own wardrobe items show on your curler. */
   private lookFor(id: string) {
     return id === this.localPlayerId ? getEquippedLook() : undefined;
   }
-  private cameraTarget = new T.Vector3(0, 0, HACK_Z + 4);
+  private cameraTarget = new T.Vector3(0, 0, HACK_Z + 6);
   private trauma = 0;
+  private sightline = new T.Raycaster();
 
   constructor(container: HTMLDivElement, callbacks: SceneCallbacks) {
     this.container = container;
@@ -88,8 +91,8 @@ export class PanicCurlingScene {
       0.5,
       140,
     );
-    this.camera.position.set(0, 5.0, HACK_Z - 5.5);
-    this.camera.lookAt(0, 0.4, HACK_Z + 12);
+    this.camera.position.set(0, 6.5, HACK_Z - 8);
+    this.camera.lookAt(this.cameraTarget);
 
     // 4. Lighting: the collection's house light under a frosty sky.
     const { sun } = addHouseLight(this.scene, {
@@ -133,7 +136,13 @@ export class PanicCurlingScene {
 
   public render(snapshot: PanicCurlingSnapshot) {
     const world = snapshot.world;
-    this.time += 0.016;
+    const now = performance.now();
+    this.frameDt =
+      this.lastRenderTime === undefined
+        ? 1 / 60
+        : Math.min(0.05, (now - this.lastRenderTime) / 1000);
+    this.lastRenderTime = now;
+    this.time += this.frameDt;
 
     // 1. Synchronize Ice Tiles (Thin Ice Cracking & Breaking)
     this.syncIceTiles(world);
@@ -150,7 +159,7 @@ export class PanicCurlingScene {
     // 5. Process Visual Particles & Events
     this.processEvents(world);
     this.updateParticles();
-    this.updateSnowflakes(0.016);
+    this.updateSnowflakes(this.frameDt);
 
     // 6. Update Aim Arrow
     this.updateAimArrow(world);
@@ -240,6 +249,7 @@ export class PanicCurlingScene {
 
         // Attach Gadget
         gadgetGroup = createGadgetMesh(p.gadget);
+        gadgetGroup.userData.gadget = p.gadget;
         this.scene.add(gadgetGroup);
         this.gadgetMeshes.set(p.id, gadgetGroup);
       }
@@ -256,24 +266,47 @@ export class PanicCurlingScene {
         color: p.color,
       });
 
-      // Update gadget position and visibility
+      // Keep the displayed tool in sync with the selected tool.
+      if (gadgetGroup && gadgetGroup.userData.gadget !== p.gadget) {
+        this.scene.remove(gadgetGroup);
+        gadgetGroup = createGadgetMesh(p.gadget);
+        gadgetGroup.userData.gadget = p.gadget;
+        this.scene.add(gadgetGroup);
+        this.gadgetMeshes.set(p.id, gadgetGroup);
+      }
       if (gadgetGroup) {
-        if (p.role === 'sweeper') {
-          gadgetGroup.visible = true;
-          // Position right in front of the curler's hands
-          const fx = p.x + Math.sin(p.rotation) * 0.45;
-          const fz = p.z + Math.cos(p.rotation) * 0.45;
-          gadgetGroup.position.set(fx, 0.05, fz);
-          gadgetGroup.rotation.y = p.rotation;
-
-          // Jiggle gadget during active sweeping
-          if (p.sweepIntensity > 0) {
-            gadgetGroup.position.x += Math.sin(this.time * 28) * 0.08;
-            this.spawnSweepParticles(fx, fz, p.gadget);
+        gadgetGroup.visible = p.role === 'sweeper' && p.status !== 'slipping';
+        const scrub =
+          p.status === 'sweeping' ? Math.sin(this.time * 24) * 0.22 : 0;
+        const fx =
+          p.x + Math.sin(p.rotation) * 0.65 + Math.cos(p.rotation) * scrub;
+        const fz =
+          p.z + Math.cos(p.rotation) * 0.65 - Math.sin(p.rotation) * scrub;
+        gadgetGroup.position.set(fx, 0.015, fz);
+        gadgetGroup.rotation.y = p.rotation;
+        group.updateMatrixWorld(true);
+        const hand = group.userData.armR?.getObjectByName('worker-hand') as
+          | T.Object3D
+          | undefined;
+        if (hand) {
+          const grip = hand.getWorldPosition(new T.Vector3());
+          if (p.gadget === 'broom') {
+            gadgetGroup.updateMatrixWorld(true);
+            const localGrip = gadgetGroup.worldToLocal(grip);
+            const shaft = gadgetGroup.userData.shaft as T.Mesh;
+            shaft.position.copy(localGrip).multiplyScalar(0.5);
+            shaft.scale.y = localGrip.length() / 1.3;
+            shaft.quaternion.setFromUnitVectors(
+              new T.Vector3(0, 1, 0),
+              localGrip.normalize(),
+            );
+          } else {
+            gadgetGroup.position.copy(grip);
+            gadgetGroup.rotation.x = -0.6;
           }
-        } else {
-          gadgetGroup.visible = false;
         }
+        if (gadgetGroup.visible && p.status === 'sweeping')
+          this.spawnSweepParticles(fx, fz, p.gadget);
       }
     }
 
@@ -353,46 +386,59 @@ export class PanicCurlingScene {
   private updateCamera(world: PanicCurlingWorld) {
     const activeStone = world.stones.find((s) => s.id === world.activeStoneId);
 
-    if (world.phase === 'sliding' && activeStone && !activeStone.stopped) {
-      if (activeStone.z > 21.0) {
-        // Elevated broadcast angle as stone approaches House rings
-        this.cameraTarget.lerp(new T.Vector3(0, 0.1, TEE_Z + 0.5), 0.07);
-        this.camera.position.lerp(new T.Vector3(0, 8.8, TEE_Z - 5.8), 0.07);
-      } else {
-        // Intimate dynamic tracking dolly behind active stone down the sheet
-        const targetZ = activeStone.z;
-        const targetX = activeStone.x * 0.45;
-        this.cameraTarget.lerp(
-          new T.Vector3(targetX, 0.35, targetZ + 3.2),
-          0.09,
-        );
-
-        const camZ = targetZ - 5.6;
-        const camY = 4.2;
-        this.camera.position.lerp(
-          new T.Vector3(targetX * 0.6, camY, camZ),
-          0.09,
-        );
-      }
-    } else if (world.phase === 'end_summary') {
-      // Zoom in on the House rings to inspect scoring
-      this.cameraTarget.lerp(new T.Vector3(0, 0, TEE_Z), 0.06);
-      this.camera.position.lerp(new T.Vector3(0, 9.2, TEE_Z - 5.5), 0.06);
-    } else {
-      // Aiming / warmup view: low dramatic perspective right behind hack
-      this.cameraTarget.lerp(new T.Vector3(0, 0.4, HACK_Z + 14.0), 0.08);
-      this.camera.position.lerp(new T.Vector3(0, 5.0, HACK_Z - 5.5), 0.08);
+    const position = new T.Vector3(0, 6.5, HACK_Z - 8);
+    const target = new T.Vector3(0, 0.3, HACK_Z + 6);
+    if (
+      (world.phase === 'sliding' || world.phase === 'shot_result') &&
+      activeStone
+    ) {
+      // Gradually open out to the house, keeping the full shot visible.
+      const progress = T.MathUtils.smoothstep(activeStone.z, 18, 29);
+      position.set(activeStone.x * 0.35, 6.5, activeStone.z - 8);
+      target.set(activeStone.x * 0.4, 0.2, activeStone.z + 2);
+      position.lerp(new T.Vector3(0, 12, TEE_Z - 10), progress);
+      target.lerp(new T.Vector3(0, 0, TEE_Z - 0.5), progress);
+    } else if (world.phase === 'end_summary' || world.phase === 'match_over') {
+      position.set(0, 12, TEE_Z - 10);
+      target.set(0, 0, TEE_Z - 0.5);
     }
+    const blend = 1 - Math.exp(-3.5 * this.frameDt);
+    this.camera.position.lerp(position, blend);
+    this.cameraTarget.lerp(target, blend);
 
     // Apply trauma screen shake
     if (this.trauma > 0) {
       const shake = this.trauma * this.trauma * 0.35;
       this.camera.position.x += (Math.random() - 0.5) * shake;
       this.camera.position.y += (Math.random() - 0.5) * shake;
-      this.trauma = Math.max(0, this.trauma - 0.016 * 2.2);
+      this.trauma = Math.max(0, this.trauma - this.frameDt * 2.2);
     }
 
     this.camera.lookAt(this.cameraTarget);
+
+    // Scenery must never hide the release, stone or sweeping action.
+    this.rinkGroup.updateMatrixWorld(true);
+    const subjects = [this.cameraTarget.clone()];
+    if (activeStone)
+      subjects.push(new T.Vector3(activeStone.x, 0.2, activeStone.z));
+    for (const player of world.players) {
+      if (player.team === world.turnTeam && player.role !== 'defender') {
+        subjects.push(new T.Vector3(player.x, 1, player.z));
+      }
+    }
+    for (const scenery of this.rinkGroup.children) {
+      if (!scenery.userData.cameraOccluder) continue;
+      scenery.visible = true;
+      for (const subject of subjects) {
+        const direction = subject.clone().sub(this.camera.position);
+        this.sightline.set(this.camera.position, direction.clone().normalize());
+        this.sightline.far = direction.length();
+        if (this.sightline.intersectObject(scenery, true).length) {
+          scenery.visible = false;
+          break;
+        }
+      }
+    }
   }
 
   private initSnowflakes() {
@@ -489,7 +535,7 @@ export class PanicCurlingScene {
   }
 
   private updateParticles() {
-    const dt = 0.016;
+    const dt = this.frameDt;
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life += dt;

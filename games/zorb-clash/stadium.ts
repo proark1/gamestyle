@@ -1,3 +1,4 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import * as T from 'three';
 import { TEAM } from '../../shared/rendering/palette';
 import {
@@ -524,5 +525,10 @@ export function createStadium(): StadiumRig {
     }
   };
 
+  batchScenery(
+    root,
+    spectators.map((s) => s.mesh),
+    true,
+  );
   return { root, spectators, update };
 }

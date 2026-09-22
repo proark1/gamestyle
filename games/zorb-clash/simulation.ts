@@ -15,7 +15,7 @@ import {
   type ZorbClashWorld,
   type ZorbPlayer,
 } from './types';
-import { ZorbClashPhysics, STEP } from './physics';
+import { ZorbClashPhysics } from './physics';
 import { updateBots } from './bots';
 import type { ZorbClashAudio } from './audio';
 
@@ -34,7 +34,7 @@ export function createSpringCushions(): SpringCushion[] {
     z: -halfL / 2,
     width: 0.8,
     height: 1.8,
-    depth: halfL * 0.9,
+    depth: halfL,
     compression: 0,
   });
   cushions.push({
@@ -45,7 +45,7 @@ export function createSpringCushions(): SpringCushion[] {
     z: halfL / 2,
     width: 0.8,
     height: 1.8,
-    depth: halfL * 0.9,
+    depth: halfL,
     compression: 0,
   });
 
@@ -58,7 +58,7 @@ export function createSpringCushions(): SpringCushion[] {
     z: -halfL / 2,
     width: 0.8,
     height: 1.8,
-    depth: halfL * 0.9,
+    depth: halfL,
     compression: 0,
   });
   cushions.push({
@@ -69,7 +69,7 @@ export function createSpringCushions(): SpringCushion[] {
     z: halfL / 2,
     width: 0.8,
     height: 1.8,
-    depth: halfL * 0.9,
+    depth: halfL,
     compression: 0,
   });
 
@@ -152,7 +152,7 @@ export function createTiltRamps(): Ramp[] {
 
 export function freshZorbWorld(now: number): ZorbClashWorld {
   return {
-    clock: 0,
+    clock: now,
     started: now,
     phase: 'playing',
     timeRemaining: MATCH_DURATION,
@@ -195,7 +195,7 @@ export function newZorbPlayer(
     color,
     team,
     bot,
-    x: isRed ? -4 : 4,
+    x: [-6, 0, 6][color % 3],
     y: ZORB_RADIUS + 0.2,
     z: isRed ? -12 : 12,
     vx: 0,
@@ -209,6 +209,14 @@ export function newZorbPlayer(
     dashing: 0,
     braced: false,
     turtle: false,
+    posture: 'upright',
+    balance: 0,
+    heading: isRed ? 0 : Math.PI,
+    gait: 0,
+    grounded: false,
+    fallX: 0,
+    fallZ: 1,
+    recovery: 0,
     turtleTimer: 0,
     wiggleProgress: 0,
     bonks: 0,
@@ -232,9 +240,7 @@ export function getOrCreatePhysics(w: ZorbClashWorld): ZorbClashPhysics {
 }
 
 export function advanceZorbClashWorld(w: ZorbClashWorld, now: number) {
-  const lastTime = w.clock > 0 ? w.clock : now / 1000;
-  const currentTime = now / 1000;
-  const dt = Math.min(Math.max(currentTime - lastTime, STEP), 0.1);
+  const dt = Math.min(Math.max((now - w.clock) / 1000, 0), 0.1);
   const physics = getOrCreatePhysics(w);
   advanceZorbClash(w, physics, dt);
 }
@@ -247,7 +253,9 @@ export function advanceZorbClash(
   onImpact?: (x: number, y: number, z: number, intensity: number) => void,
   onGoal?: (x: number, y: number, z: number) => void,
 ) {
-  world.clock += dt;
+  if (!Number.isFinite(dt) || dt <= 0) return;
+  dt = Math.min(dt, 0.1);
+  world.clock += dt * 1000;
 
   // Handle Goal Celebration Freeze
   if (world.status === 'goal_scored') {
@@ -274,7 +282,7 @@ export function advanceZorbClash(
   }
 
   // AI Bots updates
-  updateBots(world, world.clock);
+  updateBots(world, world.clock / 1000);
 
   // Physics Step
   physics.step(dt);
@@ -287,21 +295,14 @@ export function advanceZorbClash(
       onImpact?.(impact.x, impact.y, impact.z, impact.intensity);
 
       // Add bonk score to player
-      if (impact.playerA) {
-        const p = world.players.find((pl) => pl.id === impact.playerA);
+      for (const id of [impact.playerA, impact.playerB]) {
+        const p = world.players.find((pl) => pl.id === id);
         if (p) p.bonks++;
       }
     } else if (impact.type === 'cushion') {
       audio?.springCushion();
     } else if (impact.type === 'zorb_ball') {
       audio?.bonk(0.4);
-      if (impact.playerA) {
-        const p = world.players.find((pl) => pl.id === impact.playerA);
-        if (p) {
-          world.ball.lastTouchTeam = p.team;
-          world.ball.lastTouchPlayerId = p.id;
-        }
-      }
     }
   }
 
@@ -314,8 +315,9 @@ export function advanceZorbClash(
     const scoringTeam = goalResult.team;
     world.score[scoringTeam]++;
 
-    let scorerName = `${scoringTeam.toUpperCase()} TEAM`;
+    let scorerName = '';
     let scorerId: string | null = null;
+    let ownGoal = false;
 
     if (world.ball.lastTouchPlayerId) {
       const p = world.players.find(
@@ -324,7 +326,8 @@ export function advanceZorbClash(
       if (p) {
         scorerName = p.name;
         scorerId = p.id;
-        p.goals++;
+        ownGoal = p.team !== scoringTeam;
+        if (!ownGoal) p.goals++;
       }
     }
 
@@ -332,11 +335,11 @@ export function advanceZorbClash(
       team: scoringTeam,
       scorerId,
       scorerName,
-      isTurtleGoal: goalResult.isTurtleGoal,
+      ownGoal,
       clock: world.clock,
     };
 
-    audio?.goal(goalResult.isTurtleGoal);
+    audio?.goal();
     onGoal?.(world.ball.x, world.ball.y + 1, world.ball.z);
 
     // Check Match Point
@@ -361,12 +364,26 @@ export function zorbClashAction(
   } else if (action.type === 'switch_team') {
     player.team = player.team === 'red' ? 'blue' : 'red';
   } else if (action.type === 'reset' && isHost) {
-    world.score = { red: 0, blue: 0 };
-    world.timeRemaining = MATCH_DURATION;
-    world.status = 'playing';
-    world.lastGoal = null;
-    world.bonkCount = 0;
+    restartZorbMatch(world, getOrCreatePhysics(world));
   }
+}
+
+export function restartZorbMatch(
+  world: ZorbClashWorld,
+  physics: ZorbClashPhysics,
+) {
+  world.score = { red: 0, blue: 0 };
+  world.timeRemaining = MATCH_DURATION;
+  world.status = 'playing';
+  world.lastGoal = null;
+  world.bonkCount = 0;
+  world.celebrationTimer = 0;
+  for (const p of world.players) {
+    p.goals = 0;
+    p.bonks = 0;
+  }
+  physics.resetBall();
+  physics.resetPlayers();
 }
 
 export function zorbClashSnapshot(

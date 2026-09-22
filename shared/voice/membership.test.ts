@@ -11,11 +11,13 @@ import { type RoomStore, type Row } from '../rooms/types';
 import { handleFarmRoom } from '../../games/act-natural/rooms';
 import { handleGiantRoom } from '../../games/dont-wake-the-giant/rooms';
 import { handleDeliveryRoom } from '../../games/uphill-delivery/rooms';
+import { handleShelfRoom } from '../../games/shelf-control/rooms';
 const games = {
   'stack-or-sink': handleRoom,
   'act-natural': handleFarmRoom,
   'dont-wake-the-giant': handleGiantRoom,
   'uphill-delivery': handleDeliveryRoom,
+  'shelf-control': handleShelfRoom,
 };
 function memory(): RoomStore {
   const rows = new Map<string, Row>();

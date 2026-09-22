@@ -12,6 +12,7 @@ import {
   signOut,
 } from './client';
 import type { AccountSummary } from './types';
+import { CastGuide } from '../clubhouse/Cast';
 
 const PROVIDERS = { google: 'Google', email: 'Email code' };
 
@@ -53,7 +54,8 @@ export default function AccountDialog({
     >
       <Dialog.Portal>
         <Dialog.Backdrop className="account-backdrop" />
-        <Dialog.Popup className="account-dialog">
+        <Dialog.Popup className="account-dialog account-clubhouse">
+          <CastGuide pose="cheer" message="account" />
           <Dialog.Title className="account-title">Your account</Dialog.Title>
           <Dialog.Description className="account-description">
             You’re signed in with:
