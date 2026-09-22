@@ -90,24 +90,28 @@ export const SURFACES: readonly Box[] = [
 
   // Girder run: three beams over the pit with two jumpable gaps.
   box('girder-a', 'girder', 16, 24, -0.5, 0, -0.9, 0.9),
-  box('girder-b', 'girder', 27, 33, -0.5, 0, -0.9, 0.9),
-  box('girder-c', 'girder', 36.6, 44, -0.5, 0, -0.9, 0.9),
+  box('girder-b', 'girder', 26.7, 33, -0.5, 0, -0.15, 1.25),
+  box('girder-c', 'girder', 36, 44, -0.5, 0, -1.25, 0.15),
 
   // The low road: drop under the gaps and walk, then climb back out on the
   // left of the girders, where there is headroom to jump.
-  box('catwalk', 'catwalk', 22, 40, -2.9, -2.4, -3, 3),
+  box('catwalk', 'catwalk', 22, 28, -2.9, -2.4, -2.8, -1.1),
+  box('catwalk-turn', 'catwalk', 28, 30, -2.9, -2.4, -2.8, 1.3),
+  box('catwalk-return', 'catwalk', 30, 34, -2.9, -2.4, -0.4, 1.3),
+  box('catwalk-turn-back', 'catwalk', 34, 36, -2.9, -2.4, -2.8, 1.3),
+  box('catwalk-exit', 'catwalk', 36, 40, -2.9, -2.4, -2.8, -1.1),
   box('step-a', 'crate', 39.4, 41.4, -2.4, -1.6, -2.9, -1.3),
   box('step-b', 'crate', 41.4, 43.4, -1.6, -0.8, -2.9, -1.3),
   box('step-c', 'crate', 43.4, 45.4, -0.8, 0, -2.9, -1.3),
 
   // Scaffold climb: six short steps up to the high structure.
   box('scaffold-base', 'scaffold', 44, 50, -0.5, 0, -4, 4),
-  box('scaffold-1', 'scaffold', 50.0, 52.5, 0.7, 1.2, -2.5, 2.5),
-  box('scaffold-2', 'scaffold', 52.5, 55.0, 1.9, 2.4, -2.5, 2.5),
-  box('scaffold-3', 'scaffold', 55.0, 57.5, 3.1, 3.6, -2.5, 2.5),
-  box('scaffold-4', 'scaffold', 57.5, 60.0, 4.3, 4.8, -2.5, 2.5),
-  box('scaffold-5', 'scaffold', 60.0, 62.5, 5.5, 6.0, -2.5, 2.5),
-  box('scaffold-6', 'scaffold', 62.5, 65.0, 6.7, 7.2, -2.5, 2.5),
+  box('scaffold-1', 'scaffold', 50.0, 52.5, 0.7, 1.2, -2.4, 1.3),
+  box('scaffold-2', 'scaffold', 52.5, 55.0, 1.9, 2.4, -1.3, 2.4),
+  box('scaffold-3', 'scaffold', 55.0, 57.5, 3.1, 3.6, -2.4, 1.3),
+  box('scaffold-4', 'scaffold', 57.5, 60.0, 4.3, 4.8, -1.3, 2.4),
+  box('scaffold-5', 'scaffold', 60.0, 62.5, 5.5, 6.0, -2.4, 1.3),
+  box('scaffold-6', 'scaffold', 62.5, 65.0, 6.7, 7.2, -1.3, 2.4),
   box('scaffold-top', 'scaffold', 65, 70, 7.5, 8.0, -3, 3),
 
   // Pendulum ledge: narrow, high, and swept by the wrecking load.
@@ -128,14 +132,15 @@ export const SURFACES: readonly Box[] = [
 
   // Net approach and the ground the net reaches down to.
   box('net-deck', 'ledge', 112, 118, 7.5, 8.0, -3, 3),
-  box('lower-pad', 'pad', 118, 144, -1.2, 0, -6, 6),
+  box('lower-pad', 'pad', 118, 125, -1.2, 0, -4, 4),
+  box('cargo-landing', 'pad', 136, 144, -1.2, 0, -4, 4),
 
   // Cargo chicane: jump the loads or take the slower route around the ends.
-  box('cargo-left', 'crate', 128, 129.2, 0, 1.0, -6, 1.2),
-  box('cargo-right', 'crate', 136, 137.2, 0, 1.0, -1.2, 6),
+  box('cargo-left', 'crate', 138, 138.7, 0, 2.5, -4, 0.4),
+  box('cargo-right', 'crate', 141, 141.7, 0, 2.5, -0.4, 4),
   // One last narrow crossing. The landing is wide enough to regroup.
-  box('last-bridge-a', 'ledge', 144, 151, -0.5, 0, -1.6, 1.6),
-  box('last-bridge-b', 'ledge', 153.5, 161, -0.5, 0, -1.6, 1.6),
+  box('last-bridge-a', 'ledge', 144, 151, -0.5, 0, -1.1, 1.1),
+  box('last-bridge-b', 'ledge', 153.5, 161, -0.5, 0, -1.1, 1.1),
 
   // Site office.
   box('office-pad', 'office', 161, COURSE_END_X, -1.2, 0, -8, 8),
@@ -172,12 +177,64 @@ export const PROPS: readonly Box[] = [
       b.minZ + 0.16,
     ),
   ]),
-  ...[-2.9, 2.9].map((z, i) =>
-    box(`catwalk-rail-${i}`, 'pipe', 23, 39, -1.5, -1.4, z - 0.05, z + 0.05),
-  ),
 ];
 
 export const SOLIDS: readonly Box[] = [...SURFACES, ...PROPS];
+
+/** Shared render/physics transforms. The deck shuttles between stable docks;
+ * suspended loads traverse open crossings with a visible, learnable rhythm. */
+export function machineryAt(seconds: number): Box[] {
+  const shuttle = Math.sin((seconds * Math.PI) / 5) * 1.7;
+  const sweep = Math.sin((seconds * Math.PI) / 3.6) * 4.5;
+  return [
+    box(
+      'cargo-shuttle',
+      'pad',
+      126 + shuttle,
+      134 + shuttle,
+      -0.6,
+      0,
+      -1.55,
+      1.55,
+    ),
+    box(
+      'sweep-final',
+      'crate',
+      156.2,
+      157.2,
+      0.25,
+      2.4,
+      sweep - 0.7,
+      sweep + 0.7,
+    ),
+    box(
+      'sweep-scaffold',
+      'crate',
+      66.5,
+      67.4,
+      8.2,
+      10.4,
+      Math.sin((seconds * Math.PI) / 4.4 + 1.6) * 4.8 - 0.65,
+      Math.sin((seconds * Math.PI) / 4.4 + 1.6) * 4.8 + 0.65,
+    ),
+  ];
+}
+
+export function courseSeconds(world: {
+  clock: number;
+  startedAt: number;
+  endedAt?: number;
+}): number {
+  return Math.max(0, ((world.endedAt || world.clock) - world.startedAt) / 1000);
+}
+
+export function courseSolids(world: {
+  clock: number;
+  startedAt: number;
+  endedAt?: number;
+}): readonly Box[] {
+  return [...SOLIDS, ...machineryAt(courseSeconds(world))];
+}
 
 export type Anchor = {
   id: string;
@@ -226,6 +283,12 @@ export const CHECKPOINTS: readonly Checkpoint[] = [
 export function laneZ(x: number, y: number): number {
   // Climbing out of the low road happens beside the girders, not under them.
   if (y < -1.0 && x > 34 && x < 46) return -2.1;
+  if (y < -1.0 && x >= 22 && x < 29) return -1.9;
+  if (y < -1.0 && x >= 29 && x < 34) return 0.4;
+  if (y > -1 && x > 24 && x < 33) return 0.55;
+  if (y > -1 && x >= 33 && x < 43) return -0.55;
+  if (x >= 136 && x < 139.3) return 1.35;
+  if (x >= 139.3 && x < 142.3) return -1.35;
   // Past the crate stack at the pipe mouth and into the pipe.
   if (x > 86 && x < 92.5) return -0.4;
   return 0;

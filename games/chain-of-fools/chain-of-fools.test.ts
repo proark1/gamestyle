@@ -261,7 +261,7 @@ void test('hauling brings a dangling worker back onto the deck', () => {
   assert.ok(hauler.hauls > 0, 'the hauler got the credit');
 });
 
-void test('a wipe returns the crew to the last banked checkpoint', () => {
+void test('a wipe returns the whole crew to the gate even after reaching later sections', () => {
   const world = playing();
   world.checkpoint = 2;
   for (const player of world.players) {
@@ -275,7 +275,7 @@ void test('a wipe returns the crew to the last banked checkpoint', () => {
   run(world, 2.5);
 
   assert.ok(world.wipes >= 1, 'the crew wiped');
-  const spawn = CHECKPOINTS[2].spawn;
+  const spawn = CHECKPOINTS[0].spawn;
   for (const player of world.players) {
     assert.ok(
       Math.abs(player.x - spawn[0]) < 8,
@@ -547,10 +547,15 @@ void test('the human leads the line and the bots follow their route down', () =>
     'the human starts at the front of the line',
   );
 
-  // Walk straight off the end of the first girder onto the low road, then stop.
+  // Choose the narrow side catwalk, then stop before its first turn.
   const step = 1 / 60;
   for (let i = 0; i < 18 * 60; i++) {
-    me.input = { ...me.input, x: me.x < 30 ? 1 : 0, z: 0, jump: false };
+    me.input = {
+      ...me.input,
+      x: me.x < 27 ? 1 : 0,
+      z: me.x > 22 ? Math.max(-1, Math.min(1, (-1.9 - me.z) * 2)) : 0,
+      jump: false,
+    };
     for (const player of world.players)
       if (player.bot) stepChainBot(player, world, step);
     advanceChainOfFools(world, world.clock + step * 1000, step);

@@ -472,12 +472,6 @@ export const chainOfFoolsCatalog: Cue[] = [
     'Halfway through the shift. Keep the chain slack and your ambitions modest.',
   ),
   line(
-    'checkpoint',
-    'Checkpoint banked',
-    '[pleased]',
-    'Checkpoint banked. Nobody fell off. Well, nobody important.',
-  ),
-  line(
     'dangle',
     'Someone went over',
     '[deadpan]',

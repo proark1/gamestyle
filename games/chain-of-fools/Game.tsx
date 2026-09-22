@@ -534,7 +534,10 @@ export default function ChainOfFoolsGame() {
               </span>
             </div>
             <span className="cof-checkpoint-count">
-              {strings.checkpointSaved(w.checkpoint, CHECKPOINTS.length - 1)}
+              {strings.sectionProgress(w.checkpoint, CHECKPOINTS.length - 1)}
+              <span className="cof-best">
+                {strings.bestDistance(Math.round(Math.min(FINISH_X, w.bestX)))}
+              </span>
             </span>
           </div>
 
@@ -560,11 +563,17 @@ export default function ChainOfFoolsGame() {
           <div className="cof-hud-badge cof-badge-wipes">
             <HardHat size={18} />
             <div>
-              <strong>{w.wipes}</strong>
+              <strong>{w.wipes + 1}</strong>
               <small>{strings.hudWipes}</small>
             </div>
           </div>
         </section>
+      )}
+
+      {w && playing && me && me.respawnAt > w.clock && w.wipes > 0 && (
+        <output className="cof-reset-notice" aria-live="polite">
+          {strings.resetNotice}
+        </output>
       )}
 
       {prompt && (

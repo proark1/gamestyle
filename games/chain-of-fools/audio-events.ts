@@ -7,6 +7,7 @@ import {
   pendulumBall,
   plankSurfaceY,
   type SurfaceKind,
+  machineryAt,
 } from './course';
 import {
   PLAYER_RADIUS,
@@ -97,7 +98,6 @@ const LINE_PRIORITY = [
   'speech.haul',
   'speech.dangle',
   'speech.plank',
-  'speech.checkpoint',
   'speech.encourage',
 ];
 
@@ -107,9 +107,18 @@ export function chainSurface(
   y: number,
   z: number,
   plankTilt: number,
+  seconds = 0,
 ): ChainSurface {
   if (onPlank(x, z) && Math.abs(plankSurfaceY(x, plankTilt) - y) < 0.3)
     return 'timber';
+  const deck = machineryAt(seconds)[0];
+  if (
+    Math.abs(y) < 0.15 &&
+    x >= deck.minX - PLAYER_RADIUS &&
+    x <= deck.maxX + PLAYER_RADIUS &&
+    Math.abs(z) < 1.55 + PLAYER_RADIUS
+  )
+    return 'steel';
   let top = -Infinity;
   let kind: SurfaceKind | null = null;
   for (const b of SURFACES) {
@@ -256,7 +265,10 @@ export function chainAudioStep(
   const newRound =
     world.phase === 'playing' &&
     (previous.phase !== 'playing' || previous.startedAt !== world.startedAt);
-  if (newRound) {
+  const wiped = world.events.some(
+    (e) => e.id > previous.eventId && e.type === 'wipe',
+  );
+  if (newRound && !wiped) {
     lines.push('speech.start');
     cues.push({ id: 'event.start' });
   }
@@ -319,7 +331,7 @@ export function chainAudioStep(
       if (next.stride >= STRIDE) {
         next.stride = 0;
         say(
-          `step.${chainSurface(player.x, player.y, player.z, world.plankTilt)}`,
+          `step.${chainSurface(player.x, player.y, player.z, world.plankTilt, (world.clock - world.startedAt) / 1000)}`,
           0.7,
           true,
         );
@@ -366,6 +378,23 @@ export function chainAudioStep(
       });
   }
 
+  // Passing machinery reuses the spatial construction whoosh.
+  if (playing && !newRound) {
+    const current = machineryAt((world.clock - world.startedAt) / 1000);
+    const before = machineryAt((previous.clock - previous.startedAt) / 1000);
+    for (let i = 1; i < current.length; i++) {
+      const z = (current[i].minZ + current[i].maxZ) / 2;
+      const oldZ = (before[i].minZ + before[i].maxZ) / 2;
+      const position = { x: current[i].minX, y: current[i].maxY, z };
+      if (Math.sign(z) !== Math.sign(oldZ) && near(position))
+        cues.push({
+          id: 'hazard.swing',
+          position,
+          strength: 0.7,
+          source: current[i].id,
+        });
+    }
+  }
   // The wrecking load whooshes through the bottom of every swing.
   if (
     playing &&
@@ -418,7 +447,7 @@ function eventCues(
         add('move.land', mine ? 0.85 : 0.4, true);
         if (at)
           add(
-            `step.${chainSurface(at.x, at.y, at.z, world.plankTilt)}`,
+            `step.${chainSurface(at.x, at.y, at.z, world.plankTilt, (world.clock - world.startedAt) / 1000)}`,
             mine ? 0.9 : 0.45,
             true,
           );
@@ -474,7 +503,6 @@ function eventCues(
       if (event.playerId) add('event.clockin', 0.9);
       else {
         cues.push({ id: 'event.checkpoint' });
-        lines.push('speech.checkpoint');
       }
       break;
     case 'wipe':

@@ -191,7 +191,7 @@ void test('the workshop catalog is rich, keeps every original cue and fits the p
 void test('every deck on the course has its own footstep', () => {
   assert.equal(chainSurface(2, 0, 0, 0), 'dirt');
   assert.equal(chainSurface(20, 0, 0, 0), 'steel');
-  assert.equal(chainSurface(30, -2.4, 2, 0), 'steel', 'catwalk grating');
+  assert.equal(chainSurface(30, -2.4, 0.5, 0), 'steel', 'catwalk grating');
   assert.equal(chainSurface(6.8, 0.9, -2.4, 0), 'timber', 'crate');
   assert.equal(chainSurface(67, 8, 0, 0), 'timber', 'scaffold');
   assert.equal(chainSurface(73, 8, 0, 0), 'timber', 'the plank');
@@ -462,7 +462,10 @@ const scenarios: Record<string, () => string[]> = {
     const ears = new Ears(world);
     const banked = ears.run(0.2);
     assert.ok(banked.includes('event.checkpoint'));
-    assert.ok(banked.includes('speech.checkpoint'));
+    assert.ok(
+      !banked.includes('speech.checkpoint'),
+      'no voice claims a checkpoint was saved',
+    );
     const office = shift(1);
     Object.assign(office.players[0], { x: FINISH_X + 1, y: 0, grounded: true });
     const clock = new Ears(office);

@@ -1037,3 +1037,30 @@
     transform: translateX(-50%) scale(1.04);
   }
 }
+
+.cof-checkpoint-count {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  justify-content: space-between;
+}
+.cof-best {
+  color: var(--hud-ink);
+  font-weight: 700;
+}
+.cof-reset-notice {
+  position: absolute;
+  z-index: 15;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 18px 24px;
+  border-radius: 16px;
+  background: #34454a;
+  color: #fff4d2;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 10px 40px #0003;
+}

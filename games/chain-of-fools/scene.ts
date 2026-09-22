@@ -1,3 +1,4 @@
+import { animateSiteDetails } from './site-details';
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import { shouldRenderFrame } from '../../shared/rendering/runtime';
 import * as T from 'three';
@@ -87,6 +88,7 @@ export class ChainScene {
   private calmMotion = prefersReducedMotion();
 
   private world: ChainWorld | null = null;
+  private snapCamera = false;
   private localId = '';
   private mode: CameraMode = 'crew';
   private yaw = 0;
@@ -156,11 +158,19 @@ export class ChainScene {
       this.site.pendulum,
       ...this.site.anchors.values(),
       ...this.site.checkpointFlags,
+      ...this.site.details.machines.values(),
+      ...this.site.details.cranes,
+      ...this.site.details.lamps,
     ]);
     // The plank and the wrecking load each move as one rigid piece, so their
     // parts can share draw calls inside their own groups.
     batchScenery(this.site.plank);
     batchScenery(this.site.pendulum);
+    for (const group of [
+      ...this.site.details.machines.values(),
+      ...this.site.details.cranes,
+    ])
+      batchScenery(group);
     this.scene.add(this.site.root);
 
     // The safety line: real links, recoloured by how hard the line is pulling.
@@ -400,6 +410,7 @@ export class ChainScene {
     this.world = world;
     this.cb.input(this.pollInput());
 
+    animateSiteDetails(this.site.details, world, this.calmMotion);
     this.syncWorkers(world);
     this.site.plank.rotation.z = world.plankTilt;
     this.site.pendulum.rotation.x = -world.pendulumAngle;
@@ -657,6 +668,7 @@ export class ChainScene {
           }
           break;
         case 'wipe':
+          this.snapCamera = true;
           this.trauma = Math.max(this.trauma, 0.5);
           break;
         case 'plank_tip':
@@ -773,7 +785,7 @@ export class ChainScene {
     const ahead = portrait && this.mode !== 'side' ? 4 : 2;
     this.cameraTarget.lerp(
       this.tmpA.set(tx + ahead, ty + 1.1, tz),
-      1 - Math.exp(-dt * 4),
+      this.snapCamera ? 1 : 1 - Math.exp(-dt * 4),
     );
 
     let back: number;
@@ -804,7 +816,11 @@ export class ChainScene {
     offset.applyAxisAngle(Y_AXIS, yaw);
     offset.y += this.pitch * 10;
     const wanted = this.tmpA.copy(this.cameraTarget).add(offset);
-    this.cameraPosition.lerp(wanted, 1 - Math.exp(-dt * 3.2));
+    this.cameraPosition.lerp(
+      wanted,
+      this.snapCamera ? 1 : 1 - Math.exp(-dt * 3.2),
+    );
+    this.snapCamera = false;
     this.camera.position.copy(this.cameraPosition);
 
     if (this.calmMotion) this.trauma = 0;
@@ -853,7 +869,7 @@ export class ChainScene {
     ) as T.BufferAttribute;
     for (let i = 0; i < dust.count; i++) {
       let x = dust.getX(i) + dt * 0.35;
-      if (x > 160) x = -10;
+      if (x > 182) x = -10;
       dust.setX(i, x);
     }
     dust.needsUpdate = true;

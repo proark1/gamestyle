@@ -1,4 +1,11 @@
-import { FINISH_X, NET, laneZ } from './course';
+import {
+  FINISH_X,
+  NET,
+  laneZ,
+  courseSolids,
+  courseSeconds,
+  machineryAt,
+} from './course';
 import { climbAhead, supportUnder } from './physics';
 import { newPlayer } from './simulation';
 import {
@@ -116,6 +123,8 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
     return;
   }
 
+  const solids = courseSolids(world);
+
   // Follow the route whoever is ahead on the line chose: their line across,
   // and never past them. The front of the line picks its own way.
   const leader = leaderOf(bot, world);
@@ -126,7 +135,9 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
   const targetZ = atNet
     ? (bot.link - 1.5) * 1.2
     : following
-      ? leader.z
+      ? bot.x >= 136 && bot.x < 144
+        ? laneZ(bot.x, bot.y)
+        : leader.z
       : laneZ(bot.x, bot.y);
   const lane = targetZ - bot.z;
   bot.input.z =
@@ -140,18 +151,39 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
 
   // Forward, which on the cargo net also means down it.
   bot.input.x = 1;
+  // Turn at the cargo gates before advancing into their tall faces.
+  if (bot.x >= 136 && bot.x < 144 && Math.abs(lane) > 0.3) bot.input.x = 0;
+  // Wait on a stable staging area until the load is moving out of the lane.
+  const seconds = courseSeconds(world);
+  const now = machineryAt(seconds);
+  const soon = machineryAt(seconds + 0.8);
+  for (let i = 1; i < now.length; i++) {
+    const load = now[i];
+    if (
+      bot.grounded &&
+      bot.x < load.minX &&
+      bot.x > load.minX - 2.2 &&
+      Math.abs(bot.y - (load.minY - 0.25)) < 0.4 &&
+      (Math.abs((load.minZ + load.maxZ) / 2) < 2.7 ||
+        Math.abs((soon[i].minZ + soon[i].maxZ) / 2) < 2.3)
+    ) {
+      bot.input.x = 0;
+      bot.input.brace = true;
+      return;
+    }
+  }
 
   if (!bot.grounded) return;
 
   // Look at the boots' own level rather than at any absolute height: a drop to
   // the low road reads as a gap exactly like open air does.
   const level = (probe: number) => {
-    const support = supportUnder(probe, bot.y, bot.z, world.plankTilt);
+    const support = supportUnder(probe, bot.y, bot.z, world.plankTilt, solids);
     return support !== null && Math.abs(support - bot.y) < 0.6;
   };
 
   const lip = !level(bot.x + 0.9);
-  const stepUp = climbAhead(bot.x + 0.9, bot.y, bot.z, 1.35) !== null;
+  const stepUp = climbAhead(bot.x + 0.9, bot.y, bot.z, 1.35, solids) !== null;
 
   // A gap is worth jumping only when there is somewhere to land on the far side.
   let landing = false;
@@ -161,5 +193,9 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
 
   // If the worker ahead dropped to the low road, walk off after them instead.
   const leaderBelow = following && leader.y < bot.y - 1.2;
+  if (lip && !landing && bot.x >= 122 && bot.x < 136) {
+    bot.input.x = 0;
+    bot.input.brace = true;
+  }
   if (stepUp || (lip && landing && !leaderBelow)) bot.input.jump = true;
 }
