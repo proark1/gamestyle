@@ -778,7 +778,7 @@ export default function ActNatural() {
                 >
                   {farmer ? <Eye size={20} /> : <Hand size={20} />}
                   <span className="farm-desktop-hint">
-                    {farmer ? 'Inspect cow' : 'Interact'}
+                    {farmer ? touchHud?.label ?? 'Inspect cow' : 'Interact'}
                   </span>
                   <span className="farm-mobile-hint">{touchHud?.label}</span>
                   <kbd>E</kbd>

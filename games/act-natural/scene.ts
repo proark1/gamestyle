@@ -11,6 +11,7 @@ import {
   walkCow,
 } from './objects';
 import { farmSnapshot, freshFarm } from './simulation';
+import { farmerRepair } from './farmer-actions';
 import {
   cowExposed,
   fenceDistance,
@@ -330,7 +331,7 @@ export class FarmScene {
   interact() {
     if (this.paused) return;
     this.callbacks.action({
-      type: this.snapshot.you.role === 'farmer' ? 'inspect' : 'interact',
+      type: 'interact',
       ...(this.snapshot.you.role === 'farmer' && this.selected
         ? { target: this.selected }
         : {}),
@@ -516,9 +517,11 @@ export class FarmScene {
         'Wander or graze near other cows. Space to graze, E to interact.';
       let watched = false;
       if (farmer)
-        hint = selected
-          ? `Selected cow · ${distance(selected, w.farmer).toFixed(1)} m away · E to inspect`
-          : 'Sweep your flashlight across the herd. Face a nearby cow, then click or press E to inspect.';
+        hint = farmerRepair(w)
+          ? `E to ${farmerRepair(w)!.label.toLowerCase()}.`
+          : selected
+            ? `Selected cow · ${distance(selected, w.farmer).toFixed(1)} m away · E to inspect`
+            : 'Sweep your flashlight across the herd. Face a nearby cow, then click or press E to inspect.';
       else if (me) {
         const dx = me.x - w.farmer.x,
           dz = me.z - w.farmer.z,
