@@ -6,6 +6,7 @@ import {
   PLAZA_SPEED,
 } from '../../shared/plaza/world';
 import type { Look } from '../../shared/wardrobe/look';
+import type { CrewBadge } from '../../shared/crews/types';
 import {
   hashToken,
   newRoomCode,
@@ -346,6 +347,7 @@ export async function updateLobbyPresence(
     look: Look;
     fullGame: boolean;
     accountId: string | null;
+    crew?: CrewBadge | null;
   },
   now = Date.now(),
 ) {
@@ -387,6 +389,7 @@ export async function updateLobbyPresence(
                 lobbySeenAt: now,
                 look: presence.look,
                 fullGame: presence.fullGame,
+                crew: presence.crew ?? null,
                 browsing: presence.browsing,
                 ready: presence.browsing
                   ? false

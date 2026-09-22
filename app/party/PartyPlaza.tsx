@@ -49,6 +49,7 @@ export default function PartyPlaza({
   const pose = useRef<PlazaPose>(me?.lobbyPose ?? spawnPose(me?.color ?? 0));
   const latest = useRef({ look: wardrobe.look, browsing: false, onPresence });
   const sending = useRef<Promise<boolean> | null>(null),
+    lastPublished = useRef(0),
     lastSent = useRef(''),
     alive = useRef(true),
     changingShop = useRef(false);
@@ -88,6 +89,7 @@ export default function PartyPlaza({
             ? signature
             : '';
         latest.current.onPresence(fresh);
+        lastPublished.current = Date.now();
         setError('');
         return true;
       } catch {
@@ -122,7 +124,11 @@ export default function PartyPlaza({
         look: latest.current.look,
         browsing: latest.current.browsing,
       });
-      if (signature !== lastSent.current) void publishRef.current();
+      if (
+        signature !== lastSent.current ||
+        Date.now() - lastPublished.current > 10000
+      )
+        void publishRef.current();
     }, 350);
     return () => {
       alive.current = false;

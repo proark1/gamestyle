@@ -310,3 +310,33 @@ export const commerceTransactions = sqliteTable(
     index('commerce_transactions_owner_idx').on(table.ownerId),
   ],
 );
+
+export const crews = sqliteTable('crews', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  emblem: text('emblem').notNull(),
+  ownerMemberId: text('owner_member_id'),
+  inviteHash: text('invite_hash').unique(),
+  inviteExpires: integer('invite_expires'),
+  created: integer('created').notNull(),
+  archived: integer('archived'),
+});
+export const crewMembers = sqliteTable(
+  'crew_members',
+  {
+    accountId: text('account_id')
+      .primaryKey()
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    crewId: text('crew_id')
+      .notNull()
+      .references(() => crews.id, { onDelete: 'cascade' }),
+    publicId: text('public_id').notNull().unique(),
+    seat: integer('seat').notNull(),
+    joined: integer('joined').notNull(),
+  },
+  (table) => [
+    uniqueIndex('crew_members_seat_idx').on(table.crewId, table.seat),
+    index('crew_members_crew_idx').on(table.crewId),
+  ],
+);

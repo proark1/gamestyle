@@ -11,6 +11,7 @@ import type { PartyAction, PartyRoomState } from '@/platform/party/types';
 import type { Identity } from './PartyClient';
 import PartyPodium from './PartyPodium';
 import PartyPlaza from './PartyPlaza';
+import CrewPanel from '@/shared/crews/CrewPanel';
 import {
   GameBriefing,
   PartyAvatar,
@@ -303,6 +304,7 @@ export function PartyLobby({
         token={token}
         onPresence={onPresence}
       />
+      <CrewPanel partyLink={invite} />
       <div className="party-roster">
         {humans.map((p) => (
           <div className="party-roster-row" key={p.id}>
@@ -314,6 +316,7 @@ export function PartyLobby({
               </strong>
               <small>
                 {p.isHost ? text('Host', 'Gastgeber') : text('Crew', 'Crew')}
+                {p.crew && ` · ${p.crew.name}`}
               </small>
             </span>
             <span

@@ -35,6 +35,7 @@ import {
 } from '@/shared/commerce/server/inventory';
 import { LEGACY_ITEMS } from '@/shared/commerce/server/legacy-items';
 import { parseLook } from '@/shared/wardrobe/look';
+import { crewBadge } from '@/shared/crews/server/store';
 
 const json = (body: unknown, status = 200) =>
   Response.json(body, {
@@ -83,6 +84,7 @@ async function handleRequest(request: Request) {
               look,
               fullGame,
               accountId: account?.id ?? null,
+              crew: account ? await crewBadge(getBinding(), account.id) : null,
             },
           ),
         });

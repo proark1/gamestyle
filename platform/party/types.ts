@@ -2,6 +2,7 @@ import type { GameId } from '../../shared/audio/types';
 import type { PartyResult } from '../../shared/ui/party-round';
 import type { Look } from '../../shared/wardrobe/look';
 import type { PlazaPose } from '../../shared/plaza/world';
+import type { CrewBadge } from '../../shared/crews/types';
 
 export type PartyPlayer = {
   id: string;
@@ -18,6 +19,7 @@ export type PartyPlayer = {
   lobbySeenAt?: number;
   browsing?: boolean;
   fullGame?: boolean;
+  crew?: CrewBadge | null;
 };
 
 export type PartyStatus =
