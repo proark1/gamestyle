@@ -144,8 +144,19 @@ export function createFighter(p: Fighter, look?: Look) {
     const forearm = ball(parent, [0.064, 0.1, 0.064], [0, -0.3, 0], '#de9268');
     const glove = new T.Group();
     parent.add(glove);
-    ball(glove, [0.14, 0.15, 0.16], [0, 0, 0.025], TEAM[p.team], 16);
-    box(glove, [0.17, 0.09, 0.18], [0, -0.1, 0], CLOTH.cream, true);
+    // Open-finger MMA gloves leave the palm and fingertips visible for grappling.
+    ball(glove, [0.079, 0.083, 0.066], [0, 0, -0.01], '#de9268');
+    box(glove, [0.19, 0.1, 0.13], [0, 0.025, 0.04], TEAM[p.team], true);
+    box(glove, [0.15, 0.045, 0.125], [0, -0.087, 0], CLOTH.cream, true);
+    for (const x of [-0.066, -0.022, 0.022, 0.066])
+      ball(glove, [0.021, 0.034, 0.028], [x, 0.109, -0.008], '#de9268', 10);
+    ball(
+      glove,
+      [0.031, 0.039, 0.032],
+      [side === 'L' ? -0.1 : 0.1, 0.005, -0.015],
+      '#de9268',
+      10,
+    );
     return { upper, elbow, forearm, glove, side: side === 'L' ? -1 : 1 };
   });
   const ring = new T.Mesh(
