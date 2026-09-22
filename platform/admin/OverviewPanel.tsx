@@ -34,9 +34,9 @@ export default function OverviewPanel({
       <p className={styles.empty}>Loading the overview…</p>
     );
   const { totals } = data;
-  const games = [...data.games].sort(
-    (a, b) => b.sessions - a.sessions || b.played - a.played,
-  );
+  const games = data.games
+    .filter((row) => catalogGame(row.game))
+    .sort((a, b) => b.sessions - a.sessions || b.played - a.played);
   const busiest = Math.max(1, games[0]?.sessions ?? 0);
   return (
     <div className={styles.panel} data-loading={loading || undefined}>
