@@ -3,6 +3,20 @@
   min-height: 38px;
   white-space: nowrap;
 }
+@media (max-width: 900px), (pointer: coarse) {
+  .peer-room-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .peer-room-trigger > span {
+    display: none;
+  }
+}
 .peer-room-backdrop {
   position: fixed;
   inset: 0;

@@ -21,6 +21,7 @@ import {
 
 const adapter: GameAdapter<BrainWorld, BrainSnapshot> = {
   game: 'four-brain-cells',
+  snapshotDetached: true,
   autonomous: (p) => !!p.bot,
   roster: (w, roster) => reconcileBreakfastNpcs(w, roster.slots),
   actions: ['start', 'restart', 'claim', 'grab', 'use', 'kick', 'center'],

@@ -293,7 +293,7 @@ void test('Party Room Lifecycle: create -> join -> start -> report -> next round
       assert.equal(room.currentRound, round + 1);
     }
   }
-  assert(room.players.every((p) => p.score > 0));
+  assert(room.players.filter((p) => !p.isBot).every((p) => p.score > 0));
 
   // 7. Rematch
   const rematched = await rematchParty(store, code, host);
@@ -431,6 +431,14 @@ async function startParty(game: GameId, guests: number) {
     guestPasses.push({ id: joined.playerId, token: joined.token });
   }
   const started = await startPartyTournament(store, code, host);
+  // Legacy saved tournaments retain their solo-leg scoring across deployment.
+  const saved = (await store.get(partyStorageKey(code)))!;
+  const legacy = JSON.parse(saved.state);
+  delete legacy.runId;
+  await store.compareAndSwap(
+    { ...saved, state: JSON.stringify(legacy), version: saved.version + 1 },
+    saved.version,
+  );
   const bots = started.players.filter((p) => p.isBot).map((p) => p.id);
   return { store, code, host, guests: guestPasses, bots };
 }

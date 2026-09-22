@@ -39,7 +39,7 @@ export type SealedCheckpoint = {
 };
 export type PeerView = {
   code: string;
-  game: Game;
+  game: Game | 'party';
   host: string;
   epoch: number;
   members: Member[];
@@ -51,6 +51,11 @@ export type PeerView = {
   cursor: number;
   iceServers: RTCIceServer[];
   relayConfigured: boolean;
+  relayOnly?: boolean;
+  voiceRecovered?: boolean;
+  party?: { code: string; round: number; run: string };
+  protocol?: number;
+  rules?: number;
   // Only the currently elected host receives checkpoint keys or recovery state.
   key?: string;
   checkpoint?: SealedCheckpoint & { key: string };

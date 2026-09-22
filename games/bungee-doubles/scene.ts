@@ -1,3 +1,4 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
 import { courtCameraDistance, courtViewport, movementAxes } from './controls';
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
@@ -616,8 +617,15 @@ export class BungeeScene {
     this.shakeTimer = duration;
   }
 
+  private inputStamp = 0;
   private animate = () => {
     this.frameId = requestAnimationFrame(this.animate);
+    const inputNow = performance.now();
+    this.pollInput(
+      this.inputStamp ? Math.min(0.1, (inputNow - this.inputStamp) / 1000) : 0,
+    );
+    this.inputStamp = inputNow;
+    if (!shouldRenderFrame(this.renderer)) return;
     const now = performance.now();
     const dt = Math.min((now - this.lastTime) / 1000, 0.1);
     this.lastTime = now;
@@ -651,8 +659,6 @@ export class BungeeScene {
     }
     this.camera.lookAt(this.currentCamLook);
     this.camera.updateMatrixWorld();
-
-    this.pollInput(dt);
 
     // Update ball trails
     for (const t of this.trailPool) {

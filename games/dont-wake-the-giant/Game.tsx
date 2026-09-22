@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-html-link-for-pages */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -335,7 +337,7 @@ export default function GiantGame() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/dont-wake-the-giant?room=${session.code}`,
+        `${publicGameOrigin()}/dont-wake-the-giant?room=${session.code}`,
       );
       setCopied(true);
     } catch {

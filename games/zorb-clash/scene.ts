@@ -1,3 +1,4 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import {
@@ -724,6 +725,7 @@ export class ZorbClashScene {
 
   private loop = (timeMs: number) => {
     this.animFrame = requestAnimationFrame(this.loop);
+    if (!shouldRenderFrame(this.renderer)) return;
     const dt = Math.min((timeMs - this.lastTime) / 1000, 0.1);
     this.lastTime = timeMs;
 

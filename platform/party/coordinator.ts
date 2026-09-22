@@ -410,6 +410,7 @@ export async function startPartyTournament(
         currentRound: 0,
         reports: undefined,
         status: 'countdown',
+        runId: crypto.randomUUID(),
         countdownUntil: now + 4000,
       };
     },
@@ -443,7 +444,23 @@ function finishRound(
     score: scores[p.id] ?? 0,
   }));
 
-  const pointsAwarded = calculateRoundPoints(scoreEntries, isTeam);
+  const pointsAwarded =
+    room.runId && detail.reports
+      ? isTeam
+        ? Object.fromEntries(
+            Object.entries(detail.reports).map(([id, report]) => [
+              id,
+              report?.kind === 'versus'
+                ? { won: 10, draw: 6, lost: 3 }[report.outcome]
+                : 0,
+            ]),
+          )
+        : calculateRoundPoints(
+            scoreEntries.filter((p) =>
+              Object.hasOwn(detail.reports!, p.playerId),
+            ),
+          )
+      : calculateRoundPoints(scoreEntries, isTeam);
 
   // Find round winner
   let highestPts = -1;
@@ -503,6 +520,19 @@ function scoreReportedRound(room: PartyRoomState): PartyRoomState {
   }
   const ids = room.players.map((p) => p.id);
   const game = getPartyGameInfo(room.playlist[round]);
+  if (room.runId) {
+    const scores = game?.teams
+      ? Object.fromEntries(
+          Object.entries(reports).map(([id, r]) => [
+            id,
+            r?.kind === 'versus'
+              ? { won: 1, draw: 0.5, lost: 0 }[r.outcome]
+              : -1,
+          ]),
+        )
+      : scoreGoalRound(Object.keys(reports), reports);
+    return finishRound(room, round, scores, { reports });
+  }
   if (game?.teams) {
     const teams = roundTeams(ids, round);
     return finishRound(room, round, scoreTeamRound(teams, reports), {

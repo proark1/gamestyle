@@ -1,3 +1,5 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
 import * as T from 'three';
 import {
   isTouchDevice,
@@ -820,6 +822,7 @@ export class ChainScene {
   private loop = () => {
     if (this.destroyed) return;
     this.animId = requestAnimationFrame(this.loop);
+    if (!shouldRenderFrame(this.renderer)) return;
     const now = performance.now();
     const dt = Math.min(0.05, (now - this.lastFrame) / 1000);
     this.lastFrame = now;
@@ -857,11 +860,7 @@ export class ChainScene {
     );
     window.removeEventListener('pointermove', this.pointerMove);
     window.removeEventListener('pointerup', this.pointerUp);
-    this.scene.traverse((object) => {
-      const mesh = object as T.Mesh;
-      if (mesh.geometry && !mesh.geometry.userData?.shared)
-        mesh.geometry.dispose();
-    });
+    disposeObject(this.scene);
     for (const mat of this.particleMaterials.values()) mat.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();

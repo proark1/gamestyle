@@ -1,3 +1,9 @@
+import { DurableBatch } from './durable-batch';
+import {
+  SnapshotSender,
+  SnapshotReceiver,
+  type StatePacket,
+} from './snapshot-codec';
 import type { GameId } from '../audio/types';
 import type { Session } from '../rooms/session';
 import type {
@@ -44,6 +50,9 @@ type PendingAction = {
 };
 type Packet = {
   type: string;
+  base?: number;
+  version?: number;
+  changes?: unknown;
   epoch: number;
   order?: number;
   input?: unknown;
@@ -53,6 +62,14 @@ type Packet = {
   snapshot?: GameSnapshot;
 };
 export class PeerGameConnection<S> {
+  readonly diagnostics = {
+    simulationMs: 0,
+    snapshotMs: 0,
+    encodingMs: 0,
+    checkpointMs: 0,
+    tickMs: 0,
+  };
+  private diagnosticAt = 0;
   private mesh: PeerMesh;
   private release: () => void;
   private unsubscribe: (() => void)[] = [];
@@ -60,6 +77,7 @@ export class PeerGameConnection<S> {
   private recovery?: PeerView['checkpoint'];
   private epoch = 0;
   private restoring = false;
+  private partyStarting = false;
   private stopped = false;
   private started = false;
   private leaving = false;
@@ -70,7 +88,10 @@ export class PeerGameConnection<S> {
   private lastTick = 0;
   private lastSave = 0;
   private saving = false;
-  private saveQueue: Promise<unknown> = Promise.resolve();
+  private durability = new DurableBatch(() => this.saveCheckpoint());
+  private encoders = new Map<string, SnapshotSender>();
+  private decoder = new SnapshotReceiver();
+  private lastResync = -Infinity;
   private actionQueue: Promise<unknown> = Promise.resolve();
   private pending = new Map<string, PendingAction>();
   private processing = new Set<string>();
@@ -101,8 +122,10 @@ export class PeerGameConnection<S> {
     this.unsubscribe.push(
       this.mesh.on('view', (view) => this.onView(view)),
       this.mesh.on('message', (id, message) => this.onMessage(id, message)),
+      this.mesh.on('connected', (id) => this.encoders.get(id)?.reset()),
       this.mesh.on('error', (error) => {
-        if (error instanceof PeerError && error.status === 401) {
+        if (error instanceof PeerError && [401, 426].includes(error.status)) {
+          this.notice(error.message);
           this.status('expired');
           this.stop();
         } else this.status('reconnecting');
@@ -161,6 +184,8 @@ export class PeerGameConnection<S> {
       const previous = this.epoch;
       this.epoch = view.epoch;
       this.engine = undefined;
+      this.encoders.clear();
+      this.decoder.reset();
       this.recovery = undefined;
       this.restoring = false;
       this.receivedVersion = -1;
@@ -213,6 +238,7 @@ export class PeerGameConnection<S> {
         'No recovery checkpoint is available. Create a new room to play again.',
       );
     this.engine = createEngine(view.now, saved);
+    if (view.party) this.engine.configureParty();
     this.engine.reconcile(this.mesh.view.members, this.mesh.view.npcs);
     this.lastTick = performance.now();
     await this.commit();
@@ -235,38 +261,34 @@ export class PeerGameConnection<S> {
     );
   }
   private commit() {
+    return this.durability.request();
+  }
+  private async saveCheckpoint() {
     const epoch = this.epoch;
-    const task = this.saveQueue
-      .catch(() => {})
-      .then(async () => {
-        if (
-          !this.authoritative() ||
-          this.epoch !== epoch ||
-          !this.mesh.view?.key
-        )
-          throw new Error('Waiting for the new host…');
-        const engine = this.engine!;
-        const state = engine.checkpoint();
-        const open = engine.open;
-        const checkpoint = await sealCheckpoint(
-          state,
-          this.mesh.view.key,
-          `${this.game}:${this.session.code}`,
-          epoch,
-          state.seq,
-        );
-        if (!this.authoritative() || this.epoch !== epoch)
-          throw new Error('Waiting for the new host…');
-        await this.mesh.rpc('checkpoint', {
-          epoch,
-          checkpoint,
-          open,
-          rosterRevision: state.rosterRevision,
-        });
-        this.lastSave = performance.now();
-      });
-    this.saveQueue = task;
-    return task;
+    const started = performance.now();
+
+    if (!this.authoritative() || this.epoch !== epoch || !this.mesh.view?.key)
+      throw new Error('Waiting for the new host…');
+    const engine = this.engine!;
+    const state = engine.checkpoint();
+    const open = engine.open;
+    const checkpoint = await sealCheckpoint(
+      state,
+      this.mesh.view.key,
+      `${this.game}:${this.session.code}`,
+      epoch,
+      state.seq,
+    );
+    if (!this.authoritative() || this.epoch !== epoch)
+      throw new Error('Waiting for the new host…');
+    await this.mesh.rpc('checkpoint', {
+      epoch,
+      checkpoint,
+      open,
+      rosterRevision: state.rosterRevision,
+    });
+    this.lastSave = performance.now();
+    this.diagnostics.checkpointMs = this.lastSave - started;
   }
   private tick() {
     if (this.stopped || this.leaving) return;
@@ -281,21 +303,50 @@ export class PeerGameConnection<S> {
       try {
         this.engine!.reconcile(view.members, view.npcs);
         this.engine!.input(this.session.id, input, order);
+        if (
+          view.party &&
+          !this.engine!.world.partyRoundStarted &&
+          !this.partyStarting &&
+          view.members.every((m) => !!m.instance && !m.suspended)
+        ) {
+          this.partyStarting = true;
+          const type = ['sample-stampede', 'zorb-clash'].includes(this.game)
+            ? 'ready'
+            : 'start';
+          void this.action({ type })
+            .finally(() => {
+              this.partyStarting = false;
+            })
+            .catch(() => {});
+        }
         this.engine!.advance(delta);
+        this.diagnostics.simulationMs = performance.now() - now;
+        this.diagnostics.snapshotMs = 0;
+        this.diagnostics.encodingMs = 0;
+        for (const id of this.encoders.keys())
+          if (!view.members.some((m) => m.id === id)) this.encoders.delete(id);
         for (const member of view.members) {
+          const snapshotAt = performance.now();
           const snapshot = this.engine!.snapshot(
             this.session.code,
             this.session.id,
             member.id,
             this.epoch,
           );
+          this.diagnostics.snapshotMs += performance.now() - snapshotAt;
           if (member.id === this.session.id) this.deliver(snapshot);
-          else
-            this.mesh.send(member.id, {
-              type: 'snapshot',
-              epoch: this.epoch,
-              snapshot,
-            });
+          else {
+            let codec = this.encoders.get(member.id);
+            if (!codec) {
+              codec = new SnapshotSender();
+              this.encoders.set(member.id, codec);
+            }
+            const encodingAt = performance.now();
+            const packet = codec.encode(snapshot, now);
+            if (!this.mesh.send(member.id, { ...packet, epoch: this.epoch }))
+              codec.reset();
+            this.diagnostics.encodingMs += performance.now() - encodingAt;
+          }
         }
         if (now - this.lastSave > 1000 && !this.saving) {
           this.saving = true;
@@ -317,6 +368,15 @@ export class PeerGameConnection<S> {
       });
       if (now >= this.mesh.validUntil || now - this.receivedAt > 2000)
         this.status('reconnecting');
+    }
+    this.diagnostics.tickMs = performance.now() - now;
+    if (typeof document !== 'undefined' && now - this.diagnosticAt > 1000) {
+      this.diagnosticAt = now;
+      document.documentElement.dataset.peerPerformance = JSON.stringify({
+        game: this.game,
+        ...this.diagnostics,
+        ...this.mesh.diagnostics,
+      });
     }
     for (const [requestId, pending] of this.pending) {
       if (now > pending.until) {
@@ -350,6 +410,12 @@ export class PeerGameConnection<S> {
     this.receivedAt = performance.now();
     this.receive(snapshot as S);
     this.status('online');
+    if (
+      this.mesh.view?.party &&
+      snapshot.partyRoundStarted &&
+      typeof window !== 'undefined'
+    )
+      window.dispatchEvent(new Event('game:party-ready'));
   }
   private onMessage(id: string, raw: unknown) {
     if (this.stopped || !raw || typeof raw !== 'object') return;
@@ -359,6 +425,23 @@ export class PeerGameConnection<S> {
       performance.now() >= this.mesh.validUntil
     )
       return;
+    if (
+      id === this.mesh.view?.host &&
+      ['baseline', 'snapshot-delta'].includes(message.type)
+    ) {
+      const decoded = this.decoder.decode(message as unknown as StatePacket);
+      if (decoded && decoded.host === id && decoded.code === this.session.code)
+        this.deliver(decoded);
+      else if (performance.now() - this.lastResync > 500) {
+        this.lastResync = performance.now();
+        this.mesh.send(id, { type: 'resync', epoch: this.epoch });
+      }
+      return;
+    }
+    if (message.type === 'resync' && this.authoritative()) {
+      this.encoders.get(id)?.reset();
+      return;
+    }
     if (
       message.type === 'snapshot' &&
       id === this.mesh.view?.host &&
@@ -397,8 +480,8 @@ export class PeerGameConnection<S> {
     action: unknown,
     epoch: number,
   ) {
-    const key = `${id}:${requestId}`;
-    if (this.processing.has(key) || this.processing.size > 32) return;
+    const key = id + ':' + requestId;
+    if (this.processing.has(key) || this.processing.size >= 32) return;
     this.processing.add(key);
     this.actionQueue = this.actionQueue
       .catch(() => {})
@@ -407,8 +490,10 @@ export class PeerGameConnection<S> {
           !this.authoritative() ||
           this.epoch !== epoch ||
           !this.mesh.view!.members.some((m) => m.id === id)
-        )
+        ) {
+          this.processing.delete(key);
           return;
+        }
         const type =
           action && typeof action === 'object'
             ? (action as { type?: unknown }).type
@@ -418,7 +503,10 @@ export class PeerGameConnection<S> {
           id === this.session.id
         ) {
           await this.mesh.rpc('lock', { epoch });
-          if (!this.authoritative() || this.epoch !== epoch) return;
+          if (!this.authoritative() || this.epoch !== epoch) {
+            this.processing.delete(key);
+            return;
+          }
           this.engine!.reconcile(this.mesh.view!.members, this.mesh.view!.npcs);
         }
         const result = this.engine!.execute(
@@ -427,15 +515,26 @@ export class PeerGameConnection<S> {
           action,
           this.session.id,
         );
-        // Acknowledge only durable actions. Retrying after a crash uses the checkpoint's receipts.
-        await this.commit();
-        if (!this.authoritative() || this.epoch !== epoch) return;
-        if (id === this.session.id) this.ack(requestId, result.error);
-        else this.mesh.send(id, { type: 'ack', epoch, requestId, ...result });
+        if (
+          !result.error &&
+          this.mesh.view?.party &&
+          ['start', 'ready'].includes(String(type))
+        )
+          this.engine!.world.partyRoundStarted = true;
+        // Continue ordered execution now; acknowledge only the checkpoint batch containing this receipt.
+        void this.commit()
+          .then(() => {
+            if (!this.authoritative() || this.epoch !== epoch) return;
+            if (id === this.session.id) this.ack(requestId, result.error);
+            else
+              this.mesh.send(id, { type: 'ack', epoch, requestId, ...result });
+          })
+          .catch(() => this.status('reconnecting'))
+          .finally(() => this.processing.delete(key));
       })
-      .catch(() => this.status('reconnecting'))
-      .finally(() => {
+      .catch(() => {
         this.processing.delete(key);
+        this.status('reconnecting');
       });
   }
   private ack(id: string, error?: string) {

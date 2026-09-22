@@ -1,3 +1,5 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import { KeyedModels } from '../../shared/rendering/keyed-models';
 import { REDUCED_MOTION_QUERY } from '../../shared/browser/device';
@@ -263,12 +265,14 @@ export class SampleStampedeScene {
       // North Shelf
       const rackN = createPalletRack(3.2, 4.8, 16.0);
       rackN.position.set(ax, 0, -12);
+      batchScenery(rackN, [], true);
       this.scene.add(rackN);
       this.occluders.push(rackN);
 
       // South Shelf
       const rackS = createPalletRack(3.2, 4.8, 16.0);
       rackS.position.set(ax, 0, 10);
+      batchScenery(rackS, [], true);
       this.scene.add(rackS);
       this.occluders.push(rackS);
 
@@ -322,11 +326,18 @@ export class SampleStampedeScene {
     }
   }
 
+  private pendingVisualEvents: StampedeEvent[] = [];
   /** `frameEvents`: what the local simulation produced this frame. */
   public render(
     snapshot: SampleStampedeSnapshot,
     frameEvents: readonly StampedeEvent[] = [],
   ) {
+    this.pendingVisualEvents.push(...frameEvents);
+    if (this.pendingVisualEvents.length > 512)
+      this.pendingVisualEvents.splice(0, this.pendingVisualEvents.length - 512);
+    if (!shouldRenderFrame(this.renderer)) return;
+    frameEvents = this.pendingVisualEvents;
+    this.pendingVisualEvents = [];
     const { world, localCartId } = snapshot;
     const now = performance.now();
     const dt = Math.min((now - this.lastTime) / 1000, 0.05);

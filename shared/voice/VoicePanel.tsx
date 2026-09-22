@@ -12,6 +12,7 @@ import type { VoiceClient } from './peer-client';
 import type { VoiceState } from './types';
 import type { VoiceSession, VoiceSnapshot } from './types';
 import './voice.css';
+import MicrophoneCheck from './MicrophoneCheck';
 import { bindPushToTalk } from './push-to-talk';
 import {
   voiceControls,
@@ -42,7 +43,16 @@ export type VoiceController = Pick<
   | 'volume'
   | 'deafen'
 > &
-  Partial<Pick<VoiceClient, 'capture' | 'captureStream'>> & {
+  Partial<
+    Pick<
+      VoiceClient,
+      | 'capture'
+      | 'captureStream'
+      | 'outputs'
+      | 'outputDevice'
+      | 'supportsOutputSelection'
+    >
+  > & {
     hold?: (source: string, active: boolean) => void;
   };
 export default function VoicePanel({
@@ -78,7 +88,32 @@ export default function VoicePanel({
     [device, setDevice] = useState(''),
     [nearby, setNearby] = useState(false);
   const [volumes, setVolumes] = useState<Record<string, number>>({});
+  const [outputs, setOutputs] = useState<MediaDeviceInfo[]>([]),
+    [output, setOutput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [canSelectOutput, setCanSelectOutput] = useState(false);
+  useEffect(() => {
+    if (!state.connected) return;
+    let live = true;
+    const refresh = async () => {
+      const c = client.current;
+      const [inputs, speakers] = await Promise.all([
+        c?.devices().catch(() => []) ?? [],
+        c?.outputs?.().catch(() => []) ?? [],
+      ]);
+      if (live) {
+        setDevices(inputs);
+        setOutputs(speakers);
+        setCanSelectOutput(!!c?.supportsOutputSelection);
+      }
+    };
+    void refresh();
+    navigator.mediaDevices?.addEventListener?.('devicechange', refresh);
+    return () => {
+      live = false;
+      navigator.mediaDevices?.removeEventListener?.('devicechange', refresh);
+    };
+  }, [state.connected, state.mic]);
   const { mode, shortcut } = useSyncExternalStore(
     subscribeControls,
     voiceControls,
@@ -134,10 +169,18 @@ export default function VoicePanel({
     };
   }, [state.connected, armed, mode, shortcut]);
   useEffect(() => {
+    const resetTalk = () => holds.current?.reset();
     const stop = () => {
       speechAttempt.current++;
       holds.current?.reset();
-      if (mode === 'open') {
+      if (
+        mode === 'open' &&
+        !(
+          document.activeElement instanceof HTMLIFrameElement &&
+          document.activeElement.classList.contains('party-game-frame') &&
+          !document.hidden
+        )
+      ) {
         void client.current?.microphone(false);
         setArmed(false);
       }
@@ -146,9 +189,11 @@ export default function VoicePanel({
       if (document.hidden) stop();
     };
     window.addEventListener('blur', stop);
+    window.addEventListener('game:voice-reset-talk', resetTalk);
     document.addEventListener('visibilitychange', hidden);
     return () => {
       window.removeEventListener('blur', stop);
+      window.removeEventListener('game:voice-reset-talk', resetTalk);
       document.removeEventListener('visibilitychange', hidden);
     };
   }, [mode]);
@@ -284,6 +329,12 @@ export default function VoicePanel({
       </button>
     );
   }
+  if (
+    typeof window !== 'undefined' &&
+    window.parent !== window &&
+    new URLSearchParams(location.search).has('party')
+  )
+    return null;
   return (
     <>
       {state.connected &&
@@ -475,6 +526,40 @@ export default function VoicePanel({
                         ))}
                       </select>
                     </label>
+                  )}
+                  {canSelectOutput && (
+                    <label>
+                      Speakers
+                      <select
+                        value={output}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          void client.current
+                            ?.outputDevice?.(id)
+                            .then(() => setOutput(id))
+                            .catch(() =>
+                              setState((s) => ({
+                                ...s,
+                                error:
+                                  'Could not select that speaker. Use the system default.',
+                              })),
+                            );
+                        }}
+                      >
+                        <option value="">System default</option>
+                        {outputs
+                          .filter((d) => d.deviceId !== 'default')
+                          .map((d) => (
+                            <option key={d.deviceId} value={d.deviceId}>
+                              {d.label || 'Speaker'}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                  )}
+                  <MicrophoneCheck />
+                  {state.connectionInfo && (
+                    <p className="voice-note">{state.connectionInfo}</p>
                   )}
                   <label>
                     Microphone level

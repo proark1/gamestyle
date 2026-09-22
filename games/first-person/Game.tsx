@@ -1,4 +1,5 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
 
 import { SiteAudio } from '../../shared/audio/construction/player';
 import { SAYINGS } from './sayings';
@@ -458,13 +459,15 @@ export default function Game() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/first-person?raum=${session.code}`,
+        `${publicGameOrigin()}/first-person?raum=${session.code}`,
       );
       setCopied(true);
       clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(false), 2500);
     } catch {
-      toast(`Invitation: ${location.origin}/first-person?raum=${session.code}`);
+      toast(
+        `Invitation: ${publicGameOrigin()}/first-person?raum=${session.code}`,
+      );
     }
   };
   const inv =

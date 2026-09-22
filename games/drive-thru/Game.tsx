@@ -7,8 +7,6 @@ import {
   Utensils,
   Coffee,
   User,
-  Flame,
-  AlertTriangle,
   Zap,
   Hamburger,
 } from 'lucide-react';
@@ -36,11 +34,12 @@ import {
 import { driveThruAnalytics } from './analytics';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
-import GameToolbar from '../../shared/ui/GameToolbar';
 import { usePeerRoom } from '../../shared/peer/usePeerRoom';
 import PeerRoomControls from '../../shared/peer/PeerRoomControls';
+import GameToolbar from '../../shared/ui/GameToolbar';
 import { idleInput } from './types';
 import { DRIVE_THRU_TRANSLATIONS } from './translations';
+import { HoldControl, RushPanel } from './RushPanel';
 import { computeWindowReachGap } from './physics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyGoal, partyRound } from '../../shared/ui/party-round';
@@ -163,6 +162,7 @@ export default function DriveThruGame() {
     // Simulation & Render Loop
     let lastTime = performance.now();
     let animId = 0;
+    let lastTicket = w.ticket?.id;
 
     const loop = (now: number) => {
       const dt = Math.min(0.1, (now - lastTime) / 1000);
@@ -191,6 +191,10 @@ export default function DriveThruGame() {
           currentWorld.phase !== 'completed',
       );
 
+      if (lastTicket !== currentWorld.ticket?.id) {
+        scene.resetInput();
+        lastTicket = currentWorld.ticket?.id;
+      }
       // 3. Take snapshot
       const snap = driveThruSnapshot(
         currentWorld,
@@ -234,6 +238,9 @@ export default function DriveThruGame() {
     if (send(act)) return;
     driveThruAction(worldRef.current, localPlayerIdRef.current, act);
   };
+
+  const hold = (code: string, down: boolean) =>
+    sceneRef.current?.holdControl(code, down);
 
   const handleToggleAudio = () => {
     const next = !audioEnabled;
@@ -332,7 +339,7 @@ export default function DriveThruGame() {
           </span>
           <p>
             {computeWindowReachGap(snapshot.car).canReach
-              ? 'At the window — stop for pickup'
+              ? 'Hold the handbrake for the handoff'
               : snapshot.car.z < -2
                 ? 'Reverse toward the pickup bay'
                 : 'Follow the lane to the striped pickup bay'}
@@ -368,44 +375,12 @@ export default function DriveThruGame() {
         </button>
       </div>
 
-      {/* HUD Gauges */}
-      <div className="drive-thru-hud-gauges">
-        <div className="drive-thru-gauge-card">
-          <div className="drive-thru-gauge-label">
-            <span>Milkshake PSI</span>
-            <span>{Math.round(snapshot?.kitchen.shakePressure ?? 0)}%</span>
-          </div>
-          <div className="drive-thru-progress-bar">
-            <div
-              className="drive-thru-progress-fill-shake"
-              style={{
-                width: `${Math.min(100, snapshot?.kitchen.shakePressure ?? 0)}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="drive-thru-gauge-card">
-          <div className="drive-thru-gauge-label">
-            <span>{strings.fryerTemp}</span>
-            <span>
-              {Math.round((snapshot?.kitchen.fryerTimer ?? 0) * 100)}%
-            </span>
-          </div>
-          <div className="drive-thru-progress-bar">
-            <div
-              className="drive-thru-progress-fill-fryer"
-              style={{
-                width: `${Math.min(100, (snapshot?.kitchen.fryerTimer ?? 0) * 100)}%`,
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Short Stop Reach Alert */}
-      {snapshot?.phase === 'reaching' && (
-        <div className="drive-thru-reach-panel">{strings.shortStopReach}</div>
+      {snapshot && <RushPanel snapshot={snapshot} action={handleAction} />}
+      {snapshot?.rush.stage === 'between' && (
+        <output className="rush-intermission">
+          <strong>Order {snapshot.ordersServed} served!</strong>
+          <span>Next car in {Math.ceil(snapshot.rush.intermission)}…</span>
+        </output>
       )}
 
       {/* Windshield Milkshake Splat Effect */}
@@ -457,6 +432,7 @@ export default function DriveThruGame() {
                 <span>{title}</span>
               </button>
             ))}
+            <HoldControl code="Space" label="Hold handbrake" hold={hold} />
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'honk' })}
@@ -468,73 +444,62 @@ export default function DriveThruGame() {
 
         {selectedRole === 'passenger' && (
           <>
-            <button
-              className="drive-thru-action-btn"
-              onClick={() => handleAction({ type: 'reachTray' })}
-            >
-              <KeyHint text="Reach for Tray (Space)" />
-            </button>
+            <HoldControl code="KeyA" label="← Balance" hold={hold} />
+            <HoldControl code="KeyD" label="Balance →" hold={hold} />
+            <HoldControl
+              code="Space"
+              label="Hold reach / release to pull"
+              hold={hold}
+            />
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'swatDistraction' })}
             >
-              <KeyHint text="Swat Toddler Toy (R)" />
+              Swat toy
             </button>
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'toggleWipers' })}
             >
-              <KeyHint text="Wipers (E)" />
+              Wipers
             </button>
           </>
         )}
-
         {selectedRole === 'grill' && (
           <>
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'flipPatty' })}
             >
-              <Utensils size={17} /> <KeyHint text={strings.flipPatty} />
+              Flip selected patty
+            </button>
+            <button
+              className="drive-thru-action-btn"
+              onClick={() => handleAction({ type: 'stackNext' })}
+            >
+              Stack next layer
             </button>
             <button
               className="drive-thru-action-btn"
               onClick={() => handleAction({ type: 'liftFryer' })}
             >
-              <Flame size={17} /> <KeyHint text="Pull Fryer (R)" />
-            </button>
-            <button
-              className="drive-thru-action-btn"
-              onClick={() =>
-                handleAction({ type: 'stackIngredient', layer: 'patty' })
-              }
-            >
-              <KeyHint text="Stack Patty (E)" />
+              Lift golden fries
             </button>
           </>
         )}
-
         {selectedRole === 'barista' && (
           <>
-            <button
-              className="drive-thru-action-btn"
-              onClick={() => handleAction({ type: 'pourDrink' })}
-            >
-              <KeyHint text="Pour drink (R)" />
-            </button>
-            <button
-              className="drive-thru-action-btn"
-              onClick={() => handleAction({ type: 'ventMilkshake' })}
-            >
-              <AlertTriangle size={17} />{' '}
-              <KeyHint text="Vent Shake Valve (Space)" />
-            </button>
-            <button
-              className="drive-thru-action-btn"
-              onClick={() => handleAction({ type: 'pushTray' })}
-            >
-              <KeyHint text="Push Tray to Window (E)" />
-            </button>
+            <HoldControl
+              code="KeyR"
+              label="Hold pour · release in green"
+              hold={hold}
+            />
+            <HoldControl code="Space" label="Hold vent" hold={hold} />
+            <HoldControl
+              code="KeyE"
+              label="Hold slide · release in green"
+              hold={hold}
+            />
           </>
         )}
       </div>
@@ -555,6 +520,7 @@ export default function DriveThruGame() {
           >
             <div className="drive-thru-help-badge">WELCOME TO JUMBLE DINER</div>
             <button
+              className="drive-thru-btn-restart"
               onClick={() => {
                 setHelpOpen(false);
                 paused.current = false;
@@ -564,26 +530,33 @@ export default function DriveThruGame() {
               Multiplayer
             </button>
             <h1 id="drive-help-title">
-              One car. Four jobs.
+              Three orders. Four jobs.
               <br />
               Lunch is on the line.
             </h1>
             <p>
-              Drive to the striped pickup bay, stop beside the window and let
-              your passenger collect the order. Bots handle the other jobs until
-              you take over.
+              Cook, pour, slide and catch three increasingly busy orders. Hold
+              the handbrake during pickup. Mistakes cost time, but you can
+              recover. Bots handle the other jobs until you take over.
             </p>
             <dl className="drive-thru-help-controls">
               <dt>Driver</dt>
               <dd>
-                W / ↑ accelerate · S / ↓ brake & reverse · A / D steer · H honk
+                W / ↑ accelerate · S / ↓ brake & reverse · A / D steer · Space
+                handbrake · H honk
               </dd>
               <dt>Passenger</dt>
-              <dd>Space reach · R swat toy · E wipers</dd>
+              <dd>
+                Hold Space to reach, release to pull · A/D balance · R swat · E
+                wipers
+              </dd>
               <dt>Grill</dt>
-              <dd>Arrows move spatula · Space flip · R lift fryer · E stack</dd>
+              <dd>
+                Select patty · Space flip · E stack next layer when cooked · R
+                lift golden fries
+              </dd>
               <dt>Barista</dt>
-              <dd>Space vent · R pour drinks · E send tray</dd>
+              <dd>Hold R pour / E slide; release in green · Hold Space vent</dd>
             </dl>
             <button
               autoFocus
@@ -611,12 +584,12 @@ export default function DriveThruGame() {
               }`}
             >
               {snapshot.phase === 'completed'
-                ? 'ORDER SERVED!'
+                ? 'LUNCH RUSH SURVIVED!'
                 : 'INTERCOM MELTDOWN!'}
             </div>
             <div className="drive-thru-modal-body">
               {snapshot.phase === 'completed'
-                ? `Order delivered! Final score: ${snapshot.score}`
+                ? `Three orders delivered! Final score: ${snapshot.score}`
                 : snapshot.failReason ||
                   'The shift ended in catastrophic fast-food disaster!'}
             </div>

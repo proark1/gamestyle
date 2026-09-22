@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 import { DisasterChallenge } from './DisasterChallenge';
 // Local blob previews cannot use the image optimizer; game clips have no generated caption track.
 /* oxlint-disable nextjs/no-img-element, jsx-a11y/media-has-caption */
@@ -404,11 +406,11 @@ export function PartyPanel({
   async function shareChallenge() {
     try {
       await navigator.clipboard.writeText(
-        challengeLink(location.origin, s.world),
+        challengeLink(publicGameOrigin(), s.world),
       );
       notify('Challenge link copied. It starts a fresh site for a new crew.');
     } catch {
-      notify(challengeLink(location.origin, s.world));
+      notify(challengeLink(publicGameOrigin(), s.world));
     }
   }
   async function shareFile() {
@@ -431,8 +433,8 @@ export function PartyPanel({
         files: [file],
         title: 'PERMIT PENDING',
         text: savedBuildId
-          ? `${location.origin}/build/${savedBuildId}`
-          : challengeLink(location.origin, s.world),
+          ? `${publicGameOrigin()}/build/${savedBuildId}`
+          : challengeLink(publicGameOrigin(), s.world),
       });
     } catch (error) {
       if ((error as Error).name !== 'AbortError')

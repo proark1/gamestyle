@@ -13,8 +13,8 @@ export function keyboardInput(
     x,
     z,
     action1: role === 'driver' ? z < 0 : has('Space'),
-    action2:
-      role === 'driver' ? z > 0 || has('Space') : has('KeyR', 'ShiftLeft'),
+    action2: role === 'driver' ? z > 0 : has('KeyR', 'ShiftLeft'),
+    jump: role === 'driver' && has('Space'),
     action3: has('KeyE', 'KeyH'),
   };
 }

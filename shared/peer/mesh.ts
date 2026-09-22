@@ -1,3 +1,4 @@
+import { compatibility } from './protocol';
 import type { VoiceSession } from '../voice/types';
 import { apiFetch } from '../browser/api-fetch';
 import {
@@ -17,7 +18,10 @@ export async function peerRequest(
   const response = await apiFetch('/api/peer', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      ...compatibility(String((body as { game?: string }).game ?? '')),
+      ...body,
+    }),
     signal: AbortSignal.timeout(5000),
     keepalive,
   });
@@ -37,6 +41,8 @@ type Link = {
   stateChannel?: RTCDataChannel;
   sender?: RTCRtpSender;
   created: number;
+  trouble?: number;
+  restarting?: number;
   candidates: RTCIceCandidateInit[];
   chunks: Map<
     string,
@@ -51,6 +57,15 @@ type Listeners = {
   connected: (id: string) => void;
 };
 export class PeerMesh {
+  readonly diagnostics = {
+    sentBytes: 0,
+    droppedStates: 0,
+    rttMs: 0,
+    relay: false,
+    audioLost: 0,
+    jitterMs: 0,
+  };
+  private sampling = false;
   readonly instance = crypto.randomUUID();
   view?: PeerView;
   validUntil = 0;
@@ -89,7 +104,8 @@ export class PeerMesh {
         ? error
         : new Error('Peer connection interrupted.');
     for (const listener of this.listeners.error) listener(value);
-    if (value instanceof PeerError && value.status === 401) this.close();
+    if (value instanceof PeerError && [401, 426].includes(value.status))
+      this.close();
   }
   start() {
     if (this.started || this.closed) return;
@@ -109,6 +125,7 @@ export class PeerMesh {
     } catch (error) {
       this.error(error);
     }
+    void this.sampleStats();
     if (!this.closed) this.heartbeat = setTimeout(() => void this.poll(), 1000);
   }
   rpc(op: string, extra: object = {}) {
@@ -120,6 +137,7 @@ export class PeerMesh {
         const started = performance.now();
         const reply = await this.request({
           ...this.session,
+          ...compatibility(this.session.game),
           instance: this.instance,
           cursor: this.cursor,
           epoch: this.view?.epoch,
@@ -158,13 +176,43 @@ export class PeerMesh {
     for (const [id, link] of this.links) {
       const member = this.view.members.find((m) => m.id === id);
       if (!member || member.instance !== link.member.instance) this.remove(id);
-      else if (
-        self.order < member.order &&
-        (link.pc.connectionState === 'failed' ||
-          (link.channel?.readyState !== 'open' &&
-            performance.now() - link.created > 10000))
-      )
-        this.remove(id);
+      else if (self.order < member.order) {
+        const failed = ['failed', 'disconnected'].includes(
+          link.pc.connectionState,
+        );
+        if (failed) {
+          link.trouble ??= performance.now();
+          const age = performance.now() - link.trouble;
+          if (
+            !link.restarting &&
+            (age > 3000 || link.pc.connectionState === 'failed') &&
+            link.pc.signalingState === 'stable'
+          ) {
+            link.restarting = performance.now();
+            void (async () => {
+              await link.pc.setLocalDescription(
+                await link.pc.createOffer({ iceRestart: true }),
+              );
+              if (this.links.get(id) === link)
+                this.signal(link, {
+                  description: link.pc.localDescription!.toJSON(),
+                });
+            })().catch((error) => this.error(error));
+          } else if (
+            link.restarting &&
+            performance.now() - link.restarting > 10000
+          )
+            this.remove(id);
+        } else {
+          link.trouble = undefined;
+          link.restarting = undefined;
+          if (
+            link.channel?.readyState !== 'open' &&
+            performance.now() - link.created > 10000
+          )
+            this.remove(id);
+        }
+      }
     }
     for (const member of this.view.members)
       if (
@@ -186,8 +234,11 @@ export class PeerMesh {
   private create(member: Member, id: string, initiator: boolean) {
     const pc = new RTCPeerConnection({
       iceServers: this.view?.iceServers ?? [],
+      iceTransportPolicy: this.view?.relayOnly ? 'relay' : 'all',
     });
-    // The answerer reuses the transceiver created by the remote offer.
+    // Only the offerer creates a transceiver. On the answering side,
+    // setRemoteDescription creates the transceiver associated with the offer;
+    // a pre-created addTransceiver sender would remain unnegotiated and silent.
     const sender = initiator
       ? pc.addTransceiver('audio', { direction: 'sendrecv' }).sender
       : undefined;
@@ -357,12 +408,17 @@ export class PeerMesh {
         this.remove(member.id);
         link = this.create(member, signal.link, false);
       }
-      if (link.pc.remoteDescription) return;
+      if (
+        link.pc.remoteDescription?.sdp === signal.description.sdp ||
+        link.pc.signalingState !== 'stable'
+      )
+        return;
       await link.pc.setRemoteDescription(signal.description);
       const audio = link.pc
         .getTransceivers()
-        .find((t) => t.receiver.track.kind === 'audio');
+        .find((transceiver) => transceiver.receiver.track.kind === 'audio');
       if (audio) {
+        // Reserve both directions even if voice is joined after gameplay starts.
         audio.direction = 'sendrecv';
         link.sender = audio.sender;
         await audio.sender.replaceTrack(this.localTrack);
@@ -396,7 +452,8 @@ export class PeerMesh {
   send(id: string, message: unknown): boolean {
     const link = this.links.get(id);
     const type = (message as { type?: string } | null)?.type;
-    const replaceable = type === 'snapshot' || type === 'input';
+    const replaceable =
+      type === 'snapshot' || type === 'snapshot-delta' || type === 'input';
     const channel =
       replaceable && link?.stateChannel?.readyState === 'open'
         ? link.stateChannel
@@ -405,10 +462,12 @@ export class PeerMesh {
       this.closed ||
       channel?.readyState !== 'open' ||
       channel.bufferedAmount > (replaceable ? 32000 : 256000)
-    )
+    ) {
+      if (replaceable) this.diagnostics.droppedStates++;
       return false;
+    }
     const text = JSON.stringify(message);
-    if (text.length > 260000) return false;
+    if (text.length > 256000) return false;
     try {
       if (text.length <= 8000) channel.send(text);
       else {
@@ -425,9 +484,52 @@ export class PeerMesh {
             }),
           );
       }
+      this.diagnostics.sentBytes += new TextEncoder().encode(text).byteLength;
       return true;
     } catch {
+      if (replaceable) this.diagnostics.droppedStates++;
       return false;
+    }
+  }
+  private async sampleStats() {
+    if (this.sampling || this.closed) return;
+    this.sampling = true;
+    try {
+      let rtt = 0,
+        relay = false,
+        lost = 0,
+        jitter = 0;
+      await Promise.all(
+        [...this.links.values()].map(async (link) => {
+          const stats = await link.pc.getStats();
+          stats.forEach((report) => {
+            if (
+              report.type === 'candidate-pair' &&
+              report.state === 'succeeded' &&
+              (report.nominated || report.selected)
+            ) {
+              rtt = Math.max(rtt, (report.currentRoundTripTime ?? 0) * 1000);
+              relay ||=
+                stats.get(report.localCandidateId)?.candidateType === 'relay' ||
+                stats.get(report.remoteCandidateId)?.candidateType === 'relay';
+            }
+            if (report.type === 'inbound-rtp' && report.kind === 'audio') {
+              lost += report.packetsLost ?? 0;
+              jitter = Math.max(jitter, (report.jitter ?? 0) * 1000);
+            }
+          });
+        }),
+      );
+      Object.assign(this.diagnostics, {
+        rttMs: Math.round(rtt),
+        relay,
+        audioLost: lost,
+        jitterMs: Math.round(jitter),
+      });
+    } catch {
+      /* Diagnostics must never interrupt transport. */
+    } finally {
+      this.sampling = false;
     }
   }
   async microphone(track: MediaStreamTrack | null) {

@@ -1,3 +1,4 @@
+import { compatibility } from '../shared/peer/protocol.ts';
 import assert from 'node:assert/strict';
 import wrtc from '@roamhq/wrtc';
 import { handlePeerRoom } from '../shared/peer/coordinator.ts';
@@ -60,13 +61,14 @@ globalThis.fetch = async (url, options) => {
       headers,
     });
     const reply = await response.json();
-    if (reply.view) reply.view.iceServers = [];
+    if (reply.view && process.env.PEER_RELAY_ONLY !== '1')
+      reply.view.iceServers = [];
     return Response.json(reply, { status: response.status });
   }
   try {
     const reply = await handlePeerRoom(store, JSON.parse(options.body));
     // Test direct connections on this machine without contacting an external STUN service.
-    reply.view.iceServers = [];
+    if (process.env.PEER_RELAY_ONLY !== '1') reply.view.iceServers = [];
     return Response.json(reply);
   } catch (error) {
     return Response.json(
@@ -76,7 +78,7 @@ globalThis.fetch = async (url, options) => {
   }
 };
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-async function until(condition, description, timeout = 16000) {
+async function until(condition, description, timeout = 30000) {
   const started = Date.now();
   while (!condition()) {
     if (Date.now() - started > timeout)
@@ -97,6 +99,7 @@ async function run(game) {
     for (let i = 0; i < 4; i++) {
       const response = await fetch('/api/peer', {
         body: JSON.stringify({
+          ...compatibility(game),
           op: i ? 'join' : 'create',
           game,
           code: sessions[0]?.code,
@@ -146,6 +149,44 @@ async function run(game) {
         ),
       'all six peer links open',
     );
+    if (process.env.PEER_RELAY_ONLY === '1') {
+      await until(
+        () => leases.every((l) => l.mesh.diagnostics.relay),
+        'every peer uses a selected TURN relay',
+      );
+    }
+    if (game === 'stack-or-sink') {
+      const link = leases[0].mesh.links.get(sessions[1].id);
+      const previous =
+        link.pc.localDescription.sdp.match(/a=ice-ufrag:(.+)/)[1];
+      const native = link.pc;
+      let disconnected = true;
+      link.pc = new Proxy(native, {
+        get(target, key) {
+          if (key === 'connectionState' && disconnected) return 'disconnected';
+          const value = Reflect.get(target, key, target);
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+      await until(
+        () =>
+          link.pc.localDescription.sdp.match(/a=ice-ufrag:(.+)/)[1] !==
+          previous,
+        'network transition triggers ICE restart',
+      );
+      disconnected = false;
+      await until(
+        () =>
+          link.pc.signalingState === 'stable' &&
+          link.channel.readyState === 'open',
+        'ICE restart preserves the game channel',
+      );
+      assert.equal(
+        leases[0].mesh.links.get(sessions[1].id),
+        link,
+        'recover ICE without destroying the peer link',
+      );
+    }
     await connections[0].action({
       ...(game === 'reel-problems-2' ? { mode: 'campaign' } : {}),
       type: ['sample-stampede', 'zorb-clash'].includes(game)
@@ -643,7 +684,7 @@ async function run(game) {
     );
     assert.equal(latest.get(sessions[2].id).world.started, started);
     console.log(
-      `${game}: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (${Date.now() - handoffAt} ms graceful) passed.`,
+      `${game}: 4 real WebRTC clients, ${process.env.PEER_RELAY_ONLY === '1' ? 'TURN-relayed' : 'direct'} audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (${Date.now() - handoffAt} ms graceful) passed.`,
     );
   } catch (error) {
     console.error(

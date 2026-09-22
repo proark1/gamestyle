@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   advanceDriveThruWorld,
-  driveThruAction,
   freshDriveThruWorld,
   generateOrderTicket,
   newDriveThruPlayer,
@@ -20,12 +19,12 @@ import { driveThruCatalog } from './audio/catalog';
 import { promptLimit } from '../../shared/audio/limits';
 import type { DriveThruSnapshot, Patty, SedanState } from './types';
 
-void test('Drive-Thru: fresh world initializes with ordering phase and 60s timer', () => {
+void test('Drive-Thru: fresh world initializes with ordering phase and 75s timer', () => {
   const w = freshDriveThruWorld();
   assert.equal(w.phase, 'ordering');
-  assert.equal(w.phaseTimer, 60);
+  assert.equal(w.phaseTimer, 75);
   assert.ok(w.ticket);
-  assert.equal(w.kitchen.patties.length, 3);
+  assert.equal(w.kitchen.patties.length, 1);
   assert.equal(w.failState, 'none');
   assert.equal(w.car.honking, false);
 });
@@ -65,7 +64,7 @@ void test('Drive-Thru: a car scraping the curb keeps the same speed at any frame
   }
 });
 
-void test('Drive-Thru: reversing into speaker pole triggers pole_crash fail state', () => {
+void test('Drive-Thru: pole collision costs time and allows recovery', () => {
   const w = freshDriveThruWorld();
   // Place car right at the speaker pole and reverse into it
   w.car.x = SPEAKER_POLE_POS.x;
@@ -76,8 +75,10 @@ void test('Drive-Thru: reversing into speaker pole triggers pole_crash fail stat
   assert.equal(w.car.reversedIntoPole, true);
 
   advanceDriveThruWorld(w, 0.1);
-  assert.equal(w.failState, 'pole_crash');
-  assert.equal(w.phase, 'meltdown');
+  assert.equal(w.failState, 'none');
+  assert.notEqual(w.phase, 'meltdown');
+  assert.ok(w.phaseTimer < 70);
+  assert.ok(w.events.some((e) => e.kind === 'pole_crashed'));
 });
 
 void test('Drive-Thru: patty flips with upward impulse and cooks on grill surface', () => {
@@ -111,15 +112,16 @@ void test('Drive-Thru: patty flips with upward impulse and cooks on grill surfac
   assert.ok(patty.state === 'sizzling' || patty.state === 'cooked');
 });
 
-void test('Drive-Thru: unvented deep fryer ignites into grease_fire after timer reaches 1.0', () => {
+void test('Drive-Thru: overcooked fries are replaced with a time penalty', () => {
   const w = freshDriveThruWorld();
   w.kitchen.fryerBasketDown = true;
   w.kitchen.fryerTimer = 0.98;
 
   advanceDriveThruWorld(w, 1.0);
-  assert.equal(w.kitchen.fryerGreaseFire, true);
-  assert.equal(w.failState, 'grease_fire');
-  assert.equal(w.phase, 'meltdown');
+  assert.ok(w.kitchen.fryerTimer < 0.1);
+  assert.equal(w.failState, 'none');
+  assert.notEqual(w.phase, 'meltdown');
+  assert.ok(w.phaseTimer < 71);
 });
 
 void test('Drive-Thru: a meltdown ends the round even with the car stopped by the window', () => {
@@ -127,14 +129,10 @@ void test('Drive-Thru: a meltdown ends the round even with the car stopped by th
   // back to 'reaching', so the round carried on after the fire.
   const w = freshDriveThruWorld();
   Object.assign(w.car, { x: -1.23, z: 0.52, yaw: -0.54, speed: 0 });
-  Object.assign(w.kitchen.patties[0], {
-    state: 'burnt',
-    sizzleProgress: 1,
-    burnProgress: 1,
-  });
+  w.phaseTimer = 0.01;
 
   advanceDriveThruWorld(w, 0.1, w.clock + 100);
-  assert.equal(w.failState, 'grease_fire');
+  assert.equal(w.failState, 'none');
   assert.equal(w.phase, 'meltdown');
   advanceDriveThruWorld(w, 0.1, w.clock + 100);
   assert.equal(w.phase, 'meltdown');
@@ -154,8 +152,9 @@ void test('Drive-Thru: venting milkshake pressure prevents blowout', () => {
   w.players = [newDriveThruPlayer('test-p', 'Barista', 0, 'barista', false)];
   w.kitchen.shakePressure = 80;
 
-  driveThruAction(w, 'test-p', { type: 'ventMilkshake' });
-  assert.equal(w.kitchen.shakePressure, 45);
+  w.players[0].input.action1 = true;
+  advanceDriveThruWorld(w, 1);
+  assert.ok(w.kitchen.shakePressure < 55);
   assert.equal(w.kitchen.shakeExploded, false);
 });
 
@@ -169,21 +168,6 @@ void test('Drive-Thru: Short Stop detection triggers when car parks too far from
   const check = computeWindowReachGap(w.car);
   assert.equal(check.isShortStop, true);
   assert.equal(check.canReach, true);
-});
-
-void test('Drive-Thru: successful handoff scores bonus and completes round', () => {
-  const w = freshDriveThruWorld();
-  w.car.x = 0.6;
-  w.car.z = 0;
-  w.car.speed = 0;
-  w.car.passengerReach = 0.9;
-  w.car.balanceMeter = 0;
-  w.kitchen.trayAtWindow = true;
-
-  advanceDriveThruWorld(w, 0.1);
-  assert.equal(w.phase, 'completed');
-  assert.ok(w.score > 0);
-  assert.equal(w.ordersServed, 1);
 });
 
 void test('Drive-Thru: bot reconciliation ensures all 4 roles have players', () => {
@@ -207,7 +191,7 @@ void test('Drive-Thru: a bots-only round steers around the speaker pole and serv
     const w = freshDriveThruWorld();
     reconcileDriveThruBots(w);
     let seconds = 0;
-    while (w.phase !== 'completed' && w.phase !== 'meltdown' && seconds < 12) {
+    while (w.phase !== 'completed' && w.phase !== 'meltdown' && seconds < 80) {
       for (const p of w.players) if (p.bot) stepDriveThruBot(p, w, 1 / hz);
       advanceDriveThruWorld(w, 1 / hz, w.clock + 1000 / hz);
       seconds += 1 / hz;
@@ -217,7 +201,7 @@ void test('Drive-Thru: a bots-only round steers around the speaker pole and serv
       'completed',
       `${hz} Hz: ${w.phase} after ${seconds.toFixed(1)} s (${w.failReason})`,
     );
-    assert.equal(w.ordersServed, 1);
+    assert.equal(w.ordersServed, 3);
     assert.equal(w.car.bumperDamage, 0, `${hz} Hz: the car hit the pole`);
   }
 });
@@ -229,7 +213,7 @@ void test('Drive-Thru: a bots-only round steers around the speaker pole and serv
  */
 function assertBotsServeFrom(
   start: Pick<SedanState, 'x' | 'z' | 'yaw'>,
-  deadline = 10,
+  deadline = 85,
 ) {
   for (const hz of [30, 60, 144]) {
     const w = freshDriveThruWorld();
@@ -251,7 +235,7 @@ function assertBotsServeFrom(
       'completed',
       `${from}: ${w.phase} after ${seconds.toFixed(1)} s (${w.failReason})`,
     );
-    assert.equal(w.ordersServed, 1);
+    assert.equal(w.ordersServed, 3);
     assert.equal(w.car.bumperDamage, 0, `${from}: the car hit the pole`);
   }
 }
@@ -270,8 +254,8 @@ void test('Drive-Thru: a bot handed a car across the lane works it round and ser
   // nosed into the far edge the car only grinds along it. The bot used to
   // stall in both; now it reverses while turning toward the lane.
   // Full-size body and correct reverse steering require a three-point turn.
-  assertBotsServeFrom({ x: 1, z: 14.5, yaw: -1.2 }, 22);
-  assertBotsServeFrom({ x: -8, z: 5.5, yaw: -1.2 }, 22);
+  assertBotsServeFrom({ x: 1, z: 14.5, yaw: -1.2 }, 95);
+  assertBotsServeFrom({ x: -8, z: 5.5, yaw: -1.2 }, 95);
 });
 
 void test('Drive-Thru: peer engine creates room, accepts actions, and builds snapshot', () => {
@@ -300,7 +284,7 @@ void test('Drive-Thru: peer engine creates room, accepts actions, and builds sna
     Date.now(),
   ) as DriveThruSnapshot;
   assert.ok(snap);
-  assert.equal(snap.car.honking, true);
+  assert.ok(snap.events.some((e) => e.kind === 'horn_honked'));
 });
 
 void test('Drive-Thru: ElevenLabs audio catalog conforms to prompt length limits', () => {

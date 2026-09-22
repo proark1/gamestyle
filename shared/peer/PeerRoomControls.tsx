@@ -16,21 +16,22 @@ export default function PeerRoomControls({
 }) {
   const { language } = useLanguage();
   const de = language === 'de';
+  const label = room.session
+    ? `${room.session.code} · ${room.players.length}/4`
+    : de
+      ? 'Mehrspieler'
+      : 'Multiplayer';
   return (
     <>
       <button
         type="button"
         className="game-toolbar-button peer-room-trigger"
+        aria-label={label}
+        title={label}
         onClick={() => room.setOpen(true)}
       >
         <Users size={18} />
-        <span>
-          {room.session
-            ? `${room.session.code} · ${room.players.length}/4`
-            : de
-              ? 'Mehrspieler'
-              : 'Multiplayer'}
-        </span>
+        <span>{label}</span>
       </button>
       {withVoice && <VoicePanel {...room.voice} />}
       {room.session && room.status !== 'online' && (

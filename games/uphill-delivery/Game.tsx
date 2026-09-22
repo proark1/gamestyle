@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-html-link-for-pages */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -389,7 +391,7 @@ export default function UphillDelivery() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/uphill-delivery?room=${session?.code}`,
+        `${publicGameOrigin()}/uphill-delivery?room=${session?.code}`,
       );
       setCopied(true);
     } catch {
@@ -900,7 +902,7 @@ export default function UphillDelivery() {
               <input
                 aria-label="Invitation link"
                 readOnly
-                value={`${typeof location !== 'undefined' ? location.origin : ''}/uphill-delivery?room=${session?.code}`}
+                value={`${typeof location !== 'undefined' ? publicGameOrigin() : ''}/uphill-delivery?room=${session?.code}`}
                 onFocus={(e) => e.target.select()}
               />
               <button

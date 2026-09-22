@@ -107,20 +107,21 @@ void test('new sedan has circular wheels and a cabin that clears seated avatar h
   assert.ok(roof.position.y - 0.075 > 0.23 + 1.68 * 0.9);
 });
 
-void test('a single passenger pickup click delivers the ready tray beside the window', () => {
+void test('a single passenger click cannot bypass the physical handoff', () => {
   const world = freshDriveThruWorld();
   world.players = [newDriveThruPlayer('human', 'You', 0, 'passenger', false)];
   Object.assign(world.car, { x: 0.15, z: 0.5, speed: 0 });
   world.kitchen.trayAtWindow = true;
   driveThruAction(world, 'human', { type: 'reachTray' });
   advanceDriveThruWorld(world, 1 / 60, world.clock + 1000 / 60);
-  assert.equal(world.phase, 'completed');
+  assert.notEqual(world.phase, 'completed');
+  assert.equal(world.ordersServed, 0);
 });
 
-void test('barista pour button fills at most four cups', () => {
+void test('repeated pour clicks cannot bypass timed filling', () => {
   const world = freshDriveThruWorld();
   world.players = [newDriveThruPlayer('human', 'You', 0, 'barista', false)];
   for (let i = 0; i < 6; i++)
     driveThruAction(world, 'human', { type: 'pourDrink' });
-  assert.equal(world.kitchen.sodasPoured, 4);
+  assert.equal(world.kitchen.sodasPoured, 0);
 });

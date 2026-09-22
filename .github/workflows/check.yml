@@ -16,12 +16,51 @@ jobs:
       - run: npm test
       - run: npm run build:railway
       - run: npm run build:client
-      - run: npx playwright install --with-deps chrome
+      - run: npx playwright install --with-deps chrome firefox
       - name: Start installed client preview
         run: npm run preview:client -- --port 4173 > /tmp/jumbleyard-preview.log 2>&1 &
       - run: npm run test:browser
+      - run: node --import tsx scripts/party-browser-integration.mjs
+      - run: node --import tsx scripts/party-browser-integration.mjs four-brain-cells
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: browser-smoke
           path: .tmp/platform-audit/browser-smoke.json
+  networking:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chrome firefox
+      - run: npm run test:peer
+      - run: npm run test:voice:browser -- --ui
+      - run: npm run test:voice:browser
+        env:
+          VOICE_TEST_ENGINE: firefox
+      - run: npm run test:voice:browser -- --early
+      - run: npm run test:voice:browser -- --server-room=shelf-control
+      - run: npm run test:voice:browser -- --server-room=chaos
+      - run: npm run test:voice:browser -- --server-room=first-person
+      - run: node --import tsx scripts/measure-peer-bandwidth.mjs
+      - name: Start isolated TURN server
+        run: docker run -d --name test-turn --network host coturn/coturn:4.18.0-r0-alpine -n --no-tls --fingerprint --lt-cred-mech --realm jumbleyard.test --user test:local-test-only --listening-ip 127.0.0.1 --relay-ip 127.0.0.1 --min-port 49160 --max-port 49259 --allow-loopback-peers --relay-threads=1
+      - name: Verify forced relay gameplay and audio
+        env:
+          PEER_RELAY_ONLY: '1'
+          PEER_TURN_URLS: turn:127.0.0.1:3478?transport=udp
+          PEER_TURN_USERNAME: test
+          PEER_TURN_CREDENTIAL: local-test-only
+        run: npm run test:peer -- stack-or-sink
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: network-diagnostics
+          path: |
+            .tmp/improvements
+            .tmp/voice

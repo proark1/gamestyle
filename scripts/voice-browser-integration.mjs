@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chromium } from '@playwright/test';
+import { chromium, firefox } from '@playwright/test';
 import { createServer } from 'vite';
 import { handlePeerRoom } from '../shared/peer/coordinator.ts';
 import tailwindcss from '@tailwindcss/postcss';
@@ -124,7 +124,8 @@ const server = await createServer({
                 membership,
                 JSON.parse(body),
               );
-              reply.view.iceServers = [];
+              if (process.env.PEER_RELAY_ONLY !== '1')
+                reply.view.iceServers = [];
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(reply));
             } catch (error) {
@@ -136,9 +137,25 @@ const server = await createServer({
               let body = '';
               for await (const chunk of req) body += chunk;
               const request = JSON.parse(body);
+              const stamp = Date.now();
+              if (process.env.VOICE_TEST_TRACE)
+                console.log(
+                  'RPC start',
+                  stamp,
+                  request.op,
+                  request.id?.slice(0, 5),
+                );
               if (earlyJoin && request.op === 'signal') await signalsReady;
               const reply = await handlePeerRoom(store, request);
-              reply.view.iceServers = [];
+              if (process.env.VOICE_TEST_TRACE)
+                console.log(
+                  'RPC end',
+                  Date.now(),
+                  request.op,
+                  Date.now() - stamp,
+                );
+              if (process.env.PEER_RELAY_ONLY !== '1')
+                reply.view.iceServers = [];
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(reply));
             } catch (error) {
@@ -156,21 +173,36 @@ let browser;
 try {
   const origin = `http://127.0.0.1:${server.httpServer.address().port}`;
   console.log(`Voice test server: ${origin}`);
-  browser = await chromium.launch({
-    channel: process.env.VOICE_TEST_BROWSER || 'chrome',
-    headless: true,
-    args: [
-      '--autoplay-policy=no-user-gesture-required',
-      '--use-fake-device-for-media-stream',
-      '--use-fake-ui-for-media-stream',
-      '--disable-features=WebRtcHideLocalIpsWithMdns',
-    ],
-  });
+  browser =
+    process.env.VOICE_TEST_ENGINE === 'firefox'
+      ? await firefox.launch({
+          headless: true,
+          firefoxUserPrefs: {
+            'media.navigator.streams.fake': true,
+            'media.navigator.permission.disabled': true,
+            'media.autoplay.default': 0,
+            'media.peerconnection.ice.loopback': true,
+            'media.peerconnection.ice.obfuscate_host_addresses': false,
+            'dom.min_background_timeout_value': 10,
+          },
+        })
+      : await chromium.launch({
+          channel: process.env.VOICE_TEST_BROWSER || 'chrome',
+          headless: true,
+          args: [
+            '--autoplay-policy=no-user-gesture-required',
+            '--use-fake-device-for-media-stream',
+            '--use-fake-ui-for-media-stream',
+            '--disable-features=WebRtcHideLocalIpsWithMdns',
+          ],
+        });
   console.log('Browser launched');
   const pages = await Promise.all(
     [0, 1].map(async () => {
       const context = await browser.newContext({
-        permissions: ['microphone'],
+        ...(process.env.VOICE_TEST_ENGINE === 'firefox'
+          ? {}
+          : { permissions: ['microphone'] }),
         hasTouch: true,
       });
       const page = await context.newPage();
@@ -247,7 +279,9 @@ try {
                 release: () => {},
               };
           window.voiceTest = { lease, VoiceClient, session, sessions, i };
-          lease.mesh.on('error', (error) => console.error(error.message));
+          lease.mesh.on('error', (error) =>
+            console.error(error.name, error.message),
+          );
           if (!earlyJoin) lease.mesh.start();
         },
         { session: sessions[i], sessions, i, earlyJoin },
@@ -265,7 +299,7 @@ try {
               (l) => l.channel?.readyState === 'open',
             ),
           null,
-          { timeout: 20000 },
+          { timeout: 20000, polling: 100 },
         ),
       ),
     ).catch(async (error) => {
@@ -440,6 +474,17 @@ try {
     await page.getByRole('button', { name: 'Join with push to talk' }).click();
     await page.getByRole('button', { name: 'Disable push to talk' }).waitFor();
     await sound(pages[1], false, 'UI push-to-talk joins silently');
+    await page.getByRole('button', { name: 'Test microphone locally' }).click();
+    await page.getByLabel('Local microphone level').waitFor();
+    await sound(
+      pages[1],
+      false,
+      'local microphone test never publishes to peers',
+    );
+    await page.getByRole('button', { name: 'Stop microphone test' }).click();
+    await page
+      .getByLabel('Local microphone level')
+      .waitFor({ state: 'detached' });
     await page.keyboard.down('t');
     await sound(pages[1], true, 'holding the talk key transmits remote audio');
     await page.keyboard.up('t');

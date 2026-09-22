@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* oxlint-disable react/react-compiler -- This uncompiled WebGL host synchronizes mutable scene controllers and saved browser state; hook rules and exhaustive dependencies remain enforced. */
 /* oxlint-disable jsx-a11y/autocomplete-valid -- nickname is a standard HTML autocomplete token. */
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- HUD live regions use styled containers with explicit ARIA semantics. */
@@ -440,7 +442,7 @@ export default function Game() {
   }
   async function share(native = false) {
     if (!session) return;
-    const url = `${location.origin}${location.pathname}?raum=${session.code}`;
+    const url = `${publicGameOrigin()}${location.pathname}?raum=${session.code}`;
     if (native && navigator.share) {
       try {
         await navigator.share({
@@ -3148,7 +3150,7 @@ export default function Game() {
             readOnly
             value={
               typeof location !== 'undefined' && session
-                ? `${location.origin}${location.pathname}?raum=${session.code}`
+                ? `${publicGameOrigin()}${location.pathname}?raum=${session.code}`
                 : ''
             }
             onFocus={(e) => e.target.select()}

@@ -16,7 +16,7 @@
   z-index: 101;
   width: 94vw;
   max-width: 900px;
-  max-height: 90vh;
+  max-height: calc(100dvh - 28px - var(--sat) - var(--sab));
   background: #fff8e8;
   border: 1px solid #bfcfba;
   border-radius: 20px;
@@ -98,8 +98,9 @@
   background: none;
   border: 1px solid transparent;
   border-radius: 50%;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1004,19 +1005,41 @@
     padding: 12px 14px;
     flex-wrap: wrap;
   }
+  .wardrobe-header {
+    position: relative;
+    padding-right: 62px;
+    flex-shrink: 0;
+  }
+  .wardrobe-header-title-wrap {
+    gap: 8px;
+    min-width: 0;
+  }
+  .wardrobe-title {
+    font-size: 20px;
+  }
+  .wardrobe-close {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+  }
 
   .wardrobe-mode-btn,
   .wardrobe-ctrl-btn,
   .wardrobe-turn-btn,
   .wardrobe-slot-btn,
   .wardrobe-item-btn {
-    min-height: 36px;
+    min-height: 44px;
   }
 
   .wardrobe-goals-panel {
     box-sizing: border-box;
     padding: 14px;
     max-height: none;
+  }
+}
+@media (max-height: 640px) {
+  .wardrobe-dialog .wardrobe-cast-guide {
+    display: none;
   }
 }
 

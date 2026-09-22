@@ -706,3 +706,239 @@
 dialog.drive-thru-modal {
   margin: auto;
 }
+.rush-panel {
+  position: absolute;
+  top: 88px;
+  right: 18px;
+  width: 290px;
+  padding: 16px;
+  border: 1px solid #39585230;
+  border-radius: 18px;
+  background: #fff9eefa;
+  color: #244b45;
+  box-shadow: 0 8px 28px #193b3420;
+  z-index: 12;
+  max-height: calc(100dvh - 245px);
+  overflow: auto;
+}
+.rush-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+}
+.rush-panel-heading span {
+  font-size: 11px;
+  background: #dcebdd;
+  padding: 5px 8px;
+  border-radius: 20px;
+  font-weight: 800;
+}
+.rush-stage {
+  font-family: var(--hud-display);
+  font-size: 20px;
+  line-height: 1.15;
+  margin: 12px 0;
+}
+.rush-tip {
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 10px 0;
+}
+.rush-meter-row {
+  margin: 9px 0;
+}
+.rush-meter-row > span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.rush-meter {
+  height: 12px;
+  position: relative;
+  border-radius: 8px;
+  background: #ead9bf;
+  border: 1px solid #244b4520;
+}
+.rush-safe-band {
+  position: absolute;
+  height: 100%;
+  background: #79b78a;
+  border-radius: 4px;
+}
+.rush-meter-pointer {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 4px;
+  border-radius: 3px;
+  background: #204e47;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 1px #fff9ee;
+}
+.rush-recipe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 12px 0 8px;
+}
+.rush-recipe span {
+  border: 1px solid #b8b9a7;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 10px;
+  opacity: 0.55;
+}
+.rush-recipe .done {
+  background: #dcebdc;
+  border-color: #76a781;
+  opacity: 1;
+}
+.rush-recipe .done::before {
+  content: '✓ ';
+}
+.rush-recipe .next {
+  opacity: 1;
+  border-color: #c28335;
+  background: #f8e5bd;
+}
+.rush-counts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+}
+.rush-notice {
+  margin: 12px 0 0;
+  padding: 9px 10px;
+  background: #f7e8c9;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.rush-patties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.rush-patties button {
+  flex: 1;
+  border: 1px solid #ccab87;
+  background: #f5dfc9;
+  color: #493d31;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.rush-patties button.ready {
+  background: #dcebdc;
+  border-color: #76a781;
+}
+.rush-patties small {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+}
+.rush-hold {
+  touch-action: none;
+}
+.rush-hold:active {
+  background: #bcdac7;
+  transform: translateY(2px);
+}
+.rush-intermission {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 25px 38px;
+  background: #fff9ee;
+  border: 2px solid #619783;
+  border-radius: 22px;
+  box-shadow: 0 12px 44px #193b3430;
+  text-align: center;
+  z-index: 25;
+}
+.rush-intermission strong {
+  display: block;
+  font-size: 28px;
+  font-family: var(--hud-display);
+}
+.rush-intermission span {
+  display: block;
+  margin-top: 10px;
+}
+@media (max-width: 700px) {
+  .rush-panel {
+    top: auto;
+    bottom: 151px;
+    right: 8px;
+    width: 180px;
+    padding: 10px;
+    max-height: 31dvh;
+    border-radius: 12px;
+  }
+  .rush-panel-heading {
+    font-size: 12px;
+    gap: 4px;
+  }
+  .rush-panel-heading span {
+    font-size: 9px;
+    padding: 4px;
+  }
+  .rush-stage {
+    font-size: 15px;
+    margin: 7px 0;
+  }
+  .rush-tip {
+    font-size: 10px;
+  }
+  .rush-recipe {
+    margin: 7px 0;
+  }
+  .rush-recipe span {
+    font-size: 9px;
+    padding: 3px;
+  }
+  .drive-thru-controls-bar {
+    width: calc(100% - 16px);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .drive-thru-action-btn {
+    font-size: 10px;
+    padding: 9px 7px;
+    min-height: 40px;
+  }
+  .drive-thru-driving-status {
+    max-width: 145px;
+    bottom: 160px;
+  }
+  .drive-thru-role-bar {
+    bottom: 104px;
+  }
+}
+.rush-native-meter {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.rush-notice {
+  display: block;
+}
+@media (max-width: 700px) {
+  .rush-panel {
+    bottom: 180px;
+  }
+  .rush-panel:not(.rush-role-driver) .rush-tip {
+    display: none;
+  }
+  .rush-role-passenger .rush-recipe {
+    display: none;
+  }
+}

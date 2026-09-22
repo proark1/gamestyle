@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 import { apiFetch } from '../../shared/browser/api-fetch';
 
 import { useEffect, useRef, useState } from 'react';
@@ -58,7 +60,7 @@ export function DisasterChallenge({
     }
   }
   async function copy() {
-    const text = `${p.crewName || 'Our crew'} passed in ${formatChallengeTime(p.run!.elapsedMs!)} with ${p.run!.crewSize} builder${p.run!.crewSize === 1 ? '' : 's'}. Can your crew beat our disaster? ${location.origin}/build/${saved}`;
+    const text = `${p.crewName || 'Our crew'} passed in ${formatChallengeTime(p.run!.elapsedMs!)} with ${p.run!.crewSize} builder${p.run!.crewSize === 1 ? '' : 's'}. Can your crew beat our disaster? ${publicGameOrigin()}/build/${saved}`;
     try {
       await navigator.clipboard.writeText(text);
       notify('Challenge invitation copied.');

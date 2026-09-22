@@ -1,5 +1,6 @@
 'use client';
 import { useSyncExternalStore } from 'react';
+import { Monitor } from 'lucide-react';
 import {
   graphicsPreferences,
   defaultGraphicsPreferences,
@@ -15,17 +16,15 @@ export default function GraphicsControls() {
   );
   return (
     <details className="game-graphics-controls">
-      <summary className="game-toolbar-button">Graphics</summary>
-      <div
-        style={{
-          position: 'absolute',
-          padding: 12,
-          background: '#fff6df',
-          color: '#294a43',
-          borderRadius: 12,
-          zIndex: 100,
-        }}
+      <summary
+        className="game-toolbar-button"
+        aria-label="Graphics"
+        title="Graphics"
       >
+        <Monitor size={19} />
+        <span className="graphics-label">Graphics</span>
+      </summary>
+      <div className="game-graphics-panel">
         <label>
           Quality{' '}
           <select

@@ -31,6 +31,7 @@ export class VoiceClient {
   private stream?: MediaStream;
   private source?: MediaStreamAudioSourceNode;
   private analyser?: AnalyserNode;
+  private localValues?: Uint8Array<ArrayBuffer>;
   private peers = new Map<string, PeerAudio>();
   private snapshot?: VoiceSnapshot;
   private volumes = new Map<string, number>();
@@ -71,12 +72,22 @@ export class VoiceClient {
       this.mesh = lease.mesh;
       this.release = lease.release;
       this.unsubscribe.push(
+        this.mesh.on('view', (view) => {
+          if (view.voiceRecovered) {
+            void this.microphone(false);
+            this.emit({
+              mic: false,
+              ready: false,
+              error: 'Voice reconnected. Enable your microphone when ready.',
+            });
+          }
+        }),
         this.mesh.on('track', (id, track) => {
           this.remove(id);
           if (track) this.add(id, track);
         }),
         this.mesh.on('error', (error) => {
-          if (error instanceof PeerError && error.status === 401) {
+          if (error instanceof PeerError && [401, 426].includes(error.status)) {
             this.emit({
               status: 'Disconnected',
               connected: false,
@@ -326,6 +337,20 @@ export class VoiceClient {
       (d) => d.kind === 'audioinput',
     );
   }
+  get supportsOutputSelection() {
+    return !!this.context && 'setSinkId' in this.context;
+  }
+  async outputs() {
+    return (await navigator.mediaDevices.enumerateDevices()).filter(
+      (d) => d.kind === 'audiooutput',
+    );
+  }
+  async outputDevice(id: string) {
+    const context = this.context as
+      | (AudioContext & { setSinkId?: (id: string) => Promise<void> })
+      | undefined;
+    if (context?.setSinkId) await context.setSinkId(id);
+  }
   async resumeAudio() {
     if (!this.context || this.destroyed) return;
     try {
@@ -361,8 +386,22 @@ export class VoiceClient {
     const missing = members.filter(
       (m) => this.mesh?.links.get(m.id)?.pc.connectionState !== 'connected',
     );
-    const status = missing.length ? 'Connecting to players…' : 'Connected';
-    if (this.state.status !== status) this.emit({ status });
+    const status = !this.mesh?.view
+      ? 'Connecting…'
+      : missing.length
+        ? 'Connecting to players…'
+        : members.length
+          ? 'Connected'
+          : 'Waiting for players…';
+    const network = this.mesh?.diagnostics;
+    const connectionInfo = network
+      ? `${network.relay ? 'Relay' : 'Direct'} · ${network.rttMs} ms · audio jitter ${network.jitterMs} ms · lost ${network.audioLost}`
+      : undefined;
+    if (
+      this.state.status !== status ||
+      this.state.connectionInfo !== connectionInfo
+    )
+      this.emit({ status, connectionInfo });
     const speaking: string[] = [],
       me = this.snapshot?.players.find((p) => p.id === this.session.id);
     for (const [id, peer] of this.peers) {
@@ -414,7 +453,10 @@ export class VoiceClient {
           : 0;
     let level = 0;
     if (this.analyser && this.state.mic) {
-      const values = new Uint8Array(this.analyser.fftSize);
+      const values =
+        this.localValues?.length === this.analyser.fftSize
+          ? this.localValues
+          : (this.localValues = new Uint8Array(this.analyser.fftSize));
       this.analyser.getByteTimeDomainData(values);
       level = Math.min(
         1,

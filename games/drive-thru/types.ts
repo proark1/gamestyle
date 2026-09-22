@@ -152,9 +152,40 @@ export type DriveThruEvent = {
   text: string;
 };
 
+export type RushState = {
+  elapsed: number;
+  stage:
+    | 'preparing'
+    | 'charging'
+    | 'sliding'
+    | 'offered'
+    | 'carrying'
+    | 'between';
+  charge: number;
+  trayTravel: number;
+  trayVelocity: number;
+  grip: number;
+  danger: number;
+  cupFill: number;
+  pouring: boolean;
+  friesReady: boolean;
+  flipped: string[];
+  stackCooldown: number;
+  flipCooldown: number;
+  intermission: number;
+  spills: number;
+  notice: string;
+  noticeTime: number;
+  warning: number;
+  nextDistraction: number;
+  previousSpeed: number;
+  botWait: Partial<Record<RoleId, number>>;
+};
+
 export type DriveThruWorld = {
   clock: number;
   started: number;
+  rush: RushState;
   phase: GamePhase;
   phaseTimer: number; // countdown in seconds
   ticket: OrderTicket | null;
@@ -174,6 +205,7 @@ export type DriveThruSnapshot = {
   host: string;
   version: number;
   world: DriveThruWorld;
+  rush: RushState;
   clock: number;
   phase: GamePhase;
   phaseTimer: number;
@@ -211,4 +243,7 @@ export type DriveThruAction =
   | { type: 'pourDrink' }
   | { type: 'reachTray' }
   | { type: 'toggleWipers' }
-  | { type: 'swatDistraction' };
+  | { type: 'swatDistraction' }
+  | { type: 'selectPatty'; id: string }
+  | { type: 'stackNext' }
+  | { type: 'undoLayer' };

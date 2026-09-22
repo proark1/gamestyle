@@ -23,6 +23,9 @@ import {
 
 const adapter: GameAdapter<PanicCurlingWorld, PanicCurlingSnapshot> = {
   game: 'panic-curling',
+  party: (w) => {
+    w.aimPatience = 20;
+  },
   autonomous: (p) => !!p.bot,
   actions: [
     'start',

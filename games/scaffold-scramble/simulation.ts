@@ -443,27 +443,7 @@ function interactCleaningOrShoo(
     }
   }
 
-  // Calculate player's world coordinates
-  const tiltRad = world.cradle.tiltRad;
-  const worldX = player.deckX * Math.cos(tiltRad);
-  const worldY =
-    world.cradle.centerHeight + player.deckX * Math.sin(tiltRad) + 1.2;
-
-  // Find nearest window that is in reach
-  let bestDist = 2.4;
-  let targetWindow: WindowTarget | null = null;
-
-  for (const win of world.windows) {
-    const dx = Math.abs(win.x - worldX);
-    const dy = Math.abs(win.y - worldY);
-    if (dx < 1.3 && dy < 1.8) {
-      const dist = Math.hypot(dx, dy);
-      if (dist < bestDist) {
-        bestDist = dist;
-        targetWindow = win;
-      }
-    }
-  }
+  const targetWindow = reachableWindow(world, player);
 
   if (!targetWindow) return;
 
@@ -500,6 +480,35 @@ function interactCleaningOrShoo(
       });
     }
   }
+}
+
+export function reachableWindow(
+  world: ScaffoldScrambleWorld,
+  player: Player,
+): WindowTarget | null {
+  // Calculate player's world coordinates
+  const tiltRad = world.cradle.tiltRad;
+  const worldX = player.deckX * Math.cos(tiltRad);
+  const worldY =
+    world.cradle.centerHeight + player.deckX * Math.sin(tiltRad) + 1.2;
+
+  // Find nearest window that is in reach
+  let bestDist = 2.4;
+  let targetWindow: WindowTarget | null = null;
+
+  for (const win of world.windows) {
+    const dx = Math.abs(win.x - worldX);
+    const dy = Math.abs(win.y - worldY);
+    if (dx < 1.3 && dy < 1.8) {
+      const dist = Math.hypot(dx, dy);
+      if (dist < bestDist) {
+        bestDist = dist;
+        targetWindow = win;
+      }
+    }
+  }
+
+  return targetWindow;
 }
 
 export function scaffoldScrambleAction(

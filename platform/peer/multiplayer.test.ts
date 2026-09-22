@@ -54,12 +54,12 @@ void test('Sample Stampede replaces a departing driver or grabber with an NPC in
   }
 });
 
-void test('Drive-Thru exposes its existing drink action through the shared peer engine', () => {
+void test('Drive-Thru exposes the grill undo action through the shared peer engine', () => {
   const engine = drive(1000);
   engine.reconcile(members);
-  const barista = engine.world.players.find((p) => p.role === 'barista')!;
+  const grill = engine.world.players.find((p) => p.role === 'grill')!;
   assert.deepEqual(
-    engine.execute(barista.id, 'pour', { type: 'pourDrink' }, members[0].id),
+    engine.execute(grill.id, 'undo', { type: 'undoLayer' }, members[0].id),
     {},
   );
 });

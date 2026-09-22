@@ -3,6 +3,11 @@ import { bindGameLifecycle, gameActive } from '../browser/game-lifecycle';
 import type { RenderQuality } from '../browser/device';
 import { FrameStats } from './frame-stats';
 import { AdaptiveQuality } from './adaptive-quality';
+import { FramePacer } from './frame-pacer';
+const admissions = new WeakMap<WebGLRenderer, () => boolean>();
+export function shouldRenderFrame(renderer: WebGLRenderer) {
+  return admissions.get(renderer)?.() ?? true;
+}
 import {
   graphicsPreferences,
   subscribeGraphicsPreferences,
@@ -14,7 +19,8 @@ export function attachRenderRuntime(
   quality: RenderQuality,
 ) {
   const stats = new FrameStats(),
-    adaptive = new AdaptiveQuality();
+    adaptive = new AdaptiveQuality(),
+    pacer = new FramePacer();
   const canvas = renderer.domElement;
   const render = renderer.render.bind(renderer),
     dispose = renderer.dispose.bind(renderer);
@@ -44,6 +50,7 @@ export function attachRenderRuntime(
   const reset = () => {
     previous = 0;
     adaptive.reset();
+    pacer.reset();
   };
   const unbind = bindGameLifecycle(reset);
   const message = document.createElement('output');
@@ -71,6 +78,21 @@ export function attachRenderRuntime(
   };
   canvas.addEventListener('webglcontextlost', contextLost);
   canvas.addEventListener('webglcontextrestored', restored);
+  let workStarted = 0;
+  const admit = () => {
+    if (!gameActive() || lost) {
+      pacer.reset();
+      previous = 0;
+      return false;
+    }
+    const now = performance.now();
+    const timeline = document.timeline?.currentTime;
+    const stamp = typeof timeline === 'number' ? timeline : Math.floor(now);
+    const due = pacer.due(stamp, graphicsPreferences().fps);
+    if (due && stamp !== lastFrame) workStarted = now;
+    return due;
+  };
+  admissions.set(renderer, admit);
   renderer.render = (scene: Object3D, camera: Camera) => {
     if (!gameActive() || lost) {
       previous = 0;
@@ -84,7 +106,8 @@ export function attachRenderRuntime(
     const frame = stamp !== lastFrame;
     if (frame) {
       lastFrame = stamp;
-      skip = !!previous && gap < 1000 / preference.fps - 1;
+      skip = !pacer.due(stamp, preference.fps);
+      if (!workStarted) workStarted = now;
     }
     if (skip) return;
     // Multiple passes in one frame should neither count nor alter quality twice.
@@ -93,7 +116,7 @@ export function attachRenderRuntime(
       if (
         gap &&
         preference.quality === 'auto' &&
-        adaptive.record((gap * preference.fps) / 60)
+        adaptive.record(pacer.qualityGap(gap, preference.fps))
       )
         apply();
       if (now - published > 1000) {
@@ -135,9 +158,13 @@ export function attachRenderRuntime(
       }
     }
     render(scene, camera);
-    if (frame) stats.record(gap, performance.now() - now);
+    if (frame) {
+      stats.record(gap, performance.now() - (workStarted || now));
+      workStarted = 0;
+    }
   };
   renderer.dispose = () => {
+    admissions.delete(renderer);
     unbind();
     unsubscribe();
     message.remove();

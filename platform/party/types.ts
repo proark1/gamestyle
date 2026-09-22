@@ -31,6 +31,7 @@ export type RoundResult = {
 };
 
 export type PartyRoomState = {
+  runId?: string;
   intermission?: PartyIntermission;
   /** Response-only server clock reference. */
   serverNow?: number;
@@ -71,6 +72,13 @@ export type PartyIntermission = {
 
 /** Every action taken as a player carries that player's party pass token. */
 export type PartyAction =
+  | {
+      op: 'game_session';
+      code: string;
+      playerId: string;
+      token: string;
+      round: number;
+    }
   | {
       op: 'vote';
       code: string;

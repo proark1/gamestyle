@@ -329,8 +329,8 @@
   right: 14px;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -396,19 +396,18 @@
   .account-header-button span {
     display: none;
   }
-  /* One more toolbar button must still fit a 360px top bar: with the account
-     button present, the voice control shows only its icon and every toolbar
-     button shrinks to 40px. */
+  /* Secondary controls live in the mobile settings panel. Keep touch targets
+     full-sized when the account service enables its button. */
   .game-toolbar:has(.account-toolbar-button) {
     gap: 3px;
   }
   .game-toolbar:has(.account-toolbar-button) .game-toolbar-button {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
   .game-toolbar:has(.account-toolbar-button) .voice-trigger {
-    width: 40px;
+    width: 44px;
     padding: 0;
     gap: 0;
   }

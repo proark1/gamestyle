@@ -101,3 +101,15 @@ a {
 button:active {
   transform: translateY(2px);
 }
+
+/* Text fields must remain readable without triggering focus zoom on phones. */
+@media (pointer: coarse) {
+  body
+    input:not([type='range']):not([type='checkbox']):not([type='radio']):not(
+      [type='color']
+    ),
+  body select,
+  body textarea {
+    font-size: max(16px, 1em);
+  }
+}

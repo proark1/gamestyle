@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useMediaQuery } from '../../shared/browser/use-media-query';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
+import { TouchControls } from '../../shared/input/TouchControls';
 import {
   advanceBasketball,
   basketballAction,
@@ -434,6 +435,12 @@ export default function BasketballGame() {
       {/* Mobile Touch Controls Overlay */}
       {touchMode && world?.phase === 'playing' && (
         <div className="bb-touch-controls">
+          <TouchControls
+            disabled={room.open}
+            showJump={false}
+            jump={() => {}}
+            move={(vector) => scene.current?.setTouchMove(vector)}
+          />
           <div className="bb-touch-buttons">
             <div className="bb-touch-row">
               <button
@@ -469,28 +476,33 @@ export default function BasketballGame() {
                 type="button"
                 className="bb-touch-btn shoot"
                 onPointerDown={(event) => {
+                  if (event.button !== 0) return;
+                  event.preventDefault();
                   event.currentTarget.setPointerCapture(event.pointerId);
-                  currentInput.current.shoot = true;
-                  if (localWorld.current) {
-                    const p = localWorld.current.players.find(
-                      (pl) => pl.id === sessionRef.current.id,
-                    );
-                    if (p) p.input.shoot = true;
-                  }
+                  scene.current?.setTouchShoot(true);
                 }}
                 onPointerCancel={() => {
-                  currentInput.current.shoot = false;
+                  scene.current?.setTouchShoot(false);
                 }}
                 onLostPointerCapture={() => {
-                  currentInput.current.shoot = false;
+                  scene.current?.setTouchShoot(false);
                 }}
                 onPointerUp={() => {
-                  currentInput.current.shoot = false;
-                  if (localWorld.current) {
-                    const p = localWorld.current.players.find(
-                      (pl) => pl.id === sessionRef.current.id,
-                    );
-                    if (p) p.input.shoot = false;
+                  scene.current?.setTouchShoot(false);
+                }}
+                onBlur={() => scene.current?.setTouchShoot(false)}
+                onKeyDown={(event) => {
+                  if (event.key === ' ' || event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    scene.current?.setTouchShoot(true);
+                  }
+                }}
+                onKeyUp={(event) => {
+                  if (event.key === ' ' || event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    scene.current?.setTouchShoot(false);
                   }
                 }}
               >

@@ -215,8 +215,118 @@
   opacity: 0.45;
   cursor: default;
 }
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) {
   .game-toolbar-volume {
+    display: none;
+  }
+}
+
+.toolbar-options,
+.toolbar-options-panel {
+  display: flex;
+  align-items: center;
+  gap: inherit;
+}
+.toolbar-options-panel {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+.game-toolbar .toolbar-options-trigger,
+.graphics-label {
+  display: none;
+}
+.game-graphics-controls > summary::-webkit-details-marker {
+  display: none;
+}
+.game-graphics-panel {
+  position: absolute;
+  right: 0;
+  z-index: 100;
+  width: min(260px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid #c3cfb9;
+  border-radius: 12px;
+  background: #fff6df;
+  color: #294a43;
+  box-shadow: 0 8px 24px #203a2920;
+}
+.game-graphics-panel label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.game-graphics-panel select {
+  width: 100%;
+  min-height: 44px;
+  font: inherit;
+  font-size: 16px;
+}
+@media (max-width: 900px), (pointer: coarse) {
+  .game-toolbar .toolbar-options-trigger {
+    display: inline-flex;
+  }
+  .toolbar-options-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    width: min(280px, calc(100vw - 24px - var(--sal) - var(--sar)));
+    max-height: calc(100dvh - 100px - var(--sat) - var(--sab));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px;
+    border: 1px solid #c3cfb9;
+    border-radius: 16px;
+    background: #fff8e8;
+    box-shadow: 0 8px 24px #203a2930;
+  }
+  .toolbar-options-panel[data-open='true'] {
+    display: grid;
+    gap: 8px;
+  }
+  .game-toolbar .toolbar-options-panel .game-toolbar-button {
+    width: 100%;
+    min-height: 44px;
+    height: auto;
+    border-radius: 10px;
+    padding: 10px 12px;
+    justify-content: flex-start;
+    box-shadow: none;
+  }
+  .toolbar-options-panel button[aria-label]::after {
+    content: attr(aria-label);
+    font-size: 13px;
+    text-align: left;
+  }
+  .toolbar-options-panel .graphics-label {
+    display: inline;
+  }
+  .toolbar-options-panel .language-switcher {
+    display: block;
+  }
+  .toolbar-options-panel .language-menu,
+  .game-toolbar .toolbar-options-panel .game-graphics-panel {
+    position: static;
+    width: 100%;
+    box-shadow: none;
+    margin-top: 8px;
+  }
+  .game-toolbar .voice-trigger {
+    width: 44px;
+    padding: 0;
+  }
+  .game-toolbar .voice-trigger > span {
+    display: none;
+  }
+  /* Act Natural already places the toolbar in its own mobile popover. */
+  .farm-toolbar-options .toolbar-options,
+  .farm-toolbar-options .toolbar-options-panel {
+    display: contents;
+  }
+  .farm-toolbar-options .game-toolbar .toolbar-options-trigger {
     display: none;
   }
 }

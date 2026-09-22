@@ -1,7 +1,13 @@
 'use client';
 /* oxlint-disable react/react-compiler */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -52,6 +58,9 @@ import {
   type ScaffoldScrambleWorld,
 } from './types';
 import './style.css';
+import { combineInput, type TouchControl } from './controls';
+import { scaffoldHint } from './guidance';
+import { SCAFFOLD_UI } from './ui-copy';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyGoal, partyRound } from '../../shared/ui/party-round';
 
@@ -77,6 +86,7 @@ const triggerHaptic = (pattern: number | number[]) => {
 export default function ScaffoldScrambleGame() {
   const { t } = useLanguage();
   const strings = t(SCAFFOLD_TRANSLATIONS);
+  const copy = t(SCAFFOLD_UI);
   useGameTracker(tracker);
 
   const container = useRef<HTMLDivElement>(null);
@@ -84,6 +94,8 @@ export default function ScaffoldScrambleGame() {
   const sound = useRef<ScaffoldScrambleSound | null>(null);
   const localWorld = useRef<ScaffoldScrambleWorld | null>(null);
   const currentInput = useRef(idleInput());
+  const touchPointers = useRef(new Map<number, TouchControl>());
+  const helpRef = useRef(false);
   // The scene is handed every snapshot directly; the HUD is paced, so a
   // 20Hz feed does not rebuild it twenty times a second.
   const hud = useRef(
@@ -107,7 +119,12 @@ export default function ScaffoldScrambleGame() {
   const room = usePeerRoom<ScaffoldSnapshot>({
     game: 'scaffold-scramble',
     loadEngine: () => import('./peer'),
-    readInput: () => (help ? idleInput() : currentInput.current),
+    readInput: () =>
+      combineInput(
+        currentInput.current,
+        touchPointers.current.values(),
+        snapshot?.world.phase === 'playing' && !helpRef.current,
+      ),
     idleInput,
     onAttach: (next) => {
       localWorld.current = null;
@@ -175,7 +192,11 @@ export default function ScaffoldScrambleGame() {
             (pl) => pl.id === sessionRef.current.id,
           );
           if (p) {
-            p.input = inp;
+            p.input = combineInput(
+              inp,
+              touchPointers.current.values(),
+              localWorld.current.phase === 'playing' && !helpRef.current,
+            );
             p.seen = localWorld.current.clock;
           }
         }
@@ -183,6 +204,12 @@ export default function ScaffoldScrambleGame() {
       action: dispatchAction,
     });
 
+    const clearHeld = () => {
+      touchPointers.current.clear();
+      currentInput.current = idleInput();
+    };
+    window.addEventListener('blur', clearHeld);
+    document.addEventListener('visibilitychange', clearHeld);
     const now = Date.now();
     const initialWorld = freshScaffoldWorld(now);
     initialWorld.players.push(
@@ -217,6 +244,16 @@ export default function ScaffoldScrambleGame() {
       if (!active.current && localWorld.current) {
         const timeNow = Date.now();
 
+        const me = localWorld.current.players.find(
+          (p) => p.id === sessionRef.current.id,
+        );
+        if (me)
+          me.input = combineInput(
+            currentInput.current,
+            touchPointers.current.values(),
+            localWorld.current.phase === 'playing' && !helpRef.current,
+          );
+
         // Step bots
         for (const p of localWorld.current.players) {
           if (p.bot) {
@@ -242,6 +279,8 @@ export default function ScaffoldScrambleGame() {
 
     return () => {
       clearInterval(ticker);
+      window.removeEventListener('blur', clearHeld);
+      document.removeEventListener('visibilitychange', clearHeld);
       sound.current?.dispose();
       scene.current?.destroy();
     };
@@ -283,16 +322,44 @@ export default function ScaffoldScrambleGame() {
   const windKnots = Math.round(Math.abs(windStrength) * 28);
   const windActive = world?.wind.active;
 
-  // Helicopter descent progress toward roof (0% = sky, 100% = touched down)
-  const heliProgress = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        (1.0 - Math.max(0, (world?.helicopter.y ?? 130) - 95.0) / 35.0) * 100,
-      ),
-    ),
-  );
+  const hint = world && localPlayer ? scaffoldHint(world, localPlayer) : 'move';
+  const roleDescription = {
+    'left-winch': copy.left,
+    'right-winch': copy.right,
+    cleaner: copy.cleaner,
+    'all-rounder': copy.all,
+  }[role];
+  const setHelpOpen = (open: boolean) => {
+    helpRef.current = open;
+    touchPointers.current.clear();
+    currentInput.current = idleInput();
+    scene.current?.setControlsEnabled(!open && isPlaying);
+    setHelp(open);
+  };
+  useEffect(() => {
+    scene.current?.setControlsEnabled(isPlaying && !help);
+    touchPointers.current.clear();
+    currentInput.current = idleInput();
+  }, [isPlaying, help]);
+
+  const heldControl = (control: TouchControl) => ({
+    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      touchPointers.current.set(event.pointerId, control);
+      sound.current?.unlock();
+      triggerHaptic(15);
+    },
+    onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      touchPointers.current.delete(event.pointerId);
+    },
+    onPointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      touchPointers.current.delete(event.pointerId);
+    },
+    onLostPointerCapture: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      touchPointers.current.delete(event.pointerId);
+    },
+  });
 
   const handleStart = () => {
     dispatchAction({ type: 'start' });
@@ -327,12 +394,12 @@ export default function ScaffoldScrambleGame() {
     ['Q/Z', strings.hintWinchLeft],
     ['E/R', strings.hintWinchRight],
     ['Space', strings.hintAction],
-    ['Tab', strings.hintSwitchTool],
+    ['T', strings.hintSwitchTool],
   ] as const;
 
   return (
     <main
-      className="sc-game"
+      className={`sc-game sc-${world?.phase ?? 'lobby'}`}
       {...partyRound(
         isEnded,
         world
@@ -358,139 +425,190 @@ export default function ScaffoldScrambleGame() {
           voice={room.voice}
           muted={muted}
           onToggleSound={toggleSound}
-          onHelp={() => setHelp(true)}
+          onHelp={() => setHelpOpen(true)}
           voiceHint="Use your group call to talk with friends. In-game voice is not available in Scaffold Scramble yet."
         />
       </header>
 
-      <div className="sc-hud-stack">
-        {/* Top HUD Telemetry */}
-        <div className="sc-hud">
-          {/* Floor Altitude Ticker */}
-          <div className="sc-hud-badge">
-            <Building2 size={22} />
-            <div>
-              <div className="sc-score-val flex items-center gap-1">
-                <span>{currentStory}</span>
-                <span className="sc-score-sub">/ 80</span>
+      {isPlaying && (
+        <div className="sc-hud-stack">
+          {/* Top HUD Telemetry */}
+          <div className="sc-hud">
+            {/* Floor Altitude Ticker */}
+            <div className="sc-hud-badge altitude">
+              <Building2 size={22} />
+              <div>
+                <div className="sc-score-val flex items-center gap-1">
+                  <span>{currentStory}</span>
+                  <span className="sc-score-sub">/ 80</span>
+                </div>
+                <div className="sc-hud-meta">{strings.hudStory}</div>
               </div>
-              <div className="sc-hud-meta">{strings.hudStory}</div>
             </div>
-          </div>
 
-          {/* Industrial Spirit Level Attitude Indicator */}
-          <div className={`sc-hud-badge tilt ${tiltClass}`}>
-            <div className="sc-tilt-val">
-              {absTilt >= TILT_WARNING_DEG && (
-                <AlertTriangle
-                  size={18}
-                  className={
-                    absTilt >= TILT_SLIP_DEG
-                      ? 'sc-tilt-icon sc-pulse-icon'
-                      : 'sc-tilt-icon'
-                  }
+            {/* Industrial Spirit Level Attitude Indicator */}
+            <div className={`sc-hud-badge tilt ${tiltClass}`}>
+              <div className="sc-tilt-val">
+                {absTilt >= TILT_WARNING_DEG && (
+                  <AlertTriangle
+                    size={18}
+                    className={
+                      absTilt >= TILT_SLIP_DEG
+                        ? 'sc-tilt-icon sc-pulse-icon'
+                        : 'sc-tilt-icon'
+                    }
+                  />
+                )}
+                <span>{tiltDeg.toFixed(1)}°</span>
+              </div>
+
+              {/* Curved Glass Spirit Level Capsule */}
+              <div className="sc-spirit-level">
+                <div className="sc-spirit-tick neg20" />
+                <div className="sc-spirit-tick neg15" />
+                <div className="sc-spirit-tick zero" />
+                <div className="sc-spirit-tick pos15" />
+                <div className="sc-spirit-tick pos20" />
+                <div
+                  className="sc-spirit-bubble"
+                  style={{ left: `${bubblePercent}%` }}
                 />
-              )}
-              <span>{tiltDeg.toFixed(1)}°</span>
+              </div>
+
+              <div className="sc-hud-meta">
+                {absTilt >= TILT_SLIP_DEG
+                  ? strings.slipHazard
+                  : absTilt >= TILT_WARNING_DEG
+                    ? strings.tiltWarning
+                    : strings.hudTilt}
+              </div>
             </div>
 
-            {/* Curved Glass Spirit Level Capsule */}
-            <div className="sc-spirit-level">
-              <div className="sc-spirit-tick neg20" />
-              <div className="sc-spirit-tick neg15" />
-              <div className="sc-spirit-tick zero" />
-              <div className="sc-spirit-tick pos15" />
-              <div className="sc-spirit-tick pos20" />
-              <div
-                className="sc-spirit-bubble"
-                style={{ left: `${bubblePercent}%` }}
+            {/* Live Wind Telemetry Widget */}
+            <div
+              className={`sc-hud-badge wind ${windActive ? 'wind-gust' : ''}`}
+            >
+              <Wind
+                size={22}
+                style={{
+                  transform: `scaleX(${windStrength >= 0 ? 1 : -1})`,
+                  transition: 'transform 0.3s',
+                }}
               />
-            </div>
-
-            <div className="sc-hud-meta">
-              {absTilt >= TILT_SLIP_DEG
-                ? strings.slipHazard
-                : absTilt >= TILT_WARNING_DEG
-                  ? strings.tiltWarning
-                  : strings.hudTilt}
-            </div>
-          </div>
-
-          {/* Live Wind Telemetry Widget */}
-          <div className={`sc-hud-badge ${windActive ? 'wind-gust' : ''}`}>
-            <Wind
-              size={22}
-              style={{
-                transform: `scaleX(${windStrength >= 0 ? 1 : -1})`,
-                transition: 'transform 0.3s',
-              }}
-            />
-            <div>
-              <div className="sc-score-val">
-                {windKnots} <span className="sc-unit">kt</span>
-              </div>
-              <div className="sc-hud-meta">
-                {windActive ? strings.windGust : strings.windCalm}
+              <div>
+                <div className="sc-score-val">
+                  {windKnots} <span className="sc-unit">kt</span>
+                </div>
+                <div className="sc-hud-meta">
+                  {windActive ? strings.windGust : strings.windCalm}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Windows Cleaned Badge */}
-          <div className="sc-hud-badge cleaned">
-            <Sparkles size={22} />
-            <div>
-              <div className="sc-score-val">
-                {world?.cleanedCount ?? 0} / 30
+            {/* Windows Cleaned Badge */}
+            <div className="sc-hud-badge cleaned">
+              <Sparkles size={22} />
+              <div>
+                <div className="sc-score-val">
+                  <span key={world?.cleanedCount} className="sc-clean-count">
+                    {world?.cleanedCount ?? 0}
+                  </span>
+                  <span className="sc-score-sub"> / 30</span>
+                </div>
+                <div className="sc-hud-meta">{strings.hudCleaned}</div>
+                <progress
+                  className="sc-clean-progress"
+                  max={30}
+                  value={world?.cleanedCount ?? 0}
+                  aria-label={strings.hudCleaned}
+                />
               </div>
-              <div className="sc-hud-meta">{strings.hudCleaned}</div>
             </div>
-          </div>
 
-          {/* Helicopter Deadline Timer with Descent Radar */}
-          <div className="sc-hud-badge">
-            <Timer size={22} />
-            <div>
-              <div className="sc-timer-val">{formatTime(msLeft)}</div>
-              <div className="sc-hud-meta">
-                {strings.hudDeadline} ({heliProgress}%)
+            {/* Shift deadline */}
+            <div
+              className={`sc-hud-badge deadline ${msLeft <= 30000 ? 'urgent' : ''}`}
+            >
+              <Timer size={22} />
+              <div>
+                <div className="sc-timer-val">{formatTime(msLeft)}</div>
+                <div className="sc-hud-meta">{copy.timeRemaining}</div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Active Tool Badge */}
-        {isPlaying && (
-          <button
-            type="button"
-            className="sc-tool-badge"
-            onClick={handleSwitchTool}
-            title="Click or press Tab to switch tools"
+          {/* Active Tool Badge */}
+          {isPlaying && (
+            <button
+              type="button"
+              className="sc-tool-badge"
+              onClick={handleSwitchTool}
+              title={copy.swap}
+            >
+              <span>
+                {activeTool === 'sponge'
+                  ? strings.activeToolSponge
+                  : strings.activeToolSqueegee}
+              </span>
+              <span className="sc-tool-key house-key">T</span>
+            </button>
+          )}
+          <output
+            className={`sc-guidance ${hint === 'balance' || hint === 'climb' ? 'warning' : ''}`}
           >
-            <span>
-              {activeTool === 'sponge'
-                ? strings.activeToolSponge
-                : strings.activeToolSqueegee}
-            </span>
-            <span className="sc-tool-key house-key">Tab</span>
-          </button>
-        )}
-      </div>
+            {copy[hint]}
+          </output>
+          {(world?.cleanedCount ?? 0) > 0 && (
+            <output
+              className="sc-clean-feedback"
+              key={`${world?.started}-${world?.cleanedCount}`}
+            >
+              <Sparkles size={16} />
+              {copy.cleaned} <strong>{world?.cleanedCount} / 30</strong>
+            </output>
+          )}
+        </div>
+      )}
 
       {/* Welcome / Role Select Overlay */}
       {!isPlaying && !isEnded && (
         <div className="sc-welcome">
           <h1>
-            Scaffold <span>Scramble</span>.
+            {strings.titleMain}
+            <span>{strings.titleHighlight}</span>.
           </h1>
-          <div className="sc-tagline">{strings.tagline}</div>
-          <p className="sc-desc">{strings.desc}</p>
+          <div className="sc-tagline">{copy.brief}</div>
+          <p className="sc-desc">{copy.intro}</p>
+          <div className="sc-shift-facts">
+            <span>
+              <strong>30</strong>
+              {copy.goal}
+            </span>
+            <span>
+              <strong>2:30</strong>
+              {copy.duration}
+            </span>
+            <span>
+              <strong>3</strong>
+              {copy.bots}
+            </span>
+          </div>
+          <ol className="sc-cleaning-steps">
+            {copy.steps.map((step, index) => (
+              <li key={step}>
+                <span>{index + 1}</span>
+                {step}
+              </li>
+            ))}
+          </ol>
 
           <div className="sc-role-selector">
-            <span className="sc-role-title">{strings.roleSelectorTitle}</span>
+            <span className="sc-role-title">{copy.crew}</span>
             <div className="sc-role-grid">
               <button
                 type="button"
                 className={`sc-btn ${role === 'left-winch' ? 'active' : ''}`}
+                aria-pressed={role === 'left-winch'}
                 onClick={() => handleRoleChange('left-winch')}
               >
                 {strings.roleLeftWinch}
@@ -498,6 +616,7 @@ export default function ScaffoldScrambleGame() {
               <button
                 type="button"
                 className={`sc-btn ${role === 'right-winch' ? 'active' : ''}`}
+                aria-pressed={role === 'right-winch'}
                 onClick={() => handleRoleChange('right-winch')}
               >
                 {strings.roleRightWinch}
@@ -505,6 +624,7 @@ export default function ScaffoldScrambleGame() {
               <button
                 type="button"
                 className={`sc-btn ${role === 'cleaner' ? 'active' : ''}`}
+                aria-pressed={role === 'cleaner'}
                 onClick={() => handleRoleChange('cleaner')}
               >
                 {strings.roleCleaner}
@@ -512,6 +632,7 @@ export default function ScaffoldScrambleGame() {
               <button
                 type="button"
                 className={`sc-btn ${role === 'all-rounder' ? 'active' : ''}`}
+                aria-pressed={role === 'all-rounder'}
                 onClick={() => handleRoleChange('all-rounder')}
               >
                 {strings.roleAllRounder}
@@ -519,12 +640,15 @@ export default function ScaffoldScrambleGame() {
             </div>
           </div>
 
+          <p className="sc-role-description" aria-live="polite">
+            {roleDescription}
+          </p>
           <button
             type="button"
             className="sc-btn primary primary-button"
             onClick={handleStart}
           >
-            {strings.startShift} <ArrowRight size={18} />
+            {copy.start} <ArrowRight size={18} />
           </button>
         </div>
       )}
@@ -543,6 +667,26 @@ export default function ScaffoldScrambleGame() {
               ? strings.ceoImpressedDesc
               : strings.ceoFuriousDesc}
           </p>
+          <div className="sc-result-stats">
+            <span>
+              <strong>
+                {world?.cleanedCount ?? 0}
+                <small> / 30</small>
+              </strong>
+              {copy.crewTotal}
+            </span>
+            <span>
+              <strong>{localPlayer?.windowsCleaned ?? 0}</strong>
+              {copy.personal}
+            </span>
+            <span>
+              <strong>{localPlayer?.slips ?? 0}</strong>
+              {copy.slips}
+            </span>
+          </div>
+          {world?.winner !== 'crew' && (
+            <p className="sc-retry-tip">{copy.retryTip}</p>
+          )}
           <button
             type="button"
             className="sc-btn primary primary-button"
@@ -554,15 +698,17 @@ export default function ScaffoldScrambleGame() {
       )}
 
       {/* Bottom Keyboard Controls Hint Bar */}
-      <div className="sc-hint-bar tool-dock">
-        {keyHints.map(([key, label]) => (
-          <span key={key}>
-            <span className="sc-hint-key house-key">{key}</span> {label}
-          </span>
-        ))}
-      </div>
+      {isPlaying && (
+        <div className="sc-hint-bar tool-dock">
+          {keyHints.map(([key, label]) => (
+            <span key={key}>
+              <span className="sc-hint-key house-key">{key}</span> {label}
+            </span>
+          ))}
+        </div>
+      )}
 
-      <Dialog open={help} onOpenChange={setHelp}>
+      <Dialog open={help} onOpenChange={setHelpOpen}>
         <DialogContent className="game-dialog">
           <DialogTitle>
             {strings.titleMain}
@@ -579,122 +725,85 @@ export default function ScaffoldScrambleGame() {
         </DialogContent>
       </Dialog>
 
-      {/* Mobile Touch Controls */}
-      <div className="sc-mobile-controls">
-        <div className="sc-touch-group">
-          {/* Left Winch Rocker */}
-          <div className="sc-touch-row">
-            <button
-              type="button"
-              className="sc-touch-btn"
-              onPointerDown={() =>
-                dispatchAction({ type: 'crank', winch: 'left', dir: 'up' })
-              }
-            >
-              L ▲ (Q)
-            </button>
-            <button
-              type="button"
-              className="sc-touch-btn"
-              onPointerDown={() =>
-                dispatchAction({ type: 'crank', winch: 'left', dir: 'down' })
-              }
-            >
-              L ▼ (Z)
-            </button>
+      {isPlaying && !help && (
+        <div className="sc-mobile-controls">
+          <div className="sc-touch-group">
+            <div className="sc-touch-row">
+              <button
+                type="button"
+                className="sc-touch-btn"
+                aria-label={copy.leftUp}
+                {...heldControl('crankLeftUp')}
+              >
+                L ▲
+              </button>
+              <button
+                type="button"
+                className="sc-touch-btn"
+                aria-label={copy.leftDown}
+                {...heldControl('crankLeftDown')}
+              >
+                L ▼
+              </button>
+            </div>
+            <div className="sc-touch-row">
+              <button
+                type="button"
+                className="sc-touch-btn"
+                aria-label={copy.moveLeft}
+                {...heldControl('left')}
+              >
+                ◀
+              </button>
+              <button
+                type="button"
+                className="sc-touch-btn"
+                aria-label={copy.moveRight}
+                {...heldControl('right')}
+              >
+                ▶
+              </button>
+            </div>
           </div>
-          {/* Move Deck */}
-          <div className="sc-touch-row">
-            <button
-              type="button"
-              className="sc-touch-btn"
-              onPointerDown={() => {
-                triggerHaptic(15);
-                if (localWorld.current) {
-                  const me = localWorld.current.players.find(
-                    (p) => p.id === sessionRef.current.id,
-                  );
-                  if (me) me.input.x = -1;
-                }
-              }}
-              onPointerUp={() => {
-                if (localWorld.current) {
-                  const me = localWorld.current.players.find(
-                    (p) => p.id === sessionRef.current.id,
-                  );
-                  if (me) me.input.x = 0;
-                }
-              }}
-            >
-              ◀ A
-            </button>
-            <button
-              type="button"
-              className="sc-touch-btn"
-              onPointerDown={() => {
-                triggerHaptic(15);
-                if (localWorld.current) {
-                  const me = localWorld.current.players.find(
-                    (p) => p.id === sessionRef.current.id,
-                  );
-                  if (me) me.input.x = 1;
-                }
-              }}
-              onPointerUp={() => {
-                if (localWorld.current) {
-                  const me = localWorld.current.players.find(
-                    (p) => p.id === sessionRef.current.id,
-                  );
-                  if (me) me.input.x = 0;
-                }
-              }}
-            >
-              D ▶
-            </button>
-          </div>
-        </div>
-
-        <div className="sc-touch-group">
-          {/* Right Winch Rocker */}
-          <div className="sc-touch-row">
-            <button
-              type="button"
-              className="sc-touch-btn"
-              onPointerDown={() =>
-                dispatchAction({ type: 'crank', winch: 'right', dir: 'up' })
-              }
-            >
-              R ▲ (E)
-            </button>
-            <button
-              type="button"
-              className="sc-touch-btn"
-              onPointerDown={() =>
-                dispatchAction({ type: 'crank', winch: 'right', dir: 'down' })
-              }
-            >
-              R ▼ (R)
-            </button>
-          </div>
-          {/* Action & Tool Switch */}
-          <div className="sc-touch-row">
-            <button
-              type="button"
-              className="sc-touch-btn wide"
-              onClick={() => dispatchAction({ type: 'useTool' })}
-            >
-              Clean / Space
-            </button>
-            <button
-              type="button"
-              className="sc-touch-btn"
-              onClick={handleSwitchTool}
-            >
-              <RefreshCw size={16} />
-            </button>
+          <div className="sc-touch-group">
+            <div className="sc-touch-row">
+              <button
+                type="button"
+                className="sc-touch-btn"
+                aria-label={copy.rightUp}
+                {...heldControl('crankRightUp')}
+              >
+                R ▲
+              </button>
+              <button
+                type="button"
+                className="sc-touch-btn"
+                aria-label={copy.rightDown}
+                {...heldControl('crankRightDown')}
+              >
+                R ▼
+              </button>
+            </div>
+            <div className="sc-touch-row">
+              <button
+                type="button"
+                className="sc-touch-btn wide sc-touch-action"
+                {...heldControl('action')}
+              >
+                {hint === 'climb' ? copy.climbAction : copy.action}
+              </button>
+              <button
+                type="button"
+                className="sc-touch-btn"
+                onClick={handleSwitchTool}
+                aria-label={copy.swap}
+              >
+                <RefreshCw size={18} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }

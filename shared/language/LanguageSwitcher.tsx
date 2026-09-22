@@ -17,7 +17,7 @@ export default function LanguageSwitcher({
   // Close when clicking outside
   useEffect(() => {
     if (!open) return;
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: PointerEvent) => {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -28,10 +28,10 @@ export default function LanguageSwitcher({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handleClickOutside);
     document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('pointerdown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [open]);
@@ -50,7 +50,7 @@ export default function LanguageSwitcher({
           aria-label={`${language === 'de' ? 'Sprache ändern (aktuell' : 'Change language (currently'} ${activeOption.label})`}
           title={`${language === 'de' ? 'Sprache' : 'Language'}: ${activeOption.label}`}
           aria-expanded={open}
-          aria-haspopup="listbox"
+          aria-haspopup="menu"
         >
           <Globe size={18} />
           <span className="language-toolbar-badge">
@@ -65,7 +65,7 @@ export default function LanguageSwitcher({
           aria-label={`${language === 'de' ? 'Sprache ändern (aktuell' : 'Change language (currently'} ${activeOption.label})`}
           title={`${language === 'de' ? 'Sprache' : 'Language'}: ${activeOption.label}`}
           aria-expanded={open}
-          aria-haspopup="listbox"
+          aria-haspopup="menu"
         >
           <Globe size={15} />
           <span className="language-header-code">

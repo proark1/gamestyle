@@ -1,3 +1,4 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
@@ -59,6 +60,25 @@ export class BasketballScene {
   private currentInput: PlayerInput = idleInput();
   private lastSpacePress = 0;
   private isSpaceHeld = false;
+  private touchMove = { x: 0, z: 0 };
+  private touchShoot = false;
+
+  public setTouchMove(vector: { x: number; z: number }) {
+    this.touchMove = vector;
+    this.syncInput();
+  }
+
+  public setTouchShoot(held: boolean) {
+    if (held && !this.touchShoot) {
+      const now = Date.now();
+      if (this.touchMove.z > 0.3) this.cb.action({ type: 'stepback' });
+      if (now - this.lastSpacePress < 320)
+        this.cb.action({ type: 'superJump' });
+      this.lastSpacePress = now;
+    }
+    this.touchShoot = held;
+    this.syncInput();
+  }
   private cameraMode: 'iso' | 'follow' = 'iso';
 
   private lastEventId = 0;
@@ -217,8 +237,17 @@ export class BasketballScene {
     window.addEventListener('keydown', this.keyDown, { signal });
     window.addEventListener('keyup', this.keyUp, { signal });
     window.addEventListener('blur', this.resetInput, { signal });
+    window.addEventListener('orientationchange', this.resetInput, { signal });
+    document.addEventListener(
+      'visibilitychange',
+      () => {
+        if (document.hidden) this.resetInput();
+      },
+      { signal },
+    );
 
     this.frameId = requestAnimationFrame(this.renderLoop);
+    if (!shouldRenderFrame(this.renderer)) return;
   }
 
   private spawnConfettiBurst(x: number, y: number, z: number) {
@@ -340,12 +369,14 @@ export class BasketballScene {
   private resetInput = () => {
     this.keys.clear();
     this.isSpaceHeld = false;
+    this.touchMove = { x: 0, z: 0 };
+    this.touchShoot = false;
     this.syncInput();
   };
 
   private syncInput() {
-    let x = 0;
-    let z = 0;
+    let x = this.touchMove.x;
+    let z = this.touchMove.z;
 
     if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) z -= 1;
     if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) z += 1;
@@ -355,9 +386,9 @@ export class BasketballScene {
     const sprint = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight');
 
     this.currentInput = {
-      x,
-      z,
-      shoot: this.isSpaceHeld,
+      x: Math.max(-1, Math.min(1, x)),
+      z: Math.max(-1, Math.min(1, z)),
+      shoot: this.isSpaceHeld || this.touchShoot,
       pass: this.keys.has('KeyE'),
       steal: this.keys.has('KeyQ'),
       sprint,

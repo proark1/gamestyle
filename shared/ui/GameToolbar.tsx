@@ -20,6 +20,7 @@ import {
 import { useWakeLock } from '../browser/wake-lock';
 import './toolbar.css';
 import GraphicsControls from '../rendering/GraphicsControls';
+import ToolbarOptions from './ToolbarOptions';
 
 const DEFAULT_LABELS = {
   controls: 'Game controls',
@@ -61,7 +62,7 @@ export default function GameToolbar({
 }) {
   useWakeLock();
   const { language } = useLanguage();
-  const de = language === 'de' && labels === DEFAULT_LABELS;
+  const de = language === 'de';
   // Stored preferences are external state: the server and the hydrating client
   // both see the defaults, then React re-reads once hydration finishes.
   const audio = useSyncExternalStore(
@@ -142,37 +143,38 @@ export default function GameToolbar({
         aria-label={de ? 'Lautstärke' : labels.volume}
         title={de ? 'Lautstärke' : labels.volume}
       />
-      <button
-        className={`game-toolbar-button${audio.music ? '' : ' is-off'}`}
-        onClick={() => change({ music: !audio.music })}
-        disabled={muted}
-        aria-label={
-          audio.music
-            ? de
-              ? 'Musik ausschalten'
-              : labels.musicOff
-            : de
-              ? 'Musik einschalten'
-              : labels.musicOn
-        }
-        title={
-          audio.music
-            ? de
-              ? 'Musik ausschalten'
-              : labels.musicOff
-            : de
-              ? 'Musik einschalten'
-              : labels.musicOn
-        }
-        aria-pressed={audio.music}
-      >
-        <AudioLines size={19} />
-      </button>
-      <WardrobeButton variant="toolbar" />
-
-      <AccountButton variant="toolbar" />
-      <LanguageSwitcher variant="toolbar" />
-      <GraphicsControls />
+      <ToolbarOptions label={de ? 'Weitere Einstellungen' : 'More settings'}>
+        <button
+          className={`game-toolbar-button${audio.music ? '' : ' is-off'}`}
+          onClick={() => change({ music: !audio.music })}
+          disabled={muted}
+          aria-label={
+            audio.music
+              ? de
+                ? 'Musik ausschalten'
+                : labels.musicOff
+              : de
+                ? 'Musik einschalten'
+                : labels.musicOn
+          }
+          title={
+            audio.music
+              ? de
+                ? 'Musik ausschalten'
+                : labels.musicOff
+              : de
+                ? 'Musik einschalten'
+                : labels.musicOn
+          }
+          aria-pressed={audio.music}
+        >
+          <AudioLines size={19} />
+        </button>
+        <WardrobeButton variant="toolbar" />
+        <GraphicsControls />
+        <AccountButton variant="toolbar" />
+        <LanguageSwitcher variant="toolbar" />
+      </ToolbarOptions>
       <button
         className="game-toolbar-button"
         onClick={onHelp}

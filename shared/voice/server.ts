@@ -16,7 +16,7 @@ import {
   type VoiceRoom,
 } from './membership';
 import type { VoiceSession } from './types';
-function storeFor(game: Game) {
+function storeFor(game: Game | 'party') {
   return game === 'chaos' || game === 'first-person'
     ? constructionVoiceStore(getBinding(), game)
     : roomStore();

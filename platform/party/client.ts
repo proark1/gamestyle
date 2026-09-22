@@ -6,6 +6,7 @@ import type { PartyAction, PartyPass, PartyRoomState } from './types';
 async function partyRequest<T>(action: PartyAction): Promise<T> {
   const res = await apiFetch('/api/party', {
     method: 'POST',
+    signal: AbortSignal.timeout(8000),
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(action),
     cache: 'no-store',

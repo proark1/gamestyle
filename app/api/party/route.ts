@@ -1,3 +1,4 @@
+import { partyGameSession } from '@/platform/party/game-session';
 import {
   readRoomRequest,
   withRequestBudget,
@@ -45,6 +46,16 @@ async function handleRequest(request: Request) {
     const store = roomStore();
 
     switch (body.op) {
+      case 'game_session':
+        return json({
+          session: await partyGameSession(
+            store,
+            body.code,
+            body.playerId,
+            body.token,
+            body.round,
+          ),
+        });
       case 'create': {
         const { state, playerId, token } = await createPartyRoom(
           store,

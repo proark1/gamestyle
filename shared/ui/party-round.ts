@@ -22,13 +22,13 @@ export const PARTY_ROUND_ENDED_SELECTOR = `[${PARTY_ROUND_ATTRIBUTE}="ended"]`;
 export type PartyOutcome = 'won' | 'lost' | 'draw';
 
 /**
- * One player's result. Party mode runs each player's match on their own
- * device, against NPCs, so a result only ever speaks for the local player.
+ * One player's result in the shared match. Teammates report the same outcome;
+ * the coordinator awards humans points without inventing tournament teams.
  *
  * - `versus`: two sides played each other, and `outcome` is how the local
  *   player's side did. Every team game (`teams: true` in the playlist)
  *   reports this.
- * - `goal`: the player, alone or with NPC crewmates, played against the
+ * - `goal`: the player, alone or with crewmates, played against the
  *   game's own goal or clock. `cleared` says whether they beat it. `score`
  *   ranks two players who both cleared it, or both failed: higher is better,
  *   and it only has to be comparable between two plays of the same game.

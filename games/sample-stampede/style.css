@@ -1290,6 +1290,19 @@ dialog.stampede-modal-backdrop,
   }
 }
 @media (max-width: 600px) {
+  .stampede-tools {
+    gap: 4px;
+  }
+  .stampede-tools .voice-trigger {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .stampede-tools .voice-trigger > span {
+    display: none;
+  }
   .stampede-topbar {
     padding-top: calc(8px + env(safe-area-inset-top));
   }

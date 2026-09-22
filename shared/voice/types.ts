@@ -1,7 +1,7 @@
 import type { Game } from '../games/identity';
 export type VoiceSession = {
   peer?: true;
-  game: Game;
+  game: Game | 'party';
   code: string;
   id: string;
   token: string;
@@ -22,6 +22,7 @@ export type VoiceState = {
   level: number;
   error?: string;
   audioBlocked?: boolean;
+  connectionInfo?: string;
   ready?: boolean;
   mode?: 'open' | 'push';
 };

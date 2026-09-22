@@ -94,11 +94,14 @@ const adapter: Omit<GameAdapter<BungeeWorld, BungeeSnapshot>, 'advance'> = {
 
 export function createEngine(now: number, checkpoint?: EngineCheckpoint) {
   const run = createBungeeRunner();
+  const partyRun = createBungeeRunner(5000);
   return new PeerEngine(
     {
       ...adapter,
       advance: (w, clock) => {
-        run(w, (clock - w.clock) / 1000);
+        ((w as BungeeWorld & { partyRoundStarted?: boolean }).partyRoundStarted
+          ? partyRun
+          : run)(w, (clock - w.clock) / 1000);
       },
     },
     now,

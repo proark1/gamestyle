@@ -121,7 +121,7 @@ export default function PartyIntermission({
         <div className="party-card party-intermission-card">
           {podium ? (
             <PartyPodium
-              players={room.players}
+              players={room.players.filter((p) => !room.runId || !p.isBot)}
               result={result}
               playerId={pass?.id ?? null}
             />

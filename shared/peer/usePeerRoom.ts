@@ -1,4 +1,5 @@
 'use client';
+import { publicGameOrigin } from '../browser/public-url';
 
 import {
   useCallback,
@@ -9,7 +10,6 @@ import {
 } from 'react';
 import type { GameId } from '../audio/types';
 import { inviteCode, sessionStore, type Session } from '../rooms/session';
-import { inPartyMode } from '../ui/party-mode';
 import type { VoiceSession, VoiceSnapshot } from '../voice/types';
 import { enterPeerRoom, PeerGameConnection } from './connection';
 import type { EngineLoader } from './engine';
@@ -115,7 +115,7 @@ export function usePeerRoom<S extends RoomSnapshot>(options: Options<S>) {
     let disposed = false;
     // Let the game's scene effect finish before restoring a saved room.
     queueMicrotask(() => {
-      if (disposed || inPartyMode()) return;
+      if (disposed) return;
       const invite = inviteCode();
       const saved = sessionStore(`${game}-session-v1`).loadPeer();
       if (saved && (!invite || invite === saved.code)) attach(saved);
@@ -199,7 +199,7 @@ export function usePeerRoom<S extends RoomSnapshot>(options: Options<S>) {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/${game}?room=${session.code}`,
+        `${publicGameOrigin()}/${game}?room=${session.code}`,
       );
       setNotice('Invite link copied.');
     } catch {

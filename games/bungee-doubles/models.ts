@@ -1,3 +1,4 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import * as T from 'three';
 import { box, material } from '../../shared/rendering/primitives';
 import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
@@ -572,6 +573,7 @@ export function tennisCourt(): T.Group {
   box(g, [14.0, 0.75, 0.15], [0, bannerY, bannerZ], '#0f172a');
   box(g, [13.8, 0.65, 0.02], [0, bannerY, bannerZ - 0.08], '#0284c7');
 
+  batchScenery(g, [], true);
   return g;
 }
 

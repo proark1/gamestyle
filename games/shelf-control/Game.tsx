@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-html-link-for-pages, next/no-img-element -- Full navigation releases WebGL; local artwork is served on both runtimes. */
 
 import {
@@ -378,7 +380,7 @@ export default function ShelfControl() {
   async function copy() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/shelf-control?room=${session?.code}`,
+        `${publicGameOrigin()}/shelf-control?room=${session?.code}`,
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

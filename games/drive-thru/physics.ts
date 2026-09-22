@@ -152,7 +152,7 @@ export function stepPattyPhysics(patty: Patty, dt: number): void {
       patty.burnProgress += 0.08 * dt;
       if (patty.burnProgress > 0.85) {
         patty.state = 'burnt';
-      } else if (patty.burnProgress > 0.4) {
+      } else {
         patty.state = 'cooked';
       }
     } else {

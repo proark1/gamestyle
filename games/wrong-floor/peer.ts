@@ -20,6 +20,7 @@ import {
 
 const adapter: GameAdapter<HotelWorld, HotelSnapshot> = {
   game: 'wrong-floor',
+  snapshotDetached: true,
   actions: ['start', 'restart', 'inspect', 'report', 'vote'],
   create: freshHotel,
   autonomous: (p) => p.bot,

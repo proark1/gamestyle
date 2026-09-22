@@ -243,6 +243,9 @@ export class DriveThruScene {
         : 0;
 
     // 2. Update Patties
+    this.pattyMeshes.forEach((mesh, i) => {
+      mesh.visible = i < snapshot.kitchen.patties.length;
+    });
     snapshot.kitchen.patties.forEach((p, i) => {
       let mesh = this.pattyMeshes[i];
       if (!mesh) {
@@ -250,6 +253,7 @@ export class DriveThruScene {
         this.pattyMeshes.push(mesh);
         this.scene.add(mesh);
       }
+      mesh.visible = true;
       mesh.position.set(p.x, p.y, p.z);
       mesh.rotation.x = p.flipAngle;
 
@@ -296,15 +300,26 @@ export class DriveThruScene {
         this.trayMesh.rotation.set(0.3, 0.4, 0.3);
       } else if (snapshot.kitchen.trayGrabbed) {
         const p = carPoint(snapshot.car, 0.5, -0.5);
-        this.trayMesh.position.set(p.x, 1.2, p.z);
-        this.trayMesh.rotation.y = -snapshot.car.yaw;
-      } else if (snapshot.kitchen.trayAtWindow)
+        const reach = snapshot.car.passengerReach;
         this.trayMesh.position.set(
-          TRAY_LEDGE_POS.x,
-          TRAY_LEDGE_POS.y,
-          TRAY_LEDGE_POS.z,
+          p.x + (TRAY_LEDGE_POS.x - p.x) * reach,
+          1.2 + (TRAY_LEDGE_POS.y - 1.2) * reach,
+          p.z + (TRAY_LEDGE_POS.z - p.z) * reach,
         );
-      else this.trayMesh.position.set(4.4, 0.95, -0.2);
+        this.trayMesh.rotation.set(
+          0,
+          -snapshot.car.yaw,
+          snapshot.car.balanceMeter * 0.3,
+        );
+      } else {
+        const travel = snapshot.rush.trayTravel;
+        this.trayMesh.position.set(
+          4.4 + (TRAY_LEDGE_POS.x - 4.4) * travel,
+          0.95 + (TRAY_LEDGE_POS.y - 0.95) * travel,
+          -0.2 + (TRAY_LEDGE_POS.z + 0.2) * travel,
+        );
+        this.trayMesh.rotation.z = snapshot.car.balanceMeter * 0.15;
+      }
     }
 
     // 5. Update Worker Avatars

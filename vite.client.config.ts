@@ -18,6 +18,9 @@ export default defineConfig({
     },
   },
   define: {
+    __GAME_PUBLIC_ORIGIN__: JSON.stringify(
+      process.env.PUBLIC_GAME_ORIGIN ?? 'https://www.jumbleyard.com',
+    ),
     __GAME_API_ORIGIN__: JSON.stringify(
       process.env.GAME_API_ORIGIN ?? 'https://www.jumbleyard.com',
     ),

@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 import { apiFetch } from '../../shared/browser/api-fetch';
 
 import { useEffect, useEffectEvent, useState } from 'react';
@@ -95,7 +97,7 @@ export function BuildShelf({
               <button
                 onClick={() =>
                   void navigator.clipboard
-                    .writeText(`${location.origin}/build/${saved}`)
+                    .writeText(`${publicGameOrigin()}/build/${saved}`)
                     .then(
                       () => notify('Build link copied.'),
                       () =>

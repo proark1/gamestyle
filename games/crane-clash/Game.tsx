@@ -42,6 +42,7 @@ import {
 import { craneClashAnalytics, craneClashPlayState } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyRound, partyVersus } from '../../shared/ui/party-round';
+import CraneTouchControls from './TouchControls';
 
 const tracker = new GameTracker(craneClashAnalytics);
 
@@ -54,7 +55,7 @@ const formatTime = (ms: number) => {
 
 export default function CraneClash() {
   useGameTracker(tracker);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const strings = t(CRANE_CLASH_TRANSLATIONS);
 
   const container = useRef<HTMLDivElement>(null);
@@ -430,6 +431,19 @@ export default function CraneClash() {
         </div>
       )}
 
+      {isPlaying && (
+        <CraneTouchControls
+          solo={isSolo}
+          role={role}
+          de={language === 'de'}
+          disabled={helpOpen || room.open}
+          move={(nextRole, vector) =>
+            scene.current?.setTouchMove(nextRole, vector)
+          }
+          hoist={(direction) => scene.current?.setTouchHoist(direction)}
+          grab={() => dispatchAction({ type: 'grab' })}
+        />
+      )}
       {/* Controls Bar at bottom */}
       <div className="cc-hint-bar">
         {hints.map((hint) => (

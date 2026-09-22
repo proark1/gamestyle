@@ -12,6 +12,7 @@ import '@fontsource/dm-sans/latin-600.css';
 import '@fontsource/dm-sans/latin-700.css';
 import '../../app/globals.css';
 import '../../shared/styles/game-ui.css';
+import '../../shared/styles/construction-theme.css';
 const games = {
   'act-natural': lazy(() => import('../../games/act-natural/Game')),
   basketball: lazy(() => import('../../games/basketball/Game')),
@@ -71,7 +72,13 @@ createRoot(document.getElementById('root')!).render(
     <PartyRibbon />
     <Suspense fallback={<output>Loading game…</output>}>
       {Game ? (
-        <Game />
+        slug === 'chaos' || slug === 'first-person' ? (
+          <div className="handwerker">
+            <Game />
+          </div>
+        ) : (
+          <Game />
+        )
       ) : slug === 'party' ? (
         <Party initialCode={query.get('room') ?? undefined} />
       ) : (

@@ -12,6 +12,7 @@ import {
 
 type VoiceRoom = {
   members: Member[];
+  fences?: Record<string, { instance: string; order: number }>;
   signals: DeliveredSignal[];
   serial: number;
   nextOrder: number;
@@ -54,26 +55,42 @@ export async function handleVoicePeer(
   for (let attempt = 0; attempt < 16; attempt++) {
     const row = await store.get(code);
     const state: VoiceRoom =
-      row && now - row.updated < 60000
+      row && now - row.updated < 86400000
         ? JSON.parse(row.state)
         : { members: [], signals: [], serial: 0, nextOrder: 0, receipts: [] };
+    state.fences ??= Object.fromEntries(
+      state.members.map((m) => [
+        m.id,
+        { instance: m.instance, order: m.order },
+      ]),
+    );
+    for (const id of Object.keys(state.fences))
+      if (!allowed.has(id)) delete state.fences[id];
     state.members = state.members.filter(
       (m) => allowed.has(m.id) && now - m.seen < 15000,
     );
     let member = state.members.find((m) => m.id === session.id);
-    if (body.op === 'hello') {
+    const recovered =
+      body.op === 'poll' &&
+      !member &&
+      state.fences[session.id]?.instance === body.instance;
+    if (body.op === 'hello' || recovered) {
       if (!member) {
         member = {
           id: session.id,
           name: auth.player.name,
           color: 0,
-          order: state.nextOrder++,
+          order: recovered ? state.fences[session.id].order : state.nextOrder++,
           instance: body.instance,
           seen: now,
         };
         state.members.push(member);
       }
       member.instance = body.instance;
+      state.fences[session.id] = {
+        instance: body.instance,
+        order: member.order,
+      };
     } else if (!member || member.instance !== body.instance) {
       throw new PeerError(
         'Voice session expired. Leave voice and join again.',
@@ -81,8 +98,10 @@ export async function handleVoicePeer(
       );
     }
     member!.seen = now;
-    if (body.op === 'leave')
+    if (body.op === 'leave') {
       state.members = state.members.filter((m) => m.id !== session.id);
+      delete state.fences[session.id];
+    }
     if (body.signals !== undefined) {
       if (
         body.op !== 'signal' ||
@@ -110,21 +129,20 @@ export async function handleVoicePeer(
         state.receipts.push(`${session.id}:${signal.id}`);
       }
     }
-    state.signals = state.signals
-      .filter(
-        (s) =>
-          now - s.at < 20000 &&
-          !(s.to === session.id && s.serial <= cursor) &&
-          state.members.some(
-            (m) => m.id === s.from && m.instance === s.fromInstance,
-          ) &&
-          state.members.some((m) => m.id === s.to && m.instance === s.instance),
-      )
-      .slice(-192);
+    state.signals = state.signals.filter(
+      (s) =>
+        now - s.at < 20000 &&
+        !(s.to === session.id && s.serial <= cursor) &&
+        state.members.some(
+          (m) => m.id === s.from && m.instance === s.fromInstance,
+        ) &&
+        state.members.some((m) => m.id === s.to && m.instance === s.instance),
+    );
     state.receipts = state.receipts.slice(-384);
     if (
+      state.signals.length > 192 ||
       new TextEncoder().encode(JSON.stringify(state.signals)).byteLength >
-      MAX_SIGNAL_BYTES
+        MAX_SIGNAL_BYTES
     )
       throw new PeerError('Voice signal queue is full. Retry shortly.', 429);
     const next = {
@@ -159,6 +177,8 @@ export async function handleVoicePeer(
           cursor: signals.at(-1)?.serial ?? cursor,
           iceServers,
           relayConfigured: iceServers.length > 1,
+          relayOnly: process.env.PEER_RELAY_ONLY === '1',
+          voiceRecovered: recovered,
         },
       };
     }

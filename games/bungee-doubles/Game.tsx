@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Camera,
@@ -239,7 +241,7 @@ export default function BungeeDoublesGame() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/bungee-doubles?room=${session.code}`,
+        `${publicGameOrigin()}/bungee-doubles?room=${session.code}`,
       );
       setNotice(de ? 'Einladungslink kopiert.' : 'Invite link copied.');
     } catch {
@@ -291,7 +293,7 @@ export default function BungeeDoublesGame() {
 
     const invite = inviteCode();
     const saved = sessions.loadPeer();
-    if (!inPartyMode()) {
+    {
       if (saved && (!invite || invite === saved.code)) attach(saved);
       else if (invite) {
         setCode(invite);

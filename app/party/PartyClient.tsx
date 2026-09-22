@@ -1,4 +1,10 @@
 'use client';
+import VoicePanel from '../../shared/voice/VoicePanel';
+import '../../shared/ui/toolbar.css';
+import type { VoiceSession, VoiceSnapshot } from '../../shared/voice/types';
+import { apiFetch } from '../../shared/browser/api-fetch';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* oxlint-disable react/react-compiler */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -43,7 +49,27 @@ import './party-intermission.css';
 
 const SESSION_KEY = 'jumbleyard-party-session-v1';
 
+type PartyVoiceProps = { session: VoiceSession; snapshot: VoiceSnapshot };
 export default function PartyClient({ initialCode }: { initialCode?: string }) {
+  const [voice, setVoice] = useState<PartyVoiceProps | null>(null);
+  return (
+    <>
+      <PartyClientBody initialCode={initialCode} onVoice={setVoice} />
+      {voice && (
+        <div className="party-voice game-toolbar">
+          <VoicePanel {...voice} />
+        </div>
+      )}
+    </>
+  );
+}
+function PartyClientBody({
+  initialCode,
+  onVoice,
+}: {
+  initialCode?: string;
+  onVoice: (value: PartyVoiceProps | null) => void;
+}) {
   const [name, setName] = useState('');
   const [color, setColor] = useState(0);
   const [joinCode, setJoinCode] = useState(initialCode ?? '');
@@ -56,6 +82,8 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
   // before passes existed have none.
   const [token, setToken] = useState('');
   const [room, setRoom] = useState<PartyRoomState | null>(null);
+  const [gameFrame, setGameFrame] = useState('');
+  const frame = useRef<HTMLIFrameElement>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
 
   const [connectionError, setConnectionError] = useState('');
@@ -160,36 +188,143 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     room?.status === 'countdown' &&
     room.reports?.[playerId] !== undefined;
 
-  // Countdown handler
   useEffect(() => {
-    if (room?.status !== 'countdown' || !room.countdownUntil || reported) {
+    onVoice(
+      room && playerId && token
+        ? {
+            session: { game: 'party', code: room.code, id: playerId, token },
+            snapshot: {
+              players: room.players
+                .filter((p) => !p.isBot)
+                .map((p) => ({ id: p.id, name: p.name })),
+              nearby: false,
+            },
+          }
+        : null,
+    );
+  }, [room, playerId, token, onVoice]);
+  const partyCode = room?.code,
+    partyRound = room?.currentRound,
+    partyStatus = room?.status,
+    countdownUntil = room?.countdownUntil;
+  useEffect(() => {
+    const received = (event: MessageEvent) => {
+      if (
+        !partyCode ||
+        event.origin !== location.origin ||
+        event.source !== frame.current?.contentWindow ||
+        event.data?.code !== partyCode
+      )
+        return;
+      if (event.data.type === 'party-round-finished') {
+        void getParty(partyCode).then((fresh) => {
+          if (fresh) acceptRoom(fresh);
+          setGameFrame('');
+        });
+      } else if (
+        event.data.type === 'party-ptt' &&
+        ['keydown', 'keyup'].includes(event.data.event) &&
+        /^Key[A-Z]$/.test(event.data.keyCode)
+      ) {
+        window.dispatchEvent(
+          new KeyboardEvent(event.data.event, {
+            code: event.data.keyCode,
+            key: event.data.keyCode.slice(3),
+            bubbles: true,
+          }),
+        );
+      } else if (event.data.type === 'party-ptt-reset')
+        window.dispatchEvent(new Event('game:voice-reset-talk'));
+    };
+    window.addEventListener('message', received);
+    return () => window.removeEventListener('message', received);
+  }, [partyCode, acceptRoom]);
+  const currentGame = room?.playlist[room.currentRound];
+  useEffect(() => {
+    window.dispatchEvent(new Event('game:voice-reset-talk'));
+  }, [gameFrame]);
+  useEffect(() => {
+    if (
+      gameFrame &&
+      (reported ||
+        partyStatus !== 'countdown' ||
+        Number(new URLSearchParams(gameFrame.split('?')[1]).get('round')) !==
+          partyRound)
+    )
+      setGameFrame('');
+  }, [gameFrame, reported, partyStatus, partyRound]);
+  useEffect(() => {
+    if (
+      !partyCode ||
+      partyStatus !== 'countdown' ||
+      !countdownUntil ||
+      reported ||
+      gameFrame ||
+      !playerId ||
+      !token ||
+      !currentGame
+    )
       return;
-    }
-    const interval = setInterval(() => {
-      const msLeft =
-        (room.countdownUntil ?? 0) -
+    let live = true,
+      launching = false;
+    const timer = setInterval(() => {
+      const left =
+        countdownUntil! -
         (clock.current.server + Date.now() - clock.current.local);
-      if (msLeft <= 0) {
-        setCountdown(0);
-        clearInterval(interval);
-        // Navigate to current game
-        const currentGame = room.playlist[room.currentRound];
-        if (currentGame) {
-          window.location.href = `/${currentGame}?party=${room.code}&round=${room.currentRound}`;
-        }
-      } else {
-        setCountdown(Math.ceil(msLeft / 1000));
-      }
-    }, 200);
-
-    return () => clearInterval(interval);
+      setCountdown(Math.max(0, Math.ceil(left / 1000)));
+      if (left > 0 || launching) return;
+      launching = true;
+      void apiFetch('/api/party', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(8000),
+        body: JSON.stringify({
+          op: 'game_session',
+          code: partyCode,
+          round: partyRound,
+          playerId,
+          token,
+        }),
+      })
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok)
+            throw new Error(data.error ?? 'Could not join the party round.');
+          if (!live) return;
+          sessionStorage.setItem(
+            'jumbleyard:party-game',
+            JSON.stringify({
+              party: partyCode,
+              round: partyRound,
+              session: data.session,
+            }),
+          );
+          setGameFrame(
+            '/' + currentGame + '?party=' + partyCode + '&round=' + partyRound,
+          );
+          setConnectionError('');
+        })
+        .catch((error) => {
+          if (live) setConnectionError(error.message);
+        })
+        .finally(() => {
+          launching = false;
+        });
+    }, 500);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
   }, [
-    room?.status,
-    room?.countdownUntil,
-    room?.playlist,
-    room?.currentRound,
-    room?.code,
+    partyCode,
+    partyStatus,
+    countdownUntil,
+    partyRound,
+    currentGame,
     reported,
+    gameFrame,
+    playerId,
+    token,
   ]);
 
   const isHost = room?.hostId === playerId;
@@ -234,7 +369,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
 
   const handleCopyLink = () => {
     if (!room) return;
-    const url = `${window.location.origin}/party?room=${room.code}`;
+    const url = `${publicGameOrigin()}/party?room=${room.code}`;
     void navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -315,6 +450,59 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
     setToken('');
   };
 
+  const giveUpRound = async () => {
+    if (!room || !playerId || busy) return;
+    setBusy(true);
+    try {
+      const response = await apiFetch('/api/party', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(8000),
+        body: JSON.stringify({
+          op: 'report_result',
+          code: room.code,
+          playerId,
+          token,
+          round: room.currentRound,
+          result: null,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error ?? 'Could not return to the party.');
+      acceptRoom(data.state);
+      setGameFrame('');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (gameFrame)
+    return (
+      <div className="party-game-shell">
+        <iframe
+          ref={frame}
+          className="party-game-frame"
+          title="Shared party round"
+          src={gameFrame}
+          allow="autoplay; microphone; fullscreen; gamepad"
+        />
+        <div className="party-game-exit">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void giveUpRound()}
+          >
+            Give up round · Back to party
+          </button>
+          {error && <p role="alert">{error}</p>}
+        </div>
+        <p className="sr-only">
+          Voice stays connected while your party changes games.
+        </p>
+      </div>
+    );
   // 1. NOT IN A ROOM YET
   if (!room) {
     return (
@@ -641,7 +829,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
 
   // 5. GRAND FINALE / WINNER PODIUM
   if (room.status === 'finished') {
-    const podium = [...room.players].sort((a, b) => b.score - a.score);
+    const podium = room.players
+      .filter((p) => !room.runId || !p.isBot)
+      .sort((a, b) => b.score - a.score);
     const champions = podium.filter(
       (player) => player.score === podium[0]?.score,
     );

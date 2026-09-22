@@ -1,3 +1,4 @@
+import { orderProblems } from './rush';
 import {
   computeWindowReachGap,
   poleClearance,
@@ -327,6 +328,11 @@ export function stepDriveThruBot(
   w: DriveThruWorld,
   _dt: number,
 ): void {
+  const wait = (w.rush.botWait[bot.role] ?? 0) - _dt;
+  w.rush.botWait[bot.role] = wait;
+  if (wait > 0) return;
+  w.rush.botWait[bot.role] = 0.16 + (w.ticket?.orderNumber ?? 1) * 0.015;
+  bot.input.jump = false;
   // Reset bot inputs
   bot.input.x = 0;
   bot.input.z = 0;
@@ -334,11 +340,26 @@ export function stepDriveThruBot(
   bot.input.action2 = false;
   bot.input.action3 = false;
 
-  if (w.phase === 'meltdown' || w.phase === 'completed') return;
+  if (
+    w.phase === 'meltdown' ||
+    w.phase === 'completed' ||
+    w.rush.stage === 'between'
+  )
+    return;
 
   switch (bot.role) {
     case 'driver': {
-      const drive = recoveryDrive(w.car, _dt) ?? driverDrive(w.car);
+      if (
+        computeWindowReachGap(w.car).gapDistance < 1.65 &&
+        Math.abs(w.car.speed) < 0.9 &&
+        Math.abs(Math.sin(w.car.yaw)) < 0.4
+      ) {
+        bot.input.jump = true;
+        break;
+      }
+      const drive =
+        recoveryDrive(w.car, 0.16 + (w.ticket?.orderNumber ?? 1) * 0.015) ??
+        driverDrive(w.car);
       bot.input.action1 = drive.throttle;
       bot.input.action2 = drive.reverse;
       bot.input.x = drive.steer;
@@ -351,63 +372,55 @@ export function stepDriveThruBot(
     }
 
     case 'passenger': {
-      // Swat toddler toy if squeaking
-      if (w.distractions.toddlerSqueaking) {
-        bot.input.action2 = true;
-      }
-      // Reach out window if tray is ready at window
-      if (w.kitchen.trayAtWindow && w.car.z <= 2.0) {
-        bot.input.action1 = true;
-      }
-      // Toggle wipers if windshield is messy
-      if (w.car.windshieldSplat > 0.2 && !w.car.wipersActive) {
-        bot.input.action3 = true;
-      }
-      break;
-    }
-
-    case 'grill': {
-      // 1. Check fryer basket
-      if (w.kitchen.fryerTimer > 0.65 && w.kitchen.fryerBasketDown) {
-        bot.input.action2 = true; // Lift fryer
-        return;
-      }
-
-      // 2. Find closest sizzling or browned patty to flip
-      const pattyToFlip = w.kitchen.patties.find(
-        (p) => (p.state === 'sizzling' || p.state === 'cooked') && p.vy === 0,
+      bot.input.action1 =
+        w.rush.stage === 'offered' || w.rush.stage === 'sliding';
+      const wobble =
+        Math.sin(w.rush.elapsed * 2.1) *
+          (0.35 + (w.ticket?.orderNumber ?? 1) * 0.12) +
+        Math.sin(w.rush.elapsed * 0.7) * 0.2;
+      bot.input.x = Math.max(
+        -1,
+        Math.min(1, -w.car.balanceMeter * 2 - wobble / 1.6),
       );
-      if (pattyToFlip) {
-        const dx = pattyToFlip.x - w.kitchen.spatulaX;
-        const dz = pattyToFlip.z - w.kitchen.spatulaZ;
-        if (Math.hypot(dx, dz) > 0.25) {
-          bot.input.x = Math.max(-1, Math.min(1, dx * 3.0));
-          bot.input.z = Math.max(-1, Math.min(1, dz * 3.0));
-        } else {
-          bot.input.action1 = true; // Flip patty!
-        }
-      }
-
-      // 3. Stack burger layers onto tray
-      if (w.kitchen.trayStack.length < 5 && Math.random() < 0.1) {
-        bot.input.action3 = true;
-      }
+      bot.input.action2 = w.rush.warning > 0 || w.distractions.toddlerSqueaking;
+      bot.input.action3 = w.car.windshieldSplat > 0.15;
       break;
     }
-
+    case 'grill': {
+      bot.input.action2 =
+        w.kitchen.fryerBasketDown && w.kitchen.fryerTimer > 0.57;
+      const patty = w.kitchen.patties.find(
+        (p) => !w.rush.flipped.includes(p.id) && p.sizzleProgress > 0.35,
+      );
+      if (patty) {
+        const dx = patty.x - w.kitchen.spatulaX,
+          dz = patty.z - w.kitchen.spatulaZ;
+        bot.input.x = Math.max(-1, Math.min(1, dx * 3));
+        bot.input.z = Math.max(-1, Math.min(1, dz * 3));
+        if (Math.hypot(dx, dz) < 0.2) bot.input.action1 = true;
+      }
+      const nextLayer = w.ticket?.requestedBurger[w.kitchen.trayStack.length];
+      bot.input.action3 =
+        w.rush.stackCooldown <= 0 &&
+        (nextLayer !== 'patty' ||
+          w.kitchen.patties.some(
+            (p) =>
+              p.state === 'cooked' &&
+              p.vy === 0 &&
+              w.rush.flipped.includes(p.id),
+          ));
+      break;
+    }
     case 'barista': {
-      // 1. Vent milkshake machine if pressure is rising
-      if (w.kitchen.shakePressure > 60) {
-        bot.input.action1 = true;
-      }
-      // 2. Pour drinks if needed
-      if (w.kitchen.sodasPoured < (w.ticket?.requestedDrinks ?? 2)) {
-        bot.input.action2 = true;
-      }
-      // 3. Push tray to window once burger has at least 3 layers
-      if (w.kitchen.trayStack.length >= 3 && !w.kitchen.trayAtWindow) {
-        bot.input.action3 = true;
-      }
+      bot.input.action1 =
+        w.kitchen.shakePressure > 48 || w.kitchen.shakeExploded;
+      bot.input.action2 =
+        w.kitchen.sodasPoured < (w.ticket?.requestedDrinks ?? 1) &&
+        w.rush.stage === 'preparing' &&
+        w.rush.cupFill < 0.75;
+      bot.input.action3 =
+        (w.rush.stage === 'preparing' && orderProblems(w).length === 0) ||
+        (w.rush.stage === 'charging' && w.rush.charge < 0.51);
       break;
     }
   }

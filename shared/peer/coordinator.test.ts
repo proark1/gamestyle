@@ -133,6 +133,47 @@ async function crew(game: GameId) {
     );
   return { store, sessions, views, call };
 }
+void test('candidate bursts apply backpressure instead of silently evicting an undelivered offer', async () => {
+  const { sessions, call } = await crew('stack-or-sink');
+  const envelope = { to: sessions[1].id, instance: 'browser-1', link: 'link' };
+  await call(0, 'signal', NOW + 1, {
+    signals: [
+      {
+        ...envelope,
+        id: 'offer',
+        description: { type: 'offer', sdp: 'offer-to-preserve' },
+      },
+    ],
+  });
+  for (let batch = 0; batch < 5; batch++)
+    await call(0, 'signal', NOW + 2, {
+      signals: Array.from({ length: 32 }, (_, i) => ({
+        ...envelope,
+        id: `candidate-${batch}-${i}`,
+        candidate: { candidate: 'candidate:1' },
+      })),
+    });
+  await assert.rejects(
+    call(0, 'signal', NOW + 3, {
+      signals: Array.from({ length: 32 }, (_, i) => ({
+        ...envelope,
+        id: `overflow-${i}`,
+        candidate: { candidate: 'candidate:1' },
+      })),
+    }),
+    (e: unknown) => e instanceof PeerError && e.status === 429,
+  );
+  const delivered = (await call(1, 'poll', NOW + 4)).view;
+  assert.equal(delivered.signals[0].description?.sdp, 'offer-to-preserve');
+  assert.equal(delivered.signals.length, 161);
+  await call(1, 'poll', NOW + 5, { cursor: delivered.cursor });
+  await call(0, 'signal', NOW + 6, {
+    signals: [
+      { ...envelope, id: 'retry', candidate: { candidate: 'candidate:1' } },
+    ],
+  });
+  assert.equal((await call(1, 'poll', NOW + 7)).view.signals.length, 1);
+});
 for (const game of [
   'stack-or-sink',
   'act-natural',
