@@ -720,7 +720,7 @@ export default function ReelProblems() {
                 <Users size={15} /> 1–4 anglers
               </span>
               <span>
-                <Waves size={16} /> 5-minute tournaments
+                <Waves size={16} /> Classic tournament · 5 minutes
               </span>
             </div>
             <label className="reel-name">
@@ -911,7 +911,9 @@ export default function ReelProblems() {
                 disabled={!captain || busy || npcBusy || status !== 'online'}
                 onClick={() => action({ type: 'start' })}
               >
-                {captain ? 'Start the tournament' : 'Waiting for the captain…'}{' '}
+                {captain
+                  ? 'Start classic tournament'
+                  : 'Waiting for the captain…'}{' '}
                 <ArrowUpRight size={18} />
               </button>
             </section>

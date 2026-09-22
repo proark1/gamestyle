@@ -81,7 +81,12 @@ export function freshDebris(): Driftwood[] {
   });
 }
 
-type Emit = (w: ReelWorld, kind: ReelEvent['kind'], message: string) => void;
+type Emit = (
+  w: ReelWorld,
+  kind: ReelEvent['kind'],
+  message: string,
+  position?: { x: number; z: number },
+) => void;
 
 /** Anglers in the water and still fighting: everything wildlife cares about. */
 function swimmers(w: ReelWorld) {
@@ -111,6 +116,7 @@ function wound(w: ReelWorld, emit: Emit, p: Angler, bite: boolean) {
       w,
       bite ? 'chomp' : 'sting',
       `${p.name} went under! The crew is hauling them out.`,
+      { x: p.x, z: p.z },
     );
     return;
   }
@@ -120,6 +126,7 @@ function wound(w: ReelWorld, emit: Emit, p: Angler, bite: boolean) {
     bite
       ? `The shark bit ${p.name}! Get out of the water.`
       : `${p.name} grabbed a fistful of tentacles — hands wide open.`,
+    { x: p.x, z: p.z },
   );
 }
 

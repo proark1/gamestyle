@@ -481,26 +481,26 @@ export function poseAngler(
 
   if (swimming) {
     if (moving) {
-      // Head lifted slightly forward to breathe while body is prone
-      if (body) body.rotation.set(-0.35, 0, 0);
-      const stroke = now / 160;
+      // Alternating crawl: reach, underwater pull, then recovery above water.
+      const stroke = (now / 1500) * Math.PI * 2;
+      if (body) body.rotation.set(-0.1, 0, Math.sin(stroke) * 0.08);
       armL.rotation.set(
-        -Math.sin(stroke) * 1.5 - 0.7,
-        Math.cos(stroke) * 0.25,
-        Math.cos(stroke) * 0.4 + 0.3,
+        -stroke,
+        Math.sin(stroke) * 0.12,
+        0.18 + Math.max(0, Math.sin(stroke)) * 0.4,
       );
       armR.rotation.set(
-        -Math.sin(stroke + Math.PI) * 1.5 - 0.7,
-        -Math.cos(stroke + Math.PI) * 0.25,
-        -Math.cos(stroke + Math.PI) * 0.4 - 0.3,
+        -stroke - Math.PI,
+        -Math.sin(stroke + Math.PI) * 0.12,
+        -0.18 - Math.max(0, Math.sin(stroke + Math.PI)) * 0.4,
       );
-      const kick = now / 80;
-      legL.rotation.set(Math.sin(kick) * 0.45, 0, 0.08);
-      legR.rotation.set(-Math.sin(kick) * 0.45, 0, -0.08);
+      const kick = stroke * 3;
+      legL.rotation.set(Math.sin(kick) * 0.22, 0, 0.06);
+      legR.rotation.set(-Math.sin(kick) * 0.22, 0, -0.06);
     } else {
       // Treading water: gentle circular sculling and scissor kick
       if (body) body.rotation.set(-0.15, 0, 0);
-      const scull = now / 230;
+      const scull = now / 380;
       armL.rotation.set(
         -0.7 + Math.sin(scull) * 0.3,
         Math.sin(scull) * 0.25,

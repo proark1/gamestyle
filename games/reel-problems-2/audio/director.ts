@@ -143,7 +143,11 @@ export class ReelAudioDirector {
         } else if (e.kind === 'rescue' && untangled)
           hit('event.untangle', 0.75, w.boat);
         else {
-          hit(`event.${e.kind}`, 0.85, w.boat);
+          hit(
+            `event.${e.kind}`,
+            e.kind === 'chomp' ? 1 : 0.85,
+            e.position ?? w.boat,
+          );
           if (e.kind === 'slip' || e.kind === 'slap') {
             hit('event.oof', 0.8, w.boat);
           } else if (e.kind === 'shock') {
