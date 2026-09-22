@@ -147,7 +147,6 @@ export default function PanicCurlingGame() {
   const activeGadgetRef = useRef<GadgetId>('broom');
   const isSweepingRef = useRef(false);
   const steerDirRef = useRef(0);
-  const soundEnabledRef = useRef(true);
   const teamRef = useRef<TeamId>('red');
   const roleRef = useRef<Role>('deliverer');
 
@@ -178,6 +177,7 @@ export default function PanicCurlingGame() {
       currentInput.current = idleInput();
       sessionRef.current = { ...sessionRef.current, ...next };
       hud.current.reset();
+      audioRef.current?.reset();
       sceneRef.current?.setLocalPlayer(next.id);
     },
     receive: (snap) => {
@@ -192,9 +192,7 @@ export default function PanicCurlingGame() {
         teamRef.current = me.team;
         roleRef.current = me.role;
       }
-      if (soundEnabledRef.current)
-        for (const event of snap.world.events)
-          audioRef.current?.playEvent(event);
+      audioRef.current?.update(snap.world, sessionRef.current.id);
     },
   });
   const { send } = room;
@@ -215,6 +213,7 @@ export default function PanicCurlingGame() {
         if (act.type === 'switchRole' || act.type === 'switchTeam') {
           reconcileCurlingBots(localWorld.current);
         }
+        audioRef.current?.update(localWorld.current, sessionRef.current.id);
         const snap = panicCurlingSnapshot(
           localWorld.current,
           'SOLO',
@@ -306,12 +305,11 @@ export default function PanicCurlingGame() {
         // Advance simulation
         advancePanicCurling(localWorld.current, Date.now());
 
-        // Play events audio & reaction toast
+        audioRef.current?.update(localWorld.current, sessionRef.current.id);
+
+        // Update reaction toast
         if (localWorld.current.events.length > 0) {
           for (const ev of localWorld.current.events) {
-            if (audioRef.current && soundEnabledRef.current) {
-              audioRef.current.playEvent(ev);
-            }
             if (ev.type === 'banana_slip') {
               if (reactionTimerRef.current)
                 clearTimeout(reactionTimerRef.current);
@@ -357,6 +355,8 @@ export default function PanicCurlingGame() {
     return () => {
       cancelAnimationFrame(frameId);
       sceneRef.current?.dispose();
+      audioRef.current?.dispose();
+      audioRef.current = null;
     };
   }, [dispatchAction]);
 
@@ -424,7 +424,7 @@ export default function PanicCurlingGame() {
   const toggleSound = () => {
     setSoundEnabled((prev) => {
       const next = !prev;
-      soundEnabledRef.current = next;
+      if (audioRef.current) audioRef.current.enabled = next;
       return next;
     });
   };

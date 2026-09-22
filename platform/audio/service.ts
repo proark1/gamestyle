@@ -2,7 +2,7 @@ import type { GameDatabase } from '@/db/contract';
 import { getCatalog } from './catalog';
 import { FARM_FENCE_CUES } from '../../games/act-natural/audio/fence';
 import { GIANT_DEFAULT_AUDIO } from '../../games/dont-wake-the-giant/audio/profile';
-import { BUTTON_DEFAULT_AUDIO } from '../../games/one-more-button/audio/profile';
+import { bundledCues } from '../../shared/audio/bundled-profile';
 import { decryptKey, encryptKey } from '../../shared/audio/crypto';
 import {
   AudioError,
@@ -25,6 +25,15 @@ import {
   type Cue,
   type GameId,
 } from '../../shared/audio/types';
+
+const BUNDLED_GAMES = new Set([
+  'crane-clash',
+  'load-bearing',
+  'panic-curling',
+  'zorb-clash',
+  'one-more-button',
+  'siege-and-desist',
+]);
 
 type SettingsRow = {
   secret: string | null;
@@ -182,8 +191,8 @@ export async function library(
       return {
         ...cue,
         file: stored?.file ?? null,
-        ...(game === 'one-more-button' && BUTTON_DEFAULT_AUDIO[base.id]
-          ? { bundledUrl: BUTTON_DEFAULT_AUDIO[base.id].url }
+        ...(BUNDLED_GAMES.has(game)
+          ? { bundledUrl: `/audio/${game}/${base.id}.wav` }
           : {}),
         generated: stored?.generated ?? null,
         error: stored?.error || '',
@@ -200,8 +209,8 @@ export function manifest(data: AudioLibrary): AudioManifest {
       ? FARM_FENCE_CUES
       : data.game === 'dont-wake-the-giant'
         ? GIANT_DEFAULT_AUDIO
-        : data.game === 'one-more-button'
-          ? BUTTON_DEFAULT_AUDIO
+        : BUNDLED_GAMES.has(data.game)
+          ? bundledCues(data.game, getCatalog(data.game))
           : {};
   return {
     settings: data.settings,

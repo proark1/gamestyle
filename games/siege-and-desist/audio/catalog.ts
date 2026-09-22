@@ -1,3 +1,4 @@
+import { expansion } from './expansion';
 import { cue } from '../../../shared/audio/catalog-helpers';
 import type { Cue } from '../../../shared/audio/types';
 
@@ -35,6 +36,7 @@ const bed = (id: string, name: string, prompt: string, volume: number) =>
   );
 
 export const siegeCatalog: Cue[] = [
+  ...expansion,
   fx(
     'event.start',
     'Call the assault',
