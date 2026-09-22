@@ -60,7 +60,10 @@ const reasons = {
   ],
   recovering: ['Wait for the bell', 'Warte auf die Glocke'],
   cooldown: ['Tag is recharging', 'Wechsel lädt auf'],
-  partner: ['Both teammates hold TAG', 'Beide halten WECHSEL'],
+  partner: [
+    'Hold E; your corner partner must accept',
+    'Halte E; dein Partner muss annehmen',
+  ],
 };
 export default function BoxingGame() {
   const { language } = useLanguage(),

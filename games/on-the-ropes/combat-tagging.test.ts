@@ -11,6 +11,7 @@ import { CORNERS, idleInput, type World } from './types';
 import { PUNCHES } from './combat';
 import { createEngine } from './peer';
 import { BoxingControls } from './controls';
+import { rulesVersion } from '../../shared/peer/protocol';
 
 function match() {
   const w = freshWorld(1000);
@@ -336,4 +337,44 @@ void test('call-back and transit survive host checkpoints without duplicating th
   }
   assert.deepEqual(mid.world, e.world);
   assert.equal(mid.world.players[1].tags, 1);
+});
+
+void test('peer input packets carry a released one-tap request through to an NPC swap', () => {
+  const engine = createEngine(1000);
+  engine.reconcile([
+    {
+      id: 'caller',
+      name: 'Caller',
+      color: 0,
+      order: 0,
+      instance: 'tab',
+      seen: 1000,
+    },
+  ]);
+  assert.equal(
+    engine.execute('caller', 'role', { type: 'switch_role' }, 'caller').error,
+    undefined,
+  );
+  assert.equal(
+    engine.execute('caller', 'start', { type: 'start' }, 'caller').error,
+    undefined,
+  );
+  let order = 0;
+  for (let i = 0; i < 62; i++) {
+    engine.input('caller', idleInput(), ++order);
+    engine.advance(50);
+  }
+  engine.input('caller', { ...idleInput(), tag: true }, ++order);
+  engine.advance(50);
+  const caller = engine.world.players.find((p) => p.id === 'caller')!;
+  assert.equal(caller.tagRequested, true);
+  for (let i = 0; i < 180 && caller.tags === 0; i++) {
+    engine.input('caller', idleInput(), ++order);
+    engine.advance(50);
+  }
+  assert.equal(caller.tags, 1);
+  assert.equal(caller.active, true);
+  const obsolete = { ...engine.checkpoint(), rules: 1 };
+  assert.equal(rulesVersion('on-the-ropes'), 2);
+  assert.throws(() => createEngine(1000, obsolete), /checkpoint/);
 });

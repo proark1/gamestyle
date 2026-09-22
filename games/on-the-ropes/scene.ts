@@ -158,6 +158,7 @@ export class BoxingScene {
             0.35,
           );
           text.position.set(e.x, 2.1, e.z);
+          text.material.transparent = true;
           text.lookAt(this.camera.position);
           this.scene.add(text);
           this.effects.push({
@@ -169,6 +170,11 @@ export class BoxingScene {
           });
         }
       }
+    }
+    while (this.effects.length > 32) {
+      const fx = this.effects.shift()!;
+      this.scene.remove(fx.mesh);
+      disposeObject(fx.mesh);
     }
   }
   private resize() {

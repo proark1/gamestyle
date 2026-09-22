@@ -23,8 +23,8 @@ export const PARTY_GUIDES = {
       'Gewinnt drei Niederschläge. Flieht in eure Ecke und wechselt den Partner.',
     ],
     [
-      'WASD moves. Tap or hold and release Space to punch; Shift guards; Q dodges. Both hold E at the corner to tag; F assists.',
-      'WASD bewegt. Leertaste tippen oder halten und loslassen: Schlag; Shift blockt; Q weicht aus. Beide halten E in der Ecke zum Wechsel; F hilft.',
+      'WASD moves. Tap Space for jab–cross; hold and release for a hook. Shift guards/parries; Q dodges. Outside, tap E to call your partner; inside, hold E at your corner to tag. F assists.',
+      'WASD bewegt. Leertaste tippen: Jab–Gerade; halten und loslassen: Haken. Shift blockt/pariert; Q weicht aus. Draußen E tippen, um den Partner zu rufen; im Ring E an der Ecke halten zum Wechsel. F hilft.',
     ],
   ),
   'crane-clash': guide(

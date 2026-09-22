@@ -63,3 +63,31 @@ Combat and network state are unchanged.
 Validated desktop and 390 × 844 layouts in the production preview. Typecheck,
 boxing lint, architecture checks and the production build pass. No captured
 browser errors. Physical-device performance still needs human verification.
+
+## Combat and tag-team refinement
+
+Reserve players now tap E or Call/Tag once to request and accept a swap. The
+request stays queued through travel and cooldown; a second tap cancels it.
+NPC partners cancel charged punches, evade blocking opponents, and return to
+the corner. The reserve also meets them at the apron handoff point. Valid tags
+atomically exchange roles, clear combat/assist state, then animate both boxers
+through a protected 0.65-second entry/exit. Starting in the corner is available
+in the lobby when the teammate is an NPC. Status shows the pending call,
+teammate role/stamina, and the committed handoff.
+
+Jab–cross combinations, heavy hooks, feints, timed parries, one-use counter
+windows, low-stamina guard breaks, and longer recovery on misses replace the
+original uniform exchange. Strike timing and punch poses use the same profiles.
+Defense decisions are gathered before resolution to preserve simultaneous
+trades. NPCs use spacing, circling, delayed defense, combinations and selective
+heavy attacks. Added distinct defensive feedback and sound cues.
+
+27 boxing tests pass, including both teams' one-tap NPC recalls under pressure,
+reverse and repeated swaps, cancellation, cooldown queuing, inactive-player
+protection, host recovery during requests/transit, and real adapter input
+packets. 49 additional peer/adapter checks pass (76 total targeted checks).
+Typecheck, lint, architecture checks and production build pass. Four real local
+WebRTC clients pass against the HTTP preview, including generated audio and
+abrupt host recovery. Browser verification confirmed the actual Call/Tag button
+returns the NPC, changes the player to the ring, and places the NPC outside.
+Boxing rules version is now 2; old boxing checkpoints are rejected cleanly.

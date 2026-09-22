@@ -187,9 +187,16 @@ export function poseBoxer(
   }
   const arm = p.hand ? rig.armR : rig.armL;
   if (p.charge > 0) {
-    arm.rotation.x = -0.65;
-    arm.rotation.z = p.hand ? 0.65 : -0.65;
-    rig.body.rotation.y = p.hand ? -0.25 : 0.25;
+    const nextHand =
+      p.charge >= 0.45 && p.stamina >= 25
+        ? 1 - p.hand
+        : p.combo === 1 && p.comboTime > 0 && p.stamina >= 12
+          ? 1
+          : 0;
+    const windingArm = nextHand ? rig.armR : rig.armL;
+    windingArm.rotation.x = -0.65;
+    windingArm.rotation.z = nextHand ? 0.65 : -0.65;
+    rig.body.rotation.y = nextHand ? -0.25 : 0.25;
   }
   if (p.attack > 0) {
     const profile = punchProfile(p),
