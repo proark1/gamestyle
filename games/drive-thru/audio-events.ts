@@ -79,8 +79,7 @@ export const isActivePhase = (phase: GamePhase) =>
   phase === 'ordering' || phase === 'assembling' || phase === 'reaching';
 export const isEndedPhase = (phase: GamePhase) =>
   phase === 'completed' || phase === 'meltdown';
-const timedPhase = (phase: GamePhase) =>
-  phase === 'ordering' || phase === 'assembling';
+const timedPhase = isActivePhase;
 
 export function localRole(world: DriveThruWorld, localId: string): RoleId {
   return world.players.find((p) => p.id === localId)?.role ?? 'driver';
@@ -257,7 +256,7 @@ export function driveThruAudioEvents(
         break;
       case 'shake_vented':
         // Venting an empty machine releases nothing, so it makes no hiss.
-        if (a.kitchen.shakePressure - b.kitchen.shakePressure >= 5)
+        if (a.kitchen.shakePressure > 0 && b.kitchen.shakeVenting)
           add(
             'event.shake-vent',
             SPOTS.shake,
@@ -297,7 +296,7 @@ export function driveThruAudioEvents(
   if (!isActivePhase(b.phase)) return cues;
 
   // The clock on the ticket.
-  if (timedPhase(a.phase) && a.phase === b.phase) {
+  if (timedPhase(a.phase) && a.ticket?.id === b.ticket?.id) {
     const was = Math.ceil(a.phaseTimer);
     const now = Math.ceil(b.phaseTimer);
     if (was > 10 && now <= 10 && now > 0) say('speech.ten-seconds', true);

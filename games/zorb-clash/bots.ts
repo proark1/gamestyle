@@ -25,20 +25,6 @@ export function botInput(
   const opponents = world.players.filter(
     (p) => p.team !== bot.team && p.id !== bot.id,
   );
-  const teammates = world.players.filter(
-    (p) => p.team === bot.team && p.id !== bot.id,
-  );
-
-  // Check for turtle'd teammate needing rescue nearby (< 9m)
-  const strandedTeammate = teammates.find(
-    (p) => p.turtle && Math.hypot(p.x - bot.x, p.z - bot.z) < 12,
-  );
-
-  // Check for turtle'd opponent ready to be punted into the goal
-  const turtleOpponent = opponents.find(
-    (p) => p.turtle && Math.hypot(p.x - bot.x, p.z - bot.z) < 10,
-  );
-
   let targetX = ball.x;
   let targetZ = ball.z;
   let shouldDash = false;
@@ -46,19 +32,7 @@ export function botInput(
 
   const enemyGoalZ = bot.team === 'red' ? PITCH_LENGTH / 2 : -PITCH_LENGTH / 2;
 
-  if (strandedTeammate) {
-    // Ram teammate to right them up!
-    targetX = strandedTeammate.x;
-    targetZ = strandedTeammate.z;
-    const dist = Math.hypot(targetX - bot.x, targetZ - bot.z);
-    if (dist < 5) shouldDash = true;
-  } else if (turtleOpponent) {
-    // Punt enemy turtle toward enemy goal!
-    targetX = turtleOpponent.x;
-    targetZ = turtleOpponent.z;
-    const dist = Math.hypot(targetX - bot.x, targetZ - bot.z);
-    if (dist < 6) shouldDash = true;
-  } else {
+  {
     // Standard tactical play:
     // Decide between going for the ball or bulldozing an opponent
     const distToBall = Math.hypot(ball.x - bot.x, ball.z - bot.z);
@@ -92,7 +66,7 @@ export function botInput(
       }
     } else {
       // Approach ball from behind to kick it towards opponent's goal
-      const behindOffset = bot.team === 'red' ? -1.8 : 1.8;
+      const behindOffset = bot.team === 'red' ? -3 : 3;
       targetX = ball.x;
       targetZ = ball.z + behindOffset;
 
@@ -120,7 +94,7 @@ export function botInput(
   return {
     x: steerX,
     z: steerZ,
-    dash: shouldDash,
+    dash: shouldDash && time % 2 < 0.9,
     brace: shouldBrace,
     wiggle: false,
   };

@@ -1,3 +1,4 @@
+import { CHECKPOINT_SCHEMA, rulesVersion } from './protocol';
 import type { GameId } from '../audio/types';
 import type { Member } from './types';
 import type { NpcRoster } from '../rooms/npc-slots';
@@ -18,17 +19,21 @@ export type PeerWorld = {
   players: PeerPlayer[];
   clock: number;
   started: number;
+  partyRoundStarted?: boolean;
   phase: string;
 };
 export type GameSnapshot = {
   code: string;
   host: string;
   version: number;
+  partyRoundStarted?: boolean;
   world: { players: { id: string }[] };
 };
 export type ActionResult = { error?: string };
 export type EngineCheckpoint<W extends PeerWorld = PeerWorld> = {
   game: GameId;
+  schema?: number;
+  rules?: number;
   world: W;
   seq: number;
   actions: [string, ActionResult][];
@@ -40,6 +45,11 @@ export type EngineCheckpoint<W extends PeerWorld = PeerWorld> = {
 /** Game rules are injected; the transport never imports another game's simulation. */
 export interface GameAdapter<W extends PeerWorld, S extends GameSnapshot> {
   game: GameId;
+  /** Adapter already creates a fully detached snapshot; avoid a second deep copy. */
+  snapshotDetached?: boolean;
+  /** Games with replaceable bots can accept friends during a round. */
+  canJoin?(world: W): boolean;
+  party?(world: W): void;
   /** Optional game-owned entities; they are never network members. */
   autonomous?(player: W['players'][number]): boolean;
   roster?(world: W, roster: NpcRoster): void;
@@ -74,6 +84,7 @@ export interface PeerRuntime {
   world: PeerWorld;
   seq: number;
   readonly open: boolean;
+  configureParty(): void;
   reconcile(members: Member[], roster?: NpcRoster): void;
   input(id: string, raw: unknown, order: number): void;
   advance(delta: number): void;
@@ -110,6 +121,8 @@ export class PeerEngine<
   ) {
     if (checkpoint) {
       if (
+        checkpoint.schema !== CHECKPOINT_SCHEMA ||
+        checkpoint.rules !== rulesVersion(adapter.game) ||
         checkpoint.game !== adapter.game ||
         !checkpoint.world ||
         !Array.isArray(checkpoint.world.players) ||
@@ -135,8 +148,15 @@ export class PeerEngine<
       };
   }
 
+  configureParty() {
+    this.adapter.party?.(this.world);
+  }
+
   get open() {
-    return !['playing', 'escape'].includes(this.world.phase);
+    return (
+      this.adapter.canJoin?.(this.world) ??
+      !['playing', 'escape'].includes(this.world.phase)
+    );
   }
 
   reconcile(members: Member[], roster?: NpcRoster) {
@@ -268,6 +288,8 @@ export class PeerEngine<
   checkpoint(): EngineCheckpoint<W> {
     return structuredClone({
       game: this.adapter.game,
+      schema: CHECKPOINT_SCHEMA,
+      rules: rulesVersion(this.adapter.game),
       world: this.world,
       seq: this.seq,
       actions: [...this.actions],
@@ -278,14 +300,14 @@ export class PeerEngine<
   }
 
   snapshot(code: string, host: string, id: string, epoch: number): S {
-    return structuredClone(
-      this.adapter.snapshot(
-        this.world,
-        code,
-        host,
-        id,
-        epoch * 1_000_000_000 + this.seq,
-      ),
+    const snapshot = this.adapter.snapshot(
+      this.world,
+      code,
+      host,
+      id,
+      epoch * 1_000_000_000 + this.seq,
     );
+    if (this.world.partyRoundStarted) snapshot.partyRoundStarted = true;
+    return this.adapter.snapshotDetached ? snapshot : structuredClone(snapshot);
   }
 }

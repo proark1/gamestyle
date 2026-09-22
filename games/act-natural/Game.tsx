@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 // Full navigation tears down the active WebGL renderer and its input listeners between games.
 /* eslint-disable next/no-html-link-for-pages */
 import { useEffect, useRef, useState } from 'react';
@@ -369,7 +371,7 @@ export default function ActNatural() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/act-natural?room=${session.code}`,
+        `${publicGameOrigin()}/act-natural?room=${session.code}`,
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

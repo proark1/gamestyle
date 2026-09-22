@@ -46,6 +46,48 @@ function audio() {
   } as unknown as MediaStream;
   return { track, stream };
 }
+void test('prepared push-to-talk stays silent and reuses one microphone for repeated holds', async (t) => {
+  const { track, stream } = audio();
+  let acquisitions = 0;
+  const { client } = setup(t, async () => {
+    acquisitions++;
+    return stream;
+  });
+  assert.equal(await client.prepareMicrophone(), true);
+  assert.equal(track.enabled, false);
+  assert.equal(client.state.mic, false);
+  for (let i = 0; i < 3; i++) {
+    await client.setTalking(true);
+    assert.equal(track.enabled, true);
+    const release = client.setTalking(false);
+    assert.equal(track.enabled, false, 'release silences synchronously');
+    await release;
+  }
+  assert.equal(acquisitions, 1);
+  await client.microphone(false);
+  assert.equal(track.stopped, true);
+  await client.setTalking(true);
+  assert.equal(client.state.mic, false);
+  await client.dispose();
+});
+void test('leaving during push-to-talk preparation stops the late microphone', async (t) => {
+  const { track, stream } = audio();
+  let finish!: (stream: MediaStream) => void;
+  const { client, published } = setup(
+    t,
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const preparation = client.prepareMicrophone();
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  await client.dispose();
+  finish(stream);
+  assert.equal(await preparation, false);
+  assert.equal(track.stopped, true);
+  assert.ok(published.every((value) => value === null));
+});
 void test('peer push-to-talk release before permission returns never publishes the microphone', async (t) => {
   const { track, stream } = audio();
   let finish!: (stream: MediaStream) => void;

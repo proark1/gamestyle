@@ -1,9 +1,9 @@
 import * as T from 'three';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH, TEAM } from '../../shared/rendering/palette';
 import { box, beam, label, material } from '../../shared/rendering/primitives';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { GAME_HEAD_TOP as WORKER_HEAD_TOP } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import { defenderPosts } from './castle';
 import {
@@ -85,8 +85,8 @@ export function crewMember(color: string | number, look?: Look) {
   const body = g.userData.body as T.Group;
 
   // Leather belt and brass buckle across the tunic waist
-  box(body, [0.7, 0.12, 0.46], [0, 0.68, 0], CLOTH.leather, true);
-  box(body, [0.12, 0.12, 0.04], [0, 0.68, 0.24], CLOTH.gold, true);
+  box(body, [0.48, 0.08, 0.35], [0, 0.64, 0], CLOTH.leather, true);
+  box(body, [0.1, 0.08, 0.04], [0, 0.64, 0.19], CLOTH.gold, true);
 
   // Conical helmet with a nasal bar; replaced if a player wears their own wardrobe hat
   if (!worn.hat) {

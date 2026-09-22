@@ -37,13 +37,29 @@ export const isPeerSession = (value: unknown): value is PeerSession =>
  * differently each time. The key stays per-game and unchanged, because it names
  * sessions that live players are holding.
  *
- * A party round never rejoins. The party ribbon starts every round from the
- * game's own menu, and a crew this tab played earlier would reattach on load
- * and hide that menu, so the round would never start.
+ * Party rounds restore their authenticated shared seat, isolated from saved
+ * standalone rooms. The party page issues the seat before mounting the game.
  */
 export function sessionStore(key: string) {
   const read = (): unknown => {
-    if (inPartyMode()) return null;
+    if (inPartyMode()) {
+      try {
+        const params = new URLSearchParams(location.search);
+        const saved = JSON.parse(
+          sessionStorage.getItem('jumbleyard:party-game') ?? 'null',
+        );
+        const game = location.pathname.split('/').filter(Boolean)[0];
+        if (
+          saved?.party === params.get('party') &&
+          saved?.round === Number(params.get('round')) &&
+          saved?.session?.game === game
+        )
+          return saved.session;
+      } catch {
+        /* No authenticated party seat. */
+      }
+      return null;
+    }
     try {
       return JSON.parse(sessionStorage.getItem(key) ?? 'null');
     } catch {

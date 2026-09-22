@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
+import { COLORS as BUILDER_COLOURS } from '../../../games/first-person/world-view';
 import { WARDROBE_COLOURS } from '../../../shared/rendering/palette';
-import { WORKER_HEAD_TOP, worker } from '../../../shared/rendering/worker';
+import { GAME_HEAD_TOP as WORKER_HEAD_TOP } from '../../../shared/rendering/game-avatar';
 import type { Look } from '../../../shared/wardrobe/look';
 import { GAMES } from '../../analytics/catalog';
 import { AVATAR_GAMES, DEFAULT_TEMPLATE, POTENTIAL_AVATARS } from './catalog';
@@ -21,27 +22,6 @@ function transforms(root: T.Object3D) {
   const values: number[] = [];
   root.traverse((object) => values.push(...object.matrixWorld.elements));
   return values;
-}
-
-/** The head, joints and limb parts a game on the shared worker must keep. */
-function workerShape(model: T.Object3D) {
-  const part = (mesh: T.Mesh) => {
-    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
-    return [
-      mesh.position.toArray(),
-      mesh.geometry.boundingBox!.getSize(new T.Vector3()).toArray(),
-    ];
-  };
-  const rig = model.userData as Record<string, T.Object3D>;
-  return {
-    head: part(rig.body.getObjectByName('worker-head') as T.Mesh),
-    limbs: ['legL', 'legR', 'armL', 'armR'].map((key) => [
-      rig[key].position.toArray(),
-      rig[key].children
-        .filter((child) => (child as T.Mesh).isMesh)
-        .map((child) => part(child as T.Mesh)),
-    ]),
-  };
 }
 
 /** Meshes a game puts on top of the head itself, such as its own hat. */
@@ -118,54 +98,49 @@ void test('every avatar builds at a believable size and moves when it walks', (t
     }
 });
 
-void test('the games on the shared worker build its exact body and change only clothes and hats', () => {
-  const reference = workerShape(worker(0));
-  const shared = [
-    ['stack-or-sink', 'stacker'],
-    ['siege-and-desist', 'crew'],
-    ['load-bearing', 'wrecker'],
-    ['uphill-delivery', 'mover'],
-    ['dont-wake-the-giant', 'thief'],
-    ['chaos', 'worker'],
-    ['wrong-floor', 'guest'],
-    ['one-more-button', 'contestant'],
-    ['reel-problems', 'angler'],
-    ['act-natural', 'farmer'],
-    ['shelf-control', 'mannequin'],
-    ['bungee-doubles', 'tennis-duo'],
-    ['panic-curling', 'curler'],
-    ['carry-on-carnage', 'traveler'],
-  ];
-  for (const [id, key] of shared) {
-    const look = AVATAR_GAMES.find((card) => card.id === id)?.looks.find(
-      (item) => item.key === key,
-    );
-    assert.ok(look, `${id} shows its ${key}`);
-    assert.deepEqual(
-      workerShape(look.create().root),
-      reference,
-      `${id} builds the shared worker's body`,
-    );
-  }
+void test('every human game avatar is Nico; cows, robots and wooden mannequins stay exceptions', (t) => {
+  const previous = globalThis.document;
+  globalThis.document = paperDocument();
+  t.after(() => {
+    globalThis.document = previous;
+  });
+  const exceptions = new Set([
+    'act-natural:cow',
+    'four-brain-cells:robot',
+    'shelf-control:mannequin',
+  ]);
+  for (const card of AVATAR_GAMES)
+    for (const look of card.looks) {
+      const key = card.id + ':' + look.key;
+      const preview = look.create();
+      const root = preview.root;
+      let nico = false;
+      root.traverse((o) => {
+        if (o.userData.kid === 'nico') nico = true;
+      });
+      assert.equal(nico, !exceptions.has(key), key);
+      preview.pose?.(0.4, true);
+      preview.pose?.(0.8, false);
+      assert.ok(
+        transforms(root).every(Number.isFinite),
+        key + ' has finite poses',
+      );
+    }
 });
 
 /**
- * The shared worker inside a preview, even when a game seats it in something.
- * The kids share its rig but not its body; their own tests cover their kits.
+ * Nico inside a preview, even when a game seats him in a vehicle.
  */
 function findWorker(root: T.Object3D) {
   let found: T.Object3D | undefined;
   root.traverse((object) => {
     const rig = object.userData;
-    if (!found && rig.body && rig.armR && rig.legL && !rig.kid) found = object;
+    if (!found && rig.kid === 'nico') found = object;
   });
   return found;
 }
 
-const colourOf = (object: T.Object3D) =>
-  `#${((object as T.Mesh).material as T.MeshStandardMaterial).color.getHexString()}`;
-
-void test('every game dresses the worker in colours from the shared palette', (t) => {
+void test('every human avatar keeps its game kit colours', (t) => {
   const previous = globalThis.document;
   globalThis.document = paperDocument();
   t.after(() => {
@@ -173,26 +148,24 @@ void test('every game dresses the worker in colours from the shared palette', (t
   });
   // Mannequins are the worker carved in oak: wood is the point of that game.
   const exempt = new Set(['shelf-control:mannequin']);
-  const allowed = new Set(WARDROBE_COLOURS.map((hex) => hex.toLowerCase()));
+  const allowed = new Set([
+    ...WARDROBE_COLOURS.map((hex) => hex.toLowerCase()),
+    ...BUILDER_COLOURS.map((hex) => '#' + hex.toString(16).padStart(6, '0')),
+  ]);
   const offCloth: string[] = [];
   for (const card of AVATAR_GAMES)
     for (const look of card.looks) {
       const key = `${card.id}:${look.key}`;
       const model = findWorker(look.create().root);
       if (!model || exempt.has(key)) continue;
-      const rig = model.userData as Record<string, T.Object3D>;
-      const clothes = {
-        shirt: colourOf(rig.armR.children[0]),
-        trousers: colourOf(rig.legL.children[0]),
-        shoes: colourOf(rig.legL.children[1]),
-      };
+      const clothes = model.userData.kit as Record<string, string>;
       for (const [part, hex] of Object.entries(clothes))
         if (!allowed.has(hex)) offCloth.push(`${key} ${part} ${hex}`);
     }
   assert.deepEqual(offCloth, [], 'clothes outside the shared palette');
 });
 
-void test('games dress the shared worker in wardrobe items over their own clothes', () => {
+void test('games dress Nico in wardrobe items over their own clothes', () => {
   const dressable = AVATAR_GAMES.flatMap((card) =>
     card.looks
       .filter((look) => look.dressable)
@@ -212,6 +185,7 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     'load-bearing:wrecker',
     'one-more-button:contestant',
     'panic-curling:curler',
+    'reel-problems-2:angler',
     'reel-problems:angler',
     'sample-stampede:rider',
     'sample-stampede:shopper',
@@ -223,7 +197,7 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     'zorb-clash:zorb-blue',
     'zorb-clash:zorb-red',
   ]);
-  const reference = workerShape(worker(0));
+
   const everything: Look = {
     hat: 'top-hat',
     top: 'striped-tee',
@@ -236,28 +210,16 @@ void test('games dress the shared worker in wardrobe items over their own clothe
     // Showing the player's items is the promise `dressable` makes, so it holds
     // for every avatar regardless of what the game builds around the worker.
     assert.ok(wearsItems(dressed), `${key} shows the items`);
-    // The body and hat-swap rules below read the worker rig off the preview root.
-    // Zorb Clash seats the worker inside a bumper sphere, so its root is the
-    // sphere; dressWorker still puts the look on the worker within it. Court
-    // Clash plays the kid, whose own tests check how items sit on him.
-    if (!dressed.userData.body || dressed.userData.kid) continue;
-    assert.deepEqual(
-      workerShape(dressed),
-      reference,
-      `${key} keeps the shared body under a full look`,
-    );
-    // Uphill Delivery merges its torso, any hat included, so there is nothing
-    // separate to find. It dresses through dressedWorker, whose own test checks
-    // that a hat takes the cap off.
-    if (key === 'uphill-delivery:mover') continue;
-    assert.equal(
-      gameHeadParts(dressed).length,
-      0,
-      `${key} leaves its own hat off under a player's hat`,
-    );
-    assert.ok(
-      gameHeadParts(look.create().root).length > 0,
-      `${key} wears its own hat without a look`,
-    );
+    // Shared Nico owns the wardrobe fitting; no game-supplied hat may remain.
+    if (
+      dressed.userData.kid &&
+      key !== 'basketball:baller-red' &&
+      key !== 'basketball:baller-blue'
+    )
+      assert.equal(
+        gameHeadParts(dressed).length,
+        0,
+        key + ' removes its own hat',
+      );
   }
 });

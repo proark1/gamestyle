@@ -1,19 +1,13 @@
 import { spawn } from 'node:child_process';
+import { GAME_IDS } from '../shared/games/identity.ts';
+import { existsSync } from 'node:fs';
 
 // Isolate native WebRTC teardown between games, including on Windows.
-for (const game of process.argv[2]
-  ? [process.argv[2]]
-  : [
-      'stack-or-sink',
-      'act-natural',
-      'uphill-delivery',
-      'dont-wake-the-giant',
-      'reel-problems',
-      'one-more-button',
-      'four-brain-cells',
-      'wrong-floor',
-      'siege-and-desist',
-    ]) {
+for (const game of process.argv.length > 2
+  ? process.argv.slice(2)
+  : GAME_IDS.filter((game) =>
+      existsSync(new URL(`../games/${game}/peer.ts`, import.meta.url)),
+    )) {
   await new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,

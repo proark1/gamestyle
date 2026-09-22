@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element -- The generated illustration is a local asset served by both hosting targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token for the angler name. */
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
@@ -532,7 +534,7 @@ export default function ReelProblems() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/reel-problems?room=${session?.code}`,
+        `${publicGameOrigin()}/reel-problems?room=${session?.code}`,
       );
       setCopied(true);
     } catch {

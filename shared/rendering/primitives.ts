@@ -11,6 +11,7 @@ export function material(color: string) {
       color,
       new T.MeshStandardMaterial({ color, roughness: 0.9, flatShading: true }),
     );
+  materials.get(color)!.userData.shared = true;
   return materials.get(color)!;
 }
 

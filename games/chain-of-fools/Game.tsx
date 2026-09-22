@@ -33,7 +33,10 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { TOUCH_QUERY } from '../../shared/browser/device';
 import { TouchControls } from '../../shared/input/TouchControls';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { idleInput } from './types';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyGoal, partyRound } from '../../shared/ui/party-round';
 import { useLanguage } from '../../shared/language/useLanguage';
@@ -77,7 +80,7 @@ import './style.css';
 const tracker = new GameTracker(chainOfFoolsAnalytics);
 
 /** Local practice, by the collection's convention. */
-const SESSION = { id: 'me', code: 'PRACTICE', name: 'You', color: 0 };
+const SOLO_SESSION = { id: 'me', code: 'PRACTICE', name: 'You', color: 0 };
 const TRACK_START = CHECKPOINTS[0].x;
 
 /**
@@ -248,6 +251,8 @@ export default function ChainOfFoolsGame() {
   const scene = useRef<ChainScene | null>(null);
   const sound = useRef<ChainOfFoolsSound | null>(null);
   const world = useRef<ChainWorld | null>(null);
+  const sessionRef = useRef(SOLO_SESSION);
+  const currentInput = useRef(idleInput());
   const lastHaptic = useRef(0);
 
   const [snapshot, setSnapshot] = useState<ChainSnapshot | null>(null);
@@ -255,18 +260,46 @@ export default function ChainOfFoolsGame() {
   const [muted, setMuted] = useState(false);
   const [help, setHelp] = useState(false);
 
+  const room = usePeerRoom<ChainSnapshot>({
+    game: 'chain-of-fools',
+    loadEngine: () => import('./peer'),
+    idleInput,
+    readInput: () => currentInput.current,
+    onAttach: (next) => {
+      world.current = null;
+      sessionRef.current = { ...sessionRef.current, ...next };
+      currentInput.current = idleInput();
+      scene.current?.setLocal(next.id);
+      pacer.reset();
+    },
+    receive: (snap) => {
+      scene.current?.update(snap);
+      sound.current?.update(
+        snap.world,
+        sessionRef.current.id,
+        scene.current?.listenerYaw(),
+      );
+      if (pacer.due(snap.world)) setSnapshot(snap);
+    },
+  });
+  const { send } = room;
+
   const publish = useCallback((force = false) => {
     const current = world.current;
     if (!current) return;
     const snap = chainSnapshot(
       current,
-      SESSION.code,
-      SESSION.id,
-      SESSION.id,
+      sessionRef.current.code,
+      sessionRef.current.id,
+      sessionRef.current.id,
       current.clock,
     );
     scene.current?.update(snap);
-    sound.current?.update(current, SESSION.id, scene.current?.listenerYaw());
+    sound.current?.update(
+      current,
+      sessionRef.current.id,
+      scene.current?.listenerYaw(),
+    );
 
     if (pacer.due(current) || force) {
       // A copy, so React sees a new object and the HUD re-renders.
@@ -274,7 +307,7 @@ export default function ChainOfFoolsGame() {
         ...snap,
         world: { ...current, players: current.players.map((p) => ({ ...p })) },
       });
-      tracker.observe(chainPlayState(snap, SESSION));
+      tracker.observe(chainPlayState(snap, sessionRef.current));
     }
   }, []);
 
@@ -282,12 +315,12 @@ export default function ChainOfFoolsGame() {
     (action: ChainAction) => {
       tracker.action(action.type);
       sound.current?.unlock();
-      if (!world.current) return;
-      chainOfFoolsAction(world.current, SESSION.id, action);
+      if (send(action) || !world.current) return;
+      chainOfFoolsAction(world.current, sessionRef.current.id, action);
       if (action.type === 'clip') haptic(25);
       publish(true);
     },
-    [publish],
+    [publish, send],
   );
 
   useEffect(() => {
@@ -295,7 +328,10 @@ export default function ChainOfFoolsGame() {
     sound.current = new ChainOfFoolsSound();
     scene.current = new ChainScene(container.current, {
       input: (input) => {
-        const me = world.current?.players.find((p) => p.id === SESSION.id);
+        currentInput.current = input;
+        const me = world.current?.players.find(
+          (p) => p.id === sessionRef.current.id,
+        );
         if (me) {
           me.input = input;
           me.seen = world.current?.clock ?? 0;
@@ -303,13 +339,19 @@ export default function ChainOfFoolsGame() {
       },
       action: dispatch,
     });
-    scene.current.setLocal(SESSION.id);
+    scene.current.setLocal(sessionRef.current.id);
 
     pacer.reset();
     const start = Date.now();
     const fresh = freshChainWorld(start);
     fresh.players.push(
-      newPlayer(SESSION.id, SESSION.name, SESSION.color, 0, false),
+      newPlayer(
+        sessionRef.current.id,
+        sessionRef.current.name,
+        sessionRef.current.color,
+        0,
+        false,
+      ),
     );
     reconcileChainBots(fresh);
     world.current = fresh;
@@ -328,7 +370,7 @@ export default function ChainOfFoolsGame() {
       publish();
 
       // A buzz when the local worker is yanked or goes over.
-      const me = current.players.find((p) => p.id === SESSION.id);
+      const me = current.players.find((p) => p.id === sessionRef.current.id);
       const recent = current.events[current.events.length - 1];
       if (
         me &&
@@ -359,7 +401,7 @@ export default function ChainOfFoolsGame() {
   }, [dispatch, publish]);
 
   const w = snapshot?.world;
-  const me = w?.players.find((p) => p.id === SESSION.id);
+  const me = w?.players.find((p) => p.id === sessionRef.current.id);
   const playing = w?.phase === 'playing';
   const ended = w?.phase === 'ended';
 
@@ -419,10 +461,11 @@ export default function ChainOfFoolsGame() {
           CHAIN OF FOOLS<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={muted}
           onToggleSound={toggleMute}
           onHelp={() => setHelp(true)}
-          voiceHint="Use your group call to talk with friends. In-game voice is not available in Chain of Fools yet."
         />
       </header>
 
@@ -473,7 +516,7 @@ export default function ChainOfFoolsGame() {
               {w.players.map((p) => (
                 <span
                   key={p.id}
-                  className={`cof-track-dot ${p.id === SESSION.id ? 'me' : ''} ${p.state}`}
+                  className={`cof-track-dot ${p.id === sessionRef.current.id ? 'me' : ''} ${p.state}`}
                   style={{
                     left: `${progress(p.x) * 100}%`,
                     background: COLORS[p.color % 4],
@@ -542,7 +585,9 @@ export default function ChainOfFoolsGame() {
               {w.players.map((p) => (
                 <span key={p.id} className="cof-crew-chip">
                   <i style={{ background: COLORS[p.color % 4] }} />
-                  {p.id === SESSION.id ? SESSION.name : p.name}
+                  {p.id === sessionRef.current.id
+                    ? sessionRef.current.name
+                    : p.name}
                 </span>
               ))}
             </div>

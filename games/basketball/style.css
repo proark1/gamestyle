@@ -621,6 +621,32 @@
   pointer-events: none;
   z-index: 15;
 }
+.bb-touch-controls .touch-controls[data-touch-controls] {
+  display: flex;
+  left: max(12px, var(--sal));
+  right: auto;
+  bottom: max(12px, var(--sab));
+}
+.bb-touch-controls .joystick {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 2px solid #ffffe692;
+  background: #eff2d73d;
+  pointer-events: auto;
+}
+.bb-touch-controls .joystick > span {
+  display: grid;
+  place-items: center;
+  width: 49px;
+  height: 49px;
+  border-radius: 50%;
+  background: #f5f3d9ad;
+  color: #638b74;
+}
+.bb-touch-btn.shoot {
+  touch-action: none;
+}
 
 .bb-touch-stick-area {
   position: absolute;
@@ -716,8 +742,31 @@
 /* With touch buttons on screen, the centre HUD sits above them. The query
    matches TOUCH_QUERY in shared/browser/device.ts, which shows them. */
 @media (pointer: coarse), (max-width: 900px) {
+  .bb-game {
+    min-height: 0;
+  }
+  .bb-welcome {
+    max-height: calc(100dvh - 92px - var(--sat) - var(--sab));
+    overflow-y: auto;
+  }
   .bb-action-hud {
     bottom: 184px;
+  }
+}
+@media (max-width: 380px) {
+  .bb-touch-stick-area {
+    width: 104px;
+    height: 104px;
+    left: max(12px, var(--sal));
+    bottom: max(12px, var(--sab));
+  }
+  .bb-touch-buttons {
+    right: max(12px, var(--sar));
+    bottom: max(12px, var(--sab));
+    gap: 8px;
+  }
+  .bb-touch-row {
+    gap: 8px;
   }
 }
 

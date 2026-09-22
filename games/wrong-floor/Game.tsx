@@ -1,4 +1,6 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element, next/no-html-link-for-pages -- Full game navigation disposes WebGL; artwork is served locally on both targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
@@ -395,7 +397,7 @@ export default function WrongFloor() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/wrong-floor?room=${session?.code}`,
+        `${publicGameOrigin()}/wrong-floor?room=${session?.code}`,
       );
       setCopied(true);
     } catch {

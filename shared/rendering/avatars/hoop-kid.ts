@@ -127,6 +127,7 @@ export function inClay<Model extends T.Object3D>(root: Model) {
         bumpMap: clayBump(),
         bumpScale: 1.2,
       });
+      clay.userData.shared = true;
       clays.set(key, clay);
     }
     mesh.material = clay;
@@ -506,7 +507,7 @@ function arm(body: T.Group, side: number, kit: string) {
 }
 
 /** How a wardrobe look changes the kid: long trousers, or a hat to fit under. */
-export type KidStyle = { trousers?: boolean; hat?: boolean };
+export type KidStyle = { trousers?: boolean; hat?: boolean | string };
 
 export type HoopKid = {
   root: T.Group;

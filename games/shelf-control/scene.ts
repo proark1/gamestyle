@@ -1,3 +1,5 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
 import { disposeGeometry } from '../../shared/rendering/primitives';
 import * as THREE from 'three';
 import {
@@ -259,6 +261,11 @@ export class ShelfScene {
     intercomStation.position.set(INTERCOM.x, 0, INTERCOM.z);
     this.scene.add(intercomStation);
     sign(this.scene, 'P.A. INTERCOM', INTERCOM.x, 1.6, INTERCOM.z, 2.6, isDark);
+    batchScenery(
+      this.scene,
+      this.guardBeamMesh ? [this.guardBeamMesh] : [],
+      true,
+    );
     const ringMaterial = new THREE.MeshBasicMaterial({
       color: 0x527c5b,
       side: THREE.DoubleSide,
@@ -620,6 +627,7 @@ export class ShelfScene {
   private animate = () => {
     if (this.disposed) return;
     this.frame = requestAnimationFrame(this.animate);
+    if (!shouldRenderFrame(this.renderer)) return;
     const s = this.snapshot,
       now = performance.now(),
       time = now / 1000;

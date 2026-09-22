@@ -1,5 +1,7 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { poseWrecker } from './avatar';
 import { SiteMotion, emptyPose } from './motion';
@@ -477,14 +479,14 @@ export class LoadBearingScene {
     }
   }
 
+  private lastVisual = 0;
   private loop = (time: number) => {
     if (this.disposed) return;
     this.frame = requestAnimationFrame(this.loop);
     const delta = Math.min(0.1, (time - this.last) / 1000) || 0;
     this.last = time;
     this.time += delta;
-    this.motion.advance(time);
-    this.dust.update(delta);
+
     try {
       this.cb.tick();
     } catch {
@@ -493,11 +495,18 @@ export class LoadBearingScene {
     if (this.snapshot?.world.crane.owner === this.localId)
       this.driveCrane(time);
     else this.sendInput(time);
+    if (!shouldRenderFrame(this.renderer)) return;
+    const visualDelta = this.lastVisual
+      ? Math.min(0.1, (time - this.lastVisual) / 1000)
+      : delta;
+    this.lastVisual = time;
+    this.motion.advance(time);
+    this.dust.update(visualDelta);
     this.syncParts();
     this.syncPeople();
     this.syncMachinery();
     this.syncAim();
-    this.placeCamera(delta);
+    this.placeCamera(visualDelta);
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -506,6 +515,7 @@ export class LoadBearingScene {
     cancelAnimationFrame(this.frame);
     this.abort.abort();
     this.observer.disconnect();
+    disposeObject(this.scene);
     this.renderer.dispose();
     this.renderer.domElement.remove();
     this.cb.input(idleInput());

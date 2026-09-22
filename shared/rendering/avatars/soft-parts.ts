@@ -17,6 +17,7 @@ export function surface(color: string, roughness = 0.7) {
   let material = materials.get(key);
   if (!material) {
     material = new T.MeshStandardMaterial({ color, roughness });
+    material.userData.shared = true;
     materials.set(key, material);
   }
   return material;

@@ -7,6 +7,7 @@ const PINNED = [
   'stack-or-sink',
   'uphill-delivery',
   'reel-problems',
+  'reel-problems-2',
   'shelf-control',
 ] as const;
 

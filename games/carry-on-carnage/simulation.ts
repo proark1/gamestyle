@@ -301,7 +301,7 @@ export function carryOnAction(
     return;
   }
 
-  if (action.type === 'interact') {
+  if (action.type === 'interact' && world.phase === 'packing') {
     const now = world.clock;
     const target = action.target;
 
@@ -789,6 +789,10 @@ export function advanceCarryOn(
 
   // 4. Flight departure countdown
   if (now >= world.deadline) {
+    const departureFees =
+      world.suitcases.filter((bag) => !bag.approved).length * SIZER_FEE;
+    world.feesPaid += departureFees;
+    world.totalScore -= departureFees;
     world.phase = 'flight_departed';
     world.events.push({
       id: ++eventIdRef.current,

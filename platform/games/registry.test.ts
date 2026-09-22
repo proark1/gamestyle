@@ -125,7 +125,7 @@ void test('the README game table lists the whole collection', () => {
     readme.indexOf('## Code structure'),
   );
   const listed = new Set(
-    [...table.matchAll(/`games\/([a-z-]+)\/`/g)].map((match) => match[1]),
+    [...table.matchAll(/`games\/([a-z0-9-]+)\/`/g)].map((match) => match[1]),
   );
   const missing = GAME_IDS.filter((game: Game) => !listed.has(game));
   assert.deepEqual(

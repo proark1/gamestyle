@@ -1,3 +1,4 @@
+import { gameAvatar } from '../../shared/rendering/game-avatar';
 import * as THREE from 'three';
 import { worker } from '../../shared/rendering/worker';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -129,7 +130,7 @@ export function itemModel(kind: 'key' | 'ladder' | 'prop') {
 }
 export function mannequin(guard = false) {
   // This is the same geometry and rig used by the farmer and delivery crew.
-  const group = worker(guard ? 1 : 0);
+  const group = guard ? gameAvatar(1) : worker(0);
   const materials = new Map<THREE.Material, THREE.Material>();
   group.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
@@ -137,6 +138,7 @@ export function mannequin(guard = false) {
     let owned = materials.get(original);
     if (!owned) {
       const material = original.clone();
+      material.userData.shared = false;
       if (!guard && original.color.getHexString() !== '283b34') {
         material.color.setHex(palette.oak);
       }
@@ -153,10 +155,10 @@ export function mannequin(guard = false) {
   carry.position.set(0.48, 0.8, 0.25);
   torso.add(carry);
   if (guard) {
-    block(torso, [0.12, 0.12, 0.035], [0.16, 1.08, 0.295], 0xf3bf50);
-    block(torso, [0.13, 0.13, 0.35], [0.44, 0.8, 0.38], 0x444a50);
+    block(torso, [0.12, 0.12, 0.035], [0.13, 0.88, 0.18], 0xf3bf50);
+    block(torso, [0.13, 0.13, 0.35], [0.3, 0.8, 0.32], 0x444a50);
     const lens = ball(torso, 0.09, 0.8, 0xffedaf);
-    lens.position.set(0.44, 0.8, 0.59);
+    lens.position.set(0.3, 0.8, 0.53);
   }
   return { group, torso, limbs, carry };
 }

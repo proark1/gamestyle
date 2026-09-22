@@ -209,7 +209,7 @@ export class ZorbClashAudio {
     osc.stop(t + 0.4);
   }
 
-  goal(isTurtle: boolean) {
+  goal() {
     if (!this.ctx || !this.masterGain) return;
     const t = this.ctx.currentTime;
 
@@ -230,24 +230,6 @@ export class ZorbClashAudio {
 
       osc.start(t);
       osc.stop(t + 0.9);
-    }
-
-    if (isTurtle) {
-      // Extra celebratory high trill for style points
-      const trill = this.ctx.createOscillator();
-      const trillGain = this.ctx.createGain();
-      trill.type = 'triangle';
-      trill.frequency.setValueAtTime(880, t + 0.2);
-      trill.frequency.exponentialRampToValueAtTime(1320, t + 0.7);
-
-      trillGain.gain.setValueAtTime(0.25, t + 0.2);
-      trillGain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
-
-      trill.connect(trillGain);
-      trillGain.connect(this.masterGain);
-
-      trill.start(t + 0.2);
-      trill.stop(t + 0.7);
     }
   }
 

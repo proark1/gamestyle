@@ -237,6 +237,33 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
     },
   },
 
+  'reel-problems-2': {
+    en: {
+      tag: 'WE BARELY MADE IT',
+      isNew: true,
+      newTag: 'NEW TO JUMBLEYARD',
+      players: '1–4 anglers',
+      duration: '4-minute survival adventure',
+      titleMain: 'Reel Problems 2',
+      titleSuffix: '.',
+      desc: 'A giant fish. A storm closing in. One questionable boat. Row, rescue, and rebuild your way home together.',
+      tagline: 'Four friends. One very questionable boat.',
+      cta: 'Play Reel Problems 2',
+    },
+    de: {
+      tag: 'KNAPP GESCHAFFT',
+      isNew: true,
+      newTag: 'NEU IN JUMBLEYARD',
+      players: '1–4 Angler',
+      duration: '4-Minuten-Überlebensabenteuer',
+      titleMain: 'Reel Problems 2',
+      titleSuffix: '.',
+      desc: 'Ein Riesenfisch. Ein aufziehender Sturm. Ein fragwürdiges Boot. Rudert, rettet und baut euch gemeinsam nach Hause.',
+      tagline: 'Vier Freunde. Ein höchst fragwürdiges Boot.',
+      cta: 'Reel Problems 2 spielen',
+    },
+  },
+
   'reel-problems': {
     en: {
       tag: 'THE FISH CAUGHT US',

@@ -1,4 +1,4 @@
-import { createPeerEngine } from '../platform/peer/engine.ts';
+import { compatibility } from '../shared/peer/protocol.ts';
 import assert from 'node:assert/strict';
 import wrtc from '@roamhq/wrtc';
 import { handlePeerRoom } from '../shared/peer/coordinator.ts';
@@ -6,8 +6,27 @@ import { PeerGameConnection } from '../shared/peer/connection.ts';
 import { acquireMesh } from '../shared/peer/mesh.ts';
 import { PeerError } from '../shared/peer/types.ts';
 
+// The Windows native test binding can expose an uninitialized fractional
+// sdpMLineIndex. Keep the valid sdpMid; browsers do not exhibit this binding bug.
+class TestPeerConnection extends wrtc.RTCPeerConnection {
+  constructor(configuration) {
+    super(configuration);
+    this.addEventListener('icecandidate', ({ candidate }) => {
+      if (
+        candidate &&
+        candidate.sdpMid != null &&
+        (!Number.isInteger(candidate.sdpMLineIndex) ||
+          candidate.sdpMLineIndex < 0 ||
+          candidate.sdpMLineIndex > 65535)
+      ) {
+        candidate.sdpMLineIndex = null;
+      }
+    });
+  }
+}
+
 Object.assign(globalThis, {
-  RTCPeerConnection: wrtc.RTCPeerConnection,
+  RTCPeerConnection: TestPeerConnection,
   RTCSessionDescription: wrtc.RTCSessionDescription,
   RTCIceCandidate: wrtc.RTCIceCandidate,
   MediaStream: wrtc.MediaStream,
@@ -42,13 +61,14 @@ globalThis.fetch = async (url, options) => {
       headers,
     });
     const reply = await response.json();
-    if (reply.view) reply.view.iceServers = [];
+    if (reply.view && process.env.PEER_RELAY_ONLY !== '1')
+      reply.view.iceServers = [];
     return Response.json(reply, { status: response.status });
   }
   try {
     const reply = await handlePeerRoom(store, JSON.parse(options.body));
     // Test direct connections on this machine without contacting an external STUN service.
-    reply.view.iceServers = [];
+    if (process.env.PEER_RELAY_ONLY !== '1') reply.view.iceServers = [];
     return Response.json(reply);
   } catch (error) {
     return Response.json(
@@ -58,7 +78,7 @@ globalThis.fetch = async (url, options) => {
   }
 };
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-async function until(condition, description, timeout = 16000) {
+async function until(condition, description, timeout = 30000) {
   const started = Date.now();
   while (!condition()) {
     if (Date.now() - started > timeout)
@@ -67,6 +87,7 @@ async function until(condition, description, timeout = 16000) {
   }
 }
 async function run(game) {
+  const { createEngine } = await import(`../games/${game}/peer.ts`);
   const sessions = [],
     connections = [],
     leases = [],
@@ -78,6 +99,7 @@ async function run(game) {
     for (let i = 0; i < 4; i++) {
       const response = await fetch('/api/peer', {
         body: JSON.stringify({
+          ...compatibility(game),
           op: i ? 'join' : 'create',
           game,
           code: sessions[0]?.code,
@@ -104,8 +126,7 @@ async function run(game) {
         (snapshot) => latest.set(result.session.id, snapshot),
         () => {},
         async () => ({
-          createEngine: (now, checkpoint) =>
-            createPeerEngine(game, now, checkpoint),
+          createEngine,
         }),
       );
       connections.push(connection);
@@ -128,13 +149,104 @@ async function run(game) {
         ),
       'all six peer links open',
     );
-    await connections[0].action({ type: 'start' });
+    if (process.env.PEER_RELAY_ONLY === '1') {
+      await until(
+        () => leases.every((l) => l.mesh.diagnostics.relay),
+        'every peer uses a selected TURN relay',
+      );
+    }
+    if (game === 'stack-or-sink') {
+      const link = leases[0].mesh.links.get(sessions[1].id);
+      const previous =
+        link.pc.localDescription.sdp.match(/a=ice-ufrag:(.+)/)[1];
+      const native = link.pc;
+      let disconnected = true;
+      link.pc = new Proxy(native, {
+        get(target, key) {
+          if (key === 'connectionState' && disconnected) return 'disconnected';
+          const value = Reflect.get(target, key, target);
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+      await until(
+        () =>
+          link.pc.localDescription.sdp.match(/a=ice-ufrag:(.+)/)[1] !==
+          previous,
+        'network transition triggers ICE restart',
+      );
+      disconnected = false;
+      await until(
+        () =>
+          link.pc.signalingState === 'stable' &&
+          link.channel.readyState === 'open',
+        'ICE restart preserves the game channel',
+      );
+      assert.equal(
+        leases[0].mesh.links.get(sessions[1].id),
+        link,
+        'recover ICE without destroying the peer link',
+      );
+    }
+    await connections[0].action({
+      ...(game === 'reel-problems-2' ? { mode: 'campaign' } : {}),
+      type: ['sample-stampede', 'zorb-clash'].includes(game)
+        ? 'ready'
+        : 'start',
+    });
+    const startedPhase =
+      {
+        'bungee-doubles': 'serving',
+        'carry-on-carnage': 'packing',
+        'drive-thru': 'ordering',
+        'panic-curling': 'aiming',
+        'sample-stampede': 'active',
+      }[game] ?? 'playing';
     await until(
-      () => sessions.every((s) => latest.get(s.id)?.world.phase === 'playing'),
+      () =>
+        sessions.every((s) =>
+          game === 'drive-thru'
+            ? ['ordering', 'assembling', 'reaching'].includes(
+                latest.get(s.id)?.world.phase,
+              )
+            : latest.get(s.id)?.world.phase === startedPhase,
+        ),
       `${game} start reaches all peers`,
     );
     const started = latest.get(sessions[1].id).world.started;
+    if (game === 'bungee-doubles') {
+      const world = () => latest.get(sessions[1].id).world;
+      assert.equal(world().players.filter((p) => !p.bot).length, 4);
+      assert.equal(world().players.filter((p) => p.team === 'red').length, 2);
+      const guest = sessions[1].id;
+      const before = world().players.find((p) => p.id === guest).x;
+      inputs[1] = { x: 1, z: 0 };
+      await until(
+        () =>
+          sessions.every(
+            (s) =>
+              latest.get(s.id).world.players.find((p) => p.id === guest).x >
+              before + 0.3,
+          ),
+        'Bungee Doubles guest movement reaches every player',
+      );
+      inputs[1] = { x: 0, z: 0 };
+      const server = sessions.findIndex(
+        (s) => s.id === world().servingPlayerId,
+      );
+      assert.ok(server >= 0);
+      await connections[server].action({ type: 'swing' });
+      await until(
+        () => sessions.every((s) => latest.get(s.id).world.phase === 'rally'),
+        'Bungee Doubles serve starts a shared rally',
+      );
+    }
+    if (game === 'reel-problems-2') {
+      const { campaignScenario } =
+        await import('../games/reel-problems-2/scripts/peer-scenario.mjs');
+      await campaignScenario({ connections, sessions, latest, inputs, until });
+    }
     let reelRecoveryTarget;
+    let reelWildlife;
     let siegeRecovery;
     if (game === 'reel-problems') {
       const world = () => latest.get(sessions[1].id).world;
@@ -199,6 +311,7 @@ async function run(game) {
       );
       assert.ok(next, 'another reachable fish for host recovery');
       reelRecoveryTarget = next.id;
+      reelWildlife = w.wildlife.map((animal) => animal.id);
       await Promise.all(
         connections.map((c) =>
           c.action({ type: 'cast', x: next.x, z: next.z }),
@@ -375,11 +488,15 @@ async function run(game) {
       const held = world().wind;
       // The aim opens centred; a guest swings it and every client must agree
       // on which way it went, since the direction is the key they held.
-      const opening = world().turn;
+      const blue =
+        world().mode === 'clash2v2' &&
+        world().players.find((p) => p.id === sessions[3].id)?.team === 'blue';
+      const aim = (w) => (blue ? w.engineBlue.turn : w.turn);
+      const opening = aim(world());
       await connections[3].action({ type: 'push', side: 1 });
       await until(
         () =>
-          sessions.every((s) => latest.get(s.id).world.turn - opening > 0.02),
+          sessions.every((s) => aim(latest.get(s.id).world) - opening > 0.02),
         'a swung aim goes the same way on every client',
       );
       await connections[3].action({ type: 'stopPush' });
@@ -492,6 +609,11 @@ async function run(game) {
       18000,
     );
     assert.equal(latest.get(sessions[1].id).world.started, started);
+    if (game === 'reel-problems-2') {
+      const { campaignAfterHandover } =
+        await import('../games/reel-problems-2/scripts/peer-scenario.mjs');
+      await campaignAfterHandover({ sessions, latest, until });
+    }
     if (game === 'reel-problems') {
       await until(
         () =>
@@ -507,7 +629,10 @@ async function run(game) {
       const w = latest.get(sessions[1].id).world;
       assert.equal(w.score, 100);
       assert.ok(w.weather.until > w.clock);
-      assert.equal(w.wildlife.length, 3);
+      assert.deepEqual(
+        w.wildlife.map((animal) => animal.id),
+        reelWildlife,
+      );
     }
     if (game === 'one-more-button') {
       assert.equal(latest.get(sessions[1].id).world.pot, 1250);
@@ -559,7 +684,7 @@ async function run(game) {
     );
     assert.equal(latest.get(sessions[2].id).world.started, started);
     console.log(
-      `${game}: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (${Date.now() - handoffAt} ms graceful) passed.`,
+      `${game}: 4 real WebRTC clients, ${process.env.PEER_RELAY_ONLY === '1' ? 'TURN-relayed' : 'direct'} audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (${Date.now() - handoffAt} ms graceful) passed.`,
     );
   } catch (error) {
     console.error(

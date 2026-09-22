@@ -1,4 +1,6 @@
+import { apiFetch } from '../../browser/api-fetch';
 import { DEFAULT_SETTINGS, type AudioManifest, type GameId } from './types';
+import { AudioBufferCache } from '../buffer-cache';
 export type Atmosphere =
   | 'menu'
   | 'lobby'
@@ -15,7 +17,7 @@ export class SiteAudio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   private manifest: AudioManifest = { settings: DEFAULT_SETTINGS, cues: {} };
-  private buffers = new Map<string, Promise<AudioBuffer | null>>();
+  private buffers = new AudioBufferCache();
   private sources = new Set<AudioBufferSourceNode>();
   private loops = new Map<
     string,
@@ -110,7 +112,7 @@ export class SiteAudio {
   }
   async refresh() {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/handwerker/audio/${this.game}?manifest=1`,
         {
           cache: 'no-store',
@@ -182,7 +184,7 @@ export class SiteAudio {
     if (!pending) {
       pending = (async () => {
         try {
-          const res = await fetch(cue.url, {
+          const res = await apiFetch(cue.url, {
             signal: AbortSignal.timeout(12000),
           });
           if (!res.ok || this.disposed) return null;

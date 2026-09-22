@@ -1,3 +1,6 @@
+import { compatibility } from './protocol';
+import type { VoiceSession } from '../voice/types';
+import { apiFetch } from '../browser/api-fetch';
 import {
   PeerError,
   type DeliveredSignal,
@@ -12,10 +15,13 @@ export async function peerRequest(
   body: object,
   keepalive = false,
 ): Promise<PeerReply> {
-  const response = await fetch('/api/peer', {
+  const response = await apiFetch('/api/peer', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      ...compatibility(String((body as { game?: string }).game ?? '')),
+      ...body,
+    }),
     signal: AbortSignal.timeout(5000),
     keepalive,
   });
@@ -32,8 +38,11 @@ type Link = {
   member: Member;
   pc: RTCPeerConnection;
   channel?: RTCDataChannel;
-  sender: RTCRtpSender;
+  stateChannel?: RTCDataChannel;
+  sender?: RTCRtpSender;
   created: number;
+  trouble?: number;
+  restarting?: number;
   candidates: RTCIceCandidateInit[];
   chunks: Map<
     string,
@@ -48,6 +57,15 @@ type Listeners = {
   connected: (id: string) => void;
 };
 export class PeerMesh {
+  readonly diagnostics = {
+    sentBytes: 0,
+    droppedStates: 0,
+    rttMs: 0,
+    relay: false,
+    audioLost: 0,
+    jitterMs: 0,
+  };
+  private sampling = false;
   readonly instance = crypto.randomUUID();
   view?: PeerView;
   validUntil = 0;
@@ -69,7 +87,10 @@ export class PeerMesh {
   private outbox: Signal[] = [];
   private heartbeat?: ReturnType<typeof setTimeout>;
   private flushTimer?: ReturnType<typeof setTimeout>;
-  constructor(readonly session: PeerSession) {}
+  constructor(
+    readonly session: VoiceSession,
+    private request = peerRequest,
+  ) {}
   on<K extends keyof Listeners>(event: K, listener: Listeners[K]) {
     this.listeners[event].add(listener);
     return () => {
@@ -83,7 +104,8 @@ export class PeerMesh {
         ? error
         : new Error('Peer connection interrupted.');
     for (const listener of this.listeners.error) listener(value);
-    if (value instanceof PeerError && value.status === 401) this.close();
+    if (value instanceof PeerError && [401, 426].includes(value.status))
+      this.close();
   }
   start() {
     if (this.started || this.closed) return;
@@ -103,6 +125,7 @@ export class PeerMesh {
     } catch (error) {
       this.error(error);
     }
+    void this.sampleStats();
     if (!this.closed) this.heartbeat = setTimeout(() => void this.poll(), 1000);
   }
   rpc(op: string, extra: object = {}) {
@@ -112,8 +135,9 @@ export class PeerMesh {
         if (this.closed)
           throw new PeerError('This room connection has closed.', 401);
         const started = performance.now();
-        const reply = await peerRequest({
+        const reply = await this.request({
           ...this.session,
+          ...compatibility(this.session.game),
           instance: this.instance,
           cursor: this.cursor,
           epoch: this.view?.epoch,
@@ -152,13 +176,43 @@ export class PeerMesh {
     for (const [id, link] of this.links) {
       const member = this.view.members.find((m) => m.id === id);
       if (!member || member.instance !== link.member.instance) this.remove(id);
-      else if (
-        self.order < member.order &&
-        (link.pc.connectionState === 'failed' ||
-          (link.channel?.readyState !== 'open' &&
-            performance.now() - link.created > 10000))
-      )
-        this.remove(id);
+      else if (self.order < member.order) {
+        const failed = ['failed', 'disconnected'].includes(
+          link.pc.connectionState,
+        );
+        if (failed) {
+          link.trouble ??= performance.now();
+          const age = performance.now() - link.trouble;
+          if (
+            !link.restarting &&
+            (age > 3000 || link.pc.connectionState === 'failed') &&
+            link.pc.signalingState === 'stable'
+          ) {
+            link.restarting = performance.now();
+            void (async () => {
+              await link.pc.setLocalDescription(
+                await link.pc.createOffer({ iceRestart: true }),
+              );
+              if (this.links.get(id) === link)
+                this.signal(link, {
+                  description: link.pc.localDescription!.toJSON(),
+                });
+            })().catch((error) => this.error(error));
+          } else if (
+            link.restarting &&
+            performance.now() - link.restarting > 10000
+          )
+            this.remove(id);
+        } else {
+          link.trouble = undefined;
+          link.restarting = undefined;
+          if (
+            link.channel?.readyState !== 'open' &&
+            performance.now() - link.created > 10000
+          )
+            this.remove(id);
+        }
+      }
     }
     for (const member of this.view.members)
       if (
@@ -180,8 +234,14 @@ export class PeerMesh {
   private create(member: Member, id: string, initiator: boolean) {
     const pc = new RTCPeerConnection({
       iceServers: this.view?.iceServers ?? [],
+      iceTransportPolicy: this.view?.relayOnly ? 'relay' : 'all',
     });
-    const sender = pc.addTransceiver('audio', { direction: 'sendrecv' }).sender;
+    // Only the offerer creates a transceiver. On the answering side,
+    // setRemoteDescription creates the transceiver associated with the offer;
+    // a pre-created addTransceiver sender would remain unnegotiated and silent.
+    const sender = initiator
+      ? pc.addTransceiver('audio', { direction: 'sendrecv' }).sender
+      : undefined;
     const link: Link = {
       id,
       pc,
@@ -192,7 +252,7 @@ export class PeerMesh {
       chunks: new Map(),
     };
     this.links.set(member.id, link);
-    if (this.localTrack)
+    if (this.localTrack && sender)
       void sender
         .replaceTrack(this.localTrack)
         .catch((error) => this.error(error));
@@ -208,19 +268,32 @@ export class PeerMesh {
       for (const listener of this.listeners.track)
         listener(member.id, event.track);
     };
-    if (initiator)
+    if (initiator) {
       this.attachChannel(link, pc.createDataChannel('game', { ordered: true }));
+      this.attachChannel(
+        link,
+        pc.createDataChannel('state', { ordered: false, maxRetransmits: 0 }),
+      );
+    }
     return link;
   }
   private attachChannel(link: Link, channel: RTCDataChannel) {
-    if (channel.label !== 'game' || link.channel) {
+    const state = channel.label === 'state';
+    if (
+      (!state && channel.label !== 'game') ||
+      (state ? link.stateChannel : link.channel)
+    ) {
       channel.close();
       return;
     }
-    link.channel = channel;
+    if (state) link.stateChannel = channel;
+    else link.channel = channel;
     channel.onopen = () => {
-      for (const listener of this.listeners.connected) listener(link.member.id);
+      if (!state)
+        for (const listener of this.listeners.connected)
+          listener(link.member.id);
     };
+    const chunks: Link['chunks'] = state ? new Map() : link.chunks;
     channel.onmessage = (event) => {
       if (
         this.closed ||
@@ -244,18 +317,22 @@ export class PeerMesh {
             typeof message.data !== 'string'
           )
             return;
-          for (const [id, chunk] of link.chunks)
-            if (performance.now() - chunk.at > 5000) link.chunks.delete(id);
-          let chunk = link.chunks.get(message.id);
+          for (const [id, chunk] of chunks)
+            if (performance.now() - chunk.at > 5000) chunks.delete(id);
+          let chunk = chunks.get(message.id);
           if (!chunk) {
-            if (link.chunks.size >= 4) return;
+            if (chunks.size >= 4) {
+              if (!state) return;
+              // A lost unreliable fragment must not block newer complete snapshots.
+              chunks.delete(chunks.keys().next().value!);
+            }
             chunk = {
               at: performance.now(),
               parts: [],
               total: message.total,
               size: 0,
             };
-            link.chunks.set(message.id, chunk);
+            chunks.set(message.id, chunk);
           }
           if (
             chunk.total !== message.total ||
@@ -265,7 +342,7 @@ export class PeerMesh {
           chunk.parts[message.index] = message.data;
           chunk.size += message.data.length;
           if (chunk.size > 280000) {
-            link.chunks.delete(message.id);
+            chunks.delete(message.id);
             return;
           }
           if (
@@ -273,7 +350,7 @@ export class PeerMesh {
               (p) => typeof p === 'string',
             )
           ) {
-            link.chunks.delete(message.id);
+            chunks.delete(message.id);
             for (const listener of this.listeners.message)
               listener(link.member.id, JSON.parse(chunk.parts.join('')));
           }
@@ -331,8 +408,21 @@ export class PeerMesh {
         this.remove(member.id);
         link = this.create(member, signal.link, false);
       }
-      if (link.pc.remoteDescription) return;
+      if (
+        link.pc.remoteDescription?.sdp === signal.description.sdp ||
+        link.pc.signalingState !== 'stable'
+      )
+        return;
       await link.pc.setRemoteDescription(signal.description);
+      const audio = link.pc
+        .getTransceivers()
+        .find((transceiver) => transceiver.receiver.track.kind === 'audio');
+      if (audio) {
+        // Reserve both directions even if voice is joined after gameplay starts.
+        audio.direction = 'sendrecv';
+        link.sender = audio.sender;
+        await audio.sender.replaceTrack(this.localTrack);
+      }
       for (const candidate of link.candidates.splice(0))
         await link.pc.addIceCandidate(candidate);
       await link.pc.setLocalDescription(await link.pc.createAnswer());
@@ -360,15 +450,24 @@ export class PeerMesh {
     }
   }
   send(id: string, message: unknown): boolean {
-    const channel = this.links.get(id)?.channel;
+    const link = this.links.get(id);
+    const type = (message as { type?: string } | null)?.type;
+    const replaceable =
+      type === 'snapshot' || type === 'snapshot-delta' || type === 'input';
+    const channel =
+      replaceable && link?.stateChannel?.readyState === 'open'
+        ? link.stateChannel
+        : link?.channel;
     if (
       this.closed ||
       channel?.readyState !== 'open' ||
-      channel.bufferedAmount > 256000
-    )
+      channel.bufferedAmount > (replaceable ? 32000 : 256000)
+    ) {
+      if (replaceable) this.diagnostics.droppedStates++;
       return false;
+    }
     const text = JSON.stringify(message);
-    if (text.length > 260000) return false;
+    if (text.length > 256000) return false;
     try {
       if (text.length <= 8000) channel.send(text);
       else {
@@ -385,9 +484,52 @@ export class PeerMesh {
             }),
           );
       }
+      this.diagnostics.sentBytes += new TextEncoder().encode(text).byteLength;
       return true;
     } catch {
+      if (replaceable) this.diagnostics.droppedStates++;
       return false;
+    }
+  }
+  private async sampleStats() {
+    if (this.sampling || this.closed) return;
+    this.sampling = true;
+    try {
+      let rtt = 0,
+        relay = false,
+        lost = 0,
+        jitter = 0;
+      await Promise.all(
+        [...this.links.values()].map(async (link) => {
+          const stats = await link.pc.getStats();
+          stats.forEach((report) => {
+            if (
+              report.type === 'candidate-pair' &&
+              report.state === 'succeeded' &&
+              (report.nominated || report.selected)
+            ) {
+              rtt = Math.max(rtt, (report.currentRoundTripTime ?? 0) * 1000);
+              relay ||=
+                stats.get(report.localCandidateId)?.candidateType === 'relay' ||
+                stats.get(report.remoteCandidateId)?.candidateType === 'relay';
+            }
+            if (report.type === 'inbound-rtp' && report.kind === 'audio') {
+              lost += report.packetsLost ?? 0;
+              jitter = Math.max(jitter, (report.jitter ?? 0) * 1000);
+            }
+          });
+        }),
+      );
+      Object.assign(this.diagnostics, {
+        rttMs: Math.round(rtt),
+        relay,
+        audioLost: lost,
+        jitterMs: Math.round(jitter),
+      });
+    } catch {
+      /* Diagnostics must never interrupt transport. */
+    } finally {
+      this.sampling = false;
     }
   }
   async microphone(track: MediaStreamTrack | null) {
@@ -400,7 +542,7 @@ export class PeerMesh {
     await Promise.all(
       [...this.links.values()].map(async (link) => {
         try {
-          await link.sender.replaceTrack(track);
+          await link.sender?.replaceTrack(track);
         } catch (error) {
           // A departure can close a sender while the microphone is being switched.
           if (this.links.get(link.member.id) === link && !this.closed)
@@ -416,6 +558,7 @@ export class PeerMesh {
       link.pc.onicecandidate = null;
       link.pc.ontrack = null;
       link.channel?.close();
+      link.stateChannel?.close();
       link.pc.close();
     }
     this.tracks.delete(id);

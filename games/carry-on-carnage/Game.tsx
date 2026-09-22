@@ -14,8 +14,12 @@ import {
   GameTracker,
   useGameTracker,
 } from '../../shared/analytics/game-tracker';
-import type { PeerGameConnection } from '../../shared/peer/connection';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
+import { TouchControls } from '../../shared/input/TouchControls';
+import { CarryOnModal } from './Modal';
+import { CARRY_ON_UI, eventMessage } from './ui-text';
 import { carryOnCarnageAnalytics } from './analytics';
 import { CarryOnSound } from './audio';
 import { reconcileCarryOnBots, updateCarryOnBots } from './bots';
@@ -31,6 +35,7 @@ import {
 import {
   idleInput,
   timeLeft,
+  type CarryOnEvent,
   type CarryOnAction,
   type CarryOnSession,
   type CarryOnSnapshot,
@@ -54,14 +59,15 @@ const formatTime = (ms: number) => {
 };
 
 export default function CarryOnCarnageGame() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const ui = t(CARRY_ON_UI);
   const strings = t(CARRY_ON_TRANSLATIONS);
   useGameTracker(tracker);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const hudRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<CarryOnScene | null>(null);
   const audioRef = useRef<CarryOnSound | null>(null);
-  const networkRef = useRef<PeerGameConnection<CarryOnSnapshot> | null>(null);
   const localWorld = useRef<CarryOnWorld | null>(null);
   const currentInput = useRef<PlayerInput>(idleInput());
   const eventIdRef = useRef(100);
@@ -73,7 +79,10 @@ export default function CarryOnCarnageGame() {
   const [snapshot, setSnapshot] = useState<CarryOnSnapshot | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const soundEnabledRef = useRef(soundEnabled);
-  const [toast, setToast] = useState<{ text: string; id: number } | null>(null);
+  const [toast, setToast] = useState<CarryOnEvent | null>(null);
+  const [helpOpen, setHelpOpen] = useState(true);
+  const [paused, setPaused] = useState(true);
+  const pausedRef = useRef(true);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sessionRef = useRef<CarryOnSession>({
@@ -84,21 +93,102 @@ export default function CarryOnCarnageGame() {
     color: 0,
   });
 
-  const dispatchAction = useCallback((act: CarryOnAction) => {
-    tracker.action(act.type);
-    audioRef.current?.unlock();
+  const room = usePeerRoom<CarryOnSnapshot>({
+    game: 'carry-on-carnage',
+    onOpen: () => setHelpOpen(false),
+    loadEngine: () => import('./peer'),
+    readInput: () => currentInput.current,
+    idleInput,
+    onAttach: (next) => {
+      localWorld.current = null;
+      currentInput.current = idleInput();
+      sessionRef.current = { ...sessionRef.current, ...next };
+      hud.current.reset();
+      setHelpOpen(false);
+    },
+    receive: (snap) => {
+      if (hud.current.due(snap)) setSnapshot(snap);
+      sceneRef.current?.render(snap, sessionRef.current.id);
+      audioRef.current?.update(snap.world, sessionRef.current.id);
+    },
+  });
+  const { send } = room;
 
-    if (networkRef.current) {
-      void networkRef.current.action(act);
-    } else if (localWorld.current) {
-      carryOnAction(
-        localWorld.current,
-        sessionRef.current.id,
-        act,
-        eventIdRef.current ? eventIdRef : { current: 100 },
-      );
-    }
+  const dispatchAction = useCallback(
+    (act: CarryOnAction) => {
+      if (act.type === 'interact' && pausedRef.current) return;
+      tracker.action(act.type);
+      audioRef.current?.unlock();
+
+      if (send(act)) return;
+      if (localWorld.current) {
+        carryOnAction(
+          localWorld.current,
+          sessionRef.current.id,
+          act,
+          eventIdRef.current ? eventIdRef : { current: 100 },
+        );
+      }
+    },
+    [send],
+  );
+
+  // Measure the actual translated HUD, including fee badges and notifications.
+  // This keeps the playfield below it without guessing every text height.
+  useEffect(() => {
+    const node = hudRef.current;
+    if (!node) return;
+    const resize = () => {
+      const root = node.parentElement;
+      if (root)
+        root.style.setProperty(
+          '--carryon-top',
+          `${Math.ceil(node.getBoundingClientRect().bottom - root.getBoundingClientRect().top) + 8}px`,
+        );
+    };
+    let resizeFrame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(resize);
+    });
+    observer.observe(node);
+    window.addEventListener('resize', resize);
+    resize();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(resizeFrame);
+      window.removeEventListener('resize', resize);
+    };
   }, []);
+
+  // Shared toolbar dialogs are portalled outside the game. Observe their open
+  // state once, rather than querying the DOM on every animation frame.
+  useEffect(() => {
+    const refresh = () => {
+      const blocked =
+        helpOpen ||
+        document.hidden ||
+        !!document.querySelector(
+          'dialog[open], [role="dialog"], [role="alertdialog"]',
+        );
+      pausedRef.current = blocked;
+      setPaused(blocked);
+      sceneRef.current?.setInputEnabled(!blocked);
+    };
+    const observer = new MutationObserver(refresh);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['open', 'role'],
+    });
+    document.addEventListener('visibilitychange', refresh);
+    refresh();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [helpOpen]);
 
   // Initialize scene and audio once; muting must not rebuild the round.
   useEffect(() => {
@@ -157,8 +247,13 @@ export default function CarryOnCarnageGame() {
         const w = localWorld.current;
 
         // Update bots & simulation
-        updateCarryOnBots(w, eventIdRef);
-        advanceCarryOn(w, dt, eventIdRef);
+        sceneRef.current?.setInputEnabled(
+          !pausedRef.current && w.phase === 'packing',
+        );
+        if (!pausedRef.current) {
+          updateCarryOnBots(w, eventIdRef);
+          advanceCarryOn(w, dt, eventIdRef);
+        }
 
         // Visual burst particles and toasts for new events
         for (const evt of w.events) {
@@ -170,7 +265,7 @@ export default function CarryOnCarnageGame() {
             }
 
             // Show toast message
-            setToast({ text: evt.text, id: evt.id });
+            setToast(evt);
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
             toastTimerRef.current = setTimeout(() => {
               setToast(null);
@@ -196,6 +291,7 @@ export default function CarryOnCarnageGame() {
 
     return () => {
       cancelAnimationFrame(animId);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
       sceneRef.current?.dispose();
       audio.dispose();
       if (audioRef.current === audio) audioRef.current = null;
@@ -224,6 +320,7 @@ export default function CarryOnCarnageGame() {
   return (
     <div
       className="carryon-container"
+      data-nearby={!!nearbySc}
       {...partyRound(
         world?.phase === 'flight_departed',
         world
@@ -243,70 +340,82 @@ export default function CarryOnCarnageGame() {
           CARRY-ON CARNAGE<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={!soundEnabled}
           onToggleSound={() => setSoundEnabled((v) => !v)}
-          onHelp={() => {}}
+          onHelp={() => setHelpOpen(true)}
           workshop="/carry-on-carnage/admin"
         />
       </header>
 
-      {/* Top Left: Target Baggage Quota */}
-      {world && (
-        <div className="carryon-target-hud house-card">
-          <Luggage size={18} />
-          <span>{strings.bagsApproved}</span>
-          <span className="carryon-target-count">
-            {world.approvedCount} / {world.targetBags}
-          </span>
-        </div>
-      )}
+      <div className="carryon-hud" ref={hudRef}>
+        {/* Top Left: Target Baggage Quota */}
+        {world && (
+          <div className="carryon-target-hud house-card">
+            <Luggage size={18} />
+            <span>{strings.bagsApproved}</span>
+            <span className="carryon-target-count">
+              {world.approvedCount} / {world.targetBags}
+            </span>
+          </div>
+        )}
 
-      {/* Top Center: Airport FIDS Board */}
-      {world && (
-        <div className="carryon-fids">
-          <div className="carryon-fids-flight">
-            <span className="carryon-fids-label">{strings.flightToIbiza}</span>
-            <div className="carryon-fids-status-row">
-              <span
-                className={`carryon-fids-dot ${isUrgent ? 'urgent' : ''}`}
-              />
-              <span className="carryon-fids-code">
-                {isUrgent ? strings.finalCall : strings.nowBoarding}
+        {/* Top Center: Airport FIDS Board */}
+        {world && (
+          <div className="carryon-fids">
+            <div className="carryon-fids-flight">
+              <span className="carryon-fids-label">
+                {strings.flightToIbiza}
+              </span>
+              <div className="carryon-fids-status-row">
+                <span
+                  className={`carryon-fids-dot ${isUrgent ? 'urgent' : ''}`}
+                />
+                <span className="carryon-fids-code">
+                  {world.phase === 'flight_departed'
+                    ? ui.closed
+                    : isUrgent
+                      ? strings.finalCall
+                      : strings.nowBoarding}
+                </span>
+              </div>
+            </div>
+            <div className={`carryon-fids-timer ${isUrgent ? 'urgent' : ''}`}>
+              <Timer size={18} />
+              <span className="carryon-fids-clock">
+                {formatTime(remainingMs)}
               </span>
             </div>
           </div>
-          <div className={`carryon-fids-timer ${isUrgent ? 'urgent' : ''}`}>
-            <Timer size={18} />
-            <span className="carryon-fids-clock">
-              {formatTime(remainingMs)}
-            </span>
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Top Right: Score & Fee Meters */}
-      {world && (
-        <div className="carryon-score-hud">
-          <div className="carryon-score-badge">
-            <Sparkles size={16} />
-            <span>
-              {world.totalScore} {strings.pts}
-            </span>
-          </div>
-          {world.feesPaid > 0 && (
-            <div className="carryon-fee-badge">
-              <AlertTriangle size={14} />
+        {/* Top Right: Score & Fee Meters */}
+        {world && (
+          <div className="carryon-score-hud">
+            <div className="carryon-score-badge">
+              <Sparkles size={16} />
               <span>
-                -${world.feesPaid} {strings.gateFees}
+                {world.totalScore} {strings.pts}
               </span>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Event Toast Notification */}
-      {toast && <div className="carryon-toast">{toast.text}</div>}
-
+            {world.feesPaid > 0 && (
+              <div className="carryon-fee-badge">
+                <AlertTriangle size={14} />
+                <span>
+                  -${world.feesPaid} {strings.gateFees}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+        {/* Event Toast Notification */}
+        {toast && (
+          <output className="carryon-toast">
+            {eventMessage(toast, language)}
+          </output>
+        )}
+      </div>
       {/* Luggage Strain & Compression Gauge HUD */}
       {nearbySc && (
         <div className="carryon-luggage-hud house-card">
@@ -390,6 +499,18 @@ export default function CarryOnCarnageGame() {
         </div>
       )}
 
+      <TouchControls
+        disabled={paused || world?.phase !== 'packing'}
+        move={(vector) => {
+          audioRef.current?.unlock();
+          sceneRef.current?.moveTouch(vector);
+        }}
+        jump={() => {}}
+        showJump={false}
+        moveLabel={ui.move}
+        joystickLabel={ui.joystick}
+      />
+      <p className="carryon-move-hint">{ui.movement}</p>
       {/* Action Controls Prompt Dock */}
       <div className="carryon-dock tool-dock">
         <button
@@ -402,7 +523,7 @@ export default function CarryOnCarnageGame() {
               ? strings.packIntoBag
               : me?.holdingSuitcase
                 ? strings.insertInSizer
-                : me?.sittingOn === nearbySc?.id
+                : me?.sittingOn && me.sittingOn === nearbySc?.id
                   ? nearbySc && nearbySc.items.length > 0
                     ? strings.removeItem
                     : strings.hopOffKey
@@ -445,9 +566,53 @@ export default function CarryOnCarnageGame() {
         </button>
       </div>
 
+      {helpOpen && (
+        <CarryOnModal
+          title={ui.help}
+          onClose={() => {
+            setHelpOpen(false);
+            audioRef.current?.unlock();
+          }}
+        >
+          <h2>{ui.help}</h2>
+          <p>{ui.intro}</p>
+          <button
+            className="carryon-restart-btn"
+            onClick={() => {
+              setHelpOpen(false);
+              room.setOpen(true);
+            }}
+          >
+            {language === 'de' ? 'Mehrspieler' : 'Multiplayer'}
+          </button>
+          <ol>
+            {ui.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <p>{ui.movement}</p>
+          <p>{ui.team}</p>
+          <p>{ui.fees}</p>
+          <button
+            className="carryon-restart-btn"
+            onClick={() => {
+              setHelpOpen(false);
+              audioRef.current?.unlock();
+            }}
+          >
+            {ui.play}
+          </button>
+        </CarryOnModal>
+      )}
       {/* Round End Modal */}
       {world?.phase === 'flight_departed' && (
-        <div className="carryon-end-modal">
+        <CarryOnModal
+          title={
+            world.approvedCount >= world.targetBags
+              ? strings.boardingComplete
+              : strings.flightDeparted
+          }
+        >
           <div className="carryon-end-card">
             <Plane size={48} />
             <h2 className="carryon-end-title">
@@ -491,7 +656,7 @@ export default function CarryOnCarnageGame() {
                   {strings.netScoreStat}
                 </span>
                 <span className="carryon-stat-value is-accent">
-                  {world.totalScore} PTS
+                  {world.totalScore} {strings.pts}
                 </span>
               </div>
             </div>
@@ -505,7 +670,7 @@ export default function CarryOnCarnageGame() {
               <span>{strings.catchNextFlight}</span>
             </button>
           </div>
-        </div>
+        </CarryOnModal>
       )}
     </div>
   );

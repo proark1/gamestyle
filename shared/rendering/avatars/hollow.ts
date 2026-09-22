@@ -27,6 +27,7 @@ function glow(color: string) {
   let lit = glows.get(color);
   if (!lit) {
     lit = new T.MeshBasicMaterial({ color, toneMapped: false });
+    lit.userData.shared = true;
     glows.set(color, lit);
   }
   return lit;
