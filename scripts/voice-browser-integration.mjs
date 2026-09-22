@@ -3,10 +3,9 @@ import { chromium } from '@playwright/test';
 import { createServer } from 'vite';
 import { handlePeerRoom } from '../shared/peer/coordinator.ts';
 import tailwindcss from '@tailwindcss/postcss';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
-import { spawn } from 'node:child_process';
-import { AccessToken } from 'livekit-server-sdk';
-import { authorizeVoice, storageCode } from '../shared/voice/membership.ts';
+import { mkdirSync, writeFileSync, readFileSync, realpathSync } from 'node:fs';
+import { handleVoicePeer } from '../shared/voice/peer-coordinator.ts';
+import { storageCode } from '../shared/voice/membership.ts';
 import { hashToken } from '../shared/rooms/identity.ts';
 
 // Real browser WebRTC and Web Audio; only microphone hardware and storage are
@@ -15,11 +14,10 @@ const rows = new Map();
 const earlyJoin = process.argv.includes('--early');
 const ui = process.argv.includes('--ui');
 const serverGame = process.argv
-  .find((arg) => arg.startsWith('--livekit='))
+  .find((arg) => arg.startsWith('--server-room='))
   ?.split('=')[1];
 if (serverGame)
   assert.ok(['chaos', 'first-person', 'shelf-control'].includes(serverGame));
-let livekit;
 mkdirSync('.tmp/voice', { recursive: true });
 if (ui)
   writeFileSync(
@@ -57,7 +55,6 @@ const server = await createServer({
     noDiscovery: true,
     include: [
       '@capacitor/core',
-      ...(serverGame ? ['livekit-client'] : []),
       ...(ui
         ? [
             'react',
@@ -74,7 +71,12 @@ const server = await createServer({
         : []),
     ],
   },
-  server: { host: '127.0.0.1', port: 0, watch: null },
+  server: {
+    host: '127.0.0.1',
+    port: 0,
+    watch: null,
+    fs: { allow: [process.cwd(), realpathSync('node_modules')] },
+  },
   plugins: [
     {
       name: 'voice-test-coordinator',
@@ -102,35 +104,31 @@ const server = await createServer({
             res.end(
               '<!doctype html><title>Voice integration</title><link rel="icon" href="data:,">',
             );
-          } else if (req.url === '/api/voice/token') {
+          } else if (req.url === '/api/voice/peer') {
             try {
               let body = '';
               for await (const chunk of req) body += chunk;
-              const { player, name } = await authorizeVoice(
+              // Model the independently-running game's player heartbeats.
+              const membership = {
+                get: async (code) => {
+                  const row = await store.get(code);
+                  if (!row) return null;
+                  const state = JSON.parse(row.state);
+                  const now = Date.now();
+                  state.world.players.forEach((p) => (p.seen = now));
+                  return { ...row, updated: now, state: JSON.stringify(state) };
+                },
+              };
+              const reply = await handleVoicePeer(
                 store,
+                membership,
                 JSON.parse(body),
               );
-              const token = new AccessToken('devkey', 'secret', {
-                identity: player.id,
-                name: player.name,
-                ttl: 120,
-              });
-              token.addGrant({
-                room: name,
-                roomJoin: true,
-                canPublish: true,
-                canSubscribe: true,
-              });
+              reply.view.iceServers = [];
               res.setHeader('Content-Type', 'application/json');
-              res.end(
-                JSON.stringify({
-                  configured: true,
-                  url: 'ws://127.0.0.1:19880',
-                  token: await token.toJwt(),
-                }),
-              );
+              res.end(JSON.stringify(reply));
             } catch (error) {
-              res.statusCode = 401;
+              res.statusCode = error.status || 500;
               res.end(JSON.stringify({ error: error.message }));
             }
           } else if (req.url === '/api/peer') {
@@ -158,29 +156,6 @@ let browser;
 try {
   const origin = `http://127.0.0.1:${server.httpServer.address().port}`;
   console.log(`Voice test server: ${origin}`);
-  if (serverGame) {
-    mkdirSync('.tmp/voice', { recursive: true });
-    writeFileSync(
-      '.tmp/voice/livekit-test.yaml',
-      'port: 19880\nbind_addresses: [127.0.0.1]\nrtc:\n  tcp_port: 19881\n  udp_port: 19882\n  node_ip: 127.0.0.1\n  use_external_ip: false\nkeys:\n  devkey: secret\nlogging:\n  level: error\n',
-    );
-    livekit = spawn(
-      process.env.LIVEKIT_BINARY || 'work/livekit/livekit-server.exe',
-      ['--dev', '--config', '.tmp/voice/livekit-test.yaml'],
-      { windowsHide: true, stdio: 'inherit' },
-    );
-    for (let attempt = 0; ; attempt++) {
-      try {
-        await fetch('http://127.0.0.1:19880', {
-          signal: AbortSignal.timeout(500),
-        });
-        break;
-      } catch {
-        if (attempt > 300) throw new Error('Local LiveKit did not start');
-        await new Promise((r) => setTimeout(r, 100));
-      }
-    }
-  }
   browser = await chromium.launch({
     channel: process.env.VOICE_TEST_BROWSER || 'chrome',
     headless: true,
@@ -204,20 +179,16 @@ try {
       });
       console.log('Page created');
       await page.goto(`${origin}/voice-test`);
-      await page.evaluate(async (serverVoice) => {
+      await page.evaluate(async () => {
         const permission = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
         permission.getTracks().forEach((track) => track.stop());
         window.voiceModules = {
           mesh: await import('/shared/peer/mesh.ts'),
-          voice: await import(
-            serverVoice
-              ? '/shared/voice/client.ts'
-              : '/shared/voice/peer-client.ts'
-          ),
+          voice: await import('/shared/voice/peer-client.ts'),
         };
-      }, !!serverGame);
+      });
       return page;
     }),
   );
@@ -557,5 +528,4 @@ try {
 } finally {
   await browser?.close();
   await server.close();
-  livekit?.kill();
 }

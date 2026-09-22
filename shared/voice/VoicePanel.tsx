@@ -8,7 +8,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import type { VoiceClient, VoiceState } from './client';
+import type { VoiceClient } from './peer-client';
+import type { VoiceState } from './types';
 import type { VoiceSession, VoiceSnapshot } from './types';
 import './voice.css';
 import { bindPushToTalk } from './push-to-talk';
@@ -159,9 +160,7 @@ export default function VoicePanel({
     setBusy(true);
     setState({ ...initial, status: 'Connecting…' });
     try {
-      const { VoiceClient } = session.peer
-        ? await import('./peer-client')
-        : await import('./client');
+      const { VoiceClient } = await import('./peer-client');
       if (!alive.current || request !== attempt.current) return;
       await client.current?.dispose();
       if (!alive.current || request !== attempt.current) return;

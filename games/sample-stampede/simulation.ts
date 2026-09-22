@@ -1,5 +1,6 @@
 import {
   ITEM_DEFS,
+  idleInput,
   type BulkItemKind,
   type ExitGauntlet,
   type GroundItem,
@@ -668,13 +669,11 @@ export function sampleStampedeAction(
     const curIdx = teams.indexOf(player.team);
     player.team = teams[(curIdx + 1) % teams.length];
   } else if (action.type === 'reset' && isHost) {
-    world.timeRemaining = MATCH_DURATION;
-    world.status = 'active';
-    world.teamScores = { red: 0, blue: 0, yellow: 0, green: 0 };
-    for (const c of world.carts) {
-      c.score = 0;
-      c.items = [];
-    }
+    const fresh = freshSampleStampedeWorld(world.clock);
+    fresh.players = world.players.map((p) => ({ ...p, input: idleInput() }));
+    physicsCache.get(world)?.destroy();
+    physicsCache.delete(world);
+    Object.assign(world, fresh);
   }
 }
 

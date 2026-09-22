@@ -1,3 +1,4 @@
+import type { VoiceSession } from '../voice/types';
 import { apiFetch } from '../browser/api-fetch';
 import {
   PeerError,
@@ -71,7 +72,10 @@ export class PeerMesh {
   private outbox: Signal[] = [];
   private heartbeat?: ReturnType<typeof setTimeout>;
   private flushTimer?: ReturnType<typeof setTimeout>;
-  constructor(readonly session: PeerSession) {}
+  constructor(
+    readonly session: VoiceSession,
+    private request = peerRequest,
+  ) {}
   on<K extends keyof Listeners>(event: K, listener: Listeners[K]) {
     this.listeners[event].add(listener);
     return () => {
@@ -114,7 +118,7 @@ export class PeerMesh {
         if (this.closed)
           throw new PeerError('This room connection has closed.', 401);
         const started = performance.now();
-        const reply = await peerRequest({
+        const reply = await this.request({
           ...this.session,
           instance: this.instance,
           cursor: this.cursor,

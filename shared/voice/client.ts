@@ -10,17 +10,8 @@ import type {
   VoiceSession as Session,
   VoiceSnapshot as Snapshot,
 } from './types';
-export type VoiceState = {
-  status: string;
-  connected: boolean;
-  mic: boolean;
-  speaking: string[];
-  level: number;
-  error?: string;
-  audioBlocked?: boolean;
-  ready?: boolean;
-  mode?: 'open' | 'push';
-};
+import type { VoiceState } from './types';
+export type { VoiceState } from './types';
 type Peer = {
   source: MediaStreamAudioSourceNode;
   gain: GainNode;

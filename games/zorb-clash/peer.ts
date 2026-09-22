@@ -21,12 +21,14 @@ import { movement } from './controls';
 
 const adapter: GameAdapter<ZorbClashWorld, ZorbClashSnapshot> = {
   game: 'zorb-clash',
+  canJoin: () => true,
   autonomous: (p) => !!p.bot,
   actions: ['input', 'ready', 'reset', 'switch_team'],
   create: (now) => {
     const w = freshZorbWorld(now);
     // Add default bots to fill the arena if needed
     w.players.push(newZorbPlayer('bot-red-1', 'Bumper Bob', 1, 'red', true));
+    w.players.push(newZorbPlayer('bot-red-2', 'Bouncer Bea', 0, 'red', true));
     w.players.push(newZorbPlayer('bot-blue-1', 'Sumo Sam', 2, 'blue', true));
     w.players.push(newZorbPlayer('bot-blue-2', 'Rollin Ron', 3, 'blue', true));
     return w;
@@ -58,7 +60,14 @@ const adapter: GameAdapter<ZorbClashWorld, ZorbClashSnapshot> = {
     w.players.push(p);
   },
   remove: (w, id) => {
-    w.players = w.players.filter((p) => p.id !== id);
+    const player = w.players.find((p) => p.id === id);
+    if (player) {
+      player.id = `bot-${id}`;
+      player.name = 'Bumper Bot';
+      player.bot = true;
+      player.input = idleInput();
+      player.dashCharge = 0;
+    }
   },
   input: (w, id, raw) => {
     const player = w.players.find((p) => p.id === id);

@@ -36,6 +36,7 @@ const adapter: GameAdapter<DriveThruWorld, DriveThruSnapshot> = {
     'reachTray',
     'toggleWipers',
     'swatDistraction',
+    'pourDrink',
   ],
   create: (now) => {
     const w = freshDriveThruWorld(now);

@@ -62,5 +62,5 @@ export async function authorizeVoice(
   );
   if (!player || room.members[body.id] !== hash)
     throw new Error('Game pass expired.');
-  return { player, name: voiceRoomName(body.game, body.code) };
+  return { player, room, name: voiceRoomName(body.game, body.code) };
 }
