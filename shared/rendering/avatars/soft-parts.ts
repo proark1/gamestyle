@@ -71,6 +71,33 @@ export function rounded(
   return place(parent, new T.Mesh(geometry, surface(color)), position);
 }
 
+/** A shoe sole with a rounded footprint, independent of its thin height. */
+export function shoeSole(
+  parent: T.Object3D,
+  size: Point,
+  position: Point,
+  color: string,
+) {
+  const mesh = lathe(
+    parent,
+    'shoe-sole',
+    () => [
+      [0, -0.5],
+      [0.88, -0.5],
+      [0.97, -0.4],
+      [1, -0.2],
+      [1, 0.2],
+      [0.97, 0.4],
+      [0.88, 0.5],
+      [0, 0.5],
+    ],
+    position,
+    color,
+  );
+  mesh.scale.set(size[0] / 2, size[1], size[2] / 2);
+  return mesh;
+}
+
 /** A capsule standing on Y: `length` is the straight middle between the caps. */
 export function capsule(
   parent: T.Object3D,

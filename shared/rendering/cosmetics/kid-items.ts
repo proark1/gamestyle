@@ -7,7 +7,13 @@ import {
   onFace,
   trouserRadius,
 } from '../avatars/hoop-kid';
-import { custom, rounded, soft, surface } from '../avatars/soft-parts';
+import {
+  custom,
+  rounded,
+  shoeSole,
+  soft,
+  surface,
+} from '../avatars/soft-parts';
 import { CLOTH } from '../palette';
 
 /**
@@ -285,16 +291,12 @@ function boot(
   top: number,
   options: { cuff?: string; toe?: string } = {},
 ) {
+  parent.parent?.getObjectByName('shoe-sole')?.removeFromParent();
+  parent.parent?.getObjectByName('shoe-collar')?.removeFromParent();
   tube(parent, `boot:${top}`, SOLE + 0.08, top, 0.105, 0.095, hex);
   soft(parent, [0.098, 0.09, 0.16], [0, SOLE + 0.095, 0.04], hex);
   soft(parent, [0.09, 0.06, 0.08], [0, SOLE + 0.07, 0.135], options.toe ?? hex);
-  rounded(
-    parent,
-    [0.19, 0.05, 0.33],
-    [0, SOLE + 0.025, 0.045],
-    CLOTH.ink,
-    0.02,
-  );
+  shoeSole(parent, [0.19, 0.05, 0.33], [0, SOLE + 0.025, 0.045], CLOTH.ink);
   if (options.cuff)
     tube(
       parent,
@@ -585,7 +587,7 @@ export const KID_ITEMS: Record<string, (dress: KidDress) => void> = {
   'golden-kicks'({ legs }) {
     for (const leg of legs) {
       boot(leg, CLOTH.gold, -0.33, { cuff: '#fff1b8' });
-      tube(leg, 'kick-lace', -0.38, -0.36, 0.1, 0.1, '#fff1b8');
+      tube(leg, 'kick-lace', -0.38, -0.36, 0.111, 0.111, '#fff1b8');
     }
   },
 
@@ -607,7 +609,8 @@ export const KID_ITEMS: Record<string, (dress: KidDress) => void> = {
         '#d7433a',
       );
       soft(leg, [0.12, 0.085, 0.1], [0, SOLE + 0.075, 0.33], '#d7433a');
-      rounded(leg, [0.23, 0.04, 0.5], [0, SOLE + 0.02, 0.14], '#2a2a2a', 0.02);
+      leg.parent?.getObjectByName('shoe-sole')?.removeFromParent();
+      shoeSole(leg, [0.23, 0.04, 0.5], [0, SOLE + 0.02, 0.14], '#2a2a2a');
     }
   },
 
@@ -757,8 +760,8 @@ function beardOnJaw(head: T.Object3D, hex: string, lip = true) {
     [0, 0.055, [0.1, 0.06, 0.055]],
     [0.075, 0.075, [0.07, 0.055, 0.05]],
     [0.135, 0.115, [0.06, 0.06, 0.05]],
-    [0.18, 0.175, [0.055, 0.07, 0.05]],
-    [0.205, 0.245, [0.05, 0.07, 0.048]],
+    [0.18, 0.15, [0.055, 0.055, 0.05]],
+    [0.205, 0.195, [0.05, 0.045, 0.048]],
   ];
   for (const [x, y, radii] of along)
     for (const side of x ? [-1, 1] : [1])

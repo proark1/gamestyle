@@ -67,6 +67,24 @@ function curlyMop(hat: boolean | string) {
         new T.Vector3(radius, radius * (crown ? 0.5 : 0.9), radius),
       ),
     );
+    // Enclosing headwear must contain the entire curl, not just its centre.
+    if (hat === 'viking-helmet' || hat === 'skipper-cap') {
+      const vertices = curl.getAttribute('position');
+      const brim = seat - (hat === 'viking-helmet' ? 0.045 : 0);
+      for (let v = 0; v < vertices.count; v++) {
+        const y = vertices.getY(v);
+        if (y <= brim - 0.04) continue;
+        const blend = Math.min(1, (y - brim + 0.04) / 0.04);
+        const inset = hat === 'viking-helmet' ? 0.24 * blend : 0;
+        vertices.setXYZ(
+          v,
+          vertices.getX(v) * (1 - inset),
+          Math.min(y, brim - 0.008),
+          vertices.getZ(v) * (1 - inset),
+        );
+      }
+      curl.computeVertexNormals();
+    }
     parts[i % SHADES.length].push(curl);
   }
   ball.dispose();

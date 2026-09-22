@@ -14,9 +14,10 @@ import {
   trouserRadius,
 } from '../avatars/hoop-kid';
 import { material } from '../primitives';
+import { KID_ITEMS } from './kid-items';
+import { shoeSole } from '../avatars/soft-parts';
 import { addPart, lookGroup, modelsOf, partTop, type Worn } from './dress';
 import { PLAYER, type ItemModel, type Part } from './items';
-import { KID_ITEMS } from './kid-items';
 
 /**
  * Wardrobe items are modelled on the worker's blocky body. This puts the same
@@ -217,6 +218,56 @@ function widest(frame: Frame, low: number, high: number) {
   };
 }
 
+/** Follow the changing torso radius on both faces, including the side joins. */
+function sash(
+  parent: T.Object3D,
+  frame: Frame,
+  height: number,
+  width: number,
+  colour: string,
+) {
+  const vertices: number[] = [],
+    indices: number[] = [];
+  const steps = 96;
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i / steps) * Math.PI * 2;
+    for (const [edge, out] of [
+      [-1, GAP],
+      [1, GAP],
+      [1, GAP + BAND],
+      [-1, GAP + BAND],
+    ]) {
+      let low = HIP[1],
+        high = HIP[1] + 0.43;
+      for (let n = 0; n < 24; n++) {
+        const mid = (low + high) / 2;
+        const target =
+          height - frame.kid(mid).w * Math.sin(angle) + (edge * width) / 2;
+        if (mid < target) low = mid;
+        else high = mid;
+      }
+      const y = (low + high) / 2;
+      const section = frame.kid(y);
+      vertices.push(
+        (section.w + out) * Math.sin(angle),
+        y,
+        (section.d + out) * Math.cos(angle),
+      );
+    }
+    if (i < steps)
+      for (let e = 0; e < 4; e++) {
+        const a = i * 4 + e,
+          b = i * 4 + ((e + 1) % 4);
+        indices.push(a, b, a + 4, b, b + 4, a + 4);
+      }
+  }
+  const geometry = new T.BufferGeometry();
+  geometry.setAttribute('position', new T.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  parent.add(shaded(new T.Mesh(geometry, material(colour))));
+}
+
 /** Places a body, leg or sleeve part through `frame`. */
 function placeOn(parent: T.Object3D, part: Part, frame: Frame, player: string) {
   const [x, y, z] = part.at;
@@ -236,6 +287,21 @@ function placeOn(parent: T.Object3D, part: Part, frame: Frame, player: string) {
     const tall = h * frame.stretch;
     const span = widest(frame, height - tall / 2, height + tall / 2);
 
+    if (blocky && h <= 0.08 && y < -0.44 && w > 0.25 && z < 0.15) {
+      parent.parent?.getObjectByName('shoe-sole')?.removeFromParent();
+      shoeSole(
+        parent,
+        [w * sx, tall, d * sz],
+        [
+          kid.x + (x - worker.x) * sx,
+          -HIP[1] + tall / 2,
+          kid.z + (z - worker.z) * sz,
+        ],
+        colour,
+      );
+      return;
+    }
+
     // A band that went all round the worker goes all round the kid.
     if (
       (!frame.blocky || height > frame.blocky.ankle) &&
@@ -246,15 +312,17 @@ function placeOn(parent: T.Object3D, part: Part, frame: Frame, player: string) {
       w >= 0.7 * worker.w &&
       d >= 0.7 * worker.d
     ) {
+      if (blocky)
+        parent.parent?.getObjectByName('shoe-collar')?.removeFromParent();
       const ring = band(
         parent,
         span.w + GAP,
         (span.d + GAP) / (span.w + GAP),
-        tall,
+        blocky ? Math.min(tall, 0.085) : tall,
         BAND,
         colour,
       );
-      ring.position.set(kid.x, height, kid.z);
+      ring.position.set(kid.x, blocky ? -HIP[1] + 0.18 : height, kid.z);
       return;
     }
 
@@ -266,11 +334,7 @@ function placeOn(parent: T.Object3D, part: Part, frame: Frame, player: string) {
       Math.abs(v) < 0.35 &&
       d >= 1.4 * worker.d
     ) {
-      const slant = new T.Group();
-      slant.position.set(kid.x, height, kid.z);
-      slant.rotation.z = roll + Math.PI / 2;
-      parent.add(slant);
-      band(slant, kid.w + GAP, DEPTH, w * sx, BAND * 1.5, colour);
+      sash(parent, frame, height, w * sx, colour);
       return;
     }
 
@@ -371,9 +435,16 @@ function headSlice(y: number) {
  * Places a glasses, mask or beard part on the kid's face. Wide straps and
  * frames curve round the head rather than standing out from it like a plank.
  */
-function placeOnFace(head: T.Object3D, part: Part, player: string) {
+function placeOnFace(
+  head: T.Object3D,
+  part: Part,
+  player: string,
+  beard = false,
+) {
   const [x, y, z] = part.at;
-  const height = faceHeight(y);
+  const height =
+    faceHeight(y) -
+    (beard ? 0.035 * Math.min(1, Math.max(0, (y + 0.46) / 0.16)) : 0);
   const across = x * FACE_SPREAD;
   if (part.shape === 'box' && part.size[0] * FACE_SCALE > 0.45) {
     const slice = headSlice(height);
@@ -475,6 +546,18 @@ function wearKidHat(
       part.size[2] >= 0.5,
   );
   for (const part of parts) {
+    // The helmet shell starts at the rim; a full ellipsoid narrows below it
+    // and lets forehead curls poke through the metal.
+    if (part.shape === 'ball' && part.size[0] >= 0.29 && part.at[1] === 0) {
+      dome(
+        group,
+        [part.size[0], part.size[1] + 0.04, part.size[2]],
+        -0.04,
+        [part.at[0], part.at[2]],
+        colourOf(part, player),
+      );
+      continue;
+    }
     if (part.shape !== 'box' || !centred(part)) {
       addPart(group, part, [0, 0, 0], 1, player);
       continue;
@@ -523,9 +606,28 @@ function wearKidHat(
 export function dressKid(model: T.Object3D, player: string, look?: Look): Worn {
   const models = modelsOf(look);
   const rig = model.userData as Record<string, T.Object3D>;
+  if (look?.face === 'snorkel-mask' && models.face) {
+    const path = new T.CatmullRomCurve3([
+      new T.Vector3(0.07, 0.185, 0.32),
+      new T.Vector3(0.25, 0.185, 0.34),
+      new T.Vector3(0.37, 0.25, 0.27),
+      new T.Vector3(0.38, 0.48, 0.17),
+      new T.Vector3(0.38, 0.73, 0.17),
+      new T.Vector3(0.34, 0.77, 0.17),
+    ]);
+    lookGroup(rig.head).add(
+      shaded(
+        new T.Mesh(
+          new T.TubeGeometry(path, 40, 0.025, 12, false),
+          material('#f2d14b'),
+        ),
+      ),
+    );
+  }
   for (const [slot, item] of Object.entries(models) as [Slot, ItemModel][]) {
-    // An item the kid has his own model for is built from his own shapes.
-    const own = KID_ITEMS[look?.[slot] ?? ''];
+    // The sash uses the shared surface-following fit; retain native clothing elsewhere.
+    const own =
+      look?.[slot] === 'badge-sash' ? undefined : KID_ITEMS[look?.[slot] ?? ''];
     if (own) {
       own({
         body: lookGroup(rig.body),
@@ -537,7 +639,19 @@ export function dressKid(model: T.Object3D, player: string, look?: Look): Worn {
       continue;
     }
     for (const part of item.parts) {
-      if (part.on === 'face') placeOnFace(lookGroup(rig.head), part, player);
+      if (
+        look?.face === 'snorkel-mask' &&
+        slot === 'face' &&
+        (part.shape === 'taper' || (part.shape === 'box' && part.size[0] < 0.2))
+      )
+        continue;
+      if (part.on === 'face')
+        placeOnFace(
+          lookGroup(rig.head),
+          part,
+          player,
+          slot === 'beard' && look?.beard !== 'big-moustache',
+        );
       else if (part.on === 'body')
         placeOn(lookGroup(rig.body), part, TORSO, player);
       else if (part.on === 'legs' || part.on === 'arms') {
