@@ -190,7 +190,7 @@
   margin: 5px 4px;
   background: #dde2d5;
 }
-.game-toolbar .toolbar-options-panel .game-toolbar-button {
+nav.game-toolbar .toolbar-options-panel .game-toolbar-button {
   width: 100%;
   min-width: 0;
   min-height: 44px;
