@@ -189,7 +189,8 @@ function promptFor(
   )
     return { text: s.promptClip(k), tone: 'info', focus: 'clip' };
 
-  return null;
+  const hint = s.routeHints[sectionAt(me.x)];
+  return hint ? { text: hint, tone: 'info' } : null;
 }
 
 function useStrings() {
@@ -338,6 +339,7 @@ export default function ChainOfFoolsGame() {
         }
       },
       action: dispatch,
+      camera: setCamera,
     });
     scene.current.setLocal(sessionRef.current.id);
 
@@ -446,8 +448,6 @@ export default function ChainOfFoolsGame() {
       className="cof-game"
       {...partyRound(
         ended,
-        // The time bonus keeps shrinking after the whistle; the ribbon keeps
-        // the first ended frame, where it is still the finishing score.
         w ? partyGoal(w.winner === 'crew', crewScore(w)) : null,
       )}
     >
@@ -465,7 +465,10 @@ export default function ChainOfFoolsGame() {
           voice={room.voice}
           muted={muted}
           onToggleSound={toggleMute}
-          onHelp={() => setHelp(true)}
+          onHelp={() => {
+            scene.current?.resetInput();
+            setHelp(true);
+          }}
         />
       </header>
 
@@ -488,11 +491,7 @@ export default function ChainOfFoolsGame() {
           <div className="cof-hud-badge cof-badge-timer">
             <Timer size={18} />
             <div>
-              <strong className="cof-timer">
-                {formatTime(
-                  playing ? timeLeft(w) : Math.max(0, w.endsAt - w.clock),
-                )}
-              </strong>
+              <strong className="cof-timer">{formatTime(timeLeft(w))}</strong>
               <small>{strings.hudTime}</small>
             </div>
           </div>
@@ -524,9 +523,19 @@ export default function ChainOfFoolsGame() {
                 />
               ))}
             </div>
-            <small>
-              {strings.sections[sectionAt(trailingX)] ?? sectionAt(trailingX)}
-            </small>
+            <div className="cof-route-summary">
+              <small>
+                {strings.sections[sectionAt(trailingX)] ?? sectionAt(trailingX)}
+              </small>
+              <span>
+                {strings.distanceLeft(
+                  Math.ceil(Math.max(0, FINISH_X - trailingX)),
+                )}
+              </span>
+            </div>
+            <span className="cof-checkpoint-count">
+              {strings.checkpointSaved(w.checkpoint, CHECKPOINTS.length - 1)}
+            </span>
           </div>
 
           <div className="cof-hud-badge cof-meters">
@@ -609,10 +618,7 @@ export default function ChainOfFoolsGame() {
           <h2>{w.winner === 'crew' ? strings.wonTitle : strings.lostTitle}</h2>
           <p>
             {w.winner === 'crew'
-              ? strings.wonDesc(
-                  Math.round(Math.max(0, w.endsAt - w.clock) / 1000),
-                  w.wipes,
-                )
+              ? strings.wonDesc(Math.round(timeLeft(w) / 1000), w.wipes)
               : strings.lostDesc(
                   strings.sections[sectionAt(trailingX)] ??
                     sectionAt(trailingX),

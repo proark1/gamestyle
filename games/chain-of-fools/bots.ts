@@ -21,9 +21,11 @@ export function reconcileChainBots(world: ChainWorld) {
 
   while (bots.length < needed) {
     const index = bots.length;
+    let number = 1;
+    while (bots.some((p) => p.id === `bot-${number}`)) number++;
     bots.push(
       newPlayer(
-        `bot-${index + 1}`,
+        `bot-${number}`,
         BOT_NAMES[index % BOT_NAMES.length],
         (humans.length + index + 1) % 4,
         0,
@@ -102,6 +104,12 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
   // Do not out-walk the far end of the line.
   const trailing = trailingNeighbour(bot, world);
   if (trailing && bot.x - trailing.x > CHAIN_SLACK * 0.85) {
+    if (
+      trailing.link < bot.link &&
+      bot.grounded &&
+      Math.abs(trailing.y - bot.y) < 0.6
+    )
+      bot.input.x = -0.4;
     if (trailing.state === 'dangling' || trailing.state === 'limp') {
       bot.input.brace = true;
     }
@@ -125,7 +133,10 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
     Math.abs(lane) > 0.15 ? Math.max(-0.8, Math.min(0.8, lane * 1.6)) : 0;
   // Hang back behind the worker ahead, unless they have gone down a level:
   // then the way on is down after them.
-  if (following && bot.x > leader.x - 1.0 && leader.y >= bot.y - 1.2) return;
+  if (following && bot.x > leader.x - 1.0 && leader.y >= bot.y - 1.2) {
+    if (bot.grounded && bot.x > leader.x - 0.6) bot.input.x = -0.4;
+    return;
+  }
 
   // Forward, which on the cargo net also means down it.
   bot.input.x = 1;

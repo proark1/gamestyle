@@ -31,20 +31,40 @@ const adapter: GameAdapter<ChainWorld, ChainSnapshot> = {
   },
 
   add: (world, member) => {
-    world.players.push(
-      newPlayer(
-        member.id,
-        member.name,
-        member.color,
-        world.players.length,
-        false,
-      ),
+    const slot = world.players.findIndex((p) => p.bot);
+    const player = newPlayer(
+      member.id,
+      member.name,
+      member.color,
+      world.players.length,
+      false,
     );
+    if (slot >= 0) {
+      const previous = world.players[slot];
+      world.players[slot] = {
+        ...previous,
+        id: player.id,
+        name: player.name,
+        color: player.color,
+        bot: false,
+        input: idleInput(),
+      };
+      if (world.pendulumRider === previous.id) world.pendulumRider = player.id;
+    } else world.players.push(player);
     reconcileChainBots(world);
   },
 
   remove: (world, id) => {
-    world.players = world.players.filter((player) => player.id !== id);
+    const player = world.players.find((p) => p.id === id);
+    if (player) {
+      let index = 1;
+      while (world.players.some((p) => p.id === `bot-${index}`)) index++;
+      player.id = `bot-${index}`;
+      player.name = 'Relief Rigger';
+      player.bot = true;
+      player.input = idleInput();
+      if (world.pendulumRider === id) world.pendulumRider = player.id;
+    }
     reconcileChainBots(world);
   },
 
@@ -52,8 +72,8 @@ const adapter: GameAdapter<ChainWorld, ChainSnapshot> = {
     const player = world.players.find((p) => p.id === id);
     if (!player) return;
     player.input = {
-      x: Number(raw.x) || 0,
-      z: Number(raw.z) || 0,
+      x: Number.isFinite(Number(raw.x)) ? clamp(Number(raw.x), -1, 1) : 0,
+      z: Number.isFinite(Number(raw.z)) ? clamp(Number(raw.z), -1, 1) : 0,
       jump: raw.jump === true,
       brace: raw.brace === true,
       haul: raw.haul === true,

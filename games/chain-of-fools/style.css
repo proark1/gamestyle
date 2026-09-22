@@ -170,6 +170,28 @@
   margin: 0 12px 0 6px;
 }
 
+.cof-route-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cof-route-summary > span,
+.cof-checkpoint-count {
+  font: 600 11px/1.4 var(--hud-body);
+  color: var(--hud-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cof-route-summary > span {
+  white-space: nowrap;
+}
+.cof-checkpoint-count {
+  margin-top: 3px;
+  color: var(--hud-good);
+}
+
 /* The safety line: amber tape over the crew's path */
 .cof-track-rail {
   position: absolute;
@@ -692,8 +714,9 @@
   }
 
   .cof-prompt {
-    top: calc(var(--cof-hud-top) + 112px);
+    top: calc(var(--cof-hud-top) + 140px);
     bottom: auto;
+    width: max-content;
     max-width: calc(100vw - var(--cof-left) - var(--cof-right));
     padding: 9px 14px;
     font-size: 14px;
@@ -937,7 +960,7 @@
   }
 
   .cof-prompt {
-    top: calc(var(--cof-hud-top) + 56px);
+    top: calc(var(--cof-hud-top) + 88px);
   }
 
   .cof-welcome {

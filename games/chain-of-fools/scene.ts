@@ -15,7 +15,7 @@ import {
 import { label, material } from '../../shared/rendering/primitives';
 import { COLORS } from '../../shared/rendering/palette';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
-import { ANCHORS, CHECKPOINTS, PLANK, nearNet } from './course';
+import { ANCHORS, CHECKPOINTS, FINISH_X, PLANK, nearNet } from './course';
 import { chainWorker, D_RING, poseChainWorker } from './avatar';
 import { SITE, createSite, type SiteModel } from './models';
 import {
@@ -33,6 +33,7 @@ import {
 export type SceneCallbacks = {
   input: (input: PlayerInput) => void;
   action: (action: ChainAction) => void;
+  camera?: (mode: CameraMode) => void;
 };
 
 export type CameraMode = 'crew' | 'close' | 'side';
@@ -233,6 +234,7 @@ export class ChainScene {
   cycleCamera(): CameraMode {
     const next = (CAMERA_MODES.indexOf(this.mode) + 1) % CAMERA_MODES.length;
     this.mode = CAMERA_MODES[next];
+    this.cb.camera?.(this.mode);
     this.yaw = 0;
     this.pitch = 0;
     return this.mode;
@@ -264,7 +266,13 @@ export class ChainScene {
 
   private keyDown = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement | null;
-    if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    if (
+      target &&
+      (target.isContentEditable ||
+        target.closest('[role="dialog"]') ||
+        /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+    )
+      return;
     if (
       [
         'Space',
@@ -663,7 +671,13 @@ export class ChainScene {
         case 'win':
           for (let i = 0; i < 4; i++) {
             const colour = COLORS[i];
-            this.burst(new T.Vector3(146, 3, -3 + i * 2), colour, 20, 7, 1.8);
+            this.burst(
+              new T.Vector3(FINISH_X, 3, -3 + i * 2),
+              colour,
+              20,
+              7,
+              1.8,
+            );
           }
           break;
       }

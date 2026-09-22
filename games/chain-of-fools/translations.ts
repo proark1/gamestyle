@@ -27,6 +27,9 @@ export interface ChainTranslations {
   hudLine: string;
   hudGrip: string;
   sections: Record<string, string>;
+  routeHints: Record<string, string>;
+  distanceLeft: (metres: number) => string;
+  checkpointSaved: (count: number, total: number) => string;
 
   keys: { desktop: KeyLabels; touch: KeyLabels };
   promptHaul: (name: string, k: KeyLabels) => string;
@@ -87,8 +90,24 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       wrecking: 'Wrecking ledge',
       pipe: 'Pipe crawl',
       net: 'Cargo net',
-      'yard-run': 'Lower yard',
+      'yard-run': 'Cargo chicane',
+      'last-crossing': 'Last crossing',
+      'office-approach': 'Office approach',
       office: 'Site office',
+    },
+    distanceLeft: (m) => `${m} m to go`,
+    checkpointSaved: (n, total) => `Checkpoints ${n}/${total}`,
+    routeHints: {
+      gate: 'Follow the beams ahead. Keep your crew close.',
+      girders: 'Jump the gaps, or drop to the lower catwalk.',
+      scaffold: 'Jump up the steps. Let the rest of the line catch up.',
+      plank: 'Spread your weight across the plank. Move together.',
+      wrecking: 'Wait for the ball to pass, then cross as a crew.',
+      pipe: 'Single file through the duct. Stay close to avoid a yank.',
+      net: 'Walk onto the net, then push forward to climb down.',
+      'yard-run': 'Jump the cargo, or weave around the open ends.',
+      'last-crossing': 'One last gap. Regroup before you jump.',
+      'office-approach': 'Bring every worker across the chequered line.',
     },
 
     keys: {
@@ -173,8 +192,24 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       wrecking: 'Abrisskante',
       pipe: 'Rohrkriechgang',
       net: 'Frachtnetz',
-      'yard-run': 'Unterer Hof',
+      'yard-run': 'Fracht-Slalom',
+      'last-crossing': 'Letzte Überquerung',
+      'office-approach': 'Weg zum Büro',
       office: 'Baubüro',
+    },
+    distanceLeft: (m) => `Noch ${m} m`,
+    checkpointSaved: (n, total) => `Kontrollpunkte ${n}/${total}`,
+    routeHints: {
+      gate: 'Folgt den Trägern. Haltet die Crew zusammen.',
+      girders: 'Springt über die Lücken oder nehmt den unteren Steg.',
+      scaffold: 'Springt die Stufen hoch. Wartet auf den Rest der Crew.',
+      plank: 'Verteilt euer Gewicht. Geht gemeinsam über das Brett.',
+      wrecking: 'Wartet auf die Abrissbirne und geht dann gemeinsam los.',
+      pipe: 'Im Gänsemarsch durchs Rohr. Bleibt nah zusammen.',
+      net: 'Geht aufs Netz und drückt vorwärts zum Absteigen.',
+      'yard-run': 'Springt über die Fracht oder lauft außen herum.',
+      'last-crossing': 'Noch eine Lücke. Sammelt euch vor dem Sprung.',
+      'office-approach': 'Bringt alle über die Ziellinie.',
     },
 
     keys: {
