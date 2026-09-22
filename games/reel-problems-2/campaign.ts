@@ -1,3 +1,4 @@
+import type { Survival } from './survival';
 import type { Angler, CatchKind, ReelWorld, Vector } from './types';
 
 export const FIRST_DELIVERY = {
@@ -29,7 +30,8 @@ export type Component = Vector & {
   droppedAt: number;
 };
 export type Mission = {
-  id: 'first-delivery';
+  id: 'first-delivery' | 'last-boat-home';
+  survival?: Survival;
   status: 'sailing' | 'recovering' | 'completed' | 'failed';
   cargo: Cargo[];
   nextCargo: number;
@@ -69,7 +71,11 @@ export const freshMission = (): Mission => ({
   rebuilds: 0,
 });
 export const roundDuration = (w?: ReelWorld | null) =>
-  w?.mission ? FIRST_DELIVERY.duration : 300_000;
+  w?.mission?.survival
+    ? 240_000
+    : w?.mission
+      ? FIRST_DELIVERY.duration
+      : 300_000;
 export const distance = (a: Vector, b: Vector) =>
   Math.hypot(a.x - b.x, a.z - b.z);
 export const carriedCargo = (w: ReelWorld) =>
@@ -103,4 +109,21 @@ export function prepareMission(w: ReelWorld) {
     z: HARBOR.fish.z + Math.cos(i) * 5,
     stamina: i % 3 ? 4 : 6,
   }));
+}
+
+export function recoveryPoint(w: ReelWorld, point: 'dock' | 'frame') {
+  const anchor = w.mission?.survival?.wreck;
+  return anchor
+    ? {
+        x: HARBOR[point].x - HARBOR.dock.x + anchor.x,
+        z: HARBOR[point].z - HARBOR.dock.z + anchor.z,
+      }
+    : HARBOR[point];
+}
+export function materialPoint(w: ReelWorld, index: number) {
+  const p = componentHome(index),
+    anchor = w.mission?.survival?.wreck;
+  return anchor
+    ? { x: p.x - HARBOR.dock.x + anchor.x, z: p.z - HARBOR.dock.z + anchor.z }
+    : p;
 }

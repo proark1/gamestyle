@@ -1,15 +1,13 @@
 # Reel Problems 2
 
-Experimental copy of Reel Problems, made from the working tree on 2026-09-21, including its current local changes. Play at /reel-problems-2; sound workshop at /reel-problems-2/admin.
+The default cooperative adventure is **Last Boat Home**: hook a giant immediately, dodge rocks, choose sheltered water or the storm shortcut, and row everyone through the harbour gate before four minutes run out.
 
-The first playable campaign mission, **First Delivery**, is implemented: catch and deliver three fish in eight minutes, manage a hull leak, and rebuild a four-part emergency raft if the boat sinks. An optional solo deckhand helps fish, repair, and rebuild. Classic tournament mode remains available.
+Reel during calm windows and release/brace during the giant's surges. After choosing a route, the Reel button becomes Row. Holding Brace protects the crew but slows the trip; bailing and rescue take hands away from rowing. A wreck leaves floating materials at the sinking position: carry and lash two deck pieces, barrels, and a paddle into an emergency raft.
 
-Choose a destination with the Fish / Café / Repair buttons (keyboard 1 / 2 / 3). Hold C or the work button to unload, repair, recover cargo, pick up materials, attach parts, and launch. Walk with WASD; existing fishing controls remain available. Completion and best time are saved locally.
+Controls: WASD/arrows to move and steer, E to reel/row, Shift to brace, C for contextual rescue/repair/salvage/building. Touch buttons provide the same held actions; an optional deckhand supports solo play. Classic tournament remains selectable. Legacy First Delivery checkpoints remain compatible.
 
-This is Milestone A of the approved campaign-first plan. Additional chapters, competitive 2v2, and the final art pass are future milestones, subject to playtesting this mission.
+Play route: `/reel-problems-2`. The original game is separate in `games/reel-problems`. Shared platform infrastructure and artwork are reused; this adventure is excluded from party rotation.
 
-The game implementation is independent in this folder. Rooms, preferences, sessions, audio workshop and analytics use reel-problems-2. Shared platform code, avatar utilities and existing public images remain shared. It is excluded from the party rotation.
+Tests: `node scripts/test.mjs games/reel-problems-2`.
 
-Run: node scripts/test.mjs games/reel-problems-2
-
-See [First Delivery validation](docs/first-delivery-validation.md) for this implementation's checks and limits. Other copied documents in docs/ are historical validation for the original game.
+Approved survival design: `docs/superpowers/specs/2026-09-22-last-boat-home-design.md` at repository root. Human playtesting is still needed to judge whether the new pacing earns another run. No automated test establishes fun or virality.

@@ -1,5 +1,5 @@
 import type { ReelWorld } from './types';
-const KEY = 'reel-problems-2-campaign-v1';
+const KEY = 'reel-problems-2-survival-v1';
 export type CampaignProgress = {
   version: 1;
   completed: boolean;

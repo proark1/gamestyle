@@ -14,6 +14,8 @@ function box(size: [number, number, number], color: string) {
 }
 export class MissionScene {
   readonly root = new THREE.Group();
+  private dock = new THREE.Group();
+  private markers = new THREE.Group();
   private components = new Map<string, THREE.Group>();
   private crates = Array.from({ length: 12 }, () =>
     box([0.8, 0.6, 0.8], '#e9b65e'),
@@ -22,6 +24,7 @@ export class MissionScene {
   private raft = new THREE.Group();
   private boatPieces: THREE.Object3D[];
   constructor(boat: THREE.Group) {
+    this.root.add(this.dock, this.markers);
     this.boatPieces = boat.children.filter(
       (child) =>
         child.type === 'Mesh' && !['brine', 'bilge'].includes(child.name),
@@ -29,13 +32,14 @@ export class MissionScene {
     for (let i = 0; i < 9; i++) {
       const plank = box([8.3, 0.35, 0.65], i % 2 ? '#c99962' : '#e3bb81');
       plank.position.set(12, 0.35, 25.3 + i * 0.7);
-      this.root.add(plank);
+      this.dock.add(plank);
     }
     for (const x of [8, 16])
       for (const z of [25, 31]) {
         const post = box([0.3, 1.8, 0.3], '#36666b');
         post.position.set(x, 0.4, z);
-        this.root.add(post);
+        post.name = 'dock-post';
+        this.dock.add(post);
       }
     for (const [name, point, color] of [
       ['CAFÉ', HARBOR.home, '#f2ce65'],
@@ -48,14 +52,14 @@ export class MissionScene {
       );
       ring.rotation.x = Math.PI / 2;
       ring.position.set(point.x, 0.13, point.z);
-      this.root.add(ring);
+      this.markers.add(ring);
       const label = nameLabel(name, '#174b57');
       label.position.set(point.x, 3, point.z);
-      this.root.add(label);
+      this.markers.add(label);
     }
     const frame = box([3.5, 0.15, 4], '#efce67');
     frame.position.set(14, 0.62, 28);
-    this.root.add(frame);
+    this.dock.add(frame);
     for (let i = 0; i < 4; i++) {
       const part = box(
         i < 2 ? [1.6, 0.15, 3.5] : i === 2 ? [3, 0.6, 1] : [0.15, 0.15, 3.6],
@@ -64,7 +68,7 @@ export class MissionScene {
       part.position.set(13.2 + (i % 2) * 1.6, 0.85 + (i > 1 ? 0.4 : 0), 28);
       part.visible = false;
       this.built.push(part);
-      this.root.add(part);
+      this.dock.add(part);
     }
     for (const id of ['deck-a', 'deck-b', 'barrels', 'paddle']) {
       const group = new THREE.Group();
@@ -100,6 +104,16 @@ export class MissionScene {
     this.raft.visible = !!m?.raft;
     for (const child of this.boatPieces) child.visible = !m?.raft;
     if (!m) return;
+    this.markers.visible = !m.survival;
+    this.dock.visible = !m.survival || m.status === 'recovering';
+    const anchor = m.survival?.wreck;
+    this.dock.position.set(
+      anchor ? anchor.x - HARBOR.dock.x : 0,
+      0,
+      anchor ? anchor.z - HARBOR.dock.z : 0,
+    );
+    for (const child of this.dock.children)
+      if (child.name === 'dock-post') child.visible = !m.survival;
     for (const [i, part] of this.built.entries())
       part.visible = m.status === 'recovering' && !!m.components[i]?.installed;
     for (const [id, group] of this.components) {

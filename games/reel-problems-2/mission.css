@@ -298,3 +298,148 @@
     max-height: calc(100dvh - 105px);
   }
 }
+.survival-panel {
+  background: #123f50;
+  color: #f4f1df;
+  border-color: #ff934e;
+  width: 310px;
+}
+.reel-storm-clock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+}
+.reel-storm-clock b {
+  font-family: Fredoka, sans-serif;
+  font-size: 32px;
+  letter-spacing: 0;
+  color: #f4d36a;
+}
+.reel-journey {
+  display: flex;
+  gap: 5px;
+  margin: 10px 0;
+}
+.reel-journey span {
+  flex: 1;
+  border-bottom: 3px solid #557e91;
+  font-size: 9px;
+  padding: 5px 0;
+  color: #9cbcc7;
+}
+.reel-journey .current {
+  border-color: #ff934e;
+  color: #fff;
+}
+.reel-mission .survival-title {
+  font-size: 21px;
+  color: #f4f1df;
+  line-height: 1.05;
+  margin: 12px 0;
+}
+.reel-danger {
+  background: #285766;
+  padding: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  border-left: 4px solid #9bc6b9;
+}
+.reel-danger.surge {
+  background: #f4d36a;
+  color: #123f50;
+  border-color: #ff934e;
+}
+.survival-panel progress {
+  width: 100%;
+  height: 9px;
+  accent-color: #ff934e;
+}
+.reel-route-choice {
+  display: grid;
+  gap: 8px;
+}
+.reel-route-choice button {
+  text-align: left;
+  border: 1px solid #9bc6b9;
+  background: #214e5d;
+  color: #f4f1df;
+  border-radius: 9px;
+  padding: 12px;
+}
+.reel-route-choice button:last-child {
+  border-color: #ff934e;
+}
+.reel-route-choice small {
+  display: block;
+  margin-top: 5px;
+}
+.reel-survival-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 9px;
+  color: #bdcfcc;
+}
+.reel-survival-stats b {
+  display: block;
+  font-size: 18px;
+  color: #f4f1df;
+}
+.survival-panel .reel-work {
+  background: #ff934e;
+  color: #123f50;
+}
+.survival-panel .unavailable {
+  display: none;
+}
+.survival-panel button:focus-visible {
+  outline: 3px solid #f4d36a;
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .reel-mission.survival-panel {
+    padding: 10px 12px;
+  }
+  .reel-mission .survival-title {
+    display: none;
+  }
+  .reel-storm-clock b {
+    font-size: 25px;
+  }
+  .reel-journey {
+    margin: 2px 0 5px;
+  }
+  .reel-survival-stats {
+    margin-top: 6px;
+  }
+  .reel-survival-stats b {
+    display: inline;
+    margin-left: 5px;
+    font-size: 13px;
+  }
+  .reel-route-choice {
+    grid-template-columns: 1fr 1fr;
+  }
+  .reel-route-choice button {
+    padding: 8px;
+  }
+  .reel-danger {
+    padding: 6px;
+    font-size: 10px;
+  }
+}
+.survival .reel-line-panel {
+  display: none;
+}
+.survival .reel-controls .reel-action:first-child {
+  display: none;
+}
+.survival .reel-action-dock > :nth-child(1),
+.survival .reel-action-dock > :nth-child(5),
+.survival .reel-action-dock > :nth-child(6),
+.survival .reel-action-dock > :nth-child(7) {
+  display: none;
+}

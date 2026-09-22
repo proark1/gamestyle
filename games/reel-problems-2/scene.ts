@@ -1,3 +1,4 @@
+import { SurvivalScene } from './survival-scene';
 import { MissionScene } from './mission-scene';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { disposeGeometry } from '../../shared/rendering/primitives';
@@ -47,6 +48,7 @@ export class ReelScene {
   private renderer: THREE.WebGLRenderer;
   private camera = new THREE.PerspectiveCamera(43, 1, 0.1, 220);
   private boat = createBoat();
+  private survivalScene = new SurvivalScene();
   private missionScene = new MissionScene(this.boat);
   private sea: SeaScene;
   private yaw = new THREE.Group();
@@ -160,7 +162,7 @@ export class ReelScene {
     this.sea = new SeaScene(this.scene, sun, water.material);
     addShore(this.scene);
     this.yaw.add(this.boat);
-    this.scene.add(this.missionScene.root);
+    this.scene.add(this.missionScene.root, this.survivalScene.root);
     this.scene.add(this.yaw);
     this.ring.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.1;
@@ -475,6 +477,7 @@ export class ReelScene {
       b = world.boat;
     this.sea.update(world, now);
     this.missionScene.update(world);
+    this.survivalScene.update(world);
     const smooth = 1 - Math.exp(-12 * dt);
     // A new boat bobs up at the dock rather than gliding over from the wreck.
     if ((b.hull ?? 0) !== this.hull) {
@@ -1078,19 +1081,24 @@ export class ReelScene {
       (me?.swimming && (b.sunk || Math.hypot(me.x - b.x, me.z - b.z) > 14))
         ? me
         : null;
-    const zoom = this.wide ? 1.6 : 1;
+    const zoom = this.wide ? 1.6 : world.mission?.survival ? 1.12 : 1;
+    const ahead = world.mission?.survival?.stage === 'fight' && !focus ? 4 : 0;
     const small = this.camera.aspect < 0.8 ? 1.2 : 1;
     const fx = focus ? focus.x : b.x,
       fz = focus ? focus.z : b.z;
     this.camera.position.lerp(
-      new THREE.Vector3(fx, 25 * zoom * small, fz + 27 * zoom * small),
+      new THREE.Vector3(fx, 25 * zoom * small, fz + ahead + 27 * zoom * small),
       1 - Math.exp(-3 * dt),
     );
     const look = (this.camera.userData.look ??= this.yaw.position.clone());
     (look as THREE.Vector3).lerp(
       focus
         ? new THREE.Vector3(focus.x, 0, focus.z)
-        : new THREE.Vector3(this.yaw.position.x, 0, this.yaw.position.z),
+        : new THREE.Vector3(
+            this.yaw.position.x,
+            0,
+            this.yaw.position.z + ahead,
+          ),
       1 - Math.exp(-4 * dt),
     );
     this.camera.lookAt(look as THREE.Vector3);

@@ -478,6 +478,7 @@ export type ReelControlAction = {
     | 'drop';
   mode?: 'classic' | 'campaign';
   destination?: Course;
+  contract?: 'first-delivery' | 'last-boat-home';
   x?: number;
   z?: number;
 };

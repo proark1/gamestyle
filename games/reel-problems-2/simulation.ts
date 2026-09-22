@@ -1,5 +1,6 @@
+import { prepareSurvival } from './survival';
 import {
-  FIRST_DELIVERY,
+  roundDuration,
   prepareMission,
   HARBOR,
   distance as missionDistance,
@@ -524,6 +525,9 @@ export function reelAction(
   }
   if (a.type === 'start' || a.type === 'restart') {
     const mode = a.mode ?? w.mode ?? 'classic';
+    const contract = a.contract ?? w.mission?.id ?? 'first-delivery';
+    if (contract !== 'first-delivery' && contract !== 'last-boat-home')
+      throw Error('Unknown adventure.');
     if (mode !== 'classic' && mode !== 'campaign')
       throw new Error('Choose a valid game mode.');
     if (id !== host)
@@ -542,12 +546,17 @@ export function reelAction(
     w.phase = 'playing';
     w.started = w.clock;
     w.goal = 100 + members.length * 40;
-    if (mode === 'campaign') prepareMission(w);
+    if (mode === 'campaign') {
+      prepareMission(w);
+      if (contract === 'last-boat-home') prepareSurvival(w);
+    }
     announce(
       w,
       'start',
       mode === 'campaign'
-        ? 'First Delivery: catch three fish and unload at the café. Choose a course to begin.'
+        ? contract === 'last-boat-home'
+          ? 'GIANT ON THE LINE! Hold Reel when calm. Release and Brace during surges. Move left/right to dodge rocks.'
+          : 'First Delivery: catch three fish and unload at the café. Choose a course to begin.'
         : 'Five minutes. One tiny boat. Bring in the big ones!',
     );
     return;
@@ -562,9 +571,11 @@ export function reelAction(
     return;
   }
   if (w.mission?.status === 'recovering') return;
+  if (w.mission?.survival && ['cast', 'cut', 'paddle'].includes(a.type)) return;
   if (
     a.type === 'cast' &&
     w.mission &&
+    !w.mission.survival &&
     missionDistance(w.boat, HARBOR.fish) > 11
   )
     throw new Error('Sail to the fishing grounds before casting.');
@@ -1463,7 +1474,7 @@ export function advanceReel(w: ReelWorld, now: number) {
       100,
       now - w.clock,
       w.mission && w.phase === 'playing'
-        ? w.started + FIRST_DELIVERY.duration - w.clock
+        ? w.started + roundDuration(w) - w.clock
         : Infinity,
     ),
   );
@@ -1519,7 +1530,7 @@ export function advanceReel(w: ReelWorld, now: number) {
   if (
     w.mission &&
     w.phase === 'playing' &&
-    w.clock - w.started >= FIRST_DELIVERY.duration
+    w.clock - w.started >= roundDuration(w)
   ) {
     w.mission.status = 'failed';
     w.phase = 'lost';
@@ -1527,7 +1538,13 @@ export function advanceReel(w: ReelWorld, now: number) {
       p.line = null;
       p.input = idleInput();
     }
-    announce(w, 'finish', 'Lunch service has ended. Try the delivery again.');
+    announce(
+      w,
+      'finish',
+      w.mission.survival
+        ? 'The storm gate closed. One more run — we can get everyone home.'
+        : 'Lunch service has ended. Try the delivery again.',
+    );
   }
 }
 export function reelSnapshot(

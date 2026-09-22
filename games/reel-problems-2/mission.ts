@@ -1,3 +1,10 @@
+import {
+  advanceSurvival,
+  chooseRoute,
+  completeSurvivalWork,
+  survivalNpc,
+  survivalWork,
+} from './survival';
 import type { Angler, CatchKind, ReelEvent, ReelWorld } from './types';
 import { idleInput } from './types';
 import { launchBoat } from './hull';
@@ -6,7 +13,8 @@ import {
   FIRST_DELIVERY,
   carriedCargo,
   cargoCapacity,
-  componentHome,
+  materialPoint,
+  recoveryPoint,
   distance,
   missionPosition,
   type ComponentKind,
@@ -46,6 +54,10 @@ export function storeCatch(w: ReelWorld, kind: CatchKind, emit: Emit) {
 }
 export function setCourse(w: ReelWorld, destination: unknown) {
   if (!w.mission || w.mission.status !== 'sailing') return;
+  if (w.mission.survival) {
+    chooseRoute(w, destination);
+    return;
+  }
   if (
     destination !== 'fish' &&
     destination !== 'home' &&
@@ -67,7 +79,7 @@ export function releaseMaterial(w: ReelWorld, id: string) {
         item,
         p?.support === 'dock'
           ? { x: p.x, z: p.z }
-          : componentHome(m.components.indexOf(item)),
+          : materialPoint(w, m.components.indexOf(item)),
       );
     }
   delete m.holds[id];
@@ -76,8 +88,8 @@ export function releaseMaterial(w: ReelWorld, id: string) {
 function ontoDock(w: ReelWorld, p: Angler) {
   const i = Math.max(0, w.players.indexOf(p));
   Object.assign(p, {
-    x: 10 + i * 0.8,
-    z: 26,
+    x: recoveryPoint(w, 'dock').x - 2 + i * 0.8,
+    z: recoveryPoint(w, 'dock').z - 2,
     support: 'dock',
     swimming: false,
     clinging: false,
@@ -100,6 +112,7 @@ export function beginRecovery(w: ReelWorld, emit: Emit) {
   const m = w.mission;
   if (!m || m.status === 'recovering') return;
   m.status = 'recovering';
+  if (m.survival) m.survival.wreck = { x: w.boat.x, z: w.boat.z };
   m.lessonDone = true;
   m.lessonAt = 0;
   m.recoveryStarted = w.clock;
@@ -109,7 +122,7 @@ export function beginRecovery(w: ReelWorld, emit: Emit) {
   const kinds: ComponentKind[] = ['deck-a', 'deck-b', 'barrels', 'paddle'];
   m.components = kinds.map((id, i) => ({
     id,
-    ...componentHome(i),
+    ...materialPoint(w, i),
     carrier: null,
     installed: false,
     droppedAt: 0,
@@ -125,13 +138,25 @@ export function beginRecovery(w: ReelWorld, emit: Emit) {
   w.leak = null;
   w.pending = null;
   for (const p of w.players) {
+    if (m.survival && !p.swimming) {
+      const pos = missionPosition(w, p);
+      Object.assign(p, {
+        ...pos,
+        swimming: true,
+        support: 'water',
+        overboardAt: w.clock,
+        clinging: false,
+      });
+    }
     p.line = null;
     p.paddle = 0;
   }
   emit(
     w,
     'sink',
-    'Boat lost! Swim to the yellow repair slip. A tow arrives in 12 seconds. Build a raft there.',
+    m.survival
+      ? 'We still have wreckage! Climb onto the floating deck. Gather parts and lash a raft together before the gate closes.'
+      : 'Boat lost! Swim to the yellow repair slip. A tow arrives in 12 seconds. Build a raft there.',
   );
 }
 export type WorkTarget = { id: string; label: string; seconds: number };
@@ -157,13 +182,17 @@ export function workTarget(w: ReelWorld, p?: Angler): WorkTarget | null {
         (item.id === 'barrels'
           ? decks === 2
           : m.components.some((c) => c.id === 'barrels' && c.installed));
-      return valid && distance(p, HARBOR.frame) < 2.2
-        ? { id: `install:${item.id}`, label: 'Attach component', seconds: 2 }
+      return valid && distance(p, recoveryPoint(w, 'frame')) < 2.2
+        ? {
+            id: `install:${item.id}`,
+            label: 'Attach component',
+            seconds: m.survival ? 1 : 2,
+          }
         : null;
     }
     if (
       m.components.every((c) => c.installed) &&
-      distance(p, HARBOR.frame) < 2.5
+      distance(p, recoveryPoint(w, 'frame')) < 2.5
     )
       return { id: 'launch', label: 'Push raft into the water', seconds: 2 };
     const next = m.components
@@ -177,6 +206,7 @@ export function workTarget(w: ReelWorld, p?: Angler): WorkTarget | null {
         }
       : null;
   }
+  if (m.survival) return survivalWork(w, p);
   if (p.line || p.paddle || p.y > 0) return null;
   if (distance(w.boat, HARBOR.home) < 4 && carriedCargo(w))
     return { id: 'unload', label: 'Unload fish at the café', seconds: 2 };
@@ -199,6 +229,7 @@ export function workTarget(w: ReelWorld, p?: Angler): WorkTarget | null {
 }
 function completeWork(w: ReelWorld, p: Angler, target: string, emit: Emit) {
   const m = w.mission!;
+  if (completeSurvivalWork(w, p, target, emit)) return;
   if (target === 'unload') {
     for (const c of m.cargo)
       if (c.location === 'boat') {
@@ -241,10 +272,15 @@ function completeWork(w: ReelWorld, p: Angler, target: string, emit: Emit) {
     }
   } else if (target === 'launch' && m.components.every((c) => c.installed)) {
     launchBoat(w);
-    Object.assign(w.boat, HARBOR.repair);
+    Object.assign(w.boat, m.survival?.wreck ?? HARBOR.repair);
     m.raft = true;
     m.rebuilds++;
     m.status = 'sailing';
+    if (m.survival) {
+      m.survival.warned = false;
+      m.survival.waveAt =
+        m.survival.waves < 3 ? w.clock + 8000 : Number.MAX_SAFE_INTEGER;
+    }
     m.holds = {};
     m.course = null;
     w.leakDueAt = Number.MAX_SAFE_INTEGER;
@@ -267,7 +303,9 @@ function completeWork(w: ReelWorld, p: Angler, target: string, emit: Emit) {
     emit(
       w,
       'launch',
-      'Back in business! Your raft can carry three fish. Finish the delivery.',
+      m.survival
+        ? 'IT FLOATS! Save what you can and get your crew home.'
+        : 'Back in business! Your raft can carry three fish. Finish the delivery.',
     );
   }
 }
@@ -276,7 +314,11 @@ export function advanceMission(w: ReelWorld, dt: number, emit: Emit) {
   const m = w.mission;
   if (!m || w.phase !== 'playing') return;
   if (w.boat.sunk && m.status !== 'recovering') beginRecovery(w, emit);
-  if (m.status === 'sailing') {
+  if (m.survival) {
+    advanceSurvival(w, dt, emit);
+    if (w.boat.sunk && m.status !== 'recovering') beginRecovery(w, emit);
+  }
+  if (m.status === 'sailing' && !m.survival) {
     if (m.course && !w.boat.sunk) {
       if (w.players.some((p) => p.paddle)) m.course = null;
       else {
@@ -336,7 +378,7 @@ export function advanceMission(w: ReelWorld, dt: number, emit: Emit) {
       item.droppedAt &&
       w.clock - item.droppedAt >= 10_000
     ) {
-      Object.assign(item, componentHome(i));
+      Object.assign(item, materialPoint(w, i));
       item.droppedAt = 0;
     }
   }
@@ -362,7 +404,7 @@ export function advanceMission(w: ReelWorld, dt: number, emit: Emit) {
       m.latched.push(p.id);
     }
   }
-  if (m.delivered >= FIRST_DELIVERY.target) {
+  if (!m.survival && m.delivered >= FIRST_DELIVERY.target) {
     m.status = 'completed';
     w.phase = 'won';
     emit(w, 'finish', 'First Delivery complete! The café is open for lunch.');
@@ -378,7 +420,10 @@ export function advanceRecovery(w: ReelWorld, dt: number) {
   const m = w.mission!;
   for (const p of w.players) {
     if (p.support !== 'dock') {
-      if (distance(p, HARBOR.dock) < 4 || w.clock - m.recoveryStarted >= 12_000)
+      if (
+        distance(p, recoveryPoint(w, 'dock')) < 4 ||
+        w.clock - m.recoveryStarted >= (m.survival ? 4000 : 12000)
+      )
         ontoDock(w, p);
       else if (!p.downedUntil) {
         const n = Math.max(1, Math.hypot(p.input.x, p.input.z));
@@ -388,8 +433,14 @@ export function advanceRecovery(w: ReelWorld, dt: number) {
       continue;
     }
     const n = Math.max(1, Math.hypot(p.input.x, p.input.z));
-    p.x = Math.max(8, Math.min(16, p.x + (p.input.x / n) * dt * 3));
-    p.z = Math.max(25, Math.min(31, p.z + (p.input.z / n) * dt * 3));
+    p.x = Math.max(
+      recoveryPoint(w, 'dock').x - 4,
+      Math.min(recoveryPoint(w, 'dock').x + 4, p.x + (p.input.x / n) * dt * 3),
+    );
+    p.z = Math.max(
+      recoveryPoint(w, 'dock').z - 3,
+      Math.min(recoveryPoint(w, 'dock').z + 3, p.z + (p.input.z / n) * dt * 3),
+    );
     if (p.input.x || p.input.z) p.facing = Math.atan2(p.input.x, p.input.z);
   }
 }
@@ -412,9 +463,9 @@ export function tickMissionNpc(w: ReelWorld, p: Angler): boolean {
     );
     const target =
       p.support !== 'dock'
-        ? HARBOR.dock
+        ? recoveryPoint(w, 'dock')
         : item || !available
-          ? HARBOR.frame
+          ? recoveryPoint(w, 'frame')
           : available;
     const gap = distance(p, target);
     p.input = {
@@ -427,6 +478,7 @@ export function tickMissionNpc(w: ReelWorld, p: Angler): boolean {
     p.task = item ? 'Building raft' : 'Collecting materials';
     return true;
   }
+  if (survivalNpc(w, p)) return true;
   const work = workTarget(w, p);
   if (work) {
     p.line = null;

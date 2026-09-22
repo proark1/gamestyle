@@ -481,7 +481,12 @@ export default function ReelProblems() {
     world.players.push(newAngler(s.id, name.trim() || 'You', 0, now));
     if (mode === 'campaign' && deckhand)
       reelAction(world, s.id, { type: 'add-npc', slot: 1 }, s.id);
-    reelAction(world, s.id, { type: 'start', mode }, s.id);
+    reelAction(
+      world,
+      s.id,
+      { type: 'start', mode, contract: 'last-boat-home' },
+      s.id,
+    );
     local.current = world;
     activeSession.current = s;
     setSession(s);
@@ -628,7 +633,7 @@ export default function ReelProblems() {
   const uiDisabled = !playing || status !== 'online' || !!modal;
   return (
     <main
-      className={`reel-game${session ? ' in-session' : ''}${w?.mission ? ' campaign' : ''}${w?.mission?.status === 'recovering' ? ' recovering' : ''}`}
+      className={`reel-game${session ? ' in-session' : ''}${w?.mission ? ' campaign' : ''}${w?.mission?.survival ? ' survival' : ''}${w?.mission?.status === 'recovering' ? ' recovering' : ''}`}
       {...partyRound(
         !!session && done,
         w ? partyGoal(w.phase === 'won', w.score) : null,
@@ -751,8 +756,8 @@ export default function ReelProblems() {
                 <Waves size={16} />{' '}
                 {mode === 'campaign'
                   ? de
-                    ? '8-Minuten-Lieferung'
-                    : '8-minute delivery'
+                    ? '4 Minuten bis zur Sturmflut'
+                    : '4 minutes. Everyone comes home.'
                   : '5-minute tournaments'}
               </span>
             </div>
@@ -769,10 +774,7 @@ export default function ReelProblems() {
             )}
             {completed && (
               <p className="reel-completed">
-                ✓{' '}
-                {de
-                  ? 'Erste Lieferung abgeschlossen'
-                  : 'First Delivery completed'}
+                ✓ {de ? 'Alle sicher zu Hause' : 'Last Boat Home completed'}
               </p>
             )}
             <label className="reel-name">
@@ -856,7 +858,7 @@ export default function ReelProblems() {
               <strong>
                 {w?.phase === 'lobby'
                   ? mode === 'campaign'
-                    ? '8:00'
+                    ? '4:00'
                     : '5:00'
                   : time(
                       roundDuration(w) - ((w?.clock ?? 0) - (w?.started ?? 0)),
@@ -943,7 +945,7 @@ export default function ReelProblems() {
                   {w?.mission
                     ? de
                       ? 'C halten: liefern, bergen oder bauen.'
-                      : 'Hold C to deliver, salvage, or build.'
+                      : 'Hold C to rescue, repair, or build.'
                     : 'Hook junk to upgrade the boat.'}
                 </span>
               )}
@@ -981,13 +983,15 @@ export default function ReelProblems() {
               <button
                 className="reel-primary"
                 disabled={!captain || busy || npcBusy || status !== 'online'}
-                onClick={() => action({ type: 'start', mode })}
+                onClick={() =>
+                  action({ type: 'start', mode, contract: 'last-boat-home' })
+                }
               >
                 {captain
                   ? mode === 'campaign'
                     ? de
-                      ? 'Lieferung starten'
-                      : 'Start delivery'
+                      ? 'Abenteuer starten'
+                      : 'Start adventure'
                     : 'Start tournament'
                   : 'Waiting for the captain…'}{' '}
                 <ArrowUpRight size={18} />
@@ -1134,22 +1138,28 @@ export default function ReelProblems() {
                 </button>
                 <HoldButton
                   label={
-                    me?.clinging
-                      ? me.climb >= 0.75
-                        ? 'Almost aboard! Keep holding'
-                        : me.climb > 0
-                          ? `Climbing: ${Math.round(me.climb * 100)}%`
-                          : 'Hold to climb'
-                      : hands === 'patch'
-                        ? 'Hold to patch the leak'
-                        : hands === 'bail'
-                          ? 'Hold to bail'
-                          : 'Hold to reel'
+                    w?.mission?.survival && w.mission.survival.stage !== 'fight'
+                      ? 'Hold to row'
+                      : me?.clinging
+                        ? me.climb >= 0.75
+                          ? 'Almost aboard! Keep holding'
+                          : me.climb > 0
+                            ? `Climbing: ${Math.round(me.climb * 100)}%`
+                            : 'Hold to climb'
+                        : hands === 'patch'
+                          ? 'Hold to patch the leak'
+                          : hands === 'bail'
+                            ? 'Hold to bail'
+                            : 'Hold to reel'
                   }
                   active={!!me?.input.reel}
                   hold={(held) => scene.current?.hold('reel', held)}
                   disabled={
-                    uiDisabled || (!me?.line && !me?.clinging && !hands)
+                    uiDisabled ||
+                    (!me?.line &&
+                      !me?.clinging &&
+                      !hands &&
+                      !w?.mission?.survival)
                   }
                   progress={
                     me?.clinging
@@ -1161,17 +1171,20 @@ export default function ReelProblems() {
                 >
                   <Anchor size={18} />
                   <span>
-                    {me?.clinging
-                      ? me.climb >= 0.75
-                        ? 'Almost up!'
-                        : me.climb > 0
-                          ? `Climb ${Math.round(me.climb * 100)}%`
-                          : 'Climb'
-                      : hands === 'patch'
-                        ? 'Patch'
-                        : hands === 'bail'
-                          ? 'Bail'
-                          : 'Reel'}
+                    {w?.mission?.survival &&
+                    w.mission.survival.stage !== 'fight'
+                      ? 'Row'
+                      : me?.clinging
+                        ? me.climb >= 0.75
+                          ? 'Almost up!'
+                          : me.climb > 0
+                            ? `Climb ${Math.round(me.climb * 100)}%`
+                            : 'Climb'
+                        : hands === 'patch'
+                          ? 'Patch'
+                          : hands === 'bail'
+                            ? 'Bail'
+                            : 'Reel'}
                     <kbd>Hold E</kbd>
                   </span>
                 </HoldButton>
@@ -1219,7 +1232,7 @@ export default function ReelProblems() {
                 </button>
                 <button
                   className="reel-action"
-                  disabled={uiDisabled || !me?.line}
+                  disabled={uiDisabled || (!me?.line && !w?.mission?.survival)}
                   onClick={() => action({ type: 'cut' })}
                 >
                   <Scissors size={18} />
@@ -1240,8 +1253,9 @@ export default function ReelProblems() {
                 </button>
               </nav>
               <span className="reel-movement-hint">
-                WASD / arrows · move · J jump · P paddle · E reel, patch or bail
-                · click the water to aim
+                {w?.mission?.survival
+                  ? 'WASD / arrows · steer & move · E reel · Shift brace · C rescue, repair & build'
+                  : 'WASD / arrows · move · J jump · P paddle · E reel, patch or bail · click the water to aim'}
               </span>
             </>
           )}
@@ -1256,22 +1270,28 @@ export default function ReelProblems() {
                   : 'TOURNAMENT COMPLETE'}
               </span>
               <h2>
-                {w?.mission
+                {w?.mission?.survival
                   ? w.phase === 'won'
-                    ? de
-                      ? 'Das Mittagessen ist gerettet.'
-                      : 'Lunch is served.'
-                    : de
-                      ? 'Morgen ist auch ein Tag.'
-                      : 'Another day, another delivery.'
-                  : w?.phase === 'won'
-                    ? 'Catch of the day.'
-                    : 'The lake wins.'}
+                    ? 'WE MADE IT.'
+                    : 'SO CLOSE. ONE MORE?'
+                  : w?.mission
+                    ? w.phase === 'won'
+                      ? de
+                        ? 'Das Mittagessen ist gerettet.'
+                        : 'Lunch is served.'
+                      : de
+                        ? 'Morgen ist auch ein Tag.'
+                        : 'Another day, another delivery.'
+                    : w?.phase === 'won'
+                      ? 'Catch of the day.'
+                      : 'The lake wins.'}
               </h2>
               <p>
-                {w?.mission
-                  ? `${w.mission.delivered}/3 ${de ? 'Fische geliefert' : 'fish delivered'} · ${w.mission.rebuilds} ${de ? 'Flöße gebaut' : 'rafts built'}`
-                  : `${w?.score} points · target ${w?.goal}`}
+                {w?.mission?.survival
+                  ? `${w.mission.survival.rescues} rescues · ${w.mission.rebuilds} rafts built · ${w.mission.delivered} catches saved`
+                  : w?.mission
+                    ? `${w.mission.delivered}/3 ${de ? 'Fische geliefert' : 'fish delivered'} · ${w.mission.rebuilds} ${de ? 'Flöße gebaut' : 'rafts built'}`
+                    : `${w?.score} points · target ${w?.goal}`}
                 <br />
                 {w?.players.reduce((sum, p) => sum + p.catches, 0)} catches.{' '}
                 {w?.players.reduce((sum, p) => sum + p.splashes, 0)} unplanned
@@ -1328,7 +1348,7 @@ export default function ReelProblems() {
                 {captain
                   ? w?.mission
                     ? de
-                      ? 'Lieferung wiederholen'
+                      ? 'Noch ein Versuch'
                       : 'Try the delivery again'
                     : 'One more tournament'
                   : 'Waiting for the captain…'}

@@ -12,7 +12,7 @@ export default function ContractSelect({
     <fieldset className="reel-contracts">
       <legend>{de ? 'Wähle deinen Ausflug' : 'Choose your trip'}</legend>
       <label
-        aria-label={de ? 'Erste Lieferung' : 'First Delivery'}
+        aria-label={de ? 'Letztes Boot nach Hause' : 'Last Boat Home'}
         className={mode === 'campaign' ? 'selected' : ''}
       >
         <input
@@ -22,11 +22,11 @@ export default function ContractSelect({
           onChange={() => onChange('campaign')}
         />
         <span>
-          <b>{de ? 'Erste Lieferung' : 'First Delivery'}</b>
+          <b>{de ? 'Letztes Boot nach Hause' : 'Last Boat Home'}</b>
           <small>
             {de
-              ? '3 Fische liefern · 8 Minuten · Reparieren & Floß bauen'
-              : 'Deliver 3 fish · 8 minutes · Repair & rebuild'}
+              ? 'Riesenfisch · Sturmflucht · Gemeinsam überleben'
+              : 'Giant fish · Storm escape · Survive together'}
           </small>
         </span>
       </label>
