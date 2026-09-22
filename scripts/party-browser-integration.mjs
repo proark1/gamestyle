@@ -189,7 +189,14 @@ try {
           room.checkpoint.key,
           game + ':' + gameRow.code.split(':').at(-1),
         );
-        if (checkpoint.world.partyRoundStarted) break;
+        const joined = new Set(
+          checkpoint.world.players.filter((p) => !p.bot).map((p) => p.id),
+        );
+        if (
+          checkpoint.world.partyRoundStarted &&
+          [host.playerId, guest.playerId].every((id) => joined.has(id))
+        )
+          break;
       }
     }
     await new Promise((r) => setTimeout(r, 250));
@@ -198,6 +205,37 @@ try {
     checkpoint?.world.partyRoundStarted,
     'shared game automatically starts',
   );
+  if (checkpoint.world.players.filter((p) => !p.bot).length !== 2) {
+    console.error('Party join diagnostics', {
+      errors,
+      rooms: [...rows.values()]
+        .filter((r) => r.code.startsWith('peer:' + game + ':'))
+        .map((r) => {
+          const room = JSON.parse(r.state);
+          return {
+            code: r.code,
+            members: room.members.map(({ id, name, suspended }) => ({
+              id,
+              name,
+              suspended,
+            })),
+          };
+        }),
+      pages: await Promise.all(
+        pages.map(async (page) => ({
+          body: (await page.locator('body').innerText()).slice(-800),
+          frames: await Promise.all(
+            page
+              .frames()
+              .slice(1)
+              .map(async (f) => ({
+                body: (await f.locator('body').innerText()).slice(-800),
+              })),
+          ),
+        })),
+      ),
+    });
+  }
   assert.deepEqual(
     checkpoint.world.players
       .filter((p) => !p.bot)
