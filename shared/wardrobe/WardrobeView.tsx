@@ -23,14 +23,26 @@ import { PLAYER_KID } from '../rendering/avatars/kid';
 import { KIT } from '../rendering/palette';
 import { GOALS, ITEMS, SLOTS, type Item, type Slot } from './catalog';
 import type { Look } from './look';
+import {
+  inventorySnapshot,
+  serverInventorySnapshot,
+  subscribeInventory,
+  refreshInventory,
+  purchaseWardrobeItem,
+  saveWardrobeItem,
+} from '../commerce/client';
+import {
+  openAccountDialog,
+  accountSnapshot,
+  serverAccountSnapshot,
+  subscribeAccount,
+} from '../accounts/client';
 import { toggleTryOn } from './fitting';
 import {
   adminAddCoins,
   adminResetWardrobe,
   adminUnlockAllItems,
-  buyItem,
   checkAndUnlockGoals,
-  equipItem,
   getGoalProgress,
   isItemUnlocked,
   serverWardrobeSnapshot,
@@ -60,6 +72,8 @@ export type WardrobeViewProps = {
   showAdminControls?: boolean;
   title?: string;
   extraHeaderActions?: React.ReactNode;
+  initialSlot?: Slot | 'all';
+  initialItemId?: string;
 };
 
 export default function WardrobeView({
@@ -68,26 +82,44 @@ export default function WardrobeView({
   showAdminControls = false,
   title = 'Wardrobe & Perks',
   extraHeaderActions,
+  initialSlot = 'all',
+  initialItemId,
 }: WardrobeViewProps) {
   const state = useSyncExternalStore(
     subscribeWardrobe,
     wardrobeSnapshot,
     serverWardrobeSnapshot,
   );
+  const inventory = useSyncExternalStore(
+    subscribeInventory,
+    inventorySnapshot,
+    serverInventorySnapshot,
+  );
+  const account = useSyncExternalStore(
+    subscribeAccount,
+    accountSnapshot,
+    serverAccountSnapshot,
+  );
+  const writable =
+    !inventory.busy &&
+    (inventory.mode === 'guest' || inventory.mode === 'account');
 
   const [activeTab, setActiveTab] = useState<'wardrobe' | 'goals'>('wardrobe');
-  const [selectedSlot, setSelectedSlot] = useState<Slot | 'all'>('all');
+  const [selectedSlot, setSelectedSlot] = useState<Slot | 'all'>(initialSlot);
   const [previewMode, setPreviewMode] = useState<WardrobePreviewMode>('avatar');
   const [avatarPose, setAvatarPose] = useState<WorkerPose>('still');
   // Which kit the preview shows; each game picks the real one.
   const [kit, setKit] = useState<string>(KIT.red);
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(
-    ITEMS[0] ?? null,
+    ITEMS.find((item) => item.id === initialItemId) ?? ITEMS[0] ?? null,
   );
   const [fittedOverrides, setFittedOverrides] = useState<
     Partial<Record<Slot, string | null>>
-  >({});
+  >(() => {
+    const item = ITEMS.find((candidate) => candidate.id === initialItemId);
+    return item ? { [item.slot]: item.id } : {};
+  });
 
   const previewRef = useRef<WardrobePreviewHandle>(null);
 
@@ -126,8 +158,12 @@ export default function WardrobeView({
     setFittedOverrides((prev) => toggleTryOn(state.look, prev, item));
   };
 
-  const commitItem = (item: Item, remove = false) => {
-    equipItem(item.slot, remove ? null : item.id);
+  const commitItem = async (item: Item, remove = false) => {
+    if (
+      !writable ||
+      !(await saveWardrobeItem(item.slot, remove ? null : item.id))
+    )
+      return;
     clearFit(item.slot);
     setSelectedItem(item);
     setPreviewMode('avatar');
@@ -168,7 +204,32 @@ export default function WardrobeView({
       </div>
 
       {/* Admin Debug / Quick Controls Bar */}
-      {showAdminControls && (
+      <output className="wardrobe-sync" aria-live="polite">
+        <span>
+          {inventory.error ||
+            (inventory.busy
+              ? 'Saving your wardrobe…'
+              : inventory.mode === 'account'
+                ? 'Saved to your account · available on your other devices'
+                : 'Guest wardrobe · saved on this device')}
+        </span>
+        {inventory.error ? (
+          <button type="button" onClick={() => void refreshInventory()}>
+            Retry
+          </button>
+        ) : inventory.mode === 'guest' &&
+          (account.methods.email || account.methods.google) ? (
+          <button
+            type="button"
+            onClick={() =>
+              openAccountDialog('Sign in to keep your wardrobe across devices.')
+            }
+          >
+            Save to account
+          </button>
+        ) : null}
+      </output>
+      {showAdminControls && inventory.mode === 'guest' && (
         <div className="wardrobe-admin-bar">
           <div className="wardrobe-admin-actions">
             <span>Admin tools:</span>
@@ -217,18 +278,20 @@ export default function WardrobeView({
         >
           <Shirt size={15} /> Customizer & Shop
         </button>
-        <button
-          type="button"
-          className="wardrobe-nav-btn"
-          aria-pressed={activeTab === 'goals'}
-          data-active={activeTab === 'goals'}
-          onClick={() => {
-            checkAndUnlockGoals();
-            setActiveTab('goals');
-          }}
-        >
-          <Trophy size={15} /> Unlockable Perks & Goals
-        </button>
+        {inventory.mode === 'guest' && (
+          <button
+            type="button"
+            className="wardrobe-nav-btn"
+            aria-pressed={activeTab === 'goals'}
+            data-active={activeTab === 'goals'}
+            onClick={() => {
+              checkAndUnlockGoals();
+              setActiveTab('goals');
+            }}
+          >
+            <Trophy size={15} /> Unlockable Perks & Goals
+          </button>
+        )}
       </div>
 
       {/* Content: 3D preview active across both Wardrobe and Perks */}
@@ -454,7 +517,7 @@ export default function WardrobeView({
           </div>
 
           {/* Right Panel: Customizer & Shop OR Unlockable Perks & Goals */}
-          {activeTab === 'wardrobe' ? (
+          {activeTab === 'wardrobe' || inventory.mode !== 'guest' ? (
             <div className="wardrobe-catalog-panel">
               {/* Slot Filter Buttons */}
               <div className="wardrobe-slots-filter">
@@ -555,9 +618,10 @@ export default function WardrobeView({
                             <button
                               type="button"
                               className="wardrobe-item-btn wardrobe-btn-unequip"
+                              disabled={!writable}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                commitItem(item, true);
+                                void commitItem(item, true);
                               }}
                             >
                               Take Off
@@ -566,9 +630,10 @@ export default function WardrobeView({
                             <button
                               type="button"
                               className="wardrobe-item-btn wardrobe-btn-equip"
+                              disabled={!writable}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                commitItem(item);
+                                void commitItem(item);
                               }}
                             >
                               Equip
@@ -580,10 +645,10 @@ export default function WardrobeView({
                               <button
                                 type="button"
                                 className="wardrobe-item-btn wardrobe-btn-buy"
-                                disabled={state.coins < item.price}
+                                disabled={!writable || state.coins < item.price}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  buyItem(item.id);
+                                  void purchaseWardrobeItem(item.id);
                                 }}
                                 title={
                                   state.coins < item.price
@@ -596,7 +661,11 @@ export default function WardrobeView({
                             ) : associatedGoal ? (
                               <div
                                 className="wardrobe-item-goal-hint"
-                                title={`Unlocked by: ${associatedGoal.label}`}
+                                title={
+                                  inventory.mode === 'guest'
+                                    ? `Unlocked by: ${associatedGoal.label}`
+                                    : 'Account mastery rewards are coming in a future update.'
+                                }
                               >
                                 <Lock
                                   size={12}
@@ -606,7 +675,9 @@ export default function WardrobeView({
                                     verticalAlign: '-1px',
                                   }}
                                 />
-                                {associatedGoal.label}
+                                {inventory.mode === 'guest'
+                                  ? associatedGoal.label
+                                  : 'Mastery reward · coming soon'}
                               </div>
                             ) : null}
                           </>
@@ -720,7 +791,7 @@ export default function WardrobeView({
                               marginTop: 0,
                             }}
                             onClick={() => {
-                              commitItem(rewardItem, !!isEquipped);
+                              void commitItem(rewardItem, !!isEquipped);
                             }}
                           >
                             {isEquipped ? 'Unequip' : 'Equip Reward'}

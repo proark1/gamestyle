@@ -1,5 +1,7 @@
 import type { GameId } from '../../shared/audio/types';
 import type { PartyResult } from '../../shared/ui/party-round';
+import type { Look } from '../../shared/wardrobe/look';
+import type { PlazaPose } from '../../shared/plaza/world';
 
 export type PartyPlayer = {
   id: string;
@@ -11,6 +13,11 @@ export type PartyPlayer = {
   isBot?: boolean;
   seenAt?: number;
   connected?: boolean;
+  look?: Look;
+  lobbyPose?: PlazaPose;
+  lobbySeenAt?: number;
+  browsing?: boolean;
+  fullGame?: boolean;
 };
 
 export type PartyStatus =
@@ -81,6 +88,15 @@ export type PartyIntermission = {
 
 /** Every action taken as a player carries that player's party pass token. */
 export type PartyAction =
+  | {
+      op: 'lobby_presence';
+      code: string;
+      playerId: string;
+      token: string;
+      pose: PlazaPose;
+      look: Look;
+      browsing: boolean;
+    }
   | {
       op: 'heartbeat' | 'briefing_ready' | 'vote_lock' | 'rematch_interest';
       code: string;
