@@ -1,13 +1,25 @@
 import type { GameId } from '../../shared/audio/types';
+import { PARTY_GUIDES } from './guides';
 
 export type PartyGameInfo = {
   id: GameId;
   name: string;
   tagline: string;
   teams?: boolean;
+  scoring: 'team' | 'individual' | 'cooperative';
+  minutes: number;
+  complexity: 'easy' | 'medium' | 'tricky';
+  quick: boolean;
+  image: string;
 };
 
-export const PARTY_GAMES: readonly PartyGameInfo[] = [
+const GAMES = [
+  {
+    id: 'on-the-ropes',
+    name: 'On the Ropes',
+    tagline: 'Swing, wobble and tag your corner partner',
+    teams: true,
+  },
   {
     id: 'crane-clash',
     name: 'Crane Clash',
@@ -35,7 +47,7 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
   {
     id: 'zorb-clash',
     name: 'Zorb Clash',
-    tagline: 'Bumper sumo showdown in inflatable orbs',
+    tagline: 'Bumper football: roll, bump and score with the ball',
     teams: true,
   },
   {
@@ -52,7 +64,7 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
   {
     id: 'one-more-button',
     name: 'One More Button',
-    tagline: 'Reactor panic sabotage & quick reflexes',
+    tagline: 'Press for a bigger prize, survive the hazards and cash out',
   },
   {
     id: 'siege-and-desist',
@@ -84,7 +96,7 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
   {
     id: 'four-brain-cells',
     name: 'Four Brain Cells',
-    tagline: 'Breakfast scramble with clumsy tools',
+    tagline: 'Four limbs, one robot: cook breakfast together',
   },
   {
     id: 'wrong-floor',
@@ -94,12 +106,12 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
   {
     id: 'load-bearing',
     name: 'Load Bearing',
-    tagline: 'Precision wrecking ball demolitions',
+    tagline: 'Bring down the building. Save the piano!',
   },
   {
     id: 'reel-problems',
     name: 'Reel Problems',
-    tagline: 'Dockside crane fishing derby',
+    tagline: 'Fish from a wobbly boat, untangle lines and rescue friends',
   },
   {
     id: 'uphill-delivery',
@@ -116,7 +128,24 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = [
     name: 'Chain of Fools',
     tagline: 'Four workers, one safety line, no unclipping',
   },
-];
+] satisfies { id: GameId; name: string; tagline: string; teams?: boolean }[];
+
+export const PARTY_GAMES: readonly PartyGameInfo[] = GAMES.map((game) => ({
+  ...game,
+  scoring:
+    'teams' in game && game.teams
+      ? 'team'
+      : ['one-more-button', 'act-natural'].includes(game.id)
+        ? 'individual'
+        : 'cooperative',
+  minutes: PARTY_GUIDES[game.id].minutes,
+  complexity: PARTY_GUIDES[game.id].complexity,
+  quick: PARTY_GUIDES[game.id].quick,
+  image:
+    game.id === 'on-the-ropes'
+      ? '/images/on-the-ropes.png'
+      : `/images/party-gameplay/${game.id}.webp`,
+}));
 
 export function getPartyGameInfo(id: GameId): PartyGameInfo | undefined {
   return PARTY_GAMES.find((game) => game.id === id);
@@ -128,13 +157,20 @@ export function getPartyGameInfo(id: GameId): PartyGameInfo | undefined {
 export function generatePlaylist(
   count = 6,
   random: () => number = Math.random,
+  format: 'quick' | 'classic' = 'classic',
 ): GameId[] {
-  const pool = PARTY_GAMES.map((g) => g.id);
+  const pool = PARTY_GAMES.filter((g) => format !== 'quick' || g.quick).map(
+    (g) => g.id,
+  );
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     const temp = pool[i];
     pool[i] = pool[j];
     pool[j] = temp;
   }
+  const opener = pool.findIndex(
+    (id) => getPartyGameInfo(id)?.complexity === 'easy',
+  );
+  if (opener > 0) [pool[0], pool[opener]] = [pool[opener], pool[0]];
   return pool.slice(0, Math.min(count, pool.length));
 }

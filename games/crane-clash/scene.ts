@@ -1,3 +1,5 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import {
   createCraneMesh,
@@ -50,6 +52,16 @@ export class CraneClashScene {
   private dragging = false;
   private cameraMode: 'overview' | 'follow' = 'overview';
   private keys = new Set<string>();
+  private touchMove = { role: 'swinger' as Role, x: 0, z: 0 };
+  private touchHoist = 0;
+
+  public setTouchMove(role: Role, vector: { x: number; z: number }) {
+    this.touchMove = { role, ...vector };
+  }
+
+  public setTouchHoist(direction: number) {
+    this.touchHoist = direction;
+  }
   private localId = '';
   private localTeam: TeamId = 'red';
   private localRole: Role = 'swinger';
@@ -344,7 +356,7 @@ export class CraneClashScene {
     let swingRawZ = 0;
     let craneX = 0;
     let craneZ = 0;
-    const craneY = hoistY;
+    const craneY = hoistY + this.touchHoist;
 
     if (this.isSoloTeam) {
       // Solo player on team: Simultaneous Dual Control!
@@ -374,6 +386,14 @@ export class CraneClashScene {
       }
     }
 
+    if (this.touchMove.role === 'operator') {
+      craneX += this.touchMove.x;
+      craneZ -= this.touchMove.z;
+    } else {
+      swingRawX += this.touchMove.x;
+      swingRawZ += this.touchMove.z;
+    }
+
     // Rotate swing input relative to camera azimuth
     const camAngle = this.orbit.angle;
     const cos = Math.cos(camAngle);
@@ -401,6 +421,7 @@ export class CraneClashScene {
     this.rafId = requestAnimationFrame(this.animate);
 
     this.pollInput();
+    if (!shouldRenderFrame(this.renderer)) return;
 
     // Position camera using spherical orbit
     const cosPitch = Math.cos(this.orbit.pitch);
@@ -481,6 +502,7 @@ export class CraneClashScene {
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);
     this.container.removeEventListener('wheel', this.onWheel);
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

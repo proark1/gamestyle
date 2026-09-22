@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 // Full navigation tears down the active WebGL renderer and its input listeners between games.
 /* eslint-disable next/no-html-link-for-pages */
 import { useEffect, useRef, useState } from 'react';
@@ -369,7 +371,7 @@ export default function ActNatural() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/act-natural?room=${session.code}`,
+        gameInviteUrl('act-natural', session.code),
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -776,7 +778,7 @@ export default function ActNatural() {
                 >
                   {farmer ? <Eye size={20} /> : <Hand size={20} />}
                   <span className="farm-desktop-hint">
-                    {farmer ? 'Inspect cow' : 'Interact'}
+                    {farmer ? touchHud?.label ?? 'Inspect cow' : 'Interact'}
                   </span>
                   <span className="farm-mobile-hint">{touchHud?.label}</span>
                   <kbd>E</kbd>
@@ -1120,7 +1122,7 @@ export default function ActNatural() {
             </span>
           </div>
           {host ? (
-            <button
+            <button data-party-setup-action=""
               className="primary-button"
               onClick={() => void action({ type: 'restart' })}
             >

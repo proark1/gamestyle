@@ -156,6 +156,25 @@ export const ITEMS: readonly Item[] = [
   { id: 'big-moustache', slot: 'beard', name: 'Big Moustache', price: 120 },
   { id: 'trimmed-beard', slot: 'beard', name: 'Trimmed Beard', price: 150 },
   { id: 'wizard-beard', slot: 'beard', name: 'Wizard Beard', price: 200 },
+
+  // Woodland, Snack Time and Cosmic collections; every piece can be mixed.
+  { id: 'frog-bucket-hat', slot: 'hat', name: 'Frog Bucket Hat', price: 180 },
+  { id: 'mushroom-cap', slot: 'hat', name: 'Mushroom Cap', price: 220 },
+  { id: 'bear-paw-shoes', slot: 'shoes', name: 'Bear Paw Shoes', price: 200 },
+  { id: 'leaf-dungarees', slot: 'legs', name: 'Leaf Dungarees', price: 220 },
+  { id: 'strawberry-beret', slot: 'hat', name: 'Strawberry Beret', price: 240 },
+  { id: 'toast-puffer', slot: 'top', name: 'Toast Puffer', price: 260 },
+  { id: 'ducky-boots', slot: 'shoes', name: 'Ducky Boots', price: 200 },
+  {
+    id: 'watermelon-shorts',
+    slot: 'legs',
+    name: 'Watermelon Shorts',
+    price: 160,
+  },
+  { id: 'saturn-hat', slot: 'hat', name: 'Saturn Hat', price: 320 },
+  { id: 'cloud-jacket', slot: 'top', name: 'Cloud Jacket', price: 280 },
+  { id: 'comet-sneakers', slot: 'shoes', name: 'Comet Sneakers', price: 280 },
+  { id: 'moon-glasses', slot: 'face', name: 'Moon Glasses', price: 180 },
 ];
 
 export function findItem(id: string) {

@@ -1,0 +1,23 @@
+{
+  "url": "https://www.jumbleyard.com/",
+  "status": 200,
+  "items": [
+    "Frog Bucket Hat",
+    "Mushroom Cap",
+    "Bear Paw Shoes",
+    "Leaf Dungarees",
+    "Strawberry Beret",
+    "Toast Puffer",
+    "Ducky Boots",
+    "Watermelon Shorts",
+    "Saturn Hat",
+    "Cloud Jacket",
+    "Comet Sneakers",
+    "Moon Glasses",
+    "Scuba Flippers"
+  ],
+  "tryOn": true,
+  "motion": true,
+  "mobile": true,
+  "errors": []
+}

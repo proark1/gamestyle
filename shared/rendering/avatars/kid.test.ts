@@ -4,7 +4,17 @@ import * as T from 'three';
 import { ITEMS } from '../../wardrobe/catalog';
 import { LOOK_GROUP } from '../cosmetics/dress';
 import { ITEM_MODELS } from '../cosmetics/items';
-import { KIT, SEAT_KITS, TEAM, WARDROBE_COLOURS, seatKit } from '../palette';
+import { KID_ITEMS } from '../cosmetics/kid-items';
+import { dressKid } from '../cosmetics/fit-kid';
+import { nico } from './nico';
+import {
+  CLOTH,
+  KIT,
+  SEAT_KITS,
+  TEAM,
+  WARDROBE_COLOURS,
+  seatKit,
+} from '../palette';
 import { HEAD_Y, HIP, SKULL, TROUSER_HEM } from './hoop-kid';
 import { PLAYER_KID, liveKid, playerKid, type KidId } from './kid';
 
@@ -39,6 +49,65 @@ const hex = (mesh: T.Mesh) =>
 /** The top of the bare skull, in the kid's own space. */
 const SCALP = HEAD_Y + SKULL.centre[1] + SKULL.radii[1];
 
+void test('scuba blades extend ahead of the toes and stay above the floor', () => {
+  const { model } = playerKid(
+    'nico',
+    { jersey: KIT.red },
+    { shoes: 'scuba-flippers' },
+  );
+  model.updateMatrixWorld(true);
+  for (const leg of [
+    model.userData.legL,
+    model.userData.legR,
+  ] as T.Object3D[]) {
+    const group = leg.getObjectByName(LOOK_GROUP)!;
+    const blades = meshes(group).filter((mesh) => hex(mesh) === CLOTH.gold);
+    assert.ok(blades.length > 0);
+    const extent = bounds(blades);
+    assert.ok(extent.min.z >= 0.09, 'blade begins at the front of the foot');
+    assert.ok(extent.max.z > 0.5, 'blade extends past the toes');
+    assert.ok(extent.min.y >= 0, 'blade stays above the floor');
+  }
+});
+
+void test('shoe soles have a rounded footprint and golden kicks replace overlapping surfaces', () => {
+  const model = nico();
+  const leg = model.userData.legL as T.Object3D;
+  const sole = leg.getObjectByName('shoe-sole')!;
+  model.updateMatrixWorld(true);
+  const centre = sole.getWorldPosition(new T.Vector3());
+  const ray = new T.Raycaster(
+    centre.clone().add(new T.Vector3(0.08, 1, 0.14)),
+    new T.Vector3(0, -1, 0),
+  );
+  assert.equal(
+    ray.intersectObject(sole).length,
+    0,
+    'no rectangular toe corner',
+  );
+  ray.ray.origin.copy(centre).add(new T.Vector3(0, 1, 0.14));
+  assert.ok(
+    ray.intersectObject(sole).length > 0,
+    'rounded toe still has a sole',
+  );
+  dressKid(model, KIT.red, { shoes: 'golden-kicks' });
+  for (const limb of [
+    model.userData.legL,
+    model.userData.legR,
+  ] as T.Object3D[]) {
+    assert.equal(
+      limb.getObjectByName('shoe-sole'),
+      undefined,
+      'old sole removed',
+    );
+    assert.equal(
+      limb.getObjectByName('shoe-collar'),
+      undefined,
+      'old collar removed',
+    );
+  }
+});
+
 void test('every kid wears every wardrobe item where it belongs', () => {
   for (const character of KIDS)
     for (const item of ITEMS) {
@@ -67,18 +136,22 @@ void test('every kid wears every wardrobe item where it belongs', () => {
       assert.ok(box.min.y > -0.05 && box.max.y < 2.3, `${name} stays upright`);
       if (item.slot === 'hat')
         assert.ok(
-          box.min.y < SCALP && box.max.y > SCALP,
+          box.min.y < SCALP + (character === 'nico' ? 0.08 : 0) &&
+            box.max.y > SCALP,
           `${name} sits over the head`,
         );
       if (item.slot === 'face' || item.slot === 'beard')
         assert.ok(
-          box.min.y > 0.7 && box.max.z > 0.25,
+          box.min.y > (item.slot === 'beard' ? 0.55 : 0.9) && box.max.z > 0.25,
           `${name} is on the front of the head`,
         );
       if (item.slot === 'top')
-        assert.ok(box.min.y < 0.9 && box.max.y > 0.6, `${name} is on the body`);
+        assert.ok(box.min.y < 1.0 && box.max.y > 0.6, `${name} is on the body`);
       if (item.slot === 'legs')
-        assert.ok(box.min.y < 0.35, `${name} reaches down the legs`);
+        assert.ok(
+          box.min.y < (ITEM_MODELS[item.id].shorts ? 0.42 : 0.35),
+          `${name} reaches its leg hem`,
+        );
       // Rain boots add only a band round the ankle; the rest is the colour.
       if (item.slot === 'shoes')
         assert.ok(
@@ -86,6 +159,100 @@ void test('every kid wears every wardrobe item where it belongs', () => {
           `${name} is on the feet`,
         );
     }
+});
+
+void test('every hat leaves Nico’s front curls visible, including the party cone', () => {
+  const shades = new Set(['#3f261b', '#4d2f21', '#5b3928']);
+  for (const item of ITEMS.filter((item) => item.slot === 'hat')) {
+    const { model } = playerKid('nico', { jersey: KIT.red }, { hat: item.id });
+    model.updateMatrixWorld(true);
+    let visible = 0;
+    // Cast from the viewer towards the forehead. A curl counts only if it is
+    // the first surface hit, so hair hidden inside the skull/hat cannot pass.
+    for (const x of [-0.18, -0.12, -0.06, 0, 0.06, 0.12, 0.18]) {
+      // The skipper's visor sits lower; sample its fringe below that visor.
+      for (const y of item.id === 'skipper-cap'
+        ? [0.42, 0.43, 0.44]
+        : [0.45, 0.48, 0.51]) {
+        const ray = new T.Raycaster(
+          new T.Vector3(x, HEAD_Y + y, 2),
+          new T.Vector3(0, 0, -1),
+        );
+        const hit = ray.intersectObject(model, true)[0];
+        if (hit && shades.has(hex(hit.object as T.Mesh))) visible++;
+      }
+    }
+    assert.ok(
+      visible >= 6,
+      `${item.id} preserves a visible fringe (${visible}/21 samples)`,
+    );
+  }
+});
+
+void test('the Viking shell covers hair above its rim from every direction', () => {
+  const { model } = playerKid(
+    'nico',
+    { jersey: KIT.red },
+    { hat: 'viking-helmet' },
+  );
+  model.updateMatrixWorld(true);
+  const hair = new Set(['#3f261b', '#4d2f21', '#5b3928', '#2f1c14']);
+  for (const y of [0.55, 0.58, 0.61, 0.64])
+    for (let i = 0; i < 48; i++) {
+      const angle = (i / 48) * Math.PI * 2;
+      const direction = new T.Vector3(Math.sin(angle), 0, Math.cos(angle));
+      const origin = direction
+        .clone()
+        .multiplyScalar(2)
+        .setY(HEAD_Y + y);
+      const hit = new T.Raycaster(origin, direction.negate()).intersectObject(
+        model,
+        true,
+      )[0];
+      assert.ok(
+        hit && !hair.has(hex(hit.object as T.Mesh)),
+        `shell covers hair at ${y}, angle ${i}`,
+      );
+    }
+});
+
+void test('the badge sash stays in front of the jersey on both sides', () => {
+  const { model } = playerKid(
+    'nico',
+    { jersey: KIT.red },
+    { top: 'badge-sash' },
+  );
+  model.updateMatrixWorld(true);
+  for (const side of [-1, 1])
+    for (const x of [-0.15, -0.1, 0, 0.1, 0.18]) {
+      const y = HIP[1] + (0.88 - 0.54) * 0.64 - x;
+      const hit = new T.Raycaster(
+        new T.Vector3(x, y, side * 2),
+        new T.Vector3(0, 0, -side),
+      ).intersectObject(model, true)[0];
+      assert.equal(
+        hex(hit.object as T.Mesh),
+        '#3f6fb5',
+        `sash visible at ${x} on side ${side}`,
+      );
+    }
+});
+
+void test('the snorkel tube is visible beside and above the head', () => {
+  const { model } = playerKid(
+    'nico',
+    { jersey: KIT.red },
+    { face: 'snorkel-mask' },
+  );
+  model.updateMatrixWorld(true);
+  for (const y of [0.4, 0.6, 0.72]) {
+    const hit = new T.Raycaster(
+      new T.Vector3(0.38, HEAD_Y + y, 2),
+      new T.Vector3(0, 0, -1),
+    ).intersectObject(model, true)[0];
+    assert.ok(hit, `tube exists at ${y}`);
+    assert.equal(hex(hit.object as T.Mesh), '#f2d14b');
+  }
 });
 
 void test('a legs item gives the kid long trousers in its colour', () => {
@@ -185,4 +352,15 @@ void test('every player is the boy, and each kid says which it is', () => {
   assert.equal(PLAYER_KID, 'nico');
   for (const kid of KIDS)
     assert.equal(playerKid(kid, { jersey: KIT.red }).model.userData.kid, kid);
+});
+void test('the kid’s own models are for items that exist, in the same slot', () => {
+  for (const id of Object.keys(KID_ITEMS)) {
+    const item = ITEMS.find((entry) => entry.id === id);
+    assert.ok(item, `${id} is a real item`);
+    assert.ok(ITEM_MODELS[id], `${id} still has a worker model for the shop`);
+  }
+  // The clothes a player sees most are worth modelling for him.
+  for (const slot of ['top', 'legs', 'shoes'] as const)
+    for (const item of ITEMS.filter((entry) => entry.slot === slot))
+      assert.ok(KID_ITEMS[item.id], `${item.id} has a model made for the kid`);
 });

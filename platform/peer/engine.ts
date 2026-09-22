@@ -4,6 +4,7 @@ import { createEngine as stack } from '../../games/stack-or-sink/peer';
 import { createEngine as farm } from '../../games/act-natural/peer';
 import { createEngine as delivery } from '../../games/uphill-delivery/peer';
 import { createEngine as giant } from '../../games/dont-wake-the-giant/peer';
+import { createEngine as reel2 } from '../../games/reel-problems-2/peer';
 import { createEngine as reel } from '../../games/reel-problems/peer';
 import { createEngine as button } from '../../games/one-more-button/peer';
 import { createEngine as hotel } from '../../games/wrong-floor/peer';
@@ -21,12 +22,15 @@ import { createEngine as driveThru } from '../../games/drive-thru/peer';
 import { createEngine as scaffoldScramble } from '../../games/scaffold-scramble/peer';
 import { createEngine as chainOfFools } from '../../games/chain-of-fools/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
+import { createEngine as boxing } from '../../games/on-the-ropes/peer';
 const engines = {
+  'on-the-ropes': boxing,
   'wrong-floor': hotel,
   'stack-or-sink': stack,
   'act-natural': farm,
   'uphill-delivery': delivery,
   'dont-wake-the-giant': giant,
+  'reel-problems-2': reel2,
   'reel-problems': reel,
   'one-more-button': button,
   'four-brain-cells': breakfast,

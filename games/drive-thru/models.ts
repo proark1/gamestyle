@@ -1,18 +1,18 @@
 import * as T from 'three';
-import { ball, box } from '../../shared/rendering/primitives';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { ball, box, taper, label } from '../../shared/rendering/primitives';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH, TEAM } from '../../shared/rendering/palette';
 import type { Look } from '../../shared/wardrobe/look';
 import { GRILL_BOUNDS, SPEAKER_POLE_POS, WINDOW_SILL_POS } from './physics';
 import type { BurgerLayer, RoleId } from './types';
 
 const COLORS = {
-  asphalt: '#2b2d31',
+  asphalt: '#59686b',
   curbConcrete: '#d1d5db',
   curbYellow: '#f59e0b',
-  buildingBrick: '#991b1b',
-  buildingWhite: '#f3f4f6',
-  roofTrim: '#dc2626',
+  buildingBrick: '#be4d3c',
+  buildingWhite: '#fff1cf',
+  roofTrim: '#377f7b',
   signYellow: '#fbbf24',
   counterSteel: '#94a3b8',
   grillIron: '#1e293b',
@@ -56,26 +56,48 @@ export function createDriveThruEnvironment(): T.Group {
   box(root, [0.15, 0.36, 36], [1.45, 0.18, 4], COLORS.curbYellow);
 
   // 3. Fast Food Restaurant Building (X: [2.8, 14], Z: [-12, 16], Y: [0, 6])
-  box(root, [11, 5.5, 26], [8.3, 2.75, 4], COLORS.buildingBrick);
+  // Cutaway service bay: walls surround the playable kitchen instead of burying it.
+  box(root, [0.25, 3.6, 26], [9, 1.8, 4], COLORS.buildingBrick);
+  box(root, [6, 3.6, 0.25], [6, 1.8, -9], COLORS.buildingBrick);
+  box(root, [0.25, 3.6, 10], [2.9, 1.8, 10], COLORS.buildingBrick);
+  box(root, [0.25, 3.6, 4], [2.9, 1.8, -7], COLORS.buildingBrick);
+  for (const z of [7, 10.2, 13.4]) {
+    box(root, [0.12, 1.65, 2.3], [2.73, 2, z], COLORS.buildingWhite, true);
+    box(root, [0.13, 1.4, 2.05], [2.65, 2, z], '#427d80', true);
+    box(root, [0.16, 1.5, 0.06], [2.57, 2, z], COLORS.buildingWhite);
+    box(root, [0.35, 0.12, 2.45], [2.62, 1.16, z], COLORS.buildingWhite, true);
+    box(root, [0.25, 0.12, 2.5], [2.64, 2.89, z], COLORS.roofTrim, true);
+  }
+  for (let x = 3; x < 9; x++)
+    for (let z = -8; z < 15; z++)
+      box(
+        root,
+        [0.98, 0.04, 0.98],
+        [x + 0.5, 0.025, z + 0.5],
+        (x + z) % 2 ? '#eee1bd' : '#91b8aa',
+      );
   // White stucco upper band
-  box(root, [11.2, 1.2, 26.2], [8.3, 5.2, 4], COLORS.buildingWhite);
+  box(root, [6.6, 0.45, 26.2], [6, 3.75, 4], COLORS.buildingWhite);
   // Retro red roof overhang
-  box(root, [12.0, 0.6, 27.0], [8.3, 5.8, 4], COLORS.roofTrim);
+  box(root, [6.9, 0.24, 26.6], [6, 4.05, 4], COLORS.roofTrim);
 
   // Big Retro Drive-Thru Sign on roof
   const signGroup = new T.Group();
-  signGroup.position.set(3.5, 6.6, 2);
+  signGroup.position.set(3.3, 4.7, 2);
   box(signGroup, [0.4, 1.4, 8.0], [0, 0, 0], COLORS.roofTrim);
   box(signGroup, [0.45, 1.1, 7.6], [0, 0, 0], COLORS.signYellow);
   root.add(signGroup);
 
-  // 4. Service Pickup Window & Sill
-  box(
-    root,
-    [0.3, 2.2, 3.2],
-    [WINDOW_SILL_POS.x + 0.5, 2.3, WINDOW_SILL_POS.z],
-    COLORS.buildingWhite,
-  );
+  // Open service window, framed by a striped awning.
+  for (const z of [-1.7, 1.7])
+    box(root, [0.18, 2.8, 0.16], [2.7, 1.6, z], COLORS.buildingWhite, true);
+  for (let i = 0; i < 10; i++)
+    box(
+      root,
+      [1.1, 0.12, 0.35],
+      [2.45, 3.0, -1.58 + i * 0.35],
+      i % 2 ? COLORS.buildingWhite : COLORS.buildingBrick,
+    );
   // Window sill ledge where trays are served
   box(
     root,
@@ -128,104 +150,53 @@ export function createDriveThruEnvironment(): T.Group {
   box(speakerPost, [0.18, 1.4, 2.0], [-0.35, 1.5, 0.9], COLORS.menuGlow);
   root.add(speakerPost);
 
+  const pickup = label('PICK UP', '#377f7b', '#fff1cf', 2.5);
+  pickup.position.set(2.55, 2.6, 0);
+  pickup.material.toneMapped = false;
+  root.add(pickup);
+  const diner = label('JUMBLE DINER', '#fff1cf', '#377f7b', 5);
+  diner.position.set(3.1, 4.7, 2);
+  diner.material.toneMapped = false;
+  root.add(diner);
+  const menu = label('BURGERS  /  SHAKES', '#fff1cf', '#be4d3c', 2.2);
+  menu.position.set(-4.2, 2.7, 11);
+  menu.material.toneMapped = false;
+  root.add(menu);
+  // Parking outline and a stop line make the pickup target visible from the car.
+  for (const x of [-2.25, 1.15])
+    box(root, [0.07, 0.015, 5.6], [x, 0.025, 0], '#fff1cf');
+  box(root, [3.45, 0.015, 0.14], [-0.55, 0.025, -2.8], '#efbd58');
+  for (let z = -8; z < 24; z += 6) {
+    box(root, [1, 0.015, 0.12], [-1.5, 0.025, z], '#fff1cf');
+    for (const x of [-0.28, 0.28]) {
+      const arrow = box(
+        root,
+        [0.08, 0.015, 0.65],
+        [-1.5 + x, 0.025, z - 0.18],
+        '#fff1cf',
+      );
+      arrow.rotation.y = x < 0 ? -0.65 : 0.65;
+    }
+  }
+  box(root, [5, 0.18, 48], [-10.5, -0.04, 8], '#8ea77b', true);
+  for (let z = -7; z < 28; z += 7) {
+    taper(root, 0.15, 0.22, 2, [-9, 0.95, z], '#91724c', 8);
+    ball(root, [1.3, 1.5, 1.3], [-9, 2.7, z], '#719565', 16);
+    ball(root, [0.9, 1, 1], [-9.6, 2.5, z + 0.3], '#88a971', 16);
+  }
   return root;
 }
 
-/**
- * Creates the beat-up 80s sedan with passenger opening, working wipers, and wheels.
- */
-export function createSedanModel(): T.Group {
-  const car = new T.Group();
-  car.name = 'sedan';
-
-  const bodyGroup = new T.Group();
-  bodyGroup.name = 'car-body';
-
-  // Lower chassis
-  box(bodyGroup, [2.0, 0.65, 4.4], [0, 0.65, 0], COLORS.carBody, true);
-  // Cabin roof
-  box(bodyGroup, [1.8, 0.65, 2.3], [0, 1.25, 0.1], COLORS.carBody, true);
-
-  // Bumpers
-  box(bodyGroup, [2.05, 0.25, 0.35], [0, 0.45, 2.25], COLORS.carTrim); // Rear
-  box(bodyGroup, [2.05, 0.25, 0.35], [0, 0.45, -2.25], COLORS.carTrim); // Front
-
-  // Headlights
-  box(bodyGroup, [0.4, 0.2, 0.1], [-0.7, 0.65, -2.22], '#fef08a');
-  box(bodyGroup, [0.4, 0.2, 0.1], [0.7, 0.65, -2.22], '#fef08a');
-
-  // Taillights
-  box(bodyGroup, [0.45, 0.2, 0.1], [-0.7, 0.65, 2.22], '#ef4444');
-  box(bodyGroup, [0.45, 0.2, 0.1], [0.7, 0.65, 2.22], '#ef4444');
-
-  // Windshield
-  const windshield = box(
-    bodyGroup,
-    [1.65, 0.55, 0.1],
-    [0, 1.2, -1.05],
-    COLORS.carGlass,
-  );
-  windshield.rotation.x = 0.35;
-  windshield.name = 'windshield';
-
-  // Windshield Splat Mesh (Goo overlay)
-  const splatMesh = box(
-    bodyGroup,
-    [1.4, 0.45, 0.05],
-    [0, 1.2, -1.03],
-    COLORS.milkshakePink,
-  );
-  splatMesh.rotation.x = 0.35;
-  splatMesh.name = 'windshield-splat';
-  splatMesh.visible = false;
-
-  // Wipers
-  const wiperL = box(
-    bodyGroup,
-    [0.65, 0.04, 0.04],
-    [-0.35, 1.0, -1.15],
-    '#000000',
-  );
-  const wiperR = box(
-    bodyGroup,
-    [0.65, 0.04, 0.04],
-    [0.35, 1.0, -1.15],
-    '#000000',
-  );
-  wiperL.name = 'wiper-l';
-  wiperR.name = 'wiper-r';
-
-  // Side windows (Right passenger window is OPEN for leaning!)
-  box(bodyGroup, [0.05, 0.5, 1.0], [-0.91, 1.25, 0.2], COLORS.carGlass); // Driver side closed
-
-  // 4 Wheels
-  const wheelPositions = [
-    [-1.0, 0.38, -1.35],
-    [1.0, 0.38, -1.35],
-    [-1.0, 0.38, 1.35],
-    [1.0, 0.38, 1.35],
-  ];
-
-  for (let i = 0; i < wheelPositions.length; i++) {
-    const [wx, wy, wz] = wheelPositions[i];
-    const wheel = new T.Group();
-    wheel.position.set(wx, wy, wz);
-    box(wheel, [0.28, 0.72, 0.72], [0, 0, 0], COLORS.tireRubber, true);
-    box(wheel, [0.3, 0.35, 0.35], [0, 0, 0], COLORS.hubcap);
-    wheel.name = `wheel-${i}`;
-    car.add(wheel);
-  }
-
-  car.add(bodyGroup);
-  return car;
-}
+export { createSedanModel } from './sedan';
 
 /**
  * Creates an interactive burger patty with visual sizzle/char states
  */
 export function createPattyMesh(): T.Group {
   const g = new T.Group();
-  box(g, [0.55, 0.12, 0.55], [0, 0.06, 0], COLORS.pattyRaw, true);
+  const patty = taper(g, 0.28, 0.3, 0.12, [0, 0.06, 0], COLORS.pattyRaw, 20);
+  patty.material = patty.material.clone();
+  patty.material.userData.shared = false;
   return g;
 }
 
@@ -355,8 +326,8 @@ export function createDriveThruWorker(
   if (isKitchen && !worn.hat) {
     const body = model.userData.body as T.Group;
     if (body) {
-      box(body, [0.55, 0.22, 0.32], [0, 1.78, 0], CLOTH.white);
-      box(body, [0.56, 0.05, 0.33], [0, 1.72, 0], TEAM.red); // Red accent stripe
+      box(body, [0.55, 0.22, 0.32], [0, 1.69, 0], CLOTH.white);
+      box(body, [0.56, 0.05, 0.33], [0, 1.6, 0], TEAM.red); // Red accent stripe
     }
   }
 
@@ -364,9 +335,9 @@ export function createDriveThruWorker(
   if (role === 'barista' && !worn.face) {
     const body = model.userData.body as T.Group;
     if (body) {
-      box(body, [0.56, 0.04, 0.04], [0, 1.62, 0], CLOTH.ink);
-      box(body, [0.05, 0.08, 0.28], [0.26, 1.45, 0.2], CLOTH.ink);
-      ball(body, [0.05, 0.05, 0.05], [0.26, 1.45, 0.34], CLOTH.ink); // Foam mic
+      box(body, [0.66, 0.04, 0.04], [0, 1.53, 0], CLOTH.ink);
+      box(body, [0.05, 0.08, 0.28], [0.32, 1.34, 0.2], CLOTH.ink);
+      ball(body, [0.05, 0.05, 0.05], [0.32, 1.34, 0.34], CLOTH.ink); // Foam mic
     }
   }
 

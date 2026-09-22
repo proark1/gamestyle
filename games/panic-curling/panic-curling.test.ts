@@ -1,7 +1,11 @@
+import { reconcileCurlingBots, updateCurlingBots } from './bots';
+import { createCurlingRinkMesh, createGadgetMesh } from './models';
+import * as T from 'three';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { computeEndScore, stepCurlingPhysics } from './physics';
 import {
+  panicCurlingAction,
   PARTY_AIM_PATIENCE_S,
   advancePanicCurling,
   freshCurlingWorld,
@@ -298,4 +302,141 @@ void test('peer engine creates panic-curling world and serializes checkpoint', (
 
   const cp = engine.checkpoint();
   assert.equal(cp.game, 'panic-curling');
+});
+
+void test('all stone types reach the house at half power and allow a visible result', () => {
+  for (const kind of ['granite', 'anvil', 'basket'] as const) {
+    const world = freshCurlingWorld(1000);
+    reconcileCurlingBots(world);
+    const stone = launchDelivery(world, 0.5, 0, 1, kind);
+    let sweeps = 0;
+    let now = 1000;
+    while (world.phase === 'sliding' && now < 32000) {
+      updateCurlingBots(world, 1 / 60);
+      advancePanicCurling(world, (now += 1000 / 60));
+      if (
+        world.players.some(
+          (p) => p.team === stone.team && p.status === 'sweeping',
+        )
+      )
+        sweeps++;
+    }
+    assert.equal(world.phase, 'shot_result');
+    assert.equal(stone.outOfBounds, false, kind);
+    assert.ok(stone.distanceToTee < 3.55, `${kind} ends in the house`);
+    assert.ok(sweeps > 0, `${kind} receives visible bot assistance`);
+    assert.equal(world.throwIndex, 0);
+    advancePanicCurling(world, (now += 100));
+    assert.equal(world.phase, 'shot_result');
+    for (let i = 0; i < 17; i++) advancePanicCurling(world, (now += 100));
+    assert.equal(world.phase, 'aiming');
+    assert.equal(world.throwIndex, 1);
+  }
+});
+
+void test('low, draw and takeout power produce distinct unswept distances', () => {
+  for (const kind of ['granite', 'anvil', 'basket'] as const) {
+    const distances = [0.3, 0.5, 0.8].map((power) => {
+      const world = freshCurlingWorld(0);
+      const stone = launchDelivery(world, power, 0, 1, kind);
+      for (let i = 1; world.phase === 'sliding' && i < 1900; i++)
+        advancePanicCurling(world, (i * 1000) / 60);
+      return stone;
+    });
+    assert.ok(distances[0].z < 26, kind);
+    assert.ok(distances[1].distanceToTee < 3.55, kind);
+    assert.equal(distances[2].outOfBounds, true, kind);
+  }
+});
+
+void test('an escort faces the stone and can slip on a banana', () => {
+  const world = freshCurlingWorld(0);
+  const sweeper = newCurlingPlayer('human', 'You', 0, 'red', 'sweeper', false);
+  world.players.push(sweeper);
+  const stone = launchDelivery(world, 0.5, 0, 1, 'granite');
+  stepCurlingPhysics(world.stones, world.players, [], [], 1 / 60, []);
+  assert.ok(Math.cos(sweeper.rotation) < -0.9);
+  const hazard: BananaHazard = {
+    id: 'peel',
+    x: sweeper.x,
+    z: sweeper.z,
+    team: 'blue',
+    active: true,
+  };
+  const events: GameEvent[] = [];
+  stepCurlingPhysics([stone], [sweeper], [], [hazard], 1 / 60, events);
+  assert.equal(sweeper.status, 'slipping');
+  assert.equal(hazard.active, false);
+  assert.ok(events.some((e) => e.type === 'banana_slip'));
+});
+
+void test('role changes cannot teleport players during a shot and humans replace role bots', () => {
+  const world = freshCurlingWorld(0);
+  const human = newCurlingPlayer('human', 'You', 0, 'red', 'deliverer', false);
+  world.players.push(human);
+  reconcileCurlingBots(world);
+  launchDelivery(world, 0.5, 0, 1, 'granite');
+  const positions = world.players.map((p) => [p.x, p.z]);
+  panicCurlingAction(
+    world,
+    human.id,
+    { type: 'switchRole', role: 'sweeper' },
+    true,
+  );
+  panicCurlingAction(
+    world,
+    human.id,
+    { type: 'switchTeam', team: 'blue' },
+    true,
+  );
+  assert.equal(human.role, 'deliverer');
+  assert.equal(human.team, 'red');
+  assert.deepEqual(
+    world.players.map((p) => [p.x, p.z]),
+    positions,
+  );
+  world.phase = 'aiming';
+  panicCurlingAction(
+    world,
+    human.id,
+    { type: 'switchRole', role: 'sweeper' },
+    true,
+  );
+  reconcileCurlingBots(world);
+  assert.equal(
+    world.players.filter((p) => p.team === 'red' && p.role === 'sweeper')
+      .length,
+    1,
+  );
+});
+
+void test('the next end gives hammer to the non-scoring team and retains it for a blank', () => {
+  for (const score of [
+    { red: 1, blue: 0 },
+    { red: 0, blue: 2 },
+    { red: 0, blue: 0 },
+  ]) {
+    const world = freshCurlingWorld(0);
+    world.phase = 'end_summary';
+    world.phaseTimer = 4;
+    world.endScores.push(score);
+    advancePanicCurling(world, 50);
+    assert.equal(world.hammerTeam, score.blue ? 'red' : 'blue');
+    assert.notEqual(world.turnTeam, world.hammerTeam);
+  }
+});
+
+void test('rink rings and painted lines sit above opaque ice and broom has an articulating shaft', () => {
+  const rink = createCurlingRinkMesh();
+  const rings = rink.children.filter(
+    (mesh): mesh is T.Mesh =>
+      mesh instanceof T.Mesh &&
+      mesh.geometry instanceof T.CylinderGeometry &&
+      mesh.position.z === TEE_Z,
+  );
+  assert.equal(rings.length, 4);
+  for (const ring of rings)
+    assert.ok(new T.Box3().setFromObject(ring).min.y > 0);
+  const broom = createGadgetMesh('broom');
+  assert.ok(broom.userData.shaft instanceof T.Mesh);
 });

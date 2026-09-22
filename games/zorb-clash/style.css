@@ -6,6 +6,7 @@
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   user-select: none;
   background: #64b5f6;
@@ -666,7 +667,12 @@
 /* Responsive Styles */
 @media (max-width: 768px) {
   .zorb-radar {
-    display: none;
+    display: block;
+    top: 136px;
+    right: 8px;
+    padding: 5px;
+    transform: scale(0.62);
+    transform-origin: top right;
   }
   .zorb-hud-top {
     top: 72px;
@@ -701,6 +707,74 @@
   }
   .zorb-goal-banner .zorb-goal-title {
     font-size: 44px;
+  }
+}
+
+.zorb-touch-stick,
+.zorb-touch-btn {
+  touch-action: none;
+}
+.zorb-touch-btn[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 3px var(--hud-ink);
+}
+.zorb-touch-btn:disabled {
+  opacity: 0.45;
+}
+.zorb-turtle-banner progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin-top: 10px;
+  accent-color: var(--hud-accent-strong);
+}
+.zorb-balance-hint {
+  position: absolute;
+  top: 168px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 65vw;
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: var(--hud-card);
+  font-size: 13px;
+  text-align: center;
+}
+.zorb-modal {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+.zorb-modal p {
+  max-width: 42ch;
+  margin: 12px auto 18px;
+  line-height: 1.55;
+}
+@media (max-height: 520px) {
+  .zorb-hud-top {
+    top: 64px;
+    transform: translateX(-50%) scale(0.8);
+    transform-origin: top;
+  }
+  .zorb-radar {
+    top: 70px;
+    transform: scale(0.55);
+    transform-origin: top right;
+  }
+  .zorb-container:has(.zorb-touch-controls) .zorb-hud-bottom {
+    bottom: 8px;
+    transform: translateX(-50%) scale(0.8);
+  }
+  .zorb-turtle-banner {
+    top: 125px;
+    font-size: 15px;
+    padding: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zorb-container *,
+  .zorb-container *::before,
+  .zorb-container *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
 

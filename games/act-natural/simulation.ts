@@ -21,6 +21,7 @@ import { farmMove, FARMER_SPEED } from './movement';
 export { farmMove } from './movement';
 import { privateFarmView } from './view';
 import { tickFarmBots } from './bots';
+import { farmerRepair, ITEM_HOMES } from './farmer-actions';
 function clue(w: FarmWorld, sound: string, position: Point) {
   w.clues ??= [];
   w.clues.push({
@@ -90,24 +91,21 @@ function resetField(w: FarmWorld) {
     {
       id: 'barn-key',
       kind: 'key',
-      x: -7,
-      z: -6,
+      ...ITEM_HOMES['barn-key'],
       holder: null,
       delivered: false,
     },
     {
       id: 'shed-key',
       kind: 'key',
-      x: 7,
-      z: -6,
+      ...ITEM_HOMES['shed-key'],
       holder: null,
       delivered: false,
     },
     {
       id: 'ladder',
       kind: 'ladder',
-      x: 6,
-      z: 4,
+      ...ITEM_HOMES.ladder,
       holder: null,
       delivered: false,
     },
@@ -153,6 +151,34 @@ function begin(w: FarmWorld) {
   w.phase = 'playing';
   w.started = w.clock;
   note(w, 'The gate is locked. Look innocent.');
+}
+function repairFarm(w: FarmWorld) {
+  const repair = farmerRepair(w);
+  if (!repair) return false;
+  if (repair.kind === 'power') {
+    w.powerOff = false;
+    for (const cow of w.cows) cow.task = 0;
+    note(w, 'The farmer restored fence power. Cut it again to escape.');
+  } else {
+    const kind = repair.kind === 'gate' ? 'key' : 'ladder';
+    for (const item of w.items) {
+      if (item.kind !== kind || !item.delivered) continue;
+      Object.assign(item, ITEM_HOMES[item.id], {
+        delivered: false,
+        holder: null,
+      });
+    }
+    if (repair.kind === 'gate') {
+      w.keysDelivered = 0;
+      clue(w, 'event.gate', GATE);
+      note(w, 'The farmer relocked the gate and returned the used keys.');
+    } else {
+      w.ladderPlaced = false;
+      clue(w, 'item.ladder.drop', LADDER_EXIT);
+      note(w, 'The farmer put the ladder back. Steal it again.');
+    }
+  }
+  return true;
 }
 export function dropItem(w: FarmWorld, cow: Cow) {
   if (!cow.carrying) return;
@@ -278,6 +304,7 @@ export function farmAction(
   }
   if (w.phase !== 'playing') throw new Error('Wait for the next round.');
   if (id === w.farmerId) {
+    if (a.type === 'interact' && repairFarm(w)) return;
     if (a.type !== 'inspect' && a.type !== 'interact')
       throw new Error('Watch the herd, then inspect a suspicious cow.');
     const nearest = w.cows
@@ -482,6 +509,7 @@ export function advanceFarm(w: FarmWorld, now: number) {
   finish(w);
 }
 function computerFarmer(w: FarmWorld, dt: number) {
+  if (repairFarm(w)) return;
   // The computer observes every cow identically; it never reads the hidden ownership map.
   let suspect: Cow | undefined;
   let best = 2.8;
@@ -523,14 +551,9 @@ function computerFarmer(w: FarmWorld, dt: number) {
       best = suspicion;
     }
   }
-  const patrol = [
-    { x: -5, z: -5 },
-    { x: 5, z: -5 },
-    { x: 6, z: 5 },
-    { x: -6, z: 5 },
-  ];
+  const patrol = [{ x: -5, z: -5 }, { x: 5, z: -5 }, LADDER_EXIT, GATE, PANEL];
   const target =
-    suspect ?? patrol[Math.floor((w.clock - w.started) / 8500) % 4];
+    suspect ?? patrol[Math.floor((w.clock - w.started) / 8500) % patrol.length];
   const dx = target.x - w.farmer.x,
     dz = target.z - w.farmer.z,
     len = Math.hypot(dx, dz);

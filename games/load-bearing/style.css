@@ -316,3 +316,8 @@
   margin-left: -6px;
   color: #c05c3c;
 }
+@media (pointer: coarse), (max-width: 900px) {
+  .lb-game.in-session {
+    min-height: 0;
+  }
+}

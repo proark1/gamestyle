@@ -1,3 +1,4 @@
+import { compatibility, PEER_PROTOCOL, rulesVersion } from './protocol';
 import {
   hashToken as hash,
   isRoomCode,
@@ -23,6 +24,9 @@ import {
 } from './types';
 
 type Room = {
+  protocol: number;
+  rules: number;
+  party?: { code: string; round: number; run: string };
   host: string;
   epoch: number;
   key: string;
@@ -43,7 +47,8 @@ const nameOf = (value: unknown) => playerName(value, 'Player');
 const supportsNpcRoster = (game: string) =>
   game === 'uphill-delivery' ||
   game === 'four-brain-cells' ||
-  game === 'reel-problems';
+  game === 'reel-problems' ||
+  game === 'reel-problems-2';
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' && /^[a-zA-Z0-9-]{1,80}$/.test(value);
 function remove(room: Room, id: string) {
@@ -53,12 +58,16 @@ function remove(room: Room, id: string) {
 }
 function elect(room: Room, now: number) {
   const host = room.members.find((m) => m.id === room.host);
-  if (host && now - host.seen < HOST_LEASE_MS) return;
-  if (host) remove(room, host.id);
-  room.host =
+  if (host && !host.suspended && now - host.seen < HOST_LEASE_MS) return;
+  // A party lease expiring revokes authority, not the authenticated player's
+  // seat. Shader compilation or a short disconnect must not eject the host.
+  if (host && !host.suspended && !room.party) remove(room, host.id);
+  const nextHost =
     room.members
-      .filter((m) => m.instance && now - m.seen < HOST_LEASE_MS)
+      .filter((m) => !m.suspended && m.instance && now - m.seen < HOST_LEASE_MS)
       .sort((a, b) => a.order - b.order)[0]?.id ?? '';
+  if (room.host === nextHost) return;
+  room.host = nextHost;
   room.epoch++;
   room.key = newCheckpointKey();
 }
@@ -112,6 +121,9 @@ function view(
     cursor: signals.at(-1)?.serial ?? cursor,
     iceServers,
     relayConfigured: iceServers.length > 1,
+    ...compatibility(game),
+    relayOnly: process.env.PEER_RELAY_ONLY === '1',
+    ...(room.party ? { party: room.party } : {}),
     ...(id === room.host
       ? {
           key: room.key,
@@ -122,7 +134,7 @@ function view(
       : {}),
   };
 }
-function validateSignal(value: unknown): Signal {
+export function validateSignal(value: unknown): Signal {
   if (!value || typeof value !== 'object')
     throw new PeerError('Invalid connection signal.');
   const s = value as Signal;
@@ -179,6 +191,11 @@ export async function handlePeerRoom(
 ): Promise<PeerReply> {
   const game = body.game;
   if (!isGameId(game)) throw new PeerError('Unknown game.');
+  if (
+    (body.protocol !== undefined && body.protocol !== PEER_PROTOCOL) ||
+    (body.rules !== undefined && body.rules !== rulesVersion(game))
+  )
+    throw new PeerError('Update the game before joining this room.', 426);
   const op = body.op;
   if (
     ![
@@ -191,6 +208,8 @@ export async function handlePeerRoom(
       'lock',
       'leave',
       'npc',
+      'suspend',
+      'resume',
     ].includes(String(op))
   )
     throw new PeerError('Unknown room operation.');
@@ -203,6 +222,7 @@ export async function handlePeerRoom(
         ? Math.max(0, Math.min(3, Number(body.color)))
         : 0;
       const room: Room = {
+        ...compatibility(game),
         host: id,
         epoch: 1,
         key: newCheckpointKey(),
@@ -259,6 +279,42 @@ export async function handlePeerRoom(
         404,
       );
     const room = JSON.parse(row.state) as Room;
+    if (room.protocol !== PEER_PROTOCOL || room.rules !== rulesVersion(game))
+      throw new PeerError(
+        'This room uses another game version. Create a new room after updating.',
+        426,
+      );
+    if (room.party) {
+      if (joining)
+        throw new PeerError('Join this game from its party lobby.', 403);
+      const partyRow = await store.get('party:' + room.party.code);
+      const party = partyRow ? JSON.parse(partyRow.state) : null;
+      if (
+        !party ||
+        !partyRow ||
+        now - partyRow.updated > 86400000 ||
+        party.passes?.[id] !== tokenHash ||
+        party.currentRound !== room.party.round ||
+        party.playlist?.[room.party.round] !== game ||
+        (party.runId ?? String(party.countdownUntil)) !== room.party.run ||
+        !['countdown', 'in_game'].includes(party.status) ||
+        party.reports?.[id] !== undefined
+      )
+        throw new PeerError(
+          'This party round has ended. Return to the party.',
+          401,
+        );
+      // A completed/forfeited seat no longer holds up the game connection.
+      // Game adapters replace departed players with helpers where supported.
+      for (const member of room.members)
+        if (
+          party.reports?.[member.id] !== undefined ||
+          !party.players.some(
+            (player: { id: string }) => player.id === member.id,
+          )
+        )
+          remove(room, member.id);
+    }
     if (!joining && room.tokens[id] !== tokenHash)
       throw new PeerError(
         'Your room pass expired. Rejoin with the room code.',
@@ -268,7 +324,11 @@ export async function handlePeerRoom(
     // Expire authority before refreshing the caller: an old host cannot revive a dead lease.
     elect(room, now);
     for (const m of room.members)
-      if (now - m.seen >= MEMBER_TTL_MS) remove(room, m.id);
+      if (
+        now - m.seen >=
+        (m.suspended ? 120000 : room.party ? 60000 : MEMBER_TTL_MS)
+      )
+        remove(room, m.id);
     if (joining) {
       if (!room.host)
         throw new PeerError('This room has ended. Create a new room.', 404);
@@ -334,6 +394,11 @@ export async function handlePeerRoom(
           401,
         );
       member.seen = now;
+      if (op === 'suspend' || op === 'resume' || op === 'hello') {
+        member.suspended = op === 'suspend';
+        elect(room, now);
+      }
+      if (room.party) elect(room, now);
       if (op === 'npc') {
         if (!supportsNpcRoster(game))
           throw new PeerError('NPC slots are not supported by this game.');
@@ -350,7 +415,7 @@ export async function handlePeerRoom(
             throw new PeerError(
               game === 'four-brain-cells'
                 ? 'Finish this breakfast before changing NPCs.'
-                : game === 'reel-problems'
+                : game === 'reel-problems' || game === 'reel-problems-2'
                   ? 'Finish this tournament before changing NPCs.'
                   : 'Finish this delivery before changing NPCs.',
               409,
@@ -455,15 +520,14 @@ export async function handlePeerRoom(
           room.receipts.push(`${id}:${signal.id}`);
         }
       }
-      room.signals = room.signals
-        .filter(
-          (s) => now - s.at < 20000 && !(s.to === id && s.serial <= cursor),
-        )
-        .slice(-192);
+      room.signals = room.signals.filter(
+        (s) => now - s.at < 20000 && !(s.to === id && s.serial <= cursor),
+      );
       room.receipts = room.receipts.slice(-384);
       if (
+        room.signals.length > 192 ||
         new TextEncoder().encode(JSON.stringify(room.signals)).byteLength >
-        MAX_SIGNAL_BYTES
+          MAX_SIGNAL_BYTES
       )
         throw new PeerError(
           'Connection signal queue is full. Please retry shortly.',
@@ -496,4 +560,94 @@ export async function handlePeerRoom(
       };
   }
   throw new PeerError('The room is busy. Reconnecting…', 503);
+}
+
+export async function reservePartyPeerRoom(
+  store: RoomStore,
+  game: PeerView['game'],
+  code: string,
+  players: { id: string; name: string; color: number }[],
+  tokens: Record<string, string>,
+  party: { code: string; round: number; run: string },
+  now: number,
+  rejoinId?: string,
+) {
+  const used = new Set<number>();
+  players = players.map((p) => {
+    const color = !used.has(p.color)
+      ? p.color
+      : [0, 1, 2, 3].find((c) => !used.has(c))!;
+    used.add(color);
+    return { ...p, color };
+  });
+  const room: Room = {
+    ...compatibility(game),
+    ...(supportsNpcRoster(game)
+      ? {
+          npcs: {
+            revision: 1,
+            slots: changeNpcSlots([], players, { type: 'fill-npcs' }),
+          },
+        }
+      : {}),
+    party,
+    host: players[0].id,
+    epoch: 1,
+    key: newCheckpointKey(),
+    members: players.map((p, order) => ({
+      ...p,
+      order,
+      instance: '',
+      seen: now,
+      suspended: true,
+    })),
+    tokens: Object.fromEntries(players.map((p) => [p.id, tokens[p.id]])),
+    nextOrder: players.length,
+    serial: 0,
+    signals: [],
+    open: true,
+    receipts: [],
+  };
+  if (
+    await store.insert({
+      code: peerStorageCode(game, code),
+      state: JSON.stringify(room),
+      version: 0,
+      updated: now,
+    })
+  )
+    return;
+  for (let attempt = 0; attempt < 16; attempt++) {
+    const row = await store.get(peerStorageCode(game, code));
+    if (!row)
+      throw new PeerError('Preparing the party room. Retry shortly.', 503);
+    const current = JSON.parse(row.state) as Room;
+    if (
+      current.party?.code !== party.code ||
+      current.party.run !== party.run ||
+      current.party.round !== party.round
+    )
+      throw new PeerError(
+        'Party room assignment conflicted. Restart the tournament.',
+        409,
+      );
+    if (!rejoinId || current.tokens[rejoinId]) return;
+    const member = room.members.find((m) => m.id === rejoinId);
+    if (!member) throw new PeerError('Rejoin the party to play.', 401);
+    current.members.push({ ...member, order: current.nextOrder++ });
+    current.tokens[rejoinId] = tokens[rejoinId];
+    if (
+      await store.compareAndSwap(
+        {
+          ...row,
+          state: JSON.stringify(current),
+          version: row.version + 1,
+          updated: now,
+        },
+        row.version,
+      )
+    )
+      return;
+  }
+  throw new PeerError('Party room is busy. Retry shortly.', 503);
 }

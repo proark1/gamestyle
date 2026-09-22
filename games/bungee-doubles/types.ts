@@ -151,6 +151,7 @@ export type BungeeWorld = {
   phase: 'lobby' | 'serving' | 'rally' | 'scored' | 'ended';
   started: number;
   endedAt: number;
+  nextServeAt: number;
   scores: Record<TeamId, number>;
   serverTeam: TeamId;
   servingPlayerId: string | null;

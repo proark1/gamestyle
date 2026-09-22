@@ -264,6 +264,7 @@ export function createSite(): SiteModel {
   const checkpointFlags = flags(root);
   siteOffice(root);
   siteGate(root);
+  finalCrossing(root);
   skyline(root);
   const dust = dustMotes(root);
 
@@ -277,6 +278,30 @@ export function createSite(): SiteModel {
     anchors,
     dust,
   };
+}
+
+/** Paint the new challenges into the world, with a clear take-off line. */
+function finalCrossing(parent: T.Object3D) {
+  for (const id of ['cargo-left', 'cargo-right']) {
+    const load = SURFACES.find((b) => b.id === id)!;
+    hazardEdge(parent, load.minX, load.maxX, load.maxY, load.minZ + 0.07);
+    hazardEdge(parent, load.minX, load.maxX, load.maxY, load.maxZ - 0.07);
+  }
+  for (const x of [147, 149, 156, 158, 165, 168, 171]) {
+    const arrow = new T.Shape();
+    arrow.moveTo(0.55, 0);
+    arrow.lineTo(-0.35, 0.4);
+    arrow.lineTo(-0.1, 0);
+    arrow.lineTo(-0.35, -0.4);
+    arrow.closePath();
+    const paint = new T.Mesh(new T.ShapeGeometry(arrow), material(SITE.hazard));
+    paint.rotation.x = -Math.PI / 2;
+    paint.position.set(x, 0.015, 0);
+    parent.add(paint);
+  }
+  for (const x of [150.4, 154.1]) {
+    box(parent, [0.15, 0.025, 2.6], [x, 0.02, 0], SITE.hazard);
+  }
 }
 
 function crate(parent: T.Object3D, b: Box) {

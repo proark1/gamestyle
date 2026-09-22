@@ -1,4 +1,8 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
+import { apiFetch } from '../../shared/browser/api-fetch';
+
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { Session } from './connection';
 export function BuildShelf({
@@ -23,7 +27,7 @@ export function BuildShelf({
   useEffect(() => {
     if (!open) return;
     const abort = new AbortController();
-    void fetch('/api/handwerker/builds', { signal: abort.signal })
+    void apiFetch('/api/handwerker/builds', { signal: abort.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error();
         const data = (await r.json()) as {
@@ -40,7 +44,7 @@ export function BuildShelf({
     if (!session || busy) return;
     setBusy(true);
     try {
-      const response = await fetch('/api/handwerker/builds', {
+      const response = await apiFetch('/api/handwerker/builds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...session, title }),
@@ -93,7 +97,7 @@ export function BuildShelf({
               <button
                 onClick={() =>
                   void navigator.clipboard
-                    .writeText(`${location.origin}/build/${saved}`)
+                    .writeText(`${publicGameOrigin()}/build/${saved}`)
                     .then(
                       () => notify('Build link copied.'),
                       () =>

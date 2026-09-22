@@ -74,6 +74,37 @@ export function calculateRoundPoints(
 /** A human's report for the round; null when they gave up or never sent one. */
 export type RoundReports = Record<string, PartyResult | null>;
 
+/** Shared games never rank missing reports or helpers as contestants. */
+export function sharedRoundPoints(
+  reports: RoundReports,
+  scoring: 'team' | 'individual' | 'cooperative',
+): Record<string, number> {
+  const points = Object.fromEntries(Object.keys(reports).map((id) => [id, 0]));
+  if (scoring === 'team') {
+    for (const [id, report] of Object.entries(reports))
+      if (report?.kind === 'versus')
+        points[id] = { won: 10, draw: 6, lost: 3 }[report.outcome];
+  } else if (scoring === 'cooperative') {
+    const completed = Object.values(reports).filter((r) => r !== null);
+    if (
+      completed.length &&
+      completed.every((r) => r.kind === 'goal' && r.cleared)
+    )
+      for (const [id, report] of Object.entries(reports))
+        if (report) points[id] = 6;
+  } else {
+    Object.assign(
+      points,
+      calculateRoundPoints(
+        Object.entries(reports).flatMap(([playerId, r]) =>
+          r?.kind === 'goal' && r.cleared ? [{ playerId, score: r.score }] : [],
+        ),
+      ),
+    );
+  }
+  return points;
+}
+
 /**
  * The two sides of a team round. Partners rotate with the round, so over a
  * tournament everyone gets a turn alongside everyone else.

@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element, next/no-html-link-for-pages -- Full game navigation disposes WebGL; artwork is served locally on both targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
@@ -395,7 +397,7 @@ export default function WrongFloor() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/wrong-floor?room=${session?.code}`,
+        gameInviteUrl('wrong-floor', session?.code),
       );
       setCopied(true);
     } catch {
@@ -458,7 +460,12 @@ export default function WrongFloor() {
             <span>{say('How to play')}</span>
           </button>
           {session && (
-            <button onClick={() => setModal('leave')}>{say('Leave')}</button>
+            <button
+              data-party-setup-action=""
+              onClick={() => setModal('leave')}
+            >
+              {say('Leave')}
+            </button>
           )}
           <details
             className="hotel-settings"
@@ -990,6 +997,7 @@ export default function WrongFloor() {
               </div>
               {host && (
                 <button
+                  data-party-setup-action=""
                   className="hotel-primary"
                   disabled={disabled}
                   onClick={() => action({ type: 'restart' })}

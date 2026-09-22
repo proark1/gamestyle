@@ -24,9 +24,11 @@ export const GAME_IDS = [
   'first-person',
   'four-brain-cells',
   'load-bearing',
+  'on-the-ropes',
   'one-more-button',
   'panic-curling',
   'reel-problems',
+  'reel-problems-2',
   'sample-stampede',
   'scaffold-scramble',
   'shelf-control',
@@ -72,6 +74,8 @@ export const BORROWED_AUDIO = {
  * provide both — not merely because nobody has added it yet.
  */
 export const PARTY_EXCLUDED = {
+  'reel-problems-2':
+    'Experimental copy for style tests; not part of the party rotation',
   chaos: 'Handwerker title with its own long-form session',
   'first-person': 'Handwerker title with its own long-form session',
   'shelf-control': 'server-authoritative rooms, no peer adapter',

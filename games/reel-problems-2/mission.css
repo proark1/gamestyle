@@ -1,0 +1,477 @@
+.reel-contracts {
+  border: 0;
+  padding: 0;
+  margin: 14px 0;
+  display: grid;
+  gap: 7px;
+  text-align: left;
+}
+.reel-contracts legend {
+  padding: 0 0 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.reel-contracts label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 2px solid #bad6cf;
+  border-radius: 12px;
+  padding: 10px 13px;
+  background: #eaf4eb;
+  cursor: pointer;
+}
+.reel-contracts label.selected {
+  border-color: #226b72;
+  background: #d4ece2;
+}
+.reel-contracts input {
+  accent-color: #226b72;
+}
+.reel-contracts b,
+.reel-contracts small {
+  display: block;
+}
+.reel-contracts b {
+  font:
+    500 19px 'Fredoka',
+    sans-serif;
+}
+.reel-contracts small {
+  font-size: 11px;
+  margin-top: 3px;
+}
+.reel-completed {
+  font-size: 12px !important;
+  color: #286f63;
+}
+.reel-mission {
+  position: absolute;
+  z-index: 5;
+  top: 92px;
+  left: 20px;
+  width: 270px;
+  padding: 16px;
+  border-radius: 5px 5px 18px 18px;
+  border-top: 5px solid #e8b54f;
+  background: #edf6eefa;
+  color: #174b57;
+  box-shadow: 0 8px 24px #18495425;
+}
+.reel-mission-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.reel-mission-heading time {
+  font:
+    600 22px 'Fredoka',
+    sans-serif;
+  letter-spacing: 0;
+}
+.reel-mission .urgent {
+  color: #b94d3b;
+}
+.reel-mission h2 {
+  font:
+    500 27px 'Fredoka',
+    sans-serif;
+  margin: 9px 0;
+}
+.reel-mission p {
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 9px 0;
+}
+.reel-mission small {
+  font-size: 10px;
+}
+.reel-delivery-stamps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-block: 1px dashed #8cb4a7;
+  padding: 10px 0;
+}
+.reel-delivery-stamps > span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px dotted #93b4ab;
+  border-radius: 50%;
+  color: #93b4ab;
+}
+.reel-delivery-stamps .delivered {
+  background: #277365;
+  border: 2px solid #277365;
+  color: white;
+}
+.reel-delivery-stamps b {
+  margin-left: auto;
+  font-size: 12px;
+}
+.reel-courses {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.reel-courses button,
+.reel-drop {
+  border: 1px solid #91b6a9;
+  background: #fffaf0;
+  border-radius: 8px;
+  padding: 9px 5px;
+  font:
+    700 12px 'DM Sans',
+    sans-serif;
+  color: #174b57;
+}
+.reel-courses button[aria-pressed='true'] {
+  background: #216b72;
+  color: white;
+}
+.reel-work {
+  width: 100%;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 10px;
+  padding: 11px;
+  background: #216b72;
+  color: white;
+  touch-action: none;
+  text-align: left;
+}
+.reel-work span,
+.reel-work small {
+  display: block;
+}
+.reel-work span {
+  font-weight: 800;
+  font-size: 12px;
+}
+.reel-work small {
+  margin-top: 5px;
+}
+.reel-work progress {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin-top: 8px;
+  accent-color: #ffd270;
+}
+.reel-work:disabled {
+  opacity: 0.55;
+}
+.reel-build-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  font-size: 11px;
+}
+.reel-build-list .installed {
+  color: #22745e;
+  font-weight: 800;
+}
+.reel-drop {
+  width: 100%;
+  margin-top: 5px;
+}
+.campaign .reel-scoreboard,
+.campaign .reel-weather {
+  display: none;
+}
+.recovering .reel-action-dock,
+.recovering .reel-line-panel,
+.recovering .reel-movement-hint {
+  display: none;
+}
+@media (max-width: 700px) {
+  .reel-mission {
+    top: 76px;
+    left: 10px;
+    width: 228px;
+    padding: 10px;
+  }
+  .reel-mission h2 {
+    font-size: 21px;
+    margin: 3px 0 7px;
+  }
+  .reel-mission p {
+    font-size: 10px;
+    margin: 6px 0;
+  }
+  .reel-mission-heading {
+    font-size: 8px;
+  }
+  .reel-delivery-stamps {
+    padding: 6px 0;
+  }
+  .reel-delivery-stamps > span {
+    width: 23px;
+    height: 23px;
+  }
+  .reel-courses button {
+    min-height: 40px;
+  }
+  .campaign .reel-crew {
+    display: none;
+  }
+  .reel-menu .reel-contracts {
+    margin: 8px 0;
+  }
+}
+@media (max-height: 600px) and (min-width: 701px) {
+  .reel-mission {
+    top: 72px;
+    width: 240px;
+    padding: 10px;
+    max-height: calc(100dvh - 85px);
+    overflow-y: auto;
+  }
+  .reel-mission h2 {
+    font-size: 22px;
+  }
+  .reel-mission p {
+    font-size: 10px;
+  }
+}
+.reel-deckhand {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 12px;
+  margin: 8px 0 12px;
+}
+.reel-deckhand input {
+  accent-color: #226b72;
+}
+.campaign .reel-notice {
+  top: auto;
+  bottom: 215px;
+}
+@media (max-width: 700px) {
+  .reel-mission {
+    top: 108px;
+    width: calc(100% - 20px);
+  }
+  .reel-mission h2 {
+    display: none;
+  }
+  .reel-mission .reel-mission-hint,
+  .reel-courses + small,
+  .reel-work.unavailable {
+    display: none;
+  }
+  .reel-mission-heading time {
+    font-size: 18px;
+  }
+  .reel-delivery-stamps {
+    padding: 4px 0;
+    margin-top: 4px;
+  }
+  .reel-mission p {
+    margin: 4px 0;
+  }
+  .reel-courses {
+    margin: 4px 0 0;
+  }
+  .reel-courses button {
+    padding: 5px;
+    min-height: 34px;
+  }
+  .reel-work {
+    margin-top: 6px;
+    padding: 8px;
+  }
+  .campaign .reel-notice {
+    bottom: 215px;
+    font-size: 10px;
+  }
+  .reel-menu {
+    overflow-y: auto;
+    max-height: calc(100dvh - 105px);
+  }
+}
+.survival-panel {
+  background: #123f50;
+  color: #f4f1df;
+  border-color: #ff934e;
+  width: 310px;
+}
+.reel-storm-clock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+}
+.reel-storm-clock b {
+  font-family: Fredoka, sans-serif;
+  font-size: 32px;
+  letter-spacing: 0;
+  color: #f4d36a;
+}
+.reel-journey {
+  display: flex;
+  gap: 5px;
+  margin: 10px 0;
+}
+.reel-journey span {
+  flex: 1;
+  border-bottom: 3px solid #557e91;
+  font-size: 9px;
+  padding: 5px 0;
+  color: #9cbcc7;
+}
+.reel-journey .current {
+  border-color: #ff934e;
+  color: #fff;
+}
+.reel-mission .survival-title {
+  font-size: 21px;
+  color: #f4f1df;
+  line-height: 1.05;
+  margin: 12px 0;
+}
+.reel-danger {
+  background: #285766;
+  padding: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  border-left: 4px solid #9bc6b9;
+}
+.reel-danger.surge {
+  background: #f4d36a;
+  color: #123f50;
+  border-color: #ff934e;
+}
+.survival-panel progress {
+  width: 100%;
+  height: 9px;
+  accent-color: #ff934e;
+}
+.reel-route-choice {
+  display: grid;
+  gap: 8px;
+}
+.reel-route-choice button {
+  text-align: left;
+  border: 1px solid #9bc6b9;
+  background: #214e5d;
+  color: #f4f1df;
+  border-radius: 9px;
+  padding: 12px;
+}
+.reel-route-choice button:last-child {
+  border-color: #ff934e;
+}
+.reel-route-choice small {
+  display: block;
+  margin-top: 5px;
+}
+.reel-survival-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 9px;
+  color: #bdcfcc;
+}
+.reel-survival-stats b {
+  display: block;
+  font-size: 18px;
+  color: #f4f1df;
+}
+.survival-panel .reel-work {
+  background: #ff934e;
+  color: #123f50;
+}
+.survival-panel .unavailable {
+  display: none;
+}
+.recovering .survival-panel .unavailable {
+  display: block;
+}
+.survival-panel button:focus-visible {
+  outline: 3px solid #f4d36a;
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .reel-mission.survival-panel {
+    padding: 10px 12px;
+  }
+  .reel-mission .survival-title {
+    display: none;
+  }
+  .reel-storm-clock b {
+    font-size: 25px;
+  }
+  .reel-journey {
+    margin: 2px 0 5px;
+  }
+  .reel-survival-stats {
+    margin-top: 6px;
+  }
+  .reel-survival-stats b {
+    display: inline;
+    margin-left: 5px;
+    font-size: 13px;
+  }
+  .reel-route-choice {
+    grid-template-columns: 1fr 1fr;
+  }
+  .reel-route-choice button {
+    padding: 8px;
+  }
+  .reel-danger {
+    padding: 6px;
+    font-size: 10px;
+  }
+}
+.survival .reel-line-panel {
+  display: none;
+}
+.survival .reel-controls .reel-action:first-child {
+  display: none;
+}
+.survival .reel-action-dock > :nth-child(1),
+.survival .reel-action-dock > :nth-child(5),
+.survival .reel-action-dock > :nth-child(6),
+.survival .reel-action-dock > :nth-child(7) {
+  display: none;
+}
+.reel-deck-jobs {
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid #557e91;
+  margin-top: 10px;
+  padding-top: 9px;
+  font-size: 11px;
+}
+.reel-deck-jobs strong {
+  color: #f4d36a;
+  font-size: 11px;
+}
+.reel-deck-jobs .job-done {
+  color: #a8d6b1;
+}
+@media (max-width: 700px) {
+  .reel-deck-jobs {
+    gap: 3px;
+    margin-top: 6px;
+    padding-top: 5px;
+    font-size: 10px;
+  }
+  .reel-deck-jobs strong {
+    font-size: 10px;
+  }
+  .reel-deck-jobs .job-done {
+    display: none;
+  }
+}

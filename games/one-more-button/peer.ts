@@ -19,6 +19,7 @@ import {
 } from './types';
 const adapter: GameAdapter<ButtonWorld, ButtonSnapshot> = {
   game: 'one-more-button',
+  snapshotDetached: true,
   actions: ['start', 'restart', 'press', 'exit', 'jump', 'stop', 'help'],
   create: freshButton,
   add: (w, m) => {

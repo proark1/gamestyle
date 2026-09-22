@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element -- The generated illustration is a local asset served by both hosting targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token for the angler name. */
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
@@ -532,7 +534,7 @@ export default function ReelProblems() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/reel-problems?room=${session?.code}`,
+        gameInviteUrl('reel-problems', session?.code),
       );
       setCopied(true);
     } catch {
@@ -718,7 +720,7 @@ export default function ReelProblems() {
                 <Users size={15} /> 1–4 anglers
               </span>
               <span>
-                <Waves size={16} /> 5-minute tournaments
+                <Waves size={16} /> Classic tournament · 5 minutes
               </span>
             </div>
             <label className="reel-name">
@@ -909,7 +911,9 @@ export default function ReelProblems() {
                 disabled={!captain || busy || npcBusy || status !== 'online'}
                 onClick={() => action({ type: 'start' })}
               >
-                {captain ? 'Start the tournament' : 'Waiting for the captain…'}{' '}
+                {captain
+                  ? 'Start classic tournament'
+                  : 'Waiting for the captain…'}{' '}
                 <ArrowUpRight size={18} />
               </button>
             </section>
@@ -1222,7 +1226,7 @@ export default function ReelProblems() {
                   onAction={(a) => action(a)}
                 />
               )}
-              <button
+              <button data-party-setup-action=""
                 className="reel-primary"
                 disabled={!captain || busy || npcBusy || status !== 'online'}
                 onClick={() => action({ type: 'restart' })}

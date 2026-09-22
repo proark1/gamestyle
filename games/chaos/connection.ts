@@ -1,3 +1,4 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import type { Action, Snapshot } from './model';
 
 export type Session = { code: string; id: string; token: string };
@@ -9,7 +10,7 @@ export type Position = {
   jump: number;
 };
 export async function requestRoom(body: object, signal?: AbortSignal) {
-  const response = await fetch('/api/handwerker/rooms', {
+  const response = await apiFetch('/api/handwerker/rooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

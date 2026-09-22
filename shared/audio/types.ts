@@ -68,10 +68,12 @@ export const DEFAULT_SETTINGS: AudioSettings = {
   voiceId: '',
 };
 export const GAME_NAMES: Record<GameId, string> = {
+  'on-the-ropes': 'On the Ropes',
   'wrong-floor': 'Wrong Floor',
   'stack-or-sink': 'Stack or Sink',
   'act-natural': 'Blend Business',
   'uphill-delivery': 'Uphill Delivery',
+  'reel-problems-2': 'Reel Problems 2',
   'reel-problems': 'Reel Problems',
   'one-more-button': 'One More Button',
   'four-brain-cells': 'Four Brain Cells',

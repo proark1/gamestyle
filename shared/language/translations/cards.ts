@@ -15,6 +15,7 @@ export interface CardTranslation {
 }
 
 export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
+  'on-the-ropes': { en: { tag: 'TAG TEAM BOXING', isNew: true, newTag: 'NEW', players: '1–4 boxers', duration: '3-minute bouts', titleMain: 'On the ', titleHighlight: 'Ropes', titleSuffix: '.', desc: 'Swing big, bounce off the ropes and escape to your corner. Your partner has a towel, a fresh pair of gloves and some very loud advice.', tagline: 'ONE MORE PUNCH. THEN TAG.', cta: 'Play On the Ropes' }, de: { tag: 'TAG-TEAM-BOXEN', isNew: true, newTag: 'NEU', players: '1–4 Boxer', duration: '3-Minuten-Kämpfe', titleMain: 'On the ', titleHighlight: 'Ropes', titleSuffix: '.', desc: 'Schwingt die Fäuste, federt von den Seilen ab und flieht in eure Ecke. Euer Partner hat ein Handtuch, frische Handschuhe und ziemlich laute Tipps.', tagline: 'NOCH EIN SCHLAG. DANN WECHSEL.', cta: 'On the Ropes spielen' } },
   'carry-on-carnage': {
     en: {
       tag: 'GATE CHECK ROULETTE',
@@ -234,6 +235,33 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
       desc: 'Liefert ein riesiges Sofa an eine sehr hoch gelegene Adresse. Teilt das Gewicht, springt über Abgründe und fangt es ab, wenn die Schwerkraft zuschlägt. Vorsicht an der Haustür.',
       tagline: 'Vier Freunde. Ein Sofa. Kein Aufzug.',
       cta: 'Uphill Delivery spielen',
+    },
+  },
+
+  'reel-problems-2': {
+    en: {
+      tag: 'WE BARELY MADE IT',
+      isNew: true,
+      newTag: 'NEW TO JUMBLEYARD',
+      players: '1–4 anglers',
+      duration: '4-minute survival adventure',
+      titleMain: 'Reel Problems 2',
+      titleSuffix: '.',
+      desc: 'A giant fish. A storm closing in. One questionable boat. Row, rescue, and rebuild your way home together.',
+      tagline: 'Four friends. One very questionable boat.',
+      cta: 'Play Reel Problems 2',
+    },
+    de: {
+      tag: 'KNAPP GESCHAFFT',
+      isNew: true,
+      newTag: 'NEU IN JUMBLEYARD',
+      players: '1–4 Angler',
+      duration: '4-Minuten-Überlebensabenteuer',
+      titleMain: 'Reel Problems 2',
+      titleSuffix: '.',
+      desc: 'Ein Riesenfisch. Ein aufziehender Sturm. Ein fragwürdiges Boot. Rudert, rettet und baut euch gemeinsam nach Hause.',
+      tagline: 'Vier Freunde. Ein höchst fragwürdiges Boot.',
+      cta: 'Reel Problems 2 spielen',
     },
   },
 

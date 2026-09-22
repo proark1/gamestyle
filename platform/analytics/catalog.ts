@@ -1,4 +1,5 @@
 import type { GameAnalytics } from '../../shared/analytics/protocol';
+import { partyAnalytics } from '../party/analytics';
 import { farmAnalytics } from '../../games/act-natural/analytics';
 import { chaosAnalytics } from '../../games/chaos/analytics';
 import { giantAnalytics } from '../../games/dont-wake-the-giant/analytics';
@@ -6,6 +7,7 @@ import { siteAnalytics } from '../../games/first-person/analytics';
 import { breakfastAnalytics } from '../../games/four-brain-cells/analytics';
 import { loadBearingAnalytics } from '../../games/load-bearing/analytics';
 import { buttonAnalytics } from '../../games/one-more-button/analytics';
+import { reelAnalytics as reel2Analytics } from '../../games/reel-problems-2/analytics';
 import { reelAnalytics } from '../../games/reel-problems/analytics';
 import { shelfAnalytics } from '../../games/shelf-control/analytics';
 import { siegeAnalytics } from '../../games/siege-and-desist/analytics';
@@ -22,6 +24,8 @@ import { driveThruAnalytics } from '../../games/drive-thru/analytics';
 import { zorbClashAnalytics } from '../../games/zorb-clash/analytics';
 import { scaffoldScrambleAnalytics } from '../../games/scaffold-scramble/analytics';
 import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
+
+import { boxingAnalytics } from '../../games/on-the-ropes/analytics';
 
 export type CatalogGame = {
   id: string;
@@ -41,6 +45,7 @@ export type CatalogGame = {
 // Each game's analytics module holds plain definitions and type-only imports,
 // so this list stays light enough for the admin page and the report route.
 export const GAMES: readonly CatalogGame[] = [
+  ['on-the-ropes', 'On the Ropes', boxingAnalytics],
   ['siege-and-desist', 'Siege and Desist', siegeAnalytics],
   ['stack-or-sink', 'Stack or Sink', stackAnalytics],
   ['act-natural', 'Blend Business', farmAnalytics],
@@ -51,6 +56,7 @@ export const GAMES: readonly CatalogGame[] = [
   ['wrong-floor', 'Wrong Floor', hotelAnalytics],
   ['one-more-button', 'One More Button', buttonAnalytics],
   ['four-brain-cells', 'Four Brain Cells', breakfastAnalytics],
+  ['reel-problems-2', 'Reel Problems 2', reel2Analytics],
   ['reel-problems', 'Reel Problems', reelAnalytics],
   ['shelf-control', 'Shelf Control', shelfAnalytics],
   ['load-bearing', 'Load Bearing', loadBearingAnalytics],
@@ -85,12 +91,16 @@ export const GAMES: readonly CatalogGame[] = [
   };
 });
 
-export const ANALYTICS_GAMES = GAMES.map((game) => game.analytics);
+export const ANALYTICS_GAMES = [
+  ...GAMES.map((game) => game.analytics),
+  partyAnalytics,
+];
 
 export function catalogGame(id: string): CatalogGame | undefined {
   return GAMES.find((game) => game.id === id);
 }
 
 export function analyticsGame(id: string): GameAnalytics | undefined {
+  if (id === 'party') return partyAnalytics;
   return catalogGame(id)?.analytics;
 }

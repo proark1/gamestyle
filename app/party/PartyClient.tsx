@@ -1,1089 +1,869 @@
 'use client';
 /* oxlint-disable react/react-compiler */
-
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Dialog } from '@base-ui/react/dialog';
 import {
   Gamepad2,
-  Users,
-  Copy,
-  Check,
-  Play,
-  Bot,
-  UserPlus,
-  ArrowRight,
-  RotateCcw,
+  HelpCircle,
   LogOut,
-  Sparkles,
+  MoreHorizontal,
+  Pause,
+  Trophy,
+  Volume2,
+  VolumeX,
   X,
 } from 'lucide-react';
-import { COLORS } from '@/shared/rendering/palette';
+import VoicePanel from '@/shared/voice/VoicePanel';
+import LanguageSwitcher from '@/shared/language/LanguageSwitcher';
+import {
+  applyAudioPreferences,
+  loadAudioPreferences,
+} from '@/shared/audio/preferences';
 import { getPartyGameInfo } from '@/platform/party/playlist';
 import {
-  createParty,
-  joinParty,
-  getParty,
-  togglePartyReady,
-  addPartyBot,
-  removePartyPlayer,
-  startParty,
-  nextPartyRound,
-  rematchParty,
+  partyRequest,
+  stateOf,
   leaveParty,
-  closePartyRound,
+  reportPartyResult,
 } from '@/platform/party/client';
-import type {
-  PartyPass,
-  PartyPlayer,
-  PartyRoomState,
-} from '@/platform/party/types';
+import type { PartyAction, PartyRoomState } from '@/platform/party/types';
+import type { PeerSession } from '@/shared/peer/types';
+import PartyIntermission from './PartyIntermission';
+import {
+  GameBriefing,
+  PartyStandings,
+  partyError,
+  usePartyText,
+} from './PartyDetails';
+import {
+  PartyEntry,
+  PartyLobby,
+  PartyBriefing,
+  PartyFinale,
+  PartyWaiting,
+} from './PartyScreens';
+import { partyCue, unlockPartyAudio } from './party-audio';
+import { useGameTracker } from '@/shared/analytics/game-tracker';
+import { partyTracker } from './party-tracker';
 import './party.css';
+import '@/shared/ui/toolbar.css';
 
 const SESSION_KEY = 'jumbleyard-party-session-v1';
-
+export type Identity = { code: string; playerId: string; token: string };
 export default function PartyClient({ initialCode }: { initialCode?: string }) {
-  const [name, setName] = useState('');
-  const [color, setColor] = useState(0);
-  const [joinCode, setJoinCode] = useState(initialCode ?? '');
-  const [copied, setCopied] = useState(false);
+  useGameTracker(partyTracker);
+  const { de, text } = usePartyText();
+  const [identity, setIdentity] = useState<Identity | null>(null);
+  const [room, setRoom] = useState<PartyRoomState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-
-  const [playerId, setPlayerId] = useState<string | null>(null);
-  // The secret that proves this browser holds the seat; sessions saved
-  // before passes existed have none.
-  const [token, setToken] = useState('');
-  const [room, setRoom] = useState<PartyRoomState | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
-
-  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Load saved name/color from localStorage
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem('stack-or-sink-prefs-v1') || '{}',
-      );
-      if (typeof saved.name === 'string' && saved.name.trim()) {
-        setName(saved.name.trim());
-      }
-      if (Number.isInteger(saved.color)) {
-        setColor(Math.max(0, Math.min(3, saved.color)));
-      }
-    } catch {}
+  const [connectionError, setConnectionError] = useState('');
+  const [launchError, setLaunchError] = useState('');
+  const [gameFrame, setGameFrame] = useState('');
+  const [gameReady, setGameReady] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [panel, setPanel] = useState<
+    'menu' | 'help' | 'standings' | 'forfeit' | 'leave' | 'close' | null
+  >(null);
+  const [muted, setMuted] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const frame = useRef<HTMLIFrameElement>(null);
+  const clock = useRef({ server: Date.now(), local: Date.now() });
+  const version = useRef({ code: '', revision: -1, stamp: 0 });
+  const acceptRoom = useCallback((fresh: PartyRoomState) => {
+    const revision = fresh.revision ?? 0,
+      stamp = fresh.serverNow ?? fresh.updated;
+    if (
+      version.current.code === fresh.code &&
+      (revision < version.current.revision ||
+        (revision === version.current.revision &&
+          stamp < version.current.stamp))
+    )
+      return;
+    version.current = { code: fresh.code, revision, stamp };
+    clock.current = {
+      server: fresh.serverNow ?? Date.now(),
+      local: Date.now(),
+    };
+    setRoom(fresh);
   }, []);
-
-  // Restore session from sessionStorage
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (saved?.code && saved?.playerId) {
-          setPlayerId(saved.playerId);
-          if (typeof saved.token === 'string') setToken(saved.token);
-          void getParty(saved.code).then((st) => {
-            if (st) setRoom(st);
-          });
-        }
-      }
-    } catch {}
+  const forget = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('jumbleyard:party-game');
+    setIdentity(null);
+    setRoom(null);
+    setGameFrame('');
+    setPanel(null);
+    setConnectionError('');
+    setLaunchError('');
+    version.current = { code: '', revision: -1, stamp: 0 };
   }, []);
-
-  // Save session to sessionStorage
   useEffect(() => {
-    if (room?.code && playerId) {
-      try {
-        const me = room.players.find((p) => p.id === playerId);
-        sessionStorage.setItem(
-          SESSION_KEY,
-          JSON.stringify({
-            code: room.code,
-            playerId,
-            token,
-            name: me?.name ?? name,
-            color: me?.color ?? color,
-            isHost: room.hostId === playerId,
-          }),
-        );
-      } catch {}
+    setMuted(loadAudioPreferences().volume === 0);
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) ?? 'null');
+      if (
+        saved?.code &&
+        saved?.playerId &&
+        saved?.token &&
+        (!initialCode || saved.code === initialCode.toUpperCase())
+      )
+        setIdentity(saved);
+    } catch {
+      /* Storage is optional. */
     }
-  }, [room?.code, room?.players, room?.hostId, playerId, token, name, color]);
-
-  // Polling loop to sync state across all 4 players
+  }, [initialCode]);
   useEffect(() => {
-    if (!room?.code) return;
-
-    const fetchState = async () => {
+    if (!identity) return;
+    let live = true,
+      polling = false,
+      timer: ReturnType<typeof setTimeout>;
+    const pulse = async () => {
+      if (polling) return;
+      polling = true;
       try {
-        const fresh = await getParty(room.code);
-        if (fresh) {
-          setRoom(fresh);
+        const fresh = await stateOf({
+          op: 'heartbeat',
+          code: identity.code,
+          playerId: identity.playerId,
+          token: identity.token,
+        });
+        if (!live) return;
+        if (!fresh.players.some((p) => p.id === identity.playerId)) {
+          forget();
+          setError(
+            de
+              ? 'Dein Platz ist nicht mehr in dieser Party. Tritt einem anderen Raum bei.'
+              : 'Your seat is no longer in that party. You can join another room.',
+          );
+          return;
         }
-      } catch {}
+        acceptRoom(fresh);
+        setConnectionError('');
+      } catch (err) {
+        if (!live) return;
+        if ([401, 404].includes((err as { status?: number }).status ?? 0)) {
+          forget();
+          setError(partyError(err, de));
+          return;
+        }
+        setConnectionError(
+          de
+            ? 'Verbindung unterbrochen. Wir verbinden dich erneut; dein Punktestand ist gespeichert.'
+            : 'Connection interrupted. Reconnecting automatically; your score is saved.',
+        );
+      } finally {
+        polling = false;
+      }
+      if (live) timer = setTimeout(pulse, 2000);
     };
-
-    pollTimer.current = setInterval(fetchState, 1500);
+    void pulse();
+    const online = () => {
+      clearTimeout(timer);
+      void pulse();
+    };
+    const offline = () =>
+      setConnectionError(
+        de
+          ? 'Du bist offline. Verbinde dich erneut, um mit deiner Crew weiterzuspielen.'
+          : 'You’re offline. Reconnect to continue with your crew.',
+      );
+    window.addEventListener('online', online);
+    window.addEventListener('offline', offline);
     return () => {
-      if (pollTimer.current) clearInterval(pollTimer.current);
+      live = false;
+      clearTimeout(timer);
+      window.removeEventListener('online', online);
+      window.removeEventListener('offline', offline);
     };
-  }, [room?.code]);
-
-  // This player has already reported their result for the round in play.
-  const reported =
-    !!playerId &&
-    room?.status === 'countdown' &&
-    room.reports?.[playerId] !== undefined;
-
-  // Countdown handler
+  }, [identity, acceptRoom, forget, de]);
+  const playerId = identity?.playerId ?? '',
+    token = identity?.token ?? '';
+  const me = room?.players.find((p) => p.id === playerId);
+  const meName = me?.name,
+    meColor = me?.color;
+  const isHost = room?.hostId === playerId;
+  const humans = room?.players.filter((p) => !p.isBot) ?? [];
+  const reported = !!room && room.reports?.[playerId] !== undefined;
+  const currentGame = room?.playlist[room.currentRound];
+  const partyCode = room?.code,
+    partyRound = room?.currentRound,
+    partyStatus = room?.status,
+    countdownUntil = room?.countdownUntil;
+  const runId = room?.runId;
+  const priorRoom = useRef<PartyRoomState | null>(null);
   useEffect(() => {
-    if (room?.status !== 'countdown' || !room.countdownUntil || reported) {
+    const prior = priorRoom.current;
+    if (
+      prior?.intermission?.phase === 'voting' &&
+      room?.currentRound !== prior.currentRound &&
+      !prior.intermission.votes[playerId]
+    )
+      partyTracker.action('missed-vote');
+    priorRoom.current = room;
+    partyTracker.observe({
+      stage: !room
+        ? 'menu'
+        : room.status === 'lobby'
+          ? 'lobby'
+          : room.status === 'finished'
+            ? 'finished'
+            : 'playing',
+      mode: room?.practice ? 'solo' : isHost ? 'host' : 'join',
+      room: room?.code,
+      humans: humans.length,
+      npcs: room ? 4 - humans.length : 0,
+      round: runId,
+      milestones:
+        room?.status === 'briefing'
+          ? ['briefing']
+          : room?.status === 'finished'
+            ? ['party-complete']
+            : [],
+      ...(room?.status === 'finished'
+        ? {
+            result: {
+              outcome: 'ended' as const,
+              reason: 'completed',
+              score: me?.score ?? 0,
+            },
+          }
+        : {}),
+    });
+  }, [room, playerId, isHost, humans.length, runId, me?.score]);
+  useEffect(() => {
+    if (gameReady) partyTracker.milestone('first-game');
+  }, [gameReady]);
+  useEffect(() => {
+    if (panel === 'help') partyTracker.action('help');
+  }, [panel]);
+  useEffect(() => {
+    if (!identity || meName === undefined || meColor === undefined) return;
+    try {
+      sessionStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({ ...identity, name: meName, color: meColor, isHost }),
+      );
+      localStorage.setItem(
+        'stack-or-sink-prefs-v1',
+        JSON.stringify({
+          ...JSON.parse(localStorage.getItem('stack-or-sink-prefs-v1') ?? '{}'),
+          name: meName,
+          color: meColor,
+        }),
+      );
+    } catch {
+      /* The current session still works without persistence. */
+    }
+  }, [identity, meName, meColor, isHost]);
+  useEffect(() => {
+    window.addEventListener('pointerdown', unlockPartyAudio, { once: true });
+    window.addEventListener('keydown', unlockPartyAudio, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlockPartyAudio);
+      window.removeEventListener('keydown', unlockPartyAudio);
+    };
+  }, []);
+  useEffect(() => {
+    const tick = () =>
+      setNow(clock.current.server + Date.now() - clock.current.local);
+    tick();
+    const timer = setInterval(tick, 250);
+    return () => clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    setPanel(null);
+    if (partyStatus !== 'countdown' && partyStatus !== 'in_game') {
+      setGameFrame('');
+      setLaunchError('');
+    }
+    if (partyStatus === 'intermission') partyCue('result');
+    if (partyStatus === 'finished') partyCue('victory');
+    const timer = setTimeout(
+      () =>
+        document
+          .querySelector<HTMLElement>('.party-main h1')
+          ?.focus({ preventScroll: true }),
+      0,
+    );
+    return () => clearTimeout(timer);
+  }, [partyStatus, partyRound]);
+  useEffect(() => {
+    if (reported) {
+      setGameFrame('');
+      setLaunchError('');
+    }
+  }, [reported]);
+  useEffect(() => {
+    window.dispatchEvent(new Event('game:voice-reset-talk'));
+  }, [gameFrame]);
+  useEffect(() => {
+    if (!gameFrame) {
+      setGameReady(false);
       return;
     }
-    const interval = setInterval(() => {
-      const msLeft = (room.countdownUntil ?? 0) - Date.now();
-      if (msLeft <= 0) {
-        setCountdown(0);
-        clearInterval(interval);
-        // Navigate to current game
-        const currentGame = room.playlist[room.currentRound];
-        if (currentGame) {
-          window.location.href = `/${currentGame}?party=${room.code}&round=${room.currentRound}`;
-        }
-      } else {
-        setCountdown(Math.ceil(msLeft / 1000));
+    const timer = setTimeout(() => {
+      if (!gameReady)
+        setLaunchError(
+          de
+            ? 'Das Spiel braucht länger als erwartet. Tritt dieser Runde erneut bei oder öffne das Partymenü.'
+            : 'The game is taking longer than expected. Rejoin this round or return to the party menu.',
+        );
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, [gameFrame, gameReady, de]);
+  useEffect(() => {
+    const received = (event: MessageEvent) => {
+      if (
+        !partyCode ||
+        event.origin !== location.origin ||
+        event.source !== frame.current?.contentWindow ||
+        event.data?.code !== partyCode
+      )
+        return;
+      if (event.data.type === 'party-game-ready') {
+        setGameReady(true);
+        setLaunchError('');
       }
-    }, 200);
-
-    return () => clearInterval(interval);
+      if (event.data.type === 'party-open-menu') setPanel('menu');
+      if (
+        event.data.type === 'party-game-error' &&
+        !reported &&
+        (partyStatus === 'countdown' || partyStatus === 'in_game')
+      )
+        setLaunchError(
+          de
+            ? 'Die Spielverbindung wurde unterbrochen. Tritt der Runde erneut bei.'
+            : 'The game connection was interrupted. Rejoin this round to recover.',
+        );
+      if (event.data.type === 'party-round-finished' && identity) {
+        void stateOf({
+          op: 'heartbeat',
+          code: identity.code,
+          playerId: identity.playerId,
+          token: identity.token,
+        })
+          .then(acceptRoom)
+          .catch(() => {});
+      }
+      if (
+        event.data.type === 'party-ptt' &&
+        ['keydown', 'keyup'].includes(event.data.event) &&
+        /^Key[A-Z]$/.test(event.data.keyCode)
+      )
+        window.dispatchEvent(
+          new KeyboardEvent(event.data.event, {
+            code: event.data.keyCode,
+            key: event.data.keyCode.slice(3),
+            bubbles: true,
+          }),
+        );
+      if (event.data.type === 'party-ptt-reset')
+        window.dispatchEvent(new Event('game:voice-reset-talk'));
+    };
+    window.addEventListener('message', received);
+    return () => window.removeEventListener('message', received);
+  }, [partyCode, partyStatus, reported, identity, acceptRoom, de]);
+  useEffect(() => {
+    if (
+      !partyCode ||
+      partyStatus !== 'countdown' ||
+      !countdownUntil ||
+      reported ||
+      gameFrame ||
+      !playerId ||
+      !token ||
+      !currentGame
+    )
+      return;
+    let live = true,
+      timer: ReturnType<typeof setTimeout>,
+      attempts = 0;
+    const launch = async () => {
+      const left =
+        countdownUntil -
+        (clock.current.server + Date.now() - clock.current.local);
+      if (left > 0) {
+        timer = setTimeout(() => void launch(), Math.min(500, left));
+        return;
+      }
+      try {
+        const data = await partyRequest<{ session: PeerSession }>({
+          op: 'game_session',
+          code: partyCode,
+          round: partyRound!,
+          playerId,
+          token,
+        });
+        if (!live) return;
+        sessionStorage.setItem(
+          'jumbleyard:party-game',
+          JSON.stringify({
+            party: partyCode,
+            round: partyRound,
+            session: data.session,
+          }),
+        );
+        setGameReady(false);
+        setLaunchError('');
+        setGameFrame(
+          `/${currentGame}?party=${partyCode}&round=${partyRound}&attempt=${retry}`,
+        );
+      } catch (err) {
+        if (!live) return;
+        setLaunchError(partyError(err, de));
+        if (++attempts < 3) timer = setTimeout(() => void launch(), 2500);
+      }
+    };
+    void launch();
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
   }, [
-    room?.status,
-    room?.countdownUntil,
-    room?.playlist,
-    room?.currentRound,
-    room?.code,
+    partyCode,
+    partyStatus,
+    countdownUntil,
+    partyRound,
+    currentGame,
     reported,
+    gameFrame,
+    playerId,
+    token,
+    retry,
+    runId,
+    de,
   ]);
-
-  const isHost = room?.hostId === playerId;
-  const pass: PartyPass | null = playerId ? { id: playerId, token } : null;
-  const me = room?.players.find((p) => p.id === playerId);
-
-  const handleCreate = async () => {
+  const countdown = countdownUntil
+    ? Math.max(0, Math.ceil((countdownUntil - now) / 1000))
+    : 0;
+  useEffect(() => {
+    if (partyStatus === 'countdown' && countdown > 0 && countdown <= 3)
+      partyCue('countdown');
+  }, [partyStatus, countdown]);
+  async function act(action: PartyAction) {
     if (busy) return;
     setBusy(true);
     setError('');
     try {
-      const res = await createParty(name || 'Player 1', color);
-      setPlayerId(res.playerId);
-      setToken(res.token);
-      setRoom(res.state);
+      acceptRoom(await stateOf(action));
+      if (action.op === 'rematch_interest')
+        partyTracker.action('rematch-interest');
+      if (action.op === 'pause' && action.paused) partyTracker.action('break');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create party.');
+      setError(partyError(err, de));
     } finally {
       setBusy(false);
     }
-  };
-
-  const handleJoin = async () => {
-    if (busy || !joinCode.trim()) return;
+  }
+  async function exit() {
+    if (identity)
+      try {
+        await leaveParty(identity.code, { id: playerId, token });
+      } catch {
+        /* Local exit remains available offline. */
+      }
+    forget();
+    location.assign('/');
+  }
+  async function giveUp() {
+    if (!room || busy) return;
     setBusy(true);
     setError('');
     try {
-      const res = await joinParty(
-        joinCode.trim().toUpperCase(),
-        name || 'Player',
-        color,
+      acceptRoom(
+        await reportPartyResult(
+          room.code,
+          room.currentRound,
+          { id: playerId, token },
+          null,
+        ),
       );
-      setPlayerId(res.playerId);
-      setToken(res.token);
-      setRoom(res.state);
+      partyTracker.action(`forfeit-${room.playlist[room.currentRound]}`);
+      setGameFrame('');
+      setPanel(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not join party.');
+      setError(partyError(err, de));
     } finally {
       setBusy(false);
     }
+  }
+  const retryGame = () => {
+    partyTracker.action('rejoin');
+    setLaunchError('');
+    setGameReady(false);
+    setGameFrame('');
+    setRetry((n) => n + 1);
+    setPanel(null);
   };
-
-  const handleCopyLink = () => {
-    if (!room) return;
-    const url = `${window.location.origin}/party?room=${room.code}`;
-    void navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+  const paused = room?.pausedAt !== undefined;
+  const toggleBreak = () =>
+    room &&
+    void act({
+      op: 'pause',
+      code: room.code,
+      playerId,
+      token,
+      paused: !paused,
     });
-  };
-
-  const handleToggleReady = async () => {
-    if (!room || !pass) return;
-    try {
-      const next = await togglePartyReady(room.code, pass, !me?.ready);
-      setRoom(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle ready.');
-    }
-  };
-
-  const handleAddBot = async () => {
-    if (!room || !pass || !isHost) return;
-    try {
-      const next = await addPartyBot(room.code, pass);
-      setRoom(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add bot.');
-    }
-  };
-
-  const handleKick = async (targetId: string) => {
-    if (!room || !pass || !isHost) return;
-    try {
-      const next = await removePartyPlayer(room.code, pass, targetId);
-      setRoom(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not remove player.');
-    }
-  };
-
-  const handleStart = async () => {
-    if (!room || !pass || !isHost) return;
-    try {
-      const next = await startParty(room.code, pass);
-      setRoom(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start party.');
-    }
-  };
-
-  const handleNextRound = async () => {
-    if (!room || !pass || !isHost) return;
-    try {
-      const next = await nextPartyRound(room.code, pass);
-      setRoom(next);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Could not advance to next round.',
-      );
-    }
-  };
-
-  const handleCloseRound = async () => {
-    if (!room || !pass || !isHost) return;
-    try {
-      const next = await closePartyRound(room.code, room.currentRound, pass);
-      setRoom(next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not close round.');
-    }
-  };
-
-  const handleRematch = async () => {
-    if (!room || !pass || !isHost) return;
-    try {
-      const next = await rematchParty(room.code, pass);
-      setRoom(next);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Could not trigger rematch.',
-      );
-    }
-  };
-
-  const handleLeave = async () => {
-    if (!room || !pass) return;
-    try {
-      await leaveParty(room.code, pass);
-    } catch {}
-    sessionStorage.removeItem(SESSION_KEY);
-    setRoom(null);
-    setPlayerId(null);
-    setToken('');
-  };
-
-  // 1. NOT IN A ROOM YET
-  if (!room) {
-    return (
-      <div className="party-root">
-        <header className="party-header">
-          <a className="party-brand" href="/">
-            <span className="party-brand-icon">
-              <Gamepad2 size={22} color="#294a43" />
-            </span>
-            JUMBLEYARD<span style={{ color: '#ca8038' }}>.</span>
-          </a>
-          <span className="party-badge">🎉 PARTY TOURNAMENT</span>
-        </header>
-
-        <main className="party-main">
-          <div className="party-title-wrap">
-            <h1 className="party-title">Party Mode Tournament</h1>
-            <p className="party-subtitle">
-              Assemble 4 players, battle across 6 random mini-games, and crown
-              the Party Champion!
-            </p>
-          </div>
-
-          <div className="party-card">
-            {error && (
-              <div
-                style={{
-                  color: '#c0392b',
-                  fontWeight: 700,
-                  marginBottom: 20,
-                  textAlign: 'center',
-                }}
-              >
-                {error}
-              </div>
-            )}
-
-            <div className="party-form-grid">
-              {/* Host / Create Panel */}
-              <div className="party-panel">
-                <h2>
-                  <Sparkles size={20} color="#ca8038" /> Create a Waiting Room
-                </h2>
-                <div className="party-input-group">
-                  <label htmlFor="host-name">Your Name</label>
-                  <input
-                    id="host-name"
-                    className="party-input"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Captain Chaos"
-                    maxLength={18}
-                  />
-                </div>
-                <div className="party-input-group">
-                  <span className="party-input-group-title" id="outfit-label">
-                    Your Outfit Color
-                  </span>
-                  <div
-                    className="party-color-picker"
-                    aria-labelledby="outfit-label"
-                  >
-                    {COLORS.map((c, i) => (
-                      <button
-                        key={c}
-                        type="button"
-                        className={`party-color-dot ${color === i ? 'selected' : ''}`}
-                        style={{ backgroundColor: c }}
-                        onClick={() => setColor(i)}
-                        aria-label={`Color ${i + 1}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="party-btn party-btn-primary"
-                  onClick={handleCreate}
-                  disabled={busy}
-                >
-                  <UserPlus size={18} /> Create Party Room
-                </button>
-              </div>
-
-              {/* Join Existing Panel */}
-              <div className="party-panel">
-                <h2>
-                  <Users size={20} color="#679e99" /> Join With Room Code
-                </h2>
-                <div className="party-input-group">
-                  <label htmlFor="join-code">6-Letter Room Code</label>
-                  <input
-                    id="join-code"
-                    className="party-input"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    placeholder="e.g. ABCDEF"
-                    maxLength={6}
-                  />
-                </div>
-                <div className="party-input-group">
-                  <label htmlFor="guest-name">Your Name</label>
-                  <input
-                    id="guest-name"
-                    className="party-input"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Lucky Duck"
-                    maxLength={18}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="party-btn party-btn-secondary"
-                  onClick={handleJoin}
-                  disabled={busy || !joinCode.trim()}
-                >
-                  Join Party <ArrowRight size={18} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // 2. WAITING FOR THE OTHERS TO FINISH THE ROUND
-  if (reported) {
-    const currentGameId = room.playlist[room.currentRound];
-    const info = currentGameId ? getPartyGameInfo(currentGameId) : undefined;
-    const humans = room.players.filter((p) => !p.isBot);
-    return (
-      <div className="party-root">
-        <header className="party-header">
-          <span className="party-brand">
-            <span className="party-brand-icon">
-              <Gamepad2 size={22} color="#294a43" />
-            </span>
-            JUMBLEYARD
-          </span>
-          <span className="party-badge">
-            ROUND {room.currentRound + 1} OF 6
-          </span>
-        </header>
-
-        <main className="party-main">
-          <div className="party-title-wrap">
-            <h1 className="party-title">
-              {room.reports?.[playerId] === null
-                ? 'You gave up this round'
-                : 'Your result is in'}
-            </h1>
-            <p className="party-subtitle">
-              {info?.name ?? 'This round'} is scored as soon as everyone has
-              finished.
-            </p>
-          </div>
-
-          <div className="party-card">
-            {error && (
-              <div
-                style={{
-                  color: '#c0392b',
-                  fontWeight: 700,
-                  marginBottom: 20,
-                  textAlign: 'center',
-                }}
-              >
-                {error}
-              </div>
-            )}
-
-            <table className="party-standings-table">
-              <tbody>
-                {humans.map((player) => {
-                  const report = room.reports?.[player.id];
-                  return (
-                    <tr key={player.id}>
-                      <td>
-                        <div
-                          className="party-player-name-cell"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 14,
-                              height: 14,
-                              borderRadius: '50%',
-                              backgroundColor: COLORS[player.color] ?? '#999',
-                              display: 'inline-block',
-                            }}
-                          />
-                          {player.name}
-                          {player.id === playerId && (
-                            <span style={{ color: '#ca8038', fontSize: 12 }}>
-                              (You)
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ color: '#557065', fontWeight: 700 }}>
-                        {report === undefined
-                          ? 'Still playing…'
-                          : report === null
-                            ? 'Gave up'
-                            : '✓ Finished'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                marginTop: 20,
-                gap: 12,
-              }}
-            >
-              <button
-                type="button"
-                className="party-btn party-btn-ghost"
-                onClick={handleLeave}
-              >
-                <LogOut size={18} /> Leave Party
-              </button>
-
-              {isHost ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    flexWrap: 'wrap',
-                    gap: 12,
-                  }}
-                >
-                  <span style={{ color: '#71806b', fontSize: 13 }}>
-                    Anyone still playing counts as giving up.
-                  </span>
-                  <button
-                    type="button"
-                    className="party-btn party-btn-primary"
-                    onClick={handleCloseRound}
-                  >
-                    Score the Round Now <ArrowRight size={18} />
-                  </button>
-                </div>
-              ) : (
-                <span style={{ color: '#71806b', fontWeight: 600 }}>
-                  Waiting for the others to finish…
-                </span>
-              )}
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // 3. COUNTDOWN VIEW
-  if (room.status === 'countdown') {
-    const currentGameId = room.playlist[room.currentRound];
-    const info = currentGameId ? getPartyGameInfo(currentGameId) : undefined;
-    return (
-      <div className="party-root">
-        <header className="party-header">
-          <span className="party-brand">
-            <span className="party-brand-icon">
-              <Gamepad2 size={22} color="#294a43" />
-            </span>
-            JUMBLEYARD
-          </span>
-          <span className="party-badge">
-            ROUND {room.currentRound + 1} OF 6
-          </span>
-        </header>
-
-        <main className="party-main">
-          <div className="party-card party-countdown-wrap">
-            <div className="party-countdown-number">{countdown ?? 'GO!'}</div>
-            <h1 className="party-title">{info?.name ?? 'Next Mini-Game'}</h1>
-            <p
-              className="party-subtitle"
-              style={{ fontSize: 18, marginBottom: 30 }}
-            >
-              {info?.tagline}
-            </p>
-            <div style={{ color: '#557065', fontWeight: 600 }}>
-              Launching game for all 4 players…
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // 4. INTERMISSION / STANDINGS VIEW
-  if (room.status === 'intermission') {
-    const lastResult = room.roundResults[room.roundResults.length - 1];
-    const lastGameInfo = lastResult
-      ? getPartyGameInfo(lastResult.game)
-      : undefined;
-    const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
-    const nextGameId = room.playlist[room.currentRound + 1];
-    const nextGameInfo = nextGameId ? getPartyGameInfo(nextGameId) : undefined;
-    const nameOf = (id: string) =>
-      room.players.find((p) => p.id === id)?.name ?? 'Someone';
-
-    return (
-      <div className="party-root">
-        <header className="party-header">
-          <span className="party-brand">
-            <span className="party-brand-icon">
-              <Gamepad2 size={22} color="#294a43" />
-            </span>
-            JUMBLEYARD
-          </span>
-          <span className="party-badge">
-            GAME {room.currentRound + 1} OF 6 COMPLETED
-          </span>
-        </header>
-
-        <main className="party-main">
-          <div className="party-title-wrap">
-            <h1 className="party-title">Tournament Standings</h1>
-            {lastGameInfo && (
-              <p className="party-subtitle">
-                {lastGameInfo.name} complete! Here is how the leaderboard
-                stands:
-              </p>
-            )}
-            {lastResult?.teams && (
-              <p className="party-subtitle" style={{ fontSize: 15 }}>
-                Teams this round: {lastResult.teams[0].map(nameOf).join(' & ')}{' '}
-                vs {lastResult.teams[1].map(nameOf).join(' & ')}
-              </p>
-            )}
-          </div>
-
-          <div className="party-card">
-            <table className="party-standings-table">
-              <tbody>
-                {sortedPlayers.map((player, idx) => {
-                  const ptsWon = lastResult?.pointsAwarded[player.id] ?? 0;
-                  return (
-                    <tr key={player.id}>
-                      <td style={{ width: 60 }}>
-                        <span className={`party-rank-badge rank-${idx + 1}`}>
-                          {idx + 1}
-                        </span>
-                      </td>
-                      <td>
-                        <div
-                          className="party-player-name-cell"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 14,
-                              height: 14,
-                              borderRadius: '50%',
-                              backgroundColor: COLORS[player.color] ?? '#999',
-                              display: 'inline-block',
-                            }}
-                          />
-                          {player.name}
-                          {player.id === playerId && (
-                            <span style={{ color: '#ca8038', fontSize: 12 }}>
-                              (You)
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ color: '#27ae60', fontWeight: 700 }}>
-                        +{ptsWon} pts
-                      </td>
-                      <td className="party-score-cell">
-                        {player.score}{' '}
-                        <span style={{ fontSize: 14, color: '#888' }}>PTS</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {nextGameInfo && (
-              <div className="party-playlist-preview">
-                <div className="party-playlist-header">
-                  <span>Up Next: Round {room.currentRound + 2} of 6</span>
-                  <span>
-                    {nextGameInfo.teams ? '2v2 Team Match' : 'Beat the Game'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div style={{ font: '700 20px Fredoka', color: '#294a43' }}>
-                    {nextGameInfo.name}
-                  </div>
-                  <div style={{ color: '#6b805f', fontSize: 14 }}>
-                    {nextGameInfo.tagline}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: 20,
-              }}
-            >
-              <button
-                type="button"
-                className="party-btn party-btn-ghost"
-                onClick={handleLeave}
-              >
-                <LogOut size={18} /> Leave Party
-              </button>
-
-              {isHost ? (
-                <button
-                  type="button"
-                  className="party-btn party-btn-primary"
-                  onClick={handleNextRound}
-                >
-                  Launch Round {room.currentRound + 2} <ArrowRight size={18} />
-                </button>
-              ) : (
-                <span style={{ color: '#71806b', fontWeight: 600 }}>
-                  Waiting for party host to launch next round…
-                </span>
-              )}
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // 5. GRAND FINALE / WINNER PODIUM
-  if (room.status === 'finished') {
-    const podium = [...room.players].sort((a, b) => b.score - a.score);
-    const champion = podium[0];
-
-    return (
-      <div className="party-root">
-        <header className="party-header">
-          <span className="party-brand">
-            <span className="party-brand-icon">
-              <Gamepad2 size={22} color="#294a43" />
-            </span>
-            JUMBLEYARD
-          </span>
-          <span className="party-badge">🏆 TOURNAMENT FINALE</span>
-        </header>
-
-        <main className="party-main">
-          <div className="party-title-wrap">
-            <h1 className="party-title" style={{ fontSize: 44 }}>
-              👑 {champion?.name} Wins!
-            </h1>
-            <p className="party-subtitle">
-              The 6-game gauntlet has finished! All hail the Party Champion!
-            </p>
-          </div>
-
-          <div className="party-card">
-            {/* 3D-styled Victory Podium */}
-            <div className="party-podium">
-              {/* 2nd Place */}
-              {podium[1] && (
-                <div className="party-podium-step step-2">
-                  <div
-                    className="party-podium-avatar"
-                    style={{ backgroundColor: COLORS[podium[1].color] }}
-                  >
-                    🥈
-                  </div>
-                  <div style={{ fontSize: 15 }}>{podium[1].name}</div>
-                  <div className="party-podium-label">
-                    {podium[1].score} pts
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>2nd Place</div>
-                </div>
-              )}
-
-              {/* 1st Place Champion */}
-              {champion && (
-                <div className="party-podium-step step-1">
-                  <div
-                    className="party-podium-avatar"
-                    style={{
-                      backgroundColor: COLORS[champion.color],
-                      transform: 'scale(1.2)',
-                    }}
-                  >
-                    👑
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800 }}>
-                    {champion.name}
-                  </div>
-                  <div className="party-podium-label" style={{ fontSize: 28 }}>
-                    {champion.score} pts
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      textTransform: 'uppercase',
-                      letterSpacing: 1,
-                    }}
-                  >
-                    Champion!
-                  </div>
-                </div>
-              )}
-
-              {/* 3rd Place */}
-              {podium[2] && (
-                <div className="party-podium-step step-3">
-                  <div
-                    className="party-podium-avatar"
-                    style={{ backgroundColor: COLORS[podium[2].color] }}
-                  >
-                    🥉
-                  </div>
-                  <div style={{ fontSize: 15 }}>{podium[2].name}</div>
-                  <div className="party-podium-label">
-                    {podium[2].score} pts
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>3rd Place</div>
-                </div>
-              )}
-            </div>
-
-            {/* 4th Place note if present */}
-            {podium[3] && (
-              <div
-                style={{
-                  textAlign: 'center',
-                  color: '#777',
-                  fontWeight: 600,
-                  marginBottom: 30,
-                }}
-              >
-                4th Place: {podium[3].name} ({podium[3].score} pts)
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-              {isHost && (
-                <button
-                  type="button"
-                  className="party-btn party-btn-primary"
-                  onClick={handleRematch}
-                >
-                  <RotateCcw size={18} /> Play Rematch (New 6 Games)
-                </button>
-              )}
-              <button
-                type="button"
-                className="party-btn party-btn-secondary"
-                onClick={handleLeave}
-              >
-                <LogOut size={18} /> Exit to Collection
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // 6. WAITING ROOM / LOBBY (Default)
-  const slots: (PartyPlayer | null)[] = [null, null, null, null];
-  room.players.forEach((p, i) => {
-    if (i < 4) slots[i] = p;
-  });
-
+  const voice =
+    room && identity
+      ? {
+          session: {
+            game: 'party' as const,
+            code: room.code,
+            id: playerId,
+            token,
+          },
+          snapshot: {
+            players: humans.map((p) => ({ id: p.id, name: p.name })),
+            nearby: false,
+          },
+        }
+      : null;
+  const screenProps = room ? { room, playerId, token, busy, act } : null;
   return (
-    <div className="party-root">
-      <header className="party-header">
-        <a className="party-brand" href="/">
-          <span className="party-brand-icon">
-            <Gamepad2 size={22} color="#294a43" />
-          </span>
-          JUMBLEYARD<span style={{ color: '#ca8038' }}>.</span>
+    <div className={`party-root${gameFrame ? ' party-playing' : ''}`}>
+      <header className="party-bar">
+        <a
+          className="party-brand"
+          href={room ? undefined : '/'}
+          aria-label="Jumbleyard"
+        >
+          <Gamepad2 size={22} />
+          <span>JUMBLEYARD</span>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            type="button"
-            className="party-btn party-btn-ghost"
-            style={{ padding: '8px 14px', fontSize: 13 }}
-            onClick={handleLeave}
-          >
-            <LogOut size={15} /> Leave
-          </button>
-          <span className="party-badge">ROOM: {room.code}</span>
-        </div>
-      </header>
-
-      <main className="party-main">
-        <div className="party-title-wrap">
-          <h1 className="party-title">Party Waiting Room</h1>
-          <p className="party-subtitle">
-            Invite friends or add bots. Once 4 players are assembled, launch the
-            tournament!
-          </p>
-        </div>
-
-        <div className="party-card">
-          {error && (
-            <div
-              style={{
-                color: '#c0392b',
-                fontWeight: 700,
-                marginBottom: 20,
-                textAlign: 'center',
-              }}
+        {room && (
+          <span className="party-bar-status">
+            {room.status === 'lobby'
+              ? `${room.code} · ${humans.length}/4`
+              : `${room.practice ? text('Practice', 'Übung') : text('Round', 'Runde')} ${room.currentRound + 1}/${room.playlist.length}`}
+          </span>
+        )}
+        <nav
+          className="party-bar-actions"
+          aria-label={text('Party controls', 'Partysteuerung')}
+        >
+          {room && (
+            <button
+              className="party-icon-btn"
+              onClick={() => setPanel('standings')}
+              aria-label={text('Standings', 'Gesamtwertung')}
+              title={text('Standings', 'Gesamtwertung')}
             >
-              {error}
+              <Trophy size={19} />
+            </button>
+          )}
+          {voice && (
+            <div className="party-voice game-toolbar">
+              <VoicePanel {...voice} />
             </div>
           )}
-
-          {/* Room Code & Invite Link Banner */}
-          <div className="party-code-banner">
-            <div className="party-code-meta">
-              <span>Invite Code</span>
-              <div className="party-code-val">{room.code}</div>
-            </div>
+          {!room && <LanguageSwitcher variant="toolbar" />}
+          {room && (
             <button
-              type="button"
+              className="party-icon-btn"
+              onClick={() => setPanel('menu')}
+              aria-label={text('Party menu', 'Partymenü')}
+            >
+              <MoreHorizontal size={23} />
+            </button>
+          )}
+        </nav>
+      </header>
+      {(error || connectionError || launchError) && (
+        <div className="party-error-banner" role="alert">
+          <span>{error || launchError || connectionError}</span>
+          {(launchError || (gameFrame && connectionError)) && (
+            <button
               className="party-btn party-btn-secondary"
-              onClick={handleCopyLink}
+              onClick={retryGame}
             >
-              {copied ? (
-                <Check size={18} color="#27ae60" />
-              ) : (
-                <Copy size={18} />
-              )}
-              {copied ? 'Invite Link Copied!' : 'Copy Invite Link'}
+              {text('Rejoin round', 'Runde erneut beitreten')}
             </button>
-          </div>
-
-          {/* 4 Player Slots */}
-          <div className="party-slots-grid">
-            {slots.map((player, idx) => {
-              if (player) {
-                return (
-                  <div key={player.id} className="party-slot-card occupied">
-                    {isHost && player.id !== playerId && (
-                      <button
-                        type="button"
-                        className="party-slot-kick"
-                        onClick={() => handleKick(player.id)}
-                        title="Remove player"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                    <div
-                      className="party-slot-avatar"
-                      style={{
-                        backgroundColor: COLORS[player.color] ?? '#999',
-                      }}
-                    >
-                      {player.isHost && (
-                        <span className="party-slot-crown" title="Party Host">
-                          👑
-                        </span>
-                      )}
-                      <Users size={28} />
-                    </div>
-                    <div className="party-slot-name">
-                      {player.name} {player.id === playerId ? '(You)' : ''}
-                    </div>
-                    <span
-                      className={`party-slot-badge ${player.ready ? 'ready' : 'waiting'}`}
-                    >
-                      {player.isBot
-                        ? '🤖 Bot'
-                        : player.ready
-                          ? '✓ Ready'
-                          : 'Waiting…'}
-                    </span>
-                  </div>
-                );
-              }
-
-              return (
-                <div key={`empty-${idx}`} className="party-slot-card empty">
-                  <div style={{ color: '#999', marginBottom: 8 }}>
-                    <Users size={32} opacity={0.4} />
-                  </div>
-                  <div style={{ fontWeight: 600, color: '#888', fontSize: 14 }}>
-                    Player {idx + 1} Slot
-                  </div>
-                  {isHost && (
-                    <button
-                      type="button"
-                      className="party-btn party-btn-ghost"
-                      style={{
-                        marginTop: 10,
-                        fontSize: 13,
-                        padding: '6px 12px',
-                      }}
-                      onClick={handleAddBot}
-                    >
-                      <Bot size={15} /> Add Bot
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 6-Game Playlist Preview */}
-          <div className="party-playlist-preview">
-            <div className="party-playlist-header">
-              <span>Tournament Playlist (6 Random Games)</span>
-              <span>{room.playlist.length} Games Selected</span>
-            </div>
-            <div className="party-games-row">
-              {room.playlist.map((gameId, idx) => {
-                const info = getPartyGameInfo(gameId);
-                return (
-                  <div key={`${gameId}-${idx}`} className="party-game-pill">
-                    <span className="pill-round">GAME {idx + 1}</span>
-                    <span>{info?.name ?? gameId}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Action Footer */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
+          )}
+          {room && (
             <button
-              type="button"
-              className={`party-btn ${me?.ready ? 'party-btn-primary' : 'party-btn-secondary'}`}
-              onClick={handleToggleReady}
+              className="party-btn party-btn-ghost"
+              onClick={() => setPanel('menu')}
             >
-              {me?.ready ? '✓ You Are Ready' : 'Mark as Ready'}
+              {text('Party menu', 'Partymenü')}
             </button>
-
-            {isHost ? (
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          )}
+          {!room && (
+            <button
+              className="party-icon-btn"
+              onClick={() => setError('')}
+              aria-label={text('Dismiss', 'Schließen')}
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      )}
+      {paused && (
+        <output className="party-break-banner">
+          <Pause size={16} />
+          {text(
+            'Crew break. Take your time; the timer is paused.',
+            'Crew-Pause. Lasst euch Zeit; der Timer steht.',
+          )}
+          <button
+            className="party-btn party-btn-secondary"
+            disabled={!isHost || busy}
+            onClick={toggleBreak}
+          >
+            {text('Resume together', 'Gemeinsam fortsetzen')}
+          </button>
+        </output>
+      )}
+      {gameFrame ? (
+        <main className="party-game-shell">
+          <iframe
+            key={gameFrame}
+            ref={frame}
+            src={gameFrame}
+            className="party-game-frame"
+            title={
+              getPartyGameInfo(currentGame!)?.name ??
+              text('Party game', 'Partyspiel')
+            }
+            allow="autoplay; microphone; fullscreen; gamepad"
+          />
+          {!gameReady && (
+            <output className="party-loading-badge">
+              {text('Connecting the crew…', 'Crew wird verbunden…')}
+            </output>
+          )}
+        </main>
+      ) : (
+        <main className="party-main">
+          {!room || !screenProps ? (
+            <PartyEntry
+              initialCode={initialCode}
+              onEnter={(fresh, id) => {
+                setIdentity(id);
+                acceptRoom(fresh);
+                history.replaceState(null, '', `/party?room=${fresh.code}`);
+              }}
+            />
+          ) : room.status === 'lobby' ? (
+            <PartyLobby {...screenProps} />
+          ) : room.status === 'briefing' ? (
+            <PartyBriefing {...screenProps} now={now} onBreak={toggleBreak} />
+          ) : room.status === 'intermission' ? (
+            <>
+              <PartyIntermission
+                room={room}
+                pass={{ id: playerId, token }}
+                onRoom={acceptRoom}
+              />
+              <div className="party-between-actions">
                 <button
-                  type="button"
-                  className="party-btn party-btn-primary"
-                  style={{ fontSize: 18, padding: '16px 32px' }}
-                  onClick={handleStart}
-                  disabled={room.players.length < 2}
+                  className="party-btn party-btn-secondary"
+                  disabled={busy || (paused && !isHost)}
+                  onClick={toggleBreak}
                 >
-                  <Play size={20} /> Start Tournament
+                  <Pause size={15} />
+                  {paused
+                    ? text('Resume', 'Fortsetzen')
+                    : text('Take a break', 'Pause machen')}
                 </button>
               </div>
-            ) : (
-              <span style={{ color: '#71806b', fontWeight: 600 }}>
-                Waiting for party leader to start…
-              </span>
+            </>
+          ) : room.status === 'finished' ? (
+            <PartyFinale {...screenProps} onExit={() => void exit()} />
+          ) : (
+            <PartyWaiting
+              {...screenProps}
+              countdown={countdown}
+              onRetry={retryGame}
+              onClose={() => setPanel('close')}
+              onMenu={() => setPanel('menu')}
+            />
+          )}
+        </main>
+      )}
+      <Dialog.Root
+        open={panel !== null}
+        onOpenChange={(open) => {
+          if (!open) setPanel(null);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="party-dialog-backdrop" />
+          <Dialog.Popup className="party-dialog" aria-describedby={undefined}>
+            <div className="party-dialog-heading">
+              <Dialog.Title>
+                {panel === 'standings'
+                  ? text('Overall standings', 'Gesamtwertung')
+                  : panel === 'help'
+                    ? text('How to play', 'So wird gespielt')
+                    : panel === 'forfeit'
+                      ? text('Give up this round?', 'Diese Runde aufgeben?')
+                      : panel === 'leave'
+                        ? text('Leave the party?', 'Party verlassen?')
+                        : panel === 'close'
+                          ? text(
+                              'End the shared round?',
+                              'Gemeinsame Runde beenden?',
+                            )
+                          : text('Party menu', 'Partymenü')}
+              </Dialog.Title>
+              <Dialog.Close
+                className="party-icon-btn"
+                aria-label={text('Close', 'Schließen')}
+              >
+                <X size={20} />
+              </Dialog.Close>
+            </div>
+            {room && panel === 'standings' && (
+              <PartyStandings room={room} playerId={playerId} />
             )}
-          </div>
-        </div>
-      </main>
+            {room && panel === 'help' && (
+              <>
+                <h3>{getPartyGameInfo(currentGame!)?.name}</h3>
+                <GameBriefing room={room} playerId={playerId} />
+                <p className="party-muted">
+                  {text(
+                    'The live game keeps running while this help is open.',
+                    'Das laufende Spiel geht weiter, solange diese Hilfe offen ist.',
+                  )}
+                </p>
+              </>
+            )}
+            {panel === 'forfeit' && (
+              <>
+                <p>
+                  {text(
+                    'You’ll receive 0 points for this round. Your crew can finish playing, and you’ll stay for the next vote.',
+                    'Du erhältst für diese Runde 0 Punkte. Deine Crew kann weiterspielen; du bleibst für die nächste Abstimmung.',
+                  )}
+                </p>
+                <div className="party-action-row">
+                  <Dialog.Close className="party-btn party-btn-primary">
+                    {text('Keep playing', 'Weiterspielen')}
+                  </Dialog.Close>
+                  <button
+                    className="party-btn party-btn-danger"
+                    disabled={busy}
+                    onClick={() => void giveUp()}
+                  >
+                    {text('Give up · 0 points', 'Aufgeben · 0 Punkte')}
+                  </button>
+                </div>
+              </>
+            )}
+            {panel === 'leave' && (
+              <>
+                <p>
+                  {text(
+                    'Your crew can keep playing. You’ll return to the game collection.',
+                    'Deine Crew kann weiterspielen. Du kehrst zur Spielesammlung zurück.',
+                  )}
+                </p>
+                <button
+                  className="party-btn party-btn-danger"
+                  onClick={() => void exit()}
+                >
+                  {text('Leave party', 'Party verlassen')}
+                </button>
+              </>
+            )}
+            {room && panel === 'close' && (
+              <>
+                <p>
+                  {text(
+                    'This ends the round for the entire crew. Anyone without a saved result gets 0 points.',
+                    'Das beendet die Runde für alle. Wer kein gespeichertes Ergebnis hat, erhält 0 Punkte.',
+                  )}
+                </p>
+                <button
+                  className="party-btn party-btn-danger"
+                  disabled={busy}
+                  onClick={() => {
+                    void act({
+                      op: 'close_round',
+                      code: room.code,
+                      round: room.currentRound,
+                      hostId: playerId,
+                      token,
+                    });
+                    setPanel(null);
+                  }}
+                >
+                  {text('End round for everyone', 'Runde für alle beenden')}
+                </button>
+              </>
+            )}
+            {panel === 'menu' && (
+              <div className="party-menu-actions">
+                <LanguageSwitcher variant="toolbar" />
+                <button
+                  className="party-btn party-btn-secondary"
+                  onClick={() => {
+                    const prefs = loadAudioPreferences();
+                    applyAudioPreferences({ ...prefs, volume: muted ? 1 : 0 });
+                    setMuted(!muted);
+                  }}
+                >
+                  {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  {muted
+                    ? text('Enable sound', 'Ton einschalten')
+                    : text('Mute sound', 'Ton stummschalten')}
+                </button>
+                {room && room.status !== 'lobby' && (
+                  <button
+                    className="party-btn party-btn-secondary"
+                    onClick={() => setPanel('help')}
+                  >
+                    <HelpCircle size={18} />
+                    {text('Objective & controls', 'Ziel & Steuerung')}
+                  </button>
+                )}
+                {room && ['briefing', 'intermission'].includes(room.status) && (
+                  <button
+                    className="party-btn party-btn-secondary"
+                    disabled={busy || (paused && !isHost)}
+                    onClick={toggleBreak}
+                  >
+                    <Pause size={18} />
+                    {paused
+                      ? text('Resume party', 'Party fortsetzen')
+                      : text('Take a crew break', 'Crew-Pause machen')}
+                  </button>
+                )}
+                {room?.status === 'countdown' && !reported && (
+                  <>
+                    <button
+                      className="party-btn party-btn-secondary"
+                      onClick={retryGame}
+                    >
+                      {text(
+                        'Rejoin this round',
+                        'Dieser Runde erneut beitreten',
+                      )}
+                    </button>
+                    <button
+                      className="party-btn party-btn-danger"
+                      onClick={() => setPanel('forfeit')}
+                    >
+                      {text('Give up round…', 'Runde aufgeben…')}
+                    </button>
+                  </>
+                )}
+                <button
+                  className="party-btn party-btn-ghost"
+                  onClick={() => setPanel('leave')}
+                >
+                  <LogOut size={17} />
+                  {text('Leave party…', 'Party verlassen…')}
+                </button>
+              </div>
+            )}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

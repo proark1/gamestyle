@@ -79,8 +79,8 @@ export const NET = {
   climbSpeed: 3.0,
 };
 
-export const FINISH_X = 146.0;
-export const COURSE_END_X = 152.0;
+export const FINISH_X = 174.0;
+export const COURSE_END_X = 180.0;
 
 export const SURFACES: readonly Box[] = [
   // Site gate: solid ground, room to work out who stands where.
@@ -128,11 +128,56 @@ export const SURFACES: readonly Box[] = [
 
   // Net approach and the ground the net reaches down to.
   box('net-deck', 'ledge', 112, 118, 7.5, 8.0, -3, 3),
-  box('lower-pad', 'pad', 118, 138, -1.2, 0, -6, 6),
+  box('lower-pad', 'pad', 118, 144, -1.2, 0, -6, 6),
+
+  // Cargo chicane: jump the loads or take the slower route around the ends.
+  box('cargo-left', 'crate', 128, 129.2, 0, 1.0, -6, 1.2),
+  box('cargo-right', 'crate', 136, 137.2, 0, 1.0, -1.2, 6),
+  // One last narrow crossing. The landing is wide enough to regroup.
+  box('last-bridge-a', 'ledge', 144, 151, -0.5, 0, -1.6, 1.6),
+  box('last-bridge-b', 'ledge', 153.5, 161, -0.5, 0, -1.6, 1.6),
 
   // Site office.
-  box('office-pad', 'office', 138, COURSE_END_X, -1.2, 0, -8, 8),
+  box('office-pad', 'office', 161, COURSE_END_X, -1.2, 0, -8, 8),
 ];
+
+/** Solid props use the same bounds in rendering and collision. */
+export const PROPS: readonly Box[] = [
+  box('office-building', 'office', FINISH_X + 1, FINISH_X + 6, 0, 3, -3.5, 3.5),
+  ...SURFACES.filter(
+    (b) => b.kind === 'scaffold' && b.id !== 'scaffold-base',
+  ).flatMap((b) => [
+    ...[b.minX + 0.1, b.maxX - 0.1].flatMap((x, i) =>
+      [b.minZ + 0.1, b.maxZ - 0.1].map((z, j) =>
+        box(
+          `${b.id}-post-${i}-${j}`,
+          'pipe',
+          x - 0.09,
+          x + 0.09,
+          -1.2,
+          b.maxY + 1.1,
+          z - 0.09,
+          z + 0.09,
+        ),
+      ),
+    ),
+    box(
+      `${b.id}-rail`,
+      'pipe',
+      b.minX + 0.1,
+      b.maxX - 0.1,
+      b.maxY + 0.94,
+      b.maxY + 1.06,
+      b.minZ + 0.04,
+      b.minZ + 0.16,
+    ),
+  ]),
+  ...[-2.9, 2.9].map((z, i) =>
+    box(`catwalk-rail-${i}`, 'pipe', 23, 39, -1.5, -1.4, z - 0.05, z + 0.05),
+  ),
+];
+
+export const SOLIDS: readonly Box[] = [...SURFACES, ...PROPS];
 
 export type Anchor = {
   id: string;
@@ -150,6 +195,8 @@ export const ANCHORS: readonly Anchor[] = [
   { id: 'ring-plank-far', x: 76.4, y: 8.3, z: 0, label: 'Plank far end' },
   { id: 'ring-pipe', x: 91.2, y: 8.3, z: 0, label: 'Pipe mouth' },
   { id: 'ring-net', x: 117.4, y: 8.3, z: 0, label: 'Net head' },
+  { id: 'ring-last-near', x: 150.2, y: 0.3, z: 0, label: 'Final gap' },
+  { id: 'ring-last-far', x: 154.3, y: 0.3, z: 0, label: 'Final landing' },
 ];
 
 export type Checkpoint = {
@@ -168,6 +215,8 @@ export const CHECKPOINTS: readonly Checkpoint[] = [
   { index: 5, x: 92, spawn: [93.5, 8.1, 0], label: 'Pipe mouth' },
   { index: 6, x: 112, spawn: [114, 8.1, 0], label: 'Net head' },
   { index: 7, x: 118, spawn: [121, 0.1, 0], label: 'Lower pad' },
+  { index: 8, x: 144, spawn: [146, 0.1, 0], label: 'Last crossing' },
+  { index: 9, x: 161, spawn: [163, 0.1, 0], label: 'Office approach' },
 ];
 
 /**
@@ -191,7 +240,9 @@ export function sectionAt(x: number): string {
   if (x < 92) return 'wrecking';
   if (x < 112) return 'pipe';
   if (x < 118) return 'net';
-  if (x < FINISH_X) return 'yard-run';
+  if (x < 144) return 'yard-run';
+  if (x < 161) return 'last-crossing';
+  if (x < FINISH_X) return 'office-approach';
   return 'office';
 }
 
@@ -207,13 +258,13 @@ export function checkpoint(index: number): Checkpoint {
 
 /** Surface height of the tipping plank at a given x, for the given tilt. */
 export function plankSurfaceY(x: number, tilt: number): number {
-  return PLANK.y + Math.sin(tilt) * (x - PLANK.pivotX);
+  return PLANK.y + Math.tan(tilt) * (x - PLANK.pivotX);
 }
 
-export function onPlank(x: number, z: number): boolean {
+export function onPlank(x: number, z: number, tilt = 0): boolean {
   return (
-    x >= PLANK.pivotX - PLANK.halfLength &&
-    x <= PLANK.pivotX + PLANK.halfLength &&
+    x >= PLANK.pivotX - PLANK.halfLength * Math.cos(tilt) &&
+    x <= PLANK.pivotX + PLANK.halfLength * Math.cos(tilt) &&
     z >= PLANK.minZ &&
     z <= PLANK.maxZ
   );

@@ -9,10 +9,13 @@ export type PartyPlayer = {
   score: number;
   isHost: boolean;
   isBot?: boolean;
+  seenAt?: number;
+  connected?: boolean;
 };
 
 export type PartyStatus =
   | 'lobby'
+  | 'briefing'
   | 'countdown'
   | 'in_game'
   | 'intermission'
@@ -28,9 +31,22 @@ export type RoundResult = {
   reports?: Record<string, PartyResult | null>;
   /** The two sides of a team round. */
   teams?: [string[], string[]];
+  scoring?: 'team' | 'individual' | 'cooperative';
+  outcome?: 'completed' | 'failed' | 'skipped';
 };
 
 export type PartyRoomState = {
+  format?: 'quick' | 'classic';
+  practice?: boolean;
+  briefing?: { startedAt: number; ready: string[] };
+  pausedAt?: number;
+  rematchVotes?: string[];
+  runId?: string;
+  intermission?: PartyIntermission;
+  /** Response-only server clock reference. */
+  serverNow?: number;
+  /** Response-only store version, for ordering concurrent client responses. */
+  revision?: number;
   code: string;
   hostId: string;
   status: PartyStatus;
@@ -39,9 +55,7 @@ export type PartyRoomState = {
   currentRound: number; // 0-indexed: 0..5 for a 6-game match
   roundResults: RoundResult[];
   /**
-   * Results reported for the current round so far, by player id. Every human
-   * plays their own match, so the round is scored once all of them are in, or
-   * when the host closes it. null means the player gave up.
+   * Results from the shared game, by human seat. null means a forfeit.
    */
   reports?: Record<string, PartyResult | null>;
   countdownUntil?: number;
@@ -54,8 +68,55 @@ export type PartyRoomState = {
  */
 export type PartyPass = { id: string; token: string };
 
+export type PartyIntermission = {
+  phase: 'podium' | 'voting' | 'tie-break' | 'reveal';
+  startedAt: number;
+  endsAt: number;
+  candidates: GameId[];
+  votes: Record<string, GameId>;
+  tied: GameId[];
+  winner?: GameId;
+  locked?: string[];
+};
+
 /** Every action taken as a player carries that player's party pass token. */
 export type PartyAction =
+  | {
+      op: 'heartbeat' | 'briefing_ready' | 'vote_lock' | 'rematch_interest';
+      code: string;
+      playerId: string;
+      token: string;
+      round?: number;
+    }
+  | {
+      op: 'format';
+      code: string;
+      hostId: string;
+      token: string;
+      format: 'quick' | 'classic';
+    }
+  | {
+      op: 'pause';
+      code: string;
+      playerId: string;
+      token: string;
+      paused: boolean;
+    }
+  | {
+      op: 'game_session';
+      code: string;
+      playerId: string;
+      token: string;
+      round: number;
+    }
+  | {
+      op: 'vote';
+      code: string;
+      round: number;
+      playerId: string;
+      token: string;
+      game: GameId;
+    }
   | { op: 'create'; hostName: string; color: number }
   | { op: 'join'; code: string; name: string; color: number }
   | { op: 'leave'; code: string; playerId: string; token: string }

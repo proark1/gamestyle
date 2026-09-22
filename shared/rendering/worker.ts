@@ -37,6 +37,7 @@ function surface(color: string) {
   let material = materials.get(color);
   if (!material) {
     material = new T.MeshStandardMaterial({ color, roughness: 0.78 });
+    material.userData.shared = true;
     materials.set(color, material);
   }
   return material;

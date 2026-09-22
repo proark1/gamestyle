@@ -17,6 +17,9 @@ export class SiegeSound extends SiteAudio {
     this.setLoop('music', plan.music, plan.musicLevel);
     this.setLoop('camp', plan.camp ? 'ambience.camp' : null, plan.camp);
     this.setLoop('fire', plan.fire ? 'ambience.fire' : null, plan.fire);
+    this.setLoop('winch', plan.winch ? 'ambience.winch' : null, plan.winch);
+    this.setLoop('bees', plan.bees ? 'ambience.bees' : null, plan.bees);
+    this.setLoop('flight', plan.flight ? 'ambience.flight' : null, plan.flight);
     for (const hit of plan.hits)
       this.play(hit.cue, hit.strength, hit.position, hit.source);
   }

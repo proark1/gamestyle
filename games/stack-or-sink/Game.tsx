@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* oxlint-disable react/react-compiler -- This uncompiled WebGL host synchronizes mutable scene controllers and saved browser state; hook rules and exhaustive dependencies remain enforced. */
 /* oxlint-disable jsx-a11y/autocomplete-valid -- nickname is a standard HTML autocomplete token. */
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- HUD live regions use styled containers with explicit ARIA semantics. */
@@ -429,7 +431,7 @@ export default function Game() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/stack-or-sink?room=${session.code}`,
+        gameInviteUrl('stack-or-sink', session.code),
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
@@ -443,7 +445,7 @@ export default function Game() {
       await navigator.share({
         title: 'Join my Stack or Sink crew',
         text: `Crew code: ${session.code}`,
-        url: `${location.origin}/stack-or-sink?room=${session.code}`,
+        url: gameInviteUrl('stack-or-sink', session.code),
       });
     } catch (error) {
       if (!(error instanceof Error && error.name === 'AbortError'))
@@ -1326,7 +1328,7 @@ export default function Game() {
             </span>
           </div>
           {isHost ? (
-            <button
+            <button data-party-setup-action=""
               className="primary-button"
               onClick={() => void action({ type: 'restart' })}
             >

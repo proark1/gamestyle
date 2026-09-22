@@ -1,6 +1,6 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 
 /** Walks a stacker, arms overhead while carrying; `time` is in seconds. */
 export function poseStacker(

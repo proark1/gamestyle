@@ -1,3 +1,4 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import * as T from 'three';
 import { ball, beam, box, taper } from '../../shared/rendering/primitives';
 import {
@@ -114,6 +115,10 @@ export function createCraneMesh(team: TeamId) {
   root.add(cable);
   root.userData.cable = cable;
 
+  batchScenery(jib, [trolley]);
+  batchScenery(trolley);
+  batchScenery(hook);
+  batchScenery(root, [jib, hook, cable]);
   return root;
 }
 
@@ -160,6 +165,7 @@ export function createCrateMesh(kind: CrateKind) {
     box(g, [0.15, h + 0.04, d + 0.04], [0, 0, 0], '#ffea75');
   }
 
+  batchScenery(g);
   return g;
 }
 
@@ -195,6 +201,7 @@ export function createPlatformMesh(team: TeamId) {
     }
   }
 
+  batchScenery(g);
   return g;
 }
 
@@ -216,5 +223,6 @@ export function createLaserLine(team: TeamId) {
   const mesh = new T.Mesh(geom, laserMat);
   g.add(mesh);
 
+  batchScenery(g);
   return g;
 }

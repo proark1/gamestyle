@@ -3,6 +3,7 @@ import {
   PENDULUM,
   PLANK,
   SURFACES,
+  SOLIDS,
   nearNet,
   onPlank,
   pendulumBall,
@@ -51,13 +52,10 @@ function overlapsXZ(x: number, z: number, b: Box, radius: number): boolean {
 }
 
 /**
- * Is this box a wall to a worker whose feet are at `y`? Only boxes the boots
- * are actually level with count. Something overhead is an overhang, not a wall:
- * a worker hanging on the line under a deck must be free to hang there rather
- * than be shoved out sideways by their own hard hat.
+ * The entire body must fit, including when the boots are below a deck.
  */
 function blocksAt(y: number, b: Box): boolean {
-  return y >= b.minY - EPS && y < b.maxY - EPS;
+  return y + PLAYER_HEIGHT > b.minY + EPS && y < b.maxY - EPS;
 }
 
 /** Nearest face to leave this box by, moving only along x or only along z. */
@@ -85,12 +83,12 @@ export function supportUnder(
   plankTilt: number,
 ): number | null {
   let best: number | null = null;
-  for (const b of SURFACES) {
+  for (const b of SOLIDS) {
     if (b.maxY > y + 0.35) continue;
     if (!overlapsXZ(x, z, b, PLAYER_RADIUS)) continue;
     if (best === null || b.maxY > best) best = b.maxY;
   }
-  if (onPlank(x, z)) {
+  if (onPlank(x, z, plankTilt)) {
     const surface = plankSurfaceY(x, plankTilt);
     if (surface <= y + 0.35 && (best === null || surface > best))
       best = surface;
@@ -124,6 +122,8 @@ export function climbAhead(
  * worker slide along a wall or round a corner instead of sticking to it.
  */
 function resolveCircleBox(player: Player, b: Box) {
+  const beforeX = player.x;
+  const beforeZ = player.z;
   const cx = clamp(player.x, b.minX, b.maxX);
   const cz = clamp(player.z, b.minZ, b.maxZ);
   const dx = player.x - cx;
@@ -133,34 +133,108 @@ function resolveCircleBox(player: Player, b: Box) {
     const push = PLAYER_RADIUS - distance;
     player.x += (dx / distance) * push;
     player.z += (dz / distance) * push;
-    return;
+  } else {
+    const face = nearestFace(player.x, player.z, b);
+    if (face.axis === 'x') player.x = face.value;
+    else player.z = face.value;
   }
-  const face = nearestFace(player.x, player.z, b);
-  if (face.axis === 'x') player.x = face.value;
-  else player.z = face.value;
+  const nx = player.x - beforeX;
+  const nz = player.z - beforeZ;
+  const lengthSq = nx * nx + nz * nz;
+  const into = player.vx * nx + player.vz * nz;
+  if (into < 0 && lengthSq > EPS * EPS) {
+    player.vx -= (into * nx) / lengthSq;
+    player.vz -= (into * nz) / lengthSq;
+  }
 }
 
-/** Push a worker out of anything they ended up inside, without touching speed. */
+/** Resolve the solid board's sides as well as its top and underside. */
+function resolvePlankBody(player: Player, tilt: number, allowStep: boolean) {
+  const half = PLANK.halfLength * Math.cos(tilt);
+  const x = clamp(player.x, PLANK.pivotX - half, PLANK.pivotX + half);
+  const top = plankSurfaceY(x, tilt);
+  const b: Box = {
+    id: 'plank',
+    kind: 'ledge',
+    minX: PLANK.pivotX - half,
+    maxX: PLANK.pivotX + half,
+    minY: top - 0.16 / Math.cos(tilt),
+    maxY: top,
+    minZ: PLANK.minZ,
+    maxZ: PLANK.maxZ,
+  };
+  if (
+    !blocksAt(player.y, b) ||
+    !overlapsXZ(player.x, player.z, b, PLAYER_RADIUS)
+  )
+    return;
+  if (
+    top - player.y < 0.06 ||
+    (allowStep && player.grounded && top - player.y <= STEP_HEIGHT)
+  ) {
+    player.y = top;
+  } else resolveCircleBox(player, b);
+}
+
+/** Recover overlaps and remove velocity directed into solid geometry. */
 export function pushOutOfGeometry(player: Player, plankTilt: number) {
-  for (const b of SURFACES) {
-    if (!blocksAt(player.y, b)) continue;
-    if (!overlapsXZ(player.x, player.z, b, PLAYER_RADIUS)) continue;
-    resolveCircleBox(player, b);
-  }
-  const support = supportUnder(player.x, player.y + 0.4, player.z, plankTilt);
-  if (support !== null && player.y < support && player.y > support - 0.6) {
-    player.y = support;
+  for (let pass = 0; pass < 3; pass++)
+    for (const b of SOLIDS) {
+      if (!blocksAt(player.y, b)) continue;
+      if (!overlapsXZ(player.x, player.z, b, PLAYER_RADIUS)) continue;
+      // Recover small numerical overlaps vertically instead of ejecting a
+      // worker sideways from a deck or through the roof of the duct.
+      if (b.maxY - player.y <= 0.06) {
+        player.y = b.maxY;
+        player.vy = Math.max(0, player.vy);
+        continue;
+      }
+      if (player.y + PLAYER_HEIGHT - b.minY <= 0.06) {
+        player.y = b.minY - PLAYER_HEIGHT;
+        player.vy = Math.min(0, player.vy);
+        continue;
+      }
+      resolveCircleBox(player, b);
+    }
+  resolvePlankBody(player, plankTilt, false);
+  refreshSupport(player, plankTilt);
+}
+
+export function refreshSupport(player: Player, plankTilt: number) {
+  const support = supportUnder(player.x, player.y, player.z, plankTilt);
+  player.supportY = support ?? NO_SUPPORT;
+  player.grounded =
+    support !== null && Math.abs(player.y - support) < 0.06 && player.vy <= 0;
+  if (player.grounded) {
+    player.y = support as number;
+    player.vy = 0;
   }
 }
 
 /** Horizontal move with wall resolution and a small automatic step up. */
-function moveHorizontal(player: Player, dx: number, dz: number) {
+function moveHorizontal(
+  player: Player,
+  dx: number,
+  dz: number,
+  allowStep: boolean,
+) {
   player.x += dx;
   player.z += dz;
-  for (const b of SURFACES) {
+  for (const b of SOLIDS) {
     if (!blocksAt(player.y, b)) continue;
     if (!overlapsXZ(player.x, player.z, b, PLAYER_RADIUS)) continue;
-    if (b.maxY <= player.y + STEP_HEIGHT && b.maxY > player.y) {
+    if (
+      allowStep &&
+      player.grounded &&
+      b.maxY <= player.y + STEP_HEIGHT &&
+      b.maxY > player.y &&
+      !SOLIDS.some(
+        (ceiling) =>
+          ceiling !== b &&
+          blocksAt(b.maxY, ceiling) &&
+          overlapsXZ(player.x, player.z, ceiling, PLAYER_RADIUS),
+      )
+    ) {
       player.y = b.maxY;
       continue;
     }
@@ -181,12 +255,12 @@ function moveVertical(
 
   if (dy <= 0) {
     let top: number | null = null;
-    for (const b of SURFACES) {
+    for (const b of SOLIDS) {
       if (!overlapsXZ(player.x, player.z, b, PLAYER_RADIUS)) continue;
       if (b.maxY > from + EPS || b.maxY < to - EPS) continue;
       if (top === null || b.maxY > top) top = b.maxY;
     }
-    if (onPlank(player.x, player.z)) {
+    if (onPlank(player.x, player.z, plankTilt)) {
       const surface = plankSurfaceY(player.x, plankTilt);
       if (surface <= from + EPS && surface >= to - EPS) {
         if (top === null || surface > top) top = surface;
@@ -202,11 +276,21 @@ function moveVertical(
     }
   } else {
     let ceiling: number | null = null;
-    for (const b of SURFACES) {
+    for (const b of SOLIDS) {
       if (!overlapsXZ(player.x, player.z, b, PLAYER_RADIUS)) continue;
       const head = from + PLAYER_HEIGHT;
       if (b.minY < head - EPS || b.minY > to + PLAYER_HEIGHT + EPS) continue;
       if (ceiling === null || b.minY < ceiling) ceiling = b.minY;
+    }
+    if (onPlank(player.x, player.z, plankTilt)) {
+      const underside =
+        plankSurfaceY(player.x, plankTilt) - 0.16 / Math.cos(plankTilt);
+      if (
+        from + PLAYER_HEIGHT <= underside + EPS &&
+        to + PLAYER_HEIGHT >= underside &&
+        (ceiling === null || underside < ceiling)
+      )
+        ceiling = underside;
     }
     if (ceiling !== null) {
       player.y = ceiling - PLAYER_HEIGHT;
@@ -217,6 +301,96 @@ function moveVertical(
   }
 
   return { landed, impact };
+}
+
+/** Sweep in increments smaller than the body radius, including forced moves.
+ * A rope correction or rescue must never teleport across a thin wall. */
+export function moveWithCollisions(
+  player: Player,
+  dx: number,
+  dy: number,
+  dz: number,
+  plankTilt: number,
+  allowStep = false,
+): { landed: boolean; impact: number } {
+  const steps = Math.max(
+    1,
+    Math.ceil(Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)) / 0.12),
+  );
+  let landed = false;
+  let impact = 0;
+  for (let i = 0; i < steps; i++) {
+    const vertical = moveVertical(player, dy / steps, plankTilt);
+    landed ||= vertical.landed;
+    impact = Math.max(impact, vertical.impact);
+    moveHorizontal(player, dx / steps, dz / steps, allowStep);
+    resolvePlankBody(player, plankTilt, allowStep);
+  }
+  return { landed, impact };
+}
+
+/** Lift outside the deck first, then bring the worker over its edge. */
+export function haulToward(
+  target: Player,
+  lead: Player,
+  dt: number,
+  tilt: number,
+) {
+  const x = target.x;
+  let z = target.z;
+  const height = lead.y + 0.12;
+  if (target.y < lead.y + 0.03) {
+    const plankBounds: Box = {
+      id: 'plank',
+      kind: 'ledge',
+      minX: PLANK.pivotX - PLANK.halfLength * Math.cos(tilt),
+      maxX: PLANK.pivotX + PLANK.halfLength * Math.cos(tilt),
+      minY: PLANK.y - Math.abs(Math.sin(tilt)) * PLANK.halfLength - 0.16,
+      maxY: PLANK.y + Math.abs(Math.sin(tilt)) * PLANK.halfLength,
+      minZ: PLANK.minZ,
+      maxZ: PLANK.maxZ,
+    };
+    const overhead = [...SOLIDS, plankBounds].filter(
+      (b) =>
+        b.maxY > target.y &&
+        b.minY < height + PLAYER_HEIGHT &&
+        target.x > b.minX - PLAYER_RADIUS &&
+        target.x < b.maxX + PLAYER_RADIUS,
+    );
+    if (overhead.some((b) => overlapsXZ(x, z, b, PLAYER_RADIUS + 0.08))) {
+      const left =
+        Math.min(...overhead.map((b) => b.minZ)) - PLAYER_RADIUS - 0.08;
+      const right =
+        Math.max(...overhead.map((b) => b.maxZ)) + PLAYER_RADIUS + 0.08;
+      z = Math.abs(z - left) < Math.abs(z - right) ? left : right;
+    }
+    moveWithCollisions(
+      target,
+      (x - target.x) * Math.min(1, dt * 10),
+      0,
+      (z - target.z) * Math.min(1, dt * 10),
+      tilt,
+    );
+    moveWithCollisions(target, 0, Math.min(height - target.y, dt * 8), 0, tilt);
+  } else {
+    moveWithCollisions(
+      target,
+      (lead.x - target.x) * Math.min(1, dt * 4),
+      0,
+      (lead.z - target.z) * Math.min(1, dt * 4),
+      tilt,
+    );
+  }
+  target.vx = target.vy = target.vz = 0;
+  const support = supportUnder(target.x, target.y, target.z, tilt);
+  if (
+    target.haulProgress >= 1 &&
+    support !== null &&
+    Math.abs(target.y - support) < 0.2
+  ) {
+    moveWithCollisions(target, 0, support - target.y, 0, tilt);
+    refreshSupport(target, tilt);
+  }
 }
 
 export type MoveResult = {
@@ -236,30 +410,45 @@ export function stepPlayer(
 ): MoveResult {
   const input = player.input;
   let jumped = false;
+  player.jumpGrace = Math.max(0, (player.jumpGrace || 0) - dt);
+
+  if (player.anchorId || player.state === 'finished') {
+    player.vx = player.vy = player.vz = 0;
+    refreshSupport(player, plankTilt);
+    return { landed: false, impact: 0, jumped: false };
+  }
 
   // Clipped to a ring or flat on their back: no walking, just hanging on.
-  const canWalk =
-    player.state !== 'limp' && player.state !== 'finished' && !player.anchorId;
+  const canWalk = player.state !== 'limp';
 
   // On the net only once the boots have left the deck, and off it again at the
   // bottom, so walking up to it and away from it both feel like walking.
   const climbing =
-    canWalk && !player.grounded && nearNet(player.x, player.y, player.z);
+    canWalk &&
+    !player.grounded &&
+    player.vy <= 0 &&
+    nearNet(player.x, player.y, player.z);
 
   if (climbing) {
     // Gravity is off. Forward climbs down, because the course goes that way.
     player.vy = -clamp(input.x, -1, 1) * NET.climbSpeed;
     player.vz = clamp(input.z, -1, 1) * NET.climbSpeed * 0.5;
     player.vx = 0;
-    player.y = clamp(player.y + player.vy * dt, NET.minY, NET.maxY);
-    player.x = Math.max(player.x, NET.x);
-    moveHorizontal(player, 0, player.vz * dt);
+    moveWithCollisions(
+      player,
+      Math.max(0, NET.x - player.x),
+      clamp(player.y + player.vy * dt, NET.minY, NET.maxY) - player.y,
+      player.vz * dt,
+      plankTilt,
+    );
     player.grounded = player.y <= NET.minY + EPS;
     if (input.jump) {
       // Letting go: a long drop onto the pad below.
       player.vy = JUMP_SPEED * 0.5;
       player.vx = 2.6;
+      moveWithCollisions(player, player.vx * dt, player.vy * dt, 0, plankTilt);
       jumped = true;
+      player.jumpGrace = 0.85;
     }
     player.supportY =
       supportUnder(player.x, player.y + 0.2, player.z, plankTilt) ?? NO_SUPPORT;
@@ -267,8 +456,9 @@ export function stepPlayer(
   }
 
   const hanging = player.state === 'dangling';
-  const wantX = canWalk ? clamp(input.x, -1, 1) : 0;
-  const wantZ = canWalk ? clamp(input.z, -1, 1) : 0;
+  const inputLength = Math.max(1, Math.hypot(input.x, input.z));
+  const wantX = canWalk ? input.x / inputLength : 0;
+  const wantZ = canWalk ? input.z / inputLength : 0;
   const bracing = player.braced && player.grounded && player.stamina > 0;
 
   if (bracing) {
@@ -297,18 +487,26 @@ export function stepPlayer(
     player.vy = JUMP_SPEED;
     player.grounded = false;
     jumped = true;
+    player.jumpGrace = 0.85;
   }
 
   player.vy = Math.max(TERMINAL_FALL, player.vy + GRAVITY * dt);
 
-  moveHorizontal(player, player.vx * dt, player.vz * dt);
-  const vertical = moveVertical(player, player.vy * dt, plankTilt);
+  const vertical = moveWithCollisions(
+    player,
+    player.vx * dt,
+    player.vy * dt,
+    player.vz * dt,
+    plankTilt,
+    true,
+  );
 
   if (vertical.landed) {
     player.grounded = true;
   } else {
     const support = supportUnder(player.x, player.y, player.z, plankTilt);
-    player.grounded = support !== null && player.y - support < 0.06;
+    player.grounded =
+      support !== null && Math.abs(player.y - support) < 0.06 && player.vy <= 0;
     if (player.grounded) player.y = support as number;
   }
 
@@ -332,8 +530,43 @@ export function stepChain(
   eventIdRef: { current: number },
 ): ChainLink[] {
   const order = chainOrder(world);
+  const weight = (p: Player) =>
+    p.id === world.pendulumRider ? 0 : inverseMass(p);
   const links: ChainLink[] = [];
   if (order.length < 2) return links;
+
+  // Gravity on a hanging crew loads the line even after separating velocity
+  // has been removed. Transfer that load along the deck instead of treating
+  // the floor contact as an infinitely strong anchor.
+  for (const player of order) {
+    if (
+      !player.grounded ||
+      player.braced ||
+      player.anchorId ||
+      player.state === 'finished'
+    )
+      continue;
+    const hanging = order.filter((p) => !p.grounded && p.y < player.y - 1.5);
+    if (!hanging.length) continue;
+    const supporters = order.filter((p) => p.grounded).length;
+    const neighbour = order.find(
+      (p) => Math.abs(p.link - player.link) === 1 && p.y < player.y - 1.5,
+    );
+    if (!neighbour) continue;
+    const dx = neighbour.x - player.x;
+    const dz = neighbour.z - player.z;
+    const length = Math.hypot(dx, dz);
+    if (length < EPS) continue;
+    const slide =
+      ((Math.abs(GRAVITY) * hanging.length) / supporters) * dt * 0.1;
+    moveWithCollisions(
+      player,
+      (dx / length) * slide,
+      0,
+      (dz / length) * slide,
+      world.plankTilt,
+    );
+  }
 
   // Soft zone: the pull you can still walk against.
   for (let i = 0; i < order.length - 1; i++) {
@@ -355,8 +588,8 @@ export function stepChain(
       (distance - CHAIN_SLACK) * CHAIN_STIFFNESS + relative * CHAIN_DAMPING,
     );
 
-    const wa = inverseMass(a);
-    const wb = inverseMass(b);
+    const wa = weight(a);
+    const wb = weight(b);
     a.vx += nx * force * wa * dt;
     a.vy += ny * force * wa * dt;
     a.vz += nz * force * wa * dt;
@@ -377,8 +610,8 @@ export function stepChain(
       const distance = Math.hypot(dx, dy, dz);
       if (distance <= CHAIN_MAX || distance < EPS) continue;
 
-      const wa = inverseMass(a);
-      const wb = inverseMass(b);
+      const wa = weight(a);
+      const wb = weight(b);
       const total = wa + wb;
       if (total <= 0) continue;
 
@@ -389,12 +622,20 @@ export function stepChain(
 
       const shiftA = (excess * wa) / total;
       const shiftB = (excess * wb) / total;
-      a.x += nx * shiftA;
-      a.y += ny * shiftA;
-      a.z += nz * shiftA;
-      b.x -= nx * shiftB;
-      b.y -= ny * shiftB;
-      b.z -= nz * shiftB;
+      moveWithCollisions(
+        a,
+        nx * shiftA,
+        ny * shiftA,
+        nz * shiftA,
+        world.plankTilt,
+      );
+      moveWithCollisions(
+        b,
+        -nx * shiftB,
+        -ny * shiftB,
+        -nz * shiftB,
+        world.plankTilt,
+      );
 
       movedBy.set(a.id, (movedBy.get(a.id) ?? 0) + shiftA);
       movedBy.set(b.id, (movedBy.get(b.id) ?? 0) + shiftB);
@@ -484,9 +725,13 @@ export function stepPendulum(
 
   const [bx, by, bz] = pendulumBall(world.pendulumAngle);
   if (rider) {
-    rider.x = bx;
-    rider.y = by - 1.5;
-    rider.z = bz;
+    moveWithCollisions(
+      rider,
+      bx - PENDULUM.ballRadius - PLAYER_RADIUS - 0.08 - rider.x,
+      by - 1.5 - rider.y,
+      bz - rider.z,
+      world.plankTilt,
+    );
     rider.vx = 0;
     rider.vy = 0;
     rider.vz = 0;
@@ -505,12 +750,35 @@ export function stepPendulum(
   for (const player of world.players) {
     if (player.id === world.pendulumRider) continue;
     if (player.state === 'finished') continue;
-    const head = player.y + PLAYER_HEIGHT * 0.6;
+    const head = clamp(
+      by,
+      player.y + PLAYER_RADIUS,
+      player.y + PLAYER_HEIGHT - PLAYER_RADIUS,
+    );
     const distance = Math.hypot(player.x - bx, head - by, player.z - bz);
     if (distance > PENDULUM.ballRadius + PLAYER_RADIUS) continue;
 
+    const nx = distance > EPS ? (player.x - bx) / distance : -1;
+    const ny = distance > EPS ? (head - by) / distance : 0;
+    const nz = distance > EPS ? (player.z - bz) / distance : 0;
+    const overlap = PENDULUM.ballRadius + PLAYER_RADIUS - distance + EPS;
+    moveWithCollisions(
+      player,
+      nx * overlap,
+      ny * overlap,
+      nz * overlap,
+      world.plankTilt,
+    );
+    const approaching =
+      overlap > PLAYER_RADIUS ||
+      player.vx * nx +
+        (player.vy - dirY * tangential) * ny +
+        (player.vz - dirZ * tangential) * nz <
+        0.1;
+    if (!approaching) continue;
     const knock = Math.max(4.5, Math.abs(tangential) * 1.35);
-    player.vz += Math.sign(tangential) * dirZ * knock;
+    player.vx += nx * knock;
+    player.vz += (Math.sign(tangential) * dirZ + nz) * knock;
     player.vy += Math.abs(dirY) * knock * 0.25 + 3.2;
     player.grounded = false;
     events.push({
@@ -540,6 +808,7 @@ export function stepPlank(
     riders++;
   }
 
+  const previousTilt = world.plankTilt;
   const wasSlipping = Math.abs(world.plankTilt) > PLANK.slipTilt;
   const restoring = -world.plankTilt * 1.35;
   const acceleration = torque * 0.052 + restoring - world.plankVel * 2.1;
@@ -550,6 +819,22 @@ export function stepPlank(
     PLANK.maxTilt,
   );
   if (Math.abs(world.plankTilt) >= PLANK.maxTilt) world.plankVel = 0;
+
+  for (const player of world.players) {
+    if (
+      player.grounded &&
+      onPlank(player.x, player.z, previousTilt) &&
+      Math.abs(player.y - plankSurfaceY(player.x, previousTilt)) < 0.08
+    ) {
+      moveWithCollisions(
+        player,
+        0,
+        plankSurfaceY(player.x, world.plankTilt) - player.y,
+        0,
+        world.plankTilt,
+      );
+    }
+  }
 
   const slipping = Math.abs(world.plankTilt) > PLANK.slipTilt;
   if (slipping && !wasSlipping && riders > 0) {

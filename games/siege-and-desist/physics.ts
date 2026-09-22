@@ -4,6 +4,8 @@ import { AMMO, FIELD, type Block, type Shot, type SiegeWorld } from './types';
 export const GRAVITY = -12;
 const vec = (x = 0, y = 0, z = 0) => new C.Vec3(x, y, z);
 const DENSITY = 22;
+// Courses start with 0.02m clearance, before Cannon has any contact history.
+const SUPPORT_GAP = 0.06;
 
 /**
  * The keep is a real rigid-body stack, so the crew's shots decide how it comes
@@ -15,6 +17,9 @@ export class CastleSolver {
   blocks = new Map<number, C.Body>();
   shots = new Map<number, C.Body>();
   private stone = new C.Material({ friction: 0.62, restitution: 0.04 });
+  private masonry = new Set<C.Body>();
+  /** Bodies resting on each support, retained while both bodies sleep. */
+  private supported = new Map<C.Body, Set<C.Body>>();
 
   constructor(world: SiegeWorld) {
     const e = this.engine;
@@ -44,6 +49,7 @@ export class CastleSolver {
     e.addBody(fence);
     for (const b of world.blocks) this.addBlock(b);
     for (const s of world.shots) this.addShot(s);
+    this.seedSupports();
   }
 
   addBlock(b: Block) {
@@ -67,6 +73,7 @@ export class CastleSolver {
     this.engine.addBody(body);
     if (b.sleeping) body.sleep();
     this.blocks.set(b.id, body);
+    this.masonry.add(body);
     return body;
   }
 
@@ -92,13 +99,20 @@ export class CastleSolver {
 
   removeBlock(id: number) {
     const body = this.blocks.get(id);
-    if (body) this.engine.removeBody(body);
+    if (body) {
+      this.removeSupport(body);
+      this.masonry.delete(body);
+      this.engine.removeBody(body);
+    }
     this.blocks.delete(id);
   }
 
   removeShot(id: number) {
     const body = this.shots.get(id);
-    if (body) this.engine.removeBody(body);
+    if (body) {
+      this.removeSupport(body);
+      this.engine.removeBody(body);
+    }
     this.shots.delete(id);
   }
 
@@ -158,7 +172,86 @@ export class CastleSolver {
   }
 
   step(dt: number) {
+    this.wakeSupported(this.activeBodies());
     this.engine.step(dt);
+    // Collisions can wake a foundation during this step as well as before it.
+    this.wakeSupported(this.activeBodies());
+    this.rememberSupports();
+  }
+
+  private activeBodies() {
+    return [...this.blocks.values(), ...this.shots.values()].filter(
+      (body) => body.sleepState !== C.Body.SLEEPING,
+    );
+  }
+
+  private support(lower: C.Body, upper: C.Body) {
+    if (!this.masonry.has(upper)) return;
+    let resting = this.supported.get(lower);
+    if (!resting) this.supported.set(lower, (resting = new Set()));
+    resting.add(upper);
+  }
+
+  /** Seed the untouched sleeping stack; later movement uses real contacts. */
+  private seedSupports() {
+    const bodies = [...this.blocks.values(), ...this.shots.values()];
+    for (const body of bodies) body.updateAABB();
+    for (const upper of this.masonry) {
+      const a = upper.aabb;
+      let seated = a.lowerBound.y <= SUPPORT_GAP;
+      for (const lower of bodies) {
+        if (lower.position.y >= upper.position.y) continue;
+        const b = lower.aabb;
+        if (
+          Math.abs(a.lowerBound.y - b.upperBound.y) <= SUPPORT_GAP &&
+          a.lowerBound.x < b.upperBound.x &&
+          a.upperBound.x > b.lowerBound.x &&
+          a.lowerBound.z < b.upperBound.z &&
+          a.upperBound.z > b.lowerBound.z
+        ) {
+          this.support(lower, upper);
+          seated = true;
+        }
+      }
+      // A restored airborne body must not inherit a floating sleep state.
+      // Rotated rubble also needs real contacts, not its approximate bounds.
+      const q = upper.quaternion;
+      if (!seated || Math.hypot(q.x, q.y, q.z) > 0.002) upper.wakeUp();
+    }
+  }
+
+  /** Cannon wakes on a collision, but not when a support slides or vanishes. */
+  private wakeSupported(sources: C.Body[]) {
+    const visited = new Set(sources);
+    for (let i = 0; i < sources.length; i++) {
+      for (const upper of this.supported.get(sources[i]) ?? []) {
+        if (visited.has(upper)) continue;
+        if (upper.sleepState === C.Body.SLEEPING) upper.wakeUp();
+        visited.add(upper);
+        sources.push(upper);
+      }
+    }
+  }
+
+  private removeSupport(body: C.Body) {
+    this.wakeSupported([body]);
+    this.supported.delete(body);
+    for (const resting of this.supported.values()) resting.delete(body);
+  }
+
+  private rememberSupports() {
+    // Sleeping pairs produce no Cannon contacts, so keep their last support.
+    // Awake bodies rebuild theirs as they fall, tip and land on new rubble.
+    for (const [lower, resting] of this.supported) {
+      for (const upper of resting) {
+        if (upper.sleepState !== C.Body.SLEEPING) resting.delete(upper);
+      }
+      if (!resting.size) this.supported.delete(lower);
+    }
+    for (const contact of this.engine.contacts) {
+      if (contact.ni.y > 0.3) this.support(contact.bi, contact.bj);
+      else if (contact.ni.y < -0.3) this.support(contact.bj, contact.bi);
+    }
   }
 
   read(world: SiegeWorld) {

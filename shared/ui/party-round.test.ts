@@ -60,6 +60,41 @@ void test('the leading side needs the top score to itself', () => {
   assert.equal(leadingSide({ red: 0, blue: 0, yellow: 0, green: 0 }), 'draw');
 });
 
+void test('team results retain a clean scoreboard without trusting malformed score details', () => {
+  const result = partyVersus('blue', 'red', { red: 4.2, blue: 3.1 }, 'height');
+  assert.deepEqual(parsePartyResult(JSON.stringify(result)), {
+    kind: 'versus',
+    outcome: 'lost',
+    scores: { red: 4.2, blue: 3.1 },
+    metric: 'height',
+  });
+  assert.deepEqual(
+    parsePartyResult({
+      kind: 'versus',
+      outcome: 'won',
+      scores: { red: Infinity, blue: 2 },
+    }),
+    {
+      kind: 'versus',
+      outcome: 'won',
+    },
+  );
+  assert.deepEqual(
+    parsePartyResult({
+      kind: 'versus',
+      outcome: 'won',
+      scores: { red: 7, blue: 4, extra: 99 },
+      metric: 'untrusted text',
+    }),
+    {
+      kind: 'versus',
+      outcome: 'won',
+      scores: { red: 7, blue: 4 },
+      metric: 'points',
+    },
+  );
+});
+
 void test('results from outside are checked and copied', () => {
   assert.deepEqual(
     parsePartyResult({ kind: 'goal', cleared: false, score: 4, extra: 1 }),

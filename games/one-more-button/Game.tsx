@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element -- Local collection illustration on both hosting targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
@@ -358,7 +360,7 @@ export default function OneMoreButton() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/one-more-button?room=${session?.code}`,
+        gameInviteUrl('one-more-button', session?.code),
       );
       setCopied(true);
     } catch {
@@ -747,7 +749,7 @@ export default function OneMoreButton() {
                   Last press: <strong>{w.lastPresser}</strong>. We remember.
                 </p>
               )}
-              <button
+              <button data-party-setup-action=""
                 className="omb-primary"
                 disabled={!captain || status !== 'online'}
                 onClick={() => action({ type: 'restart' })}

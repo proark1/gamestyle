@@ -7,10 +7,12 @@ const PINNED = [
   'stack-or-sink',
   'uphill-delivery',
   'reel-problems',
+  'reel-problems-2',
   'shelf-control',
 ] as const;
 
 const SHUFFLED = [
+  'on-the-ropes',
   'drive-thru',
   'sample-stampede',
   'carry-on-carnage',

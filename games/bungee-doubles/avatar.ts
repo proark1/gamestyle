@@ -1,6 +1,6 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { WORKER_HAND_Y } from '../../shared/rendering/worker';
+import { GAME_HAND_Y as WORKER_HAND_Y } from '../../shared/rendering/game-avatar';
 import { tennisPlayer } from './models';
 import type { SpecialState } from './types';
 
@@ -87,9 +87,10 @@ export function poseTennisWorker(
   }
 
   // Ensure padel bat is gripped in player's right hand
-  if (rig.racket && rig.racket.parent !== rig.armR) {
-    rig.armR.add(rig.racket);
-    rig.racket.position.set(0, WORKER_HAND_Y + 0.01, 0.12);
+  const gripArm = model.userData.sleeveR as T.Group;
+  if (rig.racket && rig.racket.parent !== gripArm) {
+    gripArm.add(rig.racket);
+    rig.racket.position.set(0, WORKER_HAND_Y + 0.01, 0.04);
     rig.racket.rotation.set(Math.PI / 2 + 0.15, 0, 0);
   }
 }

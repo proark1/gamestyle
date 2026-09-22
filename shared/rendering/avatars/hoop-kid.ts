@@ -2,7 +2,15 @@ import * as T from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CLOTH, COLORS } from '../palette';
 import type { WorkerOutfit } from '../worker';
-import { blink, capsule, lathe, rounded, soft, surface } from './soft-parts';
+import {
+  blink,
+  capsule,
+  lathe,
+  rounded,
+  shoeSole,
+  soft,
+  surface,
+} from './soft-parts';
 
 /**
  * The clay basketball kids from the owner's court picture (Lola and Nico):
@@ -127,6 +135,7 @@ export function inClay<Model extends T.Object3D>(root: Model) {
         bumpMap: clayBump(),
         bumpScale: 1.2,
       });
+      clay.userData.shared = true;
       clays.set(key, clay);
     }
     mesh.material = clay;
@@ -467,10 +476,12 @@ function leg(
   }
   // A high-top sneaker in the kit colour, with a white toe, sole and laces.
   const foot = -HIP[1];
-  band(leg, 0.086, 0.08, [0, foot + 0.165, 0.005], kit, 0.09);
+  band(leg, 0.086, 0.08, [0, foot + 0.165, 0.005], kit, 0.09).name =
+    'shoe-collar';
   soft(leg, [0.092, 0.085, 0.155], [0, foot + 0.095, 0.04], kit);
   soft(leg, [0.086, 0.056, 0.072], [0, foot + 0.07, 0.132], TRIM);
-  rounded(leg, [0.184, 0.05, 0.325], [0, foot + 0.025, 0.045], TRIM, 0.022);
+  shoeSole(leg, [0.184, 0.05, 0.325], [0, foot + 0.025, 0.045], TRIM).name =
+    'shoe-sole';
   for (const [z, y] of [
     [0.055, 0.176],
     [0.1, 0.162],
@@ -506,7 +517,7 @@ function arm(body: T.Group, side: number, kit: string) {
 }
 
 /** How a wardrobe look changes the kid: long trousers, or a hat to fit under. */
-export type KidStyle = { trousers?: boolean; hat?: boolean };
+export type KidStyle = { trousers?: boolean; hat?: boolean | string };
 
 export type HoopKid = {
   root: T.Group;

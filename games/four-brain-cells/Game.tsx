@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element -- Collection artwork is a local asset on both hosting targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -406,7 +408,7 @@ export default function FourBrainCells() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/four-brain-cells?room=${session?.code}`,
+        gameInviteUrl('four-brain-cells', session?.code),
       );
       setCopied(true);
     } catch {
@@ -837,7 +839,7 @@ export default function FourBrainCells() {
                 busy={npcBusy || status !== 'online'}
                 manage={action}
               />
-              <button
+              <button data-party-setup-action=""
                 className="brain-primary"
                 disabled={!captain || status !== 'online' || npcBusy}
                 onClick={() => action({ type: 'restart' })}

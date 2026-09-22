@@ -1,8 +1,8 @@
 # Jumbleyard
 
-**Jumbleyard** is a collection of twenty-three matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
+**Jumbleyard** is a collection of matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
 
-## The twenty-three games
+## The games
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
@@ -18,6 +18,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Wrong Floor       | `/wrong-floor`         | `games/wrong-floor/`         | `app/wrong-floor/`               |
 | One More Button   | `/one-more-button`     | `games/one-more-button/`     | `app/one-more-button/`           |
 | Four Brain Cells  | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
+| Reel Problems 2 | `/reel-problems-2` | `games/reel-problems-2/` | `app/reel-problems-2/` |
 | Reel Problems     | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
 | Shelf Control     | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
 | Load Bearing      | `/load-bearing`        | `games/load-bearing/`        | `app/load-bearing/`              |
@@ -25,6 +26,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Court Clash       | `/basketball`          | `games/basketball/`          | `app/basketball/`                |
 | Bungee Doubles    | `/bungee-doubles`      | `games/bungee-doubles/`      | `app/bungee-doubles/`            |
 | Panic Curling     | `/panic-curling`       | `games/panic-curling/`       | `app/panic-curling/`             |
+| On the Ropes | `/on-the-ropes` | `games/on-the-ropes/` | `app/on-the-ropes/` |
 | Zorb Clash        | `/zorb-clash`          | `games/zorb-clash/`          | `app/zorb-clash/`                |
 | Carry-On Carnage  | `/carry-on-carnage`    | `games/carry-on-carnage/`    | `app/carry-on-carnage/`          |
 | Sample Stampede   | `/sample-stampede`     | `games/sample-stampede/`     | `app/sample-stampede/`           |

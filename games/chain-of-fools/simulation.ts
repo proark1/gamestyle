@@ -2,6 +2,7 @@ import {
   ANCHORS,
   CHECKPOINTS,
   FINISH_X,
+  COURSE_END_X,
   PENDULUM,
   checkpoint,
   checkpointAt,
@@ -10,6 +11,7 @@ import {
 } from './course';
 import {
   HARD_LANDING_SPEED,
+  haulToward,
   pushOutOfGeometry,
   stepChain,
   stepPendulum,
@@ -78,6 +80,7 @@ export function newPlayer(
     stamina: BRACE_STAMINA_MAX,
     braceCooldown: 0,
     airTime: 0,
+    jumpGrace: 0,
     anchorId: null,
     supportY: spawn[1],
     haulProgress: 0,
@@ -101,6 +104,7 @@ export function freshChainWorld(now: number, seed = 7): ChainWorld {
     phase: 'lobby',
     startedAt: 0,
     endsAt: 0,
+    endedAt: 0,
     winner: null,
     players: [],
     links: [],
@@ -129,6 +133,9 @@ export function placeAtCheckpoint(world: ChainWorld, index: number) {
     player.vy = 0;
     player.vz = 0;
     player.grounded = true;
+    player.braced = false;
+    player.checkpoint = point.index;
+    player.input = idleInput();
     player.state = 'standing';
     player.anchorId = null;
     player.haulProgress = 0;
@@ -137,6 +144,7 @@ export function placeAtCheckpoint(world: ChainWorld, index: number) {
     player.stamina = BRACE_STAMINA_MAX;
     player.braceCooldown = 0;
     player.airTime = 0;
+    player.jumpGrace = 0;
     player.supportY = point.spawn[1];
     player.respawnAt = world.clock + RESPAWN_MS;
   }
@@ -157,6 +165,9 @@ export function chainOfFoolsAction(
   switch (action.type) {
     case 'start': {
       if (world.phase === 'playing') break;
+      world.endedAt = 0;
+      world.pendulumAngle = PENDULUM.amplitude;
+      world.pendulumVel = 0;
       world.phase = 'playing';
       world.startedAt = world.clock;
       world.endsAt = world.clock + ROUND_TIME_MS;
@@ -175,6 +186,7 @@ export function chainOfFoolsAction(
     }
 
     case 'restart': {
+      world.endedAt = 0;
       world.phase = 'playing';
       world.startedAt = world.clock;
       world.endsAt = world.clock + ROUND_TIME_MS;
@@ -202,7 +214,13 @@ export function chainOfFoolsAction(
     }
 
     case 'clip': {
-      if (!player || player.state === 'limp') break;
+      if (
+        world.phase !== 'playing' ||
+        !player ||
+        player.state === 'limp' ||
+        player.state === 'finished'
+      )
+        break;
 
       if (player.anchorId) {
         player.anchorId = null;
@@ -227,7 +245,10 @@ export function chainOfFoolsAction(
         player.y + PLAYER_HEIGHT * 0.6 - by,
         player.z - bz,
       );
-      if (toBall <= PENDULUM.hookReach + PENDULUM.ballRadius) {
+      if (
+        !world.pendulumRider &&
+        toBall <= PENDULUM.hookReach + PENDULUM.ballRadius
+      ) {
         world.pendulumRider = player.id;
         world.events.push({
           id: ++eventIdRef.current,
@@ -301,7 +322,7 @@ export function advanceChainOfFools(
   }
 
   let remaining = clamp(elapsed, 0.001, 0.1);
-  while (remaining > 0) {
+  while (remaining > 0 && world.phase === 'playing') {
     const dt = Math.min(MAX_SUBSTEP, remaining);
     remaining -= dt;
     stepWorld(world, dt, eventIdRef);
@@ -309,6 +330,7 @@ export function advanceChainOfFools(
 
   if (world.phase === 'playing' && world.clock >= world.endsAt) {
     world.phase = 'ended';
+    world.endedAt = world.clock;
     world.winner = 'failed';
     world.events.push({
       id: ++eventIdRef.current,
@@ -332,6 +354,7 @@ function stepWorld(
 
   for (const player of world.players) {
     if (player.state === 'finished') continue;
+    if (player.id === world.pendulumRider) continue;
     if (player.respawnAt > world.clock) player.input = idleInput();
 
     const wasGrounded = player.grounded;
@@ -445,7 +468,8 @@ function resolveStates(
     const nothingBelow =
       player.supportY <= NO_SUPPORT + 1 ||
       player.y - player.supportY > DANGLE_DROP;
-    const hanging = player.airTime > DANGLE_AIR_TIME && nothingBelow;
+    const hanging =
+      player.airTime > DANGLE_AIR_TIME && player.jumpGrace <= 0 && nothingBelow;
 
     if (hanging) {
       if (player.state !== 'dangling') {
@@ -507,18 +531,12 @@ function resolveHelp(
       target.haulProgress += (HAUL_RATE * pulling.length + kick) * dt;
 
       const lead = pulling[0];
-      target.y = target.y + (lead.y + 0.2 - target.y) * Math.min(1, dt * 3.2);
-      target.x = target.x + (lead.x - target.x) * Math.min(1, dt * 2.2);
-      target.z = target.z + (lead.z - target.z) * Math.min(1, dt * 2.2);
-      target.vx *= 0.4;
-      target.vz *= 0.4;
-      target.vy = Math.max(target.vy, 0);
+      haulToward(target, lead, dt, world.plankTilt);
 
-      if (target.haulProgress >= 1) {
+      if (target.haulProgress >= 1 && target.grounded) {
         target.haulProgress = 0;
         target.state = 'standing';
         target.grounded = true;
-        target.y = lead.y;
         target.vx = 0;
         target.vy = 0;
         target.vz = 0;
@@ -573,8 +591,15 @@ function resolveProgress(
 
   for (const player of world.players) {
     if (player.state === 'finished') continue;
-    if (player.x >= FINISH_X) {
+    if (
+      player.x >= FINISH_X &&
+      player.x <= COURSE_END_X &&
+      Math.abs(player.z) <= 8 &&
+      player.grounded &&
+      Math.abs(player.y) < 0.08
+    ) {
       player.state = 'finished';
+      player.vx = player.vy = player.vz = 0;
       player.anchorId = null;
       world.events.push({
         id: ++eventIdRef.current,
@@ -626,6 +651,7 @@ function resolveProgress(
     world.players.every((p) => p.state === 'finished')
   ) {
     world.phase = 'ended';
+    world.endedAt = world.clock;
     world.winner = 'crew';
     world.events.push({
       id: ++eventIdRef.current,
@@ -650,7 +676,9 @@ export function crewScore(world: ChainWorld): number {
   const distance = Math.round(clamp(world.bestX, 0, FINISH_X) * 6);
   const timeBonus =
     world.winner === 'crew'
-      ? Math.round(Math.max(0, world.endsAt - world.clock) / 100)
+      ? Math.round(
+          Math.max(0, world.endsAt - (world.endedAt || world.clock)) / 100,
+        )
       : 0;
   const cleanBonus = world.winner === 'crew' && world.wipes === 0 ? 500 : 0;
   return distance + timeBonus + cleanBonus - world.wipes * 60;

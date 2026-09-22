@@ -21,6 +21,8 @@ import {
   rematchParty,
   getPartyRoom,
   partyStorageKey,
+  voteForNextGame,
+  partyPlayerAction,
 } from './coordinator';
 import type { GameId } from '../../shared/audio/types';
 import type { PartyPass, PartyRoomState } from './types';
@@ -55,6 +57,90 @@ function createMockRoomStore(): RoomStore {
     },
   };
 }
+
+async function finishIntermission(
+  store: RoomStore,
+  code: string,
+  room: PartyRoomState,
+) {
+  while (room.status === 'intermission') {
+    room = (await getPartyRoom(store, code, room.intermission!.endsAt))!;
+  }
+  return room;
+}
+
+void test('ballots authenticate voters, replace choices, reject stale actions and survive simultaneous reads', async () => {
+  const { store, code, host, guests } = await startParty('crane-clash', 3);
+  const podium = await closePartyRound(store, code, 0, host, 10000);
+  const room = (await getPartyRoom(store, code, podium.intermission!.endsAt))!;
+  const ballot = room.intermission!;
+  const [a, b] = ballot.candidates;
+  await assert.rejects(
+    voteForNextGame(store, code, 0, { ...host, token: 'wrong' }, a, 15000),
+    /recognise/,
+  );
+  await assert.rejects(
+    voteForNextGame(store, code, 1, host, a, 15000),
+    /closed/,
+  );
+  await assert.rejects(
+    voteForNextGame(store, code, 0, host, 'crane-clash', 15000),
+    /three games/,
+  );
+  await voteForNextGame(store, code, 0, host, a, 15000);
+  let next = await voteForNextGame(store, code, 0, host, b, 15001);
+  assert.deepEqual(next.intermission!.votes, { [host.id]: b });
+  next = await advanceToNextRound(store, code, host, 15002);
+  assert.equal(next.intermission!.phase, 'voting');
+  await Promise.all(
+    guests.map((guest, i) =>
+      voteForNextGame(store, code, 0, guest, i === 0 ? a : b, 15003),
+    ),
+  );
+  const snapshots = await Promise.all(
+    Array.from({ length: 4 }, () => getPartyRoom(store, code, ballot.endsAt)),
+  );
+  assert(snapshots.every((state) => state!.intermission!.winner === b));
+  assert(snapshots.every((state) => state!.intermission!.phase === 'reveal'));
+  await assert.rejects(
+    voteForNextGame(store, code, 0, host, a, ballot.endsAt),
+    /closed/,
+  );
+  const launches = await Promise.all(
+    Array.from({ length: 4 }, () =>
+      getPartyRoom(store, code, snapshots[0]!.intermission!.endsAt),
+    ),
+  );
+  assert(
+    launches.every(
+      (state) => state!.currentRound === 1 && state!.playlist[1] === b,
+    ),
+  );
+  assert.equal(launches[0]!.roundResults.length, 1);
+  assert.equal('passes' in launches[0]!, false);
+});
+
+void test('host departure removes their open vote and hands over without resetting the ballot', async () => {
+  const { store, code, host, guests } = await startParty('crane-clash', 3);
+  const podium = await closePartyRound(store, code, 0, host, 10000);
+  const voting = (await getPartyRoom(
+    store,
+    code,
+    podium.intermission!.endsAt,
+  ))!;
+  const chosen = voting.intermission!.candidates[0];
+  await voteForNextGame(store, code, 0, host, chosen, 15000);
+  await voteForNextGame(store, code, 0, guests[0], chosen, 15001);
+  const left = await leavePartyRoom(store, code, host, 15002);
+  assert.equal(left.hostId, guests[0].id);
+  assert.equal(left.intermission!.votes[host.id], undefined);
+  assert.equal(left.intermission!.votes[guests[0].id], chosen);
+  assert.equal(left.intermission!.endsAt, voting.intermission!.endsAt);
+  assert.deepEqual(
+    left.intermission!.candidates,
+    voting.intermission!.candidates,
+  );
+});
 
 void test('generatePlaylist selects 6 unique valid games', () => {
   const playlist = generatePlaylist(6);
@@ -181,13 +267,23 @@ void test('Party Room Lifecycle: create -> join -> start -> report -> next round
 
   // 5. Start tournament
   const started = await startPartyTournament(store, code, host);
-  assert.equal(started.status, 'countdown');
+  assert.equal(started.status, 'briefing');
   assert.equal(started.currentRound, 0);
   assert.equal(started.playlist.length, 6);
 
   // 6. Every human reports each round; the last report scores it
   let room: PartyRoomState = started;
   for (let round = 0; round < 6; round++) {
+    for (const player of [host, ...guests])
+      room = await partyPlayerAction(
+        store,
+        code,
+        player,
+        'briefing_ready',
+        round,
+        room.briefing!.startedAt + 5000,
+      );
+    assert.equal(room.status, 'countdown');
     const teams = getPartyGameInfo(room.playlist[round])?.teams;
     for (const [i, player] of [host, ...guests].entries()) {
       room = await reportRoundResult(
@@ -197,18 +293,18 @@ void test('Party Room Lifecycle: create -> join -> start -> report -> next round
         player,
         teams
           ? partyVersus('red', i === 0 ? 'red' : 'blue')
-          : partyGoal(i === 0, i),
+          : partyGoal(true, i),
       );
     }
-    assert.equal(room.status, round === 5 ? 'finished' : 'intermission');
+    assert.equal(room.status, 'intermission');
     assert.equal(room.roundResults.length, round + 1);
+    room = await finishIntermission(store, code, room);
     if (round < 5) {
-      room = await advanceToNextRound(store, code, host);
-      assert.equal(room.status, 'countdown');
+      assert.equal(room.status, 'briefing');
       assert.equal(room.currentRound, round + 1);
     }
   }
-  assert(room.players.every((p) => p.score > 0));
+  assert(room.players.filter((p) => !p.isBot).every((p) => p.score > 0));
 
   // 7. Rematch
   const rematched = await rematchParty(store, code, host);
@@ -344,8 +440,27 @@ async function startParty(game: GameId, guests: number) {
   for (let i = 0; i < guests; i++) {
     const joined = await joinPartyRoom(store, code, `Guest ${i}`, i + 1);
     guestPasses.push({ id: joined.playerId, token: joined.token });
+    await toggleReady(store, code, guestPasses.at(-1)!, true);
   }
   const started = await startPartyTournament(store, code, host);
+  // Legacy saved tournaments retain their solo-leg scoring across deployment.
+  const saved = (await store.get(partyStorageKey(code)))!;
+  const legacy = JSON.parse(saved.state);
+  delete legacy.runId;
+  delete legacy.format;
+  delete legacy.briefing;
+  legacy.status = 'countdown';
+  legacy.players = legacy.players.map(
+    ({
+      seenAt: _seen,
+      connected: _connected,
+      ...p
+    }: import('./types').PartyPlayer) => p,
+  );
+  await store.compareAndSwap(
+    { ...saved, state: JSON.stringify(legacy), version: saved.version + 1 },
+    saved.version,
+  );
   const bots = started.players.filter((p) => p.isBot).map((p) => p.id);
   return { store, code, host, guests: guestPasses, bots };
 }
@@ -452,6 +567,11 @@ void test('a team round scores both teammates alike from the human legs', async 
     [host.id, guest.id],
     [bots[0], bots[1]],
   ]);
+  assert.equal(
+    round0.roundResults[0].winnerId,
+    undefined,
+    'teammates share first place',
+  );
   assert.deepEqual(round0.roundResults[0].pointsAwarded, {
     [host.id]: 10,
     [guest.id]: 10,
@@ -460,7 +580,15 @@ void test('a team round scores both teammates alike from the human legs', async 
   });
 
   // Round 1 puts the two humans on opposite sides.
-  await advanceToNextRound(store, code, host);
+  await finishIntermission(store, code, round0);
+  // This scoring fixture deliberately uses the same team game in every round.
+  const row = (await store.get(partyStorageKey(code)))!;
+  const state = JSON.parse(row.state);
+  state.playlist[1] = 'crane-clash';
+  await store.compareAndSwap(
+    { ...row, state: JSON.stringify(state), version: row.version + 1 },
+    row.version,
+  );
   await reportRoundResult(store, code, 1, host, won);
   const round1 = await reportRoundResult(store, code, 1, guest, lost);
   const [, result] = round1.roundResults;

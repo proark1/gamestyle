@@ -71,6 +71,7 @@ export type BrainEvent = {
   limb: number | null;
 };
 export type BrainWorld = {
+  partyRound?: number;
   clock: number;
   started: number;
   remainder: number;

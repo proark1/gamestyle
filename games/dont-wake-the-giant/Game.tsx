@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-html-link-for-pages */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -335,7 +337,7 @@ export default function GiantGame() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/dont-wake-the-giant?room=${session.code}`,
+        gameInviteUrl('dont-wake-the-giant', session.code),
       );
       setCopied(true);
     } catch {
@@ -934,7 +936,7 @@ export default function GiantGame() {
               THIEVES ESCAPED
             </span>
           </div>
-          <button
+          <button data-party-setup-action=""
             className="giant-primary"
             disabled={!host}
             onClick={() => void action({ type: 'restart' })}

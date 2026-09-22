@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -372,7 +374,7 @@ export default function LoadBearing() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/load-bearing?room=${session?.code}`,
+        gameInviteUrl('load-bearing', session?.code),
       );
       setCopied(true);
     } catch {
@@ -605,7 +607,7 @@ export default function LoadBearing() {
               <h2>{w.phase === 'won' ? 'Signed off' : 'Not signed off'}</h2>
               <p>{w.events.at(-1)?.text}</p>
               {foreman && (
-                <button
+                <button data-party-setup-action=""
                   className="primary-button"
                   onClick={() => action({ type: 'restart' })}
                 >
