@@ -5,12 +5,18 @@ import { type StoredRoom, handleRoom } from './rooms';
 import { randomId } from '../../shared/accounts/server/crypto';
 import { stackWeek } from '../../shared/challenges/catalog';
 import { stackRewardStatements } from '../../shared/challenges/server/progress';
+import {
+  RANKED_LIMIT,
+  rankedSettleStatement,
+  rankedStartStatements,
+} from '../../shared/challenges/server/ranked';
 import type { Session } from '../../shared/rooms/session';
 import type { Snapshot, World } from './types';
 import { topOf } from './physics';
 import { FLOOR } from './geometry';
 
 type VerifiedRoom = StoredRoom & {
+  ranked?: true;
   challengeRun?: { id: string; week: number };
   challengeCommit?: string;
   challengeSettled?: true;
@@ -89,6 +95,7 @@ export async function verifiedStackRoom(
     },
     async insert(row) {
       const room = JSON.parse(row.state) as VerifiedRoom;
+      if (body.ranked === true) room.ranked = true;
       const commit = randomId();
       room.challengeCommit = commit;
       const key = prefix + row.code;
@@ -112,6 +119,10 @@ export async function verifiedStackRoom(
       const key = prefix + row.code,
         commit = randomId();
       room.challengeCommit = commit;
+      const rankedStart =
+        !!room.ranked &&
+        previous?.world.phase === 'lobby' &&
+        room.world.phase === 'playing';
       if (previous?.world.phase === 'lobby' && room.world.phase === 'playing')
         room.challengeRun = { id: randomId(), week: stackWeek(now).start };
       if (room.challengeRun && !room.challengeSettled)
@@ -124,13 +135,52 @@ export async function verifiedStackRoom(
         !room.challengeSettled &&
         ['won', 'lost'].includes(room.world.phase);
       if (settle) room.challengeSettled = true;
+      const state = JSON.stringify(room);
       const statements = [
         db
           .prepare(
-            'UPDATE rooms SET state = ?, version = ?, updated = ? WHERE code = ? AND version = ?',
+            `UPDATE rooms SET state = ?, version = ?, updated = ? WHERE code = ? AND version = ?
+            ${
+              rankedStart
+                ? `AND (SELECT COUNT(*) FROM challenge_members m JOIN json_each(?, '$.world.players') p
+              ON json_extract(p.value, '$.id') = m.player_id WHERE m.room_code = ?) = ?
+              AND NOT EXISTS (SELECT 1 FROM challenge_members m JOIN json_each(?, '$.world.players') p
+              ON json_extract(p.value, '$.id') = m.player_id WHERE m.room_code = ? AND
+              (SELECT COUNT(*) FROM ranked_attempts a WHERE a.account_id = m.account_id AND a.week = ?) >= ?)`
+                : ''
+            }`,
           )
-          .bind(JSON.stringify(room), row.version, now, key, version),
+          .bind(
+            state,
+            row.version,
+            now,
+            key,
+            version,
+            ...(rankedStart
+              ? [
+                  state,
+                  key,
+                  room.world.players.length,
+                  state,
+                  key,
+                  room.challengeRun!.week,
+                  RANKED_LIMIT,
+                ]
+              : []),
+          ),
       ];
+      if (rankedStart && room.challengeRun)
+        statements.push(
+          ...rankedStartStatements(
+            db,
+            key,
+            commit,
+            room.challengeRun,
+            room.world.players.length,
+            now,
+            state,
+          ),
+        );
       if (body.op === 'join') {
         const entrant = room.world.players.find(
           (p) => !previous?.world.players.some((old) => old.id === p.id),
@@ -171,11 +221,36 @@ export async function verifiedStackRoom(
               commit,
             ),
         );
+        if (room.ranked)
+          statements.push(
+            rankedSettleStatement(
+              db,
+              key,
+              commit,
+              run,
+              room.challengeHeight ?? 0,
+              now,
+            ),
+          );
         statements.push(
           ...stackRewardStatements(db, key, commit, run.id, run.week, now),
         );
       }
       const result = (await db.batch(statements)) as WriteResult[];
+      if (rankedStart && !result[0].meta.changes) {
+        const exhausted = await db
+          .prepare(`SELECT 1 FROM challenge_members m
+          JOIN json_each(?, '$.world.players') p ON json_extract(p.value, '$.id') = m.player_id
+          WHERE m.room_code = ? AND (SELECT COUNT(*) FROM ranked_attempts a
+          WHERE a.account_id = m.account_id AND a.week = ?) >= ? LIMIT 1`)
+          .bind(state, key, room.challengeRun!.week, RANKED_LIMIT)
+          .first();
+        if (exhausted)
+          throw new RoomError(
+            'Someone in this crew has used all five ranked starts this week.',
+            409,
+          );
+      }
       if (result[0].meta.changes) saved = room;
       return result[0].meta.changes > 0;
     },
@@ -186,13 +261,23 @@ export async function verifiedStackRoom(
   return {
     ...reply,
     ...(reply.session
-      ? { session: { ...reply.session, verified: true as const } }
+      ? {
+          session: {
+            ...reply.session,
+            verified: true as const,
+            ...(saved?.ranked ? { ranked: true as const } : {}),
+          },
+        }
       : {}),
     ...(reply.snapshot
       ? {
           snapshot: {
             ...reply.snapshot,
-            challenge: { week, verified: true as const },
+            challenge: {
+              week,
+              verified: true as const,
+              ...(saved?.ranked ? { ranked: true as const } : {}),
+            },
           },
         }
       : {}),

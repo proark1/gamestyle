@@ -86,6 +86,7 @@ export type World = {
 export type Snapshot = {
   challenge?: {
     verified: true;
+    ranked?: true;
     week: { start: number; end: number; height: number; coins: number };
   };
   code: string;

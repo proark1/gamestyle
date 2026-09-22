@@ -18,10 +18,12 @@ export type Item = {
   id: string;
   slot: Slot;
   name: string;
-  /** Coins to buy it. An item has either a price or a goal. */
+  /** Coins to buy it. An item has one acquisition path. */
   price?: number;
   /** The goal that unlocks it instead. */
   goal?: string;
+  /** Server-awarded challenge item. Never available for coin purchase. */
+  reward?: string;
 };
 
 /** Raise when an item changes meaning, so an old shop page cannot buy the wrong thing. */
@@ -88,6 +90,18 @@ export const ITEMS: readonly Item[] = [
     slot: 'hat',
     name: 'Champion Hard Hat',
     goal: 'every-game',
+  },
+  {
+    id: 'stack-rank-safety-helmet',
+    slot: 'hat',
+    name: 'Tower Ace Helmet',
+    reward: 'Top 10% in a 100-player ranked Stack board',
+  },
+  {
+    id: 'stack-rank-crown',
+    slot: 'hat',
+    name: 'Skyline Crown',
+    reward: 'Top 1% in a 100-player ranked Stack board',
   },
 
   // Tops

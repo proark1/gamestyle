@@ -199,7 +199,9 @@ export default function Game() {
       audio.enabled = !saved.muted;
     } catch {}
     const url = new URL(location.href);
-    setVerifiedJoin(url.searchParams.get('challenge') === 'verified');
+    setVerifiedJoin(
+      ['verified', 'ranked'].includes(url.searchParams.get('challenge') ?? ''),
+    );
     const room = url.searchParams.get('room');
     if (room && looksLikeRoomCode(room)) {
       setCode(room.toUpperCase());
@@ -351,13 +353,19 @@ export default function Game() {
     actionRef.current = action;
     practiceRef.current = practice;
   });
-  async function create(verified = false) {
+  async function create(verified = false, ranked = false) {
     if (!ready || busy) return;
     setBusy(true);
     setNotice('');
     sound.current?.unlock();
     try {
-      const reply = await requestRoom({ op: 'create', name, color, verified });
+      const reply = await requestRoom({
+        op: 'create',
+        name,
+        color,
+        verified,
+        ranked,
+      });
       if (reply.session && reply.snapshot)
         attach(reply.session, reply.snapshot);
     } catch (e) {
@@ -437,7 +445,11 @@ export default function Game() {
     try {
       await navigator.clipboard.writeText(
         gameInviteUrl('stack-or-sink', session.code) +
-          (session.verified ? '&challenge=verified' : ''),
+          (session.ranked
+            ? '&challenge=ranked'
+            : session.verified
+              ? '&challenge=verified'
+              : ''),
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
@@ -453,7 +465,11 @@ export default function Game() {
         text: `Crew code: ${session.code}`,
         url:
           gameInviteUrl('stack-or-sink', session.code) +
-          (session.verified ? '&challenge=verified' : ''),
+          (session.ranked
+            ? '&challenge=ranked'
+            : session.verified
+              ? '&challenge=verified'
+              : ''),
       });
     } catch (error) {
       if (!(error instanceof Error && error.name === 'AbortError'))
@@ -714,6 +730,13 @@ export default function Game() {
               </button>
               <button
                 disabled={!ready || busy}
+                className="secondary-button"
+                onClick={() => void create(true, true)}
+              >
+                Create ranked crew · weekly board <Trophy size={18} />
+              </button>
+              <button
+                disabled={!ready || busy}
                 className="practice-link"
                 onClick={() => {
                   setVerifiedJoin(true);
@@ -723,7 +746,7 @@ export default function Game() {
                 Join a verified room
               </button>
               <details className="challenge-details">
-                <summary>Weekly target &amp; mastery rewards</summary>
+                <summary>Weekly target, mastery &amp; rankings</summary>
                 <StackChallengePanel />
               </details>
               <button

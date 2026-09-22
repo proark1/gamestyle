@@ -4,6 +4,7 @@ import { inPartyMode } from '../ui/party-mode';
 export type Session = {
   peer?: true;
   verified?: true;
+  ranked?: true;
   code: string;
   id: string;
   token: string;

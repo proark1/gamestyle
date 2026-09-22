@@ -658,6 +658,21 @@ export default function WardrobeView({
                               >
                                 <Coins size={12} /> Buy · {item.price}
                               </button>
+                            ) : item.reward ? (
+                              <div
+                                className="wardrobe-item-goal-hint"
+                                title={item.reward}
+                              >
+                                <Lock
+                                  size={12}
+                                  style={{
+                                    display: 'inline',
+                                    marginRight: '3px',
+                                    verticalAlign: '-1px',
+                                  }}
+                                />
+                                {item.reward}
+                              </div>
                             ) : associatedGoal ? (
                               <div
                                 className="wardrobe-item-goal-hint"
