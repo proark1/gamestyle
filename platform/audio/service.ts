@@ -27,6 +27,7 @@ import {
 } from '../../shared/audio/types';
 
 const BUNDLED_GAMES = new Set([
+  'cage-clash',
   'crane-clash',
   'load-bearing',
   'panic-curling',

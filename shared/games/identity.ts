@@ -15,6 +15,7 @@ export const GAME_IDS = [
   'act-natural',
   'basketball',
   'bungee-doubles',
+  'cage-clash',
   'carry-on-carnage',
   'chain-of-fools',
   'chaos',
@@ -74,12 +75,17 @@ export const BORROWED_AUDIO = {
  * provide both — not merely because nobody has added it yet.
  */
 export const PARTY_EXCLUDED = {
+  'cage-clash':
+    'Two-fighter duels; the party rotation requires four-player rounds',
   'reel-problems-2':
     'Experimental copy for style tests; not part of the party rotation',
   chaos: 'Handwerker title with its own long-form session',
   'first-person': 'Handwerker title with its own long-form session',
   'shelf-control': 'server-authoritative rooms, no peer adapter',
 } as const satisfies Partial<Record<Game, string>>;
+
+/** Maximum authenticated players in a standalone room. */
+export const roomCapacity = (game: string) => (game === 'cage-clash' ? 2 : 4);
 
 /** The game that owns the workshop editing this game's sounds. */
 export function workshopOf(game: Game): Game {

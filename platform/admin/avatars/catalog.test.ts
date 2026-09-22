@@ -175,6 +175,8 @@ void test('games dress Nico in wardrobe items over their own clothes', () => {
     'basketball:baller-blue',
     'basketball:baller-red',
     'bungee-doubles:tennis-duo',
+    'cage-clash:fighter-blue',
+    'cage-clash:fighter-red',
     'carry-on-carnage:traveler',
     'chain-of-fools:chain-worker',
     'chaos:worker',

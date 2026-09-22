@@ -60,6 +60,17 @@ interface CardStaticConfig {
 }
 
 const CARD_CONFIGS: Record<string, CardStaticConfig> = {
+  'cage-clash': {
+    slug: 'cage-clash',
+    href: '/cage-clash',
+    cardClass: 'bungee-doubles-card',
+    imgSrc: '/images/cage-clash.svg',
+    imgAlt: 'Two martial artists face off inside a clay green octagonal cage.',
+    loading: 'lazy',
+    tagIcon: Gamepad2,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   'on-the-ropes': {
     slug: 'on-the-ropes',
     href: '/on-the-ropes',

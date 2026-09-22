@@ -28,6 +28,7 @@ const games = {
   'first-person': lazy(() => import('../../games/first-person/Game')),
   'four-brain-cells': lazy(() => import('../../games/four-brain-cells/Game')),
   'load-bearing': lazy(() => import('../../games/load-bearing/Game')),
+  'cage-clash': lazy(() => import('../../games/cage-clash/Game')),
   'on-the-ropes': lazy(() => import('../../games/on-the-ropes/Game')),
   'one-more-button': lazy(() => import('../../games/one-more-button/Game')),
   'panic-curling': lazy(() => import('../../games/panic-curling/Game')),

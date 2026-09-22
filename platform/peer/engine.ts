@@ -22,8 +22,10 @@ import { createEngine as driveThru } from '../../games/drive-thru/peer';
 import { createEngine as scaffoldScramble } from '../../games/scaffold-scramble/peer';
 import { createEngine as chainOfFools } from '../../games/chain-of-fools/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
+import { createEngine as cage } from '../../games/cage-clash/peer';
 import { createEngine as boxing } from '../../games/on-the-ropes/peer';
 const engines = {
+  'cage-clash': cage,
   'on-the-ropes': boxing,
   'wrong-floor': hotel,
   'stack-or-sink': stack,

@@ -15,6 +15,34 @@ export interface CardTranslation {
 }
 
 export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
+  'cage-clash': {
+    en: {
+      tag: 'MIXED MARTIAL ARTS',
+      isNew: true,
+      newTag: 'NEW',
+      players: '1–2 fighters',
+      duration: '3 × 60-second rounds',
+      titleMain: 'Cage ',
+      titleHighlight: 'Clash',
+      titleSuffix: '.',
+      desc: 'Choose your fighting style in secret. Trade punches, land kicks and take the fight to the ground. One cage. Every way to win.',
+      tagline: 'FOUR STYLES. ONE CAGE.',
+      cta: 'Play Cage Clash',
+    },
+    de: {
+      tag: 'MIXED MARTIAL ARTS',
+      isNew: true,
+      newTag: 'NEU',
+      players: '1–2 Kämpfer',
+      duration: '3 × 60 Sekunden',
+      titleMain: 'Cage ',
+      titleHighlight: 'Clash',
+      titleSuffix: '.',
+      desc: 'Wähle deinen Kampfstil geheim. Tausche Schläge aus, lande Tritte und bring den Kampf auf den Boden. Ein Käfig. Viele Wege zum Sieg.',
+      tagline: 'VIER STILE. EIN KÄFIG.',
+      cta: 'Cage Clash spielen',
+    },
+  },
   'on-the-ropes': {
     en: {
       tag: 'TAG TEAM BOXING',

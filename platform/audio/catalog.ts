@@ -21,9 +21,11 @@ import { driveThruCatalog } from '../../games/drive-thru/audio';
 import { scaffoldScrambleCatalog } from '../../games/scaffold-scramble/audio';
 import { chainOfFoolsCatalog } from '../../games/chain-of-fools/audio';
 
+import { cageCatalog } from '../../games/cage-clash/audio';
 import { boxingCatalog } from '../../games/on-the-ropes/audio';
 
 const catalogs: Record<GameId, Cue[]> = {
+  'cage-clash': cageCatalog,
   'on-the-ropes': boxingCatalog,
   'wrong-floor': hotelCatalog,
   'stack-or-sink': stackCatalog,

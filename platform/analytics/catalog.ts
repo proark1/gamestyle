@@ -25,6 +25,7 @@ import { zorbClashAnalytics } from '../../games/zorb-clash/analytics';
 import { scaffoldScrambleAnalytics } from '../../games/scaffold-scramble/analytics';
 import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
 
+import { cageAnalytics } from '../../games/cage-clash/analytics';
 import { boxingAnalytics } from '../../games/on-the-ropes/analytics';
 
 export type CatalogGame = {
@@ -45,6 +46,7 @@ export type CatalogGame = {
 // Each game's analytics module holds plain definitions and type-only imports,
 // so this list stays light enough for the admin page and the report route.
 export const GAMES: readonly CatalogGame[] = [
+  ['cage-clash', 'Cage Clash', cageAnalytics],
   ['on-the-ropes', 'On the Ropes', boxingAnalytics],
   ['siege-and-desist', 'Siege and Desist', siegeAnalytics],
   ['stack-or-sink', 'Stack or Sink', stackAnalytics],

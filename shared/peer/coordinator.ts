@@ -1,3 +1,4 @@
+import { roomCapacity } from '../games/identity';
 import { compatibility, PEER_PROTOCOL, rulesVersion } from './protocol';
 import {
   hashToken as hash,
@@ -332,8 +333,16 @@ export async function handlePeerRoom(
     if (joining) {
       if (!room.host)
         throw new PeerError('This room has ended. Create a new room.', 404);
-      if (room.members.length + (room.npcs?.slots.length ?? 0) >= 4)
-        throw new PeerError('This room already has four players.', 409);
+      if (
+        room.members.length + (room.npcs?.slots.length ?? 0) >=
+        roomCapacity(game)
+      )
+        throw new PeerError(
+          roomCapacity(game) === 2
+            ? 'This room already has 2 players.'
+            : 'This room already has four players.',
+          409,
+        );
       if (!room.open)
         throw new PeerError('A round is in progress. Join after it ends.', 409);
       const color =

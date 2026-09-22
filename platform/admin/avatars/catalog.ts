@@ -39,6 +39,7 @@ import { driveThruAvatars } from '../../../games/drive-thru/avatar';
 import { zorbAvatars } from '../../../games/zorb-clash/avatar';
 import { scaffoldAvatars } from '../../../games/scaffold-scramble/avatar';
 import { chainOfFoolsAvatars } from '../../../games/chain-of-fools/avatar';
+import { cageAvatars } from '../../../games/cage-clash/avatar';
 import { boxingAvatars } from '../../../games/on-the-ropes/avatar';
 import { GAMES } from '../../analytics/catalog';
 
@@ -253,6 +254,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'drive-thru': {
     looks: driveThruAvatars,
     note: 'Nico as drive-thru driver with cap and kitchen cook with paper hat and apron.',
+  },
+  'cage-clash': {
+    looks: cageAvatars,
+    note: 'Nico in MMA shorts and compact gloves.',
   },
   'on-the-ropes': {
     looks: boxingAvatars,

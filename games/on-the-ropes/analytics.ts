@@ -15,8 +15,8 @@ export const boxingAnalytics: GameAnalytics = {
   actions: {
     ready: 'Started boxing',
     reset: 'Played again',
-    switch_team: 'Changed team',
-    switch_role: 'Changed starting role',
+    'switch-team': 'Changed team',
+    'switch-role': 'Changed starting role',
   },
 };
 export function boxingPlayState(s: Snapshot): PlayState {

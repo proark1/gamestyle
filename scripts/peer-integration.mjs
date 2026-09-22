@@ -11,7 +11,14 @@ for (const game of process.argv.length > 2
   await new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
-      ['--import', 'tsx', 'scripts/peer-integration-client.mjs', game],
+      [
+        '--import',
+        'tsx',
+        game === 'cage-clash'
+          ? 'games/cage-clash/scripts/peer-integration.mjs'
+          : 'scripts/peer-integration-client.mjs',
+        game,
+      ],
       {
         stdio: 'inherit',
         windowsHide: true,

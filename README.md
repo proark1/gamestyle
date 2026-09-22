@@ -26,6 +26,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Court Clash       | `/basketball`          | `games/basketball/`          | `app/basketball/`                |
 | Bungee Doubles    | `/bungee-doubles`      | `games/bungee-doubles/`      | `app/bungee-doubles/`            |
 | Panic Curling     | `/panic-curling`       | `games/panic-curling/`       | `app/panic-curling/`             |
+| Cage Clash | `/cage-clash` | `games/cage-clash/` | `app/cage-clash/` |
 | On the Ropes | `/on-the-ropes` | `games/on-the-ropes/` | `app/on-the-ropes/` |
 | Zorb Clash        | `/zorb-clash`          | `games/zorb-clash/`          | `app/zorb-clash/`                |
 | Carry-On Carnage  | `/carry-on-carnage`    | `games/carry-on-carnage/`    | `app/carry-on-carnage/`          |
