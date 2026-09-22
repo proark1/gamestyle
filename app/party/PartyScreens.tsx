@@ -12,6 +12,7 @@ import type { Identity } from './PartyClient';
 import PartyPodium from './PartyPodium';
 import PartyPlaza from './PartyPlaza';
 import CrewPanel from '@/shared/crews/CrewPanel';
+import StackChallengePanel from '@/shared/challenges/StackChallengePanel';
 import {
   GameBriefing,
   PartyAvatar,
@@ -305,6 +306,7 @@ export function PartyLobby({
         onPresence={onPresence}
       />
       <CrewPanel partyLink={invite} />
+      <StackChallengePanel link />
       <div className="party-roster">
         {humans.map((p) => (
           <div className="party-roster-row" key={p.id}>

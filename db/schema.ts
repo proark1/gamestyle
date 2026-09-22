@@ -340,3 +340,40 @@ export const crewMembers = sqliteTable(
     index('crew_members_crew_idx').on(table.crewId),
   ],
 );
+
+export const challengeMembers = sqliteTable(
+  'challenge_members',
+  {
+    roomCode: text('room_code')
+      .notNull()
+      .references(() => rooms.code, { onDelete: 'cascade' }),
+    playerId: text('player_id').notNull(),
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.roomCode, table.playerId] }),
+    uniqueIndex('challenge_members_room_account_idx').on(
+      table.roomCode,
+      table.accountId,
+    ),
+    index('challenge_members_account_idx').on(table.accountId),
+  ],
+);
+export const challengeResults = sqliteTable(
+  'challenge_results',
+  {
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    runId: text('run_id').notNull(),
+    game: text('game').notNull(),
+    rules: integer('rules').notNull(),
+    week: integer('week').notNull(),
+    height: real('height').notNull(),
+    rescued: integer('rescued').notNull(),
+    completed: integer('completed').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.accountId, table.runId] })],
+);

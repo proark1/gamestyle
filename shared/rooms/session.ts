@@ -1,7 +1,13 @@
 import { isRoomCode, roomCode } from './identity';
 import { inPartyMode } from '../ui/party-mode';
 
-export type Session = { peer?: true; code: string; id: string; token: string };
+export type Session = {
+  peer?: true;
+  verified?: true;
+  code: string;
+  id: string;
+  token: string;
+};
 
 /** A session that reconnects through the peer mesh rather than a room endpoint. */
 export type PeerSession = Session & { peer: true };

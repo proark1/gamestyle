@@ -73,6 +73,7 @@ import {
 import { stackAnalytics, stackPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { inPartyMode } from '../../shared/ui/party-mode';
+import StackChallengePanel from '../../shared/challenges/StackChallengePanel';
 
 const sessions = sessionStore('stack-or-sink-session-v1');
 
@@ -128,6 +129,7 @@ export default function Game() {
     [notice, setNotice] = useState(''),
     [help, setHelp] = useState(false),
     [join, setJoin] = useState(false),
+    [verifiedJoin, setVerifiedJoin] = useState(false),
     [invite, setInvite] = useState(false),
     [code, setCode] = useState(''),
     [copied, setCopied] = useState(false),
@@ -197,6 +199,7 @@ export default function Game() {
       audio.enabled = !saved.muted;
     } catch {}
     const url = new URL(location.href);
+    setVerifiedJoin(url.searchParams.get('challenge') === 'verified');
     const room = url.searchParams.get('room');
     if (room && looksLikeRoomCode(room)) {
       setCode(room.toUpperCase());
@@ -253,9 +256,10 @@ export default function Game() {
             error: notify,
           });
           setReady(true);
-          if (!room) {
-            const saved = sessions.load();
-            if (saved) attach(saved);
+          const saved = sessions.load();
+          if (saved && (!room || saved.code === room.toUpperCase())) {
+            attach(saved);
+            setJoin(false);
           }
         } catch {
           notify(
@@ -347,13 +351,13 @@ export default function Game() {
     actionRef.current = action;
     practiceRef.current = practice;
   });
-  async function create() {
+  async function create(verified = false) {
     if (!ready || busy) return;
     setBusy(true);
     setNotice('');
     sound.current?.unlock();
     try {
-      const reply = await requestRoom({ op: 'create', name, color });
+      const reply = await requestRoom({ op: 'create', name, color, verified });
       if (reply.session && reply.snapshot)
         attach(reply.session, reply.snapshot);
     } catch (e) {
@@ -372,6 +376,7 @@ export default function Game() {
     try {
       const reply = await requestRoom({
         op: 'join',
+        verified: verifiedJoin,
         code: code.trim().toUpperCase(),
         name,
         color,
@@ -431,7 +436,8 @@ export default function Game() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        gameInviteUrl('stack-or-sink', session.code),
+        gameInviteUrl('stack-or-sink', session.code) +
+          (session.verified ? '&challenge=verified' : ''),
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
@@ -445,7 +451,9 @@ export default function Game() {
       await navigator.share({
         title: 'Join my Stack or Sink crew',
         text: `Crew code: ${session.code}`,
-        url: gameInviteUrl('stack-or-sink', session.code),
+        url:
+          gameInviteUrl('stack-or-sink', session.code) +
+          (session.verified ? '&challenge=verified' : ''),
       });
     } catch (error) {
       if (!(error instanceof Error && error.name === 'AbortError'))
@@ -589,7 +597,7 @@ export default function Game() {
         )}
         <GameToolbar
           voice={
-            session && !isLocal && state
+            session && !isLocal && !session.verified && state
               ? {
                   session: { ...session, game: 'stack-or-sink' },
                   snapshot: { players: state.world.players, nearby: false },
@@ -598,9 +606,11 @@ export default function Game() {
               : undefined
           }
           voiceHint={
-            isLocal
-              ? 'Voice is available in multiplayer. Create or join a crew to talk with friends.'
-              : undefined
+            session?.verified
+              ? 'Voice is not yet available in verified challenge rooms.'
+              : isLocal
+                ? 'Voice is available in multiplayer. Create or join a crew to talk with friends.'
+                : undefined
           }
           muted={muted}
           onToggleSound={() => {
@@ -697,6 +707,27 @@ export default function Game() {
               </button>
               <button
                 disabled={!ready || busy}
+                className="secondary-button"
+                onClick={() => void create(true)}
+              >
+                Create verified crew · earn coins <Trophy size={18} />
+              </button>
+              <button
+                disabled={!ready || busy}
+                className="practice-link"
+                onClick={() => {
+                  setVerifiedJoin(true);
+                  setJoin(true);
+                }}
+              >
+                Join a verified room
+              </button>
+              <details className="challenge-details">
+                <summary>Weekly target &amp; mastery rewards</summary>
+                <StackChallengePanel />
+              </details>
+              <button
+                disabled={!ready || busy}
                 className="practice-link"
                 onClick={practice}
               >
@@ -726,7 +757,11 @@ export default function Game() {
             <div className="clipboard-clip" />
             <div className="mission-eyebrow">
               <Flag size={13} />
-              {isLocal ? 'LEARN THE ROPES' : 'THE ESCAPE PLAN'}
+              {session.verified
+                ? 'VERIFIED CHALLENGE'
+                : isLocal
+                  ? 'LEARN THE ROPES'
+                  : 'THE ESCAPE PLAN'}
             </div>
             <h2>
               Higher ground.
@@ -740,6 +775,12 @@ export default function Game() {
                   ? 'No rising water. Get a feel for the junk.'
                   : 'Get one teammate to the rescue platform to save the whole crew.'}
             </p>
+            {state.challenge && (
+              <p className="verified-target">
+                This attempt: {state.challenge.week.height} m settled tower,
+                then finish the round. Weekly reward: 100 coins.
+              </p>
+            )}
             <div className="mission-progress">
               <span>RESCUE PLATFORM</span>
               <strong>
@@ -1224,6 +1265,14 @@ export default function Game() {
             <label className="field-label" htmlFor="join-code">
               Room code
             </label>
+            <label className="verified-room-choice">
+              <input
+                type="checkbox"
+                checked={verifiedJoin}
+                onChange={(event) => setVerifiedJoin(event.target.checked)}
+              />{' '}
+              Verified challenge room · sign-in required
+            </label>
             <input
               id="join-code"
               className="dialog-input code-input"
@@ -1327,17 +1376,27 @@ export default function Game() {
               <strong>{world?.bestHeight.toFixed(1)} m</strong>Best stack
             </span>
           </div>
+          {session?.verified && <StackChallengePanel finished />}
           {isHost ? (
             <button
               data-party-setup-action=""
               className="primary-button"
-              onClick={() => void action({ type: 'restart' })}
+              onClick={() =>
+                session?.verified
+                  ? void leave()
+                  : void action({ type: 'restart' })
+              }
             >
-              Build it better <RotateCw size={18} />
+              {session?.verified
+                ? 'Back to challenge lobby'
+                : 'Build it better'}{' '}
+              <RotateCw size={18} />
             </button>
           ) : (
             <p className="help-note">
-              Waiting for your captain to start another round.
+              {session?.verified
+                ? 'Leave this room to create or join another verified attempt.'
+                : 'Waiting for your captain to start another round.'}
             </p>
           )}
           <button className="secondary-button" onClick={() => void leave()}>
