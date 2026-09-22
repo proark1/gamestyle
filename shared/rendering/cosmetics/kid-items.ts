@@ -15,6 +15,7 @@ import {
   surface,
 } from '../avatars/soft-parts';
 import { CLOTH } from '../palette';
+import { PLAYFUL_KID_ITEMS } from './playful-items';
 
 /**
  * Wardrobe items modelled for the clay kid. The worker's items are blocks made
@@ -38,6 +39,8 @@ export type KidDress = {
   head: T.Object3D;
   /** The player's colour: the kit. */
   player: string;
+  /** The fitted brim height in head coordinates, shared with the hair. */
+  hatSeat?: number;
 };
 
 /** The shoulder line, the waist and the hem of the jersey. */
@@ -311,6 +314,7 @@ function boot(
 
 /** Every item the kid has his own model for, by catalog id. */
 export const KID_ITEMS: Record<string, (dress: KidDress) => void> = {
+  ...PLAYFUL_KID_ITEMS,
   // ---- Tops ----------------------------------------------------------------
   'striped-tee'({ body, sleeves, player }) {
     const shirt = '#f6efdf';
@@ -688,12 +692,16 @@ export const KID_ITEMS: Record<string, (dress: KidDress) => void> = {
           shape.lineTo(0.14, 0.42);
           shape.lineTo(-0.14, 0.42);
           shape.closePath();
-          return new T.ExtrudeGeometry(shape, {
-            depth: 0.022,
-            bevelEnabled: false,
-          })
-            .rotateX(-Math.PI / 2)
-            .translate(0, 0, 0.1);
+          return (
+            new T.ExtrudeGeometry(shape, {
+              depth: 0.022,
+              bevelEnabled: false,
+            })
+              // Shape +Y becomes avatar-forward +Z; lift the extrusion above
+              // the sole because its thickness now extends downwards.
+              .rotateX(Math.PI / 2)
+              .translate(0, 0.022, 0)
+          );
         },
         [0, SOLE + 0.01, 0.1],
         CLOTH.gold,

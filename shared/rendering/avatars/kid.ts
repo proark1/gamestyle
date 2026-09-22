@@ -68,7 +68,7 @@ export function playerKid(kid: KidId, kit: Kit, look?: Look) {
       boots: models.shoes?.boots ?? kit.shoes,
     },
     {
-      trousers: !!models.legs || kit.trousers,
+      trousers: models.legs ? !models.legs.shorts : kit.trousers,
       hat: models.hat ? look?.hat : kit.hat,
     },
   );
