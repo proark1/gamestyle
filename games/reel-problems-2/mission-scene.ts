@@ -16,6 +16,7 @@ export class MissionScene {
   readonly root = new THREE.Group();
   private dock = new THREE.Group();
   private markers = new THREE.Group();
+  private buildMarker = new THREE.Group();
   private components = new Map<string, THREE.Group>();
   private crates = Array.from({ length: 12 }, () =>
     box([0.8, 0.6, 0.8], '#e9b65e'),
@@ -60,6 +61,30 @@ export class MissionScene {
     const frame = box([3.5, 0.15, 4], '#efce67');
     frame.position.set(14, 0.62, 28);
     this.dock.add(frame);
+    // The build target must remain distinct from the wood and the harbour gate.
+    this.buildMarker.position.set(HARBOR.frame.x, 0, HARBOR.frame.z);
+    const outline = new THREE.MeshBasicMaterial({ color: '#123f50' });
+    for (const x of [-1.75, 1.75]) {
+      const edge = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.12, 4),
+        outline,
+      );
+      edge.position.set(x, 0.78, 0);
+      this.buildMarker.add(edge);
+    }
+    for (const z of [-2, 2]) {
+      const edge = new THREE.Mesh(
+        new THREE.BoxGeometry(3.5, 0.12, 0.18),
+        outline,
+      );
+      edge.position.set(0, 0.78, z);
+      this.buildMarker.add(edge);
+    }
+    const buildLabel = nameLabel('BUILD HERE', '#123f50');
+    buildLabel.scale.multiplyScalar(1.3);
+    buildLabel.position.set(0, 2.8, -1.6);
+    this.buildMarker.add(buildLabel);
+    this.dock.add(this.buildMarker);
     for (let i = 0; i < 4; i++) {
       const part = box(
         i < 2 ? [1.6, 0.15, 3.5] : i === 2 ? [3, 0.6, 1] : [0.15, 0.15, 3.6],
@@ -106,6 +131,7 @@ export class MissionScene {
     if (!m) return;
     this.markers.visible = !m.survival;
     this.dock.visible = !m.survival || m.status === 'recovering';
+    this.buildMarker.visible = m.status === 'recovering';
     const anchor = m.survival?.wreck;
     this.dock.position.set(
       anchor ? anchor.x - HARBOR.dock.x : 0,

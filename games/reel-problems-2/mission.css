@@ -395,6 +395,9 @@
 .survival-panel .unavailable {
   display: none;
 }
+.recovering .survival-panel .unavailable {
+  display: block;
+}
 .survival-panel button:focus-visible {
   outline: 3px solid #f4d36a;
   outline-offset: 3px;

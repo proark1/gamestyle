@@ -51,8 +51,9 @@ export default function SurvivalBrief({
       {recovering ? (
         <>
           <p>
-            Climb onto the wreckage. Carry planks to the yellow frame, then
-            barrels and a paddle. Hold C to lash them together.
+            Stay on the floating platform. Walk to the outlined area on its
+            right, labelled BUILD HERE. Hold C to attach both planks, then
+            barrels and a paddle. Release C between parts. No jumping needed.
           </p>
           <div className="reel-build-list">
             {m.components.map((c) => (

@@ -49,7 +49,11 @@ export default function MissionPanel({
       : target.label
     : de
       ? 'Zum markierten Arbeitsort gehen'
-      : 'Move to the marked work area';
+      : recovering
+        ? carrying
+          ? 'Carry this part to BUILD HERE on the platform'
+          : 'Walk to a loose part on the platform'
+        : 'Move to the marked work area';
   const key = (e: KeyboardEvent<HTMLButtonElement>, held: boolean) => {
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();

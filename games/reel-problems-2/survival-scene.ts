@@ -111,7 +111,7 @@ export class SurvivalScene {
         )
       : 1;
     this.gateBar.position.y = 0.8 + lift * 2.6;
-    this.gate.visible = !fight;
+    this.gate.visible = !fight && !recovery;
     this.label.visible = this.gate.visible;
   }
 }
