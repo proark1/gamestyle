@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import VoicePanel from '@/shared/voice/VoicePanel';
 import LanguageSwitcher from '@/shared/language/LanguageSwitcher';
+import AccountButton from '@/shared/accounts/AccountButton';
 import {
   applyAudioPreferences,
   loadAudioPreferences,
@@ -559,6 +560,9 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
               <VoicePanel {...voice} />
             </div>
           )}
+          <div className="game-toolbar">
+            <AccountButton variant="toolbar" />
+          </div>
           {!room && <LanguageSwitcher variant="toolbar" />}
           {room && (
             <button
@@ -648,7 +652,7 @@ export default function PartyClient({ initialCode }: { initialCode?: string }) {
               }}
             />
           ) : room.status === 'lobby' ? (
-            <PartyLobby {...screenProps} />
+            <PartyLobby {...screenProps} onPresence={acceptRoom} />
           ) : room.status === 'briefing' ? (
             <PartyBriefing {...screenProps} now={now} onBreak={toggleBreak} />
           ) : room.status === 'intermission' ? (

@@ -242,3 +242,71 @@ export const accountEmailCodes = sqliteTable(
     index('account_email_codes_created_idx').on(table.created),
   ],
 );
+
+/** Commerce balances are maintained by the ledger trigger in 0005_commerce.sql. */
+export const commerceProfiles = sqliteTable('commerce_profiles', {
+  accountId: text('account_id')
+    .primaryKey()
+    .references(() => accounts.id, { onDelete: 'cascade' }),
+  coins: integer('coins').notNull().default(0),
+  look: text('look').notNull().default('{}'),
+  importKey: text('import_key'),
+  created: integer('created').notNull(),
+});
+export const commerceCoinLedger = sqliteTable(
+  'commerce_coin_ledger',
+  {
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    reference: text('reference').notNull(),
+    delta: integer('delta').notNull(),
+    created: integer('created').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.accountId, table.reference] })],
+);
+export const commerceGrants = sqliteTable(
+  'commerce_grants',
+  {
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    itemId: text('item_id').notNull(),
+    source: text('source').notNull(),
+    reference: text('reference').notNull(),
+    environment: text('environment').notNull(),
+    created: integer('created').notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.accountId,
+        table.itemId,
+        table.source,
+        table.reference,
+        table.environment,
+      ],
+    }),
+  ],
+);
+export const commerceTransactions = sqliteTable(
+  'commerce_transactions',
+  {
+    provider: text('provider').notNull(),
+    transactionId: text('transaction_id').notNull(),
+    environment: text('environment').notNull(),
+    ownerId: text('owner_id').references(() => accounts.id, {
+      onDelete: 'set null',
+    }),
+    offerId: text('offer_id').notNull(),
+    grants: text('grants').notNull(),
+    status: text('status').notNull(),
+    created: integer('created').notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.provider, table.transactionId, table.environment],
+    }),
+    index('commerce_transactions_owner_idx').on(table.ownerId),
+  ],
+);

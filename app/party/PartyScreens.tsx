@@ -10,6 +10,7 @@ import { getPartyGameInfo } from '@/platform/party/playlist';
 import type { PartyAction, PartyRoomState } from '@/platform/party/types';
 import type { Identity } from './PartyClient';
 import PartyPodium from './PartyPodium';
+import PartyPlaza from './PartyPlaza';
 import {
   GameBriefing,
   PartyAvatar,
@@ -215,7 +216,14 @@ export function PartyEntry({
   );
 }
 
-export function PartyLobby({ room, playerId, token, busy, act }: ScreenProps) {
+export function PartyLobby({
+  room,
+  playerId,
+  token,
+  busy,
+  act,
+  onPresence,
+}: ScreenProps & { onPresence: (room: PartyRoomState) => void }) {
   const { text } = usePartyText();
   const [copied, setCopied] = useState(false),
     [fallback, setFallback] = useState(false);
@@ -289,6 +297,12 @@ export function PartyLobby({ room, playerId, token, busy, act }: ScreenProps) {
           <input readOnly value={invite} onFocus={(e) => e.target.select()} />
         </label>
       )}
+      <PartyPlaza
+        room={room}
+        playerId={playerId}
+        token={token}
+        onPresence={onPresence}
+      />
       <div className="party-roster">
         {humans.map((p) => (
           <div className="party-roster-row" key={p.id}>
@@ -307,9 +321,11 @@ export function PartyLobby({ room, playerId, token, busy, act }: ScreenProps) {
             >
               {p.connected === false
                 ? text('Reconnecting', 'Verbindet…')
-                : p.ready
-                  ? text('Ready ✓', 'Bereit ✓')
-                  : text('Getting ready', 'Macht sich bereit')}
+                : p.browsing
+                  ? text('Trying on outfits', 'Probiert Kleidung an')
+                  : p.ready
+                    ? text('Ready ✓', 'Bereit ✓')
+                    : text('Getting ready', 'Macht sich bereit')}
             </span>
             {host && p.id !== playerId && (
               <button
@@ -386,7 +402,7 @@ export function PartyLobby({ room, playerId, token, busy, act }: ScreenProps) {
           )}
         </small>
       </p>
-      <footer className="party-primary-footer">
+      <footer className="party-primary-footer" id="party-ready-controls">
         <p>
           {humans.length === 1
             ? text(
@@ -407,7 +423,10 @@ export function PartyLobby({ room, playerId, token, busy, act }: ScreenProps) {
           <button
             className="party-btn party-btn-primary"
             disabled={
-              busy || humans.some((p) => !p.ready || p.connected === false)
+              busy ||
+              humans.some(
+                (p) => !p.ready || p.connected === false || p.browsing,
+              )
             }
             onClick={() =>
               void act({

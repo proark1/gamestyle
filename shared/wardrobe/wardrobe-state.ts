@@ -50,6 +50,23 @@ const DEFAULT_STATE: WardrobeState = {
 };
 
 let currentState: WardrobeState = DEFAULT_STATE;
+let accountState: WardrobeState | null = null;
+let accountLocked = false;
+
+/** Account state is an in-memory overlay, never written into guest storage. */
+export function setAccountWardrobe(
+  state: WardrobeState | null,
+  locked: boolean,
+) {
+  accountState = state;
+  accountLocked = locked;
+  for (const listener of listeners) listener();
+}
+
+export function guestWardrobeSnapshot(): WardrobeState {
+  ensureInit();
+  return currentState;
+}
 let initialized = false;
 const listeners = new Set<() => void>();
 
@@ -136,7 +153,7 @@ export function subscribeWardrobe(listener: () => void): () => void {
 
 export function wardrobeSnapshot(): WardrobeState {
   ensureInit();
-  return currentState;
+  return accountState ?? currentState;
 }
 
 export function serverWardrobeSnapshot(): WardrobeState {
@@ -145,7 +162,7 @@ export function serverWardrobeSnapshot(): WardrobeState {
 
 export function getEquippedLook(): Look {
   ensureInit();
-  return currentState.look;
+  return (accountState ?? currentState).look;
 }
 
 export function isItemUnlocked(state: WardrobeState, item: Item): boolean {
@@ -155,6 +172,7 @@ export function isItemUnlocked(state: WardrobeState, item: Item): boolean {
 }
 
 export function equipItem(slot: Slot, itemId: string | null) {
+  if (accountLocked) return;
   ensureInit();
   const nextLook = { ...currentState.look };
   if (!itemId) {
@@ -173,6 +191,7 @@ export function equipItem(slot: Slot, itemId: string | null) {
 }
 
 export function buyItem(itemId: string): boolean {
+  if (accountLocked) return false;
   ensureInit();
   const item = ITEMS.find((i) => i.id === itemId);
   if (!item || !item.price) return false;
@@ -189,6 +208,7 @@ export function buyItem(itemId: string): boolean {
 }
 
 export function checkAndUnlockGoals(): string[] {
+  if (accountLocked) return [];
   ensureInit();
   const newlyUnlocked: string[] = [];
   const nextUnlocked = new Set(currentState.unlockedItems);
@@ -253,6 +273,7 @@ export function getGoalProgress(
 }
 
 export function recordGamePlayed(gameId: string) {
+  if (accountLocked) return;
   ensureInit();
   if (!currentState.stats.gamesPlayed.includes(gameId)) {
     currentState = {
@@ -269,6 +290,7 @@ export function recordGamePlayed(gameId: string) {
 }
 
 export function recordPlayTime(seconds: number) {
+  if (accountLocked) return;
   ensureInit();
   if (seconds <= 0) return;
   currentState = {
@@ -283,6 +305,7 @@ export function recordPlayTime(seconds: number) {
 }
 
 export function adminAddCoins(amount: number = 500) {
+  if (accountLocked) return;
   ensureInit();
   currentState = {
     ...currentState,
@@ -292,6 +315,7 @@ export function adminAddCoins(amount: number = 500) {
 }
 
 export function adminUnlockAllItems() {
+  if (accountLocked) return;
   ensureInit();
   currentState = {
     ...currentState,
@@ -303,6 +327,7 @@ export function adminUnlockAllItems() {
 }
 
 export function adminResetWardrobe() {
+  if (accountLocked) return;
   ensureInit();
   currentState = {
     ...DEFAULT_STATE,

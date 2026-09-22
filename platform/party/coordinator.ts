@@ -1,5 +1,12 @@
 import { RoomError, type RoomStore } from '../../shared/rooms/types';
 import {
+  boundedPose,
+  spawnPose,
+  validPose,
+  PLAZA_SPEED,
+} from '../../shared/plaza/world';
+import type { Look } from '../../shared/wardrobe/look';
+import {
   hashToken,
   newRoomCode,
   playerName,
@@ -50,11 +57,16 @@ type Passes = Record<string, string>;
  * leave the server. Parties created before passes existed have none and stay
  * open until they expire.
  */
-type StoredParty = PartyRoomState & { passes?: Passes };
+type Accounts = Record<string, string | null>;
+type StoredParty = PartyRoomState & { passes?: Passes; accounts?: Accounts };
 
-function readParty(raw: string): { room: PartyRoomState; passes?: Passes } {
-  const { passes, ...room } = JSON.parse(raw) as StoredParty;
-  return { room, passes };
+function readParty(raw: string): {
+  room: PartyRoomState;
+  passes?: Passes;
+  accounts?: Accounts;
+} {
+  const { passes, accounts, ...room } = JSON.parse(raw) as StoredParty;
+  return { room, passes, accounts };
 }
 
 async function newPass() {
@@ -158,7 +170,11 @@ async function updatePartyRoom(
   store: RoomStore,
   code: string,
   actor: PartyPass | null,
-  updater: (current: PartyRoomState, passes?: Passes) => PartyRoomState,
+  updater: (
+    current: PartyRoomState,
+    passes?: Passes,
+    accounts?: Accounts,
+  ) => PartyRoomState,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   const storageCode = partyStorageKey(code.toUpperCase());
@@ -166,7 +182,8 @@ async function updatePartyRoom(
   for (let attempt = 0; attempt < 5; attempt++) {
     const row = await store.get(storageCode);
     if (!row) throw new RoomError('Party room not found.', 404);
-    const { room, passes } = readParty(row.state);
+    const { room, passes, accounts } = readParty(row.state);
+    const nextAccounts = { ...accounts };
     if (actor) checkPass(passes, actor.id, hash);
     const nextPasses = passes && { ...passes };
     const present = actor
@@ -183,14 +200,18 @@ async function updatePartyRoom(
     );
     const next = {
       ...progressBriefing(
-        progressIntermission(updater(current, nextPasses), now),
+        progressIntermission(updater(current, nextPasses, nextAccounts), now),
         now,
       ),
       updated: now,
     };
-    const stored: StoredParty = nextPasses
-      ? { ...next, passes: nextPasses }
-      : next;
+    for (const id of Object.keys(nextAccounts))
+      if (!next.players.some((p) => p.id === id)) delete nextAccounts[id];
+    const stored: StoredParty = {
+      ...next,
+      ...(nextPasses ? { passes: nextPasses } : {}),
+      accounts: nextAccounts,
+    };
 
     const ok = await store.compareAndSwap(
       {
@@ -303,10 +324,79 @@ export async function toggleReady(
     (room) => {
       if (room.status !== 'lobby')
         throw new Error('Ready can only change in the lobby.');
+      if (ready && room.players.find((p) => p.id === player.id)?.browsing)
+        throw new RoomError('Close the wardrobe before getting ready.', 409);
       const players = room.players.map((p) =>
         p.id === player.id ? { ...p, ready } : p,
       );
       return { ...room, players };
+    },
+    now,
+  );
+}
+
+/** Appearance and account identity must be resolved by the route, not supplied by the player. */
+export async function updateLobbyPresence(
+  store: RoomStore,
+  code: string,
+  player: PartyPass,
+  presence: {
+    pose: unknown;
+    browsing: boolean;
+    look: Look;
+    fullGame: boolean;
+    accountId: string | null;
+  },
+  now = Date.now(),
+) {
+  if (!validPose(presence.pose) || typeof presence.browsing !== 'boolean')
+    throw new RoomError('Invalid lobby position.');
+  const requested = boundedPose(presence.pose);
+  return updatePartyRoom(
+    store,
+    code,
+    player,
+    (room, _passes, accounts) => {
+      const me = room.players.find((p) => p.id === player.id && !p.isBot);
+      if (!me)
+        throw new RoomError('Join the party before entering the plaza.', 401);
+      if (room.status !== 'lobby') return room;
+      const previous = me.lobbyPose ?? spawnPose(me.color);
+      const distance = Math.hypot(
+        requested.x - previous.x,
+        requested.z - previous.z,
+      );
+      const maximum =
+        Math.min(2, Math.max(0, (now - (me.lobbySeenAt ?? now - 350)) / 1000)) *
+          PLAZA_SPEED +
+        0.3;
+      const ratio = distance > maximum ? maximum / distance : 1;
+      const lobbyPose = {
+        x: previous.x + (requested.x - previous.x) * ratio,
+        z: previous.z + (requested.z - previous.z) * ratio,
+        angle: requested.angle,
+      };
+      if (accounts) accounts[player.id] = presence.accountId;
+      return {
+        ...room,
+        players: room.players.map((p) =>
+          p.id === player.id
+            ? {
+                ...p,
+                lobbyPose,
+                lobbySeenAt: now,
+                look: presence.look,
+                fullGame: presence.fullGame,
+                browsing: presence.browsing,
+                ready: presence.browsing
+                  ? false
+                  : p.browsing && p.isHost
+                    ? true
+                    : p.ready,
+              }
+            : p,
+        ),
+      };
     },
     now,
   );
@@ -409,7 +499,7 @@ export async function startPartyTournament(
       const humans = room.players.filter((p) => !p.isBot);
       if (
         !humans.length ||
-        humans.some((p) => p.connected === false || !p.ready)
+        humans.some((p) => p.connected === false || !p.ready || p.browsing)
       )
         throw new Error('Every player must be connected and ready.');
       // Fill remaining seats with bots if needed to make 4 players

@@ -26,6 +26,15 @@ import {
   pauseParty,
 } from '@/platform/party/coordinator';
 import type { PartyAction } from '@/platform/party/types';
+import { updateLobbyPresence } from '@/platform/party/coordinator';
+import { currentAccount } from '@/shared/accounts/server/current';
+import { getBinding } from '@/db/index';
+import {
+  initializeInventory,
+  readInventory,
+} from '@/shared/commerce/server/inventory';
+import { LEGACY_ITEMS } from '@/shared/commerce/server/legacy-items';
+import { parseLook } from '@/shared/wardrobe/look';
 
 const json = (body: unknown, status = 200) =>
   Response.json(body, {
@@ -49,6 +58,35 @@ async function handleRequest(request: Request) {
     const store = roomStore();
 
     switch (body.op) {
+      case 'lobby_presence': {
+        const account = await currentAccount(request);
+        let look = parseLook(body.look) ?? {};
+        let fullGame = false;
+        if (account) {
+          const db = getBinding();
+          await initializeInventory(db, account.id, Date.now());
+          const inventory = await readInventory(db, account.id);
+          look = inventory.look;
+          fullGame = inventory.fullGame;
+        } else {
+          for (const slot of Object.keys(look) as (keyof typeof look)[])
+            if (!LEGACY_ITEMS.has(look[slot]!)) delete look[slot];
+        }
+        return json({
+          state: await updateLobbyPresence(
+            store,
+            body.code,
+            { id: body.playerId, token: body.token },
+            {
+              pose: body.pose,
+              browsing: body.browsing,
+              look,
+              fullGame,
+              accountId: account?.id ?? null,
+            },
+          ),
+        });
+      }
       case 'heartbeat':
       case 'briefing_ready':
       case 'vote_lock':

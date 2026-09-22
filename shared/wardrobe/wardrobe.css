@@ -80,6 +80,25 @@
   gap: 8px;
 }
 
+.wardrobe-sync {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  background: #edf6f1;
+  color: #244943;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.wardrobe-sync button {
+  border: 1px solid #287c80;
+  border-radius: 8px;
+  padding: 5px 10px;
+  background: white;
+  color: #244943;
+  cursor: pointer;
+}
 .wardrobe-coins {
   display: inline-flex;
   align-items: center;
