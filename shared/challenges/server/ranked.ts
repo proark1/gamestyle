@@ -5,6 +5,11 @@ import type {
 } from '../../../db/contract';
 import { randomId } from '../../accounts/server/crypto';
 import { stackWeek } from '../catalog';
+import {
+  finalizeDueCrewBoards,
+  rankedCrewStartStatements,
+  readCrewBoards,
+} from './ranked-crews';
 
 export const RANKED_LIMIT = 5;
 export const RANKED_REVIEW_MS = 86400000;
@@ -33,6 +38,7 @@ export function rankedStartStatements(
       JOIN json_each(?, '$.world.players') p ON json_extract(p.value, '$.id') = m.player_id
       WHERE m.room_code = ? AND EXISTS (SELECT 1 FROM rooms WHERE code = ? AND json_extract(state, '$.challengeCommit') = ?)`)
       .bind(run.id, run.week, key, teamSize, now, state, key, key, commit),
+    ...rankedCrewStartStatements(db, key, commit, run, teamSize),
   ];
 }
 
@@ -181,6 +187,7 @@ export async function readRankedStack(
   now: number,
 ) {
   await finalizeDueRankedBoards(db, now);
+  await finalizeDueCrewBoards(db, now);
   const week = stackWeek(now);
   const attempts = await db
     .prepare(
@@ -193,10 +200,12 @@ export async function readRankedStack(
     week,
     attemptsRemaining: Math.max(0, RANKED_LIMIT - (attempts?.n ?? 0)),
     boards: await board(db, week.start, accountId),
+    crewBoards: await readCrewBoards(db, week.start, accountId),
     previous: {
       week: previousWeek,
       finalized: now >= week.start + RANKED_REVIEW_MS,
       boards: await board(db, previousWeek, accountId),
+      crewBoards: await readCrewBoards(db, previousWeek, accountId),
     },
   };
 }

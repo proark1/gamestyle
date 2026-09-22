@@ -35,10 +35,17 @@ export default function StackChallengePanel({
     value: {
       attemptsRemaining: number;
       boards: RankedBoard[];
-      previous: { week: number; finalized: boolean; boards: RankedBoard[] };
+      crewBoards: RankedBoard[];
+      previous: {
+        week: number;
+        finalized: boolean;
+        boards: RankedBoard[];
+        crewBoards: RankedBoard[];
+      };
     };
   } | null>(null);
   const [teamSize, setTeamSize] = useState(1);
+  const [scope, setScope] = useState<'players' | 'crews'>('players');
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let active = true;
@@ -118,10 +125,14 @@ export default function StackChallengePanel({
   }, []);
   const current = progress?.week ?? week;
   const rankedData = ranked?.owner === account ? ranked.value : null;
-  const board = rankedData?.boards.find((item) => item.teamSize === teamSize);
-  const oldBoard = rankedData?.previous.boards.find(
-    (item) => item.teamSize === teamSize,
-  );
+  const board = (
+    scope === 'crews' ? rankedData?.crewBoards : rankedData?.boards
+  )?.find((item) => item.teamSize === teamSize);
+  const oldBoard = (
+    scope === 'crews'
+      ? rankedData?.previous.crewBoards
+      : rankedData?.previous.boards
+  )?.find((item) => item.teamSize === teamSize);
   return (
     <section className="stack-challenge" aria-label="Stack or Sink challenges">
       <div className="stack-challenge-heading">
@@ -187,7 +198,7 @@ export default function StackChallengePanel({
         </p>
       )}
       <div className="stack-ranked" aria-label="Weekly Stack or Sink rankings">
-        <h4>Weekly ranked crews</h4>
+        <h4>Weekly rankings</h4>
         <p>
           Five ranked starts per account each week. A start uses one for every
           teammate; unlimited verified challenges remain free to replay. Finish
@@ -200,6 +211,23 @@ export default function StackChallengePanel({
               : 'Sign in for ranked starts'}
           </strong>
         </p>
+        <fieldset className="stack-ranked-sizes">
+          <legend>Leaderboard</legend>
+          <button
+            type="button"
+            aria-pressed={scope === 'players'}
+            onClick={() => setScope('players')}
+          >
+            Players
+          </button>
+          <button
+            type="button"
+            aria-pressed={scope === 'crews'}
+            onClick={() => setScope('crews')}
+          >
+            Crews
+          </button>
+        </fieldset>
         <fieldset className="stack-ranked-sizes">
           <legend>Team size</legend>
           {[1, 2, 3, 4].map((size) => (
@@ -214,16 +242,25 @@ export default function StackChallengePanel({
           ))}
         </fieldset>
         <p className="stack-challenge-note">
-          {board?.population ?? 0} eligible players ·{' '}
+          {board?.population ?? 0} eligible{' '}
+          {scope === 'crews' ? 'crews' : 'players'} ·{' '}
           {board?.population && board.population >= 100
             ? 'Top 10% wins the Tower Ace Helmet; top 1% also wins the Skyline Crown.'
-            : 'Prize cosmetics unlock when this board has at least 100 eligible players.'}{' '}
+            : `Prize cosmetics unlock when this board has at least 100 eligible ${scope === 'crews' ? 'crews' : 'players'}.`}{' '}
           Ties at the cutoff share the prize. Results stay provisional until 24
           hours after Monday 00:00 UTC.
         </p>
+        {scope === 'crews' && (
+          <p className="stack-challenge-note">
+            Every teammate must belong to the same persistent crew when the
+            ranked run starts. Only that run’s teammates can win its crew
+            prizes. You can represent one crew per week.
+          </p>
+        )}
         {board?.myPlace && (
           <p>
-            Your best place: <strong>#{board.myPlace}</strong>
+            {scope === 'crews' ? 'Your crew’s best place' : 'Your best place'}:{' '}
+            <strong>#{board.myPlace}</strong>
           </p>
         )}
         {board?.entries.length ? (
@@ -232,14 +269,21 @@ export default function StackChallengePanel({
               <li key={entry.tag}>
                 <span>
                   #{entry.place} {entry.tag}
-                  {entry.self ? ' · you' : ''}
+                  {entry.self
+                    ? scope === 'crews'
+                      ? ' · your crew'
+                      : ' · you'
+                    : ''}
                 </span>
                 <strong>{(entry.heightCm / 100).toFixed(2)} m</strong>
               </li>
             ))}
           </ol>
         ) : (
-          <p>No qualified tower yet. Be first on the board.</p>
+          <p>
+            No qualified {scope === 'crews' ? 'crew' : 'player'} tower yet. Be
+            first on the board.
+          </p>
         )}
         {!!oldBoard?.population && (
           <details>
@@ -252,7 +296,11 @@ export default function StackChallengePanel({
                 <li key={entry.tag}>
                   <span>
                     #{entry.place} {entry.tag}
-                    {entry.self ? ' · you' : ''}
+                    {entry.self
+                      ? scope === 'crews'
+                        ? ' · your crew'
+                        : ' · you'
+                      : ''}
                   </span>
                   <strong>{(entry.heightCm / 100).toFixed(2)} m</strong>
                 </li>
