@@ -7,7 +7,14 @@ import { ITEM_MODELS } from '../cosmetics/items';
 import { KID_ITEMS } from '../cosmetics/kid-items';
 import { dressKid } from '../cosmetics/fit-kid';
 import { nico } from './nico';
-import { KIT, SEAT_KITS, TEAM, WARDROBE_COLOURS, seatKit } from '../palette';
+import {
+  CLOTH,
+  KIT,
+  SEAT_KITS,
+  TEAM,
+  WARDROBE_COLOURS,
+  seatKit,
+} from '../palette';
 import { HEAD_Y, HIP, SKULL, TROUSER_HEM } from './hoop-kid';
 import { PLAYER_KID, liveKid, playerKid, type KidId } from './kid';
 
@@ -41,6 +48,27 @@ const hex = (mesh: T.Mesh) =>
 
 /** The top of the bare skull, in the kid's own space. */
 const SCALP = HEAD_Y + SKULL.centre[1] + SKULL.radii[1];
+
+void test('scuba blades extend ahead of the toes and stay above the floor', () => {
+  const { model } = playerKid(
+    'nico',
+    { jersey: KIT.red },
+    { shoes: 'scuba-flippers' },
+  );
+  model.updateMatrixWorld(true);
+  for (const leg of [
+    model.userData.legL,
+    model.userData.legR,
+  ] as T.Object3D[]) {
+    const group = leg.getObjectByName(LOOK_GROUP)!;
+    const blades = meshes(group).filter((mesh) => hex(mesh) === CLOTH.gold);
+    assert.ok(blades.length > 0);
+    const extent = bounds(blades);
+    assert.ok(extent.min.z >= 0.09, 'blade begins at the front of the foot');
+    assert.ok(extent.max.z > 0.5, 'blade extends past the toes');
+    assert.ok(extent.min.y >= 0, 'blade stays above the floor');
+  }
+});
 
 void test('shoe soles have a rounded footprint and golden kicks replace overlapping surfaces', () => {
   const model = nico();
@@ -120,7 +148,10 @@ void test('every kid wears every wardrobe item where it belongs', () => {
       if (item.slot === 'top')
         assert.ok(box.min.y < 1.0 && box.max.y > 0.6, `${name} is on the body`);
       if (item.slot === 'legs')
-        assert.ok(box.min.y < 0.35, `${name} reaches down the legs`);
+        assert.ok(
+          box.min.y < (ITEM_MODELS[item.id].shorts ? 0.42 : 0.35),
+          `${name} reaches its leg hem`,
+        );
       // Rain boots add only a band round the ankle; the rest is the colour.
       if (item.slot === 'shoes')
         assert.ok(
