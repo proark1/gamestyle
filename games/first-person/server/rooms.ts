@@ -12,6 +12,12 @@ import {
 } from '../../../shared/rooms/identity';
 import { isRoomOriginAllowed } from '@/shared/http/request-origin';
 import { getBinding } from '@/db/index';
+import { currentAccount } from '@/shared/accounts/server/current';
+import {
+  assertGameEntry,
+  paidAdmissionEnabled,
+} from '@/shared/commerce/server/access';
+import { CommerceError } from '@/shared/commerce/types';
 import type { GameDatabase } from '@/db/contract';
 import {
   applyAction,
@@ -103,6 +109,13 @@ async function handleRequest(request: Request) {
     const body = await readRoomRequest(request, 4000);
     const db = getBinding(),
       now = Date.now();
+    if (
+      paidAdmissionEnabled() &&
+      (body.op === 'create' || body.op === 'join')
+    ) {
+      const account = await currentAccount(request);
+      await assertGameEntry(db, 'first-person', account?.id ?? null);
+    }
     if (body.op === 'create') {
       const id = crypto.randomUUID(),
         token = crypto.randomUUID() + crypto.randomUUID(),
@@ -328,6 +341,7 @@ async function handleRequest(request: Request) {
     }
     return json({ snapshot: await snapshot(db, code, now) });
   } catch (e) {
+    if (e instanceof CommerceError) return json({ error: e.message }, e.status);
     if (e instanceof RoomError) return budgetError(e);
     const message = e instanceof Error ? e.message : '';
     if (/SQLITE|D1_|database|binding|fetch failed/i.test(message))

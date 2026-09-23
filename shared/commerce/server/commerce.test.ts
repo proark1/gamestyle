@@ -14,7 +14,11 @@ import {
 } from './inventory';
 import { verifyAndRecordPurchase, type VerifiedPurchase } from './purchases';
 import { createCommerceRoutes } from './routes';
-import { accountCanPlay, assertPartyGameAccess } from './access';
+import {
+  accountCanPlay,
+  assertGameEntry,
+  assertPartyGameAccess,
+} from './access';
 
 const NOW = 1_790_000_000_000;
 async function setup(t: { after: (fn: () => void) => void }) {
@@ -358,6 +362,41 @@ void test('server access checks use each player grant and react to refunds', asy
     NOW,
   );
   assert.ok(!(await accountCanPlay(db, 'wrong-floor', a)));
+});
+
+void test('direct entry remains open until enabled, then checks the current grant', async (t) => {
+  const { db, a } = await setup(t);
+  await assertGameEntry(db, 'wrong-floor', null, false);
+  await assertGameEntry(db, 'crane-clash', null, true);
+  await assert.rejects(
+    assertGameEntry(db, 'wrong-floor', null, true),
+    /full game pass/,
+  );
+  await assert.rejects(
+    assertGameEntry(db, 'wrong-floor', a, true),
+    /full game pass/,
+  );
+  await verifyAndRecordPurchase(
+    db,
+    a,
+    'proof',
+    async () => receipt(a),
+    'live',
+    NOW,
+  );
+  await assertGameEntry(db, 'wrong-floor', a, true);
+  await verifyAndRecordPurchase(
+    db,
+    a,
+    'proof',
+    async () => receipt(a, { status: 'revoked' }),
+    'live',
+    NOW,
+  );
+  await assert.rejects(
+    assertGameEntry(db, 'wrong-floor', a, true),
+    /full game pass/,
+  );
 });
 
 void test('inventory API rejects anonymous/foreign-origin writes and ignores client prices or account IDs', async (t) => {

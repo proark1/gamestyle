@@ -1,3 +1,5 @@
+import LockedGame from '@/shared/commerce/LockedGame';
+import { gamePageAccess } from '@/shared/commerce/server/page-access';
 import PanicCurlingGame from '@/games/panic-curling/Game';
 
 export const metadata = {
@@ -6,6 +8,10 @@ export const metadata = {
     'Olympic curling turned into extreme ice and sweeper chaos! Deliver granite blocks, anvils, or teammates in laundry baskets while your crew frantically scrubs thin ice with brooms and blowtorches.',
 };
 
-export default function Page() {
-  return <PanicCurlingGame />;
+export default async function Page() {
+  return (await gamePageAccess('panic-curling')) ? (
+    <PanicCurlingGame />
+  ) : (
+    <LockedGame game="panic-curling" />
+  );
 }

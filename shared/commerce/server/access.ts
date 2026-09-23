@@ -20,6 +20,23 @@ export async function accountCanPlay(
   return !!grant;
 }
 
+/** Paid admission is prepared but remains open until a deliberate launch. */
+export function paidAdmissionEnabled() {
+  return process.env.PAID_GAME_ADMISSION_ENABLED === '1';
+}
+
+export async function assertGameEntry(
+  db: GameDatabase,
+  game: string,
+  accountId: string | null,
+  enabled = paidAdmissionEnabled(),
+  environment: CommerceEnvironment = 'live',
+) {
+  if (!enabled) return;
+  if (!(await accountCanPlay(db, game, accountId, environment)))
+    throw new CommerceError('This game needs the full game pass.', 403);
+}
+
 /** Ready for admission integration; intentionally not activated on existing rooms yet. */
 export async function assertPartyGameAccess(
   db: GameDatabase,

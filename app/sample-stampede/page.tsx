@@ -1,3 +1,5 @@
+import LockedGame from '@/shared/commerce/LockedGame';
+import { gamePageAccess } from '@/shared/commerce/server/page-access';
 import SampleStampedeGame from '@/games/sample-stampede/Game';
 
 export const viewport = {
@@ -14,6 +16,10 @@ export const metadata = {
     'The chaotic experience of wholesale warehouse shopping! Push squeaky-wheel drifting carts, race for free taquito samples, and avoid contraband teddy bears at the receipt gauntlet.',
 };
 
-export default function Page() {
-  return <SampleStampedeGame />;
+export default async function Page() {
+  return (await gamePageAccess('sample-stampede')) ? (
+    <SampleStampedeGame />
+  ) : (
+    <LockedGame game="sample-stampede" />
+  );
 }

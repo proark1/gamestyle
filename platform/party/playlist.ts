@@ -1,5 +1,6 @@
 import type { GameId } from '../../shared/audio/types';
 import { PARTY_GUIDES } from './guides';
+import { hasGameAccess } from '../../shared/commerce/catalog';
 
 export type PartyGameInfo = {
   id: GameId;
@@ -158,10 +159,13 @@ export function generatePlaylist(
   count = 6,
   random: () => number = Math.random,
   format: 'quick' | 'classic' = 'classic',
+  accessScope: 'free' | 'full' = 'full',
 ): GameId[] {
-  const pool = PARTY_GAMES.filter((g) => format !== 'quick' || g.quick).map(
-    (g) => g.id,
-  );
+  const pool = PARTY_GAMES.filter(
+    (g) =>
+      (format !== 'quick' || g.quick) &&
+      (accessScope === 'full' || hasGameAccess(g.id, false)),
+  ).map((g) => g.id);
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     const temp = pool[i];
@@ -172,5 +176,8 @@ export function generatePlaylist(
     (id) => getPartyGameInfo(id)?.complexity === 'easy',
   );
   if (opener > 0) [pool[0], pool[opener]] = [pool[opener], pool[0]];
-  return pool.slice(0, Math.min(count, pool.length));
+  if (!pool.length) return [];
+  return accessScope === 'free'
+    ? Array.from({ length: count }, (_, index) => pool[index % pool.length])
+    : pool.slice(0, Math.min(count, pool.length));
 }

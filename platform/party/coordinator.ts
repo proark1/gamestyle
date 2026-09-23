@@ -489,6 +489,7 @@ export async function startPartyTournament(
   code: string,
   host: PartyPass,
   now = Date.now(),
+  admissionEnabled = false,
 ): Promise<PartyRoomState> {
   return updatePartyRoom(
     store,
@@ -532,16 +533,22 @@ export async function startPartyTournament(
       }
 
       const count = room.format === 'quick' ? 3 : 6;
+      const accessScope = admissionEnabled
+        ? humans.every((player) => player.fullGame === true)
+          ? 'full'
+          : 'free'
+        : undefined;
       const playlist =
-        room.playlist.length === count
+        !admissionEnabled && room.playlist.length === count
           ? room.playlist
-          : generatePlaylist(count, Math.random, room.format);
+          : generatePlaylist(count, Math.random, room.format, accessScope);
 
       return beginBriefing(
         {
           ...room,
           players,
           playlist,
+          accessScope,
           currentRound: 0,
           reports: undefined,
           status: 'countdown',
@@ -1012,6 +1019,7 @@ export async function rematchParty(
           room.format === 'quick' ? 3 : 6,
           Math.random,
           room.format,
+          room.accessScope,
         ),
         currentRound: 0,
         roundResults: [],

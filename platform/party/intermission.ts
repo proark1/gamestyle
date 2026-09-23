@@ -1,5 +1,6 @@
 import type { GameId } from '../../shared/audio/types';
 import { PARTY_GAMES } from './playlist';
+import { hasGameAccess } from '../../shared/commerce/catalog';
 import type { PartyIntermission, PartyRoomState } from './types';
 import { beginBriefing } from './flow';
 
@@ -16,13 +17,19 @@ export function voteCandidates(
   const previous = PARTY_GAMES.find(
     (g) => g.id === room.playlist[room.currentRound],
   );
-  const pool = PARTY_GAMES.filter(
+  const eligible = PARTY_GAMES.filter(
     (g) =>
       (room.format !== 'quick' || g.quick) &&
-      (previous?.complexity !== 'tricky' || g.complexity !== 'tricky'),
-  )
-    .map((game) => game.id)
-    .filter((id) => !played.has(id));
+      (room.accessScope === 'free' ||
+        previous?.complexity !== 'tricky' ||
+        g.complexity !== 'tricky') &&
+      (room.accessScope !== 'free' || hasGameAccess(g.id, false)),
+  ).map((game) => game.id);
+  const unplayed = eligible.filter((id) => !played.has(id));
+  const pool =
+    room.accessScope === 'free'
+      ? [...unplayed, ...eligible.filter((id) => played.has(id))]
+      : unplayed;
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];

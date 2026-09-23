@@ -20,6 +20,12 @@ import { readBuild, BUILD_ID } from '@/games/chaos/build-storage';
 import { restoreBuild } from '@/games/chaos/build-snapshot';
 import { configureInspection, makeInspection } from '@/games/chaos/inspection';
 import { getBinding } from '@/db/index';
+import { currentAccount } from '@/shared/accounts/server/current';
+import {
+  assertGameEntry,
+  paidAdmissionEnabled,
+} from '@/shared/commerce/server/access';
+import { CommerceError } from '@/shared/commerce/types';
 import type { GameDatabase, WriteResult } from '@/db/contract';
 import {
   applyAction,
@@ -143,6 +149,13 @@ async function handleRequest(request: Request) {
     const body = await readRoomRequest(request, 5000);
     const db = getBinding(),
       now = Date.now();
+    if (
+      paidAdmissionEnabled() &&
+      (body.op === 'create' || body.op === 'join')
+    ) {
+      const account = await currentAccount(request);
+      await assertGameEntry(db, 'chaos', account?.id ?? null);
+    }
     if (body.op === 'create') {
       if (body.map !== undefined && !validMap(body.map))
         return json({ error: 'Unknown map.' }, 400);
@@ -607,6 +620,8 @@ async function handleRequest(request: Request) {
       return json({ snapshot: await snapshot(db, code, now, player.id) });
     });
   } catch (error) {
+    if (error instanceof CommerceError)
+      return json({ error: error.message }, error.status);
     if (error instanceof RoomError) return budgetError(error);
     const text = error instanceof Error ? error.message : '';
     if (/D1_|SQLITE|database|binding|fetch failed/i.test(text))

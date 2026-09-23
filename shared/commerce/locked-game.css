@@ -1,0 +1,79 @@
+.locked-game {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: #a8ddf0;
+}
+
+.locked-game-ticket {
+  position: relative;
+  width: min(100%, 34rem);
+  padding: clamp(1.75rem, 6vw, 3rem);
+  color: #244943;
+  background: #fff6df;
+  border: 3px solid #244943;
+  border-radius: 1.4rem;
+  box-shadow: 0.75rem 0.75rem 0 #287c80;
+}
+
+.locked-game-ticket::before,
+.locked-game-ticket::after {
+  position: absolute;
+  top: 54%;
+  width: 1.35rem;
+  height: 1.35rem;
+  content: '';
+  background: #a8ddf0;
+  border: 3px solid #244943;
+  border-radius: 50%;
+}
+
+.locked-game-ticket::before {
+  left: -0.85rem;
+}
+
+.locked-game-ticket::after {
+  right: -0.85rem;
+}
+
+.locked-game-eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.locked-game-ticket h1 {
+  margin: 0.5rem 0 1rem;
+  font-family: Fredoka, sans-serif;
+  font-size: clamp(2.4rem, 9vw, 4.25rem);
+  line-height: 1;
+}
+
+.locked-game-ticket p {
+  max-width: 28rem;
+  line-height: 1.5;
+}
+
+.locked-game-ticket a {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.7rem;
+  background: #d96846;
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.locked-game-ticket a:hover,
+.locked-game-ticket a:focus-visible {
+  background: #b84e30;
+}
+
+.locked-game-ticket a:focus-visible {
+  outline: 3px solid #244943;
+  outline-offset: 3px;
+}

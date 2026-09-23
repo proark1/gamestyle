@@ -6,8 +6,16 @@ import {
 import { RoomError, type RoomStore } from '../rooms/types';
 import { isRoomOriginAllowed } from './request-origin';
 import { sweepExpiredRooms } from '../rooms/expiry';
+import {
+  assertGameEntry,
+  paidAdmissionEnabled,
+} from '../commerce/server/access';
+import { currentAccount } from '../accounts/server/current';
+import { getBinding } from '../../db/index';
+import { CommerceError } from '../commerce/types';
 
 type RoomHandlerOptions = {
+  game?: string;
   store: () => RoomStore;
   handle: (store: RoomStore, body: Record<string, unknown>) => Promise<unknown>;
   originError: string;
@@ -31,10 +39,20 @@ export function createRoomHandler(options: RoomHandlerOptions) {
       if (!isRoomOriginAllowed(request, process.env.PUBLIC_GAME_ORIGIN))
         return jsonResponse({ error: options.originError }, 403);
       const body = await readRoomRequest(request);
+      if (
+        options.game &&
+        paidAdmissionEnabled() &&
+        (body.op === 'create' || body.op === 'join')
+      ) {
+        const account = await currentAccount(request);
+        await assertGameEntry(getBinding(), options.game, account?.id ?? null);
+      }
       const store = options.store();
       sweepExpiredRooms(store);
       return jsonResponse(await options.handle(store, body));
     } catch (error) {
+      if (error instanceof CommerceError)
+        return jsonResponse({ error: error.message }, error.status);
       if (error instanceof RoomError) return budgetError(error);
       console.error(options.logLabel, error);
       return jsonResponse({ error: options.unavailableError }, 503);

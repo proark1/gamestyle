@@ -9,6 +9,13 @@ import { roomStore } from '@/db/rooms';
 import { handlePeerRoom } from '@/shared/peer/coordinator';
 import { PeerError } from '@/shared/peer/types';
 import { isRoomOriginAllowed } from '@/shared/http/request-origin';
+import {
+  paidAdmissionEnabled,
+  assertGameEntry,
+} from '@/shared/commerce/server/access';
+import { currentAccount } from '@/shared/accounts/server/current';
+import { getBinding } from '@/db/index';
+import { CommerceError } from '@/shared/commerce/types';
 
 const json = (body: unknown, status = 200) =>
   Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -19,8 +26,21 @@ async function handleRequest(request: Request) {
     const body = await readRoomRequest(request, 280_000);
     if (body.protocol !== PEER_PROTOCOL)
       return json({ error: 'Update the game before joining this room.' }, 426);
+    if (
+      paidAdmissionEnabled() &&
+      (body.op === 'create' || body.op === 'join')
+    ) {
+      const account = await currentAccount(request);
+      await assertGameEntry(
+        getBinding(),
+        String(body.game),
+        account?.id ?? null,
+      );
+    }
     return json(await handlePeerRoom(roomStore(), body));
   } catch (error) {
+    if (error instanceof CommerceError)
+      return json({ error: error.message }, error.status);
     if (error instanceof RoomError) return budgetError(error);
     if (error instanceof PeerError)
       return json({ error: error.message }, error.status);

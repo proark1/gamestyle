@@ -1,3 +1,5 @@
+import LockedGame from '@/shared/commerce/LockedGame';
+import { gamePageAccess } from '@/shared/commerce/server/page-access';
 import ZorbClash from '@/games/zorb-clash/Game';
 
 export const metadata = {
@@ -6,6 +8,10 @@ export const metadata = {
     'Fast-paced bubble soccer and sumo derby! Strap inside giant transparent bumper balls with hyper-bouncy Cannon physics. Launch your friends across the pitch, avoid the upside-down turtle state, and bounce to victory.',
 };
 
-export default function Page() {
-  return <ZorbClash />;
+export default async function Page() {
+  return (await gamePageAccess('zorb-clash')) ? (
+    <ZorbClash />
+  ) : (
+    <LockedGame game="zorb-clash" />
+  );
 }

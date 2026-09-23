@@ -36,6 +36,11 @@ import {
 import { LEGACY_ITEMS } from '@/shared/commerce/server/legacy-items';
 import { parseLook } from '@/shared/wardrobe/look';
 import { crewBadge } from '@/shared/crews/server/store';
+import {
+  assertPartyGameAccess,
+  paidAdmissionEnabled,
+} from '@/shared/commerce/server/access';
+import { CommerceError } from '@/shared/commerce/types';
 
 const json = (body: unknown, status = 200) =>
   Response.json(body, {
@@ -120,7 +125,14 @@ async function handleRequest(request: Request) {
             body.paused,
           ),
         });
-      case 'game_session':
+      case 'game_session': {
+        const admission = paidAdmissionEnabled()
+          ? {
+              accountId: (await currentAccount(request))?.id ?? null,
+              check: (game: string, accountIds: (string | null)[]) =>
+                assertPartyGameAccess(getBinding(), game, accountIds),
+            }
+          : undefined;
         return json({
           session: await partyGameSession(
             store,
@@ -128,8 +140,11 @@ async function handleRequest(request: Request) {
             body.playerId,
             body.token,
             body.round,
+            Date.now(),
+            admission,
           ),
         });
+      }
       case 'create': {
         const { state, playerId, token } = await createPartyRoom(
           store,
@@ -187,10 +202,13 @@ async function handleRequest(request: Request) {
       }
 
       case 'start': {
-        const state = await startPartyTournament(store, body.code, {
-          id: body.hostId,
-          token: body.token,
-        });
+        const state = await startPartyTournament(
+          store,
+          body.code,
+          { id: body.hostId, token: body.token },
+          Date.now(),
+          paidAdmissionEnabled(),
+        );
         return json({ state });
       }
 
@@ -255,6 +273,8 @@ async function handleRequest(request: Request) {
         return json({ error: 'Unknown party operation.' }, 400);
     }
   } catch (error) {
+    if (error instanceof CommerceError)
+      return json({ error: error.message }, error.status);
     if (error instanceof RoomError) return budgetError(error);
     const message =
       error instanceof Error

@@ -5,6 +5,12 @@ import { reservePartyPeerRoom } from '../../shared/peer/coordinator';
 import type { PartyRoomState } from './types';
 import type { PeerSession } from '../../shared/peer/types';
 import { roundSeats } from './flow';
+import { hasGameAccess } from '../../shared/commerce/catalog';
+
+type Admission = {
+  accountId: string | null;
+  check: (game: string, accountIds: (string | null)[]) => Promise<void>;
+};
 
 /** Assignment is inserted once; races use the winner's room, never create duplicate seats. */
 export async function partyGameSession(
@@ -14,12 +20,14 @@ export async function partyGameSession(
   token: string,
   round: number,
   now = Date.now(),
+  admission?: Admission,
 ): Promise<PeerSession> {
   const row = await store.get(`party:${code}`);
   if (!row || now - row.updated > 86400000)
     throw new RoomError('Party not found.', 404);
   const party = JSON.parse(row.state) as PartyRoomState & {
     passes?: Record<string, string>;
+    accounts?: Record<string, string | null>;
   };
   if (
     typeof token !== 'string' ||
@@ -40,6 +48,15 @@ export async function partyGameSession(
   const run = party.runId ?? String(party.countdownUntil);
   const key = `party-round:${code}:${run}:${round}`;
   let assignment = await store.get(key);
+  if (admission && !hasGameAccess(game, false)) {
+    if ((party.accounts?.[id] ?? null) !== admission.accountId)
+      throw new RoomError('Rejoin the party with your signed-in account.', 401);
+    if (!assignment)
+      await admission.check(
+        game,
+        roundSeats(party).map((seat) => party.accounts?.[seat.id] ?? null),
+      );
+  }
   if (!assignment) {
     await store.insert({
       code: key,

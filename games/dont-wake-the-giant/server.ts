@@ -2,6 +2,7 @@ import { roomStore } from '@/db/rooms';
 import { createRoomHandler } from '@/shared/http/room-handler';
 import { handleGiantRoom } from './rooms';
 export const POST = createRoomHandler({
+  game: 'dont-wake-the-giant',
   store: roomStore,
   handle: handleGiantRoom,
   originError: 'Open the giant game to use the cottage controls.',

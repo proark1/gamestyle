@@ -45,6 +45,8 @@ export type RoundResult = {
 };
 
 export type PartyRoomState = {
+  /** Shared games available when the dormant paid admission switch is active. */
+  accessScope?: 'free' | 'full';
   format?: 'quick' | 'classic';
   practice?: boolean;
   briefing?: { startedAt: number; ready: string[] };

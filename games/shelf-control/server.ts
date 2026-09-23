@@ -2,6 +2,7 @@ import { roomStore } from '@/db/rooms';
 import { createRoomHandler } from '@/shared/http/room-handler';
 import { handleShelfRoom } from './rooms';
 export const POST = createRoomHandler({
+  game: 'shelf-control',
   store: roomStore,
   handle: handleShelfRoom,
   originError: 'Open Shelf Control to use these controls.',
