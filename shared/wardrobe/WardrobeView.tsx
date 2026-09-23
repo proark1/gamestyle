@@ -61,6 +61,7 @@ import './wardrobe.css';
 
 const SLOT_NAMES: Record<Slot | 'all', string> = {
   all: 'All',
+  costume: 'Costumes',
   hat: 'Hats',
   top: 'Tops',
   legs: 'Trousers',
@@ -142,6 +143,12 @@ export default function WardrobeView({
         else delete look[slot];
       }
     }
+    if (
+      SLOTS.some(
+        (slot) => slot !== 'costume' && fittedOverrides[slot] !== undefined,
+      )
+    )
+      delete look.costume;
     return look;
   }, [state.look, fittedOverrides]);
 
@@ -160,7 +167,13 @@ export default function WardrobeView({
   const toggleFit = (item: Item) => {
     setSelectedItem(item);
     setPreviewMode('avatar');
-    setFittedOverrides((prev) => toggleTryOn(state.look, prev, item));
+    setFittedOverrides((prev) =>
+      toggleTryOn(
+        state.look,
+        item.slot === 'costume' ? { costume: prev.costume } : prev,
+        item,
+      ),
+    );
   };
 
   const commitItem = async (item: Item, remove = false) => {
@@ -584,6 +597,30 @@ export default function WardrobeView({
                   </button>
                 ))}
               </div>
+              {(selectedSlot === 'costume' || selectedSlot === 'all') && (
+                <div className="wardrobe-costume-bundle">
+                  <span>All five costumes · $4.99</span>
+                  <button
+                    type="button"
+                    className="wardrobe-item-btn wardrobe-btn-buy"
+                    disabled={
+                      !inventory.purchasesAvailable ||
+                      !webCheckoutSupported() ||
+                      checkoutBusy ||
+                      ITEMS.some(
+                        (item) =>
+                          item.slot === 'costume' &&
+                          state.unlockedItems.includes(item.id),
+                      )
+                    }
+                    onClick={() => void buyPremium('costume-bundle')}
+                  >
+                    {inventory.purchasesAvailable
+                      ? 'Buy collection'
+                      : 'Coming soon'}
+                  </button>
+                </div>
+              )}
 
               {/* Items Grid */}
               <div className="wardrobe-items-grid">

@@ -666,21 +666,25 @@ export function dressKid(model: T.Object3D, player: string, look?: Look): Worn {
       }
     }
   }
-  if (models.hat) {
+  if (models.hat || models.costume) {
+    const headwear = models.costume ?? models.hat!;
     const seat = (model.userData.hatSeat as number | undefined) ?? HAT_AT[1];
     const nativeHat = rig.head.getObjectByName('playful-hat');
     if (nativeHat) {
       model.updateMatrixWorld(true);
       model.userData.hatTop = new T.Box3().setFromObject(nativeHat, true).max.y;
     } else {
-      wearKidHat(lookGroup(rig.head), models.hat, player, seat);
+      wearKidHat(lookGroup(rig.head), headwear, player, seat);
       const top = Math.max(
-        ...models.hat.parts.filter((p) => p.on === 'head').map(partTop),
+        ...headwear.parts.filter((p) => p.on === 'head').map(partTop),
       );
       model.userData.hatTop = HEAD_Y + seat + HAT_FIT * top;
     }
   }
   return Object.fromEntries(
-    SLOTS.map((slot) => [slot, !!models[slot]]),
+    SLOTS.map((slot) => [
+      slot,
+      !!models[slot] || (!!models.costume && slot !== 'beard'),
+    ]),
   ) as Worn;
 }

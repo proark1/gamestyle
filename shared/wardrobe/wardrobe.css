@@ -509,6 +509,24 @@
   gap: 6px;
 }
 
+.wardrobe-costume-bundle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid #d2c7a8;
+  border-radius: 12px;
+  background: #fff5dc;
+  color: #365a4e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.wardrobe-costume-bundle .wardrobe-item-btn {
+  flex: 0 0 auto;
+}
+
 .wardrobe-slot-btn {
   padding: 4px 10px;
   border-radius: 12px;

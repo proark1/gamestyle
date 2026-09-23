@@ -115,3 +115,26 @@ void test('players start with nothing equipped, and an untouched old starter out
   assert.deepEqual(storedLook(partial), partial, 'a trimmed outfit stays');
   assert.deepEqual(storedLook('junk'), {}, 'junk reads as empty');
 });
+
+void test('a costume preserves the underlying look until a separate piece is equipped', async () => {
+  const {
+    adminResetWardrobe,
+    adminUnlockAllItems,
+    equipItem,
+    wardrobeSnapshot,
+  } = await import('./wardrobe-state');
+  adminResetWardrobe();
+  adminUnlockAllItems();
+  equipItem('hat', 'top-hat');
+  equipItem('costume', 'mossweaver');
+  assert.deepEqual(wardrobeSnapshot().look, {
+    hat: 'top-hat',
+    costume: 'mossweaver',
+  });
+  equipItem('top', 'hero-cape');
+  assert.deepEqual(wardrobeSnapshot().look, {
+    hat: 'top-hat',
+    top: 'hero-cape',
+  });
+  adminResetWardrobe();
+});

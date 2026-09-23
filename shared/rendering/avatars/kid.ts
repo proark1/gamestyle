@@ -63,13 +63,17 @@ export function playerKid(kid: KidId, kit: Kit, look?: Look) {
   const model = KIDS[kid](
     0,
     {
-      shirt: kit.jersey,
-      overalls: models.legs?.overalls ?? kit.shorts,
-      boots: models.shoes?.boots ?? kit.shoes,
+      shirt: models.costume?.shirt ?? kit.jersey,
+      overalls: models.costume?.overalls ?? models.legs?.overalls ?? kit.shorts,
+      boots: models.costume?.boots ?? models.shoes?.boots ?? kit.shoes,
     },
     {
-      trousers: models.legs ? !models.legs.shorts : kit.trousers,
-      hat: models.hat ? look?.hat : kit.hat,
+      trousers: models.costume
+        ? true
+        : models.legs
+          ? !models.legs.shorts
+          : kit.trousers,
+      hat: models.costume ? look?.costume : models.hat ? look?.hat : kit.hat,
     },
   );
   const worn = dressKid(model, kit.jersey, look);
@@ -78,8 +82,13 @@ export function playerKid(kid: KidId, kit: Kit, look?: Look) {
   model.userData.kid = kid;
   model.userData.kit = {
     jersey: kit.jersey,
-    trousers: models.legs?.overalls ?? kit.shorts ?? kit.jersey,
-    shoes: models.shoes?.boots ?? kit.shoes ?? kit.jersey,
+    trousers:
+      models.costume?.overalls ??
+      models.legs?.overalls ??
+      kit.shorts ??
+      kit.jersey,
+    shoes:
+      models.costume?.boots ?? models.shoes?.boots ?? kit.shoes ?? kit.jersey,
   };
   return { model, worn };
 }

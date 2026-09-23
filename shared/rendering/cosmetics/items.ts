@@ -1,5 +1,6 @@
 import type { Slot } from '../../wardrobe/catalog';
 import { PLAYFUL_MODELS } from './playful-models';
+import { COSTUME_MODELS } from './costume-models';
 
 type Vec = [number, number, number];
 
@@ -26,6 +27,8 @@ export type Part =
 
 export type ItemModel = {
   slot: Slot;
+  /** Recolours the base shirt under a full costume. */
+  shirt?: string;
   /** Recolours the worker's trousers and bib. */
   overalls?: string;
   /** Recolours the worker's boots. */
@@ -63,6 +66,7 @@ const cone = (
 
 /** Every wardrobe item's model, by catalog id. */
 export const ITEM_MODELS: Record<string, ItemModel> = {
+  ...COSTUME_MODELS,
   ...PLAYFUL_MODELS,
   'bobble-beanie': {
     slot: 'hat',

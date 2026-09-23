@@ -4,6 +4,7 @@ import { ball, box, taper, disposeGeometry } from '../primitives';
 import { ITEM_MODELS, PLAYER } from './items';
 import { playfulDisplay } from './playful-items';
 import { inClay } from '../avatars/hoop-kid';
+import { playerKid, PLAYER_KID } from '../avatars/kid';
 
 /**
  * Builds an isolated 3D model of a wardrobe item for showcase / inspection,
@@ -16,6 +17,17 @@ export function buildStandaloneItem(
   const modelDef = ITEM_MODELS[id];
   const group = new T.Group();
   if (!modelDef) return group;
+  if (modelDef.slot === 'costume') {
+    const { model } = playerKid(
+      PLAYER_KID,
+      { jersey: playerColor },
+      { costume: id },
+    );
+    const center = new T.Box3().setFromObject(model).getCenter(new T.Vector3());
+    model.position.sub(center);
+    group.add(model);
+    return group;
+  }
   const native = playfulDisplay(id, playerColor);
   if (native) {
     inClay(native);

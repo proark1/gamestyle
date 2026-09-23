@@ -5,7 +5,7 @@ import { ITEMS, SLOTS, type Slot } from '../../wardrobe/catalog';
 import type { Look } from '../../wardrobe/look';
 import { COLORS } from '../palette';
 import { WORKER_HEAD_TOP, worker } from '../worker';
-import { LOOK_GROUP, dressedWorker } from './dress';
+import { LOOK_GROUP, dressedWorker, modelsOf } from './dress';
 import { ITEM_MODELS, PLAYER, type Part } from './items';
 
 function meshes(root: T.Object3D) {
@@ -186,30 +186,49 @@ void test('glasses and beard can be worn simultaneously', () => {
   assert.equal(worn.beard, true);
 });
 
+void test('a full costume takes visual priority over separate clothing', () => {
+  for (const item of ITEMS.filter((entry) => entry.slot === 'costume')) {
+    const look: Look = {
+      costume: item.id,
+      hat: 'top-hat',
+      top: 'hero-cape',
+      legs: 'denim-overalls',
+      shoes: 'rain-boots',
+    };
+    assert.deepEqual(Object.keys(modelsOf(look)), ['costume']);
+    const { model, worn } = dressedWorker(0, {}, look);
+    assert.ok(worn.costume && worn.hat && worn.top && worn.legs && worn.shoes);
+    assert.ok(meshes(model).some(inLook));
+    assert.equal(
+      colour(model.userData.legL.children[0] as T.Mesh),
+      ITEM_MODELS[item.id].overalls,
+    );
+    assert.ok(ITEM_MODELS[item.id].parts.some((part) => part.on === 'head'));
+    assert.ok(!ITEM_MODELS[item.id].parts.some((part) => part.on === 'face'));
+  }
+});
+
 void test('an unknown or misplaced item builds the plain worker', () => {
   const plain = worker(3);
   const { model, worn } = dressedWorker(3, {}, {
     hat: 'retired-item',
     top: 'top-hat',
   } as Look);
-  assert.deepEqual(Object.values(worn), [
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-  ]);
+  assert.deepEqual(
+    Object.values(worn),
+    SLOTS.map(() => false),
+  );
   assert.deepEqual(meshes(model).map(colour), meshes(plain).map(colour));
   assert.equal(meshes(model).filter(inLook).length, 0);
 });
 
-void test('item parts share cached geometry, and no item adds more than four meshes', () => {
+void test('item parts share cached geometry, and ordinary items stay within four meshes', () => {
   const bare = meshes(worker(0, { cap: false })).length;
   for (const item of ITEMS) {
     const { model } = dressedWorker(0, { cap: false }, lookOf(item.id));
     const added = meshes(model).filter(inLook);
-    assert.ok(added.length <= 4, `${item.id} adds ${added.length} meshes`);
+    if (item.slot !== 'costume')
+      assert.ok(added.length <= 4, `${item.id} adds ${added.length} meshes`);
     for (const mesh of added)
       assert.ok(mesh.geometry.userData.shared, `${item.id} shares geometry`);
     assert.equal(meshes(model).length - added.length, bare, item.id);

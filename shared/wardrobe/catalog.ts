@@ -3,7 +3,15 @@
  * goals that unlock the few that cannot be bought. Data only, so the server
  * and the browser can both import it. Item ids are never reused.
  */
-export const SLOTS = ['hat', 'top', 'legs', 'shoes', 'face', 'beard'] as const;
+export const SLOTS = [
+  'costume',
+  'hat',
+  'top',
+  'legs',
+  'shoes',
+  'face',
+  'beard',
+] as const;
 export type Slot = (typeof SLOTS)[number];
 
 export type Goal = {
@@ -29,7 +37,7 @@ export type Item = {
 };
 
 /** Raise when an item changes meaning, so an old shop page cannot buy the wrong thing. */
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 2;
 
 export const GOALS: readonly Goal[] = [
   {
@@ -67,6 +75,37 @@ export const GOALS: readonly Goal[] = [
 ];
 
 export const ITEMS: readonly Item[] = [
+  // Complete premium looks keep the player's face uncovered.
+  {
+    id: 'mossweaver',
+    slot: 'costume',
+    name: 'Mossweaver',
+    premiumOffer: 'costume:mossweaver',
+  },
+  {
+    id: 'thunder-hen',
+    slot: 'costume',
+    name: 'Thunder Hen',
+    premiumOffer: 'costume:thunder-hen',
+  },
+  {
+    id: 'kite-knight',
+    slot: 'costume',
+    name: 'Kite Knight',
+    premiumOffer: 'costume:kite-knight',
+  },
+  {
+    id: 'comet-diver',
+    slot: 'costume',
+    name: 'Comet Diver',
+    premiumOffer: 'costume:comet-diver',
+  },
+  {
+    id: 'puddle-dragon',
+    slot: 'costume',
+    name: 'Puddle Dragon',
+    premiumOffer: 'costume:puddle-dragon',
+  },
   // Hats
   { id: 'bobble-beanie', slot: 'hat', name: 'Bobble Beanie', price: 80 },
   { id: 'party-cone', slot: 'hat', name: 'Party Cone', price: 150 },

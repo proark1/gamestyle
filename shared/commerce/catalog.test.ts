@@ -28,7 +28,9 @@ void test('premium offers have purchase-only items and the bundle is cheaper', a
   const { ITEMS } = await import('../wardrobe/catalog');
   const pieces = COMMERCE_OFFERS.filter(
     (offer) =>
-      offer.grants.length === 1 && offer.grants[0] !== 'entitlement:full-game',
+      offer.grants.length === 1 &&
+      offer.grants[0] !== 'entitlement:full-game' &&
+      !offer.id.startsWith('costume:'),
   );
   assert.equal(pieces.length, 4);
   for (const offer of pieces) {
@@ -47,5 +49,22 @@ void test('premium offers have purchase-only items and the bundle is cheaper', a
   assert.ok(
     bundle.usdCents <
       pieces.reduce((total, offer) => total + offer.usdCents, 0),
+  );
+});
+
+void test('five costumes have individual offers and a collection bundle', async () => {
+  const { ITEMS } = await import('../wardrobe/catalog');
+  const costumes = ITEMS.filter((item) => item.slot === 'costume');
+  assert.equal(costumes.length, 5);
+  for (const item of costumes) {
+    const offer = COMMERCE_OFFERS.find(
+      (entry) => entry.id === item.premiumOffer,
+    );
+    assert.deepEqual(offer?.grants, [item.id]);
+    assert.equal(offer?.usdCents, COMMERCE_PRICES.special);
+  }
+  assert.deepEqual(
+    COMMERCE_OFFERS.find((offer) => offer.id === 'costume-bundle')?.grants,
+    costumes.map((item) => item.id),
   );
 });

@@ -135,7 +135,9 @@ export async function saveWardrobeItem(slot: Slot, id: string | null) {
     return true;
   }
   const look = { ...wardrobeSnapshot().look };
-  if (id) look[slot] = id;
-  else delete look[slot];
+  if (id) {
+    if (slot !== 'costume') delete look.costume;
+    look[slot] = id;
+  } else delete look[slot];
   return client.change({ op: 'equip', look });
 }

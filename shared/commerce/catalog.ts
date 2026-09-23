@@ -1,4 +1,5 @@
 import { isGame } from '../games/identity';
+import { ITEMS } from '../wardrobe/catalog';
 
 /** Web launch prices in USD cents. */
 export const COMMERCE_PRICES = {
@@ -59,6 +60,20 @@ export const COMMERCE_OFFERS: readonly CommerceOffer[] = [
     id: 'party-style-bundle',
     name: 'Party Style Bundle',
     grants: ['neon-visor', 'confetti-shades', 'comet-cape', 'disco-boots'],
+    usdCents: COMMERCE_PRICES.bundle,
+  },
+  ...ITEMS.filter((item) => item.slot === 'costume').map((item) => ({
+    id: item.premiumOffer!,
+    name: item.name,
+    grants: [item.id],
+    usdCents: COMMERCE_PRICES.special,
+  })),
+  {
+    id: 'costume-bundle',
+    name: 'Costume Collection',
+    grants: ITEMS.filter((item) => item.slot === 'costume').map(
+      (item) => item.id,
+    ),
     usdCents: COMMERCE_PRICES.bundle,
   },
 ];

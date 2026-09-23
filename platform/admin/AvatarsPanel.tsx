@@ -12,6 +12,7 @@ const metres = (value: number) => `${value.toFixed(2)} m`;
 const lookKey = (card: AvatarCard, look: AvatarLook) =>
   `${card.id}:${look.key}`;
 const SLOT_NAMES: Record<Slot, string> = {
+  costume: 'Costume',
   hat: 'Hat',
   top: 'Top',
   legs: 'Legs',

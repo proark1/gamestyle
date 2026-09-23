@@ -1,6 +1,6 @@
 import { ITEMS, SLOTS, type Slot } from './catalog';
 
-/** The item a player wears in each slot, by id. An empty slot shows the game's own clothes. */
+/** The item in each slot. A costume visually covers other slots without deleting them. */
 export type Look = Partial<Record<Slot, string>>;
 
 /** Keeps only catalog items in their own slots, and drops everything else. */

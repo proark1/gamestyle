@@ -181,6 +181,7 @@ export function equipItem(slot: Slot, itemId: string | null) {
     const item = ITEMS.find((i) => i.id === itemId && i.slot === slot);
     if (!item) return;
     if (!isItemUnlocked(currentState, item)) return;
+    if (slot !== 'costume') delete nextLook.costume;
     nextLook[slot] = itemId;
   }
   currentState = {
