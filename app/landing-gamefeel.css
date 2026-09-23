@@ -1,0 +1,452 @@
+/* A tactile play-board theme for the collection page. The game art and clay cast
+   remain the main attraction; frames, controls, and progress read as game pieces. */
+.collection {
+  --play-ink: #234a46;
+  --play-teal: #287c80;
+  --play-teal-dark: #18545b;
+  --play-sun: #f7c64b;
+  --play-sun-dark: #a97522;
+  --play-coral: #b95032;
+  --play-coral-dark: #843621;
+  --play-cream: #fff9e9;
+  background:
+    radial-gradient(circle at 6% 11%, #f7c64b45 0 95px, transparent 96px),
+    radial-gradient(circle at 95% 30%, #d9684630 0 120px, transparent 121px),
+    radial-gradient(circle at 12% 70%, #6db8a830 0 150px, transparent 151px),
+    linear-gradient(180deg, #bde9ea 0, #d7efdb 720px, #e8efd5 1500px);
+  color: var(--play-ink);
+}
+
+.collection-header {
+  height: 102px;
+  border-bottom: 3px solid #29615b3b;
+}
+.collection-brand {
+  text-decoration: none;
+  font-weight: 700;
+}
+.collection-brand > span:first-child {
+  width: 47px;
+  height: 44px;
+  border: 2px solid #9b6a26;
+  border-radius: 15px;
+  background: var(--play-sun);
+  box-shadow: 0 5px 0 var(--play-sun-dark);
+}
+.collection-header
+  :is(
+    .language-header-button,
+    .wardrobe-header-button,
+    .account-header-button
+  ) {
+  border: 2px solid #a0a787;
+  background: var(--play-cream);
+  box-shadow: 0 4px 0 #7f967d;
+}
+.collection-header
+  :is(
+    .language-header-button,
+    .wardrobe-header-button,
+    .account-header-button
+  ):hover {
+  translate: 0 -2px;
+  box-shadow: 0 6px 0 #7f967d;
+}
+.collection-header
+  :is(
+    .language-header-button,
+    .wardrobe-header-button,
+    .account-header-button
+  ):active {
+  translate: 0 2px;
+  box-shadow: 0 2px 0 #7f967d;
+}
+
+.collection .clubhouse-hero {
+  margin-top: 30px;
+  margin-bottom: 34px;
+  padding: 30px 34px 12px;
+  border: 4px solid var(--play-teal-dark);
+  border-radius: 38px;
+  background:
+    radial-gradient(circle at 84% 19%, #fff7d354 0 116px, transparent 117px),
+    linear-gradient(145deg, #d4f3e5, #bfe9df 70%, #a8ddd5);
+  box-shadow:
+    0 12px 0 #1d5b5d,
+    0 22px 34px #275d5630;
+}
+.collection .clubhouse-hero-copy {
+  padding: 22px 0 12px;
+}
+.collection .clubhouse-hero h1 {
+  text-shadow: 3px 3px 0 #fff9e9b8;
+}
+.collection .clubhouse-eyebrow {
+  color: #345b54;
+}
+.collection .clubhouse-hero .clubhouse-eyebrow {
+  width: fit-content;
+  padding: 8px 11px;
+  border: 2px solid #d7ae5b;
+  border-radius: 10px;
+  background: #fff8e6;
+  box-shadow: 0 3px 0 #d7ae5b;
+  transform: rotate(-2deg);
+}
+.collection .clubhouse-intro {
+  color: #315b52;
+  font-weight: 500;
+}
+.collection .clubhouse-stage::before {
+  content: '';
+  position: absolute;
+  z-index: -3;
+  left: 3%;
+  right: 3%;
+  top: 32px;
+  bottom: 37px;
+  border: 3px dashed #569f96;
+  border-radius: 48% 48% 30px 30px;
+  background: radial-gradient(circle at 50% 25%, #fff9e980, #95d4c642 72%);
+}
+.collection .clubhouse-court {
+  border-color: #e5f4bb;
+  box-shadow:
+    0 12px 0 #3c9089,
+    0 22px 30px #24494328;
+}
+.collection .cast-speech {
+  border: 3px solid #e3b65c;
+  box-shadow: 0 6px 0 #bb893e;
+}
+.collection .clubhouse-crew-tag {
+  border: 2px solid #a56b26;
+  background: var(--play-sun);
+  box-shadow: 0 5px 0 #9c6a27;
+}
+.collection .clubhouse-facts {
+  gap: 12px;
+  border: 0;
+  margin-top: 18px;
+  padding: 12px 0 4px;
+}
+.collection .clubhouse-facts li {
+  padding: 10px 14px;
+  border: 2px solid #9ac9ad;
+  border-radius: 14px;
+  background: var(--play-cream);
+  box-shadow: 0 4px 0 #72ab8b;
+  color: var(--play-ink);
+}
+.collection .clubhouse-facts svg {
+  color: var(--play-coral);
+}
+
+.collection .clay-button {
+  border-width: 3px;
+  border-radius: 16px;
+  box-shadow: 0 7px 0 var(--play-teal-dark);
+  font-weight: 800;
+}
+.collection .clay-button:hover {
+  translate: 0 -3px;
+  box-shadow: 0 10px 0 var(--play-teal-dark);
+}
+.collection .clay-button:active {
+  translate: 0 4px;
+  transform: none;
+  box-shadow: 0 3px 0 var(--play-teal-dark);
+}
+.collection .clubhouse-actions .clay-button:first-child,
+.collection .adventure-picker-actions .clay-button,
+.collection .clubhouse-party > .clay-button {
+  border-color: #a36e22;
+  background: var(--play-sun);
+  color: var(--play-ink);
+  box-shadow: 0 7px 0 var(--play-sun-dark);
+}
+.collection .clubhouse-actions .clay-button:first-child:hover,
+.collection .adventure-picker-actions .clay-button:hover,
+.collection .clubhouse-party > .clay-button:hover {
+  box-shadow: 0 10px 0 var(--play-sun-dark);
+}
+.collection .clubhouse-actions .clay-button:first-child:active,
+.collection .adventure-picker-actions .clay-button:active,
+.collection .clubhouse-party > .clay-button:active {
+  box-shadow: 0 3px 0 var(--play-sun-dark);
+}
+.collection .clubhouse-actions .clay-button-light {
+  border-color: var(--play-coral-dark);
+  background: var(--play-coral);
+  color: #fffaf0;
+  box-shadow: 0 7px 0 var(--play-coral-dark);
+}
+.collection .clubhouse-actions .clay-button-light:hover {
+  box-shadow: 0 10px 0 var(--play-coral-dark);
+}
+.collection .clubhouse-actions .clay-button-light:active {
+  box-shadow: 0 3px 0 var(--play-coral-dark);
+}
+
+.collection-continue {
+  margin-top: 0;
+  padding: 13px 18px 13px 13px;
+  border: 3px solid #a76e38;
+  border-left-width: 9px;
+  border-radius: 20px;
+  background: #fff9e9;
+  box-shadow: 0 8px 0 #b88c59;
+}
+.collection-continue img {
+  border: 2px solid #c8914e;
+}
+.collection-continue > a {
+  border: 2px solid var(--play-teal-dark);
+  box-shadow: 0 4px 0 var(--play-teal-dark);
+  font-weight: 800;
+}
+.collection-continue > a:hover {
+  translate: 0 -2px;
+  box-shadow: 0 6px 0 var(--play-teal-dark);
+}
+
+.collection .adventure-desk {
+  gap: 26px;
+  margin-bottom: 54px;
+}
+.collection .adventure-picker {
+  border: 4px solid #a25b39;
+  border-radius: 31px;
+  background: linear-gradient(160deg, #f6c667, #eaa264);
+  box-shadow:
+    0 11px 0 #9b573c,
+    0 22px 30px #7d513b30;
+}
+.collection .adventure-picker-heading {
+  padding: 0 2px;
+}
+.collection .adventure-picker .clubhouse-eyebrow {
+  color: #673d2b;
+}
+.collection .adventure-reveal {
+  border: 4px solid #28676a;
+  border-radius: 21px;
+  box-shadow:
+    inset 0 7px 0 #28676a40,
+    0 5px 0 #ad6d42;
+  background: #88c9be;
+}
+.collection .adventure-mystery {
+  background:
+    radial-gradient(circle at 50% 28%, #eaf5cf 0 15%, transparent 54%),
+    linear-gradient(145deg, #9ad7c4, #6ab6b3);
+}
+.collection .adventure-die {
+  border: 4px solid #ab7226;
+  background: var(--play-sun);
+  box-shadow:
+    0 9px 0 #95601f,
+    0 18px 25px #24494338;
+}
+.collection .adventure-mystery p {
+  padding: 7px 12px;
+  border-radius: 12px;
+  background: #fff9e9dc;
+  color: #224f48;
+  font-weight: 700;
+}
+.collection .adventure-picker-actions .clay-button-light {
+  border-color: var(--play-teal-dark);
+  background: var(--play-teal);
+  color: white;
+  box-shadow: 0 7px 0 var(--play-teal-dark);
+}
+
+.collection .adventure-passport {
+  border: 4px solid #b97a42;
+  border-left-width: 11px;
+  border-radius: 12px 28px 28px 12px;
+  background: #fff9e9;
+  box-shadow:
+    0 5px 0 #e7d2a7,
+    0 11px 0 #a98051,
+    0 21px 30px #5f4c3033;
+}
+.collection .adventure-passport::before {
+  left: 13px;
+  border-left: 3px dashed #cda877;
+}
+.collection .adventure-passport progress {
+  height: 14px;
+  border: 2px solid #a8a083;
+  background: #e8dfbe;
+}
+.collection .adventure-passport progress::-webkit-progress-value {
+  background: #2d9a8d;
+}
+.collection .adventure-passport progress::-moz-progress-bar {
+  background: #2d9a8d;
+}
+.collection .passport-stamp {
+  border: 3px solid #286a70;
+  background: #e6efcf;
+  box-shadow: 0 5px 0 #8eac8b;
+}
+.collection .passport-empty-stamp {
+  border-width: 3px;
+  background: #f8f0d9;
+}
+.collection .passport-quests li {
+  margin: 7px 0;
+  padding: 8px 9px;
+  border: 2px solid #e1d2b0;
+  border-radius: 13px;
+  background: #fffdf4;
+}
+.collection .passport-quests li.quest-complete {
+  border-color: #9fcba1;
+  background: #e5f1d9;
+}
+.collection .passport-quests li > :is(a, button) {
+  border: 2px solid #cba576;
+  border-radius: 12px;
+  background: var(--play-sun);
+  box-shadow: 0 3px 0 #aa7a3f;
+}
+
+.collection .clubhouse-party {
+  min-height: 177px;
+  border: 4px solid #174d55;
+  border-radius: 31px;
+  background:
+    radial-gradient(circle at 13% 32%, #f7c64b6b 0 85px, transparent 86px),
+    radial-gradient(circle at 67% 28%, #ffffff20 0 9px, transparent 10px),
+    linear-gradient(105deg, #1c777b, #155865);
+  box-shadow:
+    0 11px 0 #123f4b,
+    0 21px 28px #173f4938;
+}
+.collection .clubhouse-party .clubhouse-eyebrow {
+  color: #ffe184;
+}
+.collection .clubhouse-party h2 {
+  font-size: clamp(30px, 3vw, 39px);
+  text-shadow: 2px 3px 0 #134851;
+}
+
+.collection .clubhouse-shelf-heading {
+  margin-top: 64px;
+}
+.collection .clubhouse-shelf-heading h2 {
+  color: var(--play-ink);
+  text-shadow: 3px 3px 0 #fff9e9;
+}
+.collection .game-card {
+  border: 4px solid #31625a;
+  border-radius: 25px;
+  background: var(--play-cream);
+  box-shadow:
+    0 9px 0 #245850,
+    0 16px 24px #1f514525;
+}
+.collection .game-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 15px 0 #245850,
+    0 23px 30px #1f51452b;
+}
+.collection .game-card-tag,
+.collection .new-game-tag {
+  border: 2px solid #a97837;
+  border-radius: 9px;
+  box-shadow: 0 3px 0 #8e6d3d;
+  background: #fff9e9;
+}
+.collection .new-game-tag {
+  background: var(--play-sun);
+}
+.collection .game-card-play {
+  border: 3px solid #1e5960;
+  background: var(--play-sun);
+  box-shadow: 0 5px 0 #1e5960;
+}
+.collection .game-card-bottom strong {
+  border: 2px solid var(--play-teal-dark);
+  background: var(--play-teal);
+  box-shadow: 0 5px 0 var(--play-teal-dark);
+  font-weight: 800;
+}
+.collection .game-card:focus-within {
+  outline: 3px solid var(--play-coral);
+  outline-offset: 5px;
+}
+
+@media (max-width: 900px) {
+  .collection .clubhouse-hero {
+    padding: 22px 22px 10px;
+  }
+}
+
+@media (max-width: 700px) {
+  .collection-header {
+    height: 82px;
+  }
+  .collection .clubhouse-hero {
+    margin-top: 16px;
+    padding: 18px 14px 14px;
+    border-radius: 29px;
+  }
+  .collection .clubhouse-hero-copy {
+    padding-top: 12px;
+  }
+  .collection .clubhouse-hero .clubhouse-eyebrow {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .collection .clubhouse-stage::before {
+    top: 26px;
+    bottom: 30px;
+  }
+  .collection .clubhouse-facts {
+    gap: 8px;
+    padding-top: 8px;
+  }
+  .collection .clubhouse-facts li {
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+  .collection .adventure-desk {
+    gap: 24px;
+  }
+  .collection .clubhouse-party {
+    margin-top: 30px;
+  }
+  .collection .clubhouse-shelf-heading {
+    margin-top: 54px;
+  }
+}
+
+@media (max-width: 400px) {
+  .collection .clubhouse-hero h1 {
+    font-size: clamp(36px, 9vw, 42px);
+  }
+  .collection .adventure-picker {
+    padding: 18px 14px;
+  }
+  .collection .adventure-mystery .clay-cast {
+    right: 6%;
+    height: 214px;
+  }
+  .collection .adventure-passport {
+    padding-left: 22px;
+  }
+  .collection .clubhouse-party {
+    padding-left: 108px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collection :is(.clay-button, .game-card, .collection-header button) {
+    transition: none;
+  }
+}

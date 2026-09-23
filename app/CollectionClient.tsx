@@ -46,6 +46,7 @@ import {
   type CardTranslation,
 } from '@/shared/language/translations/cards';
 import './collection.css';
+import './landing-gamefeel.css';
 import {
   ClubhouseWelcome,
   ClubhouseParty,
