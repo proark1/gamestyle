@@ -64,8 +64,9 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'cage-clash',
     href: '/cage-clash',
     cardClass: 'bungee-doubles-card',
-    imgSrc: '/images/cage-clash.svg',
-    imgAlt: 'Two martial artists face off inside a clay green octagonal cage.',
+    imgSrc: '/images/court-cast-v1/cage-clash.jpg',
+    imgAlt:
+      'Two clay fighters grapple inside a green octagonal cage as a crowd cheers.',
     loading: 'lazy',
     tagIcon: Gamepad2,
     metaIcon1: Users,
@@ -75,7 +76,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'on-the-ropes',
     href: '/on-the-ropes',
     cardClass: 'bungee-doubles-card',
-    imgSrc: '/images/on-the-ropes.png',
+    imgSrc: '/images/court-cast-v1/on-the-ropes.jpg',
     imgAlt:
       'Red and blue boxers face off in a soft clay boxing ring with teammates waiting at their corners.',
     loading: 'lazy',
