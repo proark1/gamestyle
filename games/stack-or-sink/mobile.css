@@ -325,6 +325,12 @@
   .game-shell .camera-tools > span {
     display: none;
   }
+  .game-shell .camera-tools .crane-view-label {
+    display: block;
+    padding: 2px 4px;
+    border-radius: 6px;
+    background: #fff4d7e8;
+  }
   .game-shell .touch-only {
     display: grid;
   }
@@ -549,11 +555,7 @@
   .game-shell .crane-panel button {
     min-width: 44px;
     min-height: 44px;
-    padding: 8px;
-  }
-  .game-shell .crane-panel .crane-release {
-    padding: 8px;
-    font-size: 11px;
+    padding: 5px;
   }
   .game-dialog {
     padding: 24px !important;
@@ -598,6 +600,12 @@
   }
   .game-shell .camera-tools {
     flex-direction: row;
+  }
+}
+
+@media (max-width: 600px) and (min-height: 701px) and (orientation: portrait) {
+  .game-shell:has(.crane-panel) .touch-controls {
+    bottom: calc(176px + var(--edge-bottom));
   }
 }
 

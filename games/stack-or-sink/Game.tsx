@@ -83,6 +83,7 @@ const INITIAL_HUD: Hud = {
   placementError: null,
   height: 0,
   crane: false,
+  craneAngle: false,
 };
 const clock = (seconds: number) =>
   `${Math.floor(Math.max(0, seconds) / 60)}:${String(Math.floor(Math.max(0, seconds) % 60)).padStart(2, '0')}`;
@@ -251,7 +252,8 @@ export default function Game() {
                 previous.carrying === h.carrying &&
                 previous.placementError === h.placementError &&
                 Math.abs(previous.height - h.height) < 0.1 &&
-                previous.crane === h.crane
+                previous.crane === h.crane &&
+                previous.craneAngle === h.craneAngle
                   ? previous
                   : h,
               ),
@@ -909,13 +911,20 @@ export default function Game() {
           </aside>
           <div className="camera-tools">
             <button
-              className={`icon-button ${overview ? 'active' : ''}`}
+              className={`icon-button ${hud.crane ? (hud.craneAngle ? 'active' : '') : overview ? 'active' : ''}`}
               onClick={() => {
-                scene.current?.toggleOverview();
-                setOverview(!overview);
+                if (hud.crane) scene.current?.toggleCraneView();
+                else {
+                  scene.current?.toggleOverview();
+                  setOverview(!overview);
+                }
               }}
-              aria-label="Toggle yard overview"
-              aria-pressed={overview}
+              aria-label={
+                hud.crane
+                  ? `Switch to ${hud.craneAngle ? 'top' : 'angled'} crane view`
+                  : 'Toggle yard overview'
+              }
+              aria-pressed={hud.crane ? hud.craneAngle : overview}
             >
               <Eye size={19} />
             </button>
@@ -933,8 +942,14 @@ export default function Game() {
             >
               <Minus size={20} />
             </button>
-            <span>
-              View <kbd>V</kbd>
+            <span className={hud.crane ? 'crane-view-label' : ''}>
+              {hud.crane ? (
+                `${hud.craneAngle ? 'Angle' : 'Top'} view`
+              ) : (
+                <>
+                  View <kbd>V</kbd>
+                </>
+              )}
             </span>
           </div>
           {world.phase === 'lobby' && (
@@ -1013,11 +1028,12 @@ export default function Game() {
               <div className="crane-panel">
                 <Construction size={29} />
                 <div>
-                  <strong>You have the crane</strong>
+                  <strong>Crane · XY positioning</strong>
                   <span>
                     {touchMode
-                      ? notice || 'Joystick moves · Arrows lift and lower'
-                      : 'Move with WASD · Q up · Z down · E release'}
+                      ? notice ||
+                        'Drag XY joystick · ↑ ↓ height · Release below'
+                      : 'WASD / arrows move XY · Q / Z change height · V changes view'}
                   </span>
                 </div>
                 <button
@@ -1028,6 +1044,7 @@ export default function Game() {
                   aria-label="Raise crane"
                 >
                   <ArrowUp size={19} />
+                  <b>Up</b>
                 </button>
                 <button
                   onClick={() => {
@@ -1037,15 +1054,7 @@ export default function Game() {
                   aria-label="Lower crane"
                 >
                   <ArrowDown size={19} />
-                </button>
-                <button
-                  className="crane-release"
-                  onClick={() => {
-                    void triggerHaptic('medium');
-                    void action({ type: 'crane-drop' });
-                  }}
-                >
-                  Release
+                  <b>Down</b>
                 </button>
               </div>
             ) : (
@@ -1144,25 +1153,54 @@ export default function Game() {
               </button>
             </div>
             <div className="touch-guide">
-              Tap to aim · Drag to orbit · Pinch to zoom
+              {hud.crane
+                ? 'Joystick moves XY · View button changes angle · Pinch to zoom'
+                : 'Tap to aim · Drag to orbit · Pinch to zoom'}
             </div>
             <div className="movement-hint">
-              <span>
-                <kbd>W</kbd>
-                <kbd>A</kbd>
-                <kbd>S</kbd>
-                <kbd>D</kbd> Move
-              </span>
-              <span>
-                <kbd>SPACE</kbd> Jump
-              </span>
-              <span>Drag to orbit · Scroll to zoom</span>
+              {hud.crane ? (
+                <>
+                  <span>
+                    <kbd>W</kbd>
+                    <kbd>A</kbd>
+                    <kbd>S</kbd>
+                    <kbd>D</kbd> XY
+                  </span>
+                  <span>
+                    <kbd>Q</kbd>
+                    <kbd>Z</kbd> Height
+                  </span>
+                  <span>
+                    <kbd>V</kbd> View · Scroll to zoom
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    <kbd>W</kbd>
+                    <kbd>A</kbd>
+                    <kbd>S</kbd>
+                    <kbd>D</kbd> Move
+                  </span>
+                  <span>
+                    <kbd>SPACE</kbd> Jump
+                  </span>
+                  <span>Drag to orbit · Scroll to zoom</span>
+                </>
+              )}
             </div>
           </div>
           <TouchControls
             disabled={controlsPaused || !!player?.down || !!player?.rescued}
             move={(vector) => scene.current?.setTouch(vector)}
             jump={() => scene.current?.jump()}
+            showJump={!hud.crane}
+            moveLabel={hud.crane ? 'CRANE XY' : 'MOVE'}
+            joystickLabel={
+              hud.crane
+                ? 'Crane XY joystick. Drag toward the target; release to stop.'
+                : undefined
+            }
           />
         </>
       )}
