@@ -52,7 +52,22 @@ const server = createServer(async (req, res) => {
         result = await handleVoicePeer(store, store, b);
         result.view.iceServers = [];
       } else if (req.url === '/api/party') {
-        if (
+        if (b.op === 'lobby_presence')
+          result = {
+            state: await party.updateLobbyPresence(
+              store,
+              b.code,
+              { id: b.playerId, token: b.token },
+              {
+                pose: b.pose,
+                browsing: b.browsing,
+                look: {},
+                fullGame: false,
+                accountId: null,
+              },
+            ),
+          };
+        else if (
           [
             'heartbeat',
             'briefing_ready',
