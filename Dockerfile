@@ -21,6 +21,7 @@ COPY --from=build /app/shared/challenges ./shared/challenges
 COPY --from=build /app/shared/accounts/server/crypto.ts ./shared/accounts/server/crypto.ts
 COPY --from=build /app/shared/rooms/identity.ts ./shared/rooms/identity.ts
 COPY --from=build /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=build /app/scripts/start-production.mjs ./scripts/start-production.mjs
 COPY --from=build /app/scripts/finalize-ranked.ts /app/scripts/review-ranked-run.ts ./scripts/
 EXPOSE 3000
-CMD ["sh", "-c", "node scripts/migrate.mjs && exec node node_modules/vinext/dist/cli.js start --hostname 0.0.0.0"]
+CMD ["node", "scripts/start-production.mjs"]

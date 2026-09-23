@@ -857,6 +857,27 @@ body:has(.party-game-frame) .controller-panel {
 .party-celebration {
   padding: 22px 0;
 }
+.party-share-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #b9d4c1;
+  border-radius: 20px;
+  background: #e9f3e6;
+}
+.party-share-card strong {
+  font-family: Fredoka, sans-serif;
+  font-size: 20px;
+}
+.party-share-card p {
+  margin: 6px 0 0;
+  color: #426957;
+  font-size: 13px;
+}
 .party-winner-line {
   text-align: center;
   font-family: Fredoka, sans-serif;

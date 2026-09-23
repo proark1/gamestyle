@@ -45,7 +45,7 @@ export default function StackChallengePanel({
     };
   } | null>(null);
   const [teamSize, setTeamSize] = useState(1);
-  const [scope, setScope] = useState<'players' | 'crews'>('players');
+  const [scope, setScope] = useState<'players' | 'mates' | 'crews'>('players');
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let active = true;
@@ -222,6 +222,13 @@ export default function StackChallengePanel({
           </button>
           <button
             type="button"
+            aria-pressed={scope === 'mates'}
+            onClick={() => setScope('mates')}
+          >
+            Crew mates
+          </button>
+          <button
+            type="button"
             aria-pressed={scope === 'crews'}
             onClick={() => setScope('crews')}
           >
@@ -263,36 +270,10 @@ export default function StackChallengePanel({
             <strong>#{board.myPlace}</strong>
           </p>
         )}
-        {board?.entries.length ? (
+        {(scope === 'mates' ? board?.crewMates : board?.entries)?.length ? (
           <ol className="stack-ranked-list">
-            {board.entries.map((entry) => (
-              <li key={entry.tag}>
-                <span>
-                  #{entry.place} {entry.tag}
-                  {entry.self
-                    ? scope === 'crews'
-                      ? ' · your crew'
-                      : ' · you'
-                    : ''}
-                </span>
-                <strong>{(entry.heightCm / 100).toFixed(2)} m</strong>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p>
-            No qualified {scope === 'crews' ? 'crew' : 'player'} tower yet. Be
-            first on the board.
-          </p>
-        )}
-        {!!oldBoard?.population && (
-          <details>
-            <summary>
-              Last week’s{' '}
-              {rankedData?.previous.finalized ? 'final' : 'provisional'} board
-            </summary>
-            <ol className="stack-ranked-list">
-              {oldBoard.entries.map((entry) => (
+            {(scope === 'mates' ? board?.crewMates : board?.entries)?.map(
+              (entry) => (
                 <li key={entry.tag}>
                   <span>
                     #{entry.place} {entry.tag}
@@ -304,7 +285,38 @@ export default function StackChallengePanel({
                   </span>
                   <strong>{(entry.heightCm / 100).toFixed(2)} m</strong>
                 </li>
-              ))}
+              ),
+            )}
+          </ol>
+        ) : (
+          <p>
+            {scope === 'mates'
+              ? 'No crew mate has a qualified tower yet.'
+              : `No qualified ${scope === 'crews' ? 'crew' : 'player'} tower yet. Be first on the board.`}
+          </p>
+        )}
+        {!!oldBoard?.population && (
+          <details>
+            <summary>
+              Last week’s{' '}
+              {rankedData?.previous.finalized ? 'final' : 'provisional'} board
+            </summary>
+            <ol className="stack-ranked-list">
+              {(scope === 'mates' ? oldBoard.crewMates : oldBoard.entries)?.map(
+                (entry) => (
+                  <li key={entry.tag}>
+                    <span>
+                      #{entry.place} {entry.tag}
+                      {entry.self
+                        ? scope === 'crews'
+                          ? ' · your crew'
+                          : ' · you'
+                        : ''}
+                    </span>
+                    <strong>{(entry.heightCm / 100).toFixed(2)} m</strong>
+                  </li>
+                ),
+              )}
             </ol>
           </details>
         )}

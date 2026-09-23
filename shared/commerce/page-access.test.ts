@@ -11,7 +11,7 @@ void test('every game route applies the dormant server-side access boundary', ()
     const source = readFileSync(route, 'utf8');
     assert.match(
       source,
-      new RegExp(`gamePageAccess\\(['\"]${game}['\"]\\)`),
+      new RegExp(`gamePageAccess\\(['"]${game}['"]\\)`),
       `${route} can bypass admission when the gate is activated`,
     );
   }

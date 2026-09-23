@@ -140,6 +140,7 @@ export type RankedBoard = {
   teamSize: number;
   population: number;
   entries: RankedEntry[];
+  crewMates?: RankedEntry[];
   myPlace: number | null;
 };
 
@@ -149,6 +150,24 @@ async function board(
   accountId: string,
 ): Promise<RankedBoard[]> {
   const results: RankedBoard[] = [];
+  const mates = await db
+    .prepare(`SELECT DISTINCT m.account_id AS accountId FROM crew_members m
+      JOIN crews c ON c.id = m.crew_id AND c.archived IS NULL
+      WHERE m.crew_id IN (SELECT crew_id FROM crew_members WHERE account_id = ?)`)
+    .bind(accountId)
+    .all<{ accountId: string }>();
+  const mateIds = new Set(mates.results.map((row) => row.accountId));
+  const entry = (row: {
+    tag: string;
+    heightCm: number;
+    place: number;
+    accountId: string;
+  }): RankedEntry => ({
+    tag: row.tag,
+    heightCm: row.heightCm,
+    place: row.place,
+    self: row.accountId === accountId,
+  });
   for (let teamSize = 1; teamSize <= 4; teamSize++) {
     const rows = await db
       .prepare(`WITH best AS (
@@ -169,12 +188,10 @@ async function board(
     results.push({
       teamSize,
       population: rows.results.length,
-      entries: rows.results.slice(0, 20).map((row) => ({
-        tag: row.tag,
-        heightCm: row.heightCm,
-        place: row.place,
-        self: row.accountId === accountId,
-      })),
+      entries: rows.results.slice(0, 20).map(entry),
+      crewMates: rows.results
+        .filter((row) => mateIds.has(row.accountId))
+        .map(entry),
       myPlace:
         rows.results.find((row) => row.accountId === accountId)?.place ?? null,
     });

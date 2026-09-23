@@ -10,6 +10,7 @@ import { getPartyGameInfo } from '@/platform/party/playlist';
 import type { PartyAction, PartyRoomState } from '@/platform/party/types';
 import type { Identity } from './PartyClient';
 import PartyPodium from './PartyPodium';
+import { partyAwards, sharePartyCard } from './party-share';
 import PartyPlaza from './PartyPlaza';
 import CrewPanel from '@/shared/crews/CrewPanel';
 import StackChallengePanel from '@/shared/challenges/StackChallengePanel';
@@ -557,7 +558,8 @@ export function PartyFinale({
   act,
   onExit,
 }: ScreenProps & { onExit: () => void }) {
-  const { text } = usePartyText();
+  const { de, text } = usePartyText();
+  const [shareError, setShareError] = useState(false);
   const humans = room.players.filter((p) => !p.isBot);
   const completed = room.roundResults.filter(
     (r) =>
@@ -579,6 +581,39 @@ export function PartyFinale({
         practice={room.practice}
       />
       <PartyStandings room={room} playerId={playerId} />
+      {room.roundResults.length > 0 && (
+        <div className="party-share-card">
+          <div>
+            <strong>{text('Crew moments', 'Crew-Momente')}</strong>
+            <p>
+              {partyAwards(room, de)
+                .map(
+                  (award) =>
+                    `${room.players.find((player) => player.id === award.playerId)?.name}: ${award.label}`,
+                )
+                .join(' · ')}
+            </p>
+          </div>
+          <button
+            className="party-btn party-btn-secondary"
+            onClick={() => {
+              setShareError(false);
+              void sharePartyCard(room, de).catch(() => setShareError(true));
+            }}
+          >
+            <Share2 size={17} />
+            {text('Share group image', 'Gruppenbild teilen')}
+          </button>
+          {shareError && (
+            <p role="alert">
+              {text(
+                'Could not create the image. Try again.',
+                'Bild konnte nicht erstellt werden. Versuche es erneut.',
+              )}
+            </p>
+          )}
+        </div>
+      )}
       {completed > 0 && (
         <p className="party-highlight">
           {text(

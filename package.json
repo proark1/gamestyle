@@ -16,7 +16,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "build:railway": "node scripts/build-node.mjs",
-    "start:railway": "node scripts/migrate.mjs && vinext start --hostname 0.0.0.0",
+    "start:railway": "node scripts/start-production.mjs",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
     "format": "oxfmt",

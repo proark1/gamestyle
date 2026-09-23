@@ -390,6 +390,11 @@ void test('one persistent crew gets one best run per team size with only its sta
   await play(3.5, 1);
   await play(6.25, 2);
   const view = await readRankedStack(f.db, f.users[0], NOW);
+  assert.equal(view.boards[1].crewMates?.length, 2);
+  assert.deepEqual(
+    view.boards[1].crewMates?.map((entry) => entry.place),
+    [1, 1],
+  );
   assert.equal(view.crewBoards[1].population, 1);
   assert.equal(view.crewBoards[1].entries[0].heightCm, 625);
   assert.equal(view.crewBoards[1].entries[0].self, true);
@@ -405,6 +410,11 @@ void test('one persistent crew gets one best run per team size with only its sta
     f.users[1],
     { op: 'leave', crewId: crew.id },
     NOW + 2000,
+  );
+  assert.equal(
+    (await readRankedStack(f.db, f.users[1], NOW + 2000)).boards[1].crewMates
+      ?.length,
+    0,
   );
   assert.equal(
     (await readRankedStack(f.db, f.users[1], NOW + 2000)).crewBoards[1].myPlace,
