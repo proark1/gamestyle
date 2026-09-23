@@ -1,7 +1,7 @@
 import { box, beam, label } from '../../shared/rendering/primitives';
 import * as T from 'three';
 import { GOAL, ITEMS, type Kind } from './types';
-import { CRANE, RESCUE_ENTRY_WIDTH, SCENERY, salvageShapes } from './geometry';
+import { RESCUE_ENTRY_WIDTH, SCENERY, salvageShapes } from './geometry';
 import { islandCoast } from './coast';
 export function junk(kind: Kind) {
   const g = new T.Group();
@@ -33,43 +33,6 @@ export function junk(kind: Kind) {
 
   return g;
 }
-export function craneRig() {
-  const g = new T.Group();
-  const { mastX, mastZ, boomY, frameY, slingY } = CRANE;
-  const distance = Math.hypot(mastX, mastZ);
-  const apex = [mastX, boomY + 2, mastZ];
-  for (let y = 0; y < boomY; y += 1.4)
-    beam(
-      g,
-      [6.9, y, mastZ],
-      [8.8, Math.min(y + 1.4, boomY), mastZ],
-      0.1,
-      '#d5a33c',
-    );
-  beam(g, [mastX, boomY, mastZ], apex, 0.16, '#d5a33c');
-  for (const reach of [-1, distance + 1.5])
-    beam(
-      g,
-      [(reach * mastX) / distance, boomY, (reach * mastZ) / distance],
-      apex,
-      0.12,
-      '#c39938',
-    );
-  const cable = (a: number[], b: number[]) => {
-    const mesh = beam(g, a, b, 0.07, '#526c60');
-    mesh.name = 'rescue-cable';
-  };
-  cable([0, boomY, 0], [0, slingY, 0]);
-  for (const x of [-2, 2]) {
-    for (const z of [-2, 2]) {
-      cable([0, slingY, 0], [x, frameY, z]);
-      cable([x, frameY, z], [x, GOAL, z]);
-      box(g, [0.2, 0.08, 0.2], [x, GOAL + 0.04, z], '#526c60');
-    }
-  }
-  return g;
-}
-
 export function island() {
   const g = islandCoast();
   for (const shape of SCENERY) {
@@ -84,9 +47,6 @@ export function island() {
   const sign = label('SALVAGE CO.', '#f3d783', '#395347', 3);
   sign.position.set(-7, 3.25, -6);
   g.add(sign);
-
-  g.add(craneRig());
-  box(g, [0.85, 0.6, 0.1], [7.8, 14.9, -5.35], '#527b73');
 
   // Contrasting thresholds and inward chevrons make the landable deck and
   // the openings legible when approaching from the isometric camera.

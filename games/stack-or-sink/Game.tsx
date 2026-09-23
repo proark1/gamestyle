@@ -43,6 +43,9 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { act, createPlayer, freshWorld, tick } from './simulation';
+import { topOf } from './physics';
+import { FLOOR } from './geometry';
+import { CraneMap } from './CraneMap';
 import { Connection, requestRoom } from './connection';
 import { COLORS } from '../../shared/rendering/palette';
 import {
@@ -84,6 +87,9 @@ const INITIAL_HUD: Hud = {
   height: 0,
   crane: false,
   craneAngle: false,
+  craneBottom: null,
+  supportTop: null,
+  destination: null,
 };
 const clock = (seconds: number) =>
   `${Math.floor(Math.max(0, seconds) / 60)}:${String(Math.floor(Math.max(0, seconds) % 60)).padStart(2, '0')}`;
@@ -253,7 +259,11 @@ export default function Game() {
                 previous.placementError === h.placementError &&
                 Math.abs(previous.height - h.height) < 0.1 &&
                 previous.crane === h.crane &&
-                previous.craneAngle === h.craneAngle
+                previous.craneAngle === h.craneAngle &&
+                previous.craneBottom === h.craneBottom &&
+                previous.supportTop === h.supportTop &&
+                previous.destination?.x === h.destination?.x &&
+                previous.destination?.z === h.destination?.z
                   ? previous
                   : h,
               ),
@@ -921,7 +931,7 @@ export default function Game() {
               }}
               aria-label={
                 hud.crane
-                  ? `Switch to ${hud.craneAngle ? 'top' : 'angled'} crane view`
+                  ? `Switch to ${hud.craneAngle ? 'work' : 'overview'} crane view`
                   : 'Toggle yard overview'
               }
               aria-pressed={hud.crane ? hud.craneAngle : overview}
@@ -944,7 +954,7 @@ export default function Game() {
             </button>
             <span className={hud.crane ? 'crane-view-label' : ''}>
               {hud.crane ? (
-                `${hud.craneAngle ? 'Angle' : 'Top'} view`
+                `${hud.craneAngle ? 'Overview' : 'Work'} view`
               ) : (
                 <>
                   View <kbd>V</kbd>
@@ -952,6 +962,50 @@ export default function Game() {
               )}
             </span>
           </div>
+          {hud.crane && world.crane.piece && (
+            <div className="crane-survey">
+              <CraneMap
+                pieces={world.pieces}
+                cargo={world.crane.piece}
+                position={{ x: world.crane.x, z: world.crane.z }}
+                destination={hud.destination}
+                onTarget={(point) => scene.current?.setCraneDestination(point)}
+              />
+              <div
+                className="crane-height"
+                role="status"
+                aria-label="Crane height above support"
+              >
+                <span className="crane-height-title">HEIGHT</span>
+                <strong>
+                  {hud.craneBottom === null || hud.supportTop === null
+                    ? '—'
+                    : `${Math.max(0, hud.craneBottom - hud.supportTop).toFixed(1)} m`}
+                </strong>
+                <span>clearance</span>
+                <div>
+                  <span>Load bottom</span>
+                  <b>{hud.craneBottom?.toFixed(1) ?? '—'} m</b>
+                </div>
+                <div>
+                  <span>Support top</span>
+                  <b>{hud.supportTop?.toFixed(1) ?? '—'} m</b>
+                </div>
+                <div className="crane-stack-height">
+                  <span>Highest box</span>
+                  <b>
+                    {Math.max(
+                      0,
+                      ...world.pieces
+                        .filter((piece) => !piece.heldBy)
+                        .map((piece) => topOf(piece) - FLOOR),
+                    ).toFixed(1)}{' '}
+                    m
+                  </b>
+                </div>
+              </div>
+            </div>
+          )}
           {world.phase === 'lobby' && (
             <section className="lobby-banner">
               <div>
@@ -1028,18 +1082,27 @@ export default function Game() {
               <div className="crane-panel">
                 <Construction size={29} />
                 <div>
-                  <strong>Crane · XY positioning</strong>
+                  <strong>Cargo crane</strong>
                   <span>
                     {touchMode
                       ? notice ||
-                        'Drag XY joystick · ↑ ↓ height · Release below'
-                      : 'WASD / arrows move XY · Q / Z change height · V changes view'}
+                        'Tap XY map or use joystick · Hold Up / Down · Release below'
+                      : 'Click XY map or use WASD / arrows · Q / Z height · V view'}
                   </span>
                 </div>
                 <button
-                  onClick={() => {
+                  onPointerDown={(event) => {
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    scene.current?.setCraneLift(1);
+                    void action({ type: 'crane-move', x: 0, z: 0, y: 0.6 });
                     void triggerHaptic('light');
-                    void action({ type: 'crane-move', x: 0, z: 0, y: 1 });
+                  }}
+                  onPointerUp={() => scene.current?.setCraneLift(0)}
+                  onPointerCancel={() => scene.current?.setCraneLift(0)}
+                  onLostPointerCapture={() => scene.current?.setCraneLift(0)}
+                  onClick={(event) => {
+                    if (event.detail === 0)
+                      void action({ type: 'crane-move', x: 0, z: 0, y: 1 });
                   }}
                   aria-label="Raise crane"
                 >
@@ -1047,9 +1110,18 @@ export default function Game() {
                   <b>Up</b>
                 </button>
                 <button
-                  onClick={() => {
+                  onPointerDown={(event) => {
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    scene.current?.setCraneLift(-1);
+                    void action({ type: 'crane-move', x: 0, z: 0, y: -0.6 });
                     void triggerHaptic('light');
-                    void action({ type: 'crane-move', x: 0, z: 0, y: -1 });
+                  }}
+                  onPointerUp={() => scene.current?.setCraneLift(0)}
+                  onPointerCancel={() => scene.current?.setCraneLift(0)}
+                  onLostPointerCapture={() => scene.current?.setCraneLift(0)}
+                  onClick={(event) => {
+                    if (event.detail === 0)
+                      void action({ type: 'crane-move', x: 0, z: 0, y: -1 });
                   }}
                   aria-label="Lower crane"
                 >

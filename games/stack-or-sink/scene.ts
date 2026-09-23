@@ -2,6 +2,12 @@ import * as T from 'three';
 import { label, disposeGeometry } from '../../shared/rendering/primitives';
 import { island, junk } from './objects';
 import { LoadCrane } from './load-crane';
+import {
+  craneRoute,
+  craneStep,
+  craneTravelHeight,
+  type CranePoint,
+} from './crane-guide';
 import { FLOOR } from './geometry';
 import { gameAvatar as worker } from '../../shared/rendering/game-avatar';
 import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
@@ -9,7 +15,7 @@ import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { poseStacker } from './avatar';
 import { previewPieces } from './preview';
 import { emptyInput, movePlayer, nearestPiece, placement } from './simulation';
-import { orientation, topOf } from './physics';
+import { cranePoseError, orientation, topOf } from './physics';
 import { YardGesture } from '../../shared/input/gestures';
 import { IslandSea, disposeCoastalMaterials } from './coast';
 import { FrameStats } from '../../shared/rendering/frame-stats';
@@ -42,6 +48,9 @@ export type Hud = {
   height: number;
   crane: boolean;
   craneAngle: boolean;
+  craneBottom: number | null;
+  supportTop: number | null;
+  destination: CranePoint | null;
 };
 type Callbacks = {
   input: (i: Input) => void;
@@ -111,6 +120,14 @@ export class GameScene {
   loadCrane = new LoadCrane();
   craneView = false;
   craneAngle = false;
+  craneBottom: number | null = null;
+  supportTop: number | null = null;
+  craneDestination: CranePoint | null = null;
+  craneWaypoints: CranePoint[] | null = null;
+  touchLift = 0;
+  destinationPosition: (CranePoint & { y: number; loadY: number }) | null =
+    null;
+  destinationProgress = 0;
   craneTarget = new T.Group();
   craneTargetRing = new T.Mesh(
     new T.RingGeometry(0.77, 0.88, 48),
@@ -184,6 +201,7 @@ export class GameScene {
     this.craneTargetLine.frustumCulled = false;
     this.craneTarget.add(this.craneTargetRing, this.craneTargetLine);
     this.craneTarget.visible = false;
+    this.craneDestination = null;
     this.scene.add(this.craneTarget);
     this.resize = new ResizeObserver(() => {
       this.projectionDirty = true;
@@ -377,6 +395,7 @@ export class GameScene {
     this.keys.clear();
     this.touch = { x: 0, z: 0 };
     this.jumpHeld = false;
+    this.touchLift = 0;
     for (const id of this.gesture.contacts.keys())
       if (this.host.hasPointerCapture(id)) this.host.releasePointerCapture(id);
     this.gesture.clear();
@@ -496,6 +515,16 @@ export class GameScene {
   setCraneAngle(angle: boolean) {
     this.craneAngle = angle;
     this.projectionDirty = true;
+  }
+  setCraneDestination(point: CranePoint | null) {
+    this.craneDestination = point;
+    this.craneWaypoints = null;
+    this.destinationPosition = null;
+    this.destinationProgress = performance.now();
+  }
+  setCraneLift(direction: number) {
+    this.touchLift = direction;
+    if (direction) this.setCraneDestination(null);
   }
   zoomBy(amount: number) {
     this.zoom = clamp(this.zoom + amount, 0.6, 1.7);
@@ -742,6 +771,8 @@ export class GameScene {
           0.55,
     );
     const y = landing?.point.y ?? FLOOR;
+    this.craneBottom = bottom;
+    this.supportTop = y;
     const footprint = dimensions(piece);
     this.craneTargetRing.position.set(x, y + 0.055, z);
     this.craneTargetRing.scale.setScalar(
@@ -773,7 +804,9 @@ export class GameScene {
             ? 20
             : 17
           : this.craneView
-            ? Math.max(14, 11 / aspect)
+            ? this.craneAngle
+              ? Math.max(21, 16 / aspect)
+              : Math.max(11, 7.8 / aspect)
             : this.overview
               ? Math.max(22, 22 / aspect)
               : aspect < 1
@@ -794,7 +827,16 @@ export class GameScene {
     const desired = this.menu
       ? new T.Vector3(aspect > 1.1 ? -5 : 0, 4, 0)
       : this.craneView
-        ? new T.Vector3(0, 7, 0)
+        ? this.craneAngle
+          ? new T.Vector3(0, 7, 0)
+          : new T.Vector3(
+              this.world?.world.crane.x ?? 0,
+              Math.max(
+                2.5,
+                ((this.world?.world.crane.y ?? 3) + (this.supportTop ?? 0)) / 2,
+              ),
+              this.world?.world.crane.z ?? 0,
+            )
         : this.overview
           ? new T.Vector3(0, 7, 0)
           : new T.Vector3(
@@ -813,11 +855,11 @@ export class GameScene {
       );
     }
     if (this.craneView) {
-      this.camera.up.set(0, 0, -1);
+      this.camera.up.set(0, 1, 0);
       this.camera.position.set(
         this.target.x,
-        this.target.y + (this.craneAngle ? 34 : 58),
-        this.target.z + (this.craneAngle ? 42 : 0.01),
+        this.target.y + (this.craneAngle ? 32 : 23),
+        this.target.z + (this.craneAngle ? 48 : 35),
       );
       this.camera.lookAt(this.target);
       return;
@@ -871,9 +913,12 @@ export class GameScene {
         now - this.lastCrane > 160
       ) {
         const y =
-          (this.keys.has('KeyQ') ? 1 : 0) - (this.keys.has('KeyZ') ? 1 : 0);
+          (this.keys.has('KeyQ') ? 1 : 0) -
+          (this.keys.has('KeyZ') ? 1 : 0) +
+          this.touchLift;
         const crane = this.craneInput();
         if (Math.hypot(crane.x, crane.z) + Math.abs(y) > 0.1) {
+          this.setCraneDestination(null);
           this.callbacks.action({
             type: 'crane-move',
             x: crane.x * 0.55,
@@ -881,6 +926,75 @@ export class GameScene {
             y: y * 0.6,
           });
           this.lastCrane = now;
+        } else if (this.craneDestination) {
+          const load = world.pieces.find(
+            (piece) => piece.id === world.crane.piece,
+          );
+          const current = {
+            x: world.crane.x,
+            z: world.crane.z,
+            y: world.crane.y,
+            loadY: load?.y ?? world.crane.y,
+          };
+          const safeY = craneTravelHeight(current.y, world.bestHeight);
+          if (!this.craneWaypoints && load) {
+            this.craneWaypoints = craneRoute(
+              current,
+              this.craneDestination,
+              (point) =>
+                !cranePoseError(world, {
+                  ...load,
+                  x: point.x,
+                  y: safeY,
+                  z: point.z,
+                }),
+            );
+            if (!this.craneWaypoints) {
+              this.setCraneDestination(null);
+              this.callbacks.error(
+                'That crane destination is blocked. Choose another point.',
+              );
+            }
+          }
+          while (
+            this.craneWaypoints?.length &&
+            !craneStep(current, this.craneWaypoints[0])
+          )
+            this.craneWaypoints.shift();
+          const waypoint = this.craneWaypoints?.[0];
+          const step = waypoint ? craneStep(current, waypoint) : null;
+          if (this.craneDestination && !step) this.setCraneDestination(null);
+          else if (this.craneDestination && step) {
+            if (
+              !this.destinationPosition ||
+              Math.hypot(
+                current.x - this.destinationPosition.x,
+                current.z - this.destinationPosition.z,
+                current.y - this.destinationPosition.y,
+                current.loadY - this.destinationPosition.loadY,
+              ) > 0.04
+            ) {
+              this.destinationPosition = current;
+              this.destinationProgress = now;
+            } else if (now - this.destinationProgress > 2200) {
+              this.setCraneDestination(null);
+              this.callbacks.error(
+                'The load is blocked. Raise it or choose another route.',
+              );
+            }
+            if (this.craneDestination) {
+              if (safeY - current.y > 0.12)
+                this.callbacks.action({
+                  type: 'crane-move',
+                  x: 0,
+                  z: 0,
+                  y: Math.min(0.6, safeY - current.y),
+                });
+              else if (current.loadY >= safeY - 0.2)
+                this.callbacks.action({ type: 'crane-move', ...step, y: 0 });
+              this.lastCrane = now;
+            }
+          }
         }
       }
       for (const p of world.pieces) {
@@ -975,6 +1089,11 @@ export class GameScene {
         this.loadCrane.update(null);
         this.craneTarget.visible = false;
       }
+      if (world.crane.owner !== this.localId) {
+        this.craneDestination = null;
+        this.craneBottom = null;
+        this.supportTop = null;
+      }
       if (now - this.lastHud > 130) {
         this.callbacks.hud({
           target: item ? ITEMS[item.kind].name : '',
@@ -984,6 +1103,9 @@ export class GameScene {
           height: this.predicted.y - 0.13,
           crane: world.crane.owner === this.localId,
           craneAngle: this.craneAngle,
+          craneBottom: this.craneBottom,
+          supportTop: this.supportTop,
+          destination: this.craneDestination,
         });
         this.lastHud = now;
       }

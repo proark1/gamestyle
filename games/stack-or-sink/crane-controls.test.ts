@@ -25,12 +25,14 @@ void test('crane XY follows the screen axes regardless of the previous orbit', (
   assert.ok(Math.abs(Math.hypot(joystick.x, joystick.z) - 1) < 1e-6);
 });
 
-void test('both crane views keep right as +X and up as -Z', () => {
+void test('oblique work and overview views preserve XY directions on desktop and mobile', () => {
   const scene = Object.create(GameScene.prototype) as GameScene;
   scene.host = { clientWidth: 1200, clientHeight: 800 } as HTMLElement;
   scene.renderer = { setSize() {} } as unknown as T.WebGLRenderer;
   scene.camera = new T.OrthographicCamera();
-  scene.world = { world: { crane: { owner: 'me' } } } as GameScene['world'];
+  scene.world = {
+    world: { crane: { owner: 'me', x: 2, y: 5, z: -1 } },
+  } as GameScene['world'];
   scene.localId = 'me';
   scene.predicted = { x: 0, y: 0, z: 0 } as GameScene['predicted'];
   scene.target = new T.Vector3();
@@ -42,14 +44,26 @@ void test('both crane views keep right as +X and up as -Z', () => {
   scene.craneAngle = false;
   scene.projectionDirty = true;
 
-  for (const angle of [false, true]) {
-    scene.updateCamera(1);
-    scene.setCraneAngle(angle);
-    scene.updateCamera(1);
-    const right = new T.Vector3(1, 0, 0).project(scene.camera);
-    const up = new T.Vector3(0, 0, -1).project(scene.camera);
-    const center = new T.Vector3().project(scene.camera);
-    assert.ok(right.x > center.x, 'world +X remains screen right');
-    assert.ok(up.y > center.y, 'world -Z remains screen up');
+  for (const [width, height] of [
+    [1200, 800],
+    [390, 844],
+  ]) {
+    Object.assign(scene.host, { clientWidth: width, clientHeight: height });
+    scene.projectionDirty = true;
+    for (const angle of [false, true]) {
+      scene.updateCamera(1);
+      scene.setCraneAngle(angle);
+      scene.updateCamera(1);
+      const right = new T.Vector3(1, 0, 0).project(scene.camera);
+      const up = new T.Vector3(0, 0, -1).project(scene.camera);
+      const center = new T.Vector3().project(scene.camera);
+      assert.ok(right.x > center.x, 'world +X remains screen right');
+      assert.ok(up.y > center.y, 'world -Z remains screen up');
+      assert.ok(
+        scene.camera.position.z > scene.target.z + 20,
+        'view remains oblique',
+      );
+      assert.equal(scene.target.x, angle ? 0 : 2);
+    }
   }
 });

@@ -557,6 +557,34 @@
     min-height: 44px;
     padding: 5px;
   }
+  .game-shell .crane-survey {
+    top: 196px;
+    right: 10px;
+    width: 144px;
+    padding: 7px;
+  }
+  .game-shell .crane-map-heading strong {
+    font-size: 13px;
+  }
+  .game-shell .crane-map-field {
+    margin: 5px 0 3px;
+  }
+  .game-shell .crane-height {
+    margin-top: 5px;
+    padding-top: 5px;
+  }
+  .game-shell .crane-height > strong {
+    font-size: 23px;
+  }
+  .game-shell:has(.crane-survey) .camera-tools {
+    top: auto;
+    right: 12px;
+    bottom: calc(219px + var(--edge-bottom));
+    z-index: 3;
+  }
+  .game-shell:has(.crane-survey) .camera-tools .touch-only {
+    display: none;
+  }
   .game-dialog {
     padding: 24px !important;
     max-width: min(555px, calc(100% - 24px)) !important;

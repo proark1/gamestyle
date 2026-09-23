@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import { LoadCrane } from './load-crane';
-import { CRANE, FLOOR, LOAD_CRANE, SCENERY } from './geometry';
+import { FLOOR, LOAD_CRANE, SCENERY } from './geometry';
 import { act, createPlayer, freshWorld, movePlayer, tick } from './simulation';
 import { poseError } from './physics';
 import { GOAL, ITEMS, type Piece } from './types';
@@ -82,18 +82,18 @@ void test('an empty cargo crane retains a connected retracted hook after releasi
   close(rig.hook.position.x, 8);
   close(rig.hook.position.z, -8);
   assert.ok(rig.rope.scale.y > 0 && rig.rope.scale.y < 1);
-  assert.ok(rig.hook.position.y > CRANE.boomY + 2);
+  assert.ok(rig.hook.position.y > GOAL + 2);
   dispose(rig);
 });
 
-void test('the cargo jib clears the fixed rescue crane and remains joined to its own mast', () => {
+void test('the cargo jib clears the rescue deck and remains joined to its own mast', () => {
   const rig = new LoadCrane();
   for (const z of [-8, 0, 8]) {
     rig.update({ x: 8, z, top: 4 });
     rig.updateMatrixWorld(true);
     assert.ok(
-      new T.Box3().setFromObject(rig.jib).min.y > CRANE.boomY + 2,
-      'both jibs can pass above one another',
+      new T.Box3().setFromObject(rig.jib).min.y > GOAL + 2,
+      'cargo jib clears the rescue deck',
     );
     const hits = new T.Raycaster(
       new T.Vector3(LOAD_CRANE.mastX, LOAD_CRANE.boomY + 0.4, LOAD_CRANE.mastZ),

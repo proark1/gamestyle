@@ -2,7 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as C from 'cannon-es';
 import { createPlayer, freshWorld, movePlayer, tick } from './simulation';
-import { CRANE, FLOOR, PLAYER_HEIGHT, SCENERY } from './geometry';
+import {
+  FLOOR,
+  PLAYER_HEIGHT,
+  RESCUE_SUPPORT_OFFSET,
+  SCENERY,
+} from './geometry';
 import { simulationPhysics, supportSurface } from './physics';
 import { GOAL, ITEMS, type Input } from './types';
 
@@ -73,31 +78,29 @@ void test('rescue deck supports a falling player at its visible top', () => {
   assert.equal(p.grounded, true);
 });
 
-void test('the rotated crane boom has matching placement and rigid-body collision surfaces', () => {
+void test('fixed rescue supports have matching placement and rigid-body surfaces', () => {
   const { w } = setup();
   const physics = simulationPhysics(w);
-  const expectedTop = CRANE.boomY + 0.19;
-  for (const fraction of [0, 0.25, 0.5]) {
-    const x = CRANE.mastX * fraction,
-      z = CRANE.mastZ * fraction;
+  for (const x of [-RESCUE_SUPPORT_OFFSET, RESCUE_SUPPORT_OFFSET]) {
+    const z = -x;
     assert.ok(
-      Math.abs(supportSurface(w, x, z, 0.01, 0.01, 21) - expectedTop) < 0.001,
+      Math.abs(supportSurface(w, x, z, 0.01, 0.01, GOAL + 1) - GOAL) < 0.001,
     );
     const hit = new C.RaycastResult();
     assert.ok(
       physics.engine.raycastClosest(
-        new C.Vec3(x, 21, z),
-        new C.Vec3(x, 17.5, z),
+        new C.Vec3(x, GOAL + 1, z),
+        new C.Vec3(x, GOAL - 1, z),
         {},
         hit,
       ),
     );
-    assert.ok(Math.abs(hit.hitPointWorld.y - expectedTop) < 0.001);
+    assert.ok(Math.abs(hit.hitPointWorld.y - GOAL) < 0.001);
   }
   assert.equal(
-    supportSurface(w, -4, -6.5, 0.01, 0.01, 21),
+    supportSurface(w, 4, -6.5, 0.01, 0.01, GOAL + 2),
     FLOOR,
-    'no invisible collision at the old boom position',
+    'no invisible surface from the removed rescue boom',
   );
 });
 

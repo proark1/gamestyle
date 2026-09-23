@@ -42,23 +42,14 @@ export const RESCUE_ENTRY_WIDTH = 1.8;
 const rescueRailLength = (4.5 - RESCUE_ENTRY_WIDTH) / 2;
 const rescueRailOffset = (RESCUE_ENTRY_WIDTH + rescueRailLength) / 2;
 
-export const CRANE = {
-  mastX: 7.85,
-  mastZ: -6.5,
-  boomY: GOAL + 4.3,
-  frameY: GOAL + 2.9,
-  slingY: GOAL + 3.8,
-};
-// The cargo crane slews independently above the fixed rescue crane. Its mast
-// sits at the left edge and its trolley can reach the whole cargo work area.
+export const RESCUE_SUPPORT_OFFSET = 2.27;
+// The cargo crane sits at the left edge and its trolley reaches the whole yard.
 export const LOAD_CRANE = {
   mastX: -9.3,
   mastZ: 0,
   boomY: GOAL + 7.5,
   reach: 20.5,
 };
-const mastDistance = Math.hypot(CRANE.mastX, CRANE.mastZ);
-const boomCenter = (mastDistance + 1.5 - 1) / 2;
 export type SceneryShape = ShapeBox & { rotationY?: number };
 
 export const SCENERY: SceneryShape[] = [
@@ -91,55 +82,10 @@ export const SCENERY: SceneryShape[] = [
     ),
     id: 'load-crane-turntable',
   },
-  ...[6.9, 8.8].map((x) => ({
-    ...shape(
-      [0.24, CRANE.boomY, 0.24],
-      [x, CRANE.boomY / 2, CRANE.mastZ],
-      '#d5a33c',
-    ),
-    id: 'crane-post',
+  ...[-RESCUE_SUPPORT_OFFSET, RESCUE_SUPPORT_OFFSET].map((x) => ({
+    ...shape([0.16, GOAL, 0.16], [x, GOAL / 2, -x], '#668579'),
+    id: 'rescue-support',
   })),
-  {
-    ...shape(
-      [2.3, 0.3, 1.9],
-      [CRANE.mastX, CRANE.boomY, CRANE.mastZ],
-      '#d5a33c',
-    ),
-    id: 'crane-turntable',
-  },
-  {
-    ...shape(
-      [mastDistance + 2.5, 0.38, 0.5],
-      [
-        (boomCenter * CRANE.mastX) / mastDistance,
-        CRANE.boomY,
-        (boomCenter * CRANE.mastZ) / mastDistance,
-      ],
-      '#e5b343',
-    ),
-    rotationY: Math.atan2(-CRANE.mastZ, CRANE.mastX),
-    id: 'crane-beam',
-  },
-  // A spreader frame gives all four corner cables a real attachment while
-  // keeping the center entrances and standing headroom clear.
-  ...[-2, 2].flatMap((edge) => [
-    {
-      ...shape([4.2, 0.16, 0.16], [0, CRANE.frameY, edge], '#c09236'),
-      id: 'rescue-spreader',
-    },
-    {
-      ...shape([0.16, 0.16, 4.2], [edge, CRANE.frameY, 0], '#c09236'),
-      id: 'rescue-spreader',
-    },
-  ]),
-  {
-    ...shape([0.28, 0.28, 0.28], [0, CRANE.slingY, 0], '#526c60'),
-    id: 'rescue-hoist-joint',
-  },
-  {
-    ...shape([1.4, 1.2, 1.4], [7.8, 14.7, -6.1], '#d1a74f', true),
-    id: 'crane-cabin',
-  },
   {
     ...shape([4.7, 0.28, 4.7], [0, GOAL - 0.14, 0], '#f0ce75'),
     id: 'rescue-platform',

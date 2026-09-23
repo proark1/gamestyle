@@ -611,6 +611,128 @@
   font-weight: 700;
   line-height: 1.1;
 }
+:where(body:not(:has(.handwerker))) .crane-survey {
+  position: absolute;
+  top: 190px;
+  right: 27px;
+  width: 190px;
+  padding: 10px;
+  border: 2px solid #dab268;
+  border-radius: 15px;
+  background: #fff6dfed;
+  box-shadow: 0 8px 22px #263c3029;
+  color: #264338;
+}
+:where(body:not(:has(.handwerker))) .crane-map-heading,
+:where(body:not(:has(.handwerker))) .crane-map-foot,
+:where(body:not(:has(.handwerker))) .crane-height > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+:where(body:not(:has(.handwerker))) .crane-map-heading strong {
+  font:
+    600 15px/1 'Fredoka',
+    sans-serif;
+}
+:where(body:not(:has(.handwerker))) .crane-map-heading span,
+:where(body:not(:has(.handwerker))) .crane-map-foot {
+  color: #687968;
+  font-size: 10px;
+  font-weight: 700;
+}
+:where(body:not(:has(.handwerker))) .crane-map-field {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  margin: 8px 0 5px;
+  padding: 0;
+  border: 2px solid #9aaf9a;
+  border-radius: 9px;
+  cursor: crosshair;
+  background-color: #cdddc6;
+  background-image:
+    linear-gradient(#a8bea780 1px, transparent 1px),
+    linear-gradient(90deg, #a8bea780 1px, transparent 1px);
+  background-size: 25% 25%;
+  touch-action: manipulation;
+}
+:where(body:not(:has(.handwerker))) .crane-map-field > span {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+:where(body:not(:has(.handwerker))) .crane-map-deck {
+  left: 35%;
+  top: 35%;
+  width: 30%;
+  height: 30%;
+  border: 2px solid #6b8a81;
+  background: #e5e3ce;
+}
+:where(body:not(:has(.handwerker))) .crane-map-piece {
+  transform: translate(-50%, -50%);
+  min-width: 6px;
+  min-height: 6px;
+  border: 1px solid #765e43;
+  border-radius: 2px;
+  background: #b98953;
+  box-shadow: 0 1px 2px #3e4c3a55;
+}
+:where(body:not(:has(.handwerker))) .crane-map-load {
+  width: 15px;
+  height: 15px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #fff7d9;
+  border-radius: 50%;
+  background: #d4703b;
+  box-shadow: 0 0 0 2px #85452b;
+}
+:where(body:not(:has(.handwerker))) .crane-map-destination {
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 2px solid #0f706c;
+  background: #5fc0ac80;
+}
+:where(body:not(:has(.handwerker))) .crane-height {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #d7c59d;
+}
+:where(body:not(:has(.handwerker))) .crane-height-title {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+:where(body:not(:has(.handwerker))) .crane-height > strong {
+  display: block;
+  font:
+    600 29px/1 'Fredoka',
+    sans-serif;
+  color: #0f706c;
+}
+:where(body:not(:has(.handwerker))) .crane-height > span:nth-of-type(2) {
+  display: block;
+  margin: 0 0 8px;
+  color: #5d756b;
+  font-size: 10px;
+}
+:where(body:not(:has(.handwerker))) .crane-height > div {
+  font-size: 10px;
+  padding: 3px 0;
+}
+:where(body:not(:has(.handwerker))) .crane-height > div b {
+  font-size: 11px;
+}
+:where(body:not(:has(.handwerker))) .crane-height > .crane-stack-height {
+  border-top: 1px solid #d7c59d;
+  margin-top: 5px;
+  padding-top: 7px;
+  color: #0f706c;
+}
 :where(body:not(:has(.handwerker))) .rescue-banner,
 :where(body:not(:has(.handwerker))) .breath-warning {
   position: absolute;

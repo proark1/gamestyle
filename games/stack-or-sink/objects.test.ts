@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import { craneRig, junk } from './objects';
-import { CRANE, SCENERY } from './geometry';
-import { ITEMS } from './types';
+import { junk } from './objects';
+import { RESCUE_SUPPORT_OFFSET, SCENERY } from './geometry';
+import { GOAL, ITEMS } from './types';
 
 void test('crate wrapping bands are visibly raised above wood on all wrapped faces, including tilted crates', () => {
   const crate = junk('crate');
@@ -43,45 +43,22 @@ void test('crate wrapping bands are visibly raised above wood on all wrapped fac
   });
 });
 
-void test('every rescue cable ends on a real attachment from the crane boom to the deck', () => {
-  const rig = craneRig();
-  for (const s of SCENERY) {
-    const mesh = new T.Mesh(new T.BoxGeometry(...s.size));
-    mesh.position.set(...s.pos);
-    mesh.rotation.y = s.rotationY || 0;
-    mesh.name = s.id || '';
-    rig.add(mesh);
-  }
-  rig.updateMatrixWorld(true);
-  const meshes = rig.children as T.Mesh<T.BoxGeometry>[];
-  const cables = meshes.filter((mesh) => mesh.name === 'rescue-cable');
-  assert.equal(cables.length, 9);
-  const contains = (mesh: T.Mesh, point: T.Vector3) => {
-    mesh.geometry.computeBoundingBox();
-    return mesh.geometry
-      .boundingBox!.clone()
-      .expandByScalar(0.005)
-      .containsPoint(mesh.worldToLocal(point.clone()));
-  };
-  for (const cable of cables) {
-    for (const end of [-1, 1]) {
-      const point = cable.localToWorld(
-        new T.Vector3(0, (end * cable.geometry.parameters.height) / 2, 0),
-      );
-      assert.ok(
-        meshes.some((other) => other !== cable && contains(other, point)),
-        `free cable end at ${point.toArray().join(', ')}`,
-      );
-    }
-  }
-  const boom = meshes.find((mesh) => mesh.name === 'crane-beam')!;
-  assert.ok(
-    contains(boom, new T.Vector3(0, CRANE.boomY, 0)),
-    'boom directly above the hoist',
+void test('rescue deck has two opposing fixed supports and no second crane silhouette', () => {
+  const supports = SCENERY.filter((shape) => shape.id === 'rescue-support');
+  assert.equal(supports.length, 2);
+  assert.deepEqual(
+    supports
+      .map((shape) => [shape.pos[0], shape.pos[2]])
+      .sort((a, b) => a[0] - b[0] || a[1] - b[1]),
+    [
+      [-RESCUE_SUPPORT_OFFSET, RESCUE_SUPPORT_OFFSET],
+      [RESCUE_SUPPORT_OFFSET, -RESCUE_SUPPORT_OFFSET],
+    ].sort((a, b) => a[0] - b[0] || a[1] - b[1]),
   );
-  assert.ok(
-    contains(boom, new T.Vector3(CRANE.mastX, CRANE.boomY, CRANE.mastZ)),
-    'boom meets the mast turntable',
+  for (const support of supports)
+    assert.equal(support.pos[1] + support.size[1] / 2, GOAL);
+  assert.equal(
+    SCENERY.filter((shape) => shape.id?.startsWith('crane-')).length,
+    0,
   );
-  for (const mesh of meshes) mesh.geometry.dispose();
 });
