@@ -6,20 +6,26 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#b7d0c3",
-  "theme_color": "#315e53",
+  "background_color": "#f7f3e8",
+  "theme_color": "#1b718d",
   "categories": ["games", "entertainment"],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/images/brand/host-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/images/brand/host-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/brand/host-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ]

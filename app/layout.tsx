@@ -17,7 +17,14 @@ export const metadata: Metadata = {
     'Browser party games for your crew. Cook breakfast as one clumsy robot, catch giant fish, escape a flood, or build something together. Share a room code and make a little chaos.',
   applicationName: 'Jumbleyard',
   manifest: '/manifest.webmanifest',
-  icons: { icon: '/favicon.svg', apple: '/favicon.svg' },
+  icons: {
+    icon: {
+      url: '/images/brand/host-icon-32.png',
+      sizes: '32x32',
+      type: 'image/png',
+    },
+    apple: { url: '/images/brand/host-app-icon.png', type: 'image/png' },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -28,7 +35,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#315e53',
+  themeColor: '#1b718d',
 };
 export default function RootLayout({
   children,

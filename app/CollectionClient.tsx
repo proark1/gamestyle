@@ -47,6 +47,7 @@ import {
 } from '@/shared/language/translations/cards';
 import './collection.css';
 import './landing-gamefeel.css';
+import './host-identity.css';
 import {
   ClubhouseWelcome,
   ClubhouseParty,
@@ -498,10 +499,22 @@ export default function CollectionClient({ order }: { order: string[] }) {
     <main className="collection">
       <header className="collection-header">
         <a className="collection-brand" href="/">
-          <span>
-            <Gamepad2 size={24} />
+          <span className="collection-brand-face" aria-hidden="true">
+            <img
+              src="/images/brand/host-head-header.webp"
+              alt=""
+              width="46"
+              height="46"
+            />
+            <img
+              className="collection-brand-face-wink"
+              src="/images/brand/host-head-wink-header.webp"
+              alt=""
+              width="46"
+              height="46"
+            />
           </span>
-          JUMBLEYARD<span className="brand-period">.</span>
+          <span>jumbleyard</span>
         </a>
         <span className="collection-header-note">{strings.headerNote}</span>
         <div className="collection-header-actions">
