@@ -19,6 +19,12 @@ export class CageAudio extends SiteAudio {
   }
   update(w: World, localId?: string) {
     const plan = this.director.update(w, localId);
+    if (
+      plan.hits.some((hit) =>
+        ['speech.ko', 'speech.submission', 'speech.decision'].includes(hit.cue),
+      )
+    )
+      this.interruptSpeech();
     this.setLoop('crowd', 'ambience.crowd', plan.crowd);
     this.setLoop('music', 'music.arena', plan.music);
     this.setLoop(
@@ -32,7 +38,14 @@ export class CageAudio extends SiteAudio {
       plan.tension,
     );
     for (const hit of plan.hits)
-      this.play(hit.cue, hit.strength, hit.position, hit.source);
+      this.play(
+        hit.cue === 'cage.opening-bell'
+          ? this.preferredCue('cage.opening-bell', 'cage.bell')
+          : hit.cue,
+        hit.strength,
+        hit.position,
+        hit.source,
+      );
   }
   setMuted(muted: boolean) {
     this.enabled = !muted;

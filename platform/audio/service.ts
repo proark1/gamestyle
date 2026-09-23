@@ -1,5 +1,5 @@
 import type { GameDatabase } from '@/db/contract';
-import { getCatalog } from './catalog';
+import { getBundledCatalog, getCatalog } from './catalog';
 import { FARM_FENCE_CUES } from '../../games/act-natural/audio/fence';
 import { GIANT_DEFAULT_AUDIO } from '../../games/dont-wake-the-giant/audio/profile';
 import { bundledCues } from '../../shared/audio/bundled-profile';
@@ -180,6 +180,9 @@ export async function library(
         .bind(narrator.voice.sourceGame)
         .first<{ available: number }>()
     : null;
+  const bundledIds = new Set(
+    BUNDLED_GAMES.has(game) ? getBundledCatalog(game).map((cue) => cue.id) : [],
+  );
   return {
     game,
     keySaved: !!row?.key_saved,
@@ -192,7 +195,7 @@ export async function library(
       return {
         ...cue,
         file: stored?.file ?? null,
-        ...(BUNDLED_GAMES.has(game)
+        ...(bundledIds.has(base.id)
           ? { bundledUrl: `/audio/${game}/${base.id}.wav` }
           : {}),
         generated: stored?.generated ?? null,
@@ -211,7 +214,7 @@ export function manifest(data: AudioLibrary): AudioManifest {
       : data.game === 'dont-wake-the-giant'
         ? GIANT_DEFAULT_AUDIO
         : BUNDLED_GAMES.has(data.game)
-          ? bundledCues(data.game, getCatalog(data.game))
+          ? bundledCues(data.game, getBundledCatalog(data.game))
           : {};
   return {
     settings: data.settings,

@@ -111,3 +111,24 @@ through the real player and verified effects plus loops, mute, master volume,
 music off/on, the shared ducking mechanism, hidden-tab suspension/resume, reset
 and AudioContext disposal. These are playback and signal checks, not a subjective
 listening review or a physical-device speaker test.
+
+## Fight night audio polish — 2026-09-23
+
+The catalog now has 49 cues. Eleven new cues are prepared for the Sound Workshop:
+an original opening announcer line, round two and three calls, a ten-second
+warning, KO/submission/decision calls, a crowd rise, a knockdown roar and a
+finish accent, plus a real opening fight bell. The catalog supplies ElevenLabs
+prompts and speech text. The existing 38 recordings remain bundled fallbacks;
+the eleven new cues have no WAV files. Ten appear in gameplay after the
+workshop generates and saves their MP3 recordings. The opening bell uses the
+existing bell until its workshop recording is ready. Saved recordings override
+old fallbacks.
+
+The director emits the new cues only on live phase changes, so joining or
+reconnecting does not replay an opening or result. A finish call interrupts an
+active warning. Music lowers after a finish. All playback uses the existing
+Sound Workshop mix and mute controls. Generation remains pending until the new
+catalog is published and an administrator starts it in the workshop.
+
+Focused tests validate the legacy bank, workshop-only cue routing, cue timing
+and reconnect behavior. TypeScript, scoped lint and formatting checks pass.

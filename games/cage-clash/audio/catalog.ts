@@ -125,6 +125,34 @@ const effects: [string, string, string, number, number][] = [
   ],
   ['countdown', 'Countdown', 'Dry wooden countdown knock.', 0.22, 0.55],
   [
+    'intro-rise',
+    'Fight night opening',
+    'Indoor fight arena crowd rising in excitement with a short, powerful drum roll. Build over three seconds and stop cleanly before the opening bell. No intelligible words, bell, music or announcer.',
+    3,
+    0.62,
+  ],
+  [
+    'opening-bell',
+    'Opening fight bell',
+    'One clear strike of a real brass fight bell in an indoor arena. Bright metallic attack with a rich, natural ringing decay. No voice, crowd, music or extra strikes.',
+    2,
+    0.85,
+  ],
+  [
+    'knockdown-roar',
+    'Knockdown crowd',
+    'One sudden, strong crowd roar and applause after a dramatic knockdown in a small indoor fight arena. Natural audience sound, short decay. No words, music or bell.',
+    2.1,
+    0.52,
+  ],
+  [
+    'finish-boom',
+    'Fight finish',
+    'One deep, cinematic low impact and short indoor arena reverberation to mark a fight finish. Strong but clean, no speech, music, crowd or bell.',
+    1.5,
+    0.58,
+  ],
+  [
     'warning',
     'Ten seconds left',
     'Three sharp wooden clacks for the last ten seconds.',
@@ -261,4 +289,57 @@ export const cageCatalog = [
     true,
     0.6,
   ),
+  ...(
+    [
+      [
+        'intro',
+        'Opening announcer',
+        "Fighters! Let's clash!",
+        2.4,
+        '[dramatically]',
+      ],
+      ['round-two', 'Round two announcer', 'Round two!', 1.2, '[firmly]'],
+      ['round-three', 'Round three announcer', 'Round three!', 1.2, '[firmly]'],
+      ['ten-seconds', 'Ten-second warning', 'Ten seconds!', 1.3, '[urgently]'],
+      ['ko', 'Knockout announcer', 'Knockout!', 1.1, '[excitedly]'],
+      ['submission', 'Submission announcer', 'Submission!', 1.3, '[excitedly]'],
+      [
+        'decision',
+        'Decision announcer',
+        'We have a decision!',
+        1.6,
+        '[dramatically]',
+      ],
+    ] as const
+  ).map(([id, name, text, duration, direction]) => ({
+    ...cue(
+      `speech.${id}`,
+      name,
+      'Announcer',
+      direction,
+      'speech',
+      duration,
+      false,
+      0.85,
+    ),
+    text,
+  })),
 ];
+
+/** Only the original release bank has bundled fallback recordings. New cues need workshop audio. */
+const workshopOnly = new Set([
+  'cage.intro-rise',
+  'cage.opening-bell',
+  'cage.knockdown-roar',
+  'cage.finish-boom',
+  'speech.intro',
+  'speech.round-two',
+  'speech.round-three',
+  'speech.ten-seconds',
+  'speech.ko',
+  'speech.submission',
+  'speech.decision',
+]);
+export const cageBundledCatalog = cageCatalog.filter(
+  (item) => !workshopOnly.has(item.id),
+);

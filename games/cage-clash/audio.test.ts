@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { cageCatalog } from './audio/catalog';
+import { cageBundledCatalog, cageCatalog } from './audio/catalog';
 import { CageAudioDirector } from './audio/director';
 import { cageAudioProfile } from './audio/profile';
 import { freshWorld } from './simulation';
@@ -11,10 +11,12 @@ import { hurt } from './combat';
 import { manifest, parseCue } from '../../platform/audio/service';
 import { DEFAULT_SETTINGS } from '../../shared/audio/types';
 
-void test('Cage sound bank: every cue is valid, distinct, audible stereo PCM with clean endpoints', () => {
+void test('Legacy Cage sound bank stays valid while workshop-only cues need recordings', () => {
   const hashes = new Set<string>();
   for (const cue of cageCatalog) {
     parseCue(cue, cue);
+  }
+  for (const cue of cageBundledCatalog) {
     const b = readFileSync(`public/audio/cage-clash/${cue.id}.wav`);
     assert.equal(b.toString('ascii', 0, 4), 'RIFF');
     assert.equal(b.readUInt16LE(22), 2);
@@ -50,7 +52,8 @@ void test('Cage sound bank: every cue is valid, distinct, audible stereo PCM wit
     }
     hashes.add(createHash('sha256').update(b).digest('hex'));
   }
-  assert.equal(hashes.size, cageCatalog.length);
+  assert.equal(hashes.size, cageBundledCatalog.length);
+  assert.equal(cageCatalog.length, cageBundledCatalog.length + 11);
 });
 
 void test('Cage workshop recordings and saved mix override bundled sounds', () => {
@@ -73,9 +76,26 @@ void test('Cage workshop recordings and saved mix override bundled sounds', () =
       cues,
     }),
   );
-  assert.equal(Object.keys(result.cues).length, cageCatalog.length);
+  assert.equal(Object.keys(result.cues).length, cageBundledCatalog.length);
   assert.match(result.cues[cues[0].id].url, /custom.mp3$/);
   assert.equal(result.cues[cues[1].id].volume, 0.123);
+  assert.equal(result.cues['speech.intro'], undefined);
+  assert.equal(result.cues['cage.intro-rise'], undefined);
+  assert.equal(result.cues['cage.opening-bell'], undefined);
+
+  const intro = cues.find((cue) => cue.id === 'speech.intro')!;
+  intro.file = 'cage-clash/announcer.mp3';
+  const generated = cageAudioProfile.prepareManifest!(
+    manifest({
+      game: 'cage-clash',
+      settings: DEFAULT_SETTINGS,
+      keySaved: true,
+      keyAvailable: true,
+      busy: false,
+      cues,
+    }),
+  );
+  assert.match(generated.cues['speech.intro'].url, /announcer.mp3$/);
 });
 
 const playing = () => {
@@ -120,7 +140,7 @@ void test('Countdown, bell, ten-second warning, and local result each fire once'
   w.clock += 50;
   assert.deepEqual(
     d.update(w).hits.map((h) => h.cue),
-    ['cage.countdown'],
+    ['cage.intro-rise', 'speech.intro', 'cage.countdown'],
   );
   assert.deepEqual(d.update(w).hits, []);
   w.phaseTime = 2;
@@ -132,18 +152,28 @@ void test('Countdown, bell, ten-second warning, and local result each fire once'
   emit(w, 'bell', me);
   assert.deepEqual(
     d.update(w).hits.map((h) => h.cue),
-    ['cage.bell'],
+    ['cage.opening-bell'],
   );
   w.time = 9.9;
   w.clock += 50;
-  assert.equal(d.update(w).hits[0].cue, 'cage.warning');
+  assert.deepEqual(
+    d.update(w).hits.map((h) => h.cue),
+    ['cage.warning', 'speech.ten-seconds'],
+  );
   assert.deepEqual(d.update(w).hits, []);
   w.phase = 'ended';
   w.winner = me.team;
+  w.finish = 'KO';
   w.clock += 50;
   assert.deepEqual(
     d.update(w, me.id).hits.map((h) => h.cue),
-    ['cage.round-end', 'cage.win', 'cage.cheer'],
+    [
+      'cage.round-end',
+      'cage.finish-boom',
+      'cage.win',
+      'cage.cheer',
+      'speech.ko',
+    ],
   );
   assert.deepEqual(d.update(w, me.id).hits, []);
   w.selection++;
@@ -159,7 +189,7 @@ void test('Crowd reactions are limited and submission atmosphere stops outside t
   emit(w, 'takedown', p);
   w.clock += 50;
   assert.equal(
-    d.update(w).hits.filter((h) => h.cue === 'cage.cheer').length,
+    d.update(w).hits.filter((h) => h.cue === 'cage.knockdown-roar').length,
     1,
   );
   emit(w, 'counter', p);
@@ -181,6 +211,34 @@ void test('Crowd reactions are limited and submission atmosphere stops outside t
   const stopped = d.update(w);
   assert.equal(stopped.grapple, 0);
   assert.equal(stopped.tension, 0);
+});
+void test('Later rounds get one announcement and restored fights do not replay one-shots', () => {
+  const w = playing();
+  const d = new CageAudioDirector();
+  d.update(w);
+  w.phase = 'break';
+  w.round = 2;
+  w.clock += 50;
+  assert.deepEqual(
+    d.update(w).hits.map((h) => h.cue),
+    ['cage.round-end', 'speech.round-two'],
+  );
+  assert.deepEqual(d.update(w).hits, []);
+  w.phase = 'playing';
+  w.clock += 50;
+  assert.deepEqual(
+    d.update(w).hits.map((h) => h.cue),
+    ['cage.opening-bell'],
+  );
+  w.phase = 'break';
+  w.round = 3;
+  w.clock += 50;
+  assert.deepEqual(
+    d.update(w).hits.map((h) => h.cue),
+    ['cage.round-end', 'speech.round-three'],
+  );
+  const restored = new CageAudioDirector();
+  assert.deepEqual(restored.update(w).hits, []);
 });
 void test('Footwork uses motion, stamina breathing is local, and held dodges do not repeat', () => {
   const w = playing(),

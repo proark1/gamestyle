@@ -635,10 +635,7 @@ export default function CageGame() {
           <span>
             {w.phase === 'break'
               ? say('Breathe. Next round.', 'Durchatmen. Nächste Runde.')
-              : say(
-                  'Styles revealed. Find your distance.',
-                  'Stile aufgedeckt. Finde deine Distanz.',
-                )}
+              : say("Fighters! Let's clash!", 'Kämpfer! Auf geht’s!')}
           </span>
         </output>
       )}

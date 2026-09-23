@@ -42,7 +42,7 @@ export class CageAudioDirector {
     const plan: CageAudioPlan = {
       hits: [],
       crowd: w.phase === 'selection' ? 0.35 : playing ? 0.8 : 0.6,
-      music: playing ? 0.35 : 0.65,
+      music: playing ? 0.35 : w.phase === 'ended' ? 0.16 : 0.65,
       grapple: playing && w.grapple ? 0.6 : 0,
       tension:
         playing && w.grapple?.submissionBy
@@ -61,10 +61,20 @@ export class CageAudioDirector {
       plan.hits.push({ cue: `cage.${cue}`, strength });
     if (old) {
       if (w.phase !== old.phase) {
-        if (playing) hit('bell');
+        if (w.phase === 'countdown') {
+          hit('intro-rise', 0.9);
+          plan.hits.push({ cue: 'speech.intro', strength: 1 });
+        }
+        if (playing) hit('opening-bell');
         if (w.phase === 'break' || w.phase === 'ended') hit('round-end');
+        if (w.phase === 'break' && (w.round === 2 || w.round === 3))
+          plan.hits.push({
+            cue: `speech.round-${w.round === 2 ? 'two' : 'three'}`,
+            strength: 1,
+          });
         if (w.phase === 'ended') {
           const me = w.players.find((p) => p.id === localId);
+          hit('finish-boom', 0.85);
           hit(
             w.winner === 'draw' || !me
               ? 'draw'
@@ -73,6 +83,11 @@ export class CageAudioDirector {
                 : 'loss',
           );
           hit('cheer', 0.8);
+          if (w.finish)
+            plan.hits.push({
+              cue: `speech.${w.finish === 'KO' ? 'ko' : w.finish === 'Submission' ? 'submission' : 'decision'}`,
+              strength: 1,
+            });
           this.nextReaction = w.clock + 3000;
         }
       }
@@ -87,8 +102,10 @@ export class CageAudioDirector {
         old.time > 10 &&
         w.time <= 10 &&
         w.time > 0
-      )
+      ) {
         hit('warning');
+        plan.hits.push({ cue: 'speech.ten-seconds', strength: 1 });
+      }
       // A long snapshot gap is a resync, not a backlog of audible impacts.
       if (w.clock - old.clock < 1500) {
         for (const e of w.events) {
@@ -115,7 +132,9 @@ export class CageAudioDirector {
             hit(
               e.kind === 'counter' || e.kind === 'guard-break'
                 ? 'gasp'
-                : 'cheer',
+                : e.kind === 'down'
+                  ? 'knockdown-roar'
+                  : 'cheer',
               0.75,
             );
             this.nextReaction = w.clock + 2800;

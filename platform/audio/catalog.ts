@@ -21,7 +21,10 @@ import { driveThruCatalog } from '../../games/drive-thru/audio';
 import { scaffoldScrambleCatalog } from '../../games/scaffold-scramble/audio';
 import { chainOfFoolsCatalog } from '../../games/chain-of-fools/audio';
 
-import { cageCatalog } from '../../games/cage-clash/audio';
+import {
+  cageBundledCatalog,
+  cageCatalog,
+} from '../../games/cage-clash/audio/catalog';
 import { boxingCatalog } from '../../games/on-the-ropes/audio';
 
 const catalogs: Record<GameId, Cue[]> = {
@@ -52,4 +55,8 @@ const catalogs: Record<GameId, Cue[]> = {
 
 export function getCatalog(game: GameId): Cue[] {
   return catalogs[game];
+}
+
+export function getBundledCatalog(game: GameId): Cue[] {
+  return game === 'cage-clash' ? cageBundledCatalog : getCatalog(game);
 }

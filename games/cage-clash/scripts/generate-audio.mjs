@@ -2,7 +2,7 @@
 // Regenerate: node --import tsx games/cage-clash/scripts/generate-audio.mjs
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { cageCatalog } from '../audio/catalog.ts';
+import { cageBundledCatalog } from '../audio/catalog.ts';
 
 const RATE = 44100,
   TAU = Math.PI * 2;
@@ -289,10 +289,12 @@ function generate(r, c) {
 }
 
 await mkdir('public/audio/cage-clash', { recursive: true });
-for (const c of cageCatalog) {
+for (const c of cageBundledCatalog) {
   seed = createHash('sha256').update(c.id).digest().readUInt32LE(0);
   const recording = new Recording(c.duration, c.loop);
   generate(recording, c);
   await recording.save(`public/audio/cage-clash/${c.id}.wav`);
 }
-console.log(`Generated ${cageCatalog.length} original Cage Clash recordings.`);
+console.log(
+  `Generated ${cageBundledCatalog.length} original Cage Clash fallback recordings.`,
+);
