@@ -18,4 +18,4 @@ This records the state of the approved 22 September roadmap after the current im
 4. Decide whether to keep the current nine-piece premium catalog (two standard accessories and seven special pieces, including five costumes) or adjust it toward the proposed nine standard/two special mix. Two non-overlapping bundles and distinct 3D previews now exist on `origin/main`. Release-test localized product copy and bundle value before selling; this branch does not turn checkout on.
 5. Validate native-client access, account changes, revocations, mixed parties, full room recovery, phone controls and performance against the final gate. Keep the gate off until the deferred payment and restoration path can actually let an owner enter a paid game.
 
-The current branch is implementation work for review, not a production release. It has not been deployed and does not change live charges or access.
+Deploying these code paths does not enable live charges or paid admission. Both production switches remain off pending the separate payment and free-game release gates.
