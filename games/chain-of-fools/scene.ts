@@ -16,7 +16,14 @@ import {
 import { label, material } from '../../shared/rendering/primitives';
 import { COLORS } from '../../shared/rendering/palette';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
-import { ANCHORS, PLANK, checkpointsFor, finishXFor, nearNet } from './course';
+import {
+  ANCHORS,
+  PLANK,
+  SWITCHYARD,
+  checkpointsFor,
+  finishXFor,
+  nearNet,
+} from './course';
 import { chainWorker, D_RING, poseChainWorker } from './avatar';
 import { SITE, createSite, type SiteModel } from './models';
 import {
@@ -425,11 +432,21 @@ export class ChainScene {
     this.site.switchCheckpointFlags.forEach((flag) => {
       flag.visible = switchyard;
     });
+    const relayOffset =
+      SWITCHYARD.gates[0].plates.length + SWITCHYARD.gates[1].plates.length;
+    const relayTarget = world.gatesOpen[2]
+      ? -1
+      : relayOffset + SWITCHYARD.gates[2].order[world.relayStep];
     this.site.switchPlates.forEach((plate, i) => {
       plate.visible = switchyard;
-      if (plate.userData.active !== world.plateActive[i]) {
-        plate.material = material(world.plateActive[i] ? '#5aa469' : '#e04b32');
-        plate.userData.active = world.plateActive[i];
+      const colour = world.plateActive[i]
+        ? '#5aa469'
+        : i === relayTarget
+          ? '#58c9ef'
+          : '#e04b32';
+      if (plate.userData.colour !== colour) {
+        plate.material = material(colour);
+        plate.userData.colour = colour;
       }
     });
     this.site.switchGates.forEach((gate, i) => {

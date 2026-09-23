@@ -107,7 +107,7 @@ void test('both gates require simultaneous separate workers and block passage un
   assert.equal(world.gatesOpen[1], true, 'every worker must hold a pad');
 
   chainOfFoolsAction(world, 'p0', { type: 'restart' });
-  assert.deepEqual(world.gatesOpen, [false, false]);
+  assert.deepEqual(world.gatesOpen, [false, false, false]);
   assert.equal(world.checkpoint, 0);
 });
 
@@ -122,7 +122,7 @@ void test('a bot crew can open the switches, cross and finish together', () => {
   for (let i = 0; i < 270 * 60 && world.phase === 'playing'; i++)
     run(world, 1 / 60);
   assert.equal(world.winner, 'crew');
-  assert.deepEqual(world.gatesOpen, [true, true]);
+  assert.deepEqual(world.gatesOpen, [true, true, true]);
   assert.ok(world.players.every((p) => p.state === 'finished'));
 });
 
@@ -143,4 +143,55 @@ void test('three bots take the other pads when a human holds the crew gate', () 
   assert.ok(
     world.events.some((event) => event.detail === 'The crew opened gate 2'),
   );
+});
+
+void test('the longer route has supported landings and changes lanes', () => {
+  assert.ok(SWITCHYARD.finishX - SWITCHYARD.startX >= 300);
+  for (const point of SWITCHYARD_CHECKPOINTS) {
+    const [x, y, z] = point.spawn;
+    const support = supportUnder(x, y + 0.3, z, 0);
+    assert.ok(support !== null && Math.abs(support - y) < 0.35, point.label);
+  }
+  assert.equal(sectionAt(390, 'switchyard'), 'switch-conveyor');
+  assert.equal(sectionAt(460, 'switchyard'), 'switch-relay');
+  assert.equal(sectionAt(540, 'switchyard'), 'switch-final');
+});
+
+void test('numbered relay needs the right order and three different workers', () => {
+  const world = crew();
+  world.gatesOpen[0] = true;
+  world.gatesOpen[1] = true;
+  const relay = SWITCHYARD.gates[2];
+  placeOnBank(world, relay.plates[0].x, [0, -1, 1, 2]);
+  run(world, 1.4);
+  assert.equal(world.relayStep, 1);
+  assert.equal(world.gatesOpen[2], false);
+
+  placeOnBank(world, relay.plates[0].x, [0, -3, -1, 1]);
+  run(world, 1.4);
+  assert.equal(world.relayStep, 2);
+  assert.equal(world.gatesOpen[2], false);
+
+  placeOnBank(world, relay.plates[0].x, [3, -1, 1, 2]);
+  run(world, 1.4);
+  assert.equal(
+    world.relayStep,
+    2,
+    'first worker cannot charge the third stage',
+  );
+  placeOnBank(world, relay.plates[0].x, [0, -1, 3, 1]);
+  run(world, 1.4);
+  assert.equal(world.relayStep, 3);
+  assert.equal(world.gatesOpen[2], true);
+  assert.equal(new Set(world.relayWorkers).size, 3);
+});
+
+void test('holding every relay plate at once does not skip the order', () => {
+  const world = crew();
+  world.gatesOpen[0] = true;
+  world.gatesOpen[1] = true;
+  placeOnBank(world, SWITCHYARD.gates[2].plates[0].x, [-3, 0, 3, 2]);
+  run(world, 2.8);
+  assert.equal(world.relayStep, 1);
+  assert.equal(world.gatesOpen[2], false);
 });

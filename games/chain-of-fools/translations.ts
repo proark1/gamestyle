@@ -29,6 +29,7 @@ export interface ChainTranslations {
   mapSwitchName: string;
   mapSwitchDesc: string;
   switchPrompt: (active: number, total: number) => string;
+  switchRelayPrompt: (charged: number, total: number) => string;
 
   hudTime: string;
   hudWipes: string;
@@ -86,11 +87,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Lose the crew and everyone restarts at the gate. No checkpoints.',
     ],
     switchDesc:
-      'Open both crew gates by standing on separate pressure plates together. Stay linked across the exposed spans and bring every worker to the office.',
+      'Cross a long chain of broken conveyors and rescue spans. Open the two crew locks, then solve the numbered relay with three different workers before the final crossing.',
     switchRules: [
-      'The first gate needs two workers; the second needs all four.',
-      'Hold every plate together until the gate latches open.',
-      'Brace, clip and haul teammates across the exposed gaps.',
+      'First split into two, then place all four on separate pads.',
+      'At the relay, press plates 2, 1, 3 in order with a new worker each time.',
+      'Change lanes on wide decks; clip, brace and haul at the broken spans.',
     ],
     startShift: 'Start the shift',
     playAgain: 'Another shift',
@@ -99,9 +100,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
     mapClassicDesc: 'The original route of beams, scaffolds and wrecking gear.',
     mapSwitchName: 'Switchyard',
     mapSwitchDesc:
-      'Split the crew across switches to open gates, then cross the exposed spans.',
+      'A long teamwork gauntlet of switches, relay clues and rescue crossings.',
     switchPrompt: (active, total) =>
       `Stand on separate floor switches together · ${active}/${total} held`,
+    switchRelayPrompt: (charged, total) =>
+      `Relay 2 → 1 → 3 · ${charged}/${total} charged · use a different worker`,
 
     hudTime: 'Shift',
     hudWipes: 'Attempt',
@@ -124,6 +127,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'switch-pair': 'Two-worker gate',
       'switch-spans': 'Exposed spans',
       'switch-crew': 'Whole-crew gate',
+      'switch-transfer': 'Conveyor approach',
+      'switch-conveyor': 'Broken conveyor',
+      'switch-rescue': 'Rescue split',
+      'switch-relay': 'Numbered relay',
+      'switch-anchor': 'Anchor run',
       'switch-final': 'Final crossing',
       'switch-office': 'Crew office',
     },
@@ -144,6 +152,15 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'switch-pair': 'Two workers need to hold separate pads at the same time.',
       'switch-spans': 'Cross one at a time. Brace and haul anyone who misses.',
       'switch-crew': 'All four workers must stand on their own pad together.',
+      'switch-transfer':
+        'Regroup before the broken conveyor. Its lanes change twice.',
+      'switch-conveyor':
+        'Jump each break and swap lanes on the wide turn decks.',
+      'switch-rescue':
+        'Clip a ring, brace, and haul a worker if the gap catches them.',
+      'switch-relay': 'Three different workers: press 2, then 1, then 3.',
+      'switch-anchor':
+        'Leap in order and keep a worker anchored near each gap.',
       'switch-final': 'Clip or brace while the rest cross the last gap.',
       'switch-office': 'Bring the entire line over the finish tape.',
     },
@@ -216,11 +233,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Verliert ihr die Crew, starten alle wieder am Tor. Keine Kontrollpunkte.',
     ],
     switchDesc:
-      'Öffnet beide Tore, indem ihr gleichzeitig auf getrennten Druckplatten steht. Bleibt auf den schmalen Stegen verbunden und bringt alle ins Büro.',
+      'Überquert lange Reihen kaputter Förderstege und rettet euch an den Lücken. Öffnet zwei Crew-Tore und löst danach das nummerierte Relais mit drei verschiedenen Arbeitern.',
     switchRules: [
-      'Das erste Tor braucht zwei Arbeiter, das zweite alle vier.',
-      'Haltet alle Platten gleichzeitig, bis das Tor offen bleibt.',
-      'Stemmt euch ab, hakt euch ein und zieht andere über die Lücken.',
+      'Zuerst braucht ihr zwei Arbeiter, danach alle vier auf eigenen Platten.',
+      'Beim Relais drückt ihr 2, 1, 3 der Reihe nach – jeweils mit jemand anderem.',
+      'Wechselt auf breiten Decks die Spur; hakt euch ein und rettet andere.',
     ],
     startShift: 'Schicht beginnen',
     playAgain: 'Noch eine Schicht',
@@ -230,9 +247,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Der ursprüngliche Weg über Träger, Gerüste und Abrissgeräte.',
     mapSwitchName: 'Schaltgelände',
     mapSwitchDesc:
-      'Verteilt die Crew auf Schalter, öffnet Tore und überquert schmale Stege.',
+      'Ein langer Team-Parcours mit Schaltern, Relais und Rettungssprüngen.',
     switchPrompt: (active, total) =>
       `Steht gleichzeitig auf getrennten Schaltern · ${active}/${total} besetzt`,
+    switchRelayPrompt: (charged, total) =>
+      `Relais 2 → 1 → 3 · ${charged}/${total} geladen · immer ein anderer Arbeiter`,
 
     hudTime: 'Schicht',
     hudWipes: 'Versuch',
@@ -255,6 +274,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'switch-pair': 'Zweiertor',
       'switch-spans': 'Schmale Stege',
       'switch-crew': 'Crewtor',
+      'switch-transfer': 'Förderband-Zugang',
+      'switch-conveyor': 'Kaputtes Förderband',
+      'switch-rescue': 'Rettungsspalte',
+      'switch-relay': 'Nummeriertes Relais',
+      'switch-anchor': 'Ankerlauf',
       'switch-final': 'Letzter Übergang',
       'switch-office': 'Crew-Büro',
     },
@@ -280,6 +304,15 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
         'Einer nach dem anderen. Stützt und zieht Abgestürzte hoch.',
       'switch-crew':
         'Alle vier Arbeiter müssen gleichzeitig einen eigenen Schalter halten.',
+      'switch-transfer':
+        'Sammelt euch vor dem Förderband. Die Spur wechselt zweimal.',
+      'switch-conveyor':
+        'Springt über die Lücken und wechselt auf breiten Decks die Spur.',
+      'switch-rescue':
+        'Hakt euch ein, stemmt euch ab und zieht Gefallene hoch.',
+      'switch-relay': 'Drei verschiedene Arbeiter: erst 2, dann 1, dann 3.',
+      'switch-anchor':
+        'Springt nacheinander und sichert die Crew an jeder Lücke.',
       'switch-final':
         'Hakt euch ein oder stemmt euch ab, während die anderen springen.',
       'switch-office': 'Bringt die gesamte Kette über die Ziellinie.',

@@ -53,6 +53,7 @@ export const CLIP_REACH = 2.4;
 
 export const LIMP_SECONDS = 9.0;
 export const ROUND_TIME_MS = 270_000;
+export const SWITCHYARD_ROUND_TIME_MS = 360_000;
 export const RESPAWN_MS = 1600;
 
 export const CREW_SIZE = 4;
@@ -159,8 +160,12 @@ export type GameEvent = {
 export type ChainWorld = {
   mapId: MapId;
   plateActive: boolean[];
-  switchProgress: [number, number];
-  gatesOpen: [boolean, boolean];
+  switchProgress: [number, number, number];
+  gatesOpen: [boolean, boolean, boolean];
+  /** Next numbered relay plate; each stage needs a different worker. */
+  relayStep: number;
+  relayWorkers: string[];
+  relayArmed: boolean;
   seed: number;
   clock: number;
   started: number;
@@ -217,7 +222,10 @@ export const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
 export function timeLeft(world: ChainWorld): number {
-  if (world.phase === 'lobby') return ROUND_TIME_MS;
+  if (world.phase === 'lobby')
+    return world.mapId === 'switchyard'
+      ? SWITCHYARD_ROUND_TIME_MS
+      : ROUND_TIME_MS;
   return Math.max(0, world.endsAt - (world.endedAt || world.clock));
 }
 

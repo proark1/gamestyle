@@ -38,6 +38,7 @@ export function reconcileChainBots(world: ChainWorld) {
         (humans.length + index + 1) % 4,
         0,
         true,
+        world.mapId,
       ),
     );
   }
@@ -111,9 +112,23 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
 
   // In practice rooms, bots occupy any pads not already held by humans.
   if (world.mapId === 'switchyard') {
-    const gateIndex = world.gatesOpen[0] ? 1 : 0;
+    const gateIndex = world.gatesOpen.findIndex((open) => !open);
     const gate = SWITCHYARD.gates[gateIndex];
-    if (!world.gatesOpen[gateIndex] && (gateIndex === 0 || bot.x >= 326)) {
+    if (gate && bot.x >= gate.plates[0].x - 10) {
+      if (gate.mode === 'relay') {
+        const actingBot = world.players.find(
+          (p) => p.bot && !world.relayWorkers.includes(p.id),
+        );
+        const target =
+          actingBot?.id === bot.id
+            ? gate.plates[gate.order[world.relayStep]]
+            : { x: gate.plates[0].x - 3.5, z: (bot.link - 1.5) * 0.8 };
+        bot.input.x = Math.max(-1, Math.min(1, (target.x - bot.x) * 1.5));
+        bot.input.z = Math.max(-1, Math.min(1, (target.z - bot.z) * 1.5));
+        if (Math.abs(target.x - bot.x) < 0.12) bot.input.x = 0;
+        if (Math.abs(target.z - bot.z) < 0.12) bot.input.z = 0;
+        return;
+      }
       const reserved = new Set(
         gate.plates.flatMap((plate, i) =>
           world.players.some(

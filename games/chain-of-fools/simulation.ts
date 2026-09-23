@@ -40,6 +40,7 @@ import {
   REVIVE_REACH,
   REVIVE_SECONDS,
   ROUND_TIME_MS,
+  SWITCHYARD_ROUND_TIME_MS,
   WIPE_Y,
   chainOrder,
   clamp,
@@ -104,9 +105,14 @@ export function newPlayer(
 export function freshChainWorld(now: number, seed = 7): ChainWorld {
   return {
     mapId: 'demolition',
-    plateActive: [false, false, false, false, false, false],
-    switchProgress: [0, 0],
-    gatesOpen: [false, false],
+    plateActive: SWITCHYARD.gates.flatMap((gate) =>
+      gate.plates.map(() => false),
+    ),
+    switchProgress: [0, 0, 0],
+    gatesOpen: [false, false, false],
+    relayStep: 0,
+    relayWorkers: [],
+    relayArmed: true,
     seed,
     clock: now,
     started: now,
@@ -129,6 +135,23 @@ export function freshChainWorld(now: number, seed = 7): ChainWorld {
     events: [],
     eventId: 0,
   };
+}
+
+function resetSwitches(world: ChainWorld) {
+  world.plateActive = SWITCHYARD.gates.flatMap((gate) =>
+    gate.plates.map(() => false),
+  );
+  world.switchProgress = [0, 0, 0];
+  world.gatesOpen = [false, false, false];
+  world.relayStep = 0;
+  world.relayWorkers = [];
+  world.relayArmed = true;
+}
+
+function roundTime(world: ChainWorld) {
+  return world.mapId === 'switchyard'
+    ? SWITCHYARD_ROUND_TIME_MS
+    : ROUND_TIME_MS;
 }
 
 /** Put the whole crew back on the last banked checkpoint, still roped up. */
@@ -178,9 +201,7 @@ export function chainOfFoolsAction(
       world.mapId = action.mapId;
       world.checkpoint = 0;
       world.bestX = checkpoint(0, world.mapId).x;
-      world.plateActive = [false, false, false, false, false, false];
-      world.switchProgress = [0, 0];
-      world.gatesOpen = [false, false];
+      resetSwitches(world);
       placeAtCheckpoint(world, 0);
       break;
     }
@@ -191,14 +212,12 @@ export function chainOfFoolsAction(
       world.pendulumVel = 0;
       world.phase = 'playing';
       world.startedAt = world.clock;
-      world.endsAt = world.clock + ROUND_TIME_MS;
+      world.endsAt = world.clock + roundTime(world);
       world.winner = null;
       world.checkpoint = 0;
       world.wipes = 0;
       world.bestX = checkpoint(0, world.mapId).x;
-      world.plateActive = [false, false, false, false, false, false];
-      world.switchProgress = [0, 0];
-      world.gatesOpen = [false, false];
+      resetSwitches(world);
       placeAtCheckpoint(world, 0);
       for (const p of world.players) {
         p.falls = 0;
@@ -213,14 +232,12 @@ export function chainOfFoolsAction(
       world.endedAt = 0;
       world.phase = 'playing';
       world.startedAt = world.clock;
-      world.endsAt = world.clock + ROUND_TIME_MS;
+      world.endsAt = world.clock + roundTime(world);
       world.winner = null;
       world.checkpoint = 0;
       world.wipes = 0;
       world.bestX = checkpoint(0, world.mapId).x;
-      world.plateActive = [false, false, false, false, false, false];
-      world.switchProgress = [0, 0];
-      world.gatesOpen = [false, false];
+      resetSwitches(world);
       world.pendulumAngle = PENDULUM.amplitude;
       world.pendulumVel = 0;
       placeAtCheckpoint(world, 0);
@@ -495,6 +512,47 @@ function resolveSwitches(
     });
     offset += gate.plates.length;
     if (world.gatesOpen[gateIndex]) return;
+    if (gate.mode === 'relay') {
+      const target = gate.plates[gate.order[world.relayStep]];
+      const occupiedTarget = world.players.some(
+        (p) =>
+          p.state === 'standing' &&
+          p.grounded &&
+          Math.abs(p.y) < 0.12 &&
+          Math.hypot(p.x - target.x, p.z - target.z) <= SWITCHYARD.plateRadius,
+      );
+      if (!occupiedTarget) world.relayArmed = true;
+      const worker = world.players.find(
+        (p) =>
+          !world.relayWorkers.includes(p.id) &&
+          p.state === 'standing' &&
+          p.grounded &&
+          Math.abs(p.y) < 0.12 &&
+          Math.hypot(p.x - target.x, p.z - target.z) <= SWITCHYARD.plateRadius,
+      );
+      world.switchProgress[gateIndex] =
+        worker && world.relayArmed
+          ? Math.min(
+              SWITCHYARD.holdSeconds,
+              world.switchProgress[gateIndex] + dt,
+            )
+          : 0;
+      if (worker && world.switchProgress[gateIndex] >= SWITCHYARD.holdSeconds) {
+        world.relayWorkers.push(worker.id);
+        world.relayStep++;
+        world.relayArmed = false;
+        world.switchProgress[gateIndex] = 0;
+        world.events.push({
+          id: ++eventIdRef.current,
+          type: 'checkpoint',
+          detail: `Relay stage ${world.relayStep} of ${gate.order.length} charged`,
+          pos: [target.x, 1, target.z],
+        });
+        if (world.relayStep === gate.order.length)
+          world.gatesOpen[gateIndex] = true;
+      }
+      return;
+    }
     world.switchProgress[gateIndex] = occupied.every(Boolean)
       ? Math.min(SWITCHYARD.holdSeconds, world.switchProgress[gateIndex] + dt)
       : 0;
@@ -725,14 +783,12 @@ function resolveProgress(
     world.hangTime = 0;
     world.checkpoint = 0;
     world.startedAt = world.clock;
-    world.endsAt = world.clock + ROUND_TIME_MS;
+    world.endsAt = world.clock + roundTime(world);
     world.endedAt = 0;
     world.pendulumAngle = PENDULUM.amplitude;
     world.pendulumVel = 0;
     world.links = [];
-    world.plateActive = [false, false, false, false, false, false];
-    world.switchProgress = [0, 0];
-    world.gatesOpen = [false, false];
+    resetSwitches(world);
     placeAtCheckpoint(world, 0);
     world.events.push({
       id: ++eventIdRef.current,

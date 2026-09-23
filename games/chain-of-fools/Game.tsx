@@ -90,7 +90,7 @@ const SOLO_SESSION = { id: 'me', code: 'PRACTICE', name: 'You', color: 0 };
  */
 const pacer = hudPacer<ChainWorld>(
   (w) =>
-    `${w.mapId}|${w.phase}|${w.checkpoint}|${w.gatesOpen.join('')}|${w.plateActive.join('')}|${w.wipes}|${w.players
+    `${w.mapId}|${w.phase}|${w.checkpoint}|${w.gatesOpen.join('')}|${w.plateActive.join('')}|${w.relayStep}|${w.wipes}|${w.players
       .map(
         (p) =>
           `${p.state[0]}${p.anchorId ? 'c' : ''}${p.braced ? 'b' : ''}${p.braceCooldown > 0 ? 'x' : ''}`,
@@ -178,10 +178,17 @@ function promptFor(
     return { text: s.promptBrace(k), tone: 'urgent', focus: 'brace' };
 
   if (world.mapId === 'switchyard') {
-    const gateIndex = world.gatesOpen[0] ? 1 : 0;
+    const gateIndex = world.gatesOpen.findIndex((open) => !open);
     const gate = SWITCHYARD.gates[gateIndex];
-    if (!world.gatesOpen[gateIndex] && me.x > gate.x - 16 && me.x < gate.x) {
-      const offset = gateIndex === 0 ? 0 : SWITCHYARD.gates[0].plates.length;
+    if (gate && me.x > gate.x - 18 && me.x < gate.x) {
+      if (gate.mode === 'relay')
+        return {
+          text: s.switchRelayPrompt(world.relayStep, gate.order.length),
+          tone: 'info',
+        };
+      const offset = SWITCHYARD.gates
+        .slice(0, gateIndex)
+        .reduce((sum, previous) => sum + previous.plates.length, 0);
       const active = world.plateActive
         .slice(offset, offset + gate.plates.length)
         .filter(Boolean).length;

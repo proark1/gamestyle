@@ -86,11 +86,12 @@ export type MapId = 'demolition' | 'switchyard';
 
 export const SWITCHYARD = {
   startX: 260,
-  finishX: 371,
-  endX: 380,
+  finishX: 570,
+  endX: 580,
   gates: [
     {
       x: 284,
+      mode: 'together',
       plates: [
         { x: 276, z: -3 },
         { x: 276, z: 3 },
@@ -98,12 +99,24 @@ export const SWITCHYARD = {
     },
     {
       x: 345,
+      mode: 'together',
       plates: [
         { x: 335, z: -3 },
         { x: 335, z: -1 },
         { x: 335, z: 1 },
         { x: 335, z: 3 },
       ],
+    },
+    {
+      x: 474,
+      mode: 'relay',
+      plates: [
+        { x: 464, z: -3 },
+        { x: 464, z: 0 },
+        { x: 464, z: 3 },
+      ],
+      // Read the three numbered floor plates in the order painted on the gate.
+      order: [1, 0, 2],
     },
   ],
   holdSeconds: 1.2,
@@ -173,7 +186,7 @@ export const SURFACES: readonly Box[] = [
   // Site office.
   box('office-pad', 'office', 161, COURSE_END_X, -1.2, 0, -8, 8),
 
-  // Separate Switchyard route: two gated banks and exposed spans.
+  // Switchyard opens with two different crew locks and an exposed crossing.
   box('switch-start', 'yard', 260, 284, -1.2, 0, -6, 6),
   box('switch-gate-one-landing', 'ledge', 284, 292, -0.5, 0, -4, 4),
   box('switch-span-a', 'girder', 294.5, 304, -0.5, 0, -1.5, 1.5),
@@ -182,7 +195,33 @@ export const SURFACES: readonly Box[] = [
   box('switch-bank', 'yard', 326, 345, -1.2, 0, -6, 6),
   box('switch-gate-two-landing', 'ledge', 345, 354, -0.5, 0, -4, 4),
   box('switch-final-span', 'girder', 356.5, 363, -0.5, 0, -1.6, 1.6),
-  box('switch-finish', 'office', 363, SWITCHYARD.endX, -1.2, 0, -7, 7),
+  box('switch-transfer', 'pad', 363, 380, -1.2, 0, -6, 6),
+
+  // The broken conveyor makes the crew change lanes between two jump runs.
+  box('switch-conveyor-a', 'girder', 380, 386, -0.5, 0, -2.8, -0.8),
+  box('switch-conveyor-b', 'girder', 388.2, 396, -0.5, 0, -2.8, -0.8),
+  box('switch-conveyor-turn', 'pad', 396, 404, -1.2, 0, -5, 5),
+  box('switch-conveyor-c', 'girder', 404, 412, -0.5, 0, 0.8, 2.8),
+  box('switch-conveyor-d', 'girder', 414.2, 423, -0.5, 0, 0.8, 2.8),
+  box('switch-conveyor-exit', 'pad', 423, 435, -1.2, 0, -5, 5),
+
+  // One more narrow split before the relay bank. Rings give a safe anchor for
+  // a rescue, while the jumping crew can carry on without using them.
+  box('switch-rescue-a', 'girder', 435, 443, -0.5, 0, -1.3, 1.3),
+  box('switch-rescue-b', 'girder', 445.4, 453, -0.5, 0, -1.3, 1.3),
+  box('switch-relay-bank', 'yard', 453, 474, -1.2, 0, -6, 6),
+  box('switch-relay-exit', 'ledge', 474, 482, -0.5, 0, -4, 4),
+
+  // The final rescue run alternates narrow lanes across four jump gaps.
+  box('switch-anchor-a', 'girder', 484.4, 494, -0.5, 0, -1.4, 1.4),
+  box('switch-anchor-b', 'girder', 496.4, 506, -0.5, 0, -1.4, 1.4),
+  box('switch-anchor-rest', 'pad', 506, 515, -1.2, 0, -5, 5),
+  box('switch-final-a', 'girder', 515, 523, -0.5, 0, -2.5, -0.5),
+  box('switch-final-b', 'girder', 525.4, 534, -0.5, 0, -2.5, -0.5),
+  box('switch-final-turn', 'pad', 534, 542, -1.2, 0, -5, 5),
+  box('switch-final-c', 'girder', 542, 550, -0.5, 0, 0.5, 2.5),
+  box('switch-final-d', 'girder', 552.4, 560, -0.5, 0, 0.5, 2.5),
+  box('switch-finish', 'office', 560, SWITCHYARD.endX, -1.2, 0, -7, 7),
 ];
 
 /** Solid props use the same bounds in rendering and collision. */
@@ -306,6 +345,12 @@ export const ANCHORS: readonly Anchor[] = [
   { id: 'switch-ring-a', x: 290.5, y: 0.3, z: 0, label: 'First crossing' },
   { id: 'switch-ring-b', x: 315.0, y: 0.3, z: 0, label: 'Regroup landing' },
   { id: 'switch-ring-c', x: 352.5, y: 0.3, z: 0, label: 'Final crossing' },
+  { id: 'switch-ring-d', x: 385.4, y: 0.3, z: -1.8, label: 'Broken conveyor' },
+  { id: 'switch-ring-e', x: 411.4, y: 0.3, z: 1.8, label: 'Far conveyor' },
+  { id: 'switch-ring-f', x: 442.4, y: 0.3, z: 0, label: 'Rescue split' },
+  { id: 'switch-ring-g', x: 492.8, y: 0.3, z: 0, label: 'Anchor run' },
+  { id: 'switch-ring-h', x: 522.4, y: 0.3, z: -1.5, label: 'Final near gap' },
+  { id: 'switch-ring-i', x: 549.4, y: 0.3, z: 1.5, label: 'Final far gap' },
 ];
 
 export type Checkpoint = {
@@ -333,7 +378,14 @@ export const SWITCHYARD_CHECKPOINTS: readonly Checkpoint[] = [
   { index: 1, x: 284, spawn: [287, 0.1, 0], label: 'First gate' },
   { index: 2, x: 316, spawn: [320, 0.1, 0], label: 'Regroup deck' },
   { index: 3, x: 345, spawn: [349, 0.1, 0], label: 'Crew gate' },
-  { index: 4, x: 363, spawn: [366, 0.1, 0], label: 'Office landing' },
+  { index: 4, x: 363, spawn: [367, 0.1, 0], label: 'Conveyor approach' },
+  { index: 5, x: 396, spawn: [399, 0.1, 0], label: 'Conveyor turn' },
+  { index: 6, x: 423, spawn: [427, 0.1, 0], label: 'Rescue landing' },
+  { index: 7, x: 453, spawn: [457, 0.1, 0], label: 'Relay bank' },
+  { index: 8, x: 474, spawn: [477, 0.1, 0], label: 'Relay exit' },
+  { index: 9, x: 506, spawn: [510, 0.1, 0], label: 'Anchor rest' },
+  { index: 10, x: 534, spawn: [538, 0.1, 0], label: 'Final turn' },
+  { index: 11, x: 560, spawn: [564, 0.1, 0], label: 'Office landing' },
 ];
 
 export function checkpointsFor(mapId: MapId): readonly Checkpoint[] {
@@ -357,7 +409,13 @@ export function laneZ(
   y: number,
   mapId: MapId = 'demolition',
 ): number {
-  if (mapId === 'switchyard') return 0;
+  if (mapId === 'switchyard') {
+    if (x >= 373 && x < 396) return -1.8;
+    if (x >= 396 && x < 423) return 1.8;
+    if (x >= 509 && x < 534) return -1.5;
+    if (x >= 534 && x < 560) return 1.5;
+    return 0;
+  }
   // Climbing out of the low road happens beside the girders, not under them.
   if (y < -1.0 && x > 34 && x < 46) return -2.1;
   if (y < -1.0 && x >= 22 && x < 29) return -1.9;
@@ -377,7 +435,12 @@ export function sectionAt(x: number, mapId: MapId = 'demolition'): string {
     if (x < 284) return 'switch-pair';
     if (x < 316) return 'switch-spans';
     if (x < 345) return 'switch-crew';
-    if (x < 363) return 'switch-final';
+    if (x < 380) return 'switch-transfer';
+    if (x < 423) return 'switch-conveyor';
+    if (x < 453) return 'switch-rescue';
+    if (x < 474) return 'switch-relay';
+    if (x < 515) return 'switch-anchor';
+    if (x < 560) return 'switch-final';
     return x < SWITCHYARD.finishX ? 'switch-office' : 'office';
   }
   if (x < 16) return 'gate';

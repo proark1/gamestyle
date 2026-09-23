@@ -209,9 +209,9 @@ export function createSite(): SiteModel {
   const root = new T.Group();
 
   // The pit everything is built over. Far enough down to read as a real drop.
-  const pit = new T.Mesh(new T.PlaneGeometry(500, 70), material(SITE.pit));
+  const pit = new T.Mesh(new T.PlaneGeometry(800, 70), material(SITE.pit));
   pit.rotation.x = -Math.PI / 2;
-  pit.position.set(150, -30, 0);
+  pit.position.set(250, -30, 0);
   pit.receiveShadow = true;
   root.add(pit);
   for (let i = 0; i < 38; i++) {
@@ -314,10 +314,14 @@ function switchyardFeatures(parent: T.Object3D) {
     for (let z = -5.1; z <= 5.1; z += 1.7)
       box(barrier, [0.16, 2.3, 0.16], [gate.x, 1.15, z], SITE.rust);
     const board = sign(
-      gateIndex === 0 ? '2 WORKERS TO OPEN' : 'ALL 4 WORKERS TO OPEN',
+      gate.mode === 'relay'
+        ? 'RELAY: 2 > 1 > 3 / NEW WORKER EACH TIME'
+        : gateIndex === 0
+          ? '2 WORKERS TO OPEN'
+          : 'ALL 4 WORKERS TO OPEN',
       '#2b2a28',
       '#f1c232',
-      4.6,
+      gate.mode === 'relay' ? 6.4 : 4.6,
     );
     board.position.set(gate.x - 0.3, 3.65, 0);
     barrier.add(board);
@@ -326,8 +330,21 @@ function switchyardFeatures(parent: T.Object3D) {
   const start = sign('SWITCHYARD', '#2b2a28', '#f1c232', 4);
   start.position.set(265, 3.2, -5);
   parent.add(start);
-  for (const x of [292, 304, 316, 354, 363])
+  for (const x of [
+    292, 304, 316, 354, 363, 386, 396, 412, 423, 443, 453, 482, 494, 506, 523,
+    534, 550, 560,
+  ])
     box(parent, [0.12, 0.04, 3.2], [x, 0.025, 0], SITE.hazard);
+  for (const [x, z, message] of [
+    [376, -4, 'CHANGE LANES AT THE WIDE DECKS'],
+    [429, -4, 'CLIP A RING, BRACE, THEN HAUL'],
+    [457, -4, 'THREE DIFFERENT WORKERS: 2 > 1 > 3'],
+    [509, -4, 'STAY LINKED THROUGH THE FINAL GAPS'],
+  ] as const) {
+    const hint = sign(message, '#2b2a28', '#f1c232', 6.5);
+    hint.position.set(x, 2.8, z);
+    parent.add(hint);
+  }
   const x = SWITCHYARD.finishX + 3.5;
   box(parent, [5, 3, 7], [x, 1.5, 0], SITE.office, true);
   box(parent, [5.3, 0.25, 7.3], [x, 3.1, 0], SITE.concreteDark);
