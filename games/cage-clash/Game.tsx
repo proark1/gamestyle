@@ -423,8 +423,8 @@ export default function CageGame() {
                   'WENIG AUSDAUER — Abstand schaffen und erholen.',
                 )
               : say(
-                  'Tap Punch for jab–cross. Queue your next strike as you recover.',
-                  'Schlag tippen für Jab–Cross. Folgeangriff kurz vor der Erholung eingeben.',
+                  'Tap Punch for jab–cross–hook. Queue your next strike as you recover.',
+                  'Schlag tippen für Jab–Gerade–Haken. Folgeangriff kurz vor der Erholung eingeben.',
                 );
   return (
     <main className="cage-game">
@@ -863,8 +863,8 @@ export default function CageGame() {
             </li>
             <li>
               {say(
-                'WASD or joystick moves; you face your opponent. Tap and release Space for a jab, then a cross. Hold and release for a hook. F kicks.',
-                'WASD oder Joystick bewegt; du schaust zum Gegner. Leertaste tippen und loslassen: Jab, dann Gerade. Halten und loslassen: Haken. F tritt.',
+                'WASD or joystick moves; you face your opponent. Tap and release Space three times for a jab–cross–hook combination. Hold and release for a hook. F kicks.',
+                'WASD oder Joystick bewegt; du schaust zum Gegner. Leertaste dreimal tippen und loslassen: Jab–Gerade–Haken. Halten und loslassen: Haken. F tritt.',
               )}
             </li>
             <li>

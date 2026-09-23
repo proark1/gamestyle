@@ -6,7 +6,12 @@ import type { Look } from '../../shared/wardrobe/look';
 import { CAGE_RADIUS, type Fighter, type Grapple } from './types';
 import { cageVertices } from './physics';
 import { MOVES } from './combat';
-import { guardFist, strikeMotion, type Point } from './strike-motion';
+import {
+  guardFist,
+  kickMotion,
+  strikeMotion,
+  type Point,
+} from './strike-motion';
 import { label } from './signage';
 import { createRingside } from './ringside';
 import { groundPose } from './ground-pose';
@@ -188,7 +193,28 @@ export function createFighter(p: Fighter, look?: Look) {
     group.visible = false;
     return { group, thigh, knee, shin, foot, side };
   });
-  return { root, model, rig, arms, groundLegs, marker, ring, team: p.team };
+  const kickGroup = new T.Group();
+  kickGroup.position.copy(rig.legR.position);
+  rig.body.add(kickGroup);
+  const kickLeg = {
+    group: kickGroup,
+    thigh: ball(kickGroup, [0.13, 0.1, 0.13], [0, -0.12, 0], TEAM[p.team]),
+    knee: ball(kickGroup, [0.095, 0.095, 0.095], [0, -0.25, 0], '#de9268'),
+    shin: ball(kickGroup, [0.078, 0.1, 0.078], [0, -0.36, 0], '#de9268'),
+    foot: ball(kickGroup, [0.1, 0.085, 0.17], [0, -0.48, 0.04], CLOTH.cream),
+  };
+  kickGroup.visible = false;
+  return {
+    root,
+    model,
+    rig,
+    arms,
+    groundLegs,
+    kickLeg,
+    marker,
+    ring,
+    team: p.team,
+  };
 }
 export function poseFighter(
   visual: ReturnType<typeof createFighter>,
@@ -203,6 +229,7 @@ export function poseFighter(
   rig.head.rotation.set(0, 0, 0);
   const grounded = !!g && g.mode !== 'clinch';
   rig.legL.visible = rig.legR.visible = !grounded;
+  visual.kickLeg.group.visible = false;
   for (const limb of visual.groundLegs) limb.group.visible = grounded;
   const stride = Math.sin(time * 12) * Math.min(1, Math.hypot(p.vx, p.vz) / 3);
   model.position.y = p.down
@@ -228,18 +255,27 @@ export function poseFighter(
   if (p.attack > 0) {
     const profile = MOVES[p.move],
       elapsed = profile.duration - p.attack;
-    const swing =
-      elapsed < profile.windup
-        ? (elapsed / profile.windup) ** 2
-        : Math.max(
-            0,
-            1 -
-              (elapsed - profile.windup) / (profile.duration - profile.windup),
-          );
+    const swing = strikeMotion(
+      p.move,
+      elapsed,
+      p.move === 'jab' ? -1 : 1,
+    ).drive;
     if (p.move === 'kick') {
-      rig.legR.rotation.x = -swing * 1.65;
-      rig.legR.rotation.z = swing * 0.25;
-      rig.body.rotation.x = -swing * 0.2;
+      const kick = kickMotion(elapsed);
+      rig.legR.visible = false;
+      visual.kickLeg.group.visible = true;
+      poseSegment(visual.kickLeg.thigh, [0, 0, 0], kick.knee);
+      visual.kickLeg.knee.position.set(...kick.knee);
+      poseSegment(visual.kickLeg.shin, kick.knee, kick.ankle);
+      visual.kickLeg.foot.position.set(...kick.ankle);
+      visual.kickLeg.foot.rotation.y = -kick.drive * 0.45;
+      rig.legL.rotation.y = -kick.drive * 0.32;
+      rig.legL.rotation.x = -kick.drive * 0.08;
+      rig.body.rotation.x = -kick.drive * 0.16;
+      rig.body.rotation.y = -kick.drive * 0.38;
+      rig.head.rotation.y = kick.drive * 0.28;
+      rig.armL.rotation.x = -1.2 - kick.drive * 0.2;
+      rig.armR.rotation.x = -1.2 + kick.drive * 0.2;
     } else if (p.move === 'clinch') {
       rig.armL.rotation.x = rig.armR.rotation.x = -1.2 - swing * 0.6;
       rig.body.rotation.x = swing * 0.3;
@@ -247,7 +283,11 @@ export function poseFighter(
       const arm = p.move === 'jab' ? rig.armL : rig.armR;
       arm.rotation.x = -1.1 - swing;
       arm.rotation.y = p.move === 'hook' ? -swing * 0.8 : 0;
-      rig.body.rotation.y = swing * 0.2;
+      const direction = p.move === 'jab' ? 1 : -1;
+      rig.body.rotation.y =
+        direction * swing * (p.move === 'hook' ? 0.24 : 0.22);
+      rig.head.rotation.y = -rig.body.rotation.y * 0.55;
+      rig.legR.rotation.y = p.move === 'jab' ? 0 : swing * 0.14;
     }
   }
   if (g?.mode === 'clinch') {
@@ -320,9 +360,11 @@ export function poseFighter(
       const next =
         p.charge >= 0.4
           ? 'hook'
-          : p.combo === 1 && p.comboTime > 0
+          : p.comboTime > 0 && p.combo === 1
             ? 'cross'
-            : 'jab';
+            : p.comboTime > 0 && p.combo === 2
+              ? 'hook'
+              : 'jab';
       if (index === (next === 'jab' ? 0 : 1))
         fist = strikeMotion(
           next,
@@ -341,16 +383,8 @@ export function poseFighter(
         index === (p.move === 'jab' ? 0 : 1)
       ) {
         fist = motion.fist;
-        rig.body.rotation.y =
-          limb.side * motion.drive * (p.move === 'hook' ? 0.24 : 0.12);
       } else if (p.move === 'clinch')
         fist = [limb.side * 0.05, 0.12, 0.3 + motion.drive * 0.4];
-      if (p.move === 'kick') {
-        rig.legR.rotation.x = -motion.drive * 1.75;
-        rig.legR.rotation.z = motion.drive * 0.4;
-        rig.body.rotation.x = -motion.drive * 0.23;
-        rig.body.rotation.y = -motion.drive * 0.2;
-      }
     }
     const elbow: Point =
       g && g.mode !== 'clinch'
@@ -359,13 +393,19 @@ export function poseFighter(
             fist[1] * 0.55 - 0.17,
             fist[2] * 0.5,
           ]
-        : standing
-          ? [
-              fist[0] * 0.45 + limb.side * 0.09,
-              fist[1] * 0.45 - 0.16,
-              fist[2] * 0.43,
-            ]
-          : [0, -0.19, 0];
+        : standing &&
+            p.attack > 0 &&
+            ['jab', 'cross', 'hook'].includes(p.move) &&
+            index === (p.move === 'jab' ? 0 : 1)
+          ? strikeMotion(p.move, MOVES[p.move].duration - p.attack, limb.side)
+              .elbow
+          : standing
+            ? [
+                fist[0] * 0.45 + limb.side * 0.09,
+                fist[1] * 0.45 - 0.16,
+                fist[2] * 0.43,
+              ]
+            : [0, -0.19, 0];
     limb.elbow.position.set(...elbow);
     limb.glove.position.set(...fist);
     limb.glove.rotation.x = standing ? Math.PI / 2 : 0;

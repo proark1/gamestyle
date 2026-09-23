@@ -3,36 +3,36 @@ import { stats } from './styles';
 import { STEP, type Fighter, type Move, type World } from './types';
 export const MOVES = {
   jab: {
-    duration: 0.4,
-    windup: 0.14,
+    duration: 0.34,
+    windup: 0.12,
     range: 1.45,
     damage: 6,
     cost: 7,
-    recovery: 0.1,
+    recovery: 0.08,
   },
   cross: {
-    duration: 0.5,
-    windup: 0.2,
+    duration: 0.42,
+    windup: 0.16,
     range: 1.6,
     damage: 9,
     cost: 10,
-    recovery: 0.13,
+    recovery: 0.1,
   },
   hook: {
-    duration: 0.8,
-    windup: 0.34,
+    duration: 0.66,
+    windup: 0.27,
     range: 1.55,
     damage: 16,
     cost: 23,
-    recovery: 0.3,
+    recovery: 0.22,
   },
   kick: {
-    duration: 0.85,
-    windup: 0.38,
+    duration: 0.72,
+    windup: 0.28,
     range: 2.25,
     damage: 13,
     cost: 19,
-    recovery: 0.35,
+    recovery: 0.28,
   },
   clinch: {
     duration: 0.65,
@@ -43,7 +43,7 @@ export const MOVES = {
     recovery: 0.35,
   },
 } as const;
-export const INPUT_BUFFER = 0.22;
+export const INPUT_BUFFER = 0.26;
 export function clearQueuedStrike(p: Fighter) {
   p.queuedMove = null;
   p.queueTime = 0;
@@ -172,8 +172,12 @@ export function standingStep(w: World) {
       else if (p.charge > 0) queue(p.charge >= 0.4 ? 'hook' : 'jab');
       if (!p.attack && !p.cooldown && p.queuedMove) {
         const move =
-          p.queuedMove === 'jab' && p.combo === 1 && p.comboTime > 0
-            ? 'cross'
+          p.queuedMove === 'jab' && p.comboTime > 0
+            ? p.combo === 1
+              ? 'cross'
+              : p.combo === 2
+                ? 'hook'
+                : 'jab'
             : p.queuedMove;
         startAttack(p, move);
       }
@@ -189,8 +193,8 @@ export function standingStep(w: World) {
       }
       if (p.attack === 0) {
         p.cooldown = profile.recovery + (p.whiffed ? 0.35 : 0);
-        p.combo = p.move === 'jab' ? 1 : 0;
-        p.comboTime = 0.7;
+        p.combo = p.move === 'jab' ? 1 : p.move === 'cross' ? 2 : 0;
+        p.comboTime = 0.8;
       }
     }
   }

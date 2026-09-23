@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { freshWorld, startMatch, stepWorld } from './simulation';
 import { clearCombat, INPUT_BUFFER, MOVES } from './combat';
 import { idleInput, STEP, type World } from './types';
-import { guardFist, strikeMotion } from './strike-motion';
+import { guardFist, kickMotion, strikeMotion } from './strike-motion';
 import { createEngine } from './peer';
 import { compatibility } from '../../shared/peer/protocol';
 
@@ -39,6 +39,22 @@ void test('a late punch tap survives jab recovery and becomes one cross', () => 
   assert.equal(p.punches, 1);
   run(w, 1);
   assert.equal(p.punches, 1);
+});
+void test('three quick punch taps flow through jab, cross and hook', () => {
+  const w = fight(),
+    p = w.players[0];
+  for (const move of ['jab', 'cross', 'hook'] as const) {
+    p.input.punch = true;
+    run(w, 0.05);
+    p.input.punch = false;
+    stepWorld(w);
+    run(w, MOVES[move].recovery + 0.02);
+    assert.equal(p.move, move);
+    assert.ok(p.attack > 0);
+    run(w, MOVES[move].duration);
+  }
+  assert.equal(p.combo, 0);
+  assert.equal(p.punches, 3);
 });
 void test('kick buffers near recovery, but early inputs expire without surprise attacks', () => {
   const w = fight(),
@@ -115,7 +131,7 @@ void test('buffer survives checkpoint handover and old rules are rejected', () =
   const restored = createEngine(1000, checkpoint);
   assert.equal(restored.world.players[0].queuedMove, 'kick');
   assert.equal(restored.world.players[0].queueTime, 0.18);
-  assert.equal(compatibility('cage-clash').rules, 3);
+  assert.equal(compatibility('cage-clash').rules, 4);
   assert.throws(
     () => createEngine(1000, { ...checkpoint, rules: 1 }),
     /checkpoint/,
@@ -136,4 +152,20 @@ void test('jab, cross and hook travel on distinct paths and contact on their hit
   const hook = strikeMotion('hook', MOVES.hook.windup * 0.65, 1).fist;
   const cross = strikeMotion('cross', MOVES.cross.windup * 0.65, 1).fist;
   assert.ok(hook[0] > cross[0] + 0.2);
+});
+void test('kick chambers before contact, retracts, and ends at the planted stance', () => {
+  const profile = MOVES.kick;
+  const start = kickMotion(0);
+  const chamber = kickMotion(profile.windup * 0.38);
+  const contact = kickMotion(profile.windup);
+  const end = kickMotion(profile.duration);
+  assert.ok(chamber.knee[2] > start.knee[2]);
+  assert.ok(chamber.ankle[1] < contact.ankle[1]);
+  assert.ok(contact.ankle[2] > chamber.ankle[2]);
+  assert.equal(contact.drive, 1);
+  assert.deepEqual(end.knee, start.knee);
+  end.ankle.forEach((value, index) =>
+    assert.ok(Math.abs(value - start.ankle[index]) < 1e-9),
+  );
+  assert.equal(end.drive, 0);
 });
