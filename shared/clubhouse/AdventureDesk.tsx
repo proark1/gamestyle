@@ -169,7 +169,7 @@ export function AdventureDesk({
               <div className="adventure-die" aria-hidden="true">
                 <Shuffle size={52} />
               </div>
-              <Cast pose="point" />
+              <Cast pose="game-scout" />
               <p>{copy.pickHint}</p>
             </div>
           )}
@@ -339,7 +339,7 @@ export function AdventureDesk({
       </div>
       {celebrating && (
         <aside className="adventure-celebration" aria-live="polite">
-          <Cast pose="wave" />
+          <Cast pose="explorer" />
           <div>
             <strong>{copy.celebration}</strong>
             <p>{copy.celebrationHint}</p>

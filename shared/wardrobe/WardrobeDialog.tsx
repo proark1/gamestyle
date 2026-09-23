@@ -27,7 +27,7 @@ export default function WardrobeDialog({
           aria-labelledby="wardrobe-dialog-title"
         >
           <CastGuide
-            pose="wave"
+            pose="stylist"
             message="wardrobe"
             className="wardrobe-cast-guide"
           />

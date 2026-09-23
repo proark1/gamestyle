@@ -79,7 +79,7 @@ export function ClubhouseWelcome({
 export function ClubhouseHowTo() {
   const { t } = useLanguage();
   const copy = t(CLUBHOUSE_COPY);
-  const poses = ['point', 'mail', 'wave'] as const;
+  const poses = ['game-scout', 'mail', 'play-laugh'] as const;
   return (
     <section className="clubhouse-how" aria-labelledby="clubhouse-how-title">
       <h2 id="clubhouse-how-title">{copy.how}</h2>
@@ -104,7 +104,7 @@ export function ClubhouseParty() {
   const copy = t(CLUBHOUSE_COPY);
   return (
     <aside className="clubhouse-party">
-      <Cast pose="wave" />
+      <Cast pose="party-host" />
       <div>
         <span className="clubhouse-eyebrow">
           <Trophy size={15} />

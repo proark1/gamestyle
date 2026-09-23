@@ -5,7 +5,16 @@ import { useLanguage } from '../language/useLanguage';
 import { CLUBHOUSE_COPY } from './copy';
 import './clubhouse.css';
 
-export type CastPose = 'wave' | 'point' | 'cheer' | 'mail';
+export type CastPose =
+  | 'wave'
+  | 'point'
+  | 'cheer'
+  | 'mail'
+  | 'game-scout'
+  | 'explorer'
+  | 'play-laugh'
+  | 'party-host'
+  | 'stylist';
 
 /** Decorative cast: instructions remain ordinary, translated page text. */
 export function Cast({

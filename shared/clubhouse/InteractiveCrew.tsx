@@ -1,16 +1,22 @@
 'use client';
 import { useState } from 'react';
-import { Cast, type CastPose } from './Cast';
+import { Cast } from './Cast';
 import { useLanguage } from '../language/useLanguage';
 import { ADVENTURE_COPY } from './adventure-copy';
 import { CLUBHOUSE_COPY } from './copy';
 import './adventures.css';
 
-const POSES: CastPose[] = ['mail', 'point', 'wave'];
+const CREW = [
+  { role: 'mail', pose: 'mail' },
+  { role: 'point', pose: 'explorer' },
+  { role: 'wave', pose: 'game-scout' },
+] as const;
+type CrewRole = (typeof CREW)[number]['role'];
+
 export function InteractiveCrew() {
   const { t } = useLanguage();
   const copy = t(ADVENTURE_COPY);
-  const [active, setActive] = useState<CastPose | null>(null);
+  const [active, setActive] = useState<CrewRole | null>(null);
   return (
     <div className="clubhouse-stage interactive-crew">
       <p
@@ -22,14 +28,14 @@ export function InteractiveCrew() {
       </p>
       <div className="clubhouse-sun" aria-hidden="true" />
       <div className="clubhouse-court" aria-hidden="true" />
-      {POSES.map((pose) => (
+      {CREW.map(({ role, pose }) => (
         <button
-          key={pose}
+          key={role}
           type="button"
-          className={`hero-cast hero-cast-${pose} crew-friend`}
-          aria-label={copy.crewLabels[pose]}
-          aria-pressed={active === pose}
-          onClick={() => setActive(pose)}
+          className={`hero-cast hero-cast-${role} crew-friend`}
+          aria-label={copy.crewLabels[role]}
+          aria-pressed={active === role}
+          onClick={() => setActive(role)}
         >
           <Cast pose={pose} eager />
         </button>
