@@ -91,7 +91,9 @@ else {
     for (const environment of JSON.parse(status.stdout).environments.edges)
       for (const instance of environment.node.serviceInstances.edges)
         for (const deployment of instance.node.activeDeployments ?? [])
+          // Railway can retain a stopped deployment with an old nonterminal status.
           if (
+            !deployment.deploymentStopped &&
             !['SUCCESS', 'FAILED', 'CRASHED', 'REMOVED'].includes(
               deployment.status,
             )
