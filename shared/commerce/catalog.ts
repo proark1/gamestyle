@@ -56,6 +56,20 @@ export const COMMERCE_OFFERS: readonly CommerceOffer[] = [
     grants: ['disco-boots'],
     usdCents: COMMERCE_PRICES.special,
   },
+  ...ITEMS.filter((item) =>
+    [
+      'mini-volcano',
+      'arcade-bomber',
+      'lava-flow-joggers',
+      'wind-up-stompers',
+    ].includes(item.id),
+  ).map((item) => ({
+    id: item.premiumOffer!,
+    name: item.name,
+    grants: [item.id],
+    usdCents:
+      item.slot === 'hat' ? COMMERCE_PRICES.standard : COMMERCE_PRICES.special,
+  })),
   {
     id: 'party-style-bundle',
     name: 'Party Style Bundle',

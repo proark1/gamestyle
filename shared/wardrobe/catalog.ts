@@ -312,6 +312,46 @@ export const ITEMS: readonly Item[] = [
     name: 'Disco Boots',
     premiumOffer: 'disco-boots',
   },
+  { id: 'ramen-nest', slot: 'hat', name: 'Ramen Nest', price: 240 },
+  {
+    id: 'mini-volcano',
+    slot: 'hat',
+    name: 'Mini Volcano',
+    premiumOffer: 'mini-volcano',
+  },
+  { id: 'sharkfin-zip-up', slot: 'top', name: 'Sharkfin Zip-Up', price: 300 },
+  {
+    id: 'arcade-bomber',
+    slot: 'top',
+    name: 'Arcade Bomber',
+    premiumOffer: 'arcade-bomber',
+  },
+  {
+    id: 'balloon-twist-pants',
+    slot: 'legs',
+    name: 'Balloon Twist Pants',
+    price: 280,
+  },
+  {
+    id: 'lava-flow-joggers',
+    slot: 'legs',
+    name: 'Lava Flow Joggers',
+    premiumOffer: 'lava-flow-joggers',
+  },
+  {
+    id: 'banana-peel-slides',
+    slot: 'shoes',
+    name: 'Banana Peel Slides',
+    price: 220,
+  },
+  {
+    id: 'wind-up-stompers',
+    slot: 'shoes',
+    name: 'Wind-Up Stompers',
+    premiumOffer: 'wind-up-stompers',
+  },
+  { id: 'side-eye-specs', slot: 'face', name: 'Side-Eye Specs', price: 190 },
+  { id: 'bubble-beard', slot: 'beard', name: 'Bubble Beard', price: 170 },
 ];
 
 export function findItem(id: string) {

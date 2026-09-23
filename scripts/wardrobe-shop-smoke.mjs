@@ -25,7 +25,8 @@ server.middlewares.use('/shop-check', async (_req, res) => {
   import WardrobeView from '/shared/wardrobe/WardrobeView.tsx';
   import {ITEMS} from '/shared/wardrobe/catalog.ts';
   import {PLAYFUL_KID_ITEMS} from '/shared/rendering/cosmetics/playful-items.ts';
-  window.collection=ITEMS.filter(item=>Object.hasOwn(PLAYFUL_KID_ITEMS,item.id));
+  window.collection=ITEMS.filter(item=>Object.hasOwn(PLAYFUL_KID_ITEMS,item.id) && item.price !== undefined);
+  window.newPremium=ITEMS.filter(item=>['mini-volcano','arcade-bomber','lava-flow-joggers','wind-up-stompers'].includes(item.id));
   createRoot(document.getElementById('root')).render(React.createElement(WardrobeView,{embedded:true}));
   </script></body></html>`,
     ),
@@ -90,6 +91,19 @@ try {
   expect(saved.coins).toBe(
     5000 - items.reduce((sum, item) => sum + item.price, 0),
   );
+  const premium = await page.evaluate(() => window.newPremium);
+  for (const item of premium) {
+    const card = page.locator('.wardrobe-item-card').filter({
+      has: page.getByRole('button', {
+        name: 'Inspect ' + item.name,
+        exact: true,
+      }),
+    });
+    await expect(card.locator('img')).toHaveAttribute('src', /^data:image/);
+    await card.getByRole('button', { name: 'Try on', exact: true }).click();
+    await expect(card).toHaveAttribute('data-fitted', 'true');
+    await expect(card.locator('.wardrobe-btn-buy')).toBeDisabled();
+  }
   await page
     .getByRole('button', { name: 'Inspect Moon Glasses', exact: true })
     .click();
@@ -120,6 +134,8 @@ try {
     avatarPreview: true,
     motion: true,
     mobile: true,
+    premiumPreview: premium.length === 4,
+    premiumCheckoutGate: true,
     errors,
   };
   writeFileSync(

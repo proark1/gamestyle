@@ -5,13 +5,60 @@ import { ITEMS } from '../../wardrobe/catalog';
 import { parseLook } from '../../wardrobe/look';
 import { playerKid } from '../avatars/kid';
 import { KIT } from '../palette';
-import { LOOK_GROUP } from './dress';
+import { dressedWorker, LOOK_GROUP } from './dress';
 import { PLAYFUL_KID_ITEMS } from './playful-items';
+import { ITEM_MODELS } from './items';
 import { buildStandaloneItem } from './standalone-item';
 
-const collection = ITEMS.filter((item) =>
-  Object.hasOwn(PLAYFUL_KID_ITEMS, item.id),
+const collection = ITEMS.filter(
+  (item) =>
+    Object.hasOwn(PLAYFUL_KID_ITEMS, item.id) && item.price !== undefined,
 );
+
+void test('the ten new pieces have matching kid, worker, and inspection models', () => {
+  const ids = [
+    'ramen-nest',
+    'mini-volcano',
+    'sharkfin-zip-up',
+    'arcade-bomber',
+    'balloon-twist-pants',
+    'lava-flow-joggers',
+    'banana-peel-slides',
+    'wind-up-stompers',
+    'side-eye-specs',
+    'bubble-beard',
+  ];
+  for (const id of ids) {
+    const item = ITEMS.find((candidate) => candidate.id === id);
+    assert.ok(item, `${id} is in the catalog`);
+    assert.equal(ITEM_MODELS[id]?.slot, item.slot);
+    assert.ok(PLAYFUL_KID_ITEMS[id], `${id} has a clay model`);
+    const inspected = buildStandaloneItem(id);
+    assert.ok(
+      !new T.Box3().setFromObject(inspected).isEmpty(),
+      `${id} can be inspected`,
+    );
+    const { model } = playerKid(
+      'nico',
+      { jersey: KIT.red },
+      { [item.slot]: id },
+    );
+    assert.ok(
+      !new T.Box3().setFromObject(model).isEmpty(),
+      `${id} fits the kid`,
+    );
+    const worker = dressedWorker(0, {}, { [item.slot]: id }).model;
+    assert.ok(
+      !new T.Box3().setFromObject(worker).isEmpty(),
+      `${id} fits the worker`,
+    );
+    let attached = false;
+    worker.traverse((object) => {
+      if (object.name === LOOK_GROUP && object.children.length) attached = true;
+    });
+    assert.ok(attached, `${id} attaches visible worker geometry`);
+  }
+});
 
 void test('new items can be purchased, equipped and restored without changing other slots', async () => {
   const {

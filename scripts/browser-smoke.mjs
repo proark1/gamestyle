@@ -40,7 +40,7 @@ try {
     await page.goto(`${origin}/${game}`, { waitUntil: 'networkidle' });
     const practice = page
       .getByRole('button', {
-        name: /practice|solo|alone|training|üben|alleine|start match|let.s shop|start game|start (the )?shift|start round|ready.*play|vs bots|learn with/i,
+        name: /practice|solo|alone|training|üben|alleine|start match|let.s shop|start game|start (the )?shift|start round|ready.*play|vs bots|learn with|gloves up|lock in .*fighter/i,
       })
       .first();
     let started = automatic.has(game);
