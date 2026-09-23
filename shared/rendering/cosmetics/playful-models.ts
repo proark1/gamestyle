@@ -37,6 +37,112 @@ const disc = (
 
 /** Lightweight worker versions; the kid and shop share the detailed clay models. */
 export const PLAYFUL_MODELS: Record<string, ItemModel> = {
+  'ramen-nest': {
+    slot: 'hat',
+    parts: [
+      orb('head', [0.32, 0.14, 0.3], [0, 0.1, 0], '#fff0ce'),
+      orb('head', [0.2, 0.025, 0.16], [0, 0.2, 0], '#f4c96f'),
+      box('head', [0.025, 0.3, 0.025], [-0.13, 0.31, -0.02], '#704b38'),
+      box('head', [0.025, 0.3, 0.025], [0.13, 0.31, -0.02], '#704b38'),
+    ],
+  },
+  'mini-volcano': {
+    slot: 'hat',
+    parts: [
+      disc('head', 0.31, 0.08, [0, 0.05, 0], '#343741'),
+      {
+        shape: 'taper',
+        on: 'head',
+        top: 0.08,
+        bottom: 0.28,
+        height: 0.34,
+        at: [0, 0.25, 0],
+        colour: '#55505a',
+        sides: 12,
+      },
+      orb('head', [0.08, 0.03, 0.07], [0, 0.4, 0], '#f8794f'),
+      orb('head', [0.055, 0.04, 0.05], [0.03, 0.45, 0], '#a3a1ad'),
+    ],
+  },
+  'sharkfin-zip-up': {
+    slot: 'top',
+    shirt: '#246c77',
+    parts: [
+      box('body', [0.04, 0.34, 0.025], [0, 0.76, 0.29], '#dcebd9'),
+      ...[-1, 1].map((side) =>
+        box('body', [0.055, 0.065, 0.025], [side * 0.17, 0.8, 0.27], '#b9e5dc'),
+      ),
+      {
+        shape: 'taper',
+        on: 'body',
+        top: 0,
+        bottom: 0.17,
+        height: 0.32,
+        at: [0, 0.79, -0.29],
+        colour: '#19616d',
+        sides: 3,
+      },
+    ],
+  },
+  'arcade-bomber': {
+    slot: 'top',
+    shirt: '#302858',
+    parts: [
+      box('body', [0.55, 0.055, 0.38], [0, 0.58, 0], '#f59d68'),
+      ...['#69e7d2', '#f8ca67', '#f477a1'].map((colour, i) =>
+        box('body', [0.08, 0.08, 0.04], [-0.16 + i * 0.16, 0.8, 0.29], colour),
+      ),
+    ],
+  },
+  'balloon-twist-pants': {
+    slot: 'legs',
+    overalls: '#efaa99',
+    parts: [
+      orb('legs', [0.15, 0.18, 0.14], [0, -0.12, 0], '#f3a8aa'),
+      orb('legs', [0.15, 0.17, 0.14], [0, -0.31, 0], '#7bd2dc'),
+    ],
+  },
+  'lava-flow-joggers': {
+    slot: 'legs',
+    overalls: '#3b3a41',
+    parts: [
+      box('legs', [0.29, 0.055, 0.29], [0, -0.43, 0], '#57505a'),
+      box('legs', [0.035, 0.3, 0.025], [0.03, -0.23, 0.16], '#fff0ce'),
+    ],
+  },
+  'banana-peel-slides': {
+    slot: 'shoes',
+    boots: '#f7d95a',
+    parts: [
+      box('legs', [0.31, 0.05, 0.43], [0, -0.48, 0.055], '#7d6042'),
+      box('legs', [0.08, 0.035, 0.19], [0.1, -0.4, 0.22], '#fff1be'),
+    ],
+  },
+  'wind-up-stompers': {
+    slot: 'shoes',
+    boots: '#704230',
+    parts: [
+      box('legs', [0.32, 0.06, 0.45], [0, -0.48, 0.05], '#163867'),
+      box('legs', [0.025, 0.17, 0.17], [0.17, -0.36, 0], '#fff0ce'),
+    ],
+  },
+  'side-eye-specs': {
+    slot: 'face',
+    parts: [-1, 1].flatMap((side) => [
+      orb('face', [0.092, 0.085, 0.038], [side * 0.14, 0.02, 0.1], '#fff6df'),
+      orb('face', [0.035, 0.04, 0.016], [side * 0.18, 0.02, 0.143], '#263b30'),
+    ]),
+  },
+  'bubble-beard': {
+    slot: 'beard',
+    parts: [
+      orb('face', [0.1, 0.08, 0.065], [0, -0.22, 0.08], '#e5f5ee'),
+      ...[-1, 1].flatMap((side) => [
+        orb('face', [0.075, 0.07, 0.055], [side * 0.1, -0.18, 0.07], '#aee9d9'),
+      ]),
+      orb('face', [0.06, 0.06, 0.05], [0.05, -0.29, 0.06], '#fff7e5'),
+    ],
+  },
   'neon-visor': {
     slot: 'hat',
     parts: [

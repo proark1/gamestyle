@@ -195,6 +195,252 @@ const lensMaterial = new T.MeshBasicMaterial({
 lensMaterial.userData.shared = true;
 
 export const PLAYFUL_KID_ITEMS: Record<string, (dress: KidDress) => void> = {
+  'ramen-nest'(dress) {
+    const group = hat(dress);
+    soft(group, [0.32, 0.13, 0.29], [0, 0.08, 0], '#fff0ce');
+    lathe(
+      group,
+      'ramen-rim',
+      () => [
+        [0.25, 0.13],
+        [0.32, 0.13],
+        [0.32, 0.17],
+        [0.25, 0.17],
+      ],
+      [0, 0, 0],
+      '#c7564b',
+    );
+    for (let i = 0; i < 7; i++) {
+      const a = i * 2.4;
+      soft(
+        group,
+        [0.055, 0.025, 0.05],
+        [Math.sin(a) * 0.18, 0.17 + (i % 2) * 0.018, Math.cos(a) * 0.15],
+        '#f4c96f',
+      );
+    }
+    for (const side of [-1, 1]) {
+      const stick = rounded(
+        group,
+        [0.025, 0.39, 0.025],
+        [side * 0.1, 0.32, -0.03],
+        '#704b38',
+        0.01,
+      );
+      stick.rotation.z = side * 0.3;
+    }
+    soft(group, [0.07, 0.018, 0.025], [0, 0.09, 0.28], '#e88571');
+  },
+  'mini-volcano'(dress) {
+    const group = hat(dress);
+    crown(group, 'volcano-base', 0.31, 0.055, '#343741');
+    custom(
+      group,
+      'volcano-cone',
+      () => new T.ConeGeometry(0.28, 0.33, 12, 1, true),
+      [0, 0.22, 0],
+      '#55505a',
+    );
+    custom(
+      group,
+      'volcano-crater',
+      () => new T.TorusGeometry(0.082, 0.03, 8, 24).rotateX(Math.PI / 2),
+      [0, 0.39, 0],
+      '#292e37',
+    );
+    soft(group, [0.08, 0.025, 0.07], [0, 0.39, 0], '#f8794f');
+    for (const [x, y, z, size] of [
+      [-0.17, 0.19, 0.12, 0.035],
+      [0.12, 0.29, 0.12, 0.03],
+      [0.19, 0.14, -0.1, 0.025],
+    ] as const)
+      soft(group, [size, size * 1.5, size], [x, y, z], '#ff9e58');
+    for (const [x, y] of [
+      [0.04, 0.5],
+      [-0.03, 0.56],
+      [0.06, 0.62],
+    ] as const)
+      soft(group, [0.055, 0.038, 0.047], [x, y, 0], '#a3a1ad');
+  },
+  'sharkfin-zip-up'({ body, sleeves }) {
+    puffer(body, 'shark', '#246c77', '#38949a');
+    for (const sleeve of sleeves) {
+      soft(sleeve, [0.09, 0.12, 0.09], [0, -0.08, 0], '#246c77');
+      cuff(sleeve, 'shark-cuff', -0.17, 0.087, 0.05, '#b9e5dc');
+    }
+    rounded(body, [0.024, 0.3, 0.02], [0, 0.75, 0.25], '#dcebd9', 0.008);
+    for (const side of [-1, 1])
+      for (let i = 0; i < 3; i++)
+        rounded(
+          body,
+          [0.055, 0.014, 0.012],
+          [side * 0.16, 0.75 + i * 0.045, 0.22],
+          '#b9e5dc',
+          0.005,
+        ).rotation.z = side * 0.25;
+    const fin = custom(
+      body,
+      'shark-fin',
+      () => {
+        const shape = new T.Shape();
+        shape.moveTo(-0.11, -0.13);
+        shape.lineTo(0.02, 0.19);
+        shape.lineTo(0.1, -0.13);
+        shape.closePath();
+        return new T.ExtrudeGeometry(shape, {
+          depth: 0.045,
+          bevelEnabled: true,
+          bevelSize: 0.012,
+          bevelThickness: 0.012,
+          bevelSegments: 2,
+        });
+      },
+      [0, 0.76, -0.29],
+      '#19616d',
+    );
+    fin.rotation.y = Math.PI;
+  },
+  'arcade-bomber'({ body, sleeves }) {
+    puffer(body, 'arcade', '#302858', '#51418a');
+    for (const sleeve of sleeves) {
+      soft(sleeve, [0.095, 0.13, 0.095], [0, -0.08, 0], '#302858');
+      cuff(sleeve, 'arcade-cuff', -0.17, 0.092, 0.05, '#f59d68');
+    }
+    for (const [i, colour] of ['#69e7d2', '#f8ca67', '#f477a1'].entries()) {
+      rounded(
+        body,
+        [0.055, 0.05, 0.022],
+        [-0.13 + i * 0.13, 0.79, 0.25],
+        colour,
+        0.015,
+      );
+      soft(
+        body,
+        [0.015, 0.014, 0.008],
+        [-0.13 + i * 0.13, 0.79, 0.276],
+        '#fff0ce',
+      );
+    }
+    rounded(body, [0.48, 0.04, 0.33], [0, 0.6, 0], '#f59d68', 0.018);
+  },
+  'balloon-twist-pants'({ body, legs }) {
+    soft(body, [0.24, 0.1, 0.18], [0, 0.54, 0], '#efaa99');
+    for (const [i, leg] of legs.entries()) {
+      const colour = i ? '#7bd2dc' : '#f3a8aa';
+      soft(leg, [0.145, 0.17, 0.14], [0, -0.1, 0], colour);
+      soft(leg, [0.15, 0.16, 0.14], [0, -0.29, 0], colour);
+      cuff(leg, 'balloon-knot', -0.205, 0.115, 0.04, '#fff0ce');
+      soft(leg, [0.058, 0.04, 0.055], [0.11, -0.2, 0.08], colour);
+      cuff(leg, 'balloon-hem', -0.395, 0.11, 0.04, '#fff0ce');
+    }
+  },
+  'lava-flow-joggers'({ body, legs }) {
+    soft(body, [0.24, 0.1, 0.18], [0, 0.54, 0], '#34353c');
+    for (const [i, leg] of legs.entries()) {
+      soft(leg, [0.125, 0.25, 0.115], [0, -0.2, 0], '#3b3a41');
+      cuff(leg, 'lava-hem', -0.39, 0.124, 0.055, '#57505a');
+      stroke(
+        leg,
+        `lava-crack:${i}`,
+        [
+          [i ? 0.05 : -0.05, -0.05, 0.115],
+          [0.015, -0.17, 0.132],
+          [i ? -0.04 : 0.04, -0.25, 0.12],
+          [0.01, -0.34, 0.12],
+        ],
+        0.009,
+        '#ef814e',
+      );
+      soft(leg, [0.03, 0.024, 0.018], [0.02, -0.2, 0.13], '#ffbf6a');
+    }
+  },
+  'banana-peel-slides'({ legs }) {
+    for (const leg of legs) {
+      footwear(leg, '#f7d95a', '#7d6042', 0.13);
+      soft(leg, [0.1, 0.055, 0.1], [0, -HIP[1] + 0.1, 0.19], '#fff1be');
+      for (const side of [-1, 1]) {
+        const flap = soft(
+          leg,
+          [0.045, 0.025, 0.12],
+          [side * 0.1, -HIP[1] + 0.09, 0.23],
+          '#e9bb3f',
+        );
+        flap.rotation.z = side * 0.35;
+      }
+    }
+  },
+  'wind-up-stompers'({ legs }) {
+    for (const [i, leg] of legs.entries()) {
+      footwear(leg, '#a8613f', '#448da1', 0.23);
+      cuff(leg, 'wind-up-top', -HIP[1] + 0.23, 0.108, 0.05, '#d59a63');
+      const side = i ? 1 : -1;
+      soft(
+        leg,
+        [0.045, 0.045, 0.018],
+        [side * 0.12, -HIP[1] + 0.16, 0],
+        '#f2ca85',
+      );
+      rounded(
+        leg,
+        [0.025, 0.14, 0.02],
+        [side * 0.15, -HIP[1] + 0.16, 0],
+        '#e7c47b',
+        0.008,
+      );
+      rounded(
+        leg,
+        [0.12, 0.025, 0.02],
+        [side * 0.15, -HIP[1] + 0.16, 0],
+        '#e7c47b',
+        0.008,
+      );
+    }
+  },
+  'side-eye-specs'({ head }) {
+    for (const side of [-1, 1]) {
+      const x = side * 0.13;
+      const rim = custom(
+        head,
+        'side-eye-rim',
+        () => new T.TorusGeometry(0.092, 0.011, 8, 32),
+        [0, 0, 0],
+        '#42355c',
+      );
+      onFace(rim, x, 0.31, 0.07);
+      const lens = soft(head, [0.077, 0.075, 0.012], [0, 0, 0], '#fff6df');
+      onFace(lens, x, 0.31, 0.075);
+      const pupil = soft(head, [0.032, 0.038, 0.01], [0, 0, 0], '#263b30');
+      onFace(pupil, x + side * 0.033, 0.31, 0.092);
+    }
+    stroke(
+      head,
+      'side-eye-bridge',
+      [
+        [-0.04, 0.32, 0.32],
+        [0, 0.33, 0.33],
+        [0.04, 0.32, 0.32],
+      ],
+      0.01,
+      '#42355c',
+    );
+  },
+  'bubble-beard'({ head }) {
+    for (const [x, y, radius, colour] of [
+      [0, 0.06, 0.09, '#e5f5ee'],
+      [-0.08, 0.09, 0.068, '#aee9d9'],
+      [0.08, 0.09, 0.069, '#fff7e5'],
+      [-0.16, 0.15, 0.052, '#e5f5ee'],
+      [0.16, 0.15, 0.052, '#aee9d9'],
+      [-0.045, -0.02, 0.06, '#fff7e5'],
+      [0.055, -0.025, 0.055, '#e5f5ee'],
+    ] as const)
+      onFace(
+        soft(head, [radius, radius, radius * 0.7], [0, 0, 0], colour),
+        x,
+        y,
+        0.005,
+      );
+  },
   'frog-bucket-hat'(dress) {
     const group = hat(dress);
     lathe(
@@ -550,9 +796,20 @@ export function playfulDisplay(id: string, player: string) {
     group.add(arm);
     return arm;
   });
-  if (id === 'leaf-dungarees' || id === 'watermelon-shorts') {
+  if (
+    id === 'leaf-dungarees' ||
+    id === 'watermelon-shorts' ||
+    id === 'balloon-twist-pants' ||
+    id === 'lava-flow-joggers'
+  ) {
     const short = id === 'watermelon-shorts';
-    const colour = short ? BERRY : LEAF;
+    const colour = short
+      ? BERRY
+      : id === 'leaf-dungarees'
+        ? LEAF
+        : id === 'balloon-twist-pants'
+          ? '#efaa99'
+          : '#3b3a41';
     soft(body, [0.232, 0.12, 0.172], [0, 0.545, 0], colour);
     for (const leg of legs)
       lathe(

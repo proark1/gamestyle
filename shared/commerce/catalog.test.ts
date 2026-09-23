@@ -32,7 +32,7 @@ void test('premium offers have purchase-only items and the bundle is cheaper', a
       offer.grants[0] !== 'entitlement:full-game' &&
       !offer.id.startsWith('costume:'),
   );
-  assert.equal(pieces.length, 4);
+  assert.equal(pieces.length, 8);
   for (const offer of pieces) {
     const item = ITEMS.find((candidate) => candidate.id === offer.grants[0]);
     assert.equal(item?.premiumOffer, offer.id);
@@ -42,14 +42,27 @@ void test('premium offers have purchase-only items and the bundle is cheaper', a
   const bundle = COMMERCE_OFFERS.find(
     (offer) => offer.id === 'party-style-bundle',
   )!;
-  assert.deepEqual(
-    bundle.grants,
-    pieces.map((offer) => offer.grants[0]),
-  );
+  assert.deepEqual(bundle.grants, [
+    'neon-visor',
+    'confetti-shades',
+    'comet-cape',
+    'disco-boots',
+  ]);
   assert.ok(
     bundle.usdCents <
       pieces.reduce((total, offer) => total + offer.usdCents, 0),
   );
+  for (const [id, tier] of [
+    ['mini-volcano', COMMERCE_PRICES.standard],
+    ['arcade-bomber', COMMERCE_PRICES.special],
+    ['lava-flow-joggers', COMMERCE_PRICES.special],
+    ['wind-up-stompers', COMMERCE_PRICES.special],
+  ] as const) {
+    const offer = COMMERCE_OFFERS.find((entry) => entry.id === id);
+    assert.deepEqual(offer?.grants, [id]);
+    assert.equal(offer?.usdCents, tier);
+    assert.ok(!bundle.grants.includes(id));
+  }
 });
 
 void test('ten costumes have individual offers and two fixed five-item bundles', async () => {
