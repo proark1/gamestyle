@@ -15,6 +15,12 @@ export type CrewSnapshot = CrewBadge & {
 };
 export type CrewReply = {
   crew: CrewSnapshot | null;
+  records?: {
+    rankedRuns: number;
+    bestTowerCm: number;
+    towerAce: number;
+    skylineCrown: number;
+  };
   ownerKey: string;
   invite?: { code: string; expires: number };
 };

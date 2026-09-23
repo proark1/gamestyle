@@ -149,6 +149,52 @@
   font-size: 14px;
   overflow-wrap: anywhere;
 }
+.crew-records {
+  padding: 18px;
+  margin: 8px 0 18px;
+  border: 2px solid #244943;
+  border-radius: 16px;
+  background: #f5c451;
+  box-shadow: 5px 5px 0 #287c80;
+}
+.crew-records-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.crew-records-heading h3 {
+  margin: 0;
+  font-family: Fredoka, sans-serif;
+  font-size: 1.2rem;
+}
+.crew-records-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+.crew-records-grid p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff6df;
+}
+.crew-records-grid strong {
+  font-family: Fredoka, sans-serif;
+  font-size: 1.5rem;
+}
+.crew-records a {
+  color: #244943;
+  font-weight: 800;
+}
+@media (max-width: 420px) {
+  .crew-records-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .crew-roster li > div {
   display: flex;
   gap: 6px;

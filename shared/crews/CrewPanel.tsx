@@ -11,6 +11,7 @@ import {
   Users,
   Waves,
   Flame,
+  Trophy,
 } from 'lucide-react';
 import {
   accountSnapshot,
@@ -359,6 +360,39 @@ export default function CrewPanel({ partyLink }: { partyLink: string }) {
               </li>
             ))}
           </ul>
+          <section className="crew-records" aria-label="Verified crew records">
+            <div className="crew-records-heading">
+              <Trophy size={21} aria-hidden="true" />
+              <h3>Verified crew records</h3>
+            </div>
+            {reply?.records?.rankedRuns ? (
+              <div className="crew-records-grid">
+                <p>
+                  <strong>
+                    {(reply.records.bestTowerCm / 100).toFixed(2)} m
+                  </strong>
+                  <span>Best Stack or Sink tower</span>
+                </p>
+                <p>
+                  <strong>{reply.records.rankedRuns}</strong>
+                  <span>Qualified ranked runs</span>
+                </p>
+                <p>
+                  <strong>{reply.records.towerAce}</strong>
+                  <span>Tower Ace finishes</span>
+                </p>
+                <p>
+                  <strong>{reply.records.skylineCrown}</strong>
+                  <span>Skyline Crown finishes</span>
+                </p>
+              </div>
+            ) : (
+              <p>Complete a ranked Stack or Sink run to start your shelf.</p>
+            )}
+            <a href="/stack-or-sink?challenge=ranked">
+              Build a tower together →
+            </a>
+          </section>
           <div className="crew-actions">
             {owner && (
               <>

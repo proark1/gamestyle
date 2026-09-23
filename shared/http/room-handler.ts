@@ -10,8 +10,6 @@ import {
   assertGameEntry,
   paidAdmissionEnabled,
 } from '../commerce/server/access';
-import { currentAccount } from '../accounts/server/current';
-import { getBinding } from '../../db/index';
 import { CommerceError } from '../commerce/types';
 
 type RoomHandlerOptions = {
@@ -44,6 +42,10 @@ export function createRoomHandler(options: RoomHandlerOptions) {
         paidAdmissionEnabled() &&
         (body.op === 'create' || body.op === 'join')
       ) {
+        const [{ currentAccount }, { getBinding }] = await Promise.all([
+          import('../accounts/server/current'),
+          import('../../db/index'),
+        ]);
         const account = await currentAccount(request);
         await assertGameEntry(getBinding(), options.game, account?.id ?? null);
       }

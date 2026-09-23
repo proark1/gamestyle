@@ -8,6 +8,7 @@ import {
   initializeInventory,
 } from '../../shared/commerce/server/inventory';
 import { readRankedStack } from '../../shared/challenges/server/ranked';
+import { reviewRankedRun } from '../../shared/challenges/server/ranked-review';
 import { stackWeek } from '../../shared/challenges/catalog';
 import {
   changeCrew,
@@ -15,6 +16,7 @@ import {
   joinCrew,
   readCrew,
 } from '../../shared/crews/server/store';
+import { readCrewRecords } from '../../shared/crews/server/records';
 import { verifiedStackRoom } from './challenge-server';
 import type { Session } from '../../shared/rooms/session';
 
@@ -131,6 +133,164 @@ void test('five starts exhaust the week, and leaving during a run removes rankin
       }
     ).n,
     10,
+  );
+});
+
+void test('a service failure restores each reserved attempt once and cannot later qualify', async (t) => {
+  const f = await fixture(t);
+  const room = await f.create();
+  await f.call(1, { op: 'join', code: room.code });
+  await f.start(room, 'failed-start');
+  const run = f.native
+    .prepare('SELECT run_id AS id FROM ranked_attempts LIMIT 1')
+    .get() as { id: string };
+  const review = {
+    runId: run.id,
+    kind: 'service' as const,
+    actor: 'ops-test',
+    reason: 'Confirmed room service interruption',
+  };
+  assert.equal(await reviewRankedRun(f.db, review, NOW + 500), 'recorded');
+  assert.equal(
+    await reviewRankedRun(f.db, review, NOW + 600),
+    'already-recorded',
+  );
+  for (const id of f.users)
+    assert.equal((await readRankedStack(f.db, id, NOW)).attemptsRemaining, 5);
+  await f.finish(room, 7);
+  assert.equal(
+    (await readRankedStack(f.db, f.users[0], NOW)).boards[1].population,
+    0,
+  );
+  const next = await f.create();
+  await f.start(next, 'replacement');
+  assert.equal(
+    (await readRankedStack(f.db, f.users[0], NOW)).attemptsRemaining,
+    4,
+  );
+  assert.equal(
+    (
+      f.native
+        .prepare(
+          'SELECT COUNT(*) AS n FROM ranked_run_reviews WHERE run_id = ?',
+        )
+        .get(run.id) as { n: number }
+    ).n,
+    1,
+  );
+});
+
+void test('review voids a completed run without returning attempts and closes at finalization', async (t) => {
+  const f = await fixture(t);
+  const room = await f.create();
+  await f.start(room, 'anomalous');
+  await f.finish(room, 7);
+  const run = f.native
+    .prepare('SELECT run_id AS id FROM ranked_attempts LIMIT 1')
+    .get() as { id: string };
+  await assert.rejects(
+    reviewRankedRun(
+      f.db,
+      { runId: run.id, kind: 'service', actor: 'ops-test', reason: 'Too late' },
+      NOW + 2000,
+    ),
+    /already completed/,
+  );
+  assert.equal(
+    await reviewRankedRun(
+      f.db,
+      { runId: run.id, kind: 'review', actor: 'ops-test', reason: 'Anomaly' },
+      NOW + 2000,
+    ),
+    'recorded',
+  );
+  const view = await readRankedStack(f.db, f.users[0], NOW);
+  assert.equal(view.attemptsRemaining, 4);
+  assert.equal(view.boards[0].population, 0);
+  await assert.rejects(
+    reviewRankedRun(
+      f.db,
+      {
+        runId: run.id,
+        kind: 'service',
+        actor: 'ops-test',
+        reason: 'Changed mind',
+      },
+      NOW + 3000,
+    ),
+    /different review decision/,
+  );
+  const late = await f.create();
+  await f.start(late, 'late');
+  await f.finish(late, 7);
+  const laterRun = f.native
+    .prepare(
+      'SELECT run_id AS id FROM ranked_attempts WHERE run_id != ? LIMIT 1',
+    )
+    .get(run.id) as { id: string };
+  await readRankedStack(f.db, f.users[0], stackWeek(NOW).end + 86400001);
+  await assert.rejects(
+    reviewRankedRun(
+      f.db,
+      {
+        runId: laterRun.id,
+        kind: 'review',
+        actor: 'ops-test',
+        reason: 'Too late',
+      },
+      stackWeek(NOW).end + 86400002,
+    ),
+    /review window\/board is closed/,
+  );
+});
+
+void test('a voided service run releases its crew lock if no other run represents that crew', async (t) => {
+  const f = await fixture(t);
+  await createCrew(f.db, f.users[0], 'Interrupted Crew', 'rocket', NOW);
+  const oldCrew = (await readCrew(f.db, f.users[0]))!;
+  const room = await f.create();
+  await f.start(room, 'crew-interrupted');
+  const run = f.native
+    .prepare('SELECT run_id AS id FROM ranked_attempts LIMIT 1')
+    .get() as { id: string };
+  assert.equal(
+    (
+      f.native.prepare('SELECT COUNT(*) AS n FROM ranked_crew_locks').get() as {
+        n: number;
+      }
+    ).n,
+    1,
+  );
+  await reviewRankedRun(
+    f.db,
+    {
+      runId: run.id,
+      kind: 'service',
+      actor: 'ops-test',
+      reason: 'Confirmed interrupted crew room',
+    },
+    NOW + 500,
+  );
+  assert.equal(
+    (
+      f.native.prepare('SELECT COUNT(*) AS n FROM ranked_crew_locks').get() as {
+        n: number;
+      }
+    ).n,
+    0,
+  );
+  await changeCrew(f.db, f.users[0], { op: 'leave', crewId: oldCrew.id }, NOW);
+  await createCrew(f.db, f.users[0], 'Replacement Crew', 'sun', NOW);
+  const replacement = (await readCrew(f.db, f.users[0]))!;
+  const next = await f.create();
+  await f.start(next, 'crew-replacement');
+  assert.equal(
+    (
+      f.native
+        .prepare('SELECT crew_id AS id FROM ranked_crew_locks LIMIT 1')
+        .get() as { id: string }
+    ).id,
+    replacement.id,
   );
 });
 
@@ -451,6 +611,18 @@ void test('100 distinct crews earn tied rewards for qualifying-run members only,
   const after = week.end + 86400000 + 1000;
   const view = await readRankedStack(f.db, f.users[0], after);
   assert.equal(view.previous.crewBoards[0].population, 100);
+  assert.deepEqual(await readCrewRecords(f.db, 'crew-fixture-0'), {
+    rankedRuns: 1,
+    bestTowerCm: 600,
+    towerAce: 1,
+    skylineCrown: 1,
+  });
+  assert.deepEqual(await readCrewRecords(f.db, 'crew-fixture-50'), {
+    rankedRuns: 1,
+    bestTowerCm: 500,
+    towerAce: 0,
+    skylineCrown: 0,
+  });
   assert.deepEqual(
     view.previous.crewBoards[0].entries
       .slice(0, 11)

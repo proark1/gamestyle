@@ -146,7 +146,7 @@ export async function verifiedStackRoom(
               ON json_extract(p.value, '$.id') = m.player_id WHERE m.room_code = ?) = ?
               AND NOT EXISTS (SELECT 1 FROM challenge_members m JOIN json_each(?, '$.world.players') p
               ON json_extract(p.value, '$.id') = m.player_id WHERE m.room_code = ? AND
-              (SELECT COUNT(*) FROM ranked_attempts a WHERE a.account_id = m.account_id AND a.week = ?) >= ?)`
+              (SELECT COUNT(*) FROM ranked_attempts a WHERE a.account_id = m.account_id AND a.week = ? AND a.service_voided = 0) >= ?)`
                 : ''
             }`,
           )
@@ -242,7 +242,7 @@ export async function verifiedStackRoom(
           .prepare(`SELECT 1 FROM challenge_members m
           JOIN json_each(?, '$.world.players') p ON json_extract(p.value, '$.id') = m.player_id
           WHERE m.room_code = ? AND (SELECT COUNT(*) FROM ranked_attempts a
-          WHERE a.account_id = m.account_id AND a.week = ?) >= ? LIMIT 1`)
+          WHERE a.account_id = m.account_id AND a.week = ? AND a.service_voided = 0) >= ? LIMIT 1`)
           .bind(state, key, room.challengeRun!.week, RANKED_LIMIT)
           .first();
         if (exhausted)

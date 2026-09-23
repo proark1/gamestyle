@@ -57,6 +57,7 @@ export function rankedSettleStatement(
   return db
     .prepare(`UPDATE ranked_attempts SET eligible = 1, height_cm = ?, completed = ?
     WHERE run_id = ? AND ? = 1
+    AND NOT EXISTS (SELECT 1 FROM ranked_run_reviews r WHERE r.run_id = ranked_attempts.run_id)
     AND EXISTS (SELECT 1 FROM rooms WHERE code = ? AND json_extract(state, '$.challengeCommit') = ?)
     AND (SELECT COUNT(*) FROM ranked_attempts WHERE run_id = ?) =
         (SELECT COUNT(*) FROM challenge_members WHERE room_code = ?)
@@ -191,7 +192,7 @@ export async function readRankedStack(
   const week = stackWeek(now);
   const attempts = await db
     .prepare(
-      'SELECT COUNT(*) AS n FROM ranked_attempts WHERE account_id = ? AND week = ?',
+      'SELECT COUNT(*) AS n FROM ranked_attempts WHERE account_id = ? AND week = ? AND service_voided = 0',
     )
     .bind(accountId, week.start)
     .first<{ n: number }>();

@@ -5,6 +5,7 @@ import { sqliteAdapter } from '../../../db/node';
 import { createAccount } from '../../accounts/server/store';
 import { startSession } from '../../accounts/server/session';
 import { createCrewRoutes } from './routes';
+import { readCrewRecords } from './records';
 import {
   changeCrew,
   createCrew,
@@ -63,6 +64,66 @@ void test('concurrent joins never exceed eight members or give one account two c
       .n,
     1,
   );
+});
+
+void test('crew shelf counts only complete verified roster results', async (t) => {
+  const { db, users, crew, invite, native } = await fixture(t);
+  assert.deepEqual(await readCrewRecords(db, crew.id), {
+    rankedRuns: 0,
+    bestTowerCm: 0,
+    towerAce: 0,
+    skylineCrown: 0,
+  });
+  await joinCrew(db, users[1], invite.code, NOW);
+  native
+    .prepare(
+      'INSERT INTO ranked_crew_runs (run_id,crew_id,week,team_size) VALUES (?,?,?,2)',
+    )
+    .run('complete-run', crew.id, NOW);
+  const insert = native.prepare(`INSERT INTO ranked_attempts
+    (account_id,run_id,week,room_code,player_id,team_size,started,eligible,height_cm,completed)
+    VALUES (?,?,?,?,?,2,?,1,?,?)`);
+  insert.run(
+    users[0],
+    'complete-run',
+    NOW,
+    'room-a',
+    'player-a',
+    NOW,
+    420,
+    NOW,
+  );
+  insert.run(
+    users[1],
+    'complete-run',
+    NOW,
+    'room-a',
+    'player-b',
+    NOW,
+    420,
+    NOW,
+  );
+  native
+    .prepare(
+      'INSERT INTO ranked_crew_runs (run_id,crew_id,week,team_size) VALUES (?,?,?,2)',
+    )
+    .run('incomplete-run', crew.id, NOW);
+  insert.run(
+    users[0],
+    'incomplete-run',
+    NOW,
+    'room-b',
+    'player-a',
+    NOW,
+    900,
+    NOW,
+  );
+  assert.deepEqual(await readCrewRecords(db, crew.id), {
+    rankedRuns: 1,
+    bestTowerCm: 420,
+    towerAce: 0,
+    skylineCrown: 0,
+  });
 });
 
 void test('crew creation races are atomic without abandoned duplicate crews', async (t) => {

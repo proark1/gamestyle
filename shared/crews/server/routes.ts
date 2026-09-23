@@ -7,6 +7,7 @@ import { hasAllowedOrigin } from '../../http/request-origin';
 import { RequestBudget } from '../../http/request-budget';
 import { RoomError } from '../../rooms/types';
 import { changeCrew, createCrew, CrewError, joinCrew, readCrew } from './store';
+import { readCrewRecords } from './records';
 
 export function createCrewRoutes(deps: {
   db: () => GameDatabase;
@@ -52,8 +53,10 @@ export function createCrewRoutes(deps: {
           await joinCrew(db, id, body.code, now);
         } else invite = await changeCrew(db, id, body, now);
       }
+      const crew = await readCrew(db, id);
       return reply({
-        crew: await readCrew(db, id),
+        crew,
+        ...(crew ? { records: await readCrewRecords(db, crew.id) } : {}),
         ownerKey,
         ...(invite ? { invite } : {}),
       });
