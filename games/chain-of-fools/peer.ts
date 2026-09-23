@@ -22,7 +22,7 @@ import {
 const adapter: GameAdapter<ChainWorld, ChainSnapshot> = {
   game: 'chain-of-fools',
   autonomous: (player) => !!player.bot,
-  actions: ['start', 'restart', 'jump', 'clip', 'ping'],
+  actions: ['start', 'restart', 'select_map', 'jump', 'clip', 'ping'],
 
   create: (now) => {
     const world = freshChainWorld(now);
@@ -38,6 +38,7 @@ const adapter: GameAdapter<ChainWorld, ChainSnapshot> = {
       member.color,
       world.players.length,
       false,
+      world.mapId,
     );
     if (slot >= 0) {
       const previous = world.players[slot];

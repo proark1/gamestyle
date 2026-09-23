@@ -46,9 +46,10 @@ import { ChainOfFoolsSound } from './audio';
 import { reconcileChainBots, stepChainBot } from './bots';
 import {
   ANCHORS,
-  CHECKPOINTS,
-  FINISH_X,
   PENDULUM,
+  SWITCHYARD,
+  checkpointsFor,
+  finishXFor,
   nearNet,
   pendulumBall,
   sectionAt,
@@ -81,7 +82,6 @@ const tracker = new GameTracker(chainOfFoolsAnalytics);
 
 /** Local practice, by the collection's convention. */
 const SOLO_SESSION = { id: 'me', code: 'PRACTICE', name: 'You', color: 0 };
-const TRACK_START = CHECKPOINTS[0].x;
 
 /**
  * What the HUD must show the moment it changes: the phase, a banked
@@ -90,7 +90,7 @@ const TRACK_START = CHECKPOINTS[0].x;
  */
 const pacer = hudPacer<ChainWorld>(
   (w) =>
-    `${w.phase}|${w.checkpoint}|${w.wipes}|${w.players
+    `${w.mapId}|${w.phase}|${w.checkpoint}|${w.gatesOpen.join('')}|${w.plateActive.join('')}|${w.wipes}|${w.players
       .map(
         (p) =>
           `${p.state[0]}${p.anchorId ? 'c' : ''}${p.braced ? 'b' : ''}${p.braceCooldown > 0 ? 'x' : ''}`,
@@ -103,8 +103,13 @@ const formatTime = (ms: number) => {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 };
 
-const progress = (x: number) =>
-  Math.max(0, Math.min(1, (x - TRACK_START) / (FINISH_X - TRACK_START)));
+const progress = (x: number, world: ChainWorld) => {
+  const start = checkpointsFor(world.mapId)[0].x;
+  return Math.max(
+    0,
+    Math.min(1, (x - start) / (finishXFor(world.mapId) - start)),
+  );
+};
 
 function haptic(pattern: number | number[]) {
   try {
@@ -172,6 +177,18 @@ function promptFor(
   if (others.some((p) => p.state === 'dangling') && me.grounded && !me.braced)
     return { text: s.promptBrace(k), tone: 'urgent', focus: 'brace' };
 
+  if (world.mapId === 'switchyard') {
+    const gateIndex = world.gatesOpen[0] ? 1 : 0;
+    const gate = SWITCHYARD.gates[gateIndex];
+    if (!world.gatesOpen[gateIndex] && me.x > gate.x - 16 && me.x < gate.x) {
+      const offset = gateIndex === 0 ? 0 : SWITCHYARD.gates[0].plates.length;
+      const active = world.plateActive
+        .slice(offset, offset + gate.plates.length)
+        .filter(Boolean).length;
+      return { text: s.switchPrompt(active, gate.plates.length), tone: 'info' };
+    }
+  }
+
   if (!me.grounded && nearNet(me.x, me.y, me.z))
     return { text: s.promptNet(touch), tone: 'info' };
 
@@ -189,7 +206,7 @@ function promptFor(
   )
     return { text: s.promptClip(k), tone: 'info', focus: 'clip' };
 
-  const hint = s.routeHints[sectionAt(me.x)];
+  const hint = s.routeHints[sectionAt(me.x, world.mapId)];
   return hint ? { text: hint, tone: 'info' } : null;
 }
 
@@ -403,6 +420,9 @@ export default function ChainOfFoolsGame() {
   }, [dispatch, publish]);
 
   const w = snapshot?.world;
+  const description =
+    w?.mapId === 'switchyard' ? strings.switchDesc : strings.desc;
+  const rules = w?.mapId === 'switchyard' ? strings.switchRules : strings.rules;
   const me = w?.players.find((p) => p.id === sessionRef.current.id);
   const playing = w?.phase === 'playing';
   const ended = w?.phase === 'ended';
@@ -499,14 +519,16 @@ export default function ChainOfFoolsGame() {
           <div className="cof-hud-badge cof-track-badge">
             <div className="cof-track">
               <div className="cof-track-rail" />
-              {CHECKPOINTS.slice(1).map((point) => (
-                <span
-                  key={point.index}
-                  className={`cof-track-flag ${w.checkpoint >= point.index ? 'banked' : ''}`}
-                  style={{ left: `${progress(point.x) * 100}%` }}
-                  title={point.label}
-                />
-              ))}
+              {checkpointsFor(w.mapId)
+                .slice(1)
+                .map((point) => (
+                  <span
+                    key={point.index}
+                    className={`cof-track-flag ${w.checkpoint >= point.index ? 'banked' : ''}`}
+                    style={{ left: `${progress(point.x, w) * 100}%` }}
+                    title={point.label}
+                  />
+                ))}
               <Flag
                 size={14}
                 className="cof-track-finish"
@@ -517,7 +539,7 @@ export default function ChainOfFoolsGame() {
                   key={p.id}
                   className={`cof-track-dot ${p.id === sessionRef.current.id ? 'me' : ''} ${p.state}`}
                   style={{
-                    left: `${progress(p.x) * 100}%`,
+                    left: `${progress(p.x, w) * 100}%`,
                     background: COLORS[p.color % 4],
                   }}
                 />
@@ -525,18 +547,30 @@ export default function ChainOfFoolsGame() {
             </div>
             <div className="cof-route-summary">
               <small>
-                {strings.sections[sectionAt(trailingX)] ?? sectionAt(trailingX)}
+                {strings.sections[sectionAt(trailingX, w.mapId)] ??
+                  sectionAt(trailingX, w.mapId)}
               </small>
               <span>
                 {strings.distanceLeft(
-                  Math.ceil(Math.max(0, FINISH_X - trailingX)),
+                  Math.ceil(Math.max(0, finishXFor(w.mapId) - trailingX)),
                 )}
               </span>
             </div>
             <span className="cof-checkpoint-count">
-              {strings.sectionProgress(w.checkpoint, CHECKPOINTS.length - 1)}
+              {strings.sectionProgress(
+                w.checkpoint,
+                checkpointsFor(w.mapId).length - 1,
+              )}
               <span className="cof-best">
-                {strings.bestDistance(Math.round(Math.min(FINISH_X, w.bestX)))}
+                {strings.bestDistance(
+                  Math.round(
+                    Math.max(
+                      0,
+                      Math.min(finishXFor(w.mapId), w.bestX) -
+                        (w.mapId === 'switchyard' ? SWITCHYARD.startX : 0),
+                    ),
+                  ),
+                )}
               </span>
             </span>
           </div>
@@ -593,9 +627,33 @@ export default function ChainOfFoolsGame() {
               {strings.titleMain}
               <span>{strings.titleHighlight}</span>.
             </h1>
-            <p className="cof-desc">{strings.desc}</p>
+            <div className="cof-map-picker" aria-label={strings.mapLabel}>
+              <button
+                type="button"
+                className={`cof-map-choice ${w.mapId === 'demolition' ? 'selected' : ''}`}
+                aria-pressed={w.mapId === 'demolition'}
+                onClick={() =>
+                  dispatch({ type: 'select_map', mapId: 'demolition' })
+                }
+              >
+                <strong>{strings.mapClassicName}</strong>
+                <span>{strings.mapClassicDesc}</span>
+              </button>
+              <button
+                type="button"
+                className={`cof-map-choice ${w.mapId === 'switchyard' ? 'selected' : ''}`}
+                aria-pressed={w.mapId === 'switchyard'}
+                onClick={() =>
+                  dispatch({ type: 'select_map', mapId: 'switchyard' })
+                }
+              >
+                <strong>{strings.mapSwitchName}</strong>
+                <span>{strings.mapSwitchDesc}</span>
+              </button>
+            </div>
+            <p className="cof-desc">{description}</p>
             <ul className="cof-rules">
-              {strings.rules.map((rule) => (
+              {rules.map((rule) => (
                 <li key={rule}>{rule}</li>
               ))}
             </ul>
@@ -629,8 +687,8 @@ export default function ChainOfFoolsGame() {
             {w.winner === 'crew'
               ? strings.wonDesc(Math.round(timeLeft(w) / 1000), w.wipes)
               : strings.lostDesc(
-                  strings.sections[sectionAt(trailingX)] ??
-                    sectionAt(trailingX),
+                  strings.sections[sectionAt(trailingX, w.mapId)] ??
+                    sectionAt(trailingX, w.mapId),
                 )}
           </p>
           <div className="cof-score">
@@ -664,9 +722,9 @@ export default function ChainOfFoolsGame() {
             {strings.titleMain}
             {strings.titleHighlight}
           </DialogTitle>
-          <DialogDescription>{strings.desc}</DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
           <ul className="cof-rules">
-            {strings.rules.map((rule) => (
+            {rules.map((rule) => (
               <li key={rule}>{rule}</li>
             ))}
           </ul>

@@ -16,7 +16,7 @@ import {
 import { label, material } from '../../shared/rendering/primitives';
 import { COLORS } from '../../shared/rendering/palette';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
-import { ANCHORS, CHECKPOINTS, FINISH_X, PLANK, nearNet } from './course';
+import { ANCHORS, PLANK, checkpointsFor, finishXFor, nearNet } from './course';
 import { chainWorker, D_RING, poseChainWorker } from './avatar';
 import { SITE, createSite, type SiteModel } from './models';
 import {
@@ -158,6 +158,9 @@ export class ChainScene {
       this.site.pendulum,
       ...this.site.anchors.values(),
       ...this.site.checkpointFlags,
+      ...this.site.switchCheckpointFlags,
+      ...this.site.switchPlates,
+      ...this.site.switchGates,
       ...this.site.details.machines.values(),
       ...this.site.details.cranes,
       ...this.site.details.lamps,
@@ -415,12 +418,32 @@ export class ChainScene {
     this.site.plank.rotation.z = world.plankTilt;
     this.site.pendulum.rotation.x = -world.pendulumAngle;
 
-    CHECKPOINTS.slice(1).forEach((point, i) => {
-      const banked = world.checkpoint >= point.index;
-      this.site.checkpointFlags[i].material = material(
-        banked ? '#5aa469' : '#d5d0c4',
-      );
+    const switchyard = world.mapId === 'switchyard';
+    this.site.checkpointFlags.forEach((flag) => {
+      flag.visible = !switchyard;
     });
+    this.site.switchCheckpointFlags.forEach((flag) => {
+      flag.visible = switchyard;
+    });
+    this.site.switchPlates.forEach((plate, i) => {
+      plate.visible = switchyard;
+      if (plate.userData.active !== world.plateActive[i]) {
+        plate.material = material(world.plateActive[i] ? '#5aa469' : '#e04b32');
+        plate.userData.active = world.plateActive[i];
+      }
+    });
+    this.site.switchGates.forEach((gate, i) => {
+      gate.visible = switchyard && !world.gatesOpen[i];
+    });
+    checkpointsFor(world.mapId)
+      .slice(1)
+      .forEach((point, i) => {
+        const banked = world.checkpoint >= point.index;
+        const flag = switchyard
+          ? this.site.switchCheckpointFlags[i]
+          : this.site.checkpointFlags[i];
+        flag.material = material(banked ? '#5aa469' : '#d5d0c4');
+      });
 
     const clipped = new Set(
       world.players.map((p) => p.anchorId).filter(Boolean) as string[],
@@ -654,7 +677,7 @@ export class ChainScene {
           break;
         case 'checkpoint':
           if (!event.playerId) {
-            const point = CHECKPOINTS[world.checkpoint];
+            const point = checkpointsFor(world.mapId)[world.checkpoint];
             if (point) {
               const [x, y] = point.spawn;
               this.burst(
@@ -684,7 +707,7 @@ export class ChainScene {
           for (let i = 0; i < 4; i++) {
             const colour = COLORS[i];
             this.burst(
-              new T.Vector3(FINISH_X, 3, -3 + i * 2),
+              new T.Vector3(finishXFor(world.mapId), 3, -3 + i * 2),
               colour,
               20,
               7,
@@ -783,6 +806,7 @@ export class ChainScene {
     // is on screen above the crew rather than off the side of it.
     const portrait = this.camera.aspect < PORTRAIT_ASPECT;
     const ahead = portrait && this.mode !== 'side' ? 4 : 2;
+    if (Math.abs(this.cameraTarget.x - tx) > 40) this.snapCamera = true;
     this.cameraTarget.lerp(
       this.tmpA.set(tx + ahead, ty + 1.1, tz),
       this.snapCamera ? 1 : 1 - Math.exp(-dt * 4),

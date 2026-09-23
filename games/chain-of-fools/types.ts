@@ -56,6 +56,7 @@ export const ROUND_TIME_MS = 270_000;
 export const RESPAWN_MS = 1600;
 
 export const CREW_SIZE = 4;
+import type { MapId } from './course';
 
 export type PlayerInput = {
   /** Camera-relative movement, already normalized by the scene. */
@@ -156,6 +157,10 @@ export type GameEvent = {
 };
 
 export type ChainWorld = {
+  mapId: MapId;
+  plateActive: boolean[];
+  switchProgress: [number, number];
+  gatesOpen: [boolean, boolean];
   seed: number;
   clock: number;
   started: number;
@@ -187,6 +192,7 @@ export type ChainWorld = {
 export type ChainAction =
   | { type: 'start' }
   | { type: 'restart' }
+  | { type: 'select_map'; mapId: MapId }
   | { type: 'jump' }
   | { type: 'clip' }
   | { type: 'ping' };

@@ -443,6 +443,46 @@
   transform: translateY(-50%);
 }
 
+.cof-map-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.cof-map-choice {
+  display: flex;
+  min-height: 94px;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  border: 2px solid var(--hud-edge);
+  border-radius: var(--hud-radius-small);
+  background: var(--hud-card-solid);
+  color: var(--hud-ink);
+}
+
+.cof-map-choice.selected {
+  border-color: var(--hud-accent-strong);
+  box-shadow: inset 0 0 0 1px var(--hud-accent-strong);
+}
+
+.cof-map-choice strong {
+  font: 700 14px/1.2 var(--hud-body);
+}
+
+.cof-map-choice span {
+  color: var(--hud-muted);
+  font: 400 11px/1.35 var(--hud-body);
+}
+
+.cof-map-choice:focus-visible {
+  outline: 3px solid var(--hud-accent-strong);
+  outline-offset: 2px;
+}
+
 .cof-crew {
   display: flex;
   flex-wrap: wrap;
@@ -755,6 +795,11 @@
   .cof-rules li {
     padding: 6px 10px 6px 30px;
     font-size: 12.5px;
+  }
+
+  .cof-map-choice {
+    min-height: 80px;
+    padding: 9px;
   }
 
   /* Two by two: a wrapped chain of chips leaves a dangling connector. */

@@ -17,6 +17,8 @@ import {
   PENDULUM,
   PLANK,
   SURFACES,
+  SWITCHYARD,
+  SWITCHYARD_CHECKPOINTS,
   type Box,
   type SurfaceKind,
 } from './course';
@@ -195,6 +197,9 @@ export type SiteModel = {
   /** Materials of the pipe's roof, faded out while the local worker is inside. */
   pipeRoof: T.MeshStandardMaterial;
   checkpointFlags: T.Mesh[];
+  switchCheckpointFlags: T.Mesh[];
+  switchPlates: T.Mesh[];
+  switchGates: T.Group[];
   anchors: Map<string, T.Group>;
   dust: T.Points;
   details: SiteDetails;
@@ -204,9 +209,9 @@ export function createSite(): SiteModel {
   const root = new T.Group();
 
   // The pit everything is built over. Far enough down to read as a real drop.
-  const pit = new T.Mesh(new T.PlaneGeometry(260, 70), material(SITE.pit));
+  const pit = new T.Mesh(new T.PlaneGeometry(500, 70), material(SITE.pit));
   pit.rotation.x = -Math.PI / 2;
-  pit.position.set(70, -30, 0);
+  pit.position.set(150, -30, 0);
   pit.receiveShadow = true;
   root.add(pit);
   for (let i = 0; i < 38; i++) {
@@ -250,6 +255,8 @@ export function createSite(): SiteModel {
   cargoNet(root);
   const anchors = anchorRings(root);
   const checkpointFlags = flags(root);
+  const switchCheckpointFlags = flags(root, SWITCHYARD_CHECKPOINTS);
+  const { plates: switchPlates, gates: switchGates } = switchyardFeatures(root);
   siteOffice(root);
   siteGate(root);
   finalCrossing(root);
@@ -264,10 +271,80 @@ export function createSite(): SiteModel {
     pendulumBall,
     pipeRoof,
     checkpointFlags,
+    switchCheckpointFlags,
+    switchPlates,
+    switchGates,
     anchors,
     dust,
     details,
   };
+}
+
+/** Pressure pads and barrier frames share the same coordinates as the server
+ * rule, so a crew can see exactly where each worker needs to stand. */
+function switchyardFeatures(parent: T.Object3D) {
+  const plates: T.Mesh[] = [];
+  const gates: T.Group[] = [];
+  SWITCHYARD.gates.forEach((gate, gateIndex) => {
+    gate.plates.forEach((plate, plateIndex) => {
+      const disc = new T.Mesh(
+        new T.CylinderGeometry(0.95, 0.95, 0.06, 24),
+        material('#e04b32'),
+      );
+      disc.position.set(plate.x, 0.035, plate.z);
+      disc.receiveShadow = true;
+      parent.add(disc);
+      plates.push(disc);
+      const ring = new T.Mesh(
+        new T.TorusGeometry(1.05, 0.065, 6, 24),
+        material(SITE.hazard),
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(plate.x, 0.08, plate.z);
+      parent.add(ring);
+      const number = sign(`${plateIndex + 1}`, '#2b2a28', '#ffffff', 0.7);
+      number.position.set(plate.x, 0.22, plate.z);
+      parent.add(number);
+    });
+    const barrier = new T.Group();
+    parent.add(barrier);
+    for (const z of [-5.7, 5.7])
+      box(barrier, [0.35, 3, 0.35], [gate.x, 1.5, z], SITE.hazard);
+    box(barrier, [0.3, 0.3, 11.6], [gate.x, 3.05, 0], SITE.hazardDark);
+    for (let z = -5.1; z <= 5.1; z += 1.7)
+      box(barrier, [0.16, 2.3, 0.16], [gate.x, 1.15, z], SITE.rust);
+    const board = sign(
+      gateIndex === 0 ? '2 WORKERS TO OPEN' : 'ALL 4 WORKERS TO OPEN',
+      '#2b2a28',
+      '#f1c232',
+      4.6,
+    );
+    board.position.set(gate.x - 0.3, 3.65, 0);
+    barrier.add(board);
+    gates.push(barrier);
+  });
+  const start = sign('SWITCHYARD', '#2b2a28', '#f1c232', 4);
+  start.position.set(265, 3.2, -5);
+  parent.add(start);
+  for (const x of [292, 304, 316, 354, 363])
+    box(parent, [0.12, 0.04, 3.2], [x, 0.025, 0], SITE.hazard);
+  const x = SWITCHYARD.finishX + 3.5;
+  box(parent, [5, 3, 7], [x, 1.5, 0], SITE.office, true);
+  box(parent, [5.3, 0.25, 7.3], [x, 3.1, 0], SITE.concreteDark);
+  const officeSign = sign('CREW OFFICE', '#2b2a28', '#f1c232', 3.7);
+  officeSign.position.set(x - 2.6, 3.7, 0);
+  parent.add(officeSign);
+  for (let i = 0; i < 14; i++)
+    box(
+      parent,
+      [0.5, 0.03, 1],
+      [SWITCHYARD.finishX, 0.015, -6.5 + i],
+      i % 2 ? '#f4f1e4' : '#2b2a28',
+    );
+  const finish = sign('CREW CLOCK IN', SITE.hiVis, '#ffffff', 4);
+  finish.position.set(SWITCHYARD.finishX, 3.3, 0);
+  parent.add(finish);
+  return { plates, gates };
 }
 
 /** Paint the new challenges into the world, with a clear take-off line. */
@@ -571,9 +648,9 @@ function anchorRings(parent: T.Object3D): Map<string, T.Group> {
   return rings;
 }
 
-function flags(parent: T.Object3D): T.Mesh[] {
+function flags(parent: T.Object3D, checkpoints = CHECKPOINTS): T.Mesh[] {
   const result: T.Mesh[] = [];
-  for (const point of CHECKPOINTS.slice(1)) {
+  for (const point of checkpoints.slice(1)) {
     const [x, y] = point.spawn;
     const pole = beam(
       parent,

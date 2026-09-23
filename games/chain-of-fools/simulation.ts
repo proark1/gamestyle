@@ -1,14 +1,16 @@
 import {
   ANCHORS,
-  CHECKPOINTS,
-  FINISH_X,
-  COURSE_END_X,
   PENDULUM,
+  SWITCHYARD,
   checkpoint,
   checkpointAt,
+  checkpointsFor,
+  endXFor,
+  finishXFor,
   nearNet,
   pendulumBall,
   courseSolids,
+  type MapId,
 } from './course';
 import {
   HARD_LANDING_SPEED,
@@ -61,8 +63,9 @@ export function newPlayer(
   color: number,
   link: number,
   bot: boolean,
+  mapId: MapId = 'demolition',
 ): Player {
-  const spawn = checkpoint(0).spawn;
+  const spawn = checkpoint(0, mapId).spawn;
   return {
     id,
     name,
@@ -100,6 +103,10 @@ export function newPlayer(
 
 export function freshChainWorld(now: number, seed = 7): ChainWorld {
   return {
+    mapId: 'demolition',
+    plateActive: [false, false, false, false, false, false],
+    switchProgress: [0, 0],
+    gatesOpen: [false, false],
     seed,
     clock: now,
     started: now,
@@ -126,7 +133,7 @@ export function freshChainWorld(now: number, seed = 7): ChainWorld {
 
 /** Put the whole crew back on the last banked checkpoint, still roped up. */
 export function placeAtCheckpoint(world: ChainWorld, index: number) {
-  const point = checkpoint(index);
+  const point = checkpoint(index, world.mapId);
   for (const player of chainOrder(world)) {
     player.x = point.spawn[0] + (1.5 - player.link) * SPAWN_SPREAD;
     player.y = point.spawn[1];
@@ -165,6 +172,18 @@ export function chainOfFoolsAction(
   const eventIdRef = { current: world.eventId };
 
   switch (action.type) {
+    case 'select_map': {
+      if (world.phase !== 'lobby') break;
+      if (action.mapId !== 'demolition' && action.mapId !== 'switchyard') break;
+      world.mapId = action.mapId;
+      world.checkpoint = 0;
+      world.bestX = checkpoint(0, world.mapId).x;
+      world.plateActive = [false, false, false, false, false, false];
+      world.switchProgress = [0, 0];
+      world.gatesOpen = [false, false];
+      placeAtCheckpoint(world, 0);
+      break;
+    }
     case 'start': {
       if (world.phase === 'playing') break;
       world.endedAt = 0;
@@ -176,7 +195,10 @@ export function chainOfFoolsAction(
       world.winner = null;
       world.checkpoint = 0;
       world.wipes = 0;
-      world.bestX = 0;
+      world.bestX = checkpoint(0, world.mapId).x;
+      world.plateActive = [false, false, false, false, false, false];
+      world.switchProgress = [0, 0];
+      world.gatesOpen = [false, false];
       placeAtCheckpoint(world, 0);
       for (const p of world.players) {
         p.falls = 0;
@@ -195,7 +217,10 @@ export function chainOfFoolsAction(
       world.winner = null;
       world.checkpoint = 0;
       world.wipes = 0;
-      world.bestX = 0;
+      world.bestX = checkpoint(0, world.mapId).x;
+      world.plateActive = [false, false, false, false, false, false];
+      world.switchProgress = [0, 0];
+      world.gatesOpen = [false, false];
       world.pendulumAngle = PENDULUM.amplitude;
       world.pendulumVel = 0;
       placeAtCheckpoint(world, 0);
@@ -355,9 +380,11 @@ function stepWorld(
   const events = world.events;
   const solids = courseSolids(world);
 
-  stepMachinery(world, dt);
-  stepPlank(world, dt, events, eventIdRef);
-  stepPendulum(world, dt, events, eventIdRef);
+  if (world.mapId === 'demolition') {
+    stepMachinery(world, dt);
+    stepPlank(world, dt, events, eventIdRef);
+    stepPendulum(world, dt, events, eventIdRef);
+  }
 
   for (const player of world.players) {
     if (player.state === 'finished') continue;
@@ -432,9 +459,55 @@ function stepWorld(
     pushOutOfGeometry(player, world.plankTilt, solids);
   }
 
+  resolveSwitches(world, dt, eventIdRef);
+
   resolveStates(world, dt, eventIdRef);
   resolveHelp(world, dt, eventIdRef);
   resolveProgress(world, dt, eventIdRef);
+}
+
+function resolveSwitches(
+  world: ChainWorld,
+  dt: number,
+  eventIdRef: { current: number },
+) {
+  if (world.mapId !== 'switchyard') return;
+  let offset = 0;
+  SWITCHYARD.gates.forEach((gate, gateIndex) => {
+    if (!world.gatesOpen[gateIndex]) {
+      for (const player of world.players) {
+        if (player.state === 'finished' || player.x < gate.x - 0.42) continue;
+        player.x = gate.x - 0.42;
+        player.vx = Math.min(0, player.vx);
+      }
+    }
+    const occupied = gate.plates.map((plate) =>
+      world.players.some(
+        (p) =>
+          p.state === 'standing' &&
+          p.grounded &&
+          Math.abs(p.y) < 0.12 &&
+          Math.hypot(p.x - plate.x, p.z - plate.z) <= SWITCHYARD.plateRadius,
+      ),
+    );
+    occupied.forEach((active, i) => {
+      world.plateActive[offset + i] = active;
+    });
+    offset += gate.plates.length;
+    if (world.gatesOpen[gateIndex]) return;
+    world.switchProgress[gateIndex] = occupied.every(Boolean)
+      ? Math.min(SWITCHYARD.holdSeconds, world.switchProgress[gateIndex] + dt)
+      : 0;
+    if (world.switchProgress[gateIndex] >= SWITCHYARD.holdSeconds) {
+      world.gatesOpen[gateIndex] = true;
+      world.events.push({
+        id: ++eventIdRef.current,
+        type: 'checkpoint',
+        detail: `The crew opened gate ${gateIndex + 1}`,
+        pos: [gate.x, 1, 0],
+      });
+    }
+  });
 }
 
 function resolveStates(
@@ -599,9 +672,9 @@ function resolveProgress(
   for (const player of world.players) {
     if (player.state === 'finished') continue;
     if (
-      player.x >= FINISH_X &&
-      player.x <= COURSE_END_X &&
-      Math.abs(player.z) <= 8 &&
+      player.x >= finishXFor(world.mapId) &&
+      player.x <= endXFor(world.mapId) &&
+      Math.abs(player.z) <= (world.mapId === 'switchyard' ? 7 : 8) &&
       player.grounded &&
       Math.abs(player.y) < 0.08
     ) {
@@ -621,14 +694,14 @@ function resolveProgress(
 
   if (running.length > 0) {
     const trailing = Math.min(...running.map((p) => p.x));
-    const banked = checkpointAt(trailing);
+    const banked = checkpointAt(trailing, world.mapId);
     if (banked > world.checkpoint) {
       world.checkpoint = banked;
       for (const player of world.players) player.checkpoint = banked;
       world.events.push({
         id: ++eventIdRef.current,
         type: 'checkpoint',
-        detail: `Crew reached ${CHECKPOINTS[banked].label}`,
+        detail: `Crew reached ${checkpointsFor(world.mapId)[banked].label}`,
       });
     }
   }
@@ -657,12 +730,14 @@ function resolveProgress(
     world.pendulumAngle = PENDULUM.amplitude;
     world.pendulumVel = 0;
     world.links = [];
+    world.plateActive = [false, false, false, false, false, false];
+    world.switchProgress = [0, 0];
+    world.gatesOpen = [false, false];
     placeAtCheckpoint(world, 0);
     world.events.push({
       id: ++eventIdRef.current,
       type: 'wipe',
-      detail:
-        'Crew lost! Back to the site gate. No checkpoints — save each other!',
+      detail: `Crew lost! Back to ${checkpoint(0, world.mapId).label}. Save each other!`,
     });
   }
 
@@ -693,7 +768,10 @@ export function chainSnapshot(
 
 /** Crew score: distance banked, time left, and a clean-run bonus. */
 export function crewScore(world: ChainWorld): number {
-  const distance = Math.round(clamp(world.bestX, 0, FINISH_X) * 6);
+  const start = checkpoint(0, world.mapId).x;
+  const distance = Math.round(
+    clamp(world.bestX - start, 0, finishXFor(world.mapId) - start) * 6,
+  );
   const timeBonus =
     world.winner === 'crew'
       ? Math.round(

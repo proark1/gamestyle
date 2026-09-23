@@ -19,8 +19,16 @@ export interface ChainTranslations {
   tagline: string;
   desc: string;
   rules: [string, string, string];
+  switchDesc: string;
+  switchRules: [string, string, string];
   startShift: string;
   playAgain: string;
+  mapLabel: string;
+  mapClassicName: string;
+  mapClassicDesc: string;
+  mapSwitchName: string;
+  mapSwitchDesc: string;
+  switchPrompt: (active: number, total: number) => string;
 
   hudTime: string;
   hudWipes: string;
@@ -77,8 +85,23 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Haul danglers back up before the whole line goes over.',
       'Lose the crew and everyone restarts at the gate. No checkpoints.',
     ],
+    switchDesc:
+      'Open both crew gates by standing on separate pressure plates together. Stay linked across the exposed spans and bring every worker to the office.',
+    switchRules: [
+      'The first gate needs two workers; the second needs all four.',
+      'Hold every plate together until the gate latches open.',
+      'Brace, clip and haul teammates across the exposed gaps.',
+    ],
     startShift: 'Start the shift',
     playAgain: 'Another shift',
+    mapLabel: 'Choose a map',
+    mapClassicName: 'Demolition Site',
+    mapClassicDesc: 'The original route of beams, scaffolds and wrecking gear.',
+    mapSwitchName: 'Switchyard',
+    mapSwitchDesc:
+      'Split the crew across switches to open gates, then cross the exposed spans.',
+    switchPrompt: (active, total) =>
+      `Stand on separate floor switches together · ${active}/${total} held`,
 
     hudTime: 'Shift',
     hudWipes: 'Attempt',
@@ -98,6 +121,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'last-crossing': 'Last crossing',
       'office-approach': 'Office approach',
       office: 'Site office',
+      'switch-pair': 'Two-worker gate',
+      'switch-spans': 'Exposed spans',
+      'switch-crew': 'Whole-crew gate',
+      'switch-final': 'Final crossing',
+      'switch-office': 'Crew office',
     },
     distanceLeft: (m) => `${m} m to go`,
     sectionProgress: (n, total) => `Sections ${n}/${total} · No checkpoints`,
@@ -113,6 +141,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'last-crossing':
         'Regroup at the gap. Watch the load sweeping the far bridge.',
       'office-approach': 'Bring every worker across the chequered line.',
+      'switch-pair': 'Two workers need to hold separate pads at the same time.',
+      'switch-spans': 'Cross one at a time. Brace and haul anyone who misses.',
+      'switch-crew': 'All four workers must stand on their own pad together.',
+      'switch-final': 'Clip or brace while the rest cross the last gap.',
+      'switch-office': 'Bring the entire line over the finish tape.',
     },
 
     keys: {
@@ -182,8 +215,24 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Zieht Hängende hoch, bevor die ganze Kette abrutscht.',
       'Verliert ihr die Crew, starten alle wieder am Tor. Keine Kontrollpunkte.',
     ],
+    switchDesc:
+      'Öffnet beide Tore, indem ihr gleichzeitig auf getrennten Druckplatten steht. Bleibt auf den schmalen Stegen verbunden und bringt alle ins Büro.',
+    switchRules: [
+      'Das erste Tor braucht zwei Arbeiter, das zweite alle vier.',
+      'Haltet alle Platten gleichzeitig, bis das Tor offen bleibt.',
+      'Stemmt euch ab, hakt euch ein und zieht andere über die Lücken.',
+    ],
     startShift: 'Schicht beginnen',
     playAgain: 'Noch eine Schicht',
+    mapLabel: 'Karte wählen',
+    mapClassicName: 'Abrissgelände',
+    mapClassicDesc:
+      'Der ursprüngliche Weg über Träger, Gerüste und Abrissgeräte.',
+    mapSwitchName: 'Schaltgelände',
+    mapSwitchDesc:
+      'Verteilt die Crew auf Schalter, öffnet Tore und überquert schmale Stege.',
+    switchPrompt: (active, total) =>
+      `Steht gleichzeitig auf getrennten Schaltern · ${active}/${total} besetzt`,
 
     hudTime: 'Schicht',
     hudWipes: 'Versuch',
@@ -203,6 +252,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'last-crossing': 'Letzte Überquerung',
       'office-approach': 'Weg zum Büro',
       office: 'Baubüro',
+      'switch-pair': 'Zweiertor',
+      'switch-spans': 'Schmale Stege',
+      'switch-crew': 'Crewtor',
+      'switch-final': 'Letzter Übergang',
+      'switch-office': 'Crew-Büro',
     },
     distanceLeft: (m) => `Noch ${m} m`,
     sectionProgress: (n, total) =>
@@ -220,6 +274,15 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'last-crossing':
         'Sammelt euch am Spalt. Achtet auf die schwingende Last.',
       'office-approach': 'Bringt alle über die Ziellinie.',
+      'switch-pair':
+        'Zwei Arbeiter müssen gleichzeitig getrennte Schalter halten.',
+      'switch-spans':
+        'Einer nach dem anderen. Stützt und zieht Abgestürzte hoch.',
+      'switch-crew':
+        'Alle vier Arbeiter müssen gleichzeitig einen eigenen Schalter halten.',
+      'switch-final':
+        'Hakt euch ein oder stemmt euch ab, während die anderen springen.',
+      'switch-office': 'Bringt die gesamte Kette über die Ziellinie.',
     },
 
     keys: {
