@@ -168,6 +168,7 @@ export class ChainScene {
       ...this.site.switchCheckpointFlags,
       ...this.site.switchPlates,
       ...this.site.switchGates,
+      this.site.switchBridge,
       ...this.site.details.machines.values(),
       ...this.site.details.cranes,
       ...this.site.details.lamps,
@@ -176,6 +177,7 @@ export class ChainScene {
     // parts can share draw calls inside their own groups.
     batchScenery(this.site.plank);
     batchScenery(this.site.pendulum);
+    batchScenery(this.site.switchBridge);
     for (const group of [
       ...this.site.details.machines.values(),
       ...this.site.details.cranes,
@@ -432,11 +434,12 @@ export class ChainScene {
     this.site.switchCheckpointFlags.forEach((flag) => {
       flag.visible = switchyard;
     });
-    const relayOffset =
-      SWITCHYARD.gates[0].plates.length + SWITCHYARD.gates[1].plates.length;
-    const relayTarget = world.gatesOpen[2]
+    const relayOffset = SWITCHYARD.gates
+      .slice(0, 3)
+      .reduce((sum, gate) => sum + gate.plates.length, 0);
+    const relayTarget = world.gatesOpen[3]
       ? -1
-      : relayOffset + SWITCHYARD.gates[2].order[world.relayStep];
+      : relayOffset + SWITCHYARD.gates[3].order[world.relayStep];
     this.site.switchPlates.forEach((plate, i) => {
       plate.visible = switchyard;
       const colour = world.plateActive[i]
@@ -452,6 +455,7 @@ export class ChainScene {
     this.site.switchGates.forEach((gate, i) => {
       gate.visible = switchyard && !world.gatesOpen[i];
     });
+    this.site.switchBridge.visible = switchyard && world.gatesOpen[4];
     checkpointsFor(world.mapId)
       .slice(1)
       .forEach((point, i) => {

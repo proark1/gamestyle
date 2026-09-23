@@ -108,8 +108,8 @@ export function freshChainWorld(now: number, seed = 7): ChainWorld {
     plateActive: SWITCHYARD.gates.flatMap((gate) =>
       gate.plates.map(() => false),
     ),
-    switchProgress: [0, 0, 0],
-    gatesOpen: [false, false, false],
+    switchProgress: [0, 0, 0, 0, 0],
+    gatesOpen: [false, false, false, false, false],
     relayStep: 0,
     relayWorkers: [],
     relayArmed: true,
@@ -141,8 +141,8 @@ function resetSwitches(world: ChainWorld) {
   world.plateActive = SWITCHYARD.gates.flatMap((gate) =>
     gate.plates.map(() => false),
   );
-  world.switchProgress = [0, 0, 0];
-  world.gatesOpen = [false, false, false];
+  world.switchProgress = [0, 0, 0, 0, 0];
+  world.gatesOpen = [false, false, false, false, false];
   world.relayStep = 0;
   world.relayWorkers = [];
   world.relayArmed = true;
@@ -489,6 +489,11 @@ function resolveSwitches(
   eventIdRef: { current: number },
 ) {
   if (world.mapId !== 'switchyard') return;
+  const onPlate = (p: Player, plate: { x: number; y?: number; z: number }) =>
+    p.state === 'standing' &&
+    p.grounded &&
+    Math.abs(p.y - (plate.y ?? 0)) < 0.12 &&
+    Math.hypot(p.x - plate.x, p.z - plate.z) <= SWITCHYARD.plateRadius;
   let offset = 0;
   SWITCHYARD.gates.forEach((gate, gateIndex) => {
     if (!world.gatesOpen[gateIndex]) {
@@ -499,13 +504,7 @@ function resolveSwitches(
       }
     }
     const occupied = gate.plates.map((plate) =>
-      world.players.some(
-        (p) =>
-          p.state === 'standing' &&
-          p.grounded &&
-          Math.abs(p.y) < 0.12 &&
-          Math.hypot(p.x - plate.x, p.z - plate.z) <= SWITCHYARD.plateRadius,
-      ),
+      world.players.some((p) => onPlate(p, plate)),
     );
     occupied.forEach((active, i) => {
       world.plateActive[offset + i] = active;
@@ -514,21 +513,10 @@ function resolveSwitches(
     if (world.gatesOpen[gateIndex]) return;
     if (gate.mode === 'relay') {
       const target = gate.plates[gate.order[world.relayStep]];
-      const occupiedTarget = world.players.some(
-        (p) =>
-          p.state === 'standing' &&
-          p.grounded &&
-          Math.abs(p.y) < 0.12 &&
-          Math.hypot(p.x - target.x, p.z - target.z) <= SWITCHYARD.plateRadius,
-      );
+      const occupiedTarget = world.players.some((p) => onPlate(p, target));
       if (!occupiedTarget) world.relayArmed = true;
       const worker = world.players.find(
-        (p) =>
-          !world.relayWorkers.includes(p.id) &&
-          p.state === 'standing' &&
-          p.grounded &&
-          Math.abs(p.y) < 0.12 &&
-          Math.hypot(p.x - target.x, p.z - target.z) <= SWITCHYARD.plateRadius,
+        (p) => !world.relayWorkers.includes(p.id) && onPlate(p, target),
       );
       world.switchProgress[gateIndex] =
         worker && world.relayArmed

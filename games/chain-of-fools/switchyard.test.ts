@@ -4,6 +4,7 @@ import {
   SWITCHYARD,
   SWITCHYARD_CHECKPOINTS,
   checkpointAt,
+  courseSolids,
   sectionAt,
 } from './course';
 import { reconcileChainBots, stepChainBot } from './bots';
@@ -35,10 +36,10 @@ function run(world: ChainWorld, seconds: number) {
   }
 }
 
-function placeOnBank(world: ChainWorld, x: number, lanes: number[]) {
+function placeOnBank(world: ChainWorld, x: number, lanes: number[], y = 0) {
   world.players.forEach((player, i) => {
     player.x = x;
-    player.y = 0;
+    player.y = y;
     player.z = lanes[i];
     player.vx = player.vy = player.vz = 0;
     player.grounded = true;
@@ -107,7 +108,7 @@ void test('both gates require simultaneous separate workers and block passage un
   assert.equal(world.gatesOpen[1], true, 'every worker must hold a pad');
 
   chainOfFoolsAction(world, 'p0', { type: 'restart' });
-  assert.deepEqual(world.gatesOpen, [false, false, false]);
+  assert.deepEqual(world.gatesOpen, [false, false, false, false, false]);
   assert.equal(world.checkpoint, 0);
 });
 
@@ -122,7 +123,7 @@ void test('a bot crew can open the switches, cross and finish together', () => {
   for (let i = 0; i < 270 * 60 && world.phase === 'playing'; i++)
     run(world, 1 / 60);
   assert.equal(world.winner, 'crew');
-  assert.deepEqual(world.gatesOpen, [true, true, true]);
+  assert.deepEqual(world.gatesOpen, [true, true, true, true, true]);
   assert.ok(world.players.every((p) => p.state === 'finished'));
 });
 
@@ -161,16 +162,17 @@ void test('numbered relay needs the right order and three different workers', ()
   const world = crew();
   world.gatesOpen[0] = true;
   world.gatesOpen[1] = true;
-  const relay = SWITCHYARD.gates[2];
+  world.gatesOpen[2] = true;
+  const relay = SWITCHYARD.gates[3];
   placeOnBank(world, relay.plates[0].x, [0, -1, 1, 2]);
   run(world, 1.4);
   assert.equal(world.relayStep, 1);
-  assert.equal(world.gatesOpen[2], false);
+  assert.equal(world.gatesOpen[3], false);
 
   placeOnBank(world, relay.plates[0].x, [0, -3, -1, 1]);
   run(world, 1.4);
   assert.equal(world.relayStep, 2);
-  assert.equal(world.gatesOpen[2], false);
+  assert.equal(world.gatesOpen[3], false);
 
   placeOnBank(world, relay.plates[0].x, [3, -1, 1, 2]);
   run(world, 1.4);
@@ -182,7 +184,7 @@ void test('numbered relay needs the right order and three different workers', ()
   placeOnBank(world, relay.plates[0].x, [0, -1, 3, 1]);
   run(world, 1.4);
   assert.equal(world.relayStep, 3);
-  assert.equal(world.gatesOpen[2], true);
+  assert.equal(world.gatesOpen[3], true);
   assert.equal(new Set(world.relayWorkers).size, 3);
 });
 
@@ -190,8 +192,33 @@ void test('holding every relay plate at once does not skip the order', () => {
   const world = crew();
   world.gatesOpen[0] = true;
   world.gatesOpen[1] = true;
-  placeOnBank(world, SWITCHYARD.gates[2].plates[0].x, [-3, 0, 3, 2]);
+  world.gatesOpen[2] = true;
+  placeOnBank(world, SWITCHYARD.gates[3].plates[0].x, [-3, 0, 3, 2]);
   run(world, 2.8);
   assert.equal(world.relayStep, 1);
-  assert.equal(world.gatesOpen[2], false);
+  assert.equal(world.gatesOpen[3], false);
+});
+
+void test('the lower station requires workers to descend onto both plates', () => {
+  const world = crew();
+  world.gatesOpen[0] = true;
+  world.gatesOpen[1] = true;
+  const station = SWITCHYARD.gates[2];
+  placeOnBank(world, station.plates[0].x, [-2, -1, 1, 2], -1.2);
+  run(world, 1.5);
+  assert.equal(world.gatesOpen[2], true);
+  assert.ok(world.players.every((player) => player.y < -1));
+});
+
+void test('the final bridge is solid only after the crew powers it', () => {
+  const world = crew();
+  world.gatesOpen[0] = true;
+  world.gatesOpen[1] = true;
+  world.gatesOpen[2] = true;
+  world.gatesOpen[3] = true;
+  assert.equal(supportUnder(520, 0.3, 0, 0, courseSolids(world)), null);
+  placeOnBank(world, 510, [-2, -1, 1, 2]);
+  run(world, 1.5);
+  assert.equal(world.gatesOpen[4], true);
+  assert.equal(supportUnder(520, 0.3, 0, 0, courseSolids(world)), 0);
 });

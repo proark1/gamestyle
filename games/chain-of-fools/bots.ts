@@ -114,7 +114,13 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
   if (world.mapId === 'switchyard') {
     const gateIndex = world.gatesOpen.findIndex((open) => !open);
     const gate = SWITCHYARD.gates[gateIndex];
-    if (gate && bot.x >= gate.plates[0].x - 10) {
+    const approachX =
+      gate && 'approachX' in gate
+        ? gate.approachX
+        : gate
+          ? gate.plates[0].x - 10
+          : Infinity;
+    if (gate && bot.x >= approachX) {
       if (gate.mode === 'relay') {
         const actingBot = world.players.find(
           (p) => p.bot && !world.relayWorkers.includes(p.id),

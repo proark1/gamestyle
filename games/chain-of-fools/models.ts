@@ -17,6 +17,7 @@ import {
   PENDULUM,
   PLANK,
   SURFACES,
+  SWITCH_BRIDGE,
   SWITCHYARD,
   SWITCHYARD_CHECKPOINTS,
   type Box,
@@ -200,6 +201,7 @@ export type SiteModel = {
   switchCheckpointFlags: T.Mesh[];
   switchPlates: T.Mesh[];
   switchGates: T.Group[];
+  switchBridge: T.Group;
   anchors: Map<string, T.Group>;
   dust: T.Points;
   details: SiteDetails;
@@ -257,6 +259,9 @@ export function createSite(): SiteModel {
   const checkpointFlags = flags(root);
   const switchCheckpointFlags = flags(root, SWITCHYARD_CHECKPOINTS);
   const { plates: switchPlates, gates: switchGates } = switchyardFeatures(root);
+  const switchBridge = new T.Group();
+  slab(switchBridge, SWITCH_BRIDGE, true);
+  root.add(switchBridge);
   siteOffice(root);
   siteGate(root);
   finalCrossing(root);
@@ -274,6 +279,7 @@ export function createSite(): SiteModel {
     switchCheckpointFlags,
     switchPlates,
     switchGates,
+    switchBridge,
     anchors,
     dust,
     details,
@@ -291,7 +297,8 @@ function switchyardFeatures(parent: T.Object3D) {
         new T.CylinderGeometry(0.95, 0.95, 0.06, 24),
         material('#e04b32'),
       );
-      disc.position.set(plate.x, 0.035, plate.z);
+      const plateY = 'y' in plate ? plate.y : 0;
+      disc.position.set(plate.x, plateY + 0.035, plate.z);
       disc.receiveShadow = true;
       parent.add(disc);
       plates.push(disc);
@@ -300,13 +307,14 @@ function switchyardFeatures(parent: T.Object3D) {
         material(SITE.hazard),
       );
       ring.rotation.x = Math.PI / 2;
-      ring.position.set(plate.x, 0.08, plate.z);
+      ring.position.set(plate.x, plateY + 0.08, plate.z);
       parent.add(ring);
       const number = sign(`${plateIndex + 1}`, '#2b2a28', '#ffffff', 0.7);
-      number.position.set(plate.x, 0.22, plate.z);
+      number.position.set(plate.x, plateY + 0.22, plate.z);
       parent.add(number);
     });
     const barrier = new T.Group();
+    if (gateIndex === 2) barrier.position.y = -1.2;
     parent.add(barrier);
     for (const z of [-5.7, 5.7])
       box(barrier, [0.35, 3, 0.35], [gate.x, 1.5, z], SITE.hazard);
@@ -318,7 +326,11 @@ function switchyardFeatures(parent: T.Object3D) {
         ? 'RELAY: 2 > 1 > 3 / NEW WORKER EACH TIME'
         : gateIndex === 0
           ? '2 WORKERS TO OPEN'
-          : 'ALL 4 WORKERS TO OPEN',
+          : gateIndex === 1
+            ? 'ALL 4 WORKERS TO OPEN'
+            : gateIndex === 2
+              ? 'DROP BELOW: 2 LOW SWITCHES'
+              : '2 WORKERS RAISE THE BRIDGE',
       '#2b2a28',
       '#f1c232',
       gate.mode === 'relay' ? 6.4 : 4.6,
@@ -330,19 +342,36 @@ function switchyardFeatures(parent: T.Object3D) {
   const start = sign('SWITCHYARD', '#2b2a28', '#f1c232', 4);
   start.position.set(265, 3.2, -5);
   parent.add(start);
-  for (const x of [
-    292, 304, 316, 354, 363, 386, 396, 412, 423, 443, 453, 482, 494, 506, 523,
-    534, 550, 560,
-  ])
-    box(parent, [0.12, 0.04, 3.2], [x, 0.025, 0], SITE.hazard);
-  for (const [x, z, message] of [
-    [376, -4, 'CHANGE LANES AT THE WIDE DECKS'],
-    [429, -4, 'CLIP A RING, BRACE, THEN HAUL'],
-    [457, -4, 'THREE DIFFERENT WORKERS: 2 > 1 > 3'],
-    [509, -4, 'STAY LINKED THROUGH THE FINAL GAPS'],
+  for (const [x, y, z] of [
+    [292, 0, 0],
+    [304, 0, 0],
+    [316, 0, 0],
+    [354, 0, 0],
+    [363, 0, 0],
+    [386, 2.7, -1.8],
+    [396, 2.7, -1.8],
+    [412, 2.7, 1.8],
+    [423, 2.7, 1.8],
+    [443, -1.2, 0],
+    [453, -1.2, 0],
+    [482, 0, 0],
+    [494, 0, 0],
+    [506, 0, 0],
+    [534, 0, 0],
+    [550, 0, 1.5],
+    [560, 0, 0],
+  ] as const)
+    box(parent, [0.12, 0.04, 2], [x, y + 0.025, z], SITE.hazard);
+  for (const [x, y, z, message] of [
+    [365, 3.2, -5, 'CLIMB THREE STEPS TO THE HIGH CONVEYOR'],
+    [398, 5.7, -4, 'CHANGE LANES ON THE WIDE DECK'],
+    [427, 3.3, -4, 'STEP DOWN, THEN DROP TO THE LOW ROAD'],
+    [441, 1.6, -4, 'CLIP, RESCUE, THEN HOLD BOTH LOW PADS'],
+    [460, 2.8, -4, 'THREE DIFFERENT WORKERS: 2 > 1 > 3'],
+    [509, 2.8, -4, 'TWO PADS RAISE THE BRIDGE'],
   ] as const) {
     const hint = sign(message, '#2b2a28', '#f1c232', 6.5);
-    hint.position.set(x, 2.8, z);
+    hint.position.set(x, y, z);
     parent.add(hint);
   }
   const x = SWITCHYARD.finishX + 3.5;

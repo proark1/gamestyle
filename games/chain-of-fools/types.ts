@@ -160,8 +160,8 @@ export type GameEvent = {
 export type ChainWorld = {
   mapId: MapId;
   plateActive: boolean[];
-  switchProgress: [number, number, number];
-  gatesOpen: [boolean, boolean, boolean];
+  switchProgress: [number, number, number, number, number];
+  gatesOpen: [boolean, boolean, boolean, boolean, boolean];
   /** Next numbered relay plate; each stage needs a different worker. */
   relayStep: number;
   relayWorkers: string[];

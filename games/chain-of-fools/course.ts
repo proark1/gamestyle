@@ -108,8 +108,18 @@ export const SWITCHYARD = {
       ],
     },
     {
+      x: 453,
+      mode: 'together',
+      approachX: 445,
+      plates: [
+        { x: 449, y: -1.2, z: -2 },
+        { x: 449, y: -1.2, z: 2 },
+      ],
+    },
+    {
       x: 474,
       mode: 'relay',
+      approachX: 459,
       plates: [
         { x: 464, z: -3 },
         { x: 464, z: 0 },
@@ -118,10 +128,31 @@ export const SWITCHYARD = {
       // Read the three numbered floor plates in the order painted on the gate.
       order: [1, 0, 2],
     },
+    {
+      x: 515,
+      mode: 'together',
+      approachX: 506,
+      plates: [
+        { x: 510, z: -2 },
+        { x: 510, z: 2 },
+      ],
+    },
   ],
   holdSeconds: 1.2,
   plateRadius: 0.95,
 } as const;
+
+/** The powered span is solid only after the crew has raised it. */
+export const SWITCH_BRIDGE = box(
+  'switch-powered-bridge',
+  'catwalk',
+  515,
+  534,
+  -0.5,
+  0,
+  -2.4,
+  2.4,
+);
 
 export const SURFACES: readonly Box[] = [
   // Site gate: solid ground, room to work out who stands where.
@@ -196,28 +227,31 @@ export const SURFACES: readonly Box[] = [
   box('switch-gate-two-landing', 'ledge', 345, 354, -0.5, 0, -4, 4),
   box('switch-final-span', 'girder', 356.5, 363, -0.5, 0, -1.6, 1.6),
   box('switch-transfer', 'pad', 363, 380, -1.2, 0, -6, 6),
+  box('switch-climb-a', 'crate', 368, 372, 0, 0.9, -3, 3),
+  box('switch-climb-b', 'crate', 372, 376, 0, 1.8, -3, 3),
+  box('switch-climb-c', 'crate', 376, 380, 0, 2.7, -3, 3),
 
-  // The broken conveyor makes the crew change lanes between two jump runs.
-  box('switch-conveyor-a', 'girder', 380, 386, -0.5, 0, -2.8, -0.8),
-  box('switch-conveyor-b', 'girder', 388.2, 396, -0.5, 0, -2.8, -0.8),
-  box('switch-conveyor-turn', 'pad', 396, 404, -1.2, 0, -5, 5),
-  box('switch-conveyor-c', 'girder', 404, 412, -0.5, 0, 0.8, 2.8),
-  box('switch-conveyor-d', 'girder', 414.2, 423, -0.5, 0, 0.8, 2.8),
-  box('switch-conveyor-exit', 'pad', 423, 435, -1.2, 0, -5, 5),
+  // The elevated conveyor changes lanes before descending three levels.
+  box('switch-conveyor-a', 'girder', 380, 386, 2.2, 2.7, -2.8, -0.8),
+  box('switch-conveyor-b', 'girder', 388.2, 396, 2.2, 2.7, -2.8, -0.8),
+  box('switch-conveyor-turn', 'pad', 396, 404, 1.5, 2.7, -5, 5),
+  box('switch-conveyor-c', 'girder', 404, 412, 2.2, 2.7, 0.8, 2.8),
+  box('switch-conveyor-d', 'girder', 414.2, 423, 2.2, 2.7, 0.8, 2.8),
+  box('switch-descent-a', 'crate', 423, 427, 0, 1.8, -3, 3),
+  box('switch-descent-b', 'crate', 427, 431, 0, 0.9, -3, 3),
+  box('switch-conveyor-exit', 'pad', 431, 435, -1.2, 0, -5, 5),
 
-  // One more narrow split before the relay bank. Rings give a safe anchor for
-  // a rescue, while the jumping crew can carry on without using them.
-  box('switch-rescue-a', 'girder', 435, 443, -0.5, 0, -1.3, 1.3),
-  box('switch-rescue-b', 'girder', 445.4, 453, -0.5, 0, -1.3, 1.3),
-  box('switch-relay-bank', 'yard', 453, 474, -1.2, 0, -6, 6),
+  // Drop to a lower catwalk, clear its gap, then split across two low switches.
+  box('switch-rescue-a', 'catwalk', 435, 443, -1.7, -1.2, -1.5, 1.5),
+  box('switch-rescue-b', 'catwalk', 445.4, 453, -1.7, -1.2, -4, 4),
+  box('switch-exit-step', 'crate', 453, 455, -1.2, -0.6, -4, 4),
+  box('switch-relay-bank', 'yard', 455, 474, -1.2, 0, -6, 6),
   box('switch-relay-exit', 'ledge', 474, 482, -0.5, 0, -4, 4),
 
-  // The final rescue run alternates narrow lanes across four jump gaps.
+  // An anchor gap ends at the bridge controls; two workers raise the span.
   box('switch-anchor-a', 'girder', 484.4, 494, -0.5, 0, -1.4, 1.4),
   box('switch-anchor-b', 'girder', 496.4, 506, -0.5, 0, -1.4, 1.4),
   box('switch-anchor-rest', 'pad', 506, 515, -1.2, 0, -5, 5),
-  box('switch-final-a', 'girder', 515, 523, -0.5, 0, -2.5, -0.5),
-  box('switch-final-b', 'girder', 525.4, 534, -0.5, 0, -2.5, -0.5),
   box('switch-final-turn', 'pad', 534, 542, -1.2, 0, -5, 5),
   box('switch-final-c', 'girder', 542, 550, -0.5, 0, 0.5, 2.5),
   box('switch-final-d', 'girder', 552.4, 560, -0.5, 0, 0.5, 2.5),
@@ -320,8 +354,13 @@ export function courseSolids(world: {
   clock: number;
   startedAt: number;
   endedAt?: number;
+  gatesOpen?: readonly boolean[];
 }): readonly Box[] {
-  return [...SOLIDS, ...machineryAt(courseSeconds(world))];
+  return [
+    ...SOLIDS,
+    ...machineryAt(courseSeconds(world)),
+    ...(world.gatesOpen?.[4] ? [SWITCH_BRIDGE] : []),
+  ];
 }
 
 export type Anchor = {
@@ -345,9 +384,9 @@ export const ANCHORS: readonly Anchor[] = [
   { id: 'switch-ring-a', x: 290.5, y: 0.3, z: 0, label: 'First crossing' },
   { id: 'switch-ring-b', x: 315.0, y: 0.3, z: 0, label: 'Regroup landing' },
   { id: 'switch-ring-c', x: 352.5, y: 0.3, z: 0, label: 'Final crossing' },
-  { id: 'switch-ring-d', x: 385.4, y: 0.3, z: -1.8, label: 'Broken conveyor' },
-  { id: 'switch-ring-e', x: 411.4, y: 0.3, z: 1.8, label: 'Far conveyor' },
-  { id: 'switch-ring-f', x: 442.4, y: 0.3, z: 0, label: 'Rescue split' },
+  { id: 'switch-ring-d', x: 385.4, y: 3, z: -1.8, label: 'High conveyor' },
+  { id: 'switch-ring-e', x: 411.4, y: 3, z: 1.8, label: 'Far conveyor' },
+  { id: 'switch-ring-f', x: 442.4, y: -0.9, z: 0, label: 'Lower rescue' },
   { id: 'switch-ring-g', x: 492.8, y: 0.3, z: 0, label: 'Anchor run' },
   { id: 'switch-ring-h', x: 522.4, y: 0.3, z: -1.5, label: 'Final near gap' },
   { id: 'switch-ring-i', x: 549.4, y: 0.3, z: 1.5, label: 'Final far gap' },
@@ -379,8 +418,8 @@ export const SWITCHYARD_CHECKPOINTS: readonly Checkpoint[] = [
   { index: 2, x: 316, spawn: [320, 0.1, 0], label: 'Regroup deck' },
   { index: 3, x: 345, spawn: [349, 0.1, 0], label: 'Crew gate' },
   { index: 4, x: 363, spawn: [367, 0.1, 0], label: 'Conveyor approach' },
-  { index: 5, x: 396, spawn: [399, 0.1, 0], label: 'Conveyor turn' },
-  { index: 6, x: 423, spawn: [427, 0.1, 0], label: 'Rescue landing' },
+  { index: 5, x: 396, spawn: [399, 2.8, 0], label: 'High conveyor turn' },
+  { index: 6, x: 423, spawn: [433, 0.1, 0], label: 'Descent landing' },
   { index: 7, x: 453, spawn: [457, 0.1, 0], label: 'Relay bank' },
   { index: 8, x: 474, spawn: [477, 0.1, 0], label: 'Relay exit' },
   { index: 9, x: 506, spawn: [510, 0.1, 0], label: 'Anchor rest' },

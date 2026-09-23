@@ -87,11 +87,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Lose the crew and everyone restarts at the gate. No checkpoints.',
     ],
     switchDesc:
-      'Cross a long chain of broken conveyors and rescue spans. Open the two crew locks, then solve the numbered relay with three different workers before the final crossing.',
+      'Climb to the high conveyor, descend to the rescue catwalk, and work together to power five gates. Follow the clues at each station to raise the final bridge and bring the whole crew home.',
     switchRules: [
-      'First split into two, then place all four on separate pads.',
-      'At the relay, press plates 2, 1, 3 in order with a new worker each time.',
-      'Change lanes on wide decks; clip, brace and haul at the broken spans.',
+      'Split between two pads, then put all four workers on the next set.',
+      'Climb three steps, change lanes above, then drop to the two low rescue pads.',
+      'Press relay plates 2, 1, 3 with different workers; hold the last two pads to raise the bridge.',
     ],
     startShift: 'Start the shift',
     playAgain: 'Another shift',
@@ -100,7 +100,7 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
     mapClassicDesc: 'The original route of beams, scaffolds and wrecking gear.',
     mapSwitchName: 'Switchyard',
     mapSwitchDesc:
-      'A long teamwork gauntlet of switches, relay clues and rescue crossings.',
+      'A high climb, low rescue route, ordered relay and crew powered bridge.',
     switchPrompt: (active, total) =>
       `Stand on separate floor switches together · ${active}/${total} held`,
     switchRelayPrompt: (charged, total) =>
@@ -127,12 +127,12 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'switch-pair': 'Two-worker gate',
       'switch-spans': 'Exposed spans',
       'switch-crew': 'Whole-crew gate',
-      'switch-transfer': 'Conveyor approach',
-      'switch-conveyor': 'Broken conveyor',
-      'switch-rescue': 'Rescue split',
+      'switch-transfer': 'Three step climb',
+      'switch-conveyor': 'High conveyor',
+      'switch-rescue': 'Lower rescue station',
       'switch-relay': 'Numbered relay',
       'switch-anchor': 'Anchor run',
-      'switch-final': 'Final crossing',
+      'switch-final': 'Crew bridge and final crossing',
       'switch-office': 'Crew office',
     },
     distanceLeft: (m) => `${m} m to go`,
@@ -153,15 +153,16 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'switch-spans': 'Cross one at a time. Brace and haul anyone who misses.',
       'switch-crew': 'All four workers must stand on their own pad together.',
       'switch-transfer':
-        'Regroup before the broken conveyor. Its lanes change twice.',
+        'Jump up all three steps together; the high conveyor starts on the left.',
       'switch-conveyor':
-        'Jump each break and swap lanes on the wide turn decks.',
+        'Stay on the high road; swap lanes only on the wide deck, then step down.',
       'switch-rescue':
-        'Clip a ring, brace, and haul a worker if the gap catches them.',
+        'Drop to the lower catwalk. Clip or haul at its gap, then hold both low pads.',
       'switch-relay': 'Three different workers: press 2, then 1, then 3.',
       'switch-anchor':
         'Leap in order and keep a worker anchored near each gap.',
-      'switch-final': 'Clip or brace while the rest cross the last gap.',
+      'switch-final':
+        'Hold both pads to raise the bridge, then cross the last gap together.',
       'switch-office': 'Bring the entire line over the finish tape.',
     },
 
@@ -233,11 +234,11 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Verliert ihr die Crew, starten alle wieder am Tor. Keine Kontrollpunkte.',
     ],
     switchDesc:
-      'Überquert lange Reihen kaputter Förderstege und rettet euch an den Lücken. Öffnet zwei Crew-Tore und löst danach das nummerierte Relais mit drei verschiedenen Arbeitern.',
+      'Klettert zum hohen Förderband, steigt zum unteren Rettungssteg ab und öffnet gemeinsam fünf Tore. Folgt den Hinweisen an jeder Station, hebt die letzte Brücke und bringt die ganze Crew ins Ziel.',
     switchRules: [
-      'Zuerst braucht ihr zwei Arbeiter, danach alle vier auf eigenen Platten.',
-      'Beim Relais drückt ihr 2, 1, 3 der Reihe nach – jeweils mit jemand anderem.',
-      'Wechselt auf breiten Decks die Spur; hakt euch ein und rettet andere.',
+      'Teilt euch auf zwei Platten auf, dann stellt alle vier auf die nächste Gruppe.',
+      'Klettert drei Stufen hoch, wechselt oben die Spur und springt zu den zwei unteren Platten.',
+      'Drückt beim Relais 2, 1, 3 mit verschiedenen Arbeitern; hebt die Brücke mit den letzten zwei Platten.',
     ],
     startShift: 'Schicht beginnen',
     playAgain: 'Noch eine Schicht',
@@ -274,12 +275,12 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'switch-pair': 'Zweiertor',
       'switch-spans': 'Schmale Stege',
       'switch-crew': 'Crewtor',
-      'switch-transfer': 'Förderband-Zugang',
-      'switch-conveyor': 'Kaputtes Förderband',
-      'switch-rescue': 'Rettungsspalte',
+      'switch-transfer': 'Dreistufiger Aufstieg',
+      'switch-conveyor': 'Hohes Förderband',
+      'switch-rescue': 'Untere Rettungsstation',
       'switch-relay': 'Nummeriertes Relais',
       'switch-anchor': 'Ankerlauf',
-      'switch-final': 'Letzter Übergang',
+      'switch-final': 'Crew-Brücke und Zielübergang',
       'switch-office': 'Crew-Büro',
     },
     distanceLeft: (m) => `Noch ${m} m`,
@@ -305,16 +306,16 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'switch-crew':
         'Alle vier Arbeiter müssen gleichzeitig einen eigenen Schalter halten.',
       'switch-transfer':
-        'Sammelt euch vor dem Förderband. Die Spur wechselt zweimal.',
+        'Springt zusammen über alle drei Stufen; das hohe Förderband beginnt links.',
       'switch-conveyor':
-        'Springt über die Lücken und wechselt auf breiten Decks die Spur.',
+        'Bleibt oben; wechselt nur auf dem breiten Deck die Spur und steigt dann ab.',
       'switch-rescue':
-        'Hakt euch ein, stemmt euch ab und zieht Gefallene hoch.',
+        'Springt zum unteren Steg. Sichert euch an der Lücke und haltet beide unteren Platten.',
       'switch-relay': 'Drei verschiedene Arbeiter: erst 2, dann 1, dann 3.',
       'switch-anchor':
         'Springt nacheinander und sichert die Crew an jeder Lücke.',
       'switch-final':
-        'Hakt euch ein oder stemmt euch ab, während die anderen springen.',
+        'Haltet beide Platten für die Brücke und überquert die letzte Lücke zusammen.',
       'switch-office': 'Bringt die gesamte Kette über die Ziellinie.',
     },
 
