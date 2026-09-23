@@ -2,9 +2,13 @@ import type { Localized } from '../language/types';
 
 interface ClubhouseCopy {
   welcome: string;
+  welcomeBack: string;
   heroTop: string;
+  heroPersonal: string;
   heroBottom: string;
   intro: string;
+  introPersonal: string;
+  signedInNote: string;
   pick: string;
   party: string;
   bubble: string;
@@ -14,6 +18,10 @@ interface ClubhouseCopy {
   partyTitle: string;
   partyText: string;
   shelf: string;
+  shelfPersonal: string;
+  continueLabel: string;
+  continueDevice: string;
+  continueAction: string;
   shelfHint: string;
   signIn: string;
   code: string;
@@ -51,10 +59,15 @@ interface ClubhouseCopy {
 export const CLUBHOUSE_COPY: Localized<ClubhouseCopy> = {
   en: {
     welcome: 'WELCOME TO THE YARD',
+    welcomeBack: 'WELCOME BACK TO THE YARD',
     heroTop: 'Little games.',
+    heroPersonal: 'Hey, {name}.',
     heroBottom: 'Big chaos.',
     intro:
       'A whole playground of wonderfully silly challenges. Grab your friends, pick a game, and see what happens.',
+    introPersonal:
+      'Your next round is ready. Pick up where you left off, collect another stamp, or bring your crew into party mode.',
+    signedInNote: 'Your look and account are ready whenever you are.',
     pick: 'Pick a game',
     party: 'Play party mode',
     bubble: 'You bring the friends. We’ll bring the chaos.',
@@ -78,6 +91,10 @@ export const CLUBHOUSE_COPY: Localized<ClubhouseCopy> = {
     partyText:
       'Gather in a room, take on a mix of mini-games, and chase the tournament crown.',
     shelf: 'What are we playing?',
+    shelfPersonal: 'Your next game',
+    continueLabel: 'PICK UP WHERE YOU LEFT OFF',
+    continueDevice: 'Last visited on this device',
+    continueAction: 'Play again',
     shelfHint: 'Pick any adventure. We’ll meet you there!',
     signIn: 'Come on in! New here? Your first sign-in creates your account.',
     code: 'Check your inbox! Pop your six-digit code in below.',
@@ -116,10 +133,15 @@ export const CLUBHOUSE_COPY: Localized<ClubhouseCopy> = {
   },
   de: {
     welcome: 'WILLKOMMEN AUF DER SPIELWIESE',
+    welcomeBack: 'WILLKOMMEN ZURÜCK AUF DER SPIELWIESE',
     heroTop: 'Kleine Spiele.',
+    heroPersonal: 'Hey, {name}.',
     heroBottom: 'Großes Chaos.',
     intro:
       'Eine ganze Spielwiese voller herrlich verrückter Herausforderungen. Schnapp dir deine Freunde, wählt ein Spiel und legt los.',
+    introPersonal:
+      'Deine nächste Runde wartet. Spiel dort weiter, wo du aufgehört hast, sammle einen neuen Stempel oder starte den Party-Modus mit deiner Crew.',
+    signedInNote: 'Dein Look und dein Konto sind bereit.',
     pick: 'Spiel wählen',
     party: 'Party-Modus spielen',
     bubble: 'Du bringst die Freunde. Wir bringen das Chaos.',
@@ -143,6 +165,10 @@ export const CLUBHOUSE_COPY: Localized<ClubhouseCopy> = {
     partyText:
       'Trefft euch im Raum, spielt einen Mix aus Minispielen und holt euch die Turnierkrone.',
     shelf: 'Was spielen wir?',
+    shelfPersonal: 'Dein nächstes Spiel',
+    continueLabel: 'SPIEL EINFACH WEITER',
+    continueDevice: 'Zuletzt auf diesem Gerät besucht',
+    continueAction: 'Noch mal spielen',
     shelfHint: 'Wähle ein Abenteuer. Wir sehen uns dort!',
     signIn: 'Komm rein! Neu hier? Beim ersten Anmelden entsteht dein Konto.',
     code: 'Schau ins Postfach! Gib unten deinen sechsstelligen Code ein.',

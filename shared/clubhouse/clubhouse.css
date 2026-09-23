@@ -116,6 +116,7 @@
     600 clamp(44px, 5.1vw, 76px)/1.02 'Fredoka',
     sans-serif;
   letter-spacing: -2px;
+  overflow-wrap: anywhere;
 }
 .clubhouse-hero h1 em {
   font-style: normal;

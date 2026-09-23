@@ -37,6 +37,7 @@ import {
   subscribeAdventure,
 } from './adventure-state';
 import './adventures.css';
+import type { AccountSummary } from '../accounts/types';
 
 const WardrobeDialog = lazy(() => import('../wardrobe/WardrobeDialog'));
 export type AdventureGame = {
@@ -48,7 +49,13 @@ export type AdventureGame = {
   cta: string;
 };
 
-export function AdventureDesk({ games }: { games: AdventureGame[] }) {
+export function AdventureDesk({
+  games,
+  account,
+}: {
+  games: AdventureGame[];
+  account: AccountSummary | null;
+}) {
   const { t } = useLanguage();
   const copy = t(ADVENTURE_COPY);
   const progress = useSyncExternalStore(
@@ -141,7 +148,7 @@ export function AdventureDesk({ games }: { games: AdventureGame[] }) {
       <div className={`adventure-picker ${rolling ? 'is-rolling' : ''}`}>
         <div className="adventure-picker-heading">
           <p className="clubhouse-eyebrow">{copy.pickLabel}</p>
-          <h2>{copy.pickTitle}</h2>
+          <h2>{account ? copy.pickPersonal : copy.pickTitle}</h2>
         </div>
         <div className="adventure-reveal" aria-busy={rolling}>
           {result ? (
@@ -202,7 +209,11 @@ export function AdventureDesk({ games }: { games: AdventureGame[] }) {
           <Stamp size={32} aria-hidden="true" />
         </div>
         <p className="passport-note">
-          {progress.persistent ? copy.saved : copy.temporary}
+          {progress.persistent
+            ? account
+              ? copy.savedSignedIn
+              : copy.saved
+            : copy.temporary}
         </p>
         <div className="passport-progress">
           <strong>
@@ -328,7 +339,7 @@ export function AdventureDesk({ games }: { games: AdventureGame[] }) {
       </div>
       {celebrating && (
         <aside className="adventure-celebration" aria-live="polite">
-          <Cast pose="cheer" />
+          <Cast pose="wave" />
           <div>
             <strong>{copy.celebration}</strong>
             <p>{copy.celebrationHint}</p>

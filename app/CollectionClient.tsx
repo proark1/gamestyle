@@ -26,8 +26,17 @@ import {
   Building2,
   Link2,
 } from 'lucide-react';
-import type { ElementType, ReactElement } from 'react';
+import {
+  useSyncExternalStore,
+  type ElementType,
+  type ReactElement,
+} from 'react';
 import AccountButton from '@/shared/accounts/AccountButton';
+import {
+  accountSnapshot,
+  serverAccountSnapshot,
+  subscribeAccount,
+} from '@/shared/accounts/client';
 import WardrobeButton from '@/shared/wardrobe/WardrobeButton';
 import LanguageSwitcher from '@/shared/language/LanguageSwitcher';
 import { useLanguage } from '@/shared/language/useLanguage';
@@ -44,6 +53,11 @@ import {
 import { CastGuide } from '@/shared/clubhouse/Cast';
 import { CLUBHOUSE_COPY } from '@/shared/clubhouse/copy';
 import { AdventureDesk } from '@/shared/clubhouse/AdventureDesk';
+import {
+  adventureSnapshot,
+  serverAdventureSnapshot,
+  subscribeAdventure,
+} from '@/shared/clubhouse/adventure-state';
 
 interface CardStaticConfig {
   slug: string;
@@ -88,7 +102,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'carry-on-carnage',
     href: '/carry-on-carnage',
     cardClass: 'carry-on-carnage-card',
-    imgSrc: '/images/court-cast-v1/carry-on-carnage.jpg',
+    imgSrc: '/images/court-cast-v1/boys/carry-on-carnage.jpg',
     imgAlt:
       'Four clay travelers squash an overstuffed suitcase beside an airport luggage sizer as toys pop out.',
     loading: 'lazy',
@@ -100,7 +114,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'bungee-doubles',
     href: '/bungee-doubles',
     cardClass: 'bungee-doubles-card',
-    imgSrc: '/images/court-cast-v1/bungee-doubles.jpg',
+    imgSrc: '/images/court-cast-v1/boys/bungee-doubles.jpg',
     imgAlt:
       'Four clay players compete at padel, with the red pair linked by a stretching bungee cord.',
     loading: 'lazy',
@@ -112,7 +126,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'panic-curling',
     href: '/panic-curling',
     cardClass: 'panic-curling-card',
-    imgSrc: '/images/court-cast-v1/panic-curling.jpg',
+    imgSrc: '/images/court-cast-v1/boys/panic-curling.jpg',
     imgAlt:
       'Four clay friends sweep a curling rink as a teammate rides a laundry basket toward the target.',
     loading: 'lazy',
@@ -124,7 +138,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'basketball',
     href: '/basketball',
     cardClass: 'basketball-card',
-    imgSrc: '/images/court-cast-v1/court-clash.jpg',
+    imgSrc: '/images/court-cast-v1/boys/court-clash.jpg',
     imgAlt:
       'Four clay basketball players in red and blue jerseys jump and reach for a dunk on an outdoor court.',
     loading: 'lazy',
@@ -136,7 +150,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'crane-clash',
     href: '/crane-clash',
     cardClass: 'crane-clash-card',
-    imgSrc: '/images/court-cast-v1/crane-clash.jpg',
+    imgSrc: '/images/court-cast-v1/boys/crane-clash.jpg',
     imgAlt:
       'Four clay workers use red and blue cranes to stack crates into competing towers.',
     loading: 'lazy',
@@ -148,7 +162,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'siege-and-desist',
     href: '/siege-and-desist',
     cardClass: 'siege-card',
-    imgSrc: '/images/court-cast-v1/siege-and-desist.jpg',
+    imgSrc: '/images/court-cast-v1/boys/siege-and-desist.jpg',
     imgAlt:
       'Four clay medieval crew members struggle with a trebuchet beside a distant sandstone castle.',
     loading: 'lazy',
@@ -160,7 +174,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'stack-or-sink',
     href: '/stack-or-sink',
     cardClass: 'stack-card',
-    imgSrc: '/images/court-cast-v1/stack-or-sink.jpg',
+    imgSrc: '/images/court-cast-v1/boys/stack-or-sink.jpg',
     imgAlt:
       'Four clay friends stack furniture and crates above rising turquoise floodwater.',
     fetchPriority: 'high',
@@ -171,7 +185,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'uphill-delivery',
     href: '/uphill-delivery',
     cardClass: 'delivery-card',
-    imgSrc: '/images/court-cast-v1/uphill-delivery.jpg',
+    imgSrc: '/images/court-cast-v1/boys/uphill-delivery.jpg',
     imgAlt:
       'Four clay friends in work overalls carry a yellow sofa up village steps beside a goat and rope bridge.',
     fetchPriority: 'high',
@@ -182,7 +196,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'reel-problems-2',
     href: '/reel-problems-2',
     cardClass: 'reel-card',
-    imgSrc: '/images/court-cast-v1/reel-problems.jpg',
+    imgSrc: '/images/court-cast-v1/boys/reel-problems.jpg',
     imgAlt:
       'Four clay friends in life jackets reel in an enormous fish from a rocking orange boat.',
     fetchPriority: 'high',
@@ -194,7 +208,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'reel-problems',
     href: '/reel-problems',
     cardClass: 'reel-card',
-    imgSrc: '/images/court-cast-v1/reel-problems.jpg',
+    imgSrc: '/images/court-cast-v1/boys/reel-problems.jpg',
     imgAlt:
       'Four clay friends in life jackets reel in an enormous fish from a rocking orange boat.',
     fetchPriority: 'high',
@@ -206,7 +220,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'shelf-control',
     href: '/shelf-control',
     cardClass: 'shelf-control-card',
-    imgSrc: '/images/court-cast-v1/shelf-control.jpg',
+    imgSrc: '/images/court-cast-v1/boys/shelf-control.jpg',
     imgAlt:
       'Four familiar clay-faced display mannequins sneak a ladder through a furniture showroom behind a guard.',
     loading: 'lazy',
@@ -218,7 +232,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'wrong-floor',
     href: '/wrong-floor',
     cardClass: 'hotel-card',
-    imgSrc: '/images/court-cast-v1/wrong-floor.jpg',
+    imgSrc: '/images/court-cast-v1/boys/wrong-floor.jpg',
     imgAlt:
       'Four clay hotel guests approach an elevator while one spots a shadow down the corridor.',
     loading: 'lazy',
@@ -231,7 +245,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     href: '/load-bearing',
     cardClass: 'wreck-card',
     artClass: 'wreck-art',
-    imgSrc: '/images/court-cast-v1/load-bearing.jpg',
+    imgSrc: '/images/court-cast-v1/boys/load-bearing.jpg',
     imgAlt:
       'Four clay workers protect an upright piano as a wrecking ball breaks a house wall.',
     loading: 'lazy',
@@ -243,7 +257,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'one-more-button',
     href: '/one-more-button',
     cardClass: 'button-card',
-    imgSrc: '/images/court-cast-v1/one-more-button.jpg',
+    imgSrc: '/images/court-cast-v1/boys/one-more-button.jpg',
     imgAlt:
       'One clay contestant presses a red button, launching a boxing glove toward three surprised friends.',
     loading: 'lazy',
@@ -255,7 +269,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'four-brain-cells',
     href: '/four-brain-cells',
     cardClass: 'brain-card',
-    imgSrc: '/images/court-cast-v1/four-brain-cells.jpg',
+    imgSrc: '/images/court-cast-v1/boys/four-brain-cells.jpg',
     imgAlt:
       'Four clay friends pilot a clumsy robot that pours coffee, flips pancakes and kicks the breakfast table.',
     loading: 'lazy',
@@ -267,7 +281,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'act-natural',
     href: '/act-natural',
     cardClass: 'cow-card',
-    imgSrc: '/images/court-cast-v1/blend-business.jpg',
+    imgSrc: '/images/court-cast-v1/boys/blend-business.jpg',
     imgAlt:
       'Four clay friends in cow disguises sneak a ladder toward a pasture gate behind a distracted farmer.',
     loading: 'lazy',
@@ -279,7 +293,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'dont-wake-the-giant',
     href: '/dont-wake-the-giant',
     cardClass: 'giant-card',
-    imgSrc: '/images/court-cast-v1/tiptoe-thieves.jpg',
+    imgSrc: '/images/court-cast-v1/boys/tiptoe-thieves.jpg',
     imgAlt:
       'Four tiny clay adventurers steal a golden necklace from a sleeping giant in a cozy cottage.',
     loading: 'lazy',
@@ -291,7 +305,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'chaos',
     href: '/chaos',
     cardClass: 'handwerker-card',
-    imgSrc: '/images/court-cast-v1/permit-pending.jpg',
+    imgSrc: '/images/court-cast-v1/boys/permit-pending.jpg',
     imgAlt:
       'Four clay builders carry a sofa and guide a crane lifting a bathtub onto a half-built house.',
     loading: 'lazy',
@@ -302,7 +316,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'first-person',
     href: '/first-person',
     cardClass: 'first-person-card',
-    imgSrc: '/images/court-cast-v1/brick-by-hand.jpg',
+    imgSrc: '/images/court-cast-v1/boys/brick-by-hand.jpg',
     imgAlt:
       'Clay hands lay a brick with a trowel while three familiar friends work beyond the wall.',
     loading: 'lazy',
@@ -313,7 +327,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'zorb-clash',
     href: '/zorb-clash',
     cardClass: 'zorb-clash-card',
-    imgSrc: '/images/court-cast-v1/zorb-clash.jpg',
+    imgSrc: '/images/court-cast-v1/boys/zorb-clash.jpg',
     imgAlt:
       'Four clay players in clear zorb bubbles collide and tumble around a soccer ball.',
     loading: 'lazy',
@@ -325,7 +339,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'sample-stampede',
     href: '/sample-stampede',
     cardClass: 'sample-stampede-card',
-    imgSrc: '/images/court-cast-v1/sample-stampede.jpg',
+    imgSrc: '/images/court-cast-v1/boys/sample-stampede.jpg',
     imgAlt:
       'Four clay friends race two loaded shopping carts toward a tray of supermarket samples.',
     loading: 'lazy',
@@ -337,7 +351,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'drive-thru',
     href: '/drive-thru',
     cardClass: 'drive-thru-card',
-    imgSrc: '/images/court-cast-v1/drive-thru.jpg',
+    imgSrc: '/images/court-cast-v1/boys/drive-thru.jpg',
     imgAlt:
       'Three clay travelers reach from a car for a wobbling burger tray served by their friend at a drive-thru.',
     loading: 'lazy',
@@ -349,7 +363,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'chain-of-fools',
     href: '/chain-of-fools',
     cardClass: 'chain-of-fools-card',
-    imgSrc: '/images/court-cast-v1/chain-of-fools.jpg',
+    imgSrc: '/images/court-cast-v1/boys/chain-of-fools.jpg',
     imgAlt:
       'Four clay demolition workers linked by a chain haul a dangling teammate onto a girder.',
     loading: 'lazy',
@@ -361,7 +375,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'scaffold-scramble',
     href: '/scaffold-scramble',
     cardClass: 'scaffold-scramble-card',
-    imgSrc: '/images/court-cast-v1/scaffold-scramble.jpg',
+    imgSrc: '/images/court-cast-v1/boys/scaffold-scramble.jpg',
     imgAlt:
       'Four clay window cleaners cling to a tilted suspended scaffold as a bucket spills soapy water.',
     loading: 'lazy',
@@ -442,6 +456,16 @@ export default function CollectionClient({ order }: { order: string[] }) {
   const { t } = useLanguage();
   const strings = t(LANDING_TRANSLATIONS);
   const clubhouse = t(CLUBHOUSE_COPY);
+  const { account } = useSyncExternalStore(
+    subscribeAccount,
+    accountSnapshot,
+    serverAccountSnapshot,
+  );
+  const progress = useSyncExternalStore(
+    subscribeAdventure,
+    adventureSnapshot,
+    serverAdventureSnapshot,
+  );
   const adventures = order.flatMap((slug) => {
     const config = CARD_CONFIGS[slug];
     const dictionary = CARDS_TRANSLATIONS[slug];
@@ -462,6 +486,12 @@ export default function CollectionClient({ order }: { order: string[] }) {
       },
     ];
   });
+  const lastPlayed = account
+    ? [...progress.visited]
+        .reverse()
+        .map((slug) => adventures.find((game) => game.slug === slug))
+        .find((game) => game !== undefined)
+    : undefined;
 
   return (
     <main className="collection">
@@ -483,13 +513,29 @@ export default function CollectionClient({ order }: { order: string[] }) {
         </div>
       </header>
 
-      <ClubhouseWelcome count={order.length} />
-      <AdventureDesk games={adventures} />
+      <ClubhouseWelcome count={order.length} account={account} />
+      {lastPlayed && (
+        <aside
+          className="collection-continue"
+          aria-label={clubhouse.continueLabel}
+        >
+          <img src={lastPlayed.image} alt="" width={120} height={80} />
+          <div>
+            <span>{clubhouse.continueLabel}</span>
+            <strong>{lastPlayed.title}</strong>
+            <small>{clubhouse.continueDevice}</small>
+          </div>
+          <a href={lastPlayed.href}>
+            {clubhouse.continueAction} <ArrowUpRight size={17} />
+          </a>
+        </aside>
+      )}
+      <AdventureDesk games={adventures} account={account} />
       <ClubhouseParty />
 
       <div className="clubhouse-shelf-heading" id="games">
         <div>
-          <h2>{clubhouse.shelf}</h2>
+          <h2>{account ? clubhouse.shelfPersonal : clubhouse.shelf}</h2>
           <p>
             <Shuffle size={13} /> {strings.shelfLeadSubtitle}
           </p>

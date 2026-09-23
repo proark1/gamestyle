@@ -13,8 +13,15 @@ import { CLUBHOUSE_COPY } from './copy';
 import { useLanguage } from '../language/useLanguage';
 import { LANDING_TRANSLATIONS } from '../language/translations/landing';
 import { InteractiveCrew } from './InteractiveCrew';
+import type { AccountSummary } from '../accounts/types';
 
-export function ClubhouseWelcome({ count }: { count: number }) {
+export function ClubhouseWelcome({
+  count,
+  account,
+}: {
+  count: number;
+  account: AccountSummary | null;
+}) {
   const { t } = useLanguage();
   const copy = t(CLUBHOUSE_COPY);
   const facts = t(LANDING_TRANSLATIONS);
@@ -23,14 +30,18 @@ export function ClubhouseWelcome({ count }: { count: number }) {
       <div className="clubhouse-hero-copy">
         <p className="clubhouse-eyebrow">
           <span />
-          {copy.welcome}
+          {account ? copy.welcomeBack : copy.welcome}
         </p>
         <h1 id="clubhouse-title">
-          {copy.heroTop}
+          {account?.displayName
+            ? copy.heroPersonal.replace('{name}', account.displayName)
+            : copy.heroTop}
           <br />
           <em>{copy.heroBottom}</em>
         </h1>
-        <p className="clubhouse-intro">{copy.intro}</p>
+        <p className="clubhouse-intro">
+          {account ? copy.introPersonal : copy.intro}
+        </p>
         <div className="clubhouse-actions">
           <a className="clay-button" href="#games">
             <Gamepad2 size={20} />
@@ -42,7 +53,9 @@ export function ClubhouseWelcome({ count }: { count: number }) {
             {copy.party}
           </a>
         </div>
-        <p className="clubhouse-guest-note">{facts.statNoAccount}</p>
+        <p className="clubhouse-guest-note">
+          {account ? copy.signedInNote : facts.statNoAccount}
+        </p>
       </div>
       <InteractiveCrew />
       <ul className="clubhouse-facts">
@@ -66,7 +79,7 @@ export function ClubhouseWelcome({ count }: { count: number }) {
 export function ClubhouseHowTo() {
   const { t } = useLanguage();
   const copy = t(CLUBHOUSE_COPY);
-  const poses = ['point', 'mail', 'cheer'] as const;
+  const poses = ['point', 'mail', 'wave'] as const;
   return (
     <section className="clubhouse-how" aria-labelledby="clubhouse-how-title">
       <h2 id="clubhouse-how-title">{copy.how}</h2>
@@ -91,7 +104,7 @@ export function ClubhouseParty() {
   const copy = t(CLUBHOUSE_COPY);
   return (
     <aside className="clubhouse-party">
-      <Cast pose="cheer" />
+      <Cast pose="wave" />
       <div>
         <span className="clubhouse-eyebrow">
           <Trophy size={15} />

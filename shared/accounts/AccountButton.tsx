@@ -90,7 +90,7 @@ export default function AccountButton({
       )}
       {welcome && account && (
         <aside className="account-welcome" aria-live="polite">
-          <CastGuide pose="cheer" message="account" />
+          <CastGuide pose="wave" message="account" />
           <button
             type="button"
             aria-label={copy.close}

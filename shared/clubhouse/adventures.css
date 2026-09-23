@@ -13,37 +13,38 @@
   max-height: inherit;
 }
 .interactive-crew .crew-friend {
-  width: 30%;
-  max-height: 340px;
+  width: 38%;
+  max-height: 390px;
 }
 .interactive-crew .hero-cast-mail {
-  left: -4%;
+  left: -5%;
   right: auto;
-  bottom: 80px;
+  bottom: 66px;
 }
 .interactive-crew .hero-cast-point {
-  left: 22%;
+  left: 29%;
   right: auto;
-  bottom: 45px;
+  bottom: 36px;
 }
 .interactive-crew .hero-cast-wave {
-  left: 48%;
+  left: 65%;
   right: auto;
-  bottom: 80px;
-}
-.interactive-crew .hero-cast-cheer {
-  left: 74%;
-  right: auto;
-  bottom: 45px;
+  bottom: 55px;
 }
 @media (max-width: 1000px) {
   .interactive-crew {
     height: 320px;
   }
+  .interactive-crew .crew-friend {
+    max-height: 290px;
+  }
 }
 @media (max-width: 700px) {
   .interactive-crew {
     height: 300px;
+  }
+  .interactive-crew .crew-friend {
+    max-height: 270px;
   }
 }
 .interactive-crew .crew-friend:hover,
@@ -308,16 +309,21 @@
   transform: rotate(7deg);
 }
 .passport-stamp img {
-  width: 60%;
-  height: 48%;
+  width: 80%;
+  height: 80%;
   object-fit: cover;
   border-radius: 50%;
 }
 .passport-stamp span {
+  position: absolute;
+  bottom: 5%;
+  max-width: 88%;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: #fff6dfea;
   font-size: 9px;
   font-weight: 700;
   line-height: 1.2;
-  margin-top: 3px;
 }
 .passport-stamp > svg {
   position: absolute;

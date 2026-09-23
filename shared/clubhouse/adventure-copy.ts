@@ -18,6 +18,7 @@ export const ADVENTURE_COPY = {
     desk: 'A little nudge into your next adventure.',
     pickLabel: 'THE CREW’S SURPRISE PICK',
     pickTitle: 'Where to next?',
+    pickPersonal: 'Your next adventure',
     pickHint:
       'Give the crew a spin. We’ll pick somewhere you haven’t explored yet.',
     shuffle: 'Pick my next game',
@@ -29,6 +30,8 @@ export const ADVENTURE_COPY = {
     passport: 'Your adventure passport',
     passportLabel: 'JUMBLEYARD EXPLORER CLUB',
     saved: 'Saved in this browser. One stamp per game visited.',
+    savedSignedIn:
+      'You’re signed in. Stamps are saved on this device, one per game visited.',
     temporary: 'Storage is unavailable. Progress lasts for this visit only.',
     stamps: 'stamps collected',
     empty: 'Your first adventure goes here.',
@@ -72,6 +75,7 @@ export const ADVENTURE_COPY = {
     desk: 'Ein kleiner Schubs ins nächste Abenteuer.',
     pickLabel: 'DER ÜBERRASCHUNGSTIPP DER CREW',
     pickTitle: 'Wohin als Nächstes?',
+    pickPersonal: 'Dein nächstes Abenteuer',
     pickHint:
       'Lass die Crew wählen. Wir suchen ein Spiel, das du noch nicht entdeckt hast.',
     shuffle: 'Wähle mein nächstes Spiel',
@@ -83,6 +87,8 @@ export const ADVENTURE_COPY = {
     passport: 'Dein Abenteuerpass',
     passportLabel: 'JUMBLEYARD ENTDECKERCLUB',
     saved: 'In diesem Browser gespeichert. Ein Stempel pro besuchtem Spiel.',
+    savedSignedIn:
+      'Du bist angemeldet. Stempel werden auf diesem Gerät gespeichert, einer pro besuchtem Spiel.',
     temporary:
       'Speichern ist nicht möglich. Dein Fortschritt gilt nur für diesen Besuch.',
     stamps: 'Stempel gesammelt',

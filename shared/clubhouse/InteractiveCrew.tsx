@@ -6,7 +6,7 @@ import { ADVENTURE_COPY } from './adventure-copy';
 import { CLUBHOUSE_COPY } from './copy';
 import './adventures.css';
 
-const POSES: CastPose[] = ['mail', 'point', 'wave', 'cheer'];
+const POSES: CastPose[] = ['mail', 'point', 'wave'];
 export function InteractiveCrew() {
   const { t } = useLanguage();
   const copy = t(ADVENTURE_COPY);
