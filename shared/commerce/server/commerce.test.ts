@@ -245,7 +245,12 @@ void test('refunds are terminal even when settlement arrives late; repurchase us
 void test('bundle grants are atomic and refunds preserve items owned through another source', async (t) => {
   const { db, a } = await setup(t);
   const offers: CommerceOffer[] = [
-    { id: 'test-bundle', grants: ['party-cone', 'hero-cape'], usdCents: 499 },
+    {
+      id: 'test-bundle',
+      name: 'Test Bundle',
+      grants: ['party-cone', 'hero-cape'],
+      usdCents: 499,
+    },
   ];
   await buyCoinItem(db, a, 'party-cone', NOW);
   const apply = (status: 'paid' | 'revoked') =>
@@ -316,10 +321,10 @@ void test('restoring a purchase uses its original bundle contents after a catalo
   const { db, a } = await setup(t);
   const verify = async () => receipt(a, { offerId: 'bundle' });
   await verifyAndRecordPurchase(db, a, 'proof', verify, 'live', NOW, [
-    { id: 'bundle', grants: ['party-cone'], usdCents: 499 },
+    { id: 'bundle', name: 'Bundle', grants: ['party-cone'], usdCents: 499 },
   ]);
   await verifyAndRecordPurchase(db, a, 'proof', verify, 'live', NOW, [
-    { id: 'bundle', grants: ['hero-cape'], usdCents: 499 },
+    { id: 'bundle', name: 'Bundle', grants: ['hero-cape'], usdCents: 499 },
   ]);
   const inventory = await readInventory(db, a);
   assert.ok(inventory.items.includes('party-cone'));

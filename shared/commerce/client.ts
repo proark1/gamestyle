@@ -1,4 +1,5 @@
 import { apiFetch } from '../browser/api-fetch';
+import { Capacitor } from '@capacitor/core';
 import {
   accountSnapshot,
   subscribeAccount,
@@ -95,6 +96,37 @@ export function connectAccountInventory() {
 export async function purchaseWardrobeItem(id: string) {
   if (client.snapshot().mode === 'guest') return buyItem(id);
   return client.change({ op: 'buy_coins', itemId: id });
+}
+
+export function webCheckoutSupported() {
+  return (
+    !Capacitor.isNativePlatform() &&
+    typeof window !== 'undefined' &&
+    (window.location.protocol === 'https:' ||
+      window.location.hostname === 'localhost')
+  );
+}
+
+export async function startWebCheckout(offerId: string) {
+  if (!webCheckoutSupported())
+    throw new Error('This store is available on the web.');
+  const response = await apiFetch('/api/commerce/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ offerId }),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(15_000),
+  });
+  const body = await response.json();
+  if (!response.ok || typeof body.url !== 'string')
+    throw new Error(body.error ?? 'Checkout could not start.');
+  const destination = new URL(body.url);
+  if (
+    destination.protocol !== 'https:' ||
+    destination.hostname !== 'checkout.stripe.com'
+  )
+    throw new Error('Checkout destination was invalid.');
+  window.location.assign(destination.href);
 }
 
 export async function saveWardrobeItem(slot: Slot, id: string | null) {

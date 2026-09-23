@@ -10,12 +10,14 @@ export type InventoryClientState = {
   busy: boolean;
   error: string;
   inventory: InventorySnapshot | null;
+  purchasesAvailable: boolean;
 };
 export const INITIAL_INVENTORY: InventoryClientState = {
   mode: 'guest',
   busy: false,
   error: '',
   inventory: null,
+  purchasesAvailable: false,
 };
 
 /** Isolated state machine: old requests cannot apply to a newer session. */
@@ -49,7 +51,13 @@ export function createInventoryClient(
       publish(INITIAL_INVENTORY);
       return;
     }
-    publish({ mode: 'loading', busy: true, error: '', inventory: null });
+    publish({
+      mode: 'loading',
+      busy: true,
+      error: '',
+      inventory: null,
+      purchasesAvailable: false,
+    });
     try {
       let reply = await send();
       if (asked !== generation) return;
@@ -62,6 +70,7 @@ export function createInventoryClient(
         busy: false,
         error: '',
         inventory: reply.inventory,
+        purchasesAvailable: reply.purchasesAvailable,
       });
     } catch (error) {
       if (asked === generation)
@@ -70,6 +79,7 @@ export function createInventoryClient(
           busy: false,
           error: message(error),
           inventory: null,
+          purchasesAvailable: false,
         });
     }
   }
@@ -86,6 +96,7 @@ export function createInventoryClient(
         busy: false,
         error: '',
         inventory: reply.inventory,
+        purchasesAvailable: reply.purchasesAvailable,
       });
       return true;
     } catch (error) {

@@ -315,6 +315,44 @@ function boot(
 /** Every item the kid has his own model for, by catalog id. */
 export const KID_ITEMS: Record<string, (dress: KidDress) => void> = {
   ...PLAYFUL_KID_ITEMS,
+  'neon-visor'({ head, hatSeat = 0.2 }) {
+    soft(head, [0.29, 0.07, 0.27], [0, hatSeat + 0.1, 0], '#182d40');
+    soft(head, [0.26, 0.12, 0.24], [0, hatSeat + 0.16, 0], '#30445d');
+    soft(head, [0.27, 0.035, 0.22], [0, hatSeat + 0.08, 0.19], '#5effdf');
+  },
+  'confetti-shades'({ head }) {
+    for (const side of [-1, 1]) {
+      const frame = rounded(
+        head,
+        [0.2, 0.12, 0.04],
+        [side * 0.12, 0.31, 0.29],
+        '#9c50e5',
+        0.025,
+      );
+      frame.rotation.y = side * 0.12;
+      soft(head, [0.075, 0.035, 0.014], [side * 0.12, 0.31, 0.32], '#ffdc57');
+    }
+    soft(head, [0.05, 0.025, 0.025], [0, 0.32, 0.31], '#9c50e5');
+  },
+  'comet-cape'({ body }) {
+    garment(body, 'comet-cape', 0.25, SHOULDER + 0.03, OVER + 0.02, '#5b4ec4', {
+      arc: Math.PI * 1.2,
+      flare: 0.15,
+      steps: 14,
+    });
+    soft(
+      body,
+      [0.05, 0.05, 0.025],
+      [0, NECK - 0.06, torsoRadius(0.94) * DEPTH + 0.03],
+      '#ffcc61',
+    );
+  },
+  'disco-boots'({ legs }) {
+    for (const leg of legs) {
+      boot(leg, '#5c38ae', -0.28, { cuff: '#f95f9b', toe: '#f95f9b' });
+      shoeSole(leg, [0.21, 0.06, 0.34], [0, SOLE + 0.025, 0.06], '#1d2430');
+    }
+  },
   'stack-rank-safety-helmet'({ head, hatSeat = 0.2 }) {
     soft(head, [0.31, 0.06, 0.29], [0, hatSeat + 0.02, 0.02], '#126c78');
     soft(head, [0.25, 0.14, 0.24], [0, hatSeat + 0.14, 0], '#1b9aa4');

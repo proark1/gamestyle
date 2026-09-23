@@ -24,6 +24,8 @@ export type Item = {
   goal?: string;
   /** Server-awarded challenge item. Never available for coin purchase. */
   reward?: string;
+  /** Paid-only offer. The bundle may grant this item too. */
+  premiumOffer?: string;
 };
 
 /** Raise when an item changes meaning, so an old shop page cannot buy the wrong thing. */
@@ -189,6 +191,30 @@ export const ITEMS: readonly Item[] = [
   { id: 'cloud-jacket', slot: 'top', name: 'Cloud Jacket', price: 280 },
   { id: 'comet-sneakers', slot: 'shoes', name: 'Comet Sneakers', price: 280 },
   { id: 'moon-glasses', slot: 'face', name: 'Moon Glasses', price: 180 },
+  {
+    id: 'neon-visor',
+    slot: 'hat',
+    name: 'Neon Visor',
+    premiumOffer: 'neon-visor',
+  },
+  {
+    id: 'confetti-shades',
+    slot: 'face',
+    name: 'Confetti Shades',
+    premiumOffer: 'confetti-shades',
+  },
+  {
+    id: 'comet-cape',
+    slot: 'top',
+    name: 'Comet Cape',
+    premiumOffer: 'comet-cape',
+  },
+  {
+    id: 'disco-boots',
+    slot: 'shoes',
+    name: 'Disco Boots',
+    premiumOffer: 'disco-boots',
+  },
 ];
 
 export function findItem(id: string) {

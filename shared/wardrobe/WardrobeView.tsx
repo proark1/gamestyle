@@ -22,6 +22,7 @@ import { getItemThumbnails } from '../rendering/cosmetics/standalone-item';
 import { PLAYER_KID } from '../rendering/avatars/kid';
 import { KIT } from '../rendering/palette';
 import { GOALS, ITEMS, SLOTS, type Item, type Slot } from './catalog';
+import { COMMERCE_OFFERS } from '../commerce/catalog';
 import type { Look } from './look';
 import {
   inventorySnapshot,
@@ -29,6 +30,8 @@ import {
   subscribeInventory,
   refreshInventory,
   purchaseWardrobeItem,
+  startWebCheckout,
+  webCheckoutSupported,
   saveWardrobeItem,
 } from '../commerce/client';
 import {
@@ -111,6 +114,8 @@ export default function WardrobeView({
   // Which kit the preview shows; each game picks the real one.
   const [kit, setKit] = useState<string>(KIT.red);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(
     ITEMS.find((item) => item.id === initialItemId) ?? ITEMS[0] ?? null,
   );
@@ -172,6 +177,22 @@ export default function WardrobeView({
   const filteredItems = ITEMS.filter((item) =>
     selectedSlot === 'all' ? true : item.slot === selectedSlot,
   );
+  const buyPremium = async (offerId: string) => {
+    if (inventory.mode !== 'account') {
+      openAccountDialog('Sign in to keep your purchases on every device.');
+      return;
+    }
+    setCheckoutError('');
+    setCheckoutBusy(true);
+    try {
+      await startWebCheckout(offerId);
+    } catch (error) {
+      setCheckoutError(
+        error instanceof Error ? error.message : 'Checkout could not start.',
+      );
+      setCheckoutBusy(false);
+    }
+  };
 
   return (
     <div className={embedded ? 'wardrobe-embedded-card' : 'wardrobe-content'}>
@@ -519,6 +540,35 @@ export default function WardrobeView({
           {/* Right Panel: Customizer & Shop OR Unlockable Perks & Goals */}
           {activeTab === 'wardrobe' || inventory.mode !== 'guest' ? (
             <div className="wardrobe-catalog-panel">
+              {selectedSlot === 'all' && (
+                <div className="wardrobe-premium-banner">
+                  <div>
+                    <strong>Party Style Bundle · $4.99</strong>
+                    <span>
+                      All four purchase-only looks. Save $0.97 compared with
+                      buying each piece.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={
+                      !inventory.purchasesAvailable ||
+                      !webCheckoutSupported() ||
+                      checkoutBusy
+                    }
+                    onClick={() => void buyPremium('party-style-bundle')}
+                  >
+                    {inventory.purchasesAvailable
+                      ? 'Get the bundle'
+                      : 'Web checkout coming soon'}
+                  </button>
+                </div>
+              )}
+              {checkoutError && (
+                <p className="wardrobe-checkout-error" role="alert">
+                  {checkoutError}
+                </p>
+              )}
               {/* Slot Filter Buttons */}
               <div className="wardrobe-slots-filter">
                 {(['all', ...SLOTS] as const).map((slot) => (
@@ -657,6 +707,24 @@ export default function WardrobeView({
                                 }
                               >
                                 <Coins size={12} /> Buy · {item.price}
+                              </button>
+                            ) : item.premiumOffer ? (
+                              <button
+                                type="button"
+                                className="wardrobe-item-btn wardrobe-btn-buy"
+                                disabled={
+                                  !inventory.purchasesAvailable ||
+                                  !webCheckoutSupported() ||
+                                  checkoutBusy
+                                }
+                                onClick={() =>
+                                  void buyPremium(item.premiumOffer!)
+                                }
+                                title="Purchase-only item; try it on before buying"
+                              >
+                                {inventory.purchasesAvailable
+                                  ? `Buy · $${((COMMERCE_OFFERS.find((offer) => offer.id === item.premiumOffer)?.usdCents ?? 0) / 100).toFixed(2)}`
+                                  : 'Exclusive · soon'}
                               </button>
                             ) : item.reward ? (
                               <div

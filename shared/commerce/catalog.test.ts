@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   COMMERCE_PRICES,
+  COMMERCE_OFFERS,
   FREE_GAME_IDS,
   hasGameAccess,
   partyCanPlay,
@@ -21,4 +22,30 @@ void test('individual ownership gates paid games while mixed parties retain the 
     special: 199,
     bundle: 499,
   });
+});
+
+void test('premium offers have purchase-only items and the bundle is cheaper', async () => {
+  const { ITEMS } = await import('../wardrobe/catalog');
+  const pieces = COMMERCE_OFFERS.filter(
+    (offer) =>
+      offer.grants.length === 1 && offer.grants[0] !== 'entitlement:full-game',
+  );
+  assert.equal(pieces.length, 4);
+  for (const offer of pieces) {
+    const item = ITEMS.find((candidate) => candidate.id === offer.grants[0]);
+    assert.equal(item?.premiumOffer, offer.id);
+    assert.equal(item?.price, undefined);
+    assert.equal(item?.goal, undefined);
+  }
+  const bundle = COMMERCE_OFFERS.find(
+    (offer) => offer.id === 'party-style-bundle',
+  )!;
+  assert.deepEqual(
+    bundle.grants,
+    pieces.map((offer) => offer.grants[0]),
+  );
+  assert.ok(
+    bundle.usdCents <
+      pieces.reduce((total, offer) => total + offer.usdCents, 0),
+  );
 });

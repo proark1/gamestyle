@@ -1,6 +1,6 @@
 import { isGame } from '../games/identity';
 
-/** US reference prices in cents. Checkout uses the storefront's localized price. */
+/** Web launch prices in USD cents. */
 export const COMMERCE_PRICES = {
   fullGame: 499,
   standard: 99,
@@ -19,16 +19,47 @@ export const FULL_GAME_ENTITLEMENT = 'entitlement:full-game';
 
 export type CommerceOffer = {
   id: string;
+  name: string;
   grants: readonly string[];
   usdCents: number;
 };
 
-/** Premium cosmetics enter this catalog only when their actual assets are ready. */
 export const COMMERCE_OFFERS: readonly CommerceOffer[] = [
   {
     id: 'full-game',
+    name: 'Full game pass',
     grants: [FULL_GAME_ENTITLEMENT],
     usdCents: COMMERCE_PRICES.fullGame,
+  },
+  {
+    id: 'neon-visor',
+    name: 'Neon Visor',
+    grants: ['neon-visor'],
+    usdCents: COMMERCE_PRICES.standard,
+  },
+  {
+    id: 'confetti-shades',
+    name: 'Confetti Shades',
+    grants: ['confetti-shades'],
+    usdCents: COMMERCE_PRICES.standard,
+  },
+  {
+    id: 'comet-cape',
+    name: 'Comet Cape',
+    grants: ['comet-cape'],
+    usdCents: COMMERCE_PRICES.special,
+  },
+  {
+    id: 'disco-boots',
+    name: 'Disco Boots',
+    grants: ['disco-boots'],
+    usdCents: COMMERCE_PRICES.special,
+  },
+  {
+    id: 'party-style-bundle',
+    name: 'Party Style Bundle',
+    grants: ['neon-visor', 'confetti-shades', 'comet-cape', 'disco-boots'],
+    usdCents: COMMERCE_PRICES.bundle,
   },
 ];
 

@@ -10,8 +10,9 @@ void test('every item has its own id, a real slot, and one acquisition path', ()
     assert.ok(SLOTS.includes(item.slot), `${item.id} has a real slot`);
     assert.match(item.id, /^[a-z0-9-]+$/);
     assert.equal(
-      [item.price, item.goal, item.reward].filter((path) => path !== undefined)
-        .length,
+      [item.price, item.goal, item.reward, item.premiumOffer].filter(
+        (path) => path !== undefined,
+      ).length,
       1,
       `${item.id} has exactly one acquisition path`,
     );

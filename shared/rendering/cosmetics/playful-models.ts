@@ -37,6 +37,37 @@ const disc = (
 
 /** Lightweight worker versions; the kid and shop share the detailed clay models. */
 export const PLAYFUL_MODELS: Record<string, ItemModel> = {
+  'neon-visor': {
+    slot: 'hat',
+    parts: [
+      disc('head', 0.32, 0.06, [0, 0.09, 0], '#182d40'),
+      orb('head', [0.28, 0.12, 0.26], [0, 0.14, 0], '#30445d'),
+      box('head', [0.53, 0.06, 0.3], [0, 0.12, 0.23], '#5effdf'),
+    ],
+  },
+  'confetti-shades': {
+    slot: 'face',
+    parts: [-0.13, 0.13].flatMap((x) => [
+      box('face', [0.21, 0.14, 0.04], [x, 0.02, 0.08], '#9c50e5'),
+      box('face', [0.14, 0.07, 0.05], [x, 0.02, 0.11], '#ffdc57'),
+    ]),
+  },
+  'comet-cape': {
+    slot: 'top',
+    parts: [
+      box('body', [0.13, 0.68, 0.07], [-0.27, 0.7, -0.29], '#5b4ec4'),
+      box('body', [0.13, 0.68, 0.07], [0.27, 0.7, -0.29], '#5b4ec4'),
+      orb('body', [0.1, 0.1, 0.04], [0, 0.94, 0.3], '#ffcc61'),
+    ],
+  },
+  'disco-boots': {
+    slot: 'shoes',
+    boots: '#5c38ae',
+    parts: [
+      box('legs', [0.3, 0.06, 0.42], [0, -0.47, 0.05], '#1d2430'),
+      orb('legs', [0.1, 0.1, 0.1], [0, -0.3, 0.16], '#f95f9b'),
+    ],
+  },
   'frog-bucket-hat': {
     slot: 'hat',
     parts: [
