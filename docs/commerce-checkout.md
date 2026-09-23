@@ -1,6 +1,6 @@
 # Web checkout launch
 
-The wardrobe offers two $0.99 purchase-only cosmetics, two $1.99 purchase-only accessories, five $1.99 full costumes, and separate $4.99 bundles for the accessories and costumes. The server creates a Stripe-hosted Checkout Session from the fixed catalog. A signed webhook fulfills paid sessions; the return page verifies the same session for the signed-in account. Refunds and disputes revoke their purchase grants. Coin and challenge rewards remain separate.
+The wardrobe offers two $0.99 purchase-only cosmetics, two $1.99 purchase-only accessories, ten $1.99 costumes, and separate $4.99 bundles for the accessories, original five costumes, and five full mascot suits. Bundle grant lists are fixed; adding a new costume does not expand an earlier bundle purchase. The server creates a Stripe-hosted Checkout Session from the fixed catalog. A signed webhook fulfills paid sessions; the return page verifies the same session for the signed-in account. Refunds and disputes revoke their purchase grants. Coin and challenge rewards remain separate.
 
 The $4.99 full-game pass remains **off sale** until the paid-game access gate is enabled on every route and in mixed-owner parties. The three proposed free games and all currently open games remain playable. Native App Store, Google Play, and Steam clients do not use this web checkout.
 

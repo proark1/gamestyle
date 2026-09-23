@@ -98,6 +98,8 @@ export function lola(
   const { head } = kid;
   const tie = outfit.shirt ?? COLORS[color % COLORS.length];
 
+  if (style.coveredHair) return inClay(kid.root);
+
   // A clay cap of hair, tipped back so it frames the face and covers the nape.
   // Under a hat it lies flatter, so the crown stays inside the hat.
   const radii = CAP.radii.clone();

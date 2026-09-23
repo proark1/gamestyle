@@ -1,7 +1,13 @@
 'use client';
 /* eslint-disable next/no-img-element, @next/next/no-img-element */
 
-import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  Fragment,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import {
   Award,
   Box,
@@ -21,7 +27,14 @@ import {
 import { getItemThumbnails } from '../rendering/cosmetics/standalone-item';
 import { PLAYER_KID } from '../rendering/avatars/kid';
 import { KIT } from '../rendering/palette';
-import { GOALS, ITEMS, SLOTS, type Item, type Slot } from './catalog';
+import {
+  COSTUME_COLLECTIONS,
+  GOALS,
+  ITEMS,
+  SLOTS,
+  type Item,
+  type Slot,
+} from './catalog';
 import { COMMERCE_OFFERS } from '../commerce/catalog';
 import type { Look } from './look';
 import {
@@ -69,6 +82,7 @@ const SLOT_NAMES: Record<Slot | 'all', string> = {
   face: 'Glasses',
   beard: 'Beards',
 };
+const FIRST_OTHER_ITEM = ITEMS.find((item) => item.slot !== 'costume')?.id;
 
 export type WardrobeViewProps = {
   embedded?: boolean;
@@ -598,27 +612,40 @@ export default function WardrobeView({
                 ))}
               </div>
               {(selectedSlot === 'costume' || selectedSlot === 'all') && (
-                <div className="wardrobe-costume-bundle">
-                  <span>All five costumes · $4.99</span>
-                  <button
-                    type="button"
-                    className="wardrobe-item-btn wardrobe-btn-buy"
-                    disabled={
-                      !inventory.purchasesAvailable ||
-                      !webCheckoutSupported() ||
-                      checkoutBusy ||
-                      ITEMS.some(
-                        (item) =>
-                          item.slot === 'costume' &&
-                          state.unlockedItems.includes(item.id),
-                      )
-                    }
-                    onClick={() => void buyPremium('costume-bundle')}
-                  >
-                    {inventory.purchasesAvailable
-                      ? 'Buy collection'
-                      : 'Coming soon'}
-                  </button>
+                <div className="wardrobe-costume-collections">
+                  {COSTUME_COLLECTIONS.map((collection) => {
+                    const offer = COMMERCE_OFFERS.find(
+                      (entry) => entry.id === collection.offerId,
+                    )!;
+                    return (
+                      <div
+                        className="wardrobe-costume-bundle"
+                        key={collection.id}
+                      >
+                        <span>
+                          {collection.name} · $
+                          {(offer.usdCents / 100).toFixed(2)}
+                        </span>
+                        <button
+                          type="button"
+                          className="wardrobe-item-btn wardrobe-btn-buy"
+                          disabled={
+                            !inventory.purchasesAvailable ||
+                            !webCheckoutSupported() ||
+                            checkoutBusy ||
+                            collection.itemIds.some((id) =>
+                              state.unlockedItems.includes(id),
+                            )
+                          }
+                          onClick={() => void buyPremium(collection.offerId)}
+                        >
+                          {inventory.purchasesAvailable
+                            ? 'Buy collection'
+                            : 'Coming soon'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -632,178 +659,195 @@ export default function WardrobeView({
                   const associatedGoal = item.goal
                     ? GOALS.find((g) => g.id === item.goal)
                     : null;
+                  const collection = COSTUME_COLLECTIONS.find(
+                    (entry) => entry.itemIds[0] === item.id,
+                  );
 
                   return (
-                    <div
-                      key={item.id}
-                      className="wardrobe-item-card"
-                      data-equipped={isEquipped}
-                      data-fitted={isFitted && !isEquipped}
-                      data-unlocked={unlocked}
-                      data-selected={isSelected}
-                    >
-                      <button
-                        type="button"
-                        className="wardrobe-item-select"
-                        aria-label={`Inspect ${item.name}`}
-                        aria-pressed={isSelected}
-                        onClick={() => {
-                          setSelectedItem(item);
-                          setPreviewMode('item');
-                        }}
+                    <Fragment key={item.id}>
+                      {collection && (
+                        <h3 className="wardrobe-collection-heading">
+                          {collection.name}
+                        </h3>
+                      )}
+                      {selectedSlot === 'all' &&
+                        item.id === FIRST_OTHER_ITEM && (
+                          <h3 className="wardrobe-collection-heading">
+                            More wardrobe items
+                          </h3>
+                        )}
+                      <div
+                        className="wardrobe-item-card"
+                        data-equipped={isEquipped}
+                        data-fitted={isFitted && !isEquipped}
+                        data-unlocked={unlocked}
+                        data-selected={isSelected}
                       >
-                        <div className="wardrobe-item-thumb-box">
-                          {thumbnails[item.id] ? (
-                            <img
-                              src={thumbnails[item.id]}
-                              alt={item.name}
-                              className="wardrobe-item-thumb-img"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="wardrobe-item-thumb-placeholder" />
-                          )}
-                          {isEquipped && (
-                            <span className="wardrobe-item-badge">
-                              <Check size={11} strokeWidth={3} /> Equipped
-                            </span>
-                          )}
-                          {!isEquipped && isFitted && (
-                            <span className="wardrobe-item-badge wardrobe-badge-fitted">
-                              <Sparkles size={10} /> Trying on
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="wardrobe-item-info">
-                          <span className="wardrobe-item-name">
-                            {item.name}
-                          </span>
-                          <span className="wardrobe-item-slot-name">
-                            {SLOT_NAMES[item.slot]}
-                          </span>
-                        </div>
-                      </button>
-                      <div className="wardrobe-item-actions">
                         <button
                           type="button"
-                          className="wardrobe-item-btn wardrobe-btn-fit"
-                          aria-pressed={isFitted}
-                          data-active={isFitted}
-                          onClick={() => toggleFit(item)}
-                          title="Try on without changing your saved outfit"
+                          className="wardrobe-item-select"
+                          aria-label={`Inspect ${item.name}`}
+                          aria-pressed={isSelected}
+                          onClick={() => {
+                            setSelectedItem(item);
+                            setPreviewMode('item');
+                          }}
                         >
-                          <Sparkles size={11} />
-                          {isFitted
-                            ? isEquipped
-                              ? 'Preview without'
-                              : 'Undo try-on'
-                            : 'Try on'}
+                          <div className="wardrobe-item-thumb-box">
+                            {thumbnails[item.id] ? (
+                              <img
+                                src={thumbnails[item.id]}
+                                alt={item.name}
+                                className="wardrobe-item-thumb-img"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="wardrobe-item-thumb-placeholder" />
+                            )}
+                            {isEquipped && (
+                              <span className="wardrobe-item-badge">
+                                <Check size={11} strokeWidth={3} /> Equipped
+                              </span>
+                            )}
+                            {!isEquipped && isFitted && (
+                              <span className="wardrobe-item-badge wardrobe-badge-fitted">
+                                <Sparkles size={10} /> Trying on
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="wardrobe-item-info">
+                            <span className="wardrobe-item-name">
+                              {item.name}
+                            </span>
+                            <span className="wardrobe-item-slot-name">
+                              {SLOT_NAMES[item.slot]}
+                            </span>
+                          </div>
                         </button>
-                        {unlocked ? (
-                          isEquipped ? (
-                            <button
-                              type="button"
-                              className="wardrobe-item-btn wardrobe-btn-unequip"
-                              disabled={!writable}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                void commitItem(item, true);
-                              }}
-                            >
-                              Take Off
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="wardrobe-item-btn wardrobe-btn-equip"
-                              disabled={!writable}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                void commitItem(item);
-                              }}
-                            >
-                              Equip
-                            </button>
-                          )
-                        ) : (
-                          <>
-                            {item.price ? (
+                        <div className="wardrobe-item-actions">
+                          <button
+                            type="button"
+                            className="wardrobe-item-btn wardrobe-btn-fit"
+                            aria-pressed={isFitted}
+                            data-active={isFitted}
+                            onClick={() => toggleFit(item)}
+                            title="Try on without changing your saved outfit"
+                          >
+                            <Sparkles size={11} />
+                            {isFitted
+                              ? isEquipped
+                                ? 'Preview without'
+                                : 'Undo try-on'
+                              : 'Try on'}
+                          </button>
+                          {unlocked ? (
+                            isEquipped ? (
                               <button
                                 type="button"
-                                className="wardrobe-item-btn wardrobe-btn-buy"
-                                disabled={!writable || state.coins < item.price}
+                                className="wardrobe-item-btn wardrobe-btn-unequip"
+                                disabled={!writable}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  void purchaseWardrobeItem(item.id);
+                                  void commitItem(item, true);
                                 }}
-                                title={
-                                  state.coins < item.price
-                                    ? 'Not enough coins'
-                                    : `Buy for ${item.price} coins`
-                                }
                               >
-                                <Coins size={12} /> Buy · {item.price}
+                                Take Off
                               </button>
-                            ) : item.premiumOffer ? (
+                            ) : (
                               <button
                                 type="button"
-                                className="wardrobe-item-btn wardrobe-btn-buy"
-                                disabled={
-                                  !inventory.purchasesAvailable ||
-                                  !webCheckoutSupported() ||
-                                  checkoutBusy
-                                }
-                                onClick={() =>
-                                  void buyPremium(item.premiumOffer!)
-                                }
-                                title="Purchase-only item; try it on before buying"
+                                className="wardrobe-item-btn wardrobe-btn-equip"
+                                disabled={!writable}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void commitItem(item);
+                                }}
                               >
-                                {inventory.purchasesAvailable
-                                  ? `Buy · $${((COMMERCE_OFFERS.find((offer) => offer.id === item.premiumOffer)?.usdCents ?? 0) / 100).toFixed(2)}`
-                                  : 'Exclusive · soon'}
+                                Equip
                               </button>
-                            ) : item.reward ? (
-                              <div
-                                className="wardrobe-item-goal-hint"
-                                title={item.reward}
-                              >
-                                <Lock
-                                  size={12}
-                                  style={{
-                                    display: 'inline',
-                                    marginRight: '3px',
-                                    verticalAlign: '-1px',
+                            )
+                          ) : (
+                            <>
+                              {item.price ? (
+                                <button
+                                  type="button"
+                                  className="wardrobe-item-btn wardrobe-btn-buy"
+                                  disabled={
+                                    !writable || state.coins < item.price
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void purchaseWardrobeItem(item.id);
                                   }}
-                                />
-                                {item.reward}
-                              </div>
-                            ) : associatedGoal ? (
-                              <div
-                                className="wardrobe-item-goal-hint"
-                                title={
-                                  inventory.mode === 'guest'
-                                    ? `Unlocked by: ${associatedGoal.label}`
-                                    : 'Account mastery rewards are coming in a future update.'
-                                }
-                              >
-                                <Lock
-                                  size={12}
-                                  style={{
-                                    display: 'inline',
-                                    marginRight: '3px',
-                                    verticalAlign: '-1px',
-                                  }}
-                                />
-                                {inventory.mode === 'guest'
-                                  ? associatedGoal.label
-                                  : 'Mastery reward · coming soon'}
-                              </div>
-                            ) : null}
-                          </>
-                        )}
+                                  title={
+                                    state.coins < item.price
+                                      ? 'Not enough coins'
+                                      : `Buy for ${item.price} coins`
+                                  }
+                                >
+                                  <Coins size={12} /> Buy · {item.price}
+                                </button>
+                              ) : item.premiumOffer ? (
+                                <button
+                                  type="button"
+                                  className="wardrobe-item-btn wardrobe-btn-buy"
+                                  disabled={
+                                    !inventory.purchasesAvailable ||
+                                    !webCheckoutSupported() ||
+                                    checkoutBusy
+                                  }
+                                  onClick={() =>
+                                    void buyPremium(item.premiumOffer!)
+                                  }
+                                  title="Purchase-only item; try it on before buying"
+                                >
+                                  {inventory.purchasesAvailable
+                                    ? `Buy · $${((COMMERCE_OFFERS.find((offer) => offer.id === item.premiumOffer)?.usdCents ?? 0) / 100).toFixed(2)}`
+                                    : 'Exclusive · soon'}
+                                </button>
+                              ) : item.reward ? (
+                                <div
+                                  className="wardrobe-item-goal-hint"
+                                  title={item.reward}
+                                >
+                                  <Lock
+                                    size={12}
+                                    style={{
+                                      display: 'inline',
+                                      marginRight: '3px',
+                                      verticalAlign: '-1px',
+                                    }}
+                                  />
+                                  {item.reward}
+                                </div>
+                              ) : associatedGoal ? (
+                                <div
+                                  className="wardrobe-item-goal-hint"
+                                  title={
+                                    inventory.mode === 'guest'
+                                      ? `Unlocked by: ${associatedGoal.label}`
+                                      : 'Account mastery rewards are coming in a future update.'
+                                  }
+                                >
+                                  <Lock
+                                    size={12}
+                                    style={{
+                                      display: 'inline',
+                                      marginRight: '3px',
+                                      verticalAlign: '-1px',
+                                    }}
+                                  />
+                                  {inventory.mode === 'guest'
+                                    ? associatedGoal.label
+                                    : 'Mastery reward · coming soon'}
+                                </div>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    </Fragment>
                   );
                 })}
               </div>

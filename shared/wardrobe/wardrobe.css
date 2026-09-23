@@ -509,6 +509,11 @@
   gap: 6px;
 }
 
+.wardrobe-costume-collections {
+  display: grid;
+  gap: 8px;
+}
+
 .wardrobe-costume-bundle {
   display: flex;
   align-items: center;
@@ -554,6 +559,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
   gap: 12px;
+}
+
+.wardrobe-collection-heading {
+  grid-column: 1 / -1;
+  margin: 8px 0 -4px;
+  color: #365a4e;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .wardrobe-item-card {

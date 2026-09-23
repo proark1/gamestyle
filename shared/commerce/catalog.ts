@@ -1,5 +1,5 @@
 import { isGame } from '../games/identity';
-import { ITEMS } from '../wardrobe/catalog';
+import { COSTUME_COLLECTIONS, ITEMS } from '../wardrobe/catalog';
 
 /** Web launch prices in USD cents. */
 export const COMMERCE_PRICES = {
@@ -68,14 +68,12 @@ export const COMMERCE_OFFERS: readonly CommerceOffer[] = [
     grants: [item.id],
     usdCents: COMMERCE_PRICES.special,
   })),
-  {
-    id: 'costume-bundle',
-    name: 'Costume Collection',
-    grants: ITEMS.filter((item) => item.slot === 'costume').map(
-      (item) => item.id,
-    ),
+  ...COSTUME_COLLECTIONS.map((collection) => ({
+    id: collection.offerId,
+    name: collection.name,
+    grants: [...collection.itemIds],
     usdCents: COMMERCE_PRICES.bundle,
-  },
+  })),
 ];
 
 export function hasGameAccess(game: string, fullGame: boolean): boolean {

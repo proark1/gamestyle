@@ -37,7 +37,35 @@ export type Item = {
 };
 
 /** Raise when an item changes meaning, so an old shop page cannot buy the wrong thing. */
-export const CATALOG_VERSION = 2;
+export const CATALOG_VERSION = 3;
+
+/** Bundle membership is fixed so a new suit cannot change an existing purchase. */
+export const COSTUME_COLLECTIONS = [
+  {
+    id: 'original',
+    name: 'Original costumes',
+    offerId: 'costume-bundle',
+    itemIds: [
+      'mossweaver',
+      'thunder-hen',
+      'kite-knight',
+      'comet-diver',
+      'puddle-dragon',
+    ],
+  },
+  {
+    id: 'mascot',
+    name: 'Full mascot suits',
+    offerId: 'mascot-bundle',
+    itemIds: [
+      'cluck-cloud',
+      'patchwork-moo',
+      'wobble-cone',
+      'steam-bun',
+      'nimbus-nib',
+    ],
+  },
+] as const;
 
 export const GOALS: readonly Goal[] = [
   {
@@ -105,6 +133,36 @@ export const ITEMS: readonly Item[] = [
     slot: 'costume',
     name: 'Puddle Dragon',
     premiumOffer: 'costume:puddle-dragon',
+  },
+  {
+    id: 'cluck-cloud',
+    slot: 'costume',
+    name: 'Cluck Cloud',
+    premiumOffer: 'costume:cluck-cloud',
+  },
+  {
+    id: 'patchwork-moo',
+    slot: 'costume',
+    name: 'Patchwork Moo',
+    premiumOffer: 'costume:patchwork-moo',
+  },
+  {
+    id: 'wobble-cone',
+    slot: 'costume',
+    name: 'Wobble Cone',
+    premiumOffer: 'costume:wobble-cone',
+  },
+  {
+    id: 'steam-bun',
+    slot: 'costume',
+    name: 'Steam Bun',
+    premiumOffer: 'costume:steam-bun',
+  },
+  {
+    id: 'nimbus-nib',
+    slot: 'costume',
+    name: 'Nimbus Nib',
+    premiumOffer: 'costume:nimbus-nib',
   },
   // Hats
   { id: 'bobble-beanie', slot: 'hat', name: 'Bobble Beanie', price: 80 },

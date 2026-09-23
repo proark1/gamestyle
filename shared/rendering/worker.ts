@@ -11,6 +11,10 @@ export type WorkerOutfit = {
   boots?: string;
   /** False leaves the head bare for the game's own hat. */
   cap?: boolean;
+  /** A closed mascot hood hides the small hair patches. */
+  hair?: boolean;
+  /** Omit the ordinary overalls hardware hidden inside a padded suit. */
+  mascot?: boolean;
 };
 
 /** The top of the worker's head, where a game's own hat sits. */
@@ -94,11 +98,13 @@ export function worker(color: number, outfit: WorkerOutfit = {}) {
   const overalls = outfit.overalls ?? '#385d63';
   const boots = outfit.boots ?? '#4c4840';
   part(body, [0.67, 0.66, 0.43], [0, 0.87, 0], c, true);
-  part(body, [0.59, 0.25, 0.45], [0, 0.54, 0], overalls, true);
-  part(body, [0.34, 0.44, 0.06], [0, 0.81, 0.25], overalls);
-  for (const x of [-0.23, 0.23]) {
-    part(body, [0.09, 0.5, 0.06], [x, 0.94, 0.24], overalls);
-    part(body, [0.1, 0.08, 0.03], [x, 1.07, 0.285], '#ebc35f');
+  if (!outfit.mascot) {
+    part(body, [0.59, 0.25, 0.45], [0, 0.54, 0], overalls, true);
+    part(body, [0.34, 0.44, 0.06], [0, 0.81, 0.25], overalls);
+    for (const x of [-0.23, 0.23]) {
+      part(body, [0.09, 0.5, 0.06], [x, 0.94, 0.24], overalls);
+      part(body, [0.1, 0.08, 0.03], [x, 1.07, 0.285], '#ebc35f');
+    }
   }
   const head = part(body, [0.52, 0.5, 0.5], [0, 1.43, 0], SKIN, true);
   head.name = 'worker-head';
@@ -120,12 +126,16 @@ export function worker(color: number, outfit: WorkerOutfit = {}) {
   part(body, [0.08, 0.022, 0.02], [0, 1.275, 0.262], INK);
   part(body, [0.17, 0.08, 0.13], [0, 1.35, 0.29], SKIN_SHADE, true);
   // A little hair shows under the brim at the back, never above the head top.
-  part(body, [0.46, 0.08, 0.04], [0, 1.575, -0.25], HAIR, true);
-  for (const x of [-0.263, 0.263])
-    part(body, [0.03, 0.08, 0.16], [x, 1.575, -0.12], HAIR);
+  if (outfit.hair !== false) {
+    part(body, [0.46, 0.08, 0.04], [0, 1.575, -0.25], HAIR, true);
+    for (const x of [-0.263, 0.263])
+      part(body, [0.03, 0.08, 0.16], [x, 1.575, -0.12], HAIR);
+  }
   // A stitched bib pocket.
-  part(body, [0.17, 0.11, 0.016], [0, 0.9, 0.286], shade(overalls, 0.05));
-  part(body, [0.17, 0.014, 0.018], [0, 0.945, 0.29], shade(overalls, 0.12));
+  if (!outfit.mascot) {
+    part(body, [0.17, 0.11, 0.016], [0, 0.9, 0.286], shade(overalls, 0.05));
+    part(body, [0.17, 0.014, 0.018], [0, 0.945, 0.29], shade(overalls, 0.12));
+  }
   const legs: T.Group[] = [];
   const arms: T.Group[] = [];
   for (const side of [-1, 1]) {

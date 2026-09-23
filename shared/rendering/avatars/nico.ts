@@ -114,9 +114,13 @@ export function nico(
     trousers: style.trousers,
   });
   // A dark cap under the curls, so no scalp shows between them.
-  dome(kid.head, REACH - 0.08, [0.318, 0.3, 0.29], TILT, SKULL.centre, UNDER);
+  if (!style.coveredHair)
+    dome(kid.head, REACH - 0.08, [0.318, 0.3, 0.29], TILT, SKULL.centre, UNDER);
   if (style.hat) kid.root.userData.hatSeat = nicoHatSeat(style.hat);
-  for (const [i, geometry] of curlyMop(style.hat ?? false).entries()) {
+  for (const [i, geometry] of (style.coveredHair
+    ? []
+    : curlyMop(style.hat ?? false)
+  ).entries()) {
     const curls = new T.Mesh(geometry, surface(SHADES[i], 0.6));
     curls.castShadow = true;
     curls.receiveShadow = true;

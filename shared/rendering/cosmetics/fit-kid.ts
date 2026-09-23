@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { wearMascot } from './mascot-suits';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { SLOTS, type Slot } from '../../wardrobe/catalog';
 import type { Look } from '../../wardrobe/look';
@@ -666,7 +667,9 @@ export function dressKid(model: T.Object3D, player: string, look?: Look): Worn {
       }
     }
   }
-  if (models.hat || models.costume) {
+  if (models.costume?.mascot && look?.costume) {
+    wearMascot(model, look.costume, true);
+  } else if (models.hat || models.costume) {
     const headwear = models.costume ?? models.hat!;
     const seat = (model.userData.hatSeat as number | undefined) ?? HAT_AT[1];
     const nativeHat = rig.head.getObjectByName('playful-hat');

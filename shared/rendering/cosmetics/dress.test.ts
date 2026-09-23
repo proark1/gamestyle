@@ -5,6 +5,7 @@ import { ITEMS, SLOTS, type Slot } from '../../wardrobe/catalog';
 import type { Look } from '../../wardrobe/look';
 import { COLORS } from '../palette';
 import { WORKER_HEAD_TOP, worker } from '../worker';
+import { playerKid } from '../avatars/kid';
 import { LOOK_GROUP, dressedWorker, modelsOf } from './dress';
 import { ITEM_MODELS, PLAYER, type Part } from './items';
 
@@ -18,7 +19,8 @@ function meshes(root: T.Object3D) {
 
 function inLook(object: T.Object3D) {
   for (let node: T.Object3D | null = object; node; node = node.parent)
-    if (node.name === LOOK_GROUP) return true;
+    if (node.name === LOOK_GROUP || node.name.startsWith('mascot-'))
+      return true;
   return false;
 }
 
@@ -203,8 +205,27 @@ void test('a full costume takes visual priority over separate clothing', () => {
       colour(model.userData.legL.children[0] as T.Mesh),
       ITEM_MODELS[item.id].overalls,
     );
-    assert.ok(ITEM_MODELS[item.id].parts.some((part) => part.on === 'head'));
+    if (ITEM_MODELS[item.id].mascot)
+      assert.ok(model.getObjectByName('mascot-face-rim'));
+    else
+      assert.ok(ITEM_MODELS[item.id].parts.some((part) => part.on === 'head'));
     assert.ok(!ITEM_MODELS[item.id].parts.some((part) => part.on === 'face'));
+  }
+});
+
+void test('every mascot encloses the head and stays above the ground on both avatars', () => {
+  for (const item of ITEMS.filter((entry) => ITEM_MODELS[entry.id].mascot)) {
+    const look = { costume: item.id };
+    for (const model of [
+      playerKid('nico', { jersey: '#d76354' }, look).model,
+      dressedWorker(0, {}, look).model,
+    ]) {
+      assert.equal(model.userData.mascot, item.id);
+      assert.ok(model.getObjectByName(LOOK_GROUP), item.id);
+      const box = new T.Box3().setFromObject(model, true);
+      assert.ok(box.min.y >= -0.04, `${item.id} sinks ${box.min.y}`);
+      assert.ok(box.max.y > 1.7, `${item.id} lacks a full hood`);
+    }
   }
 });
 
@@ -231,6 +252,7 @@ void test('item parts share cached geometry, and ordinary items stay within four
       assert.ok(added.length <= 4, `${item.id} adds ${added.length} meshes`);
     for (const mesh of added)
       assert.ok(mesh.geometry.userData.shared, `${item.id} shares geometry`);
-    assert.equal(meshes(model).length - added.length, bare, item.id);
+    if (!ITEM_MODELS[item.id].mascot)
+      assert.equal(meshes(model).length - added.length, bare, item.id);
   }
 });

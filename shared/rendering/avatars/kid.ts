@@ -73,7 +73,14 @@ export function playerKid(kid: KidId, kit: Kit, look?: Look) {
         : models.legs
           ? !models.legs.shorts
           : kit.trousers,
-      hat: models.costume ? look?.costume : models.hat ? look?.hat : kit.hat,
+      hat: models.costume?.mascot
+        ? false
+        : models.costume
+          ? look?.costume
+          : models.hat
+            ? look?.hat
+            : kit.hat,
+      coveredHair: !!models.costume?.mascot,
     },
   );
   const worn = dressKid(model, kit.jersey, look);

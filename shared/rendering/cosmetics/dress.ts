@@ -5,6 +5,7 @@ import { COLORS } from '../palette';
 import { ball, box, taper } from '../primitives';
 import { WORKER_HEAD_TOP, worker, type WorkerOutfit } from '../worker';
 import { ITEM_MODELS, PLAYER, type ItemModel, type Part } from './items';
+import { wearMascot } from './mascot-suits';
 
 /** Which slots a look filled, so a game can leave off its own hat or vest. */
 export type Worn = Record<Slot, boolean>;
@@ -117,7 +118,9 @@ export function dressWorker(
       addPart(lookGroup(rig.body), part, origin, 1, player);
       if (part.on === 'head') hatTop = Math.max(hatTop, partTop(part));
     }
-  if (models.hat || models.costume)
+  if (models.costume?.mascot && look?.costume)
+    wearMascot(model, look.costume, false);
+  else if (models.hat || models.costume)
     model.userData.hatTop = WORKER_HEAD_TOP + hatTop;
   return Object.fromEntries(
     SLOTS.map((slot) => [
@@ -159,6 +162,8 @@ export function dressedWorker(
       models.costume?.overalls ?? models.legs?.overalls ?? outfit.overalls,
     boots: models.costume?.boots ?? models.shoes?.boots ?? outfit.boots,
     cap: models.hat || models.costume ? false : outfit.cap,
+    hair: models.costume?.mascot ? false : outfit.hair,
+    mascot: !!models.costume?.mascot,
   });
   const worn = dressWorker(model, outfit.shirt ?? COLORS[color % 4], look);
   return { model, worn };

@@ -52,10 +52,10 @@ void test('premium offers have purchase-only items and the bundle is cheaper', a
   );
 });
 
-void test('five costumes have individual offers and a collection bundle', async () => {
-  const { ITEMS } = await import('../wardrobe/catalog');
+void test('ten costumes have individual offers and two fixed five-item bundles', async () => {
+  const { COSTUME_COLLECTIONS, ITEMS } = await import('../wardrobe/catalog');
   const costumes = ITEMS.filter((item) => item.slot === 'costume');
-  assert.equal(costumes.length, 5);
+  assert.equal(costumes.length, 10);
   for (const item of costumes) {
     const offer = COMMERCE_OFFERS.find(
       (entry) => entry.id === item.premiumOffer,
@@ -63,8 +63,16 @@ void test('five costumes have individual offers and a collection bundle', async 
     assert.deepEqual(offer?.grants, [item.id]);
     assert.equal(offer?.usdCents, COMMERCE_PRICES.special);
   }
+  assert.equal(COSTUME_COLLECTIONS.length, 2);
+  for (const collection of COSTUME_COLLECTIONS) {
+    assert.equal(collection.itemIds.length, 5);
+    assert.deepEqual(
+      COMMERCE_OFFERS.find((offer) => offer.id === collection.offerId)?.grants,
+      [...collection.itemIds],
+    );
+  }
   assert.deepEqual(
-    COMMERCE_OFFERS.find((offer) => offer.id === 'costume-bundle')?.grants,
+    COSTUME_COLLECTIONS.flatMap((collection) => [...collection.itemIds]),
     costumes.map((item) => item.id),
   );
 });

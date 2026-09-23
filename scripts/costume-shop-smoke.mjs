@@ -43,9 +43,13 @@ try {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('http://127.0.0.1:5198/costume-shop');
-  await expect(page.locator('.wardrobe-item-card')).toHaveCount(5);
-  await expect(page.locator('.wardrobe-costume-bundle')).toContainText(
-    'All five costumes · $4.99',
+  await expect(page.locator('.wardrobe-item-card')).toHaveCount(10);
+  await expect(page.locator('.wardrobe-costume-bundle')).toHaveCount(2);
+  await expect(page.locator('.wardrobe-costume-bundle').first()).toContainText(
+    'Original costumes · $4.99',
+  );
+  await expect(page.locator('.wardrobe-costume-bundle').last()).toContainText(
+    'Full mascot suits · $4.99',
   );
   for (const name of [
     'Mossweaver',
@@ -53,6 +57,11 @@ try {
     'Kite Knight',
     'Comet Diver',
     'Puddle Dragon',
+    'Cluck Cloud',
+    'Patchwork Moo',
+    'Wobble Cone',
+    'Steam Bun',
+    'Nimbus Nib',
   ]) {
     const card = page.locator('.wardrobe-item-card').filter({
       has: page.getByRole('button', { name: 'Inspect ' + name, exact: true }),
@@ -71,8 +80,38 @@ try {
     .click();
   mkdirSync('docs/costume-qa', { recursive: true });
   await page.screenshot({ path: 'docs/costume-qa/shop.png' });
+  const mascot = page.locator('.wardrobe-item-card').filter({
+    has: page.getByRole('button', { name: 'Inspect Cluck Cloud', exact: true }),
+  });
+  await mascot.getByRole('button', { name: 'Try on', exact: true }).click();
+  mkdirSync('docs/mascot-qa', { recursive: true });
+  await page.screenshot({ path: 'docs/mascot-qa/shop.png' });
+  for (const pose of ['Walk', 'Wave', 'Hero']) {
+    const button = page.getByRole('button', { name: pose, exact: true });
+    await button.click();
+    await expect(button).toHaveAttribute('aria-pressed', 'true');
+  }
+  await page.screenshot({ path: 'docs/mascot-qa/hero.png' });
+  const mobile = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+  });
+  mobile.setDefaultTimeout(60000);
+  mobile.on('pageerror', (error) => errors.push(error.message));
+  await mobile.goto('http://127.0.0.1:5198/costume-shop');
+  await expect(mobile.locator('.wardrobe-item-card')).toHaveCount(10);
+  const mobileMascot = mobile.locator('.wardrobe-item-card').filter({
+    has: mobile.getByRole('button', {
+      name: 'Inspect Cluck Cloud',
+      exact: true,
+    }),
+  });
+  await mobileMascot
+    .getByRole('button', { name: 'Try on', exact: true })
+    .click();
+  await expect(mobileMascot).toHaveAttribute('data-fitted', 'true');
+  await mobile.screenshot({ path: 'docs/mascot-qa/mobile.png' });
   expect(errors).toEqual([]);
-  console.log('Five premium costume cards, thumbnails and try-ons verified.');
+  console.log('Ten premium costume cards, thumbnails and try-ons verified.');
 } finally {
   await browser?.close();
   await server.close();
