@@ -2,6 +2,7 @@
 /* oxlint-disable react/react-compiler */
 import { useEffect, useState } from 'react';
 import { Check, Copy, LogOut, Pause, Play, Share2, X } from 'lucide-react';
+import Image from 'next/image';
 import { COLORS } from '@/shared/rendering/palette';
 import { publicGameOrigin } from '@/shared/browser/public-url';
 import { createParty, joinParty, stateOf } from '@/platform/party/client';
@@ -95,7 +96,13 @@ export function PartyEntry({
   return (
     <div className="party-entry">
       <div className="party-entry-heading">
-        <PartyAvatar player={{ color }} />
+        <Image
+          className="party-entry-host"
+          src="/images/clubhouse/party-host.webp"
+          alt=""
+          width={300}
+          height={394}
+        />
         <p className="party-kicker">
           {text('Bring your crew', 'Bring deine Crew mit')}
         </p>

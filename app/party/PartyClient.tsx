@@ -47,6 +47,7 @@ import { partyCue, unlockPartyAudio } from './party-audio';
 import { useGameTracker } from '@/shared/analytics/game-tracker';
 import { partyTracker } from './party-tracker';
 import './party.css';
+import './party-gamefeel.css';
 import '@/shared/ui/toolbar.css';
 
 const SESSION_KEY = 'jumbleyard-party-session-v1';

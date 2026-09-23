@@ -1153,3 +1153,88 @@
     transition: none;
   }
 }
+
+/* The wardrobe is another room in the Jumbleyard playboard. */
+.wardrobe-dialog {
+  border: 3px solid var(--play-teal-dark);
+  border-radius: 26px;
+  background: var(--play-cream);
+  box-shadow:
+    0 9px 0 #1d5b5d,
+    0 23px 65px #12241a59;
+}
+.wardrobe-header {
+  border-bottom: 3px solid #9dc9b0;
+  background: #d8f1e7;
+}
+.wardrobe-title {
+  color: var(--play-ink);
+  font-size: 26px;
+}
+.wardrobe-nav {
+  border-bottom: 2px solid #9dc9b0;
+  background: #ebf4e5;
+}
+.wardrobe-nav-btn {
+  min-height: 38px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-weight: 800;
+}
+.wardrobe-nav-btn[data-active='true'] {
+  border-color: var(--play-teal-dark);
+  background: var(--play-teal);
+  box-shadow: 0 3px 0 var(--play-teal-dark);
+  color: white;
+}
+.wardrobe-preview-panel {
+  background: radial-gradient(circle at 50% 36%, #d2f0e3, #9ed4c8);
+  border-right: 3px solid #9dc9b0;
+}
+.wardrobe-item-card {
+  border: 2px solid #a4b995;
+  border-radius: 16px;
+  background: #fffef8;
+  box-shadow: 0 4px 0 #88a284;
+}
+.wardrobe-item-card:hover,
+.wardrobe-item-card[data-selected='true'] {
+  border-color: var(--play-teal-dark);
+  box-shadow: 0 5px 0 #1d5b5d;
+}
+.wardrobe-item-card[data-equipped='true'] {
+  border-color: var(--play-teal-dark);
+  background: #dcf2e5;
+  box-shadow: 0 5px 0 #1d5b5d;
+}
+.wardrobe-dialog
+  :is(
+    .wardrobe-item-btn,
+    .wardrobe-mode-btn,
+    .wardrobe-ctrl-btn,
+    .wardrobe-turn-btn,
+    .wardrobe-slot-btn
+  ) {
+  border-width: 2px;
+  border-radius: 11px;
+  font-weight: 800;
+}
+.wardrobe-dialog .wardrobe-btn-equip {
+  border-color: #a36e22;
+  background: var(--play-sun);
+  box-shadow: 0 3px 0 var(--play-sun-dark);
+  color: var(--play-ink);
+}
+.wardrobe-dialog .wardrobe-close {
+  border: 2px solid #90aa92;
+  border-radius: 12px;
+  background: var(--play-cream);
+  box-shadow: 0 3px 0 #79937b;
+  color: var(--play-ink);
+}
+@media (max-width: 720px) {
+  .wardrobe-preview-panel {
+    border-right: 0;
+    border-bottom: 3px solid #9dc9b0;
+  }
+}

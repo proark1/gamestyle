@@ -18,6 +18,15 @@
   --font-sans: 'DM Sans', sans-serif;
 }
 :root {
+  /* Shared playboard colors connect the landing, party and game setup UI. */
+  --play-ink: #234a46;
+  --play-teal: #287c80;
+  --play-teal-dark: #18545b;
+  --play-sun: #f7c64b;
+  --play-sun-dark: #a97522;
+  --play-coral: #b95032;
+  --play-coral-dark: #843621;
+  --play-cream: #fff9e9;
   --sat: env(safe-area-inset-top, 0px);
   --sar: env(safe-area-inset-right, 0px);
   --sab: env(safe-area-inset-bottom, 0px);

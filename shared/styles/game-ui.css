@@ -749,3 +749,76 @@
   color: var(--hud-muted);
   font: 700 11px/1 var(--hud-body);
 }
+
+/* Game setup screens use the same raised controls as the collection. */
+:where(body:not(:has(.handwerker))) .setup-card {
+  border: 3px solid #a4b995;
+  border-radius: 23px;
+  background: var(--play-cream);
+  box-shadow:
+    0 7px 0 #88a284,
+    0 15px 24px #275d5624;
+}
+:where(body:not(:has(.handwerker))) .setup-card input {
+  border: 2px solid #90b4a2;
+  border-radius: 12px;
+  background: #fffef8;
+}
+:where(body:not(:has(.handwerker))) .primary-button,
+:where(body:not(:has(.handwerker))) .secondary-button {
+  min-height: 48px;
+  border-width: 2px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+:where(body:not(:has(.handwerker))) .primary-button {
+  border-color: #a36e22;
+  background: var(--play-sun);
+  box-shadow: 0 5px 0 var(--play-sun-dark);
+  color: var(--play-ink);
+}
+
+:where(body:not(:has(.handwerker))) .game-dialog {
+  border: 3px solid var(--play-teal-dark) !important;
+  border-radius: 25px !important;
+  background: var(--play-cream) !important;
+  box-shadow:
+    0 8px 0 #1d5b5d,
+    0 22px 65px #173f4940 !important;
+}
+:where(body:not(:has(.handwerker))) .dialog-emblem {
+  border: 2px solid #a36e22;
+  background: var(--play-sun);
+  box-shadow: 0 4px 0 var(--play-sun-dark);
+  color: var(--play-ink);
+}
+.house-card {
+  border: 2px solid var(--hud-edge-strong);
+  box-shadow:
+    0 4px 0 #6e96809e,
+    var(--hud-shadow);
+}
+.house-pill {
+  border: 2px solid var(--hud-edge-strong);
+}
+:where(body:not(:has(.handwerker))) .primary-button:hover {
+  background: #ffdb71;
+}
+:where(body:not(:has(.handwerker))) .secondary-button {
+  border-color: #90aa92;
+  background: var(--play-cream);
+  box-shadow: 0 4px 0 #79937b;
+}
+:where(body:not(:has(.handwerker))) .icon-button {
+  border: 2px solid #90aa92;
+  border-radius: 13px;
+  background: var(--play-cream);
+  box-shadow: 0 3px 0 #79937b;
+}
+:where(body:not(:has(.handwerker))) .map-badge {
+  border: 2px solid #a36e22;
+  border-radius: 9px;
+  background: var(--play-sun);
+  box-shadow: 0 4px 0 var(--play-sun-dark);
+  color: var(--play-ink);
+}

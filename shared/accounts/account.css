@@ -415,3 +415,58 @@
     display: none;
   }
 }
+
+/* Account sheets keep the playboard edge and controls on every route. */
+.account-dialog,
+.account-clubhouse.account-dialog {
+  border: 3px solid var(--play-teal-dark);
+  border-radius: 27px;
+  background: linear-gradient(180deg, #d8f1e7, var(--play-cream) 170px);
+  box-shadow:
+    0 8px 0 #1d5b5d,
+    0 22px 70px #173f4940;
+  color: var(--play-ink);
+}
+.account-dialog .account-title {
+  color: var(--play-ink);
+  font-weight: 600;
+}
+.account-dialog .account-input {
+  border: 2px solid #91b9a7;
+  border-radius: 12px;
+  background: #fffef8;
+}
+.account-dialog
+  :is(.account-primary, .account-google, .account-secondary, .account-danger) {
+  min-height: 48px;
+  border-width: 2px;
+  border-radius: 13px;
+  font-weight: 800;
+}
+.account-dialog .account-primary,
+.account-clubhouse .account-primary {
+  border-color: #a36e22;
+  background: var(--play-sun);
+  box-shadow: 0 5px 0 var(--play-sun-dark);
+  color: var(--play-ink);
+}
+.account-dialog .account-primary:hover:not(:disabled),
+.account-clubhouse .account-primary:hover:not(:disabled) {
+  background: #ffdb71;
+}
+.account-dialog .account-google,
+.account-dialog .account-secondary {
+  border-color: #90aa92;
+  background: var(--play-cream);
+  box-shadow: 0 4px 0 #79937b;
+}
+.account-dialog .account-danger {
+  border-color: var(--play-coral-dark);
+  background: var(--play-coral);
+  box-shadow: 0 4px 0 var(--play-coral-dark);
+}
+.account-dialog .account-identities li {
+  border: 1px solid #a4c6a8;
+  border-radius: 12px;
+  background: #ecf5e7;
+}

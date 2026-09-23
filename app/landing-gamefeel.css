@@ -1,14 +1,6 @@
 /* A tactile play-board theme for the collection page. The game art and clay cast
    remain the main attraction; frames, controls, and progress read as game pieces. */
 .collection {
-  --play-ink: #234a46;
-  --play-teal: #287c80;
-  --play-teal-dark: #18545b;
-  --play-sun: #f7c64b;
-  --play-sun-dark: #a97522;
-  --play-coral: #b95032;
-  --play-coral-dark: #843621;
-  --play-cream: #fff9e9;
   background:
     radial-gradient(circle at 6% 11%, #f7c64b45 0 95px, transparent 96px),
     radial-gradient(circle at 95% 30%, #d9684630 0 120px, transparent 121px),
