@@ -198,6 +198,7 @@ void test('games dress Nico in wardrobe items over their own clothes', () => {
     'sample-stampede:shopper',
     'scaffold-scramble:scaffold-cleaner',
     'siege-and-desist:crew',
+    'slopewreck:slopewreck-rider',
     'stack-or-sink:stacker',
     'uphill-delivery:mover',
     'wrong-floor:guest',

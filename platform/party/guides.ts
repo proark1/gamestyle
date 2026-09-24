@@ -14,6 +14,19 @@ const guide = (
   keyboard: [string, string],
 ): PartyGuide => ({ minutes, complexity, quick, objective, keyboard });
 export const PARTY_GUIDES = {
+  slopewreck: guide(
+    1,
+    'easy',
+    true,
+    [
+      'Reach the finish first. Tricks leave ramps and rails for riders behind you.',
+      'Erreiche als Erster das Ziel. Tricks hinterlassen Rampen und Schienen für deine Verfolger.',
+    ],
+    [
+      'A/D steer, W tucks, S brakes, Space jumps. In the air, Q builds a ramp or E builds a rail.',
+      'A/D lenkt, W duckt, S bremst, Leertaste springt. In der Luft baut Q eine Rampe oder E eine Schiene.',
+    ],
+  ),
   'flip-happens': guide(
     2,
     'easy',

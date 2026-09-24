@@ -40,6 +40,7 @@ const GAMES: readonly GameId[] = [
   'sample-stampede',
   'scaffold-scramble',
   'siege-and-desist',
+  'slopewreck',
   'stack-or-sink',
   'uphill-delivery',
   'wrong-floor',

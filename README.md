@@ -36,6 +36,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Chain of Fools    | `/chain-of-fools`      | `games/chain-of-fools/`      | `app/chain-of-fools/`            |
 | Bouncy Castle Royale | `/bouncy-castle-royale` | `games/bouncy-castle-royale/` | `app/bouncy-castle-royale/` |
 | Flip Happens | `/flip-happens` | `games/flip-happens/` | `app/flip-happens/` |
+| Slopewreck | `/slopewreck` | `games/slopewreck/` | `app/slopewreck/` |
 
 Every game but Shelf Control has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
 

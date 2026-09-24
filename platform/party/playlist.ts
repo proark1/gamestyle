@@ -27,6 +27,11 @@ const GAMES = [
     teams: true,
   },
   {
+    id: 'slopewreck',
+    name: 'Slopewreck',
+    tagline: 'Trick, build and wipe out down a changing mountain',
+  },
+  {
     id: 'on-the-ropes',
     name: 'On the Ropes',
     tagline: 'Swing, wobble and tag your corner partner',
@@ -147,16 +152,18 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = GAMES.map((game) => ({
   scoring:
     'teams' in game && game.teams
       ? 'team'
-      : ['one-more-button', 'act-natural'].includes(game.id)
+      : ['one-more-button', 'act-natural', 'slopewreck'].includes(game.id)
         ? 'individual'
         : 'cooperative',
   minutes: PARTY_GUIDES[game.id].minutes,
   complexity: PARTY_GUIDES[game.id].complexity,
   quick: PARTY_GUIDES[game.id].quick,
   image:
-    game.id === 'on-the-ropes'
-      ? '/images/on-the-ropes.png'
-      : `/images/party-gameplay/${game.id}.webp`,
+    game.id === 'slopewreck'
+      ? '/images/slopewreck.svg'
+      : game.id === 'on-the-ropes'
+        ? '/images/on-the-ropes.png'
+        : `/images/party-gameplay/${game.id}.webp`,
 }));
 
 export function getPartyGameInfo(id: GameId): PartyGameInfo | undefined {

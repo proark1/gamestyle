@@ -200,6 +200,7 @@ async function run(game) {
         'drive-thru': 'ordering',
         'panic-curling': 'aiming',
         'sample-stampede': 'active',
+        slopewreck: 'racing',
       }[game] ?? 'playing';
     await until(
       () =>
@@ -217,6 +218,17 @@ async function run(game) {
       const { flipScenario } =
         await import('../games/flip-happens/scripts/peer-scenario.mjs');
       await flipScenario({ connections, sessions, latest, inputs, until });
+    }
+    if (game === 'slopewreck') {
+      const { slopewreckScenario } =
+        await import('../games/slopewreck/scripts/peer-scenario.mjs');
+      await slopewreckScenario({
+        connections,
+        sessions,
+        latest,
+        inputs,
+        until,
+      });
     }
     if (game === 'bouncy-castle-royale') {
       const { castleScenario } =
