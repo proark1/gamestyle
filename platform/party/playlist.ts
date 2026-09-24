@@ -16,6 +16,11 @@ export type PartyGameInfo = {
 
 const GAMES = [
   {
+    id: 'flip-happens',
+    name: 'Flip Happens',
+    tagline: 'Land it, bank it, or risk the washing machine',
+  },
+  {
     id: 'bouncy-castle-royale',
     name: 'Bouncy Castle Royale',
     tagline: 'Volley, bounce and send your friends flying',

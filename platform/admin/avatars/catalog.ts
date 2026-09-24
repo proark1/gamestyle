@@ -1,3 +1,4 @@
+import { flipAvatars } from '../../../games/flip-happens/avatar';
 import { castleAvatars } from '../../../games/bouncy-castle-royale/avatar';
 import type * as T from 'three';
 import type { AvatarLook } from '../../../shared/rendering/avatar-preview';
@@ -259,6 +260,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'cage-clash': {
     looks: cageAvatars,
     note: 'Nico in MMA shorts and compact gloves.',
+  },
+  'flip-happens': {
+    looks: flipAvatars,
+    note: 'Nico at the shared table, wearing the existing wardrobe.',
   },
   'bouncy-castle-royale': {
     looks: castleAvatars,

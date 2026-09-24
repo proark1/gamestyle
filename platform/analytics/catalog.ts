@@ -1,3 +1,4 @@
+import { flipAnalytics } from '../../games/flip-happens/analytics';
 import { castleAnalytics } from '../../games/bouncy-castle-royale/analytics';
 import type { GameAnalytics } from '../../shared/analytics/protocol';
 import { partyAnalytics } from '../party/analytics';
@@ -47,6 +48,7 @@ export type CatalogGame = {
 // Each game's analytics module holds plain definitions and type-only imports,
 // so this list stays light enough for the admin page and the report route.
 export const GAMES: readonly CatalogGame[] = [
+  ['flip-happens', 'Flip Happens', flipAnalytics],
   ['bouncy-castle-royale', 'Bouncy Castle Royale', castleAnalytics],
   ['cage-clash', 'Cage Clash', cageAnalytics],
   ['on-the-ropes', 'On the Ropes', boxingAnalytics],

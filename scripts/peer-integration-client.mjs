@@ -213,6 +213,11 @@ async function run(game) {
       `${game} start reaches all peers`,
     );
     const started = latest.get(sessions[1].id).world.started;
+    if (game === 'flip-happens') {
+      const { flipScenario } =
+        await import('../games/flip-happens/scripts/peer-scenario.mjs');
+      await flipScenario({ connections, sessions, latest, inputs, until });
+    }
     if (game === 'bouncy-castle-royale') {
       const { castleScenario } =
         await import('../games/bouncy-castle-royale/scripts/peer-scenario.mjs');

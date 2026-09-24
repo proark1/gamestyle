@@ -15,6 +15,34 @@ export interface CardTranslation {
 }
 
 export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
+  'flip-happens': {
+    en: {
+      tag: 'TABLETOP CHAOS',
+      isNew: true,
+      newTag: 'NEW',
+      players: '1–4 players',
+      duration: '2-minute rounds',
+      titleMain: 'Flip ',
+      titleHighlight: 'Happens',
+      titleSuffix: '.',
+      desc: 'One table. Six ridiculous objects. Land a bottle, bank a combo, or drop a washing machine into everybody’s plans. Includes a daily solo challenge.',
+      tagline: 'ONE MORE FLIP. WHAT COULD GO WRONG?',
+      cta: 'Play Flip Happens',
+    },
+    de: {
+      tag: 'TISCH-CHAOS',
+      isNew: true,
+      newTag: 'NEU',
+      players: '1–4 Spieler',
+      duration: '2-Minuten-Runden',
+      titleMain: 'Flip ',
+      titleHighlight: 'Happens',
+      titleSuffix: '.',
+      desc: 'Ein Tisch. Sechs absurde Objekte. Lande eine Flasche, sichere eine Kombo oder wirf eine Waschmaschine in die Pläne deiner Freunde. Mit täglicher Solo-Challenge.',
+      tagline: 'NOCH EIN WURF. WAS SOLL SCHON SCHIEFGEHEN?',
+      cta: 'Flip Happens spielen',
+    },
+  },
   'bouncy-castle-royale': {
     en: {
       tag: 'INFLATABLE VOLLEYBALL',

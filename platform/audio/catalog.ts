@@ -1,3 +1,4 @@
+import { flipCatalog } from '../../games/flip-happens/catalog';
 import { castleCatalog } from '../../games/bouncy-castle-royale/catalog';
 import type { Cue, GameId } from '../../shared/audio/types';
 import { stackCatalog } from '../../games/stack-or-sink/audio/catalog';
@@ -29,6 +30,7 @@ import {
 import { boxingCatalog } from '../../games/on-the-ropes/audio';
 
 const catalogs: Record<GameId, Cue[]> = {
+  'flip-happens': flipCatalog,
   'bouncy-castle-royale': castleCatalog,
   'cage-clash': cageCatalog,
   'on-the-ropes': boxingCatalog,

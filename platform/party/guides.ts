@@ -14,6 +14,19 @@ const guide = (
   keyboard: [string, string],
 ): PartyGuide => ({ minutes, complexity, quick, objective, keyboard });
 export const PARTY_GUIDES = {
+  'flip-happens': guide(
+    2,
+    'easy',
+    true,
+    [
+      'Land objects upright to build a combo. Bank before another heavy landing knocks your points off the table.',
+      'Lande Objekte aufrecht für Kombos. Sichere deine Punkte, bevor ein schwerer Einschlag sie vom Tisch fegt.',
+    ],
+    [
+      'Mouse / touch or WASD aims. Hold Space and release in gold to flip. Q banks points. E changes object.',
+      'Maus / Touch oder WASD zielt. Leertaste halten und bei Gold loslassen. Q sichert Punkte. E wechselt das Objekt.',
+    ],
+  ),
   'bouncy-castle-royale': guide(
     3,
     'easy',

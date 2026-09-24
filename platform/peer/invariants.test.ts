@@ -23,6 +23,7 @@ import { roomCapacity } from '../../shared/games/identity';
 const GAMES: readonly GameId[] = [
   'act-natural',
   'basketball',
+  'flip-happens',
   'bouncy-castle-royale',
   'bungee-doubles',
   'cage-clash',
