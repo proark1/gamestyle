@@ -79,13 +79,17 @@ function featureModel(f: Feature) {
   const root = new T.Group();
   const main = f.wild ? '#fa8154' : f.kind === 'ramp' ? '#e7b24d' : '#24a5aa';
   if (f.kind === 'ramp') {
+    box(root, [3.74, 0.12, 3.5], [0, 0.08, 0], '#234b63', true);
     box(root, [3.5, 0.45, 3.3], [0, 0.24, 0], main, true);
     const lip = box(root, [3.5, 0.24, 0.5], [0, 0.58, 1.36], '#fff3cf', true);
     lip.rotation.x = -0.12;
+    for (const x of [-1.66, 1.66])
+      box(root, [0.13, 0.12, 3.15], [x, 0.51, -0.03], '#fff3cf', true);
   } else {
     box(root, [0.18, 1.0, 5.2], [-0.35, 0.5, 0], '#2d5c6a', true);
     box(root, [0.18, 1.0, 5.2], [0.35, 0.5, 0], '#2d5c6a', true);
     box(root, [1.15, 0.18, 5.5], [0, 1.08, 0], main, true);
+    box(root, [1.26, 0.055, 5.62], [0, 1.19, 0], '#fff3cf', true);
   }
   root.position.set(f.x, slopeY(f.z), f.z);
   return root;
@@ -93,7 +97,7 @@ function featureModel(f: Feature) {
 
 export class SlopeScene {
   private scene = new T.Scene();
-  private camera = new T.PerspectiveCamera(59, 1, 0.1, 300);
+  private camera = new T.PerspectiveCamera(60, 1, 0.1, 420);
   private renderer: T.WebGLRenderer;
   private observer: ResizeObserver;
   private frame = 0;
@@ -115,7 +119,7 @@ export class SlopeScene {
     }).renderer;
     addHouseLight(this.scene, {
       sky: '#c2e6ed',
-      fog: { near: 115, far: 250 },
+      fog: { near: 175, far: 360 },
     });
     this.scene.add(slopeMesh());
     const scenery = new T.Group();
@@ -139,6 +143,7 @@ export class SlopeScene {
     for (const z of KICKERS) {
       const root = new T.Group();
       root.position.set(0, slopeY(z), z);
+      box(root, [16.5, 0.12, 3.9], [0, 0.08, 0], '#234b63', true);
       box(root, [16, 0.46, 3.6], [0, 0.23, 0], '#eea72f', true);
       for (const x of [-6, -2, 2, 6])
         box(root, [1.5, 0.06, 0.46], [x, 0.5, 1.24], '#fff7d7');
@@ -221,9 +226,10 @@ export class SlopeScene {
           new T.Vector3(p.x, slopeY(p.z) + p.height, p.z),
           smooth,
         );
+        avatar.root.rotation.x = Math.atan(0.085);
         avatar.root.rotation.y = p.trick ? (p.spin / 180) * Math.PI : 0;
         avatar.root.rotation.z =
-          w.clock < p.wipeoutUntil ? 0.78 : -p.input.steer * 0.12;
+          w.clock < p.wipeoutUntil ? 0.78 : -p.input.steer * 0.16;
         poseRider(avatar.body, p, w.clock / 1000);
       }
       for (const [id, mesh] of this.features)

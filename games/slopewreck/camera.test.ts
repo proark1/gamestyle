@@ -4,9 +4,9 @@ import * as T from 'three';
 import { slopeCameraFrame } from './camera';
 import { slopeY } from './types';
 
-function projection(speed: number, point: T.Vector3) {
+function projection(speed: number, point: T.Vector3, aspect = 16 / 9) {
   const frame = slopeCameraFrame({ x: 0, z: 100, height: 0, speed });
-  const camera = new T.PerspectiveCamera(frame.fov, 16 / 9, 0.1, 300);
+  const camera = new T.PerspectiveCamera(frame.fov, aspect, 0.1, 420);
   camera.position.set(frame.position.x, frame.position.y, frame.position.z);
   camera.lookAt(frame.target.x, frame.target.y, frame.target.z);
   camera.updateMatrixWorld();
@@ -18,28 +18,51 @@ void test('camera framing stays bounded as speed changes', () => {
   const fast = slopeCameraFrame({ x: 4, z: 100, height: 0, speed: 19 });
   const extreme = slopeCameraFrame({ x: 4, z: 100, height: 0, speed: 100 });
 
-  assert.equal(slow.fov, 59);
-  assert.equal(fast.fov, 64);
+  assert.equal(slow.fov, 60);
+  assert.equal(fast.fov, 65);
   assert.deepEqual(extreme, fast);
-  assert.equal(slow.position.z, 86);
-  assert.equal(fast.position.z, 83);
-  assert.equal(slow.target.z, 134);
-  assert.equal(fast.target.z, 140);
+  assert.equal(slow.position.z, 85);
+  assert.equal(fast.position.z, 82);
+  assert.equal(slow.target.z, 170);
+  assert.equal(fast.target.z, 188);
 });
 
-void test('the rider stays low in frame while upcoming course remains visible', () => {
-  for (const speed of [5, 12, 19]) {
-    const rider = projection(speed, new T.Vector3(0, slopeY(100) + 1, 100));
-    const nextFeature = projection(
-      speed,
-      new T.Vector3(0, slopeY(170) + 0.5, 170),
-    );
+void test('the rider stays low while 80–120 metres of course remain visible', () => {
+  for (const aspect of [16 / 9, 390 / 844]) {
+    for (const speed of [5, 12, 19]) {
+      const rider = projection(
+        speed,
+        new T.Vector3(0, slopeY(100) + 1, 100),
+        aspect,
+      );
 
-    assert.ok(rider.y < -0.15 && rider.y > -0.72, `${speed}: rider ${rider.y}`);
-    assert.ok(
-      nextFeature.y < 0.9 && nextFeature.y > -0.9,
-      `${speed}: feature ${nextFeature.y}`,
+      assert.ok(
+        rider.y < -0.2 && rider.y > -0.94,
+        `${aspect}/${speed}: rider ${rider.y}`,
+      );
+      for (const distance of [80, 100, 120]) {
+        const point = projection(
+          speed,
+          new T.Vector3(0, slopeY(100 + distance) + 0.5, 100 + distance),
+          aspect,
+        );
+        assert.ok(
+          point.y < 0.78 && point.y > -0.78,
+          `${aspect}/${speed}/${distance}: course ${point.y}`,
+        );
+        assert.ok(point.z > -1 && point.z < 1);
+      }
+    }
+  }
+});
+
+void test('the full course width is visible 100 metres ahead on mobile', () => {
+  for (const x of [-10, 10]) {
+    const point = projection(
+      19,
+      new T.Vector3(x, slopeY(200) + 0.5, 200),
+      390 / 844,
     );
-    assert.ok(nextFeature.z > -1 && nextFeature.z < 1);
+    assert.ok(point.x > -0.92 && point.x < 0.92, `${x}: ${point.x}`);
   }
 });

@@ -55,8 +55,8 @@ The camera remains a pure speed-aware frame calculation followed by frame-rate-i
 
 The revised composition:
 
-- moves the camera farther behind and higher above the local rider;
-- increases the downhill target from the current 34–40 metres to approximately 65–80 metres;
+- moves the camera slightly farther behind while keeping the rider large enough to read;
+- increases the downhill target from the current 34–40 metres to 70–88 metres;
 - widens field of view gently with speed without producing a sudden zoom;
 - keeps the local rider in the lower quarter to lower third of the frame;
 - keeps a feature 100 metres ahead inside the view frustum at normal and tuck speeds on desktop and mobile aspect ratios.

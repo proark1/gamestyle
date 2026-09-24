@@ -19,20 +19,20 @@ const mix = (from: number, to: number, amount: number) =>
 
 export function slopeCameraFrame(rider: CameraRider): CameraFrame {
   const pace = clamp((rider.speed - 5) / 14, 0, 1);
-  const behind = mix(14, 17, pace);
-  const height = mix(12.5, 14.5, pace);
-  const lookAhead = mix(34, 40, pace);
+  const behind = mix(15, 18, pace);
+  const height = mix(12.5, 14, pace);
+  const lookAhead = mix(70, 88, pace);
 
   return {
-    fov: mix(59, 64, pace),
+    fov: mix(60, 65, pace),
     position: {
-      x: rider.x * 0.62,
-      y: slopeY(rider.z) + height + rider.height * 0.24,
+      x: rider.x * 0.58,
+      y: slopeY(rider.z) + height + rider.height * 0.2,
       z: rider.z - behind,
     },
     target: {
-      x: rider.x * 0.34,
-      y: slopeY(rider.z + lookAhead) - 0.65 + rider.height * 0.08,
+      x: rider.x * 0.26,
+      y: slopeY(rider.z + lookAhead) - 7 + rider.height * 0.06,
       z: rider.z + lookAhead,
     },
   };
