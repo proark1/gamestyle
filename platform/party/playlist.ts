@@ -16,6 +16,12 @@ export type PartyGameInfo = {
 
 const GAMES = [
   {
+    id: 'bouncy-castle-royale',
+    name: 'Bouncy Castle Royale',
+    tagline: 'Volley, bounce and send your friends flying',
+    teams: true,
+  },
+  {
     id: 'on-the-ropes',
     name: 'On the Ropes',
     tagline: 'Swing, wobble and tag your corner partner',

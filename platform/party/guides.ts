@@ -14,6 +14,19 @@ const guide = (
   keyboard: [string, string],
 ): PartyGuide => ({ minutes, complexity, quick, objective, keyboard });
 export const PARTY_GUIDES = {
+  'bouncy-castle-royale': guide(
+    3,
+    'easy',
+    true,
+    [
+      'First to 7 points. Keep the ball off your floor, ride landing waves and share your team’s air.',
+      'Zuerst 7 Punkte erreichen. Haltet den Ball vom Boden fern, reitet Landewellen und teilt eure Team-Luft.',
+    ],
+    [
+      'WASD / arrows move. Space jumps; F volleys. Shift braces. Q changes team air; hold E by your gold pump to refill it.',
+      'WASD / Pfeile bewegen. Leertaste springt; F schlägt. Shift federt ab. Q verteilt Team-Luft; E an der goldenen Pumpe halten zum Nachfüllen.',
+    ],
+  ),
   'on-the-ropes': guide(
     4,
     'easy',

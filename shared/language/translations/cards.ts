@@ -15,6 +15,34 @@ export interface CardTranslation {
 }
 
 export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
+  'bouncy-castle-royale': {
+    en: {
+      tag: 'INFLATABLE VOLLEYBALL',
+      isNew: true,
+      newTag: 'NEW',
+      players: '1–4 players',
+      duration: '3-minute matches',
+      titleMain: 'Bouncy Castle ',
+      titleHighlight: 'Royale',
+      titleSuffix: '.',
+      desc: 'Two teams, one inflatable castle. Land a jump and launch your friends. Share the air between bouncy floors, protective walls and unpredictable bumpers.',
+      tagline: 'BIG BOUNCE. LITTLE CONTROL.',
+      cta: 'Play Bouncy Castle Royale',
+    },
+    de: {
+      tag: 'HÜPFBURG-VOLLEYBALL',
+      isNew: true,
+      newTag: 'NEU',
+      players: '1–4 Spieler',
+      duration: '3-Minuten-Matches',
+      titleMain: 'Bouncy Castle ',
+      titleHighlight: 'Royale',
+      titleSuffix: '.',
+      desc: 'Zwei Teams, eine Hüpfburg. Lande einen Sprung und schleudere deine Freunde hoch. Teilt die Luft zwischen federndem Boden, schützenden Wänden und wilden Puffern.',
+      tagline: 'GROSSE SPRÜNGE. KLEINE KONTROLLE.',
+      cta: 'Bouncy Castle Royale spielen',
+    },
+  },
   'cage-clash': {
     en: {
       tag: 'MIXED MARTIAL ARTS',

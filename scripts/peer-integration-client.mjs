@@ -213,6 +213,11 @@ async function run(game) {
       `${game} start reaches all peers`,
     );
     const started = latest.get(sessions[1].id).world.started;
+    if (game === 'bouncy-castle-royale') {
+      const { castleScenario } =
+        await import('../games/bouncy-castle-royale/scripts/peer-scenario.mjs');
+      await castleScenario({ connections, sessions, latest, inputs, until });
+    }
     if (game === 'bungee-doubles') {
       const world = () => latest.get(sessions[1].id).world;
       assert.equal(world().players.filter((p) => !p.bot).length, 4);

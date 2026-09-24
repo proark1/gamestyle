@@ -1,3 +1,4 @@
+import { CASTLE_DEFAULT_AUDIO } from '../../games/bouncy-castle-royale/catalog';
 import type { GameDatabase } from '@/db/contract';
 import { getBundledCatalog, getCatalog } from './catalog';
 import { FARM_FENCE_CUES } from '../../games/act-natural/audio/fence';
@@ -195,6 +196,9 @@ export async function library(
       return {
         ...cue,
         file: stored?.file ?? null,
+        ...(game === 'bouncy-castle-royale' && CASTLE_DEFAULT_AUDIO[base.id]
+          ? { bundledUrl: CASTLE_DEFAULT_AUDIO[base.id].url }
+          : {}),
         ...(bundledIds.has(base.id)
           ? { bundledUrl: `/audio/${game}/${base.id}.wav` }
           : {}),
@@ -209,13 +213,15 @@ export async function library(
 }
 export function manifest(data: AudioLibrary): AudioManifest {
   const bundled =
-    data.game === 'act-natural'
-      ? FARM_FENCE_CUES
-      : data.game === 'dont-wake-the-giant'
-        ? GIANT_DEFAULT_AUDIO
-        : BUNDLED_GAMES.has(data.game)
-          ? bundledCues(data.game, getBundledCatalog(data.game))
-          : {};
+    data.game === 'bouncy-castle-royale'
+      ? CASTLE_DEFAULT_AUDIO
+      : data.game === 'act-natural'
+        ? FARM_FENCE_CUES
+        : data.game === 'dont-wake-the-giant'
+          ? GIANT_DEFAULT_AUDIO
+          : BUNDLED_GAMES.has(data.game)
+            ? bundledCues(data.game, getBundledCatalog(data.game))
+            : {};
   return {
     settings: data.settings,
     cues: Object.fromEntries(

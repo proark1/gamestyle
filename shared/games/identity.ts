@@ -14,6 +14,7 @@
 export const GAME_IDS = [
   'act-natural',
   'basketball',
+  'bouncy-castle-royale',
   'bungee-doubles',
   'cage-clash',
   'carry-on-carnage',

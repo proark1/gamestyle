@@ -76,6 +76,18 @@ interface CardStaticConfig {
 }
 
 const CARD_CONFIGS: Record<string, CardStaticConfig> = {
+  'bouncy-castle-royale': {
+    slug: 'bouncy-castle-royale',
+    href: '/bouncy-castle-royale',
+    cardClass: 'bungee-doubles-card',
+    imgSrc: '/images/party-gameplay/bouncy-castle-royale.webp',
+    imgAlt:
+      'Red and blue volleyball teams bounce inside a toy inflatable castle.',
+    loading: 'lazy',
+    tagIcon: Castle,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   'cage-clash': {
     slug: 'cage-clash',
     href: '/cage-clash',

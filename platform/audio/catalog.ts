@@ -1,3 +1,4 @@
+import { castleCatalog } from '../../games/bouncy-castle-royale/catalog';
 import type { Cue, GameId } from '../../shared/audio/types';
 import { stackCatalog } from '../../games/stack-or-sink/audio/catalog';
 import { farmCatalog } from '../../games/act-natural/audio/catalog';
@@ -28,6 +29,7 @@ import {
 import { boxingCatalog } from '../../games/on-the-ropes/audio';
 
 const catalogs: Record<GameId, Cue[]> = {
+  'bouncy-castle-royale': castleCatalog,
   'cage-clash': cageCatalog,
   'on-the-ropes': boxingCatalog,
   'wrong-floor': hotelCatalog,

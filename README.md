@@ -34,10 +34,19 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Drive-Thru Static | `/drive-thru`          | `games/drive-thru/`          | `app/drive-thru/`                |
 | Scaffold Scramble | `/scaffold-scramble`   | `games/scaffold-scramble/`   | `app/scaffold-scramble/`         |
 | Chain of Fools    | `/chain-of-fools`      | `games/chain-of-fools/`      | `app/chain-of-fools/`            |
+| Bouncy Castle Royale | `/bouncy-castle-royale` | `games/bouncy-castle-royale/` | `app/bouncy-castle-royale/` |
 
 Every game but Shelf Control has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
 
 The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, all of the sound workshops, and every game's player avatar walking side by side against a chosen template. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
+
+## Bouncy Castle Royale
+
+Play at `/bouncy-castle-royale`. One to four humans play 2v2 inflatable volleyball, with bots filling empty seats. First to seven points or the leader after three minutes wins. Landing waves launch nearby players; each team redirects a shared air supply between jump height, protective walls and powerful bumpers. Air leaks during rallies and a gold pump refills it.
+
+WASD/arrows move, Space jumps, F volleys (an airborne hit smashes), Shift braces, Q cycles air allocation and E holds the pump. Touch controls and the shared gamepad mapping work too. Nico avatars, all wardrobe items, room controls, voice chat, rendering, sports recordings, analytics and party results use the collection’s existing modules. Only court models, rules and controls are game-specific.
+
+Run `node scripts/test.mjs games/bouncy-castle-royale` for rules and checkpoint checks, and `node scripts/peer-integration.mjs bouncy-castle-royale` for four local WebRTC clients, voice and host recovery.
 
 ## Siege and Desist
 

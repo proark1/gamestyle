@@ -174,6 +174,8 @@ void test('games dress Nico in wardrobe items over their own clothes', () => {
   assert.deepEqual(dressable.map(({ key }) => key).sort(), [
     'basketball:baller-blue',
     'basketball:baller-red',
+    'bouncy-castle-royale:castle-blue',
+    'bouncy-castle-royale:castle-red',
     'bungee-doubles:tennis-duo',
     'cage-clash:fighter-blue',
     'cage-clash:fighter-red',

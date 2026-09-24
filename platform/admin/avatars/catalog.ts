@@ -1,3 +1,4 @@
+import { castleAvatars } from '../../../games/bouncy-castle-royale/avatar';
 import type * as T from 'three';
 import type { AvatarLook } from '../../../shared/rendering/avatar-preview';
 import { bumble, walkBumble } from '../../../shared/rendering/avatars/bumble';
@@ -258,6 +259,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'cage-clash': {
     looks: cageAvatars,
     note: 'Nico in MMA shorts and compact gloves.',
+  },
+  'bouncy-castle-royale': {
+    looks: castleAvatars,
+    note: 'Nico in red and blue volleyball kit, wearing the shared wardrobe.',
   },
   'on-the-ropes': {
     looks: boxingAvatars,

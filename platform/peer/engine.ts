@@ -1,3 +1,4 @@
+import { createEngine as castle } from '../../games/bouncy-castle-royale/peer';
 import type { GameId } from '../../shared/audio/types';
 import type { EngineCheckpoint } from '../../shared/peer/engine';
 import { createEngine as stack } from '../../games/stack-or-sink/peer';
@@ -25,6 +26,7 @@ import { createEngine as chainOfFools } from '../../games/chain-of-fools/peer';
 import { createEngine as cage } from '../../games/cage-clash/peer';
 import { createEngine as boxing } from '../../games/on-the-ropes/peer';
 const engines = {
+  'bouncy-castle-royale': castle,
   'cage-clash': cage,
   'on-the-ropes': boxing,
   'wrong-floor': hotel,

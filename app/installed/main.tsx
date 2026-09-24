@@ -14,6 +14,9 @@ import '../../app/globals.css';
 import '../../shared/styles/game-ui.css';
 import '../../shared/styles/construction-theme.css';
 const games = {
+  'bouncy-castle-royale': lazy(
+    () => import('../../games/bouncy-castle-royale/Game'),
+  ),
   'act-natural': lazy(() => import('../../games/act-natural/Game')),
   basketball: lazy(() => import('../../games/basketball/Game')),
   'bungee-doubles': lazy(() => import('../../games/bungee-doubles/Game')),
