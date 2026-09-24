@@ -80,8 +80,9 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'flip-happens',
     href: '/flip-happens',
     cardClass: 'bungee-doubles-card',
-    imgSrc: '/images/party-gameplay/flip-happens.webp',
-    imgAlt: 'Four toy players flip objects onto a green wobbling table.',
+    imgSrc: '/images/court-cast-v1/boys/flip-happens.jpg',
+    imgAlt:
+      'Four clay boys steady a wobbling table as a washing machine and top hat flip through the air.',
     loading: 'lazy',
     tagIcon: Gamepad2,
     metaIcon1: Users,
@@ -91,9 +92,9 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     slug: 'bouncy-castle-royale',
     href: '/bouncy-castle-royale',
     cardClass: 'bungee-doubles-card',
-    imgSrc: '/images/party-gameplay/bouncy-castle-royale.webp',
+    imgSrc: '/images/court-cast-v1/boys/bouncy-castle-royale.jpg',
     imgAlt:
-      'Red and blue volleyball teams bounce inside a toy inflatable castle.',
+      'Four clay boys leap for a volleyball on the rippling floor of a red and blue inflatable castle.',
     loading: 'lazy',
     tagIcon: Castle,
     metaIcon1: Users,
