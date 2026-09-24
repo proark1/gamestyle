@@ -8,8 +8,10 @@ Correct the Bouncy Castle Royale start-page cover so each team occupies one comp
 
 - The blue court half is in the foreground, nearest the viewer, with both blue-uniformed boys entirely on that side.
 - The red court half is in the background, beyond the net, with both red-uniformed boys entirely on that side.
+- Every visible inflatable floor tile behind the net must be red, continuing from the rear wall up to the net boundary; no blue floor may remain on the rear half.
 - No red player may appear on the blue foreground half and no blue player may appear on the red background half.
 - The net must clearly separate the two teams and court halves.
+- Both red players must be completely behind the net plane. In particular, the rear-right red player must not intersect or straddle the net; the net must visibly pass in front of his full body, matching the depth of the rear-left red player.
 
 ## Preserved qualities
 
