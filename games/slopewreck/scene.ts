@@ -13,6 +13,7 @@ import {
   subscribeWardrobe,
 } from '../../shared/wardrobe/wardrobe-state';
 import { pine, poseRider, riderModel } from './models';
+import { slopeCameraFrame } from './camera';
 import {
   FINISH_Z,
   HALF_WIDTH,
@@ -92,7 +93,7 @@ function featureModel(f: Feature) {
 
 export class SlopeScene {
   private scene = new T.Scene();
-  private camera = new T.PerspectiveCamera(62, 1, 0.1, 210);
+  private camera = new T.PerspectiveCamera(59, 1, 0.1, 300);
   private renderer: T.WebGLRenderer;
   private observer: ResizeObserver;
   private frame = 0;
@@ -112,7 +113,10 @@ export class SlopeScene {
       shadows: 'soft',
       weight: 'heavy',
     }).renderer;
-    addHouseLight(this.scene, { sky: '#c2e6ed', fog: { near: 85, far: 205 } });
+    addHouseLight(this.scene, {
+      sky: '#c2e6ed',
+      fog: { near: 115, far: 250 },
+    });
     this.scene.add(slopeMesh());
     const scenery = new T.Group();
     this.scene.add(scenery);
@@ -129,15 +133,15 @@ export class SlopeScene {
         );
       }
       for (const x of [-HALF_WIDTH, HALF_WIDTH]) {
-        box(scenery, [0.16, 0.07, 2], [x, slopeY(z) + 0.05, z], '#28a5ab');
+        box(scenery, [0.18, 0.09, 2.3], [x, slopeY(z) + 0.06, z], '#078d9f');
       }
     }
     for (const z of KICKERS) {
       const root = new T.Group();
       root.position.set(0, slopeY(z), z);
-      box(root, [16, 0.4, 3.4], [0, 0.2, 0], '#f2b946', true);
+      box(root, [16, 0.46, 3.6], [0, 0.23, 0], '#eea72f', true);
       for (const x of [-6, -2, 2, 6])
-        box(root, [1.5, 0.04, 0.42], [x, 0.44, 1.2], '#fff3cd');
+        box(root, [1.5, 0.06, 0.46], [x, 0.5, 1.24], '#fff7d7');
       scenery.add(root);
     }
     {
@@ -237,11 +241,16 @@ export class SlopeScene {
       const me = w.players.find((p) => p.id === this.self) ?? w.players[0];
       if (me) {
         const z = Math.min(me.z, FINISH_Z - 6);
+        const frame = slopeCameraFrame({ ...me, z });
+        const cameraSmooth = 1 - Math.exp(-dt * 6.5);
+        const lensSmooth = 1 - Math.exp(-dt * 4.5);
         this.camera.position.lerp(
-          new T.Vector3(me.x * 0.72, slopeY(z) + 8.5 + me.height * 0.3, z - 16),
-          smooth,
+          new T.Vector3(frame.position.x, frame.position.y, frame.position.z),
+          cameraSmooth,
         );
-        this.camera.lookAt(me.x * 0.5, slopeY(z + 16) + 2.5, z + 16);
+        this.camera.fov += (frame.fov - this.camera.fov) * lensSmooth;
+        this.camera.updateProjectionMatrix();
+        this.camera.lookAt(frame.target.x, frame.target.y, frame.target.z);
       }
     }
     this.renderer.render(this.scene, this.camera);

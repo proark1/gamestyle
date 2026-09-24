@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 
 const origin = process.env.SLOPEWRECK_TEST_URL ?? 'http://localhost:4191';
+const stubAnalytics = process.env.SLOPEWRECK_STUB_ANALYTICS === '1';
 if (!['127.0.0.1', 'localhost'].includes(new URL(origin).hostname))
   throw new Error('Use a local preview.');
 mkdirSync('.tmp/slopewreck', { recursive: true });
@@ -22,6 +23,10 @@ try {
       locale: 'en-US',
     });
     const page = await context.newPage();
+    if (stubAnalytics)
+      await page.route('**/api/analytics', (route) =>
+        route.fulfill({ status: 204 }),
+      );
     const errors = [],
       failed = [];
     page.on('pageerror', (e) => errors.push(e.message));

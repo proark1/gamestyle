@@ -14,6 +14,14 @@ The game owns its simulation, peer adapter, scene, controls, audio mapping, anal
 
 The distinctive visual treatment is a bright winter-sports broadcast: pale snow and sky, deep blue score panels, orange speed accents, teal course edges, and a large clear finish arch. The interface keeps movement and trick controls visible without covering the riders.
 
+## Course visibility polish
+
+The gameplay camera uses a broadcast-chase composition that reveals the course early enough for deliberate steering. It sits higher and farther behind the local rider, keeps that rider in the lower third of the frame, and aims farther downhill so natural kickers, player-built ramps and rails, other riders, and the finish arch enter view with useful reaction time. The view spends less space on empty sky while preserving a readable rider silhouette.
+
+Camera distance, height, field of view, and look-ahead respond gently to speed within fixed limits. This adds urgency at racing speed without abrupt zooms, oscillation, or motion sickness. Position and aim changes remain frame-rate-independent and smoothly damped.
+
+Distant course features use stronger value and color separation from the snow. Their geometry remains unchanged for collision and multiplayer determinism; only presentation changes. The polish does not add a mini-map or extra HUD because the course itself should communicate what is coming.
+
 ## Checks
 
-Simulation tests cover clean tricks, wild features, feature use by a trailing rider, race completion, and input/host validation. The shared peer-invariant suite covers checkpoint serialization and host handover. The four-client WebRTC check covers steering, a shared trick-built ramp, voice, and host recovery. Desktop and mobile browser checks cover loading, controls, overflow, and browser errors.
+Simulation tests cover clean tricks, wild features, feature use by a trailing rider, race completion, and input/host validation. Camera tests cover bounded speed-based framing and the promised downhill look-ahead. The shared peer-invariant suite covers checkpoint serialization and host handover. The four-client WebRTC check covers steering, a shared trick-built ramp, voice, and host recovery. Desktop and mobile browser checks cover loading, controls, overflow, browser errors, rider scale, and early visibility of upcoming features.
