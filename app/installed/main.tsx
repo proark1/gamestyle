@@ -15,6 +15,7 @@ import '../../shared/styles/game-ui.css';
 import '../../shared/styles/construction-theme.css';
 const games = {
   'flip-happens': lazy(() => import('../../games/flip-happens/Game')),
+  slopewreck: lazy(() => import('../../games/slopewreck/Game')),
   'bouncy-castle-royale': lazy(
     () => import('../../games/bouncy-castle-royale/Game'),
   ),

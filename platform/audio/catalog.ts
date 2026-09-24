@@ -29,6 +29,8 @@ import {
 } from '../../games/cage-clash/audio/catalog';
 import { boxingCatalog } from '../../games/on-the-ropes/audio';
 
+import { slopewreckCatalog } from '../../games/slopewreck/catalog';
+
 const catalogs: Record<GameId, Cue[]> = {
   'flip-happens': flipCatalog,
   'bouncy-castle-royale': castleCatalog,
@@ -55,6 +57,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'drive-thru': driveThruCatalog,
   'scaffold-scramble': scaffoldScrambleCatalog,
   'chain-of-fools': chainOfFoolsCatalog,
+  slopewreck: slopewreckCatalog,
 };
 
 export function getCatalog(game: GameId): Cue[] {

@@ -1,5 +1,6 @@
 import { flipAvatars } from '../../../games/flip-happens/avatar';
 import { castleAvatars } from '../../../games/bouncy-castle-royale/avatar';
+import { slopewreckAvatars } from '../../../games/slopewreck/avatar';
 import type * as T from 'three';
 import type { AvatarLook } from '../../../shared/rendering/avatar-preview';
 import { bumble, walkBumble } from '../../../shared/rendering/avatars/bumble';
@@ -272,6 +273,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'on-the-ropes': {
     looks: boxingAvatars,
     note: 'Nico in red and blue boxing kit with padded gloves.',
+  },
+  slopewreck: {
+    looks: slopewreckAvatars,
+    note: 'Nico on a snowboard in bright winter race kit, wearing the shared wardrobe.',
   },
   'zorb-clash': {
     looks: zorbAvatars,

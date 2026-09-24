@@ -76,6 +76,18 @@ interface CardStaticConfig {
 }
 
 const CARD_CONFIGS: Record<string, CardStaticConfig> = {
+  slopewreck: {
+    slug: 'slopewreck',
+    href: '/slopewreck',
+    cardClass: 'bungee-doubles-card',
+    imgSrc: '/images/slopewreck.svg',
+    imgAlt:
+      'Four riders race down a snowy mountain as ramps and rails appear behind them.',
+    loading: 'lazy',
+    tagIcon: Mountain,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   'flip-happens': {
     slug: 'flip-happens',
     href: '/flip-happens',

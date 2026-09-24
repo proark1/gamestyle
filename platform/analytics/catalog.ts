@@ -30,6 +30,8 @@ import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
 import { cageAnalytics } from '../../games/cage-clash/analytics';
 import { boxingAnalytics } from '../../games/on-the-ropes/analytics';
 
+import { slopewreckAnalytics } from '../../games/slopewreck/analytics';
+
 export type CatalogGame = {
   id: string;
   name: string;
@@ -76,6 +78,7 @@ export const GAMES: readonly CatalogGame[] = [
   ['zorb-clash', 'Zorb Clash', zorbClashAnalytics],
   ['scaffold-scramble', 'Scaffold Scramble', scaffoldScrambleAnalytics],
   ['chain-of-fools', 'Chain of Fools', chainOfFoolsAnalytics],
+  ['slopewreck', 'Slopewreck', slopewreckAnalytics],
 ].map(([id, name, analytics]) => {
   const game = id as string;
   const construction = game === 'chaos' || game === 'first-person';

@@ -36,6 +36,7 @@ export const GAME_IDS = [
   'scaffold-scramble',
   'shelf-control',
   'siege-and-desist',
+  'slopewreck',
   'stack-or-sink',
   'uphill-delivery',
   'wrong-floor',

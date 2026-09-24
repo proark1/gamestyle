@@ -15,6 +15,34 @@ export interface CardTranslation {
 }
 
 export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
+  slopewreck: {
+    en: {
+      tag: 'CHAOTIC DOWNHILL RACING',
+      isNew: true,
+      newTag: 'NEW',
+      players: '1–4 riders',
+      duration: '60-second races',
+      titleMain: 'Slope',
+      titleHighlight: 'wreck',
+      titleSuffix: '.',
+      desc: 'Race down a mountain that your tricks rebuild. Land a spin and leave a ramp or rail for the riders behind you. Even a wipeout can hand your rival the winning shortcut.',
+      tagline: 'BUILD THE RUN. BREAK THE RACE.',
+      cta: 'Play Slopewreck',
+    },
+    de: {
+      tag: 'CHAOTISCHES ABFAHRTSRENNEN',
+      isNew: true,
+      newTag: 'NEU',
+      players: '1–4 Fahrer',
+      duration: '60-Sekunden-Rennen',
+      titleMain: 'Slope',
+      titleHighlight: 'wreck',
+      titleSuffix: '.',
+      desc: 'Fahr einen Berg hinunter, den deine Tricks umbauen. Lande eine Drehung und hinterlasse Verfolgern eine Rampe oder Schiene. Selbst ein Sturz kann deinem Rivalen die beste Abkürzung schenken.',
+      tagline: 'BAU DIE STRECKE. SPRING INS CHAOS.',
+      cta: 'Slopewreck spielen',
+    },
+  },
   'flip-happens': {
     en: {
       tag: 'TABLETOP CHAOS',

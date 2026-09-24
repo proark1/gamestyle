@@ -1,0 +1,480 @@
+.slopewreck {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100dvh;
+  min-height: 520px;
+  overflow: hidden;
+  background: #c2e6ed;
+  color: #193e54;
+  font-family: 'DM Sans', sans-serif;
+}
+.slopewreck button,
+.slopewreck a {
+  -webkit-tap-highlight-color: transparent;
+}
+.slopewreck button:focus-visible,
+.slopewreck a:focus-visible {
+  outline: 3px solid #f8bf49;
+  outline-offset: 3px;
+}
+.slopewreck-top {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 73px;
+  padding: 10px 22px;
+  background: #eaf7f0ed;
+  border-bottom: 4px solid #27a8ae;
+  box-shadow: 0 5px 18px #173e5a18;
+}
+.slopewreck-back {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+  border: 1px solid #92bac0;
+  border-radius: 50%;
+  color: #1a5365;
+  background: #fff;
+  flex: none;
+}
+.slopewreck-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: auto;
+  color: #1e5669;
+  font-family: 'Fredoka', 'DM Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1;
+}
+.slopewreck-logo span span {
+  color: #ef704e;
+}
+.slopewreck-canvas {
+  position: absolute;
+  inset: 73px 0 0;
+}
+.slopewreck-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline-offset: -4px;
+}
+.slopewreck-hud {
+  position: absolute;
+  z-index: 2;
+  top: 89px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 6px 25px #153b5360;
+}
+.slopewreck-hud > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 105px;
+  padding: 8px 15px;
+  background: #1e536b;
+  color: #fff;
+}
+.slopewreck-hud > div:nth-child(2) {
+  background: #f3bd4e;
+  color: #1d4656;
+}
+.slopewreck-hud small {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  white-space: nowrap;
+}
+.slopewreck-hud strong {
+  font-family: 'Fredoka', 'DM Sans', sans-serif;
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.slopewreck-hud em {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+.slopewreck-progress {
+  position: absolute;
+  z-index: 2;
+  top: 165px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(390px, calc(100% - 36px));
+  height: 10px;
+  background: #e9f5efe0;
+  border: 2px solid #fff;
+  border-radius: 99px;
+  box-shadow: 0 3px 12px #1d516042;
+}
+.slopewreck-progress span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: #ef704e;
+  transition: width 0.1s linear;
+}
+.slopewreck-progress b {
+  position: absolute;
+  right: -4px;
+  top: -6px;
+  color: #1e536b;
+}
+.slopewreck-message {
+  position: absolute;
+  z-index: 8;
+  top: 28%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: #ecf8f2;
+  font-weight: 800;
+  text-align: center;
+}
+.slopewreck-error {
+  color: #a33627;
+}
+.slopewreck-card {
+  position: absolute;
+  z-index: 4;
+  top: 52%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(470px, calc(100% - 30px));
+  padding: 28px 32px 24px;
+  border: 2px solid #fff;
+  border-radius: 24px;
+  background: #eaf7f0f2;
+  box-shadow: 0 20px 65px #123a5677;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+.slopewreck-card > small {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #207485;
+}
+.slopewreck-card h1 {
+  margin: 9px 0 11px;
+  font-family: 'Fredoka', 'DM Sans', sans-serif;
+  font-size: clamp(31px, 5vw, 46px);
+  font-weight: 700;
+  line-height: 1.03;
+  letter-spacing: -0.025em;
+}
+.slopewreck-card h1 em {
+  color: #ef704e;
+  font-style: normal;
+}
+.slopewreck-card p {
+  max-width: 370px;
+  margin: 0 auto 16px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.slopewreck-riders {
+  display: grid;
+  gap: 5px;
+  margin: 0 auto 18px;
+  text-align: left;
+}
+.slopewreck-riders > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 9px;
+  border: 1px solid #b9dadb;
+  border-radius: 8px;
+  background: #ffffffb0;
+  font-size: 12px;
+  font-weight: 800;
+}
+.slopewreck-riders b {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
+  background: #1d5369;
+  color: #fff;
+}
+.slopewreck-riders small {
+  margin-left: auto;
+  color: #428190;
+  font-size: 11px;
+}
+.slopewreck-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 11px;
+  background: #ef704e;
+  color: #fff;
+  font-family: 'Fredoka', 'DM Sans', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  box-shadow: 0 5px 0 #af472e;
+  cursor: pointer;
+}
+.slopewreck-primary:hover:not(:disabled) {
+  background: #e66341;
+  transform: translateY(1px);
+  box-shadow: 0 4px 0 #af472e;
+}
+.slopewreck-primary:disabled {
+  opacity: 0.58;
+  cursor: default;
+}
+.slopewreck-bots {
+  display: block;
+  margin-top: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #477689;
+}
+.slopewreck-party-note {
+  font-weight: 700;
+}
+.slopewreck-status {
+  position: absolute;
+  z-index: 2;
+  top: 189px;
+  left: 0;
+  right: 0;
+  color: #fff;
+  font-family: 'Fredoka', 'DM Sans', sans-serif;
+  font-size: clamp(12px, 2vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-align: center;
+  text-shadow:
+    0 2px 10px #123f59,
+    0 2px 3px #123f59;
+}
+.slopewreck-keys {
+  position: absolute;
+  z-index: 3;
+  bottom: 19px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  max-width: calc(100% - 24px);
+  padding: 9px 16px;
+  border-radius: 12px;
+  background: #eaf7f0e8;
+  color: #1d5268;
+  box-shadow: 0 5px 20px #193b4e38;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+}
+.slopewreck-keys span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.slopewreck-keys kbd {
+  padding: 3px 6px;
+  border: 1px solid #80afb3;
+  border-radius: 5px;
+  background: #fff;
+  font:
+    700 11px 'DM Sans',
+    sans-serif;
+}
+.slopewreck-touch {
+  position: absolute;
+  z-index: 3;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  padding: 0 12px;
+  pointer-events: none;
+}
+.slopewreck-touch > * {
+  pointer-events: auto;
+}
+.slopewreck-touch-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 70px);
+  gap: 7px;
+}
+.slopewreck-touch-actions button {
+  min-height: 48px;
+  padding: 6px;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  background: #1e536bea;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  touch-action: none;
+}
+.slopewreck-touch-actions button:nth-child(-n + 2) {
+  background: #ef704eed;
+}
+.slopewreck-help {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #0f3048a8;
+}
+.slopewreck-help > div {
+  width: min(470px, 100%);
+  padding: 27px;
+  border-radius: 20px;
+  background: #eff8f2;
+  text-align: center;
+  box-shadow: 0 20px 60px #0a243a60;
+}
+.slopewreck-help h2 {
+  margin: 8px 0;
+  font-family: 'Fredoka', 'DM Sans', sans-serif;
+  font-size: 30px;
+}
+.slopewreck-help p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.slopewreck-help button {
+  min-width: 120px;
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: #ef704e;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+@media (max-width: 680px) {
+  .slopewreck {
+    min-height: 480px;
+  }
+  .slopewreck-top {
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: 64px;
+  }
+  .slopewreck-logo {
+    font-size: 15px;
+    gap: 4px;
+  }
+  .slopewreck-logo span span {
+    display: none;
+  }
+  .slopewreck-logo svg {
+    width: 18px;
+  }
+  .slopewreck-canvas {
+    top: 64px;
+  }
+  .slopewreck-hud {
+    top: 73px;
+  }
+  .slopewreck-hud > div {
+    min-width: 78px;
+    padding: 7px 8px;
+  }
+  .slopewreck-hud small {
+    font-size: 7px;
+  }
+  .slopewreck-hud strong {
+    font-size: 23px;
+  }
+  .slopewreck-progress {
+    top: 138px;
+  }
+  .slopewreck-status {
+    top: 160px;
+    padding: 0 8px;
+  }
+  .slopewreck-card {
+    top: 49%;
+    max-height: calc(100dvh - 174px);
+    overflow: auto;
+    padding: 18px 19px;
+  }
+  .slopewreck-card h1 {
+    font-size: 31px;
+  }
+  .slopewreck-card p {
+    font-size: 12px;
+  }
+  .slopewreck-riders {
+    margin-bottom: 12px;
+  }
+  .slopewreck-keys {
+    gap: 5px;
+    padding: 7px;
+    bottom: 7px;
+    font-size: 9px;
+  }
+  .slopewreck-keys kbd {
+    padding: 2px 4px;
+    font-size: 9px;
+  }
+}
+@media (max-width: 420px) {
+  .slopewreck-keys {
+    flex-wrap: wrap;
+    white-space: normal;
+    width: calc(100% - 20px);
+  }
+  .slopewreck-touch-actions {
+    grid-template-columns: repeat(2, 59px);
+  }
+  .slopewreck-touch-actions button {
+    min-height: 43px;
+    font-size: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slopewreck-progress span,
+  .slopewreck-primary {
+    transition: none;
+  }
+}

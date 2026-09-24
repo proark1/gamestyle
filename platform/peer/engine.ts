@@ -26,6 +26,7 @@ import { createEngine as chainOfFools } from '../../games/chain-of-fools/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
 import { createEngine as cage } from '../../games/cage-clash/peer';
 import { createEngine as boxing } from '../../games/on-the-ropes/peer';
+import { createEngine as slopewreck } from '../../games/slopewreck/peer';
 const engines = {
   'flip-happens': flip,
   'bouncy-castle-royale': castle,
@@ -52,6 +53,7 @@ const engines = {
   'drive-thru': driveThru,
   'scaffold-scramble': scaffoldScramble,
   'chain-of-fools': chainOfFools,
+  slopewreck,
 };
 export function createPeerEngine(
   game: GameId,
