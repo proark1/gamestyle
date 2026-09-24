@@ -24,6 +24,7 @@ export const GAME_IDS = [
   'dont-wake-the-giant',
   'drive-thru',
   'first-person',
+  'flip-happens',
   'four-brain-cells',
   'load-bearing',
   'on-the-ropes',

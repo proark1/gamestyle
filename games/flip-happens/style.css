@@ -1,0 +1,734 @@
+.flip-game {
+  position: relative;
+  isolation: isolate;
+  height: 100dvh;
+  min-height: 540px;
+  width: 100%;
+  overflow: hidden;
+  background: #dce3d4;
+  color: #34493f;
+  font-family: 'DM Sans', sans-serif;
+}
+.flip-game button,
+.flip-game a {
+  -webkit-tap-highlight-color: transparent;
+}
+.flip-game button {
+  cursor: pointer;
+}
+.flip-game button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+.flip-game button:focus-visible,
+.flip-game a:focus-visible {
+  outline: 3px solid #30656a;
+  outline-offset: 3px;
+}
+.flip-topbar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  min-height: 76px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #faf6e9ee;
+  border-bottom: 1px solid #62725426;
+}
+.flip-back {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff9;
+  color: inherit;
+}
+.flip-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: auto;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  line-height: 1.2;
+}
+.flip-brand svg {
+  color: #ba593b;
+}
+.flip-brand small {
+  display: block;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+}
+.flip-canvas {
+  position: absolute;
+  inset: 132px 0 211px;
+  touch-action: none;
+}
+.flip-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline-offset: -4px;
+}
+.flip-between .flip-canvas {
+  inset: 130px 0 20px 27%;
+}
+.flip-scoreboard {
+  position: absolute;
+  top: 89px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: stretch;
+  padding: 9px 14px;
+  gap: 8px;
+  z-index: 2;
+  background: #fff9e9ed;
+  border: 1px solid #fff9;
+  border-radius: 18px;
+  box-shadow: 0 3px 24px #46553b0d;
+}
+.flip-timer {
+  min-width: 99px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 12px 0 0;
+  border-right: 1px solid #8b9a7529;
+  text-align: center;
+}
+.flip-timer strong {
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.flip-timer small {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+.flip-score {
+  min-width: 83px;
+  padding: 2px 9px;
+  display: flex;
+  flex-direction: column;
+  color: var(--seat);
+  border-radius: 8px;
+}
+.flip-score.is-you {
+  background: #e8eacb88;
+}
+.flip-score > span {
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  max-width: 115px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.flip-score small {
+  font-size: 7px;
+  opacity: 0.7;
+}
+.flip-score b {
+  font-size: 24px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.flip-lobby {
+  position: absolute;
+  z-index: 3;
+  left: clamp(24px, 4vw, 70px);
+  top: 51%;
+  transform: translateY(-42%);
+  width: 354px;
+  padding: 29px;
+  background: #fff9eaf5;
+  border: 1px solid #fff;
+  border-radius: 25px;
+  box-shadow: 0 12px 40px #546b3c13;
+}
+.flip-eyebrow {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  color: #987446;
+}
+.flip-lobby h1 {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 35px;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  margin: 15px 0 12px;
+}
+.flip-lobby h1 em {
+  font-style: normal;
+  color: #b2573b;
+}
+.flip-lobby > p {
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0 0 19px;
+  color: #647064;
+}
+.flip-modes {
+  display: flex;
+  padding: 4px;
+  gap: 3px;
+  background: #e8eadb;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.flip-modes button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  padding: 10px 3px;
+  background: transparent;
+  border-radius: 9px;
+  font-size: 11px;
+  color: #65705d;
+  font-weight: 750;
+}
+.flip-modes button[aria-pressed='true'] {
+  background: #fff8e8;
+  box-shadow: 0 1px 4px #546b3c13;
+  color: #34493f;
+}
+.flip-roster {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 17px;
+  margin-bottom: 20px;
+}
+.flip-roster > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.flip-roster i {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+.flip-roster small {
+  font-size: 8px;
+  opacity: 0.55;
+  margin-left: auto;
+}
+.flip-game .flip-primary {
+  background: #be613e;
+  border: 1px solid #a85032;
+  border-bottom-width: 4px;
+  color: #fff7df;
+  border-radius: 14px;
+  font-weight: 800;
+}
+.flip-primary:hover:not(:disabled) {
+  background: #aa5134;
+}
+.flip-start {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 13px 20px;
+  font-size: 15px;
+}
+.flip-lobby-tip {
+  display: block;
+  text-align: center;
+  font-size: 9px;
+  margin-top: 11px;
+  color: #7d816b;
+}
+.flip-daily-note {
+  font-size: 11px !important;
+}
+.flip-daily-note strong {
+  display: block;
+  margin-top: 7px;
+  color: #34493f;
+}
+.flip-callout {
+  position: absolute;
+  top: 169px;
+  left: 15px;
+  right: 15px;
+  text-align: center;
+  pointer-events: none;
+  font-size: 11px;
+  font-weight: 750;
+  color: #516747;
+}
+.flip-callout.flip-bust {
+  color: #a04c36;
+}
+.flip-callout.flip-bank {
+  color: #416d51;
+}
+.flip-console {
+  position: absolute;
+  z-index: 3;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(800px, calc(100% - 40px));
+  padding: 12px 16px 9px;
+  border: 1px solid #fff;
+  border-radius: 22px;
+  background: #fff9eaf5;
+  box-shadow: 0 8px 32px #546b3c12;
+}
+.flip-inventory {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1e5d4;
+}
+.flip-inventory button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #e9eddc;
+  color: #69755e;
+  padding: 7px 2px 5px;
+}
+.flip-inventory button[aria-pressed='true'] {
+  background: #eee0ae;
+  border-color: #d2b566;
+  color: #66542f;
+  opacity: 1;
+}
+.flip-inventory button:hover:not(:disabled) {
+  border-color: #9aac7a;
+}
+.flip-inventory span {
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.flip-inventory small {
+  font-size: 9px;
+  opacity: 0.8;
+}
+.flip-actions {
+  display: grid;
+  grid-template-columns: 132px 1fr 155px;
+  gap: 20px;
+  align-items: center;
+  padding-top: 10px;
+}
+.flip-risk {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 0 5px;
+}
+.flip-risk > small {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+.flip-risk > small b {
+  display: block;
+  font-size: 16px;
+  color: #a87930;
+}
+.flip-risk > strong {
+  font-size: 27px;
+  color: #a87930;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.flip-bank {
+  grid-column: span 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid #bac79f;
+  background: #e4ebd4;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #476140;
+}
+.flip-charge-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.flip-charge-title strong {
+  font-size: 13px;
+}
+.flip-charge-title span {
+  font-size: 10px;
+  color: #8c7952;
+}
+.flip-meter {
+  position: relative;
+  height: 23px;
+  background: #dce1ca;
+  border-radius: 7px;
+  border: 1px solid #c8d1b4;
+}
+.flip-sweet {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  background: #e1b955;
+  border: 1px solid #bf9440;
+  border-radius: 4px;
+}
+.flip-meter i {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 4px;
+  background: #34493f;
+  border: 1px solid #fff5d8;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  transition: left 60ms linear;
+}
+.flip-charge-wrap > small {
+  display: block;
+  font-size: 9px;
+  margin-top: 7px;
+  color: #82866f;
+}
+.flip-throw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 5px;
+  font-size: 13px;
+  touch-action: none;
+  user-select: none;
+}
+.flip-throw.is-charging {
+  background: #d39a3f;
+  border-color: #a77d30;
+}
+.flip-throw kbd,
+.flip-bank kbd {
+  font: inherit;
+  font-size: 9px;
+  opacity: 0.7;
+}
+.flip-keyboard {
+  font-size: 9px;
+  text-align: center;
+  margin: 10px 0 0;
+  color: #8a8e78;
+}
+.flip-loading,
+.flip-error {
+  position: absolute;
+  z-index: 6;
+  top: 45%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #fff9e9;
+  font-size: 14px;
+}
+.flip-error {
+  top: 150px;
+  color: #a54432;
+  max-width: calc(100% - 30px);
+}
+.flip-help {
+  color: #34493f;
+  background: #fff9e9;
+}
+.flip-help p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+@media (max-width: 850px) {
+  .flip-topbar {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .flip-lobby {
+    left: 20px;
+    width: 310px;
+    padding: 23px;
+  }
+  .flip-lobby h1 {
+    font-size: 31px;
+  }
+  .flip-between .flip-canvas {
+    left: 30%;
+  }
+  .flip-console {
+    width: calc(100% - 24px);
+  }
+}
+@media (max-width: 600px) {
+  .flip-game {
+    min-height: 580px;
+  }
+  .flip-topbar {
+    min-height: 62px;
+    padding: 8px 10px;
+  }
+  .flip-back {
+    width: 30px;
+    height: 30px;
+  }
+  .flip-brand {
+    font-size: 8px;
+    gap: 4px;
+  }
+  .flip-brand small {
+    font-size: 12px;
+  }
+  .flip-brand > svg {
+    width: 20px;
+  }
+  .flip-scoreboard {
+    top: 72px;
+    width: calc(100% - 24px);
+    padding: 8px;
+    gap: 3px;
+    border-radius: 13px;
+  }
+  .flip-timer {
+    min-width: 68px;
+    padding-right: 6px;
+  }
+  .flip-timer strong {
+    font-size: 22px;
+  }
+  .flip-timer small {
+    font-size: 6px;
+  }
+  .flip-score {
+    min-width: 0;
+    flex: 1;
+    padding: 3px 5px;
+  }
+  .flip-score > span {
+    font-size: 9px;
+    gap: 3px;
+  }
+  .flip-score small {
+    display: none;
+  }
+  .flip-score b {
+    font-size: 21px;
+  }
+  .flip-canvas {
+    inset: 141px -30px 245px;
+  }
+  .flip-between .flip-canvas {
+    inset: 126px -18px 304px;
+  }
+  .flip-lobby {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+    transform: none;
+    width: auto;
+    padding: 17px 20px;
+    border-radius: 20px;
+  }
+  .flip-eyebrow {
+    font-size: 8px;
+  }
+  .flip-lobby h1 {
+    font-size: 25px;
+    margin: 8px 0;
+  }
+  .flip-lobby h1 br {
+    display: none;
+  }
+  .flip-lobby h1 em::before {
+    content: ' ';
+  }
+  .flip-lobby > p {
+    font-size: 11px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .flip-modes {
+    margin-bottom: 10px;
+  }
+  .flip-modes button {
+    padding: 7px 3px;
+  }
+  .flip-roster {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .flip-roster > span {
+    font-size: 10px;
+  }
+  .flip-roster small {
+    display: none;
+  }
+  .flip-start {
+    padding: 10px;
+    font-size: 13px;
+  }
+  .flip-lobby-tip {
+    font-size: 8px;
+    margin-top: 8px;
+  }
+  .flip-callout {
+    top: 139px;
+    font-size: 9px;
+  }
+  .flip-console {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    padding: 10px;
+    border-radius: 17px;
+  }
+  .flip-inventory {
+    gap: 3px;
+    padding-bottom: 8px;
+  }
+  .flip-inventory button {
+    padding: 6px 1px;
+  }
+  .flip-inventory svg {
+    width: 21px;
+  }
+  .flip-inventory span {
+    font-size: 7px;
+    white-space: normal;
+    height: 18px;
+    line-height: 1.1;
+    display: grid;
+    place-items: center;
+  }
+  .flip-inventory small {
+    font-size: 8px;
+  }
+  .flip-actions {
+    grid-template-columns: 80px 1fr 85px;
+    gap: 10px;
+    padding-top: 9px;
+  }
+  .flip-risk > small {
+    font-size: 6px;
+  }
+  .flip-risk > strong {
+    font-size: 22px;
+  }
+  .flip-risk > small b {
+    font-size: 14px;
+  }
+  .flip-bank {
+    font-size: 10px;
+    gap: 3px;
+    padding: 8px 2px;
+  }
+  .flip-bank svg {
+    width: 12px;
+  }
+  .flip-bank kbd,
+  .flip-throw kbd {
+    display: none;
+  }
+  .flip-charge-title {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .flip-charge-title strong {
+    font-size: 10px;
+    display: block;
+  }
+  .flip-charge-title span {
+    font-size: 8px;
+    display: block;
+  }
+  .flip-meter {
+    height: 18px;
+  }
+  .flip-charge-wrap > small {
+    font-size: 7px;
+    line-height: 1.35;
+    margin-top: 5px;
+  }
+  .flip-throw {
+    min-height: 80px;
+    font-size: 10px;
+    justify-content: center;
+    padding: 6px 2px;
+  }
+  .flip-keyboard {
+    font-size: 7px;
+    margin-top: 8px;
+  }
+}
+@media (max-height: 620px) and (min-width: 601px) {
+  .flip-lobby {
+    padding: 18px;
+    top: 53%;
+    width: 305px;
+  }
+  .flip-lobby h1 {
+    font-size: 26px;
+    margin: 9px 0;
+  }
+  .flip-lobby > p {
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+  .flip-roster {
+    margin-bottom: 12px;
+  }
+  .flip-canvas {
+    top: 130px;
+    bottom: 180px;
+  }
+  .flip-console {
+    bottom: 8px;
+    padding-top: 8px;
+  }
+  .flip-inventory button {
+    padding: 3px;
+  }
+  .flip-inventory svg {
+    width: 18px;
+    height: 18px;
+  }
+  .flip-keyboard {
+    display: none;
+  }
+}

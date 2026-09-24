@@ -186,6 +186,7 @@ void test('games dress Nico in wardrobe items over their own clothes', () => {
     'dont-wake-the-giant:thief',
     'drive-thru:cook',
     'drive-thru:driver',
+    'flip-happens:flipper',
     'load-bearing:wrecker',
     'on-the-ropes:boxer-blue',
     'on-the-ropes:boxer-red',

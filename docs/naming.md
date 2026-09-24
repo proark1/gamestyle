@@ -88,3 +88,5 @@ while rejecting unrelated origins. No game source or persistent data needed
 to change for this domain update.
 
 Added 2026-09-24: **Bouncy Castle Royale**, 2v2 inflatable volleyball with shared air and landing waves. Route and game ID: `bouncy-castle-royale`.
+
+Added 2026-09-24: **Flip Happens**, competitive object flipping on an unstable shared table. Route and game ID: `flip-happens`.

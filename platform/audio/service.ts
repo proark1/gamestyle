@@ -1,3 +1,4 @@
+import { FLIP_DEFAULT_AUDIO } from '../../games/flip-happens/catalog';
 import { CASTLE_DEFAULT_AUDIO } from '../../games/bouncy-castle-royale/catalog';
 import type { GameDatabase } from '@/db/contract';
 import { getBundledCatalog, getCatalog } from './catalog';
@@ -196,6 +197,9 @@ export async function library(
       return {
         ...cue,
         file: stored?.file ?? null,
+        ...(game === 'flip-happens' && FLIP_DEFAULT_AUDIO[base.id]
+          ? { bundledUrl: FLIP_DEFAULT_AUDIO[base.id].url }
+          : {}),
         ...(game === 'bouncy-castle-royale' && CASTLE_DEFAULT_AUDIO[base.id]
           ? { bundledUrl: CASTLE_DEFAULT_AUDIO[base.id].url }
           : {}),
@@ -213,15 +217,17 @@ export async function library(
 }
 export function manifest(data: AudioLibrary): AudioManifest {
   const bundled =
-    data.game === 'bouncy-castle-royale'
-      ? CASTLE_DEFAULT_AUDIO
-      : data.game === 'act-natural'
-        ? FARM_FENCE_CUES
-        : data.game === 'dont-wake-the-giant'
-          ? GIANT_DEFAULT_AUDIO
-          : BUNDLED_GAMES.has(data.game)
-            ? bundledCues(data.game, getBundledCatalog(data.game))
-            : {};
+    data.game === 'flip-happens'
+      ? FLIP_DEFAULT_AUDIO
+      : data.game === 'bouncy-castle-royale'
+        ? CASTLE_DEFAULT_AUDIO
+        : data.game === 'act-natural'
+          ? FARM_FENCE_CUES
+          : data.game === 'dont-wake-the-giant'
+            ? GIANT_DEFAULT_AUDIO
+            : BUNDLED_GAMES.has(data.game)
+              ? bundledCues(data.game, getBundledCatalog(data.game))
+              : {};
   return {
     settings: data.settings,
     cues: Object.fromEntries(

@@ -76,6 +76,17 @@ interface CardStaticConfig {
 }
 
 const CARD_CONFIGS: Record<string, CardStaticConfig> = {
+  'flip-happens': {
+    slug: 'flip-happens',
+    href: '/flip-happens',
+    cardClass: 'bungee-doubles-card',
+    imgSrc: '/images/party-gameplay/flip-happens.webp',
+    imgAlt: 'Four toy players flip objects onto a green wobbling table.',
+    loading: 'lazy',
+    tagIcon: Gamepad2,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   'bouncy-castle-royale': {
     slug: 'bouncy-castle-royale',
     href: '/bouncy-castle-royale',

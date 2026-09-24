@@ -35,10 +35,15 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Scaffold Scramble | `/scaffold-scramble`   | `games/scaffold-scramble/`   | `app/scaffold-scramble/`         |
 | Chain of Fools    | `/chain-of-fools`      | `games/chain-of-fools/`      | `app/chain-of-fools/`            |
 | Bouncy Castle Royale | `/bouncy-castle-royale` | `games/bouncy-castle-royale/` | `app/bouncy-castle-royale/` |
+| Flip Happens | `/flip-happens` | `games/flip-happens/` | `app/flip-happens/` |
 
 Every game but Shelf Control has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
 
 The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, all of the sound workshops, and every game's player avatar walking side by side against a chosen template. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
+
+## Flip Happens
+
+Four players flip six objects onto one unstable table. Upright landings build a pending combo; banking secures it. Heavy impacts launch nearby props and a failed throw loses the pending combo. Two-minute rounds, bots, rematches, shared rooms/voice and party play. A deterministic 60-second daily challenge stores a personal best on this device. Nico, wardrobe hats/cones/boots, rendering and existing audio recordings are reused. Game ID and route: `flip-happens`.
 
 ## Bouncy Castle Royale
 

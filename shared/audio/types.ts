@@ -68,6 +68,7 @@ export const DEFAULT_SETTINGS: AudioSettings = {
   voiceId: '',
 };
 export const GAME_NAMES: Record<GameId, string> = {
+  'flip-happens': 'Flip Happens',
   'bouncy-castle-royale': 'Bouncy Castle Royale',
   'cage-clash': 'Cage Clash',
   'on-the-ropes': 'On the Ropes',
