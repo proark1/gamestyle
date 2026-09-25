@@ -10,6 +10,12 @@
   color: var(--reel-ink);
   font-family: 'DM Sans', sans-serif;
 }
+.reel-game:not(.in-session) {
+  height: auto;
+  min-height: 100dvh;
+  overflow: auto;
+  padding-bottom: 40px;
+}
 .reel-game button,
 .reel-dialog button {
   cursor: pointer;
@@ -1093,7 +1099,8 @@
     display: none;
   }
   .reel-camera {
-    bottom: 218px;
+    z-index: 21;
+    bottom: 165px;
     right: 12px;
   }
   .reel-game .touch-controls {

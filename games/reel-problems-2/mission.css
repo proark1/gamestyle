@@ -41,6 +41,54 @@
   font-size: 11px;
   margin-top: 3px;
 }
+.reel-camera-select {
+  border: 0;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  text-align: left;
+}
+.reel-camera-select legend {
+  padding: 0 0 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.reel-camera-select label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 2px solid #bad6cf;
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: #f5f4df;
+  cursor: pointer;
+}
+.reel-camera-select label.selected {
+  border-color: #226b72;
+  background: #d4ece2;
+}
+.reel-camera-select input {
+  flex: 0 0 auto;
+  accent-color: #226b72;
+}
+.reel-camera-select b,
+.reel-camera-select small {
+  display: block;
+}
+.reel-camera-select b {
+  font:
+    500 15px 'Fredoka',
+    sans-serif;
+}
+.reel-camera-select small {
+  margin-top: 2px;
+  color: #647c76;
+  font-size: 9px;
+  line-height: 1.2;
+}
 .reel-completed {
   font-size: 12px !important;
   color: #286f63;

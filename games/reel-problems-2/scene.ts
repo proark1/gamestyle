@@ -37,12 +37,19 @@ import {
 import { SeaScene } from './sea-scene';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { createRenderer } from '../../shared/rendering/create-renderer';
+import {
+  DEFAULT_CAMERA_MODE,
+  firstPersonPose,
+  nextCameraMode,
+  type CameraMode,
+} from './camera';
 
 type Callbacks = {
   input: (input: ReelInput) => void;
   action: (action: ReelAction) => void;
   tick: () => void;
   failure: () => void;
+  camera: (mode: CameraMode) => void;
 };
 export class ReelScene {
   private scene = new THREE.Scene();
@@ -103,7 +110,11 @@ export class ReelScene {
   private snapshot: ReelSnapshot | null = null;
   private demo = freshReel(100000);
   private localId = '';
-  private wide = false;
+  private cameraMode: CameraMode = DEFAULT_CAMERA_MODE;
+  private snapCamera = true;
+  private cameraTarget = new THREE.Vector3();
+  private firstPersonOrigin = new THREE.Vector3();
+  private firstPersonRotation = new THREE.Quaternion();
   private stopped = false;
   private trauma = 0;
   private lastProcessedEvent = 0;
@@ -311,8 +322,14 @@ export class ReelScene {
   hold(key: 'reel' | 'brace' | 'work', value: boolean) {
     this.held[key] = value;
   }
+  setCameraMode(mode: CameraMode) {
+    if (mode === this.cameraMode) return;
+    this.cameraMode = mode;
+    this.snapCamera = true;
+    this.cb.camera(mode);
+  }
   changeCamera() {
-    this.wide = !this.wide;
+    this.setCameraMode(nextCameraMode(this.cameraMode));
   }
   resetInput = () => {
     this.keys.clear();
@@ -605,6 +622,8 @@ export class ReelScene {
         this.bobbers.set(p.id, bobber);
         this.scene.add(bobber);
       }
+      object.visible =
+        this.cameraMode !== 'first-person' || p.id !== this.localId;
       const parent =
         p.swimming || p.support === 'dock' ? this.scene : this.boat;
       if (object.parent !== parent) {
@@ -1095,27 +1114,56 @@ export class ReelScene {
       (me?.swimming && (b.sunk || Math.hypot(me.x - b.x, me.z - b.z) > 14))
         ? me
         : null;
-    const zoom = this.wide ? 1.6 : world.mission?.survival ? 1.12 : 1;
-    const ahead = world.mission?.survival?.stage === 'fight' && !focus ? 4 : 0;
-    const small = this.camera.aspect < 0.8 ? 1.2 : 1;
-    const fx = focus ? focus.x : b.x,
-      fz = focus ? focus.z : b.z;
-    this.camera.position.lerp(
-      new THREE.Vector3(fx, 25 * zoom * small, fz + ahead + 27 * zoom * small),
-      1 - Math.exp(-3 * dt),
-    );
-    const look = (this.camera.userData.look ??= this.yaw.position.clone());
-    (look as THREE.Vector3).lerp(
-      focus
-        ? new THREE.Vector3(focus.x, 0, focus.z)
-        : new THREE.Vector3(
-            this.yaw.position.x,
-            0,
-            this.yaw.position.z + ahead,
-          ),
-      1 - Math.exp(-4 * dt),
-    );
-    this.camera.lookAt(look as THREE.Vector3);
+    const localAngler = me ? this.anglers.get(me.id) : undefined;
+    const firstPerson =
+      this.cameraMode === 'first-person' && !!me && !!localAngler;
+    const desiredFov = firstPerson ? 70 : 43;
+    const desiredNear = firstPerson ? 0.04 : 0.1;
+    if (this.camera.fov !== desiredFov || this.camera.near !== desiredNear) {
+      this.camera.fov = desiredFov;
+      this.camera.near = desiredNear;
+      this.camera.updateProjectionMatrix();
+    }
+    if (firstPerson && localAngler) {
+      localAngler.updateWorldMatrix(true, false);
+      localAngler.getWorldPosition(this.firstPersonOrigin);
+      localAngler.getWorldQuaternion(this.firstPersonRotation);
+      const pose = firstPersonPose(
+        this.firstPersonOrigin,
+        this.firstPersonRotation,
+      );
+      this.camera.position.set(pose.eye.x, pose.eye.y, pose.eye.z);
+      this.cameraTarget.set(pose.look.x, pose.look.y, pose.look.z);
+      this.camera.lookAt(this.cameraTarget);
+      (this.camera.userData.look ??= new THREE.Vector3()).copy(
+        this.cameraTarget,
+      );
+    } else {
+      const zoom = world.mission?.survival ? 1.12 : 1;
+      const ahead =
+        world.mission?.survival?.stage === 'fight' && !focus ? 4 : 0;
+      const small = this.camera.aspect < 0.8 ? 1.2 : 1;
+      const fx = focus ? focus.x : b.x,
+        fz = focus ? focus.z : b.z;
+      this.cameraTarget.set(
+        fx,
+        25 * zoom * small,
+        fz + ahead + 27 * zoom * small,
+      );
+      if (this.snapCamera) this.camera.position.copy(this.cameraTarget);
+      else this.camera.position.lerp(this.cameraTarget, 1 - Math.exp(-3 * dt));
+      const look = (this.camera.userData.look ??=
+        this.yaw.position.clone()) as THREE.Vector3;
+      this.cameraTarget.set(
+        focus ? focus.x : this.yaw.position.x,
+        0,
+        focus ? focus.z : this.yaw.position.z + ahead,
+      );
+      if (this.snapCamera) look.copy(this.cameraTarget);
+      else look.lerp(this.cameraTarget, 1 - Math.exp(-4 * dt));
+      this.camera.lookAt(look);
+    }
+    this.snapCamera = false;
 
     // Process new events for camera trauma, splashes, floating scores
     if (world.events && world.events.length > 0) {
