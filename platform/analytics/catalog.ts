@@ -11,6 +11,7 @@ import { loadBearingAnalytics } from '../../games/load-bearing/analytics';
 import { buttonAnalytics } from '../../games/one-more-button/analytics';
 import { reelAnalytics as reel2Analytics } from '../../games/reel-problems-2/analytics';
 import { reelAnalytics } from '../../games/reel-problems/analytics';
+import { reelProblems3Analytics } from '../../games/reel-problems-3/analytics';
 import { shelfAnalytics } from '../../games/shelf-control/analytics';
 import { siegeAnalytics } from '../../games/siege-and-desist/analytics';
 import { stackAnalytics } from '../../games/stack-or-sink/analytics';
@@ -66,6 +67,7 @@ export const GAMES: readonly CatalogGame[] = [
   ['four-brain-cells', 'Four Brain Cells', breakfastAnalytics],
   ['reel-problems-2', 'Reel Problems 2', reel2Analytics],
   ['reel-problems', 'Reel Problems', reelAnalytics],
+  ['reel-problems-3', 'Reel Problems 3', reelProblems3Analytics],
   ['shelf-control', 'Shelf Control', shelfAnalytics],
   ['load-bearing', 'Load Bearing', loadBearingAnalytics],
   ['crane-clash', 'Crane Clash', craneClashAnalytics],

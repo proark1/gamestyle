@@ -254,6 +254,18 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     metaIcon1: Users,
     metaIcon2: Timer,
   },
+  'reel-problems-3': {
+    slug: 'reel-problems-3',
+    href: '/reel-problems-3',
+    cardClass: 'reel-card',
+    imgSrc: '/images/reel-problems-3.svg',
+    imgAlt:
+      'A first-person view from a clay fishing boat following a glowing legendary fish through a storm toward a moonlit cove.',
+    fetchPriority: 'high',
+    tagIcon: Fish,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   'shelf-control': {
     slug: 'shelf-control',
     href: '/shelf-control',

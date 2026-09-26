@@ -404,6 +404,33 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
     },
   },
 
+  'reel-problems-3': {
+    en: {
+      tag: 'A VOYAGE WORTH FINISHING',
+      isNew: true,
+      newTag: 'NEW ADVENTURE',
+      players: '1–4 friends',
+      duration: '15–20 minute voyage',
+      titleMain: 'Reel Problems 3',
+      titleSuffix: '',
+      desc: 'Leave the harbor in first person, awaken three island beacons, survive the storm, and guide a legendary glowing fish home together.',
+      tagline: 'FOLLOW THE LIGHT. BRING EVERYONE HOME.',
+      cta: 'Begin Reel Problems 3',
+    },
+    de: {
+      tag: 'EINE REISE BIS ZUM ENDE',
+      isNew: true,
+      newTag: 'NEUES ABENTEUER',
+      players: '1–4 Freunde',
+      duration: '15–20 Minuten Reise',
+      titleMain: 'Reel Problems 3',
+      titleSuffix: '',
+      desc: 'Verlasst den Hafen in der Ich-Perspektive, erweckt drei Insel-Leuchtfeuer, übersteht den Sturm und bringt einen legendären Leuchtfisch gemeinsam nach Hause.',
+      tagline: 'FOLGT DEM LICHT. BRINGT ALLE HEIM.',
+      cta: 'Reel Problems 3 beginnen',
+    },
+  },
+
   'reel-problems': {
     en: {
       tag: 'THE FISH CAUGHT US',

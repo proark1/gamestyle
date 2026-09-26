@@ -7,6 +7,7 @@ import { deliveryCatalog } from '../../games/uphill-delivery/audio/catalog';
 import { giantCatalog } from '../../games/dont-wake-the-giant/audio/catalog';
 import { reelCatalog as reel2Catalog } from '../../games/reel-problems-2/audio';
 import { reelCatalog } from '../../games/reel-problems/audio';
+import { reelProblems3Catalog } from '../../games/reel-problems-3/catalog';
 import { hotelCatalog } from '../../games/wrong-floor/audio';
 import { buttonCatalog } from '../../games/one-more-button/audio';
 import { breakfastCatalog } from '../../games/four-brain-cells/audio';
@@ -43,6 +44,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'dont-wake-the-giant': giantCatalog,
   'reel-problems-2': reel2Catalog,
   'reel-problems': reelCatalog,
+  'reel-problems-3': reelProblems3Catalog,
   'one-more-button': buttonCatalog,
   'four-brain-cells': breakfastCatalog,
   'load-bearing': loadBearingCatalog,

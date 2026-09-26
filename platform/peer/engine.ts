@@ -8,6 +8,7 @@ import { createEngine as delivery } from '../../games/uphill-delivery/peer';
 import { createEngine as giant } from '../../games/dont-wake-the-giant/peer';
 import { createEngine as reel2 } from '../../games/reel-problems-2/peer';
 import { createEngine as reel } from '../../games/reel-problems/peer';
+import { createEngine as reel3 } from '../../games/reel-problems-3/peer';
 import { createEngine as button } from '../../games/one-more-button/peer';
 import { createEngine as hotel } from '../../games/wrong-floor/peer';
 import { createEngine as breakfast } from '../../games/four-brain-cells/peer';
@@ -39,6 +40,7 @@ const engines = {
   'dont-wake-the-giant': giant,
   'reel-problems-2': reel2,
   'reel-problems': reel,
+  'reel-problems-3': reel3,
   'one-more-button': button,
   'four-brain-cells': breakfast,
   'load-bearing': demolition,

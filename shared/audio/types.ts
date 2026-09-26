@@ -78,6 +78,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'uphill-delivery': 'Uphill Delivery',
   'reel-problems-2': 'Reel Problems 2',
   'reel-problems': 'Reel Problems',
+  'reel-problems-3': 'Reel Problems 3',
   'one-more-button': 'One More Button',
   'four-brain-cells': 'Four Brain Cells',
   'siege-and-desist': 'Siege and Desist',

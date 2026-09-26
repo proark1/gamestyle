@@ -39,6 +39,7 @@ const games = {
   'panic-curling': lazy(() => import('../../games/panic-curling/Game')),
   'reel-problems-2': lazy(() => import('../../games/reel-problems-2/Game')),
   'reel-problems': lazy(() => import('../../games/reel-problems/Game')),
+  'reel-problems-3': lazy(() => import('../../games/reel-problems-3/Game')),
   'sample-stampede': lazy(() => import('../../games/sample-stampede/Game')),
   'scaffold-scramble': lazy(() => import('../../games/scaffold-scramble/Game')),
   'shelf-control': lazy(() => import('../../games/shelf-control/Game')),

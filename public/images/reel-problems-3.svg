@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Reel Problems 3</title>
+  <desc id="desc">A clay boat follows a glowing fish through moonlit storm water toward an island sanctuary.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#173e46"/>
+      <stop offset=".62" stop-color="#55778b"/>
+      <stop offset="1" stop-color="#4d928d"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#d7fff0" stop-opacity=".95"/>
+      <stop offset=".36" stop-color="#79edcf" stop-opacity=".58"/>
+      <stop offset="1" stop-color="#79edcf" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#4d928d"/>
+      <stop offset="1" stop-color="#173e46"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="1200" height="720" fill="url(#sky)"/>
+  <circle cx="930" cy="145" r="84" fill="#f4eedb" opacity=".9"/>
+  <circle cx="930" cy="145" r="128" fill="#f4eedb" opacity=".12" filter="url(#soft)"/>
+  <path d="M0 365C150 330 210 395 350 365s260-20 390 10 270-28 460-4v349H0Z" fill="url(#sea)"/>
+  <g fill="#173e46" opacity=".93">
+    <path d="M0 350 95 212l115 140Z"/>
+    <path d="m970 352 112-176 118 150v40Z"/>
+    <path d="m730 355 77-108 94 109Z" opacity=".7"/>
+  </g>
+  <g stroke="#f4eedb" stroke-width="8" stroke-linecap="round" opacity=".38" fill="none">
+    <path d="M52 456c100-36 185 23 270-4s166-22 248 4"/>
+    <path d="M692 465c93-23 166 19 255-2s157-18 235 4"/>
+    <path d="M88 555c124-28 212 24 352-2"/>
+  </g>
+  <ellipse cx="690" cy="497" rx="260" ry="168" fill="url(#glow)"/>
+  <g transform="translate(650 478) rotate(-7)">
+    <path d="M-132 12C-74-50 62-61 146-3 76 73-64 81-132 12Z" fill="#79edcf" opacity=".86"/>
+    <path d="m-121 4-78-64 19 80-35 69 93-54Z" fill="#79edcf" opacity=".82"/>
+    <path d="M-18-43 28-104l31 62" fill="#a8ffe7" opacity=".78"/>
+    <circle cx="102" cy="-13" r="10" fill="#173e46"/>
+    <circle cx="106" cy="-17" r="3" fill="#f4eedb"/>
+    <path d="M-75 31c48 21 119 14 173-20" fill="none" stroke="#d7fff0" stroke-width="8" stroke-linecap="round" opacity=".72"/>
+  </g>
+  <g transform="translate(315 426)">
+    <path d="M-170 60h330l-42 105h-235Z" fill="#d96f56" stroke="#173e46" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M-138 52 8-35 135 52" fill="#f4eedb" stroke="#173e46" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M3-34V-175" stroke="#173e46" stroke-width="16" stroke-linecap="round"/>
+    <path d="M15-164 120-80 15-69Z" fill="#f0ad55" stroke="#173e46" stroke-width="9" stroke-linejoin="round"/>
+    <g fill="#f0ad55" stroke="#173e46" stroke-width="8">
+      <circle cx="-72" cy="27" r="25"/><circle cx="-8" cy="8" r="25"/><circle cx="54" cy="23" r="25"/>
+    </g>
+    <g fill="#173e46">
+      <circle cx="-78" cy="22" r="4"/><circle cx="-66" cy="22" r="4"/>
+      <circle cx="-14" cy="3" r="4"/><circle cx="-2" cy="3" r="4"/>
+      <circle cx="48" cy="18" r="4"/><circle cx="60" cy="18" r="4"/>
+    </g>
+    <path d="M-205 165c105-25 204 24 395-2" fill="none" stroke="#f4eedb" stroke-width="13" stroke-linecap="round" opacity=".74"/>
+  </g>
+  <g fill="#f0ad55">
+    <circle cx="86" cy="230" r="12"/><circle cx="1082" cy="195" r="12"/><circle cx="808" cy="250" r="10"/>
+  </g>
+</svg>

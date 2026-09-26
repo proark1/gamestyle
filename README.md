@@ -20,6 +20,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Four Brain Cells  | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
 | Reel Problems 2 | `/reel-problems-2` | `games/reel-problems-2/` | `app/reel-problems-2/` |
 | Reel Problems     | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
+| Reel Problems 3   | `/reel-problems-3`     | `games/reel-problems-3/`     | `app/reel-problems-3/`           |
 | Shelf Control     | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
 | Load Bearing      | `/load-bearing`        | `games/load-bearing/`        | `app/load-bearing/`              |
 | Crane Clash       | `/crane-clash`         | `games/crane-clash/`         | `app/crane-clash/`               |
