@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { useLanguage } from '../../shared/language/useLanguage';
 import type { CameraMode } from './camera';
 
@@ -11,6 +12,7 @@ export default function CameraSelect({
   onChange: (mode: CameraMode) => void;
 }) {
   const de = useLanguage().language === 'de';
+  const groupName = `reel-camera-${useId()}`;
   return (
     <fieldset className="reel-camera-select">
       <legend>{de ? 'Wähle deine Ansicht' : 'Choose your view'}</legend>
@@ -20,7 +22,7 @@ export default function CameraSelect({
       >
         <input
           type="radio"
-          name="reel-camera-mode"
+          name={groupName}
           checked={mode === 'isometric'}
           onChange={() => onChange('isometric')}
         />
@@ -35,15 +37,13 @@ export default function CameraSelect({
       >
         <input
           type="radio"
-          name="reel-camera-mode"
+          name={groupName}
           checked={mode === 'first-person'}
           onChange={() => onChange('first-person')}
         />
         <span>
           <b>{de ? 'Ich-Perspektive' : 'First-person'}</b>
-          <small>
-            {de ? 'Durch deine Augen' : "Through your angler's eyes"}
-          </small>
+          <small>{de ? 'Folge deiner Figur' : 'Follow your angler'}</small>
         </span>
       </label>
     </fieldset>

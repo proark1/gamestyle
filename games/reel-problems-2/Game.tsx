@@ -281,6 +281,7 @@ export default function ReelProblems() {
     activeSession = useRef<ReelSession | null>(null),
     latest = useRef<ReelSnapshot | null>(null),
     cameraModeRef = useRef<CameraMode>(DEFAULT_CAMERA_MODE),
+    viewNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: ReelAction) => void>(() => {}),
     // The scene is handed every snapshot directly; the HUD is paced.
@@ -298,6 +299,7 @@ export default function ReelProblems() {
     [npcBusy, setNpcBusy] = useState(false),
     [muted, setMuted] = useState(false),
     [notice, setNotice] = useState(''),
+    [viewNotice, setViewNotice] = useState<CameraMode | null>(null),
     [copied, setCopied] = useState(false),
     [status, setStatus] = useState<'online' | 'reconnecting' | 'expired'>(
       'online',
@@ -306,9 +308,21 @@ export default function ReelProblems() {
       'help' | 'join' | 'invite' | 'leave' | 'restart' | null
     >(null);
   const selectCamera = useCallback((next: CameraMode) => {
+    if (cameraModeRef.current === next) {
+      scene.current?.setCameraMode(next);
+      return;
+    }
     cameraModeRef.current = next;
     setCameraMode(next);
     scene.current?.setCameraMode(next);
+    if (activeSession.current && latest.current?.world.phase === 'playing') {
+      setViewNotice(next);
+      if (viewNoticeTimer.current) clearTimeout(viewNoticeTimer.current);
+      viewNoticeTimer.current = setTimeout(() => {
+        setViewNotice(null);
+        viewNoticeTimer.current = null;
+      }, 1600);
+    }
     try {
       const stored = JSON.parse(
         localStorage.getItem('reel-problems-2-prefs-v1') || '{}',
@@ -453,6 +467,7 @@ export default function ReelProblems() {
       network.current = null;
       scene.current?.dispose();
       scene.current = null;
+      if (viewNoticeTimer.current) clearTimeout(viewNoticeTimer.current);
       audio.dispose();
       sound.current = null;
     };
@@ -995,13 +1010,26 @@ export default function ReelProblems() {
               )}
             </div>
           </aside>
+          {playing && cameraMode === 'first-person' && (
+            <div className="reel-aim-reticle" aria-hidden="true">
+              <i />
+            </div>
+          )}
+          {viewNotice && playing && (
+            <output className="reel-view-announcement" aria-live="polite">
+              {CAMERA_MODE_NAMES[viewNotice]} view
+            </output>
+          )}
           <button
-            className="reel-camera"
+            className={`reel-camera${viewNotice ? ' confirmed' : ''}`}
             onClick={() => scene.current?.changeCamera()}
             aria-label={`Switch to ${CAMERA_MODE_NAMES[nextCameraMode(cameraMode)].toLowerCase()} view`}
+            title={`Press V to switch to ${CAMERA_MODE_NAMES[nextCameraMode(cameraMode)].toLowerCase()} view`}
+            data-mode={cameraMode}
           >
             <Camera size={19} />
             <span>{CAMERA_MODE_NAMES[cameraMode]}</span>
+            <kbd aria-hidden="true">V</kbd>
           </button>
           {w?.phase === 'lobby' && (
             <section className="reel-lobby">
@@ -1299,8 +1327,8 @@ export default function ReelProblems() {
               </nav>
               <span className="reel-movement-hint">
                 {w?.mission?.survival
-                  ? 'WASD / arrows · steer & move · E reel · Shift brace · C rescue, repair & build'
-                  : 'WASD / arrows · move · J jump · P paddle · E reel, patch or bail · click the water to aim'}
+                  ? 'WASD / arrows · steer & move · E reel · Shift brace · C rescue, repair & build · V view'
+                  : 'WASD / arrows · move · J jump · P paddle · E reel, patch or bail · V view · click the water to aim'}
               </span>
             </>
           )}

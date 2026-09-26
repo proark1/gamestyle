@@ -44,34 +44,56 @@
 .reel-camera-select {
   border: 0;
   padding: 0;
-  margin: 12px 0;
+  margin: 14px 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
+  gap: 9px;
   text-align: left;
 }
 .reel-camera-select legend {
   padding: 0 0 7px;
   font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.02em;
 }
 .reel-camera-select label {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
+  min-height: 58px;
   border: 2px solid #bad6cf;
   border-radius: 12px;
   padding: 8px 10px;
   background: #f5f4df;
   cursor: pointer;
+  box-shadow: 0 2px 0 #1d5b5d0d;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+.reel-camera-select label:hover {
+  border-color: #6aa49b;
+  transform: translateY(-1px);
+}
+.reel-camera-select label:focus-within {
+  outline: 3px solid #e18b48;
+  outline-offset: 2px;
 }
 .reel-camera-select label.selected {
   border-color: #226b72;
   background: #d4ece2;
+  box-shadow:
+    0 0 0 1px #226b7214,
+    0 5px 12px #174b5714;
 }
 .reel-camera-select input {
   flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
   accent-color: #226b72;
 }
 .reel-camera-select b,
@@ -342,8 +364,8 @@
     font-size: 10px;
   }
   .reel-menu {
-    overflow-y: auto;
-    max-height: calc(100dvh - 105px);
+    overflow: visible;
+    max-height: none;
   }
 }
 .survival-panel {

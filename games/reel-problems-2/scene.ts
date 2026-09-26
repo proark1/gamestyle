@@ -38,7 +38,10 @@ import { SeaScene } from './sea-scene';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import {
+  cameraShakeScale,
+  dampingAlpha,
   DEFAULT_CAMERA_MODE,
+  firstPersonEyeHeight,
   firstPersonPose,
   nextCameraMode,
   type CameraMode,
@@ -115,6 +118,11 @@ export class ReelScene {
   private cameraTarget = new THREE.Vector3();
   private firstPersonOrigin = new THREE.Vector3();
   private firstPersonRotation = new THREE.Quaternion();
+  private firstPersonEye = new THREE.Vector3();
+  private firstPersonForward = new THREE.Vector3(0, 0, 1);
+  private firstPersonDesiredEye = new THREE.Vector3();
+  private firstPersonDesiredForward = new THREE.Vector3(0, 0, 1);
+  private firstPersonReady = false;
   private stopped = false;
   private trauma = 0;
   private lastProcessedEvent = 0;
@@ -326,6 +334,7 @@ export class ReelScene {
     if (mode === this.cameraMode) return;
     this.cameraMode = mode;
     this.snapCamera = true;
+    this.firstPersonReady = false;
     this.cb.camera(mode);
   }
   changeCamera() {
@@ -1128,17 +1137,59 @@ export class ReelScene {
       localAngler.updateWorldMatrix(true, false);
       localAngler.getWorldPosition(this.firstPersonOrigin);
       localAngler.getWorldQuaternion(this.firstPersonRotation);
+      const downed = !!me && world.clock < me.downedUntil;
       const pose = firstPersonPose(
         this.firstPersonOrigin,
         this.firstPersonRotation,
+        firstPersonEyeHeight({
+          swimming: !!me?.swimming,
+          clinging: !!me?.clinging,
+          downed,
+        }),
+        6,
+        me?.swimming ? 0.22 : Number.NEGATIVE_INFINITY,
       );
-      this.camera.position.set(pose.eye.x, pose.eye.y, pose.eye.z);
-      this.cameraTarget.set(pose.look.x, pose.look.y, pose.look.z);
+      this.firstPersonDesiredEye.set(pose.eye.x, pose.eye.y, pose.eye.z);
+      this.firstPersonDesiredForward
+        .set(
+          pose.look.x - pose.eye.x,
+          pose.look.y - pose.eye.y,
+          pose.look.z - pose.eye.z,
+        )
+        .normalize();
+      if (this.snapCamera || !this.firstPersonReady) {
+        this.firstPersonEye.copy(this.firstPersonDesiredEye);
+        this.firstPersonForward.copy(this.firstPersonDesiredForward);
+      } else {
+        this.firstPersonEye.lerp(
+          this.firstPersonDesiredEye,
+          dampingAlpha(me?.swimming ? 8 : 10, dt),
+        );
+        this.firstPersonForward
+          .lerp(this.firstPersonDesiredForward, dampingAlpha(12, dt))
+          .normalize();
+      }
+      const gentlePitch = me?.swimming
+        ? 0
+        : THREE.MathUtils.clamp(b.pitch * 0.25, -0.06, 0.06);
+      const gentleRoll = me?.swimming
+        ? 0
+        : THREE.MathUtils.clamp(b.roll * 0.08, -0.025, 0.025);
+      this.camera.position.copy(this.firstPersonEye);
+      this.cameraTarget
+        .copy(this.firstPersonEye)
+        .addScaledVector(this.firstPersonForward, 6);
+      this.cameraTarget.y += gentlePitch;
+      this.camera.up.set(0, 1, 0);
       this.camera.lookAt(this.cameraTarget);
+      this.camera.rotation.z += gentleRoll;
       (this.camera.userData.look ??= new THREE.Vector3()).copy(
         this.cameraTarget,
       );
+      this.firstPersonReady = true;
     } else {
+      this.firstPersonReady = false;
+      this.camera.up.set(0, 1, 0);
       const zoom = world.mission?.survival ? 1.12 : 1;
       const ahead =
         world.mission?.survival?.stage === 'fight' && !focus ? 4 : 0;
@@ -1325,7 +1376,8 @@ export class ReelScene {
     // Camera trauma / shake
     if (this.trauma > 0) {
       this.trauma = Math.max(0, this.trauma - dt * 1.2);
-      const shake = this.trauma * this.trauma;
+      const shake =
+        this.trauma * this.trauma * cameraShakeScale(this.cameraMode);
       this.camera.position.x += (Math.random() - 0.5) * 0.9 * shake;
       this.camera.position.y += (Math.random() - 0.5) * 0.6 * shake;
       this.camera.position.z += (Math.random() - 0.5) * 0.6 * shake;
