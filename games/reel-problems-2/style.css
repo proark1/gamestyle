@@ -1206,6 +1206,9 @@
     right: max(12px, env(safe-area-inset-right));
     bottom: calc(220px + env(safe-area-inset-bottom));
   }
+  .campaign .reel-camera {
+    bottom: calc(275px + env(safe-area-inset-bottom));
+  }
   .reel-camera kbd {
     display: none;
   }
