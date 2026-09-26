@@ -93,6 +93,31 @@ async function checkDesktop() {
     fullPage: true,
   });
 
+  await page.keyboard.press('Digit4');
+  await page.locator('main[data-look="comic-adventure"]').waitFor();
+  await page.getByText('BEACON AWAKE').waitFor();
+  await page.waitForTimeout(500);
+  await page.screenshot({
+    path: path.join(output, 'd-comic-adventure.png'),
+    fullPage: true,
+  });
+
+  await page.keyboard.press('Digit5');
+  await page.locator('main[data-look="comic-noir"]').waitFor();
+  await page.waitForTimeout(500);
+  await page.screenshot({
+    path: path.join(output, 'e-comic-noir.png'),
+    fullPage: true,
+  });
+
+  await page.keyboard.press('Digit6');
+  await page.locator('main[data-look="comic-sketch"]').waitFor();
+  await page.waitForTimeout(500);
+  await page.screenshot({
+    path: path.join(output, 'f-comic-sketch.png'),
+    fullPage: true,
+  });
+
   await page.keyboard.down('KeyW');
   await page.waitForTimeout(350);
   await page.keyboard.up('KeyW');
@@ -147,8 +172,10 @@ async function checkMobile() {
   await page.getByText('BEACON AWAKE').waitFor();
   await page.getByRole('button', { name: /2/ }).click();
   await page.locator('main[data-look="stormlight"]').waitFor();
+  await page.locator('.rp3-lookdev-tabs button').nth(3).click();
+  await page.locator('main[data-look="comic-adventure"]').waitFor();
   await page.screenshot({
-    path: path.join(output, 'mobile-stormlight.png'),
+    path: path.join(output, 'mobile-comic-adventure.png'),
     fullPage: true,
   });
   const overflow = await page.evaluate(

@@ -6,11 +6,24 @@ import {
   START_POSE,
   summarizeFrames,
 } from './controller';
+import { COMIC_TREATMENTS } from './comic';
 import { LOOK_STYLES, LOOK_STYLE_IDS, styleFromShortcut } from './styles';
-import { fishGlowFromDepth, waterDensity, waterMotion } from './water';
+import {
+  fishGlowFromDepth,
+  waterDensity,
+  waterMotion,
+  waterTreatment,
+} from './water';
 
 void test('all look presets define complete, distinct rendering treatments', () => {
-  assert.deepEqual(LOOK_STYLE_IDS, ['storybook', 'stormlight', 'graphic']);
+  assert.deepEqual(LOOK_STYLE_IDS, [
+    'storybook',
+    'stormlight',
+    'graphic',
+    'comic-adventure',
+    'comic-noir',
+    'comic-sketch',
+  ]);
   for (const id of LOOK_STYLE_IDS) {
     const style = LOOK_STYLES[id];
     assert.equal(style.id, id);
@@ -18,6 +31,7 @@ void test('all look presets define complete, distinct rendering treatments', () 
     assert.ok(style.palette.sea !== style.palette.rock);
     assert.ok(style.sunIntensity > 0);
     assert.ok(style.waterSpeed > 0);
+    assert.ok(style.comic in COMIC_TREATMENTS);
   }
   assert.notEqual(
     LOOK_STYLES.storybook.fogDensity,
@@ -34,7 +48,31 @@ void test('number shortcuts select styles without ambiguous fallthrough', () => 
   assert.equal(styleFromShortcut('Digit1'), 'storybook');
   assert.equal(styleFromShortcut('Numpad2'), 'stormlight');
   assert.equal(styleFromShortcut('Digit3'), 'graphic');
+  assert.equal(styleFromShortcut('Digit4'), 'comic-adventure');
+  assert.equal(styleFromShortcut('Numpad5'), 'comic-noir');
+  assert.equal(styleFromShortcut('Digit6'), 'comic-sketch');
   assert.equal(styleFromShortcut('KeyA'), null);
+});
+
+void test('comic presets use distinct scene and water treatments', () => {
+  const comicIds = ['comic-adventure', 'comic-noir', 'comic-sketch'] as const;
+  assert.deepEqual(
+    comicIds.map((id) => LOOK_STYLES[id].comic),
+    ['adventure', 'noir', 'sketch'],
+  );
+  assert.deepEqual(
+    comicIds.map((id) => waterTreatment(id).comicMode),
+    [2, 3, 4],
+  );
+  assert.equal(
+    new Set(comicIds.map((id) => LOOK_STYLES[id].palette.sky)).size,
+    comicIds.length,
+  );
+  assert.equal(
+    new Set(comicIds.map((id) => COMIC_TREATMENTS[LOOK_STYLES[id].comic].bands))
+      .size,
+    comicIds.length,
+  );
 });
 
 void test('first-person movement is heading-relative and remains bounded', () => {

@@ -1,6 +1,11 @@
 import * as T from 'three';
 import { createRenderer } from '../../../shared/rendering/create-renderer';
 import { disposeObject } from '../../../shared/rendering/dispose-object';
+import {
+  applyComicTreatment,
+  COMIC_TREATMENTS,
+  installComicTreatment,
+} from './comic';
 import { lookPose, movePose, START_POSE, summarizeFrames } from './controller';
 import { LOOK_STYLES } from './styles';
 import { createSculptedWater, type SculptedWater } from './water';
@@ -14,7 +19,11 @@ import type {
 } from './types';
 
 type TaggedMesh = T.Mesh<T.BufferGeometry, T.MeshStandardMaterial> & {
-  userData: { role?: MaterialRole; outline?: T.LineSegments };
+  userData: {
+    role?: MaterialRole;
+    outline?: T.LineSegments;
+    sketchOutline?: T.LineSegments;
+  };
 };
 
 const ZERO_INPUT: LookdevInput = { forward: 0, strafe: 0, sprint: false };
@@ -217,6 +226,7 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
         material.emissive.set(LOOK_STYLES.storybook.palette[role]);
         material.emissiveIntensity = role === 'fish' ? 1.7 : 0.7;
       }
+      installComicTreatment(material);
       this.materials.set(role, material);
     }
   }
@@ -247,14 +257,32 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
   }
 
   private addOutline(mesh: TaggedMesh) {
+    const geometry = new T.EdgesGeometry(mesh.geometry, 32);
     const lines = new T.LineSegments(
-      new T.EdgesGeometry(mesh.geometry, 32),
-      new T.LineBasicMaterial({ color: '#173e46', transparent: true }),
+      geometry,
+      new T.LineBasicMaterial({
+        color: '#173e46',
+        transparent: true,
+        depthWrite: false,
+      }),
     );
     lines.renderOrder = 8;
     lines.scale.setScalar(1.006);
-    mesh.add(lines);
+    const sketchLines = new T.LineSegments(
+      geometry,
+      new T.LineBasicMaterial({
+        color: '#453b32',
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      }),
+    );
+    sketchLines.visible = false;
+    sketchLines.renderOrder = 7;
+    sketchLines.scale.setScalar(1.018);
+    mesh.add(lines, sketchLines);
     mesh.userData.outline = lines;
+    mesh.userData.sketchOutline = sketchLines;
   }
 
   private rounded(
@@ -1009,20 +1037,39 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
 
   private applyStyle(id: LookStyleId) {
     const style = LOOK_STYLES[id];
+    const comic = COMIC_TREATMENTS[style.comic];
     this.style = id;
     this.scene.background = new T.Color(style.palette.sky);
     this.scene.fog = new T.FogExp2(style.palette.fog, style.fogDensity);
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = style.exposure;
-    this.hemi.color.set(id === 'stormlight' ? '#a9cbd0' : '#ddf4ea');
-    this.hemi.groundColor.set(id === 'graphic' ? '#39645c' : '#274d50');
+    this.hemi.color.set(
+      id === 'stormlight'
+        ? '#a9cbd0'
+        : style.comic === 'noir'
+          ? '#687682'
+          : style.comic === 'sketch'
+            ? '#f5e8c4'
+            : style.comic === 'adventure'
+              ? '#e7fff2'
+              : '#ddf4ea',
+    );
+    this.hemi.groundColor.set(
+      id === 'graphic' || style.comic === 'adventure'
+        ? '#39645c'
+        : style.comic === 'noir'
+          ? '#0d1722'
+          : style.comic === 'sketch'
+            ? '#756a57'
+            : '#274d50',
+    );
     this.hemi.intensity = style.hemiIntensity;
     this.sun.color.set(style.palette.sun);
     this.sun.intensity = style.sunIntensity;
     this.sun.position.set(
-      id === 'stormlight' ? -19 : -14,
-      id === 'stormlight' ? 15 : 23,
-      id === 'stormlight' ? -8 : 13,
+      id === 'stormlight' || style.comic === 'noir' ? -19 : -14,
+      id === 'stormlight' || style.comic === 'noir' ? 15 : 23,
+      id === 'stormlight' || style.comic === 'noir' ? -8 : 13,
     );
     for (const [role, material] of this.materials) {
       material.color.set(style.palette[role]);
@@ -1033,8 +1080,20 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
       material.metalness =
         role === 'metal' ? 0.12 + style.metalness : style.metalness;
       material.bumpScale =
-        id === 'graphic' ? 0 : id === 'stormlight' ? 0.028 : 0.018;
-      material.flatShading = id === 'graphic';
+        id === 'graphic' ||
+        style.comic === 'adventure' ||
+        style.comic === 'noir'
+          ? 0
+          : id === 'stormlight'
+            ? 0.028
+            : style.comic === 'sketch'
+              ? 0.01
+              : 0.018;
+      material.flatShading =
+        id === 'graphic' ||
+        style.comic === 'adventure' ||
+        style.comic === 'noir';
+      applyComicTreatment(material, style.comic);
       if (role === 'glass' || role === 'fish') {
         material.emissive.set(style.palette[role]);
         material.emissiveIntensity =
@@ -1049,11 +1108,30 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
       outline.visible = style.edgeStrength > 0;
       (outline.material as T.LineBasicMaterial).color.set(style.palette.ink);
       (outline.material as T.LineBasicMaterial).opacity = style.edgeStrength;
+      outline.scale.setScalar(comic.outlineScale);
+      const sketchOutline = (object as TaggedMesh).userData.sketchOutline;
+      if (sketchOutline) {
+        sketchOutline.visible = comic.ghostOpacity > 0;
+        sketchOutline.scale.setScalar(
+          comic.outlineScale + 0.006 + (object.id % 3) * 0.0015,
+        );
+        (sketchOutline.material as T.LineBasicMaterial).color.set(
+          style.palette.ink,
+        );
+        (sketchOutline.material as T.LineBasicMaterial).opacity =
+          comic.ghostOpacity;
+      }
     });
     this.rain.visible = style.rain > 0 && !this.reducedMotion;
     this.motes.visible = style.ambientParticles > 0 && id !== 'stormlight';
     (this.motes.material as T.PointsMaterial).color.set(
-      id === 'graphic' ? '#fff0a0' : '#ffd995',
+      style.comic === 'noir'
+        ? '#ffbd55'
+        : style.comic === 'sketch'
+          ? '#f2d89d'
+          : id === 'graphic' || style.comic === 'adventure'
+            ? '#fff0a0'
+            : '#ffd995',
     );
     this.fishLight.color.set(style.palette.fish);
     this.beaconLight.color.set(style.palette.beacon);

@@ -210,6 +210,7 @@ export default function ReelProblems3Lookdev() {
       data-look={style}
     >
       <div className="rp3-lookdev-world" ref={host} />
+      <div className="rp3-lookdev-comic-texture" aria-hidden="true" />
 
       <header className="rp3-lookdev-topbar">
         <a href="/reel-problems-3" className="rp3-lookdev-back">

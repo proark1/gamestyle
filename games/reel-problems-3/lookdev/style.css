@@ -33,6 +33,126 @@
   cursor: none;
 }
 
+.rp3-lookdev-comic-texture {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rp3-lookdev[data-look='comic-adventure'] {
+  --look-ink: #142b38;
+  --look-paper: #fff4d3;
+  --look-amber: #ffd34f;
+  --look-coral: #ef574f;
+}
+
+.rp3-lookdev[data-look='comic-adventure'] .rp3-lookdev-comic-texture {
+  opacity: 0.1;
+  background-image: radial-gradient(circle, #142b38 0 0.7px, transparent 0.9px);
+  background-size: 7px 7px;
+  mix-blend-mode: multiply;
+  mask-image: linear-gradient(to bottom, #000c, #0005 68%, transparent 92%);
+}
+
+.rp3-lookdev[data-look='comic-noir'] {
+  --look-ink: #080d16;
+  --look-paper: #e7dec4;
+  --look-amber: #f3b64e;
+  --look-coral: #a64b3c;
+}
+
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-comic-texture {
+  opacity: 0.16;
+  background-image:
+    repeating-linear-gradient(118deg, #05080d 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(62deg, #05080d 0 1px, transparent 1px 11px);
+  mix-blend-mode: multiply;
+  mask-image: linear-gradient(105deg, #000e 0 35%, #0004 70%, transparent);
+}
+
+.rp3-lookdev[data-look='comic-sketch'] {
+  --look-ink: #453b32;
+  --look-paper: #f5e7c5;
+  --look-amber: #e6ac4f;
+  --look-coral: #ce6f58;
+}
+
+.rp3-lookdev[data-look='comic-sketch'] .rp3-lookdev-comic-texture {
+  opacity: 0.075;
+  background-image:
+    repeating-linear-gradient(2deg, #453b32 0 1px, transparent 1px 6px),
+    radial-gradient(circle, #8b6248 0 0.6px, transparent 0.9px);
+  background-size:
+    auto,
+    11px 13px;
+  mix-blend-mode: multiply;
+}
+
+.rp3-lookdev[data-look^='comic-'] .rp3-lookdev-back,
+.rp3-lookdev[data-look^='comic-'] .rp3-lookdev-performance,
+.rp3-lookdev[data-look^='comic-'] .rp3-lookdev-title,
+.rp3-lookdev[data-look^='comic-'] .rp3-lookdev-actions button {
+  border: 2px solid var(--look-paper);
+  box-shadow: 0.28rem 0.28rem 0 var(--look-ink);
+  backdrop-filter: none;
+}
+
+.rp3-lookdev[data-look^='comic-'] .rp3-lookdev-objective,
+.rp3-lookdev[data-look^='comic-'] .rp3-lookdev-switcher,
+.rp3-lookdev[data-look^='comic-'] .rp3-lookdev-guide {
+  border: 2px solid var(--look-ink);
+  box-shadow: 0.35rem 0.35rem 0 var(--look-ink);
+  backdrop-filter: none;
+}
+
+.rp3-lookdev[data-look='comic-adventure'] .rp3-lookdev-objective,
+.rp3-lookdev[data-look='comic-adventure'] .rp3-lookdev-switcher,
+.rp3-lookdev[data-look='comic-adventure'] .rp3-lookdev-guide {
+  background: #fff4d3f2;
+}
+
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-objective,
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-switcher,
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-guide {
+  color: #e7dec4;
+  background: #111b25f2;
+  border-color: #e7dec4;
+  box-shadow: 0.35rem 0.35rem 0 #05080d;
+}
+
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-tabs button {
+  color: #e7dec4;
+  background: #263744d9;
+  border-color: #e7dec45c;
+}
+
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-tabs button.is-active {
+  color: #080d16;
+  background: #f3b64e;
+  border-color: #f7d894;
+}
+
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-switcher > p,
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-guide > button small {
+  color: #aebbb8;
+}
+
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-guide > button,
+.rp3-lookdev[data-look='comic-noir'] .rp3-lookdev-guide > label {
+  border-color: #e7dec429;
+}
+
+.rp3-lookdev[data-look='comic-sketch'] .rp3-lookdev-objective,
+.rp3-lookdev[data-look='comic-sketch'] .rp3-lookdev-switcher,
+.rp3-lookdev[data-look='comic-sketch'] .rp3-lookdev-guide {
+  background:
+    linear-gradient(#f5e7c5ed, #f5e7c5ed),
+    repeating-linear-gradient(2deg, #8b62481f 0 1px, transparent 1px 5px);
+  border-radius: 0.25rem 0.85rem 0.32rem 0.65rem;
+}
+
 .rp3-lookdev button,
 .rp3-lookdev a {
   font: inherit;
@@ -205,7 +325,7 @@
   z-index: 15;
   bottom: max(1rem, env(safe-area-inset-bottom));
   left: 1rem;
-  width: min(19rem, calc(100vw - 2rem));
+  width: min(33rem, calc(100vw - 2rem));
   padding: 0.75rem;
   color: var(--look-ink);
   background: #f4eedbe8;
@@ -243,6 +363,7 @@
 }
 .rp3-lookdev-tabs {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.32rem;
 }
 .rp3-lookdev-tabs button {
@@ -633,7 +754,7 @@
     top: 4.4rem;
   }
   .rp3-lookdev-switcher {
-    width: 16.5rem;
+    width: 27rem;
   }
   .rp3-lookdev-actions button span {
     display: none;
@@ -700,15 +821,15 @@
     height: 1.55rem;
   }
   .rp3-lookdev-actions {
-    top: 11.35rem;
+    top: 14.25rem;
     right: 0.55rem;
     bottom: auto;
   }
   .rp3-lookdev-guide {
-    top: 14.5rem;
+    top: 17.35rem;
     right: 0.55rem;
     bottom: auto;
-    max-height: calc(100dvh - 15rem);
+    max-height: calc(100dvh - 17.85rem);
     overflow: auto;
   }
   .rp3-lookdev-prompt {

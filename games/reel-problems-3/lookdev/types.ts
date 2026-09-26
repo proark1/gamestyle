@@ -1,4 +1,12 @@
-export type LookStyleId = 'storybook' | 'stormlight' | 'graphic';
+export type LookStyleId =
+  | 'storybook'
+  | 'stormlight'
+  | 'graphic'
+  | 'comic-adventure'
+  | 'comic-noir'
+  | 'comic-sketch';
+
+export type ComicTreatmentId = 'none' | 'adventure' | 'noir' | 'sketch';
 
 export type MaterialRole =
   | 'rock'
@@ -29,7 +37,7 @@ export type LookPalette = Record<MaterialRole, string> & {
 
 export type LookStyle = {
   id: LookStyleId;
-  key: '1' | '2' | '3';
+  key: '1' | '2' | '3' | '4' | '5' | '6';
   label: string;
   eyebrow: string;
   description: string;
@@ -47,6 +55,7 @@ export type LookStyle = {
   rain: number;
   edgeStrength: number;
   ambientParticles: number;
+  comic: ComicTreatmentId;
 };
 
 export type LookdevInput = {

@@ -14,6 +14,12 @@ export type WaterMotion = {
   speed: number;
 };
 
+export type WaterTreatment = {
+  ridgeStrength: number;
+  foamOpacity: number;
+  comicMode: number;
+};
+
 export const WATER_DENSITY: Record<'desktop' | 'touch', WaterDensity> = {
   desktop: {
     surfaceSegments: 92,
@@ -52,6 +58,30 @@ const STYLE_WATER = {
     foamOpacity: 0.9,
     graphic: 1,
   },
+  'comic-adventure': {
+    amplitude: 0.42,
+    speed: 0.92,
+    ridgeStrength: 0.62,
+    ridgeWidth: 0.68,
+    foamOpacity: 0.86,
+    graphic: 2,
+  },
+  'comic-noir': {
+    amplitude: 0.6,
+    speed: 1.02,
+    ridgeStrength: 0.4,
+    ridgeWidth: 0.8,
+    foamOpacity: 0.5,
+    graphic: 3,
+  },
+  'comic-sketch': {
+    amplitude: 0.34,
+    speed: 0.64,
+    ridgeStrength: 0.46,
+    ridgeWidth: 0.72,
+    foamOpacity: 0.68,
+    graphic: 4,
+  },
 } as const;
 
 export function waterDensity(touch: boolean): WaterDensity {
@@ -66,6 +96,15 @@ export function waterMotion(
   return reducedMotion
     ? { amplitude: water.amplitude * 0.2, speed: water.speed * 0.24 }
     : { amplitude: water.amplitude, speed: water.speed };
+}
+
+export function waterTreatment(style: LookStyleId): WaterTreatment {
+  const water = STYLE_WATER[style];
+  return {
+    ridgeStrength: water.ridgeStrength,
+    foamOpacity: water.foamOpacity,
+    comicMode: water.graphic,
+  };
 }
 
 export function fishGlowFromDepth(depth: number) {
@@ -102,6 +141,7 @@ function sculptedMaterial() {
       deep: { value: new T.Color('#245d65') },
       foam: { value: new T.Color('#e9f3dc') },
       fishColor: { value: new T.Color('#79edcf') },
+      ink: { value: new T.Color('#173e46') },
       fishPosition: { value: new T.Vector2() },
       fishGlow: { value: 0.7 },
       ridgeStrength: { value: STYLE_WATER.storybook.ridgeStrength },
@@ -153,6 +193,7 @@ function sculptedMaterial() {
       uniform vec3 deep;
       uniform vec3 foam;
       uniform vec3 fishColor;
+      uniform vec3 ink;
       uniform vec2 fishPosition;
       uniform float fishGlow;
       uniform float ridgeStrength;
@@ -170,7 +211,10 @@ function sculptedMaterial() {
         float light = max(0.0, dot(normal, lightDirection));
         float fresnel = pow(1.0 - max(0.0, dot(normal, viewDirection)), 2.1);
         float shaped = smoothstep(-amplitude, amplitude, vHeight);
-        if (graphic > .5) shaped = floor(shaped * 3.0) / 3.0;
+        if (graphic > .5) {
+          float bands = graphic < 1.5 ? 3.0 : graphic < 2.5 ? 4.0 : graphic < 3.5 ? 2.0 : 5.0;
+          shaped = floor(shaped * bands + .2) / bands;
+        }
         float clayLight = smoothstep(.08, .88, light);
         float slope = clamp((1.0 - normal.y) * 2.7, 0.0, 1.0);
         vec3 color = mix(deep, shallow, .26 + shaped * .62);
@@ -189,6 +233,19 @@ function sculptedMaterial() {
         float breakup = sin(vWorld.x * .63 + sin(vWorld.z * .38) * 1.7) * .5 + .5;
         ridge *= mix(.36, 1.0, smoothstep(.18, .82, breakup));
         color = mix(color, foam, ridge * ridgeStrength);
+
+        if (graphic > 1.5 && graphic < 2.5) {
+          float speedStreak = smoothstep(.83, .98, sin(vWorld.x * .74 + vWorld.z * .21) * .5 + .5);
+          color = mix(color, foam, speedStreak * shoulder * .16);
+        }
+        if (graphic > 2.5 && graphic < 3.5) {
+          float inkTrough = 1.0 - smoothstep(-amplitude * .52, amplitude * .08, vHeight);
+          color = mix(color, ink, inkTrough * .46);
+        }
+        if (graphic > 3.5) {
+          float painted = sin(vWorld.x * .43 + sin(vWorld.z * .31) * 1.4) * .5 + .5;
+          color *= .94 + painted * .1;
+        }
 
         float fishDistance = distance(vWorld.xz, fishPosition);
         float fishShape = exp(-fishDistance * fishDistance * .045) * fishGlow;
@@ -379,13 +436,21 @@ export function createSculptedWater(touch: boolean) {
     material.uniforms.deep.value.set(look.palette.seaDeep);
     material.uniforms.foam.value.set(look.palette.foam);
     material.uniforms.fishColor.value.set(look.palette.fish);
+    material.uniforms.ink.value.set(look.palette.ink);
     material.uniforms.ridgeStrength.value = tuning.ridgeStrength;
     material.uniforms.ridgeWidth.value = tuning.ridgeWidth;
     material.uniforms.graphic.value = tuning.graphic;
     foamMaterial.color.set(look.palette.foam);
     foamMaterial.opacity = tuning.foamOpacity;
-    wetMaterial.color.set(next === 'stormlight' ? '#142f38' : '#245b5e');
-    wetMaterial.opacity = next === 'graphic' ? 0.86 : 0.7;
+    wetMaterial.color.set(
+      next === 'stormlight' || next === 'comic-noir'
+        ? '#142f38'
+        : next === 'comic-sketch'
+          ? '#536f69'
+          : '#245b5e',
+    );
+    wetMaterial.opacity =
+      next === 'graphic' || next === 'comic-adventure' ? 0.86 : 0.7;
   };
 
   const setReducedMotion = (reduced: boolean) => {
