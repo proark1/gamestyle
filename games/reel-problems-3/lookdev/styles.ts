@@ -5,7 +5,7 @@ export const LOOK_STYLES: Record<LookStyleId, LookStyle> = {
     id: 'storybook',
     key: '1',
     label: 'Handmade storybook',
-    eyebrow: 'A · WARM & TACTILE',
+    eyebrow: 'A · SELECTED DIRECTION',
     description: 'Sculpted clay, painted detail and soft coastal depth.',
     palette: {
       sky: '#82b9b7',

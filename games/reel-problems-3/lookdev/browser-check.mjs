@@ -57,6 +57,24 @@ async function checkDesktop() {
     fullPage: true,
   });
 
+  const canvas = page.locator('[data-lookdev-canvas="true"]');
+  await canvas.click({ position: { x: 900, y: 650 } });
+  await page.mouse.move(720, 450);
+  await page.mouse.move(1_110, 610, { steps: 12 });
+  await page.mouse.move(1_300, 790, { steps: 8 });
+  await page.waitForTimeout(400);
+  await page.screenshot({
+    path: path.join(output, 'a-storybook-water.png'),
+    fullPage: true,
+  });
+  await page.waitForTimeout(650);
+  await page.screenshot({
+    path: path.join(output, 'a-storybook-water-later.png'),
+    fullPage: true,
+  });
+  await page.evaluate(() => document.exitPointerLock?.());
+  await page.waitForTimeout(100);
+
   await page.keyboard.press('Digit2');
   await page.locator('main[data-look="stormlight"]').waitFor();
   await page.getByText('BEACON AWAKE').waitFor();
@@ -78,6 +96,7 @@ async function checkDesktop() {
   await page.keyboard.down('KeyW');
   await page.waitForTimeout(350);
   await page.keyboard.up('KeyW');
+  await page.evaluate(() => document.exitPointerLock?.());
   await page.getByRole('button', { name: /Review/ }).click();
   await page.getByText('Materials', { exact: true }).waitFor();
   const overflow = await page.evaluate(

@@ -7,6 +7,7 @@ import {
   summarizeFrames,
 } from './controller';
 import { LOOK_STYLES, LOOK_STYLE_IDS, styleFromShortcut } from './styles';
+import { fishGlowFromDepth, waterDensity, waterMotion } from './water';
 
 void test('all look presets define complete, distinct rendering treatments', () => {
   assert.deepEqual(LOOK_STYLE_IDS, ['storybook', 'stormlight', 'graphic']);
@@ -54,4 +55,28 @@ void test('performance summaries are stable and ignore negative samples', () => 
   assert.deepEqual(summarizeFrames([]), { fps: 0, frameMs: 0 });
   assert.deepEqual(summarizeFrames([16, 17, 17]), { fps: 60, frameMs: 16.7 });
   assert.deepEqual(summarizeFrames([-10, 20]), { fps: 100, frameMs: 10 });
+});
+
+void test('sculpted water scales density and reduced motion without losing depth', () => {
+  const desktop = waterDensity(false);
+  const touch = waterDensity(true);
+  assert.ok(desktop.surfaceSegments > touch.surfaceSegments);
+  assert.ok(desktop.shorelineSegments > touch.shorelineSegments);
+  assert.ok(desktop.contactFoam > touch.contactFoam);
+
+  for (const id of LOOK_STYLE_IDS) {
+    const normal = waterMotion(id, false);
+    const reduced = waterMotion(id, true);
+    assert.ok(normal.amplitude > 0);
+    assert.ok(normal.speed > 0);
+    assert.ok(reduced.amplitude > 0);
+    assert.ok(reduced.amplitude < normal.amplitude);
+    assert.ok(reduced.speed < normal.speed);
+  }
+});
+
+void test('fish glow is bounded and fades with depth', () => {
+  assert.equal(fishGlowFromDepth(-2), 1);
+  assert.ok(fishGlowFromDepth(1) > fishGlowFromDepth(3));
+  assert.equal(fishGlowFromDepth(20), 0);
 });

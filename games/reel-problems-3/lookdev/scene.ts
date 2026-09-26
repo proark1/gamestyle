@@ -3,6 +3,7 @@ import { createRenderer } from '../../../shared/rendering/create-renderer';
 import { disposeObject } from '../../../shared/rendering/dispose-object';
 import { lookPose, movePose, START_POSE, summarizeFrames } from './controller';
 import { LOOK_STYLES } from './styles';
+import { createSculptedWater, type SculptedWater } from './water';
 import type {
   LookdevInput,
   LookdevRuntime,
@@ -98,56 +99,6 @@ function tubeBetween(a: T.Vector3, b: T.Vector3, radius: number) {
   );
 }
 
-function waterMaterial() {
-  return new T.ShaderMaterial({
-    uniforms: {
-      time: { value: 0 },
-      amplitude: { value: 0.25 },
-      speed: { value: 0.8 },
-      shallow: { value: new T.Color('#4d928d') },
-      deep: { value: new T.Color('#245d65') },
-      foam: { value: new T.Color('#e9f3dc') },
-      graphic: { value: 0 },
-    },
-    vertexShader: `
-      uniform float time;
-      uniform float amplitude;
-      uniform float speed;
-      varying float vWave;
-      varying vec3 vWorld;
-      void main() {
-        vec3 p = position;
-        float a = sin(p.x * .34 + time * speed) * amplitude;
-        float b = cos(p.y * .26 - time * speed * .72) * amplitude * .62;
-        float c = sin((p.x + p.y) * .15 + time * speed * .48) * amplitude * .38;
-        p.z += a + b + c;
-        vWave = a + b + c;
-        vec4 world = modelMatrix * vec4(p, 1.0);
-        vWorld = world.xyz;
-        gl_Position = projectionMatrix * viewMatrix * world;
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 shallow;
-      uniform vec3 deep;
-      uniform vec3 foam;
-      uniform float graphic;
-      varying float vWave;
-      varying vec3 vWorld;
-      void main() {
-        float bands = smoothstep(-.26, .45, vWave);
-        if (graphic > .5) bands = floor(bands * 3.0) / 3.0;
-        vec3 color = mix(deep, shallow, .28 + bands * .56);
-        float glint = smoothstep(.42, .67, vWave);
-        color = mix(color, foam, glint * (.22 + graphic * .25));
-        gl_FragColor = vec4(color, .96);
-      }
-    `,
-    side: T.DoubleSide,
-    transparent: true,
-  });
-}
-
 export class ReelProblems3LookdevScene implements LookdevRuntime {
   private scene = new T.Scene();
   private camera = new T.PerspectiveCamera(68, 1, 0.04, 220);
@@ -157,8 +108,7 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
   private atmosphere = new T.Group();
   private materials = new Map<MaterialRole, T.MeshStandardMaterial>();
   private texture = clayTexture();
-  private water = new T.Mesh<T.PlaneGeometry, T.ShaderMaterial>();
-  private foamLines: T.Line[] = [];
+  private water!: SculptedWater;
   private grass: T.Object3D[] = [];
   private clouds: T.Object3D[] = [];
   private birds: T.Object3D[] = [];
@@ -341,36 +291,8 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
   }
 
   private buildWater() {
-    const geometry = new T.PlaneGeometry(180, 180, 72, 72);
-    geometry.rotateX(-Math.PI / 2);
-    this.water = new T.Mesh(geometry, waterMaterial());
-    this.water.position.y = -0.68;
-    this.water.receiveShadow = true;
-    this.root.add(this.water);
-    for (let i = 0; i < 8; i++) {
-      const points: T.Vector3[] = [];
-      for (let segment = 0; segment < 24; segment++) {
-        const angle = (segment / 23) * Math.PI * 1.32 + 0.88;
-        const radius = 13.2 + i * 0.22;
-        points.push(
-          new T.Vector3(
-            Math.cos(angle) * radius,
-            -0.5 + i * 0.008,
-            -1 + Math.sin(angle) * radius,
-          ),
-        );
-      }
-      const line = new T.Line(
-        new T.BufferGeometry().setFromPoints(points),
-        new T.LineBasicMaterial({
-          color: LOOK_STYLES.storybook.palette.foam,
-          transparent: true,
-          opacity: 0.18 + i * 0.025,
-        }),
-      );
-      this.foamLines.push(line);
-      this.root.add(line);
-    }
+    this.water = createSculptedWater(this.quality.touch);
+    this.root.add(this.water.group);
   }
 
   private buildDistantIslands() {
@@ -1120,23 +1042,7 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
       }
       material.needsUpdate = true;
     }
-    const uniforms = this.water.material.uniforms;
-    uniforms.amplitude.value = this.reducedMotion
-      ? style.waterAmplitude * 0.18
-      : style.waterAmplitude;
-    uniforms.speed.value = this.reducedMotion
-      ? style.waterSpeed * 0.2
-      : style.waterSpeed;
-    uniforms.shallow.value.set(style.palette.sea);
-    uniforms.deep.value.set(style.palette.seaDeep);
-    uniforms.foam.value.set(style.palette.foam);
-    uniforms.graphic.value = style.edgeStrength;
-    for (const line of this.foamLines) {
-      const material = line.material as T.LineBasicMaterial;
-      material.color.set(style.palette.foam);
-      material.opacity =
-        id === 'graphic' ? 0.65 : id === 'stormlight' ? 0.22 : 0.36;
-    }
+    this.water.setStyle(id);
     this.root.traverse((object) => {
       const outline = (object as TaggedMesh).userData.outline;
       if (!outline) return;
@@ -1168,6 +1074,7 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
 
   setReducedMotion(reduced: boolean) {
     this.reducedMotion = reduced;
+    this.water.setReducedMotion(reduced);
     this.applyStyle(this.style);
   }
 
@@ -1269,7 +1176,6 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
     this.updateTarget();
 
     const style = LOOK_STYLES[this.style];
-    this.water.material.uniforms.time.value = seconds;
     const motion = this.reducedMotion ? 0.08 : 1;
     for (let i = 0; i < this.grass.length; i++) {
       const plant = this.grass[i];
@@ -1297,6 +1203,8 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
       3 + Math.cos(seconds * 0.32) * 5.5,
     );
     this.fish.rotation.y = -seconds * 0.32 + Math.PI / 2;
+    this.water.setFish(this.fish.position, -0.68 - this.fish.position.y);
+    this.water.update(seconds);
     if (this.beaconLit) this.beaconBeam.rotation.z = seconds * 0.24;
     if (this.rain.visible) {
       const positions = this.rain.geometry.attributes
@@ -1331,9 +1239,10 @@ export class ReelProblems3LookdevScene implements LookdevRuntime {
     this.renderer.domElement.removeEventListener('click', this.onCanvasClick);
     if (document.pointerLockElement === this.renderer.domElement)
       document.exitPointerLock?.();
+    this.root.remove(this.water.group);
+    this.water.dispose();
     disposeObject(this.scene);
     for (const material of this.materials.values()) material.dispose();
-    this.water.material.dispose();
     this.texture.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
