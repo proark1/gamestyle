@@ -24,6 +24,35 @@ function bait(world: AdventureWorld) {
   );
 }
 
+const CAST_CHARGE_MS = 920;
+
+function validateCast(world: AdventureWorld, player: AdventurePlayer) {
+  if (!heldRod(world, player)) throw new Error('Pick up a fishing rod first.');
+  if (player.line) throw new Error('Your line is already in the water.');
+  if (!bait(world)) throw new Error('The bait bucket is empty.');
+  if (!insideMissionZone(world))
+    throw new Error('Steer into the marked fishing ground.');
+}
+
+export function castCharge(world: AdventureWorld, player: AdventurePlayer) {
+  if (player.castStartedAt !== undefined) return;
+  validateCast(world, player);
+  player.castStartedAt = world.clock;
+}
+
+export function cancelCast(player: AdventurePlayer) {
+  player.castStartedAt = undefined;
+}
+
+export function releaseCast(world: AdventureWorld, player: AdventurePlayer) {
+  if (player.castStartedAt === undefined)
+    throw new Error('Hold the F key to charge your cast first.');
+  const elapsed = Math.max(0, world.clock - player.castStartedAt);
+  player.castStartedAt = undefined;
+  const power = 0.22 + Math.min(1, elapsed / CAST_CHARGE_MS) * 0.78;
+  return castLine(world, player, power);
+}
+
 function weightFor(world: AdventureWorld, species: FishSpecies) {
   const definition = FISH_DEFINITIONS[species];
   const random = nextRandom(world.randomState);
@@ -39,7 +68,9 @@ export function ensureMissionFish(world: AdventureWorld) {
   if (!mission || mission.complete || !insideMissionZone(world, mission))
     return;
   const live = world.fish.filter(
-    (fish) => fish.zoneId === mission.id && fish.state !== 'secured',
+    (fish) =>
+      fish.zoneId === mission.id &&
+      ['swimming', 'biting', 'hooked', 'landing'].includes(fish.state),
   );
   if (live.length >= 8) return;
   const count = 10 - live.length;
@@ -76,20 +107,22 @@ export function castLine(
   player: AdventurePlayer,
   power = 0.65,
 ) {
-  if (!heldRod(world, player)) throw new Error('Pick up a fishing rod first.');
-  if (player.line) throw new Error('Your line is already in the water.');
-  const baitBucket = bait(world);
-  if (!baitBucket) throw new Error('The bait bucket is empty.');
-  if (!insideMissionZone(world))
-    throw new Error('Steer into the marked fishing ground.');
+  validateCast(world, player);
+  const baitBucket = bait(world)!;
+  player.castStartedAt = undefined;
   baitBucket.contents = Math.max(0, (baitBucket.contents ?? 0) - 1);
   const origin = toWorldSpace(world, player);
   const yaw = world.boat.yaw + player.yaw;
   const length = 8 + Math.max(0, Math.min(1, power)) * 13;
+  const castDuration = 460 + length * 18;
   player.line = {
     state: 'casting',
     x: origin.x + Math.sin(yaw) * length,
     z: origin.z + Math.cos(yaw) * length,
+    castFromX: origin.x + Math.sin(yaw) * 0.62,
+    castFromZ: origin.z + Math.cos(yaw) * 0.62,
+    castStartedAt: world.clock,
+    castDuration,
     length,
     tension: 0,
     strain: 0,
@@ -106,13 +139,18 @@ export function hookLine(world: AdventureWorld, player: AdventurePlayer) {
   const line = player.line;
   if (!line || line.state !== 'biting')
     throw new Error('Wait for the rod tip to dip before you hook.');
+  const mission = currentMission(world);
   const fish = world.fish
     .filter((candidate) => candidate.state === 'swimming')
     .map((candidate) => ({
       fish: candidate,
       distance: Math.hypot(candidate.x - line.x, candidate.z - line.z),
     }))
-    .sort((a, b) => a.distance - b.distance)[0]?.fish;
+    .sort((a, b) => {
+      const aMatches = a.fish.species === mission?.species ? 1 : 0;
+      const bMatches = b.fish.species === mission?.species ? 1 : 0;
+      return bMatches - aMatches || a.distance - b.distance;
+    })[0]?.fish;
   if (!fish) {
     player.line = null;
     throw new Error('The fish slipped away. Cast again.');
@@ -230,7 +268,7 @@ export function stepFishing(world: AdventureWorld, dt: number) {
     if (fish.state !== 'swimming' && fish.state !== 'hooked') continue;
     const definition = FISH_DEFINITIONS[fish.species];
     const phase = world.clock / (820 + definition.pull * 340) + fish.weight;
-    const speed = definition.school ? 1.4 : 0.85;
+    const speed = (definition.school ? 1.4 : 0.85) * definition.swimAmplitude;
     fish.vx = Math.sin(phase * 1.7) * speed;
     fish.vz = Math.cos(phase * 1.25) * speed;
     fish.x += fish.vx * dt;
@@ -244,9 +282,19 @@ export function stepFishing(world: AdventureWorld, dt: number) {
     }
   }
   for (const player of world.players) {
+    if (
+      player.castStartedAt !== undefined &&
+      (!heldRod(world, player) || player.line || !insideMissionZone(world))
+    )
+      cancelCast(player);
     const line = player.line;
     if (!line) continue;
-    if (line.state === 'casting') line.state = 'waiting';
+    if (
+      line.state === 'casting' &&
+      world.clock >=
+        (line.castStartedAt ?? world.clock) + (line.castDuration ?? 0)
+    )
+      line.state = 'waiting';
     if (line.state === 'waiting' && line.biteAt && world.clock >= line.biteAt) {
       line.state = 'biting';
       line.biteUntil = world.clock + 1550;
@@ -271,20 +319,37 @@ export function stepFishing(world: AdventureWorld, dt: number) {
     const dx = fish.x - origin.x;
     const dz = fish.z - origin.z;
     const distance = Math.max(0.1, Math.hypot(dx, dz));
+    const burstWave = Math.max(
+      0,
+      Math.sin(
+        (world.clock / definition.burstCadence) * Math.PI * 2 + fish.weight,
+      ),
+    );
+    const burst = burstWave ** 5;
     if (player.input.reel) line.length = Math.max(2.8, line.length - dt * 3.4);
-    else line.length = Math.min(26, line.length + dt * 0.85);
+    else
+      line.length = Math.min(
+        26,
+        line.length + dt * (0.9 + Math.min(1.2, line.tension) * 0.65),
+      );
+    if (burst > 0.04) {
+      fish.x += (dx / distance) * dt * burst * (0.7 + definition.pull);
+      fish.z += (dz / distance) * dt * burst * (0.7 + definition.pull);
+    }
     line.tension = Math.max(
       0,
       Math.min(
         1.35,
-        distance / Math.max(1, line.length) + definition.pull * 0.16,
+        (distance / Math.max(1, line.length) - 0.72) * 1.25 +
+          definition.pull * 0.18 +
+          burst * definition.burstStrength,
       ),
     );
     if (player.input.reel && line.tension <= definition.safeTension) {
       fish.stamina = Math.max(
         0,
         fish.stamina -
-          dt * (10 + (1 - line.tension) * 9) * (player.bot ? 1.65 : 1),
+          dt * (10 + (1 - line.tension) * 9) * (player.bot ? 2.05 : 1),
       );
       fish.x -=
         (dx / distance) *

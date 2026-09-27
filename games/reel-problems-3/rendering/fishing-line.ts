@@ -2,6 +2,35 @@ import type { FishingLine } from '../types';
 
 export type LinePoint = { x: number; y: number; z: number };
 
+export function castProgress(
+  clock: number,
+  startedAt?: number,
+  duration?: number,
+) {
+  if (startedAt === undefined || !duration || duration <= 0) return 1;
+  return Math.max(0, Math.min(1, (clock - startedAt) / duration));
+}
+
+export function castRigPosition(
+  from: LinePoint,
+  to: LinePoint,
+  progress: number,
+) {
+  const clamped = Math.max(0, Math.min(1, progress));
+  if (clamped === 0) return { ...from };
+  if (clamped === 1) return { ...to };
+  const eased = 1 - (1 - clamped) ** 2;
+  const horizontal = Math.hypot(to.x - from.x, to.z - from.z);
+  return {
+    x: from.x + (to.x - from.x) * eased,
+    y:
+      from.y +
+      (to.y - from.y) * eased +
+      Math.sin(clamped * Math.PI) * Math.min(4.2, 1.35 + horizontal * 0.12),
+    z: from.z + (to.z - from.z) * eased,
+  };
+}
+
 export function fillFishingLine(
   output: Float32Array,
   start: LinePoint,

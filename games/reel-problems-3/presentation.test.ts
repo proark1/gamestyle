@@ -36,7 +36,7 @@ void test('the guide leads a player from rod pickup to casting', () => {
   holdRod(world, player.id);
   const step = nextStepFor(world, player, null);
   assert.equal(step.id, 'cast-line');
-  assert.equal(step.control, 'F');
+  assert.equal(step.control, 'HOLD F KEY');
   assert.match(step.title, /cast/i);
 });
 
@@ -58,7 +58,7 @@ void test('the guide explains every active fishing-line state', () => {
       nextStepFor(world, player, null).id,
       nextStepFor(world, player, null).control,
     ],
-    ['hook-now', 'F'],
+    ['hook-now', 'F KEY'],
   );
   player.line.state = 'tangled';
   assert.equal(nextStepFor(world, player, null).id, 'untangle-line');
@@ -106,9 +106,34 @@ void test('touch and German guidance use the matching action language', () => {
     touch: true,
     german: true,
   });
-  assert.equal(step.control, 'ANGELN');
+  assert.equal(step.control, 'WERFEN HALTEN');
   assert.equal(step.eyebrow, 'NÄCHSTER SCHRITT');
-  assert.match(step.title, /auswerfen/i);
+  assert.match(step.title, /Wurf|laden/i);
+});
+
+void test('the guide makes charged casting and the physical R key explicit', () => {
+  const { world, player } = fishingWorld();
+  holdRod(world, player.id);
+  player.castStartedAt = world.clock;
+  const charging = nextStepFor(world, player, null);
+  assert.equal(charging.id, 'charge-cast');
+  assert.equal(charging.control, 'RELEASE F');
+
+  const fish = world.fish[0];
+  fish.state = 'hooked';
+  player.castStartedAt = undefined;
+  player.line = {
+    state: 'hooked',
+    x: fish.x,
+    z: fish.z,
+    length: 10,
+    tension: 0.3,
+    strain: 0,
+    fishId: fish.id,
+  };
+  const reeling = nextStepFor(world, player, null);
+  assert.equal(reeling.control, 'HOLD R KEY');
+  assert.match(reeling.detail, /release on red/i);
 });
 
 void test('the guide safely handles a missing local player', () => {

@@ -214,7 +214,12 @@ function stepAngler(
     const hasBait = world.items.some(
       (item) => item.kind === 'bait-bucket' && (item.contents ?? 0) > 0,
     );
-    if (hasBait) castLine(world, player, 0.72);
+    if (hasBait) {
+      const imperfectPower =
+        0.5 +
+        ((Math.sin(world.clock / 1_370 + player.seat * 1.7) + 1) / 2) * 0.34;
+      castLine(world, player, imperfectPower);
+    }
     return;
   }
   if (player.line.state === 'biting') hookLine(world, player);
@@ -326,6 +331,11 @@ function stepEmergency(
 }
 
 export function stepBots(world: AdventureWorld, dt: number) {
+  for (const player of world.players)
+    if (player.bot && player.line?.state === 'tangled') {
+      untangleLine(world, player);
+      player.task = undefined;
+    }
   const designatedHelm = helmBot(world);
   const largeFish = world.fish.find(
     (fish) =>
@@ -362,6 +372,10 @@ export function stepBots(world: AdventureWorld, dt: number) {
       }
       if (player === netHelper) {
         stepNet(world, player, dt);
+        continue;
+      }
+      if (player.line) {
+        stepAngler(world, player, dt);
         continue;
       }
       if (player === emergencyHelper && stepEmergency(world, player, dt))

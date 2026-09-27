@@ -101,6 +101,7 @@ export class VoyageAudio {
       if (event.id <= this.lastEvent) continue;
       this.lastEvent = event.id;
       if (event.kind === 'item-placed') this.tone(280, 0.16, 0.11, 'triangle');
+      else if (event.kind === 'cast') this.tone(230, 0.18, 0.08, 'triangle');
       else if (event.kind === 'bite') this.tone(392, 0.24, 0.16, 'triangle');
       else if (event.kind === 'hooked') this.chord([196, 294, 392]);
       else if (event.kind === 'incident-started' || event.kind === 'damage')
@@ -108,6 +109,9 @@ export class VoyageAudio {
       else if (event.kind === 'repair') this.tone(240, 0.12, 0.13, 'square');
       else if (event.kind === 'rescue') this.chord([262, 330, 392]);
       else if (event.kind === 'fish-landed') this.chord([110, 165, 220, 330]);
+      else if (event.kind === 'fish-secured') this.chord([220, 330, 440]);
+      else if (event.kind === 'line-snapped')
+        this.tone(82, 0.3, 0.16, 'sawtooth');
       else if (event.kind === 'docked') this.chord([196, 247, 294, 392]);
     }
   }

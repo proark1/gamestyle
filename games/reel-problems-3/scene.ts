@@ -8,7 +8,12 @@ import { FISH_DEFINITIONS } from './content/fish';
 import { ITEM_DEFINITIONS } from './content/items';
 import { STATION_POSITIONS } from './stations';
 import { BOAT_LAYOUT, STARBOARD_RAIL_SEGMENTS } from './boat-layout';
-import { fillFishingLine } from './rendering/fishing-line';
+import {
+  castProgress,
+  castRigPosition,
+  fillFishingLine,
+} from './rendering/fishing-line';
+import { sampleRodPose } from './rendering/rod-pose';
 import {
   interpolateAngle,
   sampleMotion,
@@ -17,6 +22,7 @@ import {
 import type {
   AdventureSnapshot,
   AdventureWorld,
+  FishSpecies,
   ItemStateRecord,
   StreamCell,
 } from './types';
@@ -44,6 +50,7 @@ const rubber = clay(0x18222a, 0.94);
 const cork = clay(0xc6935d, 0.96);
 const rodBlank = clay(0x26383a, 0.62, 0.12);
 const steel = clay(0x9aa5a0, 0.3, 0.7);
+const rodUpAxis = new THREE.Vector3(0, 1, 0);
 
 function mesh(
   geometry: THREE.BufferGeometry,
@@ -123,17 +130,28 @@ function markInteractive(root: THREE.Object3D, target: string) {
   });
 }
 
-function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
+function makeFish(species?: FishSpecies) {
   const group = new THREE.Group();
-  const fishMaterial = clay(color, 0.52);
+  const definition = species ? FISH_DEFINITIONS[species] : undefined;
+  const fishMaterial = clay(definition?.color ?? 0x60a8b3, 0.38, 0.04);
+  const accentMaterial = clay(definition?.accent ?? 0xf4fbef, 0.42, 0.02);
+  const eel = species === 'lantern-eel';
+  const tuna = species === 'storm-tuna';
+  const sprat = species === 'silver-sprat';
+  const glassfin = species === 'glassfin';
   const body = mesh(
-    new THREE.SphereGeometry(0.48, 18, 12),
+    new THREE.SphereGeometry(0.48, 20, 14),
     fishMaterial,
     0,
     0.35,
     0,
   );
-  body.scale.set(0.72, 0.52, 1.22);
+  body.name = 'fish-body';
+  body.scale.set(
+    tuna ? 0.96 : eel ? 0.56 : sprat ? 0.58 : 0.72,
+    tuna ? 0.66 : glassfin ? 0.42 : 0.52,
+    eel ? 1.78 : tuna ? 1.42 : sprat ? 1.34 : 1.22,
+  );
   const tail = mesh(
     new THREE.ConeGeometry(0.34, 0.58, 3),
     fishMaterial,
@@ -141,6 +159,7 @@ function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
     0.35,
     -0.75,
   );
+  tail.name = 'fish-tail';
   tail.rotation.x = -Math.PI / 2;
   tail.scale.x = 0.65;
   const dorsal = mesh(
@@ -152,6 +171,19 @@ function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
   );
   dorsal.rotation.x = Math.PI / 2;
   dorsal.scale.x = 0.42;
+  const accent = mesh(
+    new THREE.SphereGeometry(0.49, 16, 10),
+    accentMaterial,
+    0,
+    0.35,
+    -0.08,
+  );
+  accent.scale.set(
+    (tuna ? 0.96 : eel ? 0.56 : sprat ? 0.58 : 0.72) * 1.015,
+    (tuna ? 0.66 : glassfin ? 0.42 : 0.52) * 1.015,
+    0.16,
+  );
+  accent.rotation.x = 0.08;
   const mouth = mesh(
     new THREE.TorusGeometry(0.07, 0.018, 6, 12),
     clay(0x5c2730),
@@ -185,7 +217,8 @@ function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
     fin.rotation.x = 0.3;
     group.add(eye, glint, fin);
   }
-  group.add(body, tail, dorsal, mouth);
+  group.add(body, accent, tail, dorsal, mouth);
+  group.userData.fishSpecies = species;
   return group;
 }
 
@@ -204,16 +237,18 @@ function makeFishingRod() {
     cylinder(0.076, 0.076, 0.07, rubber, 0, 0.075, 0, 12),
     cylinder(0.052, 0.056, 0.12, brass, 0, 0.61, 0, 12),
   );
-  for (let index = 0; index < points.length - 1; index++)
-    assembly.add(
-      taperedSegment(
-        points[index],
-        points[index + 1],
-        0.031 - index * 0.0055,
-        0.026 - index * 0.0055,
-        rodBlank,
-      ),
+  const rodSegments: THREE.Mesh[] = [];
+  for (let index = 0; index < points.length - 1; index++) {
+    const segment = taperedSegment(
+      points[index],
+      points[index + 1],
+      0.031 - index * 0.0055,
+      0.026 - index * 0.0055,
+      rodBlank,
     );
+    rodSegments.push(segment);
+    assembly.add(segment);
+  }
 
   const reelBody = cylinder(0.082, 0.082, 0.16, navy, -0.13, 0.56, 0, 14);
   reelBody.rotation.x = Math.PI / 2;
@@ -239,18 +274,23 @@ function makeFishingRod() {
   assembly.add(reelBody, reelFront, reelBack, reelSeat, crank, crankKnob);
 
   const guidePoints = [points[1], points[2], points[3], points[4]];
+  const rodGuides: THREE.Group[] = [];
   for (let index = 0; index < guidePoints.length; index++) {
     const point = guidePoints[index];
     const radius = 0.029 - index * 0.0035;
+    const mount = new THREE.Group();
+    mount.position.copy(point);
     const guide = mesh(
       new THREE.TorusGeometry(radius, 0.0045, 5, 12),
       steel,
-      point.x - 0.038,
-      point.y,
+      -0.038,
+      0,
       0,
     );
-    const foot = box(0.04, 0.008, 0.012, steel, point.x - 0.018, point.y, 0);
-    assembly.add(foot, guide);
+    const foot = box(0.04, 0.008, 0.012, steel, -0.018, 0, 0);
+    mount.add(foot, guide);
+    rodGuides.push(mount);
+    assembly.add(mount);
   }
   const localLine = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([
@@ -270,9 +310,84 @@ function makeFishingRod() {
   assembly.add(localLine);
   assembly.rotation.z = -0.075;
   assembly.userData.rodTip = points.at(-1)!.clone();
+  assembly.userData.rodSegments = rodSegments;
+  assembly.userData.rodGuides = rodGuides;
+  assembly.userData.rodLengths = points
+    .slice(1)
+    .map((point, index) => point.distanceTo(points[index]));
+  assembly.userData.localLine = localLine;
+  assembly.userData.crank = crank;
+  assembly.userData.rodPosePoints = points.map((point) => point.clone());
+  assembly.userData.rodLinePoints = Array.from(
+    { length: guidePoints.length + 2 },
+    () => new THREE.Vector3(),
+  );
+  assembly.userData.rodDirection = new THREE.Vector3();
+  group.userData.rodAssembly = assembly;
   group.userData.itemKind = 'rod';
   group.add(assembly);
+  applyFishingRodPose(group, {
+    bend: 0.12,
+    backswing: 0,
+    forward: 0,
+    twitch: 0,
+    reel: 0,
+  });
   return group;
+}
+
+function applyFishingRodPose(
+  root: THREE.Group,
+  pose: ReturnType<typeof sampleRodPose>,
+) {
+  const assembly = root.userData.rodAssembly as THREE.Group | undefined;
+  if (!assembly) return;
+  const segments = assembly.userData.rodSegments as THREE.Mesh[];
+  const guides = assembly.userData.rodGuides as THREE.Group[];
+  const lengths = assembly.userData.rodLengths as number[];
+  const points = assembly.userData.rodPosePoints as THREE.Vector3[];
+  const direction = assembly.userData.rodDirection as THREE.Vector3;
+  points[0].set(0, 0.64, 0);
+  for (let index = 0; index < lengths.length; index++) {
+    const start = points[index];
+    const ratio = (index + 1) / lengths.length;
+    const angle =
+      pose.bend * (0.025 + ratio * ratio * 0.22) +
+      (index === lengths.length - 1 ? pose.twitch : 0);
+    const end = points[index + 1].set(
+      start.x - Math.sin(angle) * lengths[index],
+      start.y + Math.cos(angle) * lengths[index],
+      0,
+    );
+    const segment = segments[index];
+    segment.position.copy(start).add(end).multiplyScalar(0.5);
+    segment.quaternion.setFromUnitVectors(
+      rodUpAxis,
+      direction.copy(end).sub(start).normalize(),
+    );
+    guides[index].position.copy(end);
+    guides[index].rotation.z = angle;
+  }
+  const localLine = assembly.userData.localLine as THREE.Line;
+  const linePoints = assembly.userData.rodLinePoints as THREE.Vector3[];
+  linePoints[0].set(-0.13, 0.56, 0.105);
+  for (let index = 1; index < points.length; index++)
+    linePoints[index].set(points[index].x - 0.038, points[index].y, 0.006);
+  linePoints.at(-1)!.set(points.at(-1)!.x - 0.01, points.at(-1)!.y + 0.015, 0);
+  const lineAttribute = localLine.geometry.getAttribute(
+    'position',
+  ) as THREE.BufferAttribute;
+  for (let index = 0; index < linePoints.length; index++)
+    lineAttribute.setXYZ(
+      index,
+      linePoints[index].x,
+      linePoints[index].y,
+      linePoints[index].z,
+    );
+  lineAttribute.needsUpdate = true;
+  assembly.userData.rodTip = points.at(-1)!.clone();
+  const crank = assembly.userData.crank as THREE.Mesh;
+  crank.rotation.z = 0.5 + Math.sin(pose.reel) * 0.5;
 }
 
 function makeGuidanceMarker() {
@@ -299,7 +414,32 @@ function makeGuidanceMarker() {
   return group;
 }
 
-function makeItemModel(item: Pick<ItemStateRecord, 'kind' | 'fishSpecies'>) {
+function makeFishingFloat() {
+  const group = new THREE.Group();
+  const top = cylinder(0.055, 0.07, 0.22, red, 0, 0.1, 0, 10);
+  const bottom = cylinder(0.07, 0.055, 0.18, cream, 0, -0.1, 0, 10);
+  const stem = cylinder(0.014, 0.014, 0.3, rubber, 0, 0.32, 0, 6);
+  const ripple = mesh(
+    new THREE.TorusGeometry(0.18, 0.012, 5, 20),
+    new THREE.MeshBasicMaterial({
+      color: 0xf4fbef,
+      transparent: true,
+      opacity: 0.42,
+    }),
+    0,
+    -0.08,
+    0,
+  );
+  ripple.name = 'float-ripple';
+  ripple.rotation.x = Math.PI / 2;
+  group.add(top, bottom, stem, ripple);
+  group.scale.setScalar(0.78);
+  return group;
+}
+
+function makeItemModel(
+  item: Pick<ItemStateRecord, 'kind' | 'fishSpecies' | 'fishWeight'>,
+) {
   const group = new THREE.Group();
   if (item.kind === 'rope') {
     for (let i = 0; i < 3; i++) {
@@ -429,11 +569,7 @@ function makeItemModel(item: Pick<ItemStateRecord, 'kind' | 'fishSpecies'>) {
     const face = cylinder(0.17, 0.17, 0.02, cream, 0, 0.15);
     group.add(base, face);
   } else if (item.kind === 'fish') {
-    group.add(
-      makeFish(
-        item.fishSpecies ? FISH_DEFINITIONS[item.fishSpecies].color : 0x60a8b3,
-      ),
-    );
+    group.add(makeFish(item.fishSpecies));
   }
   group.name = ITEM_DEFINITIONS[item.kind].model;
   return group;
@@ -653,7 +789,9 @@ function makeBoat() {
 
   const liveWell = box(1.15, 0.58, 0.82, teal, 1.82, 1.31, 1.72);
   const liveWellLid = box(1.2, 0.1, 0.87, cream, 1.82, 1.64, 1.72);
+  liveWellLid.name = 'ice-hold-lid';
   liveWellLid.rotation.x = -0.08;
+  boat.userData.iceHoldLid = liveWellLid;
   boat.add(liveWell, liveWellLid);
   for (const [kind, point] of Object.entries(STATION_POSITIONS)) {
     const marker = mesh(
@@ -813,6 +951,7 @@ export class ReelProblems3Scene {
     string,
     { line: THREE.Line; positions: Float32Array }
   >();
+  private floatMeshes = new Map<string, THREE.Group>();
   private cellMeshes = new Map<string, THREE.Group>();
   private latest?: AdventureSnapshot;
   private visualWorld?: AdventureWorld;
@@ -1090,7 +1229,7 @@ export class ReelProblems3Scene {
   private syncItems(world: AdventureWorld) {
     const alive = new Set<string>();
     for (const item of world.items) {
-      if (['held', 'submerged'].includes(item.state)) continue;
+      if (['held', 'submerged', 'secured'].includes(item.state)) continue;
       alive.add(item.id);
       let model = this.itemMeshes.get(item.id);
       if (!model) {
@@ -1110,12 +1249,19 @@ export class ReelProblems3Scene {
         item.z,
       );
       model.rotation.y = item.yaw;
-      model.scale.setScalar(item.state === 'secured' ? 0.75 : 1);
+      model.scale.setScalar(
+        item.kind === 'fish'
+          ? 0.78 + Math.min(16, item.fishWeight ?? 1) * 0.028
+          : 1,
+      );
       if (item.kind === 'fish' && item.state === 'loose' && item.landedAt) {
         const age = Math.max(0, (world.clock - item.landedAt) / 1000);
-        const flop = Math.sin(age * 13) * Math.exp(-age * 0.72);
-        model.rotation.z = flop * 0.38;
-        model.rotation.x = flop * 0.18;
+        const flop = Math.sin(age * 15) * Math.exp(-age * 0.82);
+        const tail = model.getObjectByName('fish-tail');
+        model.rotation.z = flop * 0.32;
+        model.rotation.x = flop * 0.14;
+        model.position.y += Math.abs(flop) * 0.035;
+        if (tail) tail.rotation.z = flop * 0.7;
       }
     }
     for (const [id, model] of this.itemMeshes)
@@ -1231,7 +1377,21 @@ export class ReelProblems3Scene {
       alive.add(fish.id);
       let model = this.fishMeshes.get(fish.id);
       if (!model) {
-        model = makeFish(FISH_DEFINITIONS[fish.species].color);
+        model = makeFish(fish.species);
+        const wake = mesh(
+          new THREE.TorusGeometry(0.5, 0.024, 5, 24),
+          new THREE.MeshBasicMaterial({
+            color: 0xc9f5e8,
+            transparent: true,
+            opacity: 0.28,
+          }),
+          0,
+          0.62,
+          0,
+        );
+        wake.name = 'fish-wake';
+        wake.rotation.x = Math.PI / 2;
+        model.add(wake);
         this.fishMeshes.set(fish.id, model);
         this.scene.add(model);
       }
@@ -1255,6 +1415,14 @@ export class ReelProblems3Scene {
       );
       model.rotation.y = Math.atan2(fish.vx, fish.vz);
       model.scale.setScalar(0.75 + fish.weight * 0.035);
+      const wake = model.getObjectByName('fish-wake') as THREE.Mesh | undefined;
+      if (wake) {
+        wake.visible = fish.state !== 'landing';
+        const pulse = 1 + Math.sin(world.clock / 170 + fish.weight) * 0.16;
+        wake.scale.setScalar(pulse + (fish.state === 'hooked' ? 0.3 : 0));
+        (wake.material as THREE.MeshBasicMaterial).opacity =
+          fish.state === 'hooked' ? 0.46 : 0.22;
+      }
     }
     for (const [id, model] of this.fishMeshes)
       if (!alive.has(id)) {
@@ -1315,21 +1483,40 @@ export class ReelProblems3Scene {
             ),
           )
         : 0;
+      const start = { x: startX, y: 2.3 + (player.height ?? 0), z: startZ };
+      const finalEnd = {
+        x: player.line.x,
+        y:
+          hookedFish?.state === 'landing'
+            ? -0.2 +
+              landingProgress * 1.35 +
+              Math.sin(landingProgress * Math.PI) * 2.2
+            : player.line.state === 'hooked'
+              ? -0.25
+              : 0.08,
+        z: player.line.z,
+      };
+      const progress = castProgress(
+        world.clock,
+        player.line.castStartedAt,
+        player.line.castDuration,
+      );
+      const end =
+        player.line.state === 'casting'
+          ? castRigPosition(
+              {
+                x: player.line.castFromX ?? start.x,
+                y: start.y,
+                z: player.line.castFromZ ?? start.z,
+              },
+              finalEnd,
+              progress,
+            )
+          : finalEnd;
       fillFishingLine(
         record.positions,
-        { x: startX, y: 2.3 + (player.height ?? 0), z: startZ },
-        {
-          x: player.line.x,
-          y:
-            hookedFish?.state === 'landing'
-              ? -0.2 +
-                landingProgress * 1.35 +
-                Math.sin(landingProgress * Math.PI) * 2.2
-              : player.line.state === 'hooked'
-                ? -0.25
-                : 0.08,
-          z: player.line.z,
-        },
+        start,
+        end,
         player.line.state,
         player.line.tension,
         world.clock / 1000,
@@ -1345,6 +1532,45 @@ export class ReelProblems3Scene {
             ? 0xffcb52
             : 0xf7ddb2,
       );
+      let fishingFloat = this.floatMeshes.get(player.id);
+      if (!hookedFish) {
+        if (!fishingFloat) {
+          fishingFloat = makeFishingFloat();
+          this.floatMeshes.set(player.id, fishingFloat);
+          this.scene.add(fishingFloat);
+        }
+        fishingFloat.visible = true;
+        fishingFloat.position.set(end.x, end.y, end.z);
+        const dip = player.line.state === 'biting' ? 0.13 : 0;
+        fishingFloat.position.y -= dip;
+        fishingFloat.rotation.z =
+          player.line.state === 'casting'
+            ? Math.sin(progress * Math.PI) * 0.65
+            : Math.sin(world.clock / 260) * 0.04;
+        const ripple = fishingFloat.getObjectByName(
+          'float-ripple',
+        ) as THREE.Mesh | null;
+        if (ripple) {
+          const splash =
+            player.line.state === 'casting'
+              ? Math.max(0, (progress - 0.82) / 0.18)
+              : 1;
+          ripple.visible = splash > 0;
+          ripple.scale.setScalar(
+            player.line.state === 'casting'
+              ? 0.35 + splash * 1.9
+              : 1 + Math.sin(world.clock / 310) * 0.12,
+          );
+          (ripple.material as THREE.MeshBasicMaterial).opacity =
+            player.line.state === 'casting'
+              ? (1 - splash) * 0.65
+              : player.line.state === 'biting'
+                ? 0.58
+                : 0.28;
+        }
+      } else if (fishingFloat) {
+        fishingFloat.visible = false;
+      }
     }
     for (const [id, record] of this.lineMeshes)
       if (!alive.has(id)) {
@@ -1352,6 +1578,11 @@ export class ReelProblems3Scene {
         (record.line.material as THREE.Material).dispose();
         record.line.removeFromParent();
         this.lineMeshes.delete(id);
+      }
+    for (const [id, fishingFloat] of this.floatMeshes)
+      if (!alive.has(id)) {
+        fishingFloat.removeFromParent();
+        this.floatMeshes.delete(id);
       }
   }
 
@@ -1425,17 +1656,40 @@ export class ReelProblems3Scene {
       if (this.heldView?.userData.itemKind === 'rod') {
         const line = player.line;
         const time = world.clock / 1000;
+        const charge =
+          player.castStartedAt === undefined
+            ? 0
+            : Math.min(1, (world.clock - player.castStartedAt) / 920);
+        const cast =
+          line?.state === 'casting'
+            ? castProgress(world.clock, line.castStartedAt, line.castDuration)
+            : 0;
+        const rodPose = sampleRodPose({
+          state: line?.state,
+          charge,
+          cast,
+          tension: line?.tension,
+          reeling: player.input.reel,
+          timeSeconds: time,
+        });
         let targetX = 0.46;
         let targetY = -0.78;
         let targetZ = -1.02;
         let targetRX = -0.24;
         let targetRY = 0.08;
         let targetRZ = -0.12;
-        if (line?.state === 'casting') {
+        if (charge > 0) {
+          targetX = 0.5;
+          targetY = -0.72 + charge * 0.05;
+          targetZ = -0.98;
+          targetRX = -0.24 + rodPose.backswing * 0.42;
+          targetRY = 0.12;
+          targetRZ = -0.12 - rodPose.backswing * 0.18;
+        } else if (line?.state === 'casting') {
           targetX = 0.3;
           targetY = -0.55;
           targetZ = -1.2;
-          targetRX = -0.74;
+          targetRX = -0.46 - rodPose.forward * 0.72;
           targetRZ = 0.02;
         } else if (line?.state === 'waiting') {
           targetY += Math.sin(time * 2.4) * 0.008;
@@ -1457,6 +1711,7 @@ export class ReelProblems3Scene {
           targetX += Math.sin(time * 7) * 0.015;
           targetRZ = -0.26;
         }
+        applyFishingRodPose(this.heldView, rodPose);
         this.heldView.position.x = THREE.MathUtils.lerp(
           this.heldView.position.x,
           targetX,
@@ -1563,6 +1818,16 @@ export class ReelProblems3Scene {
       const roll = this.visualWorld.boat.roll;
       this.viewModel.rotation.z +=
         (-roll * 0.8 - this.viewModel.rotation.z) * 0.08;
+      const lid = this.boat.userData.iceHoldLid as THREE.Mesh | undefined;
+      if (lid) {
+        const secured = this.visualWorld.events
+          .toReversed()
+          .find((event) => event.kind === 'fish-secured');
+        const age = secured ? (this.visualWorld.clock - secured.at) / 720 : 2;
+        const lift = age >= 0 && age < 1 ? Math.sin(age * Math.PI) : 0;
+        lid.rotation.x = -0.08 - lift * 0.62;
+        lid.position.y = 1.64 + lift * 0.12;
+      }
     }
     this.renderer.render(this.scene, this.camera);
   };

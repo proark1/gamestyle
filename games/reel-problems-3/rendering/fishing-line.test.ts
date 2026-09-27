@@ -1,6 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fillFishingLine } from './fishing-line';
+import test from 'node:test';
+import { castProgress, castRigPosition, fillFishingLine } from './fishing-line';
 
 const start = { x: 0, y: 2, z: 0 };
 const end = { x: 8, y: 0, z: 2 };
@@ -73,4 +73,38 @@ void test('tension straightens a hooked line and landing adds an arc', () => {
       Math.abs(slack[middle] - straightMid),
   );
   assert.ok(landing[middle] > tight[middle]);
+});
+
+void test('cast progress and rig position stay bounded at exact endpoints', () => {
+  assert.equal(castProgress(900, 1_000, 500), 0);
+  assert.equal(castProgress(1_250, 1_000, 500), 0.5);
+  assert.equal(castProgress(2_000, 1_000, 500), 1);
+  const from = { x: 0, y: 2, z: 0 };
+  const to = { x: 12, y: 0, z: 4 };
+  assert.deepEqual(castRigPosition(from, to, 0), from);
+  assert.deepEqual(castRigPosition(from, to, 1), to);
+  const middle = castRigPosition(from, to, 0.5);
+  assert.ok(middle.y > from.y);
+  assert.ok(Number.isFinite(middle.x + middle.y + middle.z));
+});
+
+void test('waiting line sags while a tense hooked line straightens', () => {
+  const waiting = fillFishingLine(
+    new Float32Array(24),
+    start,
+    end,
+    'waiting',
+    0,
+    0,
+  );
+  const tight = fillFishingLine(
+    new Float32Array(24),
+    start,
+    end,
+    'hooked',
+    1,
+    0,
+  );
+  const middle = Math.floor(waiting.length / 6) * 3 + 1;
+  assert.ok(waiting[middle] < tight[middle]);
 });

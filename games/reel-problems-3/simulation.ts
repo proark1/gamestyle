@@ -2,7 +2,15 @@ import { clamp } from '../../shared/math/clamp';
 import { stepBoat, toBoatSpace } from './boat';
 import { reconcileBots, stepBots } from './bots';
 import { stepChaos, resolveIncident } from './chaos';
-import { castLine, hookLine, stepFishing, untangleLine } from './fishing';
+import {
+  cancelCast,
+  castCharge,
+  castLine,
+  hookLine,
+  releaseCast,
+  stepFishing,
+  untangleLine,
+} from './fishing';
 import {
   dropItem,
   loadedEssentials,
@@ -281,6 +289,9 @@ export function adventureAction(
     );
   if (type === 'cast')
     return castLine(world, player, Number(raw.power) || 0.65);
+  if (type === 'cast-charge') return castCharge(world, player);
+  if (type === 'cast-release') return releaseCast(world, player);
+  if (type === 'cast-cancel') return cancelCast(player);
   if (type === 'hook') return hookLine(world, player);
   if (type === 'untangle') return untangleLine(world, player);
   if (type === 'dock') return finishDocking(world, player.id);
@@ -301,6 +312,7 @@ export function replaceOwner(
 export function resetPlayerForRound(player: AdventurePlayer) {
   player.stats = freshStats();
   player.input = idleInput();
+  player.castStartedAt = undefined;
 }
 
 export function snapshot(

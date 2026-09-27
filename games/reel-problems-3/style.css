@@ -717,6 +717,25 @@
   display: block;
 }
 
+.rp3-next-step > div > .rp3-cast-charge {
+  display: block;
+  width: min(14rem, 100%);
+  height: 0.22rem;
+  margin-top: 0.38rem;
+  overflow: hidden;
+  background: #f4eedb24;
+  border-radius: 999px;
+}
+
+.rp3-cast-charge i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--rp3-teal), var(--rp3-amber));
+  border-radius: inherit;
+  box-shadow: 0 0 0.55rem #f0ad5573;
+  transition: width 90ms linear;
+}
+
 .rp3-next-step small {
   color: var(--rp3-amber);
   font:
@@ -747,7 +766,7 @@
 }
 
 .rp3-next-step kbd {
-  min-width: 3.3rem;
+  min-width: 4.2rem;
   padding: 0.5rem 0.58rem;
   color: var(--rp3-ink);
   background: #f4eedb;
@@ -1749,6 +1768,15 @@
   border-radius: 50%;
   font: 800 0.64rem/1 'DM Sans';
   pointer-events: auto;
+}
+
+.rp3-touch-actions button[aria-label*='cast' i],
+.rp3-touch-actions button[aria-label*='reel' i],
+.rp3-touch-actions button[aria-label*='fish' i] {
+  border-color: #f0ad55d1;
+  box-shadow:
+    inset 0 1px #ffffff2e,
+    0 0.28rem 0.8rem #102f3652;
 }
 
 .rp3-finale:has(.rp3-finale-copy:only-child) {

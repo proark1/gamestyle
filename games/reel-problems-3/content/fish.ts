@@ -8,6 +8,9 @@ export type FishDefinition = {
   maxWeight: number;
   stamina: number;
   pull: number;
+  burstCadence: number;
+  burstStrength: number;
+  swimAmplitude: number;
   safeTension: number;
   rare: boolean;
   needsNet: boolean;
@@ -25,6 +28,9 @@ export const FISH_DEFINITIONS: Record<FishSpecies, FishDefinition> = {
     maxWeight: 1.2,
     stamina: 28,
     pull: 0.35,
+    burstCadence: 1_350,
+    burstStrength: 0.08,
+    swimAmplitude: 1.2,
     safeTension: 0.82,
     rare: false,
     needsNet: false,
@@ -41,6 +47,9 @@ export const FISH_DEFINITIONS: Record<FishSpecies, FishDefinition> = {
     maxWeight: 3.2,
     stamina: 48,
     pull: 0.55,
+    burstCadence: 1_080,
+    burstStrength: 0.13,
+    swimAmplitude: 1.05,
     safeTension: 0.78,
     rare: false,
     needsNet: false,
@@ -57,6 +66,9 @@ export const FISH_DEFINITIONS: Record<FishSpecies, FishDefinition> = {
     maxWeight: 5.8,
     stamina: 65,
     pull: 0.68,
+    burstCadence: 1_520,
+    burstStrength: 0.17,
+    swimAmplitude: 0.88,
     safeTension: 0.76,
     rare: false,
     needsNet: false,
@@ -73,6 +85,9 @@ export const FISH_DEFINITIONS: Record<FishSpecies, FishDefinition> = {
     maxWeight: 2.6,
     stamina: 50,
     pull: 0.48,
+    burstCadence: 940,
+    burstStrength: 0.2,
+    swimAmplitude: 1.12,
     safeTension: 0.58,
     rare: false,
     needsNet: false,
@@ -89,6 +104,9 @@ export const FISH_DEFINITIONS: Record<FishSpecies, FishDefinition> = {
     maxWeight: 4.5,
     stamina: 72,
     pull: 0.76,
+    burstCadence: 1_180,
+    burstStrength: 0.22,
+    swimAmplitude: 1.24,
     safeTension: 0.7,
     rare: true,
     needsNet: false,
@@ -105,6 +123,9 @@ export const FISH_DEFINITIONS: Record<FishSpecies, FishDefinition> = {
     maxWeight: 16,
     stamina: 145,
     pull: 1,
+    burstCadence: 1_720,
+    burstStrength: 0.28,
+    swimAmplitude: 0.82,
     safeTension: 0.72,
     rare: true,
     needsNet: true,

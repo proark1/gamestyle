@@ -65,4 +65,10 @@ void test('a landed fish bounces before explicit ice-hold storage scores it', ()
   placeItem(world, player, 'ice-hold', fish.id);
   assert.equal(fish.state, 'secured');
   assert.equal(player.stats.catches, 1);
+  assert.equal(
+    world.events.filter((event) => event.kind === 'fish-secured').length,
+    1,
+  );
+  assert.throws(() => placeItem(world, player, 'ice-hold', fish.id));
+  assert.equal(player.stats.catches, 1);
 });

@@ -42,6 +42,7 @@ import {
   snapshot as makeSnapshot,
 } from './simulation';
 import { createPlayer } from './players';
+import { FISH_DEFINITIONS } from './content/fish';
 import {
   idleInput,
   type AdventureInput,
@@ -78,13 +79,14 @@ export default function ReelProblems3Game() {
   const controls = useRef<AdventureInput>(idleInput());
   const keys = useRef(new Set<string>());
   const touchLook = useRef<{ id: number; x: number; y: number } | null>(null);
+  const castHeld = useRef(false);
   const hud = useRef(
     hudPacer<AdventureSnapshot>((snap) => {
       const world = snap.world;
       const player = world.players.find(
         (candidate) => candidate.id === snap.selfId,
       );
-      return `${world.phase}:${world.activeMission}:${world.missions.map((mission) => mission.progress.toFixed(1)).join('|')}:${Math.round(world.boat.hull)}:${Math.round(world.boat.water)}:${Math.round(world.boat.speed)}:${player?.line?.state ?? ''}:${player?.line?.tension.toFixed(1) ?? ''}:${player?.held.join(',') ?? ''}:${world.events.at(-1)?.id ?? 0}:${Math.floor(world.clock / 500)}`;
+      return `${world.phase}:${world.activeMission}:${world.missions.map((mission) => mission.progress.toFixed(1)).join('|')}:${Math.round(world.boat.hull)}:${Math.round(world.boat.water)}:${Math.round(world.boat.speed)}:${player?.castStartedAt ?? ''}:${player?.line?.state ?? ''}:${player?.line?.tension.toFixed(1) ?? ''}:${player?.held.join(',') ?? ''}:${world.events.at(-1)?.id ?? 0}:${Math.floor(world.clock / 250)}`;
     }),
   );
   const [snapshot, setSnapshot] = useState<AdventureSnapshot | null>(null);
@@ -148,6 +150,7 @@ export default function ReelProblems3Game() {
       controls.current.jump = false;
       controls.current.brace = false;
       controls.current.reel = false;
+      castHeld.current = false;
       controls.current.throttle = 0;
       controls.current.steer = 0;
       keys.current.clear();
@@ -190,14 +193,26 @@ export default function ReelProblems3Game() {
     act('interact', { target: selected });
   }, [act, target, de]);
 
-  const fishAction = useCallback(() => {
+  const fishPress = useCallback(() => {
     const player = latest.current?.world.players.find(
       (candidate) => candidate.id === self.current,
     );
     if (player?.line?.state === 'biting') act('hook');
     else if (player?.line?.state === 'tangled') act('untangle');
-    else if (!player?.line) act('cast', { power: 0.72 });
+    else if (!player?.line && !castHeld.current) {
+      castHeld.current = true;
+      act('cast-charge');
+    }
   }, [act]);
+
+  const fishRelease = useCallback(
+    (cancel = false) => {
+      if (!castHeld.current) return;
+      castHeld.current = false;
+      act(cancel ? 'cast-cancel' : 'cast-release');
+    },
+    [act],
+  );
 
   useEffect(() => sound.current?.setEnabled(!muted), [muted]);
 
@@ -328,9 +343,10 @@ export default function ReelProblems3Game() {
       update();
       if (event.type === 'keydown' && !event.repeat) {
         if (event.code === 'KeyE') interact();
-        if (event.code === 'KeyF') fishAction();
+        if (event.code === 'KeyF') fishPress();
         if (event.code === 'KeyQ') act('drop');
       }
+      if (event.type === 'keyup' && event.code === 'KeyF') fishRelease();
     };
     const down = (event: KeyboardEvent) => key(event);
     const up = (event: KeyboardEvent) => key(event);
@@ -340,7 +356,7 @@ export default function ReelProblems3Game() {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, [act, fishAction, interact]);
+  }, [act, fishPress, fishRelease, interact]);
 
   const touchLookMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const last = touchLook.current;
@@ -371,6 +387,17 @@ export default function ReelProblems3Game() {
   const nextStep = world
     ? nextStepFor(world, me, target, { touch, german: de })
     : null;
+  const castCharge =
+    world && me?.castStartedAt !== undefined
+      ? Math.min(1, Math.max(0, (world.clock - me.castStartedAt) / 920))
+      : 0;
+  const hookedFish = me?.line?.fishId
+    ? world?.fish.find((fish) => fish.id === me.line?.fishId)
+    : undefined;
+  const safeTension = hookedFish
+    ? FISH_DEFINITIONS[hookedFish.species].safeTension
+    : 0.88;
+  const lineDanger = (me?.line?.tension ?? 0) > safeTension;
 
   useEffect(() => {
     scene.current?.setGuidanceTarget(nextStep?.target ?? null);
@@ -481,6 +508,11 @@ export default function ReelProblems3Game() {
                 <small>{nextStep.eyebrow}</small>
                 <strong>{nextStep.title}</strong>
                 <span>{nextStep.detail}</span>
+                {nextStep.id === 'charge-cast' ? (
+                  <span className="rp3-cast-charge" aria-hidden="true">
+                    <i style={{ width: `${22 + castCharge * 78}%` }} />
+                  </span>
+                ) : null}
               </div>
               {nextStep.control ? <kbd>{nextStep.control}</kbd> : null}
             </section>
@@ -502,10 +534,8 @@ export default function ReelProblems3Game() {
               </i>
             </div>
             {me?.line ? (
-              <div
-                className={`rp3-tension ${me.line.tension > 0.9 ? 'is-hot' : ''}`}
-              >
-                <span>LINE</span>
+              <div className={`rp3-tension ${lineDanger ? 'is-hot' : ''}`}>
+                <span>TENSION</span>
                 <i>
                   <b
                     style={{
@@ -628,12 +658,13 @@ export default function ReelProblems3Game() {
             <p>
               Load real equipment into its matching rack. One player takes the
               helm; everyone else fishes, stores catches, repairs damage, and
-              rescues friends. Fish bite briefly—press F, then hold R only while
-              tension is safe.
+              rescues friends. Hold F to load the rod and release it to cast.
+              When a fish bites, press F, then hold the R key only while tension
+              is safe.
             </p>
             <small>
-              WASD move · E interact · F cast/hook · R reel · Space jump · B
-              brace · Q drop
+              WASD move · E interact · hold/release F cast · F hook · hold R
+              reel · Space jump · B brace · Q drop
             </small>
           </article>
         </dialog>
@@ -666,7 +697,28 @@ export default function ReelProblems3Game() {
               ▲
             </button>
             <button onClick={interact}>USE</button>
-            <button onClick={fishAction}>FISH</button>
+            <button
+              aria-label={
+                me?.line?.state === 'biting'
+                  ? 'Hook fish'
+                  : me?.line?.state === 'tangled'
+                    ? 'Untangle line'
+                    : 'Hold to charge cast'
+              }
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                fishPress();
+              }}
+              onPointerUp={() => fishRelease()}
+              onPointerCancel={() => fishRelease(true)}
+              onLostPointerCapture={() => fishRelease(true)}
+            >
+              {me?.line?.state === 'biting'
+                ? 'HOOK'
+                : me?.line?.state === 'tangled'
+                  ? 'CLEAR'
+                  : 'CAST'}
+            </button>
             <button
               aria-label="Jump"
               onPointerDown={() => {
@@ -696,10 +748,17 @@ export default function ReelProblems3Game() {
               BRACE
             </button>
             <button
+              aria-label="Hold to reel"
               onPointerDown={() => {
                 controls.current.reel = true;
               }}
               onPointerUp={() => {
+                controls.current.reel = false;
+              }}
+              onPointerCancel={() => {
+                controls.current.reel = false;
+              }}
+              onLostPointerCapture={() => {
                 controls.current.reel = false;
               }}
             >

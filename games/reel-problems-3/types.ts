@@ -121,6 +121,10 @@ export type FishingLine = {
   state: 'casting' | 'waiting' | 'biting' | 'hooked' | 'tangled';
   x: number;
   z: number;
+  castFromX?: number;
+  castFromZ?: number;
+  castStartedAt?: number;
+  castDuration?: number;
   length: number;
   tension: number;
   strain: number;
@@ -182,6 +186,7 @@ export type AdventurePlayer = {
   overboard: boolean;
   station?: StationKind;
   held: string[];
+  castStartedAt?: number;
   line: FishingLine | null;
   task?: BotTask;
   nextBotThink: number;

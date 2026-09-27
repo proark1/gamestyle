@@ -99,19 +99,21 @@ function copy(german: boolean, english: string, translated: string) {
 }
 
 function control(
-  action: 'use' | 'fish' | 'reel' | 'release',
+  action: 'use' | 'cast' | 'hook' | 'reel' | 'release',
   touch: boolean,
   german: boolean,
 ) {
   if (touch) {
-    if (action === 'fish') return copy(german, 'FISH', 'ANGELN');
+    if (action === 'cast') return copy(german, 'HOLD CAST', 'WERFEN HALTEN');
+    if (action === 'hook') return copy(german, 'HOOK', 'ANHAKEN');
     if (action === 'reel') return copy(german, 'HOLD REEL', 'EINHOLEN HALTEN');
     if (action === 'release')
       return copy(german, 'RELEASE REEL', 'EINHOLEN LOSLASSEN');
     return copy(german, 'USE', 'BENUTZEN');
   }
-  if (action === 'fish') return 'F';
-  if (action === 'reel') return copy(german, 'HOLD R', 'R HALTEN');
+  if (action === 'cast') return copy(german, 'HOLD F KEY', 'F-TASTE HALTEN');
+  if (action === 'hook') return copy(german, 'F KEY', 'F-TASTE');
+  if (action === 'reel') return copy(german, 'HOLD R KEY', 'R-TASTE HALTEN');
   if (action === 'release') return copy(german, 'RELEASE R', 'R LOSLASSEN');
   return 'E';
 }
@@ -309,6 +311,19 @@ export function nextStepFor(
     };
 
   if (world.phase === 'fishing') {
+    if (player.castStartedAt !== undefined)
+      return {
+        id: 'charge-cast',
+        eyebrow: copy(german, 'CAST POWER', 'WURFKRAFT'),
+        title: copy(german, 'Release F to cast', 'F loslassen zum Auswerfen'),
+        detail: copy(
+          german,
+          'The bent rod shows how much power is loaded.',
+          'Die gebogene Angel zeigt die geladene Kraft.',
+        ),
+        control: copy(german, 'RELEASE F', 'F LOSLASSEN'),
+        tone: 'ready',
+      };
     const looseCatch = nearestItem(
       world,
       player,
@@ -345,7 +360,7 @@ export function nextStepFor(
           'The rod tip is down. The window is short.',
           'Die Rutenspitze ist unten. Das Zeitfenster ist kurz.',
         ),
-        control: control('fish', touch, german),
+        control: control('hook', touch, german),
         tone: 'urgent',
       };
     if (line?.state === 'tangled')
@@ -358,7 +373,7 @@ export function nextStepFor(
           'Clear the knot before continuing.',
           'Löse den Knoten, bevor du weiterangelst.',
         ),
-        control: control('fish', touch, german),
+        control: control('hook', touch, german),
         tone: 'urgent',
       };
     if (line?.state === 'hooked') {
@@ -478,15 +493,15 @@ export function nextStepFor(
       eyebrow,
       title: copy(
         german,
-        'Aim at the water and cast',
-        'Auf das Wasser zielen und auswerfen',
+        'Hold F to charge the cast',
+        'F-Taste halten, um den Wurf zu laden',
       ),
       detail: copy(
         german,
-        'Keep the center marker over open water.',
-        'Halte das Fadenkreuz über freies Wasser.',
+        'Aim at open water, then release F to throw.',
+        'Auf freies Wasser zielen und F zum Werfen loslassen.',
       ),
-      control: control('fish', touch, german),
+      control: control('cast', touch, german),
       tone: 'ready',
     };
   }
