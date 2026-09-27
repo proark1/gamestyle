@@ -150,6 +150,21 @@ export default function PanicCurlingGame() {
   const teamRef = useRef<TeamId>('red');
   const roleRef = useRef<Role>('deliverer');
 
+  const holdTool = useCallback((held: boolean) => {
+    if (activeGadgetRef.current === 'hairdryer') return;
+    setIsSweeping(held);
+    isSweepingRef.current = held;
+  }, []);
+
+  const blowSideways = useCallback((direction: -1 | 0 | 1) => {
+    setSteerDir(direction);
+    steerDirRef.current = direction;
+    if (activeGadgetRef.current === 'hairdryer') {
+      setIsSweeping(direction !== 0);
+      isSweepingRef.current = direction !== 0;
+    }
+  }, []);
+
   const sessionRef = useRef<PanicCurlingSession>({
     id: 'player-local',
     token: 'local-token',
@@ -451,8 +466,7 @@ export default function PanicCurlingGame() {
         ) {
           handleLaunch();
         } else if (current?.phase === 'sliding') {
-          setIsSweeping(true);
-          isSweepingRef.current = true;
+          holdTool(true);
         }
       } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         const current = localWorld.current ?? onlineWorld.current;
@@ -462,9 +476,11 @@ export default function PanicCurlingGame() {
             aimAngleRef.current = next;
             return next;
           });
-        } else if (current?.phase === 'sliding') {
-          setSteerDir(-1);
-          steerDirRef.current = -1;
+        } else if (
+          current?.phase === 'sliding' &&
+          activeGadgetRef.current === 'hairdryer'
+        ) {
+          blowSideways(-1);
         }
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         const current = localWorld.current ?? onlineWorld.current;
@@ -474,25 +490,25 @@ export default function PanicCurlingGame() {
             aimAngleRef.current = next;
             return next;
           });
-        } else if (current?.phase === 'sliding') {
-          setSteerDir(1);
-          steerDirRef.current = 1;
+        } else if (
+          current?.phase === 'sliding' &&
+          activeGadgetRef.current === 'hairdryer'
+        ) {
+          blowSideways(1);
         }
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
-        setIsSweeping(false);
-        isSweepingRef.current = false;
+        holdTool(false);
       } else if (
         e.code === 'ArrowLeft' ||
         e.code === 'KeyA' ||
         e.code === 'ArrowRight' ||
         e.code === 'KeyD'
       ) {
-        setSteerDir(0);
-        steerDirRef.current = 0;
+        blowSideways(0);
       }
     };
 
@@ -502,7 +518,7 @@ export default function PanicCurlingGame() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [role, handleLaunch]);
+  }, [role, handleLaunch, holdTool, blowSideways]);
 
   const world = snapshot?.world;
   const isMyTurn = world?.turnTeam === team;
@@ -916,6 +932,20 @@ export default function PanicCurlingGame() {
               );
               const sweeping =
                 sweeper?.status === 'sweeping' && sweeper.sweepIntensity > 0;
+              const currentGadget = sweeper?.gadget ?? activeGadget;
+              const toolStatus = sweeping
+                ? currentGadget === 'broom'
+                  ? strings.broomActive
+                  : currentGadget === 'hairdryer'
+                    ? sweeper?.steerDir === -1
+                      ? strings.dryerLeftActive
+                      : strings.dryerRightActive
+                    : strings.blowtorchActive
+                : activeGadget === 'broom'
+                  ? strings.broomPrompt
+                  : activeGadget === 'hairdryer'
+                    ? strings.dryerPrompt
+                    : strings.blowtorchPrompt;
               return (
                 <div className="curling-slide-telemetry">
                   <div className="curling-telemetry-item">
@@ -933,14 +963,12 @@ export default function PanicCurlingGame() {
                   </div>
                   <div className="curling-telemetry-item">
                     <span className="curling-telemetry-label">
-                      SWEEP STATUS
+                      {strings.toolEffectLabel}
                     </span>
                     <span
                       className={`curling-telemetry-val ${sweeping ? 'is-sweeping' : 'is-idle'}`}
                     >
-                      {sweeping
-                        ? `🔥 SWEEPING (-${Math.round(GADGET_CONFIGS[sweeper.gadget].frictionCut * 100)}%)`
-                        : 'HOLD TO EXTEND'}
+                      {toolStatus}
                     </span>
                   </div>
                 </div>
@@ -953,51 +981,66 @@ export default function PanicCurlingGame() {
                 <button
                   key={g}
                   className={`curling-gadget-btn ${activeGadget === g ? 'active' : ''}`}
+                  aria-pressed={activeGadget === g}
                   onClick={() => {
+                    setIsSweeping(false);
+                    isSweepingRef.current = false;
+                    setSteerDir(0);
+                    steerDirRef.current = 0;
                     setActiveGadget(g);
                     activeGadgetRef.current = g;
                     dispatchAction({ type: 'switchGadget', gadget: g });
                   }}
                 >
-                  {g === 'broom' && <Wind size={15} />}
-                  {g === 'hairdryer' && <Zap size={15} />}
-                  {g === 'blowtorch' && <Flame size={15} />}
-                  <span>{GADGET_CONFIGS[g].name}</span>
+                  <span className="curling-gadget-main">
+                    {g === 'broom' && <Wind size={15} />}
+                    {g === 'hairdryer' && <Zap size={15} />}
+                    {g === 'blowtorch' && <Flame size={15} />}
+                    <span>{GADGET_CONFIGS[g].name}</span>
+                  </span>
+                  <small>
+                    {g === 'broom'
+                      ? strings.broomHint
+                      : g === 'hairdryer'
+                        ? strings.dryerHint
+                        : strings.blowtorchHint}
+                  </small>
                 </button>
               ))}
             </div>
 
-            {/* Sweeper Steer & Scrub Controls */}
+            {/* Each tool has one direct action; side air needs no second finger. */}
             <div className="curling-sweeper-hud">
-              <button
-                className={`curling-steer-btn ${steerDir === -1 ? 'active' : ''}`}
-                {...holdControl((held) => {
-                  setSteerDir(held ? -1 : 0);
-                  steerDirRef.current = held ? -1 : 0;
-                })}
-              >
-                {strings.steerLeft}
-              </button>
-
-              <button
-                className={`curling-sweep-btn ${isSweeping ? 'active' : ''}`}
-                {...holdControl((held) => {
-                  setIsSweeping(held);
-                  isSweepingRef.current = held;
-                })}
-              >
-                <Sparkles size={24} /> {strings.sweepHarder}
-              </button>
-
-              <button
-                className={`curling-steer-btn ${steerDir === 1 ? 'active' : ''}`}
-                {...holdControl((held) => {
-                  setSteerDir(held ? 1 : 0);
-                  steerDirRef.current = held ? 1 : 0;
-                })}
-              >
-                {strings.steerRight}
-              </button>
+              {activeGadget === 'hairdryer' ? (
+                <>
+                  <button
+                    className={`curling-steer-btn curling-blow-btn ${steerDir === -1 ? 'active' : ''}`}
+                    {...holdControl((held) => blowSideways(held ? -1 : 0))}
+                  >
+                    {strings.blowLeft}
+                  </button>
+                  <button
+                    className={`curling-steer-btn curling-blow-btn ${steerDir === 1 ? 'active' : ''}`}
+                    {...holdControl((held) => blowSideways(held ? 1 : 0))}
+                  >
+                    {strings.blowRight}
+                  </button>
+                </>
+              ) : (
+                <button
+                  className={`curling-sweep-btn ${isSweeping ? 'active' : ''}`}
+                  {...holdControl(holdTool)}
+                >
+                  {activeGadget === 'broom' ? (
+                    <Sparkles size={24} />
+                  ) : (
+                    <Flame size={24} />
+                  )}{' '}
+                  {activeGadget === 'broom'
+                    ? strings.sweepHarder
+                    : strings.brakeStone}
+                </button>
+              )}
             </div>
           </div>
         )}

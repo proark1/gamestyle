@@ -2,6 +2,14 @@ import * as T from 'three';
 import { createRenderer } from '../../shared/rendering/create-renderer';
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import { worker as gameAvatar } from '../../shared/rendering/worker';
+import {
+  BELL_STATION,
+  ISLAND_BOAT_Z,
+  ISLAND_CENTER_Z,
+  ISLAND_GANGWAY_LENGTH,
+  ISLAND_GANGWAY_Z,
+  islandScenery,
+} from './physics-layout';
 import type { AdventureSnapshot, AdventureWorld } from './types';
 
 const PALETTE = {
@@ -130,6 +138,64 @@ function makeLabel(text: string) {
   return sprite;
 }
 
+function makeBell(scale = 1) {
+  const bell = new T.Group();
+  bell.scale.setScalar(scale);
+  const profile = [
+    new T.Vector2(0.13, 0.53),
+    new T.Vector2(0.22, 0.48),
+    new T.Vector2(0.29, 0.32),
+    new T.Vector2(0.33, 0.04),
+    new T.Vector2(0.42, -0.25),
+    new T.Vector2(0.56, -0.39),
+    new T.Vector2(0.62, -0.44),
+  ];
+  const shell = new T.Mesh(
+    new T.LatheGeometry(profile, 18),
+    clay('#c98b43', { metalness: 0.18, roughness: 0.58 }),
+  );
+  shell.name = 'bell-shell';
+  shell.castShadow = true;
+  bell.add(shell);
+  const mouth = new T.Mesh(
+    new T.CylinderGeometry(0.51, 0.58, 0.07, 18),
+    clay('#513d38', { roughness: 0.68 }),
+  );
+  mouth.position.y = -0.42;
+  bell.add(mouth);
+  cylinder(bell, 0.045, 0.055, 0.42, [0, -0.43, 0], '#604238', 10);
+  sphere(bell, [0.1, 0.11, 0.1], [0, -0.67, 0], '#76503a');
+  const crown = new T.Mesh(
+    new T.TorusGeometry(0.12, 0.045, 7, 14),
+    clay('#a96735', { metalness: 0.14, roughness: 0.62 }),
+  );
+  crown.rotation.x = Math.PI / 2;
+  crown.position.y = 0.58;
+  bell.add(crown);
+  return bell;
+}
+
+function addInteractionVolume(
+  root: T.Object3D,
+  target: string,
+  size: [number, number, number],
+  position: [number, number, number],
+) {
+  const volume = new T.Mesh(
+    new T.BoxGeometry(...size),
+    new T.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      colorWrite: false,
+    }),
+  );
+  volume.position.set(...position);
+  volume.userData.target = target;
+  root.add(volume);
+  return volume;
+}
+
 function addMarker(
   parent: T.Object3D,
   target: string,
@@ -160,12 +226,9 @@ function addMarker(
       );
     }
   } else if (shape === 'bell') {
-    hit = new T.Mesh(
-      new T.ConeGeometry(0.46, 0.78, 14, 1, true),
-      clay(PALETTE.amber),
-    );
-    root.add(hit);
-    sphere(root, [0.1, 0.1, 0.1], [0, -0.42, 0], PALETTE.ink);
+    const bell = makeBell(0.74);
+    root.add(bell);
+    hit = bell.getObjectByName('bell-shell') as T.Mesh;
   } else {
     hit = new T.Mesh(new T.BoxGeometry(0.95, 0.65, 0.75), clay(PALETTE.amber));
     root.add(hit);
@@ -191,22 +254,72 @@ function addMarker(
   sign.position.y = 1.2;
   sign.userData.target = target;
   root.add(sign);
+  addInteractionVolume(root, target, [1.5, 2.25, 1.3], [0, 0.48, 0]);
+  return root;
+}
+
+function addBellStation(parent: T.Object3D) {
+  const root = new T.Group() as Interactive;
+  root.position.set(BELL_STATION.x, 0, BELL_STATION.z);
+  root.userData.target = 'beacon-bell';
+  parent.add(root);
+  box(root, [0.28, 2.9, 0.5], [-0.82, 1.45, 0], PALETTE.wood);
+  box(root, [0.28, 2.9, 0.5], [0.82, 1.45, 0], PALETTE.wood);
+  box(root, [2.05, 0.3, 0.58], [0, 2.83, 0], '#704b38');
+  box(root, [0.82, 0.24, 0.44], [0, 2.52, 0], '#5d4437');
+  const bell = makeBell(0.9);
+  bell.position.y = 1.95;
+  root.add(bell);
+  const rope = cylinder(
+    root,
+    0.035,
+    0.035,
+    1.45,
+    [0.38, 0.94, 0],
+    '#d7bd82',
+    8,
+  );
+  rope.rotation.z = -0.035;
+  sphere(root, [0.085, 0.12, 0.085], [0.38, 0.18, 0], '#d7bd82');
+  const ring = new T.Mesh(
+    new T.TorusGeometry(1.18, 0.045, 8, 32),
+    new T.MeshBasicMaterial({
+      color: PALETTE.amber,
+      transparent: true,
+      opacity: 0.72,
+    }),
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.05;
+  ring.userData.markerRing = true;
+  root.add(ring);
+  const sign = makeLabel('RING BEACON');
+  sign.position.y = 3.72;
+  root.add(sign);
+  addInteractionVolume(root, 'beacon-bell', [2.25, 3.45, 1.35], [0, 1.58, 0]);
+  root.traverse((object) => {
+    object.userData.target = 'beacon-bell';
+  });
   return root;
 }
 
 function addBoat(
   parent: T.Object3D,
   position: [number, number, number] = [0, 0, 6],
+  shoreOpening = false,
 ) {
   const boat = new T.Group();
   boat.position.set(...position);
   parent.add(boat);
   box(boat, [6.3, 0.38, 7.4], [0, -0.12, 0], '#bd805c');
-  box(boat, [6.8, 1.2, 0.28], [0, 0.25, -3.45], PALETTE.coral);
+  if (shoreOpening) {
+    box(boat, [1.85, 1.2, 0.28], [-2.45, 0.25, -3.45], PALETTE.coral);
+    box(boat, [1.85, 1.2, 0.28], [2.45, 0.25, -3.45], PALETTE.coral);
+  } else box(boat, [6.8, 1.2, 0.28], [0, 0.25, -3.45], PALETTE.coral);
   box(boat, [6.8, 1.2, 0.28], [0, 0.25, 3.45], PALETTE.coral);
   box(boat, [0.28, 1.1, 6.65], [-3.2, 0.24, 0], PALETTE.coral);
   box(boat, [0.28, 1.1, 6.65], [3.2, 0.24, 0], PALETTE.coral);
-  box(boat, [1.2, 0.7, 1], [0, 0.42, -2.1], PALETTE.ink);
+  box(boat, [1.15, 0.7, 0.9], [-1.72, 0.42, -1.95], PALETTE.ink);
   cylinder(boat, 0.11, 0.14, 5.6, [0, 2.55, 0.55], PALETTE.wood, 10);
   const sail = new T.Mesh(
     new T.PlaneGeometry(3.2, 2.9),
@@ -216,6 +329,43 @@ function addBoat(
   sail.rotation.y = -0.05;
   boat.add(sail);
   return boat;
+}
+
+function addIslandGangway(parent: T.Object3D) {
+  const start = ISLAND_GANGWAY_Z - ISLAND_GANGWAY_LENGTH / 2;
+  const plankCount = 8;
+  for (let index = 0; index < plankCount; index++) {
+    const progress = index / (plankCount - 1);
+    box(
+      parent,
+      [2.74, 0.14, 0.36],
+      [0, 0.5 - progress * 0.66, start + progress * ISLAND_GANGWAY_LENGTH],
+      index % 2 ? '#9b6b4b' : '#aa7652',
+      [0, ((index % 3) - 1) * 0.015, 0],
+    );
+  }
+  for (const side of [-1, 1]) {
+    for (const progress of [0.08, 0.5, 0.92]) {
+      const z = start + progress * ISLAND_GANGWAY_LENGTH;
+      const y = 0.5 - progress * 0.66;
+      cylinder(
+        parent,
+        0.07,
+        0.09,
+        1.3,
+        [side * 1.42, y + 0.54, z],
+        PALETTE.wood,
+        8,
+      );
+    }
+    beam(
+      parent,
+      new T.Vector3(side * 1.42, 1.2, start),
+      new T.Vector3(side * 1.42, 0.5, start + ISLAND_GANGWAY_LENGTH),
+      0.045,
+      '#d7bd82',
+    );
+  }
 }
 
 function addHarbor(parent: T.Object3D, loaded: string[]) {
@@ -242,7 +392,7 @@ function addHarbor(parent: T.Object3D, loaded: string[]) {
     for (const windowX of [-1.25, 1.25])
       box(house, [0.78, 0.8, 0.12], [windowX, 2.7, 2.08], PALETTE.amber);
   }
-  addBoat(parent, [0, -0.35, 10.5]);
+  addBoat(parent, [0, -0.35, 10.5], true);
   const stations: [string, string, [number, number, number]][] = [
     ['rope', 'ROPE', [-5.1, 0.62, 0.2]],
     ['lanterns', 'LANTERNS', [-1.7, 0.62, -0.6]],
@@ -252,17 +402,17 @@ function addHarbor(parent: T.Object3D, loaded: string[]) {
   for (const [id, label, position] of stations)
     if (!loaded.includes(id))
       addMarker(parent, `supply-${id}`, label, position);
-  for (let i = 0; i < 9; i++) {
+  for (const [index, x] of [-8, -6, -4, 4, 6, 8].entries()) {
     const post = cylinder(
       parent,
       0.13,
       0.16,
       2.2,
-      [-8 + i * 2, 0.75, 7],
+      [x, 0.75, 7],
       PALETTE.wood,
       9,
     );
-    post.rotation.z = (i % 2 ? 1 : -1) * 0.025;
+    post.rotation.z = (index % 2 ? 1 : -1) * 0.025;
   }
 }
 
@@ -276,9 +426,18 @@ function addIsland(parent: T.Object3D, index: number, active: boolean) {
     rock: PALETTE.stone,
     accent: PALETTE.amber,
   };
-  cylinder(parent, 13, 15, 1.6, [0, -0.8, -1], variants.rock, 16);
-  cylinder(parent, 12.5, 13, 0.5, [0, 0.15, -1], variants.ground, 18);
-  addBoat(parent, [0, -0.35, 12]);
+  cylinder(parent, 13, 15, 1.6, [0, -0.8, ISLAND_CENTER_Z], variants.rock, 16);
+  cylinder(
+    parent,
+    12.5,
+    13,
+    0.5,
+    [0, 0.15, ISLAND_CENTER_Z],
+    variants.ground,
+    18,
+  );
+  addBoat(parent, [0, -0.35, ISLAND_BOAT_Z], true);
+  addIslandGangway(parent);
   const tower = new T.Group();
   tower.position.set(0, 0, -4.2);
   parent.add(tower);
@@ -296,42 +455,45 @@ function addIsland(parent: T.Object3D, index: number, active: boolean) {
     light.position.copy(lens.position);
     tower.add(light);
   }
-  for (let i = 0; i < 34; i++) {
-    const angle = i * 2.399;
-    const radius = 5 + (i % 6) * 1.1;
-    const x = Math.cos(angle) * radius;
-    const z = -1 + Math.sin(angle) * radius;
-    if (Math.abs(x) < 2.7 && z > -6 && z < 10) continue;
+  for (const item of islandScenery()) {
     const rock = sphere(
       parent,
-      [0.45 + (i % 3) * 0.16, 0.45, 0.55],
-      [x, 0.55, z],
+      item.rockScale,
+      [item.x, 0.55, item.z],
       variants.rock,
     );
-    rock.rotation.set(i * 0.11, angle, i * 0.07);
-    if (i % 3 === 0) {
+    const itemNumber = Number(item.id.slice('island-rock-'.length));
+    rock.rotation.set(itemNumber * 0.11, item.angle, itemNumber * 0.07);
+    if (item.tree) {
       const trunk = cylinder(
         parent,
         0.13,
         0.18,
         1.3,
-        [x + 0.3, 1.2, z - 0.1],
+        [item.tree.x, 1.2, item.tree.z],
         PALETTE.wood,
         8,
       );
       sphere(
         parent,
         [0.75, 1, 0.75],
-        [x + 0.3, 2.1, z - 0.1],
+        [item.tree.x, 2.1, item.tree.z],
         index === 1 ? '#4b746c' : '#668858',
       );
-      trunk.rotation.z = Math.sin(angle) * 0.08;
+      trunk.rotation.z = Math.sin(item.angle) * 0.08;
     }
   }
   if (!active) {
     addMarker(parent, 'beacon-crank', 'ALIGN LENS', [-2.2, 1.2, -2.6], 'wheel');
-    addMarker(parent, 'beacon-bell', 'RING BEACON', [2.25, 2.1, -3.2], 'bell');
-  } else addMarker(parent, 'helm', 'NEXT ISLAND', [0, 1.2, 9.6], 'wheel');
+    addBellStation(parent);
+  } else
+    addMarker(
+      parent,
+      'helm',
+      'NEXT ISLAND',
+      [-1.72, 1.05, ISLAND_BOAT_Z - 1.95],
+      'wheel',
+    );
 }
 
 function addStorm(parent: T.Object3D, world: AdventureWorld) {
@@ -468,17 +630,49 @@ function makeFish() {
 function makeHands() {
   const hands = new T.Group();
   for (const side of [-1, 1]) {
-    const sleeve = new T.Mesh(
-      new T.CapsuleGeometry(0.11, 0.42, 5, 8),
-      clay('#365d5a'),
+    const limb = new T.Group();
+    limb.name = side < 0 ? 'view-arm-left' : 'view-arm-right';
+    limb.position.set(side * 0.45, -0.4, -0.7);
+    limb.rotation.set(-1.02, -side * 0.07, side * 0.11);
+    limb.userData.baseRotationX = limb.rotation.x;
+    limb.userData.baseRotationZ = limb.rotation.z;
+    hands.add(limb);
+    const forearm = new T.Mesh(
+      new T.CapsuleGeometry(0.115, 0.38, 6, 10),
+      clay('#365d5a', { roughness: 0.78 }),
     );
-    sleeve.position.set(side * 0.34, -0.33, -0.68);
-    sleeve.rotation.set(-0.8, 0, side * 0.16);
-    hands.add(sleeve);
-    const hand = new T.Mesh(new T.SphereGeometry(0.13, 12, 8), clay('#dc9570'));
-    hand.scale.set(0.85, 1.15, 0.8);
-    hand.position.set(side * 0.32, -0.48, -0.92);
-    hands.add(hand);
+    forearm.scale.set(1.12, 1, 0.94);
+    forearm.castShadow = false;
+    limb.add(forearm);
+    const cuff = new T.Mesh(
+      new T.CylinderGeometry(0.135, 0.12, 0.13, 10),
+      clay('#284d50', { roughness: 0.8 }),
+    );
+    cuff.position.y = 0.26;
+    limb.add(cuff);
+    const palm = new T.Mesh(
+      new T.SphereGeometry(0.15, 14, 10),
+      clay('#dc9570', { roughness: 0.72 }),
+    );
+    palm.scale.set(0.9, 1.18, 0.62);
+    palm.position.y = 0.42;
+    limb.add(palm);
+    const thumb = new T.Mesh(
+      new T.CapsuleGeometry(0.038, 0.09, 4, 7),
+      clay('#d58b68', { roughness: 0.72 }),
+    );
+    thumb.position.set(-side * 0.12, 0.42, 0.01);
+    thumb.rotation.z = side * 0.74;
+    limb.add(thumb);
+    for (let finger = 0; finger < 4; finger++) {
+      const knuckle = new T.Mesh(
+        new T.SphereGeometry(0.037, 8, 6),
+        clay(finger % 2 ? '#dc9570' : '#d9906c', { roughness: 0.72 }),
+      );
+      knuckle.scale.set(0.85, 1.2, 0.72);
+      knuckle.position.set((finger - 1.5) * 0.054, 0.545, -0.006);
+      limb.add(knuckle);
+    }
   }
   return hands;
 }
@@ -528,7 +722,7 @@ export class ReelProblems3Scene {
     this.scene.add(this.worldRoot, this.water, this.fish);
     this.fish.visible = false;
     this.camera.add(this.hands);
-    this.hands.scale.setScalar(0.82);
+    this.hands.scale.setScalar(0.76);
     this.scene.add(this.camera);
 
     const hemi = new T.HemisphereLight('#dff6ee', '#284d51', 2.1);
@@ -727,10 +921,22 @@ export class ReelProblems3Scene {
       );
       this.camera.rotation.order = 'YXZ';
       this.camera.rotation.set(this.pitch, this.yaw, 0);
-      this.hands.position.y = -0.12 + bob * 0.8;
-      this.hands.rotation.z = this.reducedMotion
+      this.hands.position.y = -0.085 + bob * 0.55;
+      const sway = this.reducedMotion
         ? 0
-        : Math.sin(seconds * 4.5) * walking * 0.012;
+        : Math.sin(seconds * 8.5) * Math.min(1, walking) * 0.022;
+      for (const [name, direction] of [
+        ['view-arm-left', 1],
+        ['view-arm-right', -1],
+      ] as const) {
+        const limb = this.hands.getObjectByName(name);
+        if (!limb) continue;
+        limb.rotation.z =
+          Number(limb.userData.baseRotationZ) + sway * direction;
+        limb.rotation.x =
+          Number(limb.userData.baseRotationX) +
+          (this.reducedMotion ? 0 : Math.cos(seconds * 8.5) * walking * 0.01);
+      }
     }
     const position = this.water.geometry.attributes
       .position as T.BufferAttribute;

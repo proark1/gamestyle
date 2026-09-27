@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   SpectatorEventTracker,
+  spectatorAnchors,
   spectatorDetail,
   spectatorReaction,
 } from './spectator-presentation';
@@ -13,6 +14,19 @@ const event = (id: number, kind: CourseEvent['kind']): CourseEvent => ({
   at: id * 100,
   x: 0,
   z: 0,
+});
+
+void test('spectator anchors populate both sides with seated and standing fans', () => {
+  const anchors = spectatorAnchors(12);
+  assert.equal(anchors.length, 12);
+  assert.ok(anchors.some((anchor) => anchor.seated));
+  assert.ok(anchors.some((anchor) => !anchor.seated));
+  assert.ok(anchors.some((anchor) => anchor.x < 0));
+  assert.ok(anchors.some((anchor) => anchor.x > 0));
+  for (const anchor of anchors) {
+    if (anchor.x < 0) assert.ok(Math.sin(anchor.facing) > 0);
+    else assert.ok(Math.sin(anchor.facing) < 0);
+  }
 });
 
 void test('crowd reactions reserve the strongest cheer for cup chains', () => {

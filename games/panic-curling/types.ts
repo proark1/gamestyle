@@ -83,8 +83,8 @@ export type GadgetConfig = {
   id: GadgetId;
   name: string;
   frictionCut: number; // reduction to base friction (e.g. 0.4 = 40% reduction)
-  steerPower: number; // ability to push lateral curl
-  stressRate: number; // rate of heating/stress added to thin ice
+  steerPower: number; // lateral air push while steering
+  brakeMultiplier: number; // forward deceleration multiplier while counterblowing
   radius: number;
 };
 
@@ -93,24 +93,24 @@ export const GADGET_CONFIGS: Record<GadgetId, GadgetConfig> = {
     id: 'broom',
     name: 'Brisk Broom',
     frictionCut: 0.45,
-    steerPower: 0.55,
-    stressRate: 0.08,
+    steerPower: 0,
+    brakeMultiplier: 1,
     radius: 0.9,
   },
   hairdryer: {
     id: 'hairdryer',
     name: 'Warm Dryer',
-    frictionCut: 0.62,
+    frictionCut: 0,
     steerPower: 0.8,
-    stressRate: 0.25,
+    brakeMultiplier: 1,
     radius: 1.1,
   },
   blowtorch: {
     id: 'blowtorch',
     name: 'Mega Blowtorch',
-    frictionCut: 0.82,
-    steerPower: 1.25,
-    stressRate: 0.75,
+    frictionCut: 0,
+    steerPower: 0,
+    brakeMultiplier: 2.2,
     radius: 1.3,
   },
 };

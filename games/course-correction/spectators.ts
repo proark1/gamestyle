@@ -7,6 +7,7 @@ import { poseWorker } from '../../shared/rendering/worker-pose';
 import type { Look } from '../../shared/wardrobe/look';
 import {
   SpectatorEventTracker,
+  spectatorAnchors,
   spectatorDetail,
 } from './spectator-presentation';
 import type { CourseSnapshot } from './types';
@@ -16,7 +17,17 @@ type AnimatedFan = {
   baseY: number;
   phase: number;
   style: 'wave' | 'hero';
+  seated: boolean;
 };
+
+function poseSeated(model: T.Group) {
+  const rig = model.userData as Record<string, T.Group>;
+  rig.legL?.rotation.set(-1.3, 0, -0.08);
+  rig.legR?.rotation.set(-1.3, 0, 0.08);
+  rig.armL?.rotation.set(-0.7, 0, -0.12);
+  rig.armR?.rotation.set(-0.7, 0, 0.12);
+  if (rig.body) rig.body.rotation.x = -0.06;
+}
 
 const LOOKS: Look[] = [
   {},
@@ -51,23 +62,10 @@ export class CourseSpectators {
 
   private build(total: number, animatedCount: number) {
     const animatedRoots: T.Group[] = [];
-    const positions = [
-      [-6.25, 3.4, 1.48],
-      [-6.25, 4.35, 1.48],
-      [6.25, 3.45, -1.48],
-      [6.25, 4.4, -1.48],
-      [-6.25, 9.15, 1.48],
-      [-6.25, 10.1, 1.48],
-      [6.25, 9.2, -1.48],
-      [6.25, 10.15, -1.48],
-      [-6.25, 14.75, 1.48],
-      [-6.25, 15.7, 1.48],
-      [6.25, 14.8, -1.48],
-      [6.25, 15.75, -1.48],
-    ] as const;
+    const anchors = spectatorAnchors(total);
 
     for (let index = 0; index < total; index++) {
-      const [x, z, facing] = positions[index];
+      const { x, z, facing, seated } = anchors[index];
       const model = dressedGameAvatar(
         index,
         {
@@ -78,20 +76,10 @@ export class CourseSpectators {
         },
         LOOKS[index % LOOKS.length],
       ).model;
-      const seated = index % 3 !== 1;
       model.scale.setScalar(0.68 + (index % 3) * 0.025);
-      model.position.set(
-        x + (index % 2 ? 0.52 : -0.52),
-        seated ? 0.2 : -0.25,
-        z,
-      );
+      model.position.set(x, seated ? 0.17 : -0.25, z);
       model.rotation.y = facing;
-      const rig = model.userData as Record<string, T.Group>;
-      if (seated) {
-        rig.legL.rotation.x = rig.legR.rotation.x = -1.22;
-        rig.armL.rotation.set(-0.7, 0, -0.12);
-        rig.armR.rotation.set(-0.7, 0, 0.12);
-      }
+      if (seated) poseSeated(model);
       this.root.add(model);
       if (this.animated.length < animatedCount) {
         this.animated.push({
@@ -99,6 +87,7 @@ export class CourseSpectators {
           baseY: model.position.y,
           phase: index * 1.73,
           style: index % 2 ? 'wave' : 'hero',
+          seated,
         });
         animatedRoots.push(model);
       }
@@ -118,6 +107,7 @@ export class CourseSpectators {
     for (const fan of this.animated) {
       const active = this.excitement > 0.12;
       poseWorker(fan.model, seconds + fan.phase, active ? fan.style : 'still');
+      if (fan.seated) poseSeated(fan.model);
       fan.model.position.y =
         fan.baseY +
         Math.sin(seconds * 1.7 + fan.phase) * 0.012 +

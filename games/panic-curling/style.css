@@ -689,9 +689,10 @@
 
 .curling-gadget-btn {
   display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 8px 11px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
@@ -701,7 +702,20 @@
   transition: all 0.15s ease;
 }
 
-.curling-gadget-btn > svg {
+.curling-gadget-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.curling-gadget-btn small {
+  color: var(--hud-muted);
+  font: 600 10px/1.2 var(--hud-body);
+  white-space: nowrap;
+}
+
+.curling-gadget-main > svg {
   color: var(--hud-muted);
 }
 
@@ -714,7 +728,7 @@
   border-color: var(--hud-accent-strong);
 }
 
-.curling-gadget-btn.active > svg {
+.curling-gadget-btn.active .curling-gadget-main > svg {
   color: var(--hud-ink);
 }
 
@@ -787,6 +801,15 @@
   border-color: var(--hud-accent);
   transform: translateY(2px);
   box-shadow: none;
+}
+
+.curling-blow-btn {
+  min-width: 155px;
+  padding: 16px 22px;
+  background: var(--hud-accent);
+  border-color: var(--hud-accent-strong);
+  font-size: 16px;
+  text-align: center;
 }
 
 /* Banana sabotage */
@@ -1033,6 +1056,10 @@
     padding: 12px 12px;
     font-size: 13px;
   }
+  .curling-blow-btn {
+    min-width: 0;
+    flex: 1;
+  }
   .curling-banana-btn {
     top: 162px;
     right: 12px;
@@ -1047,6 +1074,33 @@
   .curling-banana-btn {
     padding: 8px 10px;
     font-size: 11px;
+  }
+  .curling-gadget-dock,
+  .curling-slide-telemetry {
+    width: 100%;
+  }
+  .curling-gadget-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+  }
+  .curling-gadget-main {
+    gap: 4px;
+    font-size: 11px;
+    white-space: normal;
+  }
+  .curling-gadget-btn small {
+    font-size: 9px;
+    white-space: normal;
+  }
+  .curling-slide-telemetry {
+    gap: 8px;
+    padding: 8px;
+  }
+  .curling-telemetry-val.is-idle {
+    font-size: 10px;
+    text-align: center;
+    white-space: normal;
   }
 }
 

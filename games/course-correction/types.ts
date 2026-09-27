@@ -2,7 +2,7 @@ import { clamp } from '../../shared/math/clamp';
 import { SEAT_KITS } from '../../shared/rendering/palette';
 
 export const COLORS = SEAT_KITS;
-export const BALL_RADIUS = 0.24;
+export const BALL_RADIUS = 0.12;
 export const MAX_SPEED = 14;
 export const OPENING_MS = 6_000;
 export const HOLE_MS = 100_000;

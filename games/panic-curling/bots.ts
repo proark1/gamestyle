@@ -128,27 +128,23 @@ function updateSweeperBot(
   stone: import('./types').Stone,
   _dt: number,
 ) {
-  if (bot.team === stone.team) {
-    // Decide whether to sweep
-    // Estimated stopping distance: z + v^2 / (2 * mu * g)
-    const cfg = STONE_CONFIGS[stone.kind];
-    const speed = Math.hypot(stone.vx, stone.vz);
-    const estStopZ = stone.z + (speed * speed) / (2 * cfg.baseFriction * 9.81);
+  if (bot.team !== stone.team) return;
 
-    // If stone will stop short of tee, sweep hard to reduce friction and extend slide!
-    if (estStopZ < TEE_Z + 0.8 && stone.z < TEE_Z + 1.5) {
-      bot.input.sweep = true;
-      bot.sweepIntensity = 1.0;
-    }
+  // Predicted stopping point on untouched ice; select one useful tool at a time.
+  const cfg = STONE_CONFIGS[stone.kind];
+  const speed = Math.hypot(stone.vx, stone.vz);
+  const estStopZ = stone.z + (speed * speed) / (2 * cfg.baseFriction * 9.81);
 
-    // Steer if stone is curling off-center
-    if (stone.x > 0.35) {
-      bot.input.steer = -1; // steer left toward button center
-      bot.steerDir = -1;
-    } else if (stone.x < -0.35) {
-      bot.input.steer = 1; // steer right toward button center
-      bot.steerDir = 1;
-    }
+  if (estStopZ > TEE_Z + 1.5 && stone.z < TEE_Z) {
+    bot.gadget = 'blowtorch';
+    bot.input.sweep = true;
+  } else if (Math.abs(stone.x) > 0.35 && stone.z < TEE_Z) {
+    bot.gadget = 'hairdryer';
+    bot.input.steer = stone.x > 0 ? -1 : 1;
+    bot.input.sweep = true;
+  } else if (estStopZ < TEE_Z + 0.8 && stone.z < TEE_Z + 1.5) {
+    bot.gadget = 'broom';
+    bot.input.sweep = true;
   }
 }
 
