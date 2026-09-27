@@ -1,5 +1,11 @@
 import type { CourseEvent, CourseEventKind } from './types';
-import { BENCH_ROWS, benchLayout } from './environment-layout';
+import { GAME_HIP_Y } from '../../shared/rendering/game-avatar';
+import {
+  BENCH_ROWS,
+  BENCH_SEAT_TOP,
+  BENCH_STANDING_OFFSET,
+  benchLayout,
+} from './environment-layout';
 
 export type SpectatorReaction = {
   eventId: number;
@@ -14,6 +20,10 @@ export type SpectatorAnchor = {
   seated: boolean;
 };
 
+export function seatedSpectatorRootY(scale: number) {
+  return BENCH_SEAT_TOP - GAME_HIP_Y * scale;
+}
+
 export function spectatorAnchors(total: number): SpectatorAnchor[] {
   const anchors: SpectatorAnchor[] = [];
   let benchIndex = 0;
@@ -23,8 +33,8 @@ export function spectatorAnchors(total: number): SpectatorAnchor[] {
       anchors.push({ ...layout.seats[0], facing: layout.facing, seated: true });
       if (benchIndex % 2 === 0)
         anchors.push({
-          x: side * 7.05,
-          z: z + (side > 0 ? 0.92 : -0.92),
+          x: layout.x,
+          z: layout.z + (benchIndex % 4 === 0 ? 1 : -1) * BENCH_STANDING_OFFSET,
           facing: layout.facing,
           seated: false,
         });

@@ -94,6 +94,32 @@ void test('shared household props are physical obstacles, not decoration', () =>
   assert.ok(world.events.some((entry) => entry.kind === 'impact'));
 });
 
+void test('the rear boundary rebounds hard shots back into the course', () => {
+  const world = freshWorld(0);
+  world.phase = 'playing';
+  const player = world.players[0];
+  const ball = world.balls[0];
+  const rear = world.course.length - ball.radius;
+  const incoming = 6;
+  ball.x = world.course.width / 2 - 1;
+  ball.z = rear - 0.01;
+  ball.vx = 0;
+  ball.vz = incoming;
+  ball.moving = true;
+
+  stepPhysics(world, 1 / 60);
+
+  assert.equal(ball.z, rear);
+  assert.ok(ball.vz < 0, 'the rear wall should send the ball toward the tee');
+  assert.ok(
+    Math.abs(ball.vz + incoming * Math.exp(-0.72 / 60) * 0.74) < 0.0001,
+    'the rear wall should match the side-wall rebound',
+  );
+  assert.equal(player.holeStrokes, 0);
+  assert.ok(world.events.some((entry) => entry.kind === 'impact'));
+  assert.ok(!world.events.some((entry) => entry.kind === 'recover'));
+});
+
 void test('out-of-bounds recovery restores the last safe lie with a penalty', () => {
   const world = freshWorld(0);
   world.phase = 'playing';

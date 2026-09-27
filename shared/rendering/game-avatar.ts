@@ -1,7 +1,7 @@
 import * as T from 'three';
 import type { Look } from '../wardrobe/look';
 import { PLAYER_KID, playerKid } from './avatars/kid';
-import { HEAD_Y, SKULL } from './avatars/hoop-kid';
+import { HEAD_Y, HIP, SKULL } from './avatars/hoop-kid';
 import { nicoHatSeat } from './avatars/hat-fit';
 import { COLORS } from './palette';
 import type { WorkerOutfit } from './worker';
@@ -11,6 +11,8 @@ export const GAME_HEAD_TOP = HEAD_Y + nicoHatSeat(true);
 export const GAME_HAND_Y = -0.39;
 export const GAME_BODY_HEIGHT = 1.68;
 const NICO_BODY_HEIGHT = HEAD_Y + SKULL.centre[1] + SKULL.radii[1];
+const GAME_AVATAR_SCALE = GAME_BODY_HEIGHT / NICO_BODY_HEIGHT;
+export const GAME_HIP_Y = HIP[1] * GAME_AVATAR_SCALE;
 
 /**
  * Every human game character uses Nico. A separate outer root preserves game
@@ -37,7 +39,7 @@ export function dressedGameAvatar(
     look,
   );
   const model = new T.Group();
-  kid.scale.setScalar(GAME_BODY_HEIGHT / NICO_BODY_HEIGHT);
+  kid.scale.setScalar(GAME_AVATAR_SCALE);
   model.add(kid);
   Object.assign(model.userData, kid.userData);
   model.userData.avatarHeight = GAME_BODY_HEIGHT;

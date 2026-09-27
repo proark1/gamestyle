@@ -7,7 +7,15 @@ import {
   label,
   taper,
 } from '../../shared/rendering/primitives';
-import { BENCH_ROWS, benchLayout, type CourseSide } from './environment-layout';
+import {
+  BENCH_LENGTH,
+  BENCH_ROOT_Y,
+  BENCH_ROWS,
+  BENCH_SEAT_CENTER_Y,
+  BENCH_SEAT_HEIGHT,
+  benchLayout,
+  type CourseSide,
+} from './environment-layout';
 
 const CREAM = '#f4ead2';
 const NAVY = '#354f55';
@@ -59,15 +67,21 @@ function planter(root: T.Group, x: number, z: number, width = 2.2) {
 function bench(root: T.Group, side: CourseSide, z: number) {
   const layout = benchLayout(side, z);
   const group = new T.Group();
-  box(group, [3.05, 0.18, 0.62], [0, 0.42, 0], TIMBER, true);
+  box(
+    group,
+    [BENCH_LENGTH, BENCH_SEAT_HEIGHT, 0.62],
+    [0, BENCH_SEAT_CENTER_Y, 0],
+    TIMBER,
+    true,
+  );
   // Both sides use the same local backrest position; the group transform mirrors
   // the bench so its open side and the seated crowd face the course.
-  box(group, [3.05, 0.72, 0.15], [0, 0.85, -0.28], '#bc9262', true);
+  box(group, [BENCH_LENGTH, 0.72, 0.15], [0, 0.85, -0.28], '#bc9262', true);
   for (const x of [-1.18, 1.18]) {
     beam(group, [x, -0.08, -0.22], [x, 0.42, -0.22], 0.09, NAVY);
     beam(group, [x, -0.08, 0.22], [x, 0.42, 0.22], 0.09, NAVY);
   }
-  group.position.set(layout.x, -0.3, layout.z);
+  group.position.set(layout.x, BENCH_ROOT_Y, layout.z);
   group.rotation.y = layout.rotation;
   root.add(group);
 }

@@ -7,6 +7,7 @@ import { poseWorker } from '../../shared/rendering/worker-pose';
 import type { Look } from '../../shared/wardrobe/look';
 import {
   SpectatorEventTracker,
+  seatedSpectatorRootY,
   spectatorAnchors,
   spectatorDetail,
 } from './spectator-presentation';
@@ -76,8 +77,9 @@ export class CourseSpectators {
         },
         LOOKS[index % LOOKS.length],
       ).model;
-      model.scale.setScalar(0.68 + (index % 3) * 0.025);
-      model.position.set(x, seated ? 0.17 : -0.25, z);
+      const scale = 0.68 + (index % 3) * 0.025;
+      model.scale.setScalar(scale);
+      model.position.set(x, seated ? seatedSpectatorRootY(scale) : -0.25, z);
       model.rotation.y = facing;
       if (seated) poseSeated(model);
       this.root.add(model);

@@ -16,6 +16,7 @@ import {
 
 const FRICTION = 0.72;
 const CUP_RADIUS = 0.39;
+const COURSE_BOUNDARY_RESTITUTION = 0.74;
 
 function event(
   w: CourseWorld,
@@ -279,12 +280,20 @@ export function stepPhysics(w: CourseWorld, dt: number) {
     const half = w.course.width / 2 - BALL_RADIUS;
     if (ball.x < -half || ball.x > half) {
       ball.x = clamp(ball.x, -half, half);
-      ball.vx *= -0.74;
+      ball.vx *= -COURSE_BOUNDARY_RESTITUTION;
       event(w, 'impact', ball.x, ball.z, ball.owner);
     }
     if (ball.z < 0) {
       ball.z = 0;
       ball.vz = Math.abs(ball.vz) * 0.72;
+    }
+    const rear = w.course.length - ball.radius;
+    if (ball.z > rear && ball.z <= w.course.length + 0.9) {
+      ball.z = rear;
+      if (ball.vz > 0) {
+        ball.vz = -ball.vz * COURSE_BOUNDARY_RESTITUTION;
+        event(w, 'impact', ball.x, ball.z, ball.owner);
+      }
     }
     for (const wall of w.course.walls) wallCollision(w, ball, wall);
     obstacleCollisions(w, ball);

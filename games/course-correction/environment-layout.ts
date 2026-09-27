@@ -1,6 +1,13 @@
 export type CourseSide = -1 | 1;
 
 export const BENCH_ROWS = [3.5, 9.2, 14.8] as const;
+export const BENCH_LENGTH = 3.05;
+export const BENCH_SEAT_HEIGHT = 0.18;
+export const BENCH_SEAT_CENTER_Y = 0.42;
+export const BENCH_ROOT_Y = -0.3;
+export const BENCH_SEAT_TOP =
+  BENCH_ROOT_Y + BENCH_SEAT_CENTER_Y + BENCH_SEAT_HEIGHT / 2;
+export const BENCH_STANDING_OFFSET = BENCH_LENGTH / 2 + 0.42;
 
 export type BenchLayout = {
   x: number;
