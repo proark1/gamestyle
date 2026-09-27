@@ -36,6 +36,20 @@ export interface PanicCurlingTranslation {
   steerLeft: string;
   steerRight: string;
   sweepHarder: string;
+  toolEffectLabel: string;
+  brakeStone: string;
+  blowLeft: string;
+  blowRight: string;
+  broomHint: string;
+  dryerHint: string;
+  blowtorchHint: string;
+  broomPrompt: string;
+  dryerPrompt: string;
+  blowtorchPrompt: string;
+  broomActive: string;
+  dryerLeftActive: string;
+  dryerRightActive: string;
+  blowtorchActive: string;
   tossBanana: string;
   endComplete: string;
   endDesc: string;
@@ -83,7 +97,21 @@ export const PANIC_CURLING_TRANSLATIONS: Localized<PanicCurlingTranslation> = {
     releaseAtPeak: 'Aim for 50% power to reach the target',
     steerLeft: '⇦ Steer Left',
     steerRight: 'Steer Right ⇨',
-    sweepHarder: 'SWEEP HARDER!',
+    sweepHarder: 'SWEEP TO GLIDE!',
+    toolEffectLabel: 'TOOL EFFECT',
+    brakeStone: 'COUNTERBLAST!',
+    blowLeft: '⇦ Blow Left',
+    blowRight: 'Blow Right ⇨',
+    broomHint: 'Keep sliding',
+    dryerHint: 'Steer sideways',
+    blowtorchHint: 'Brake the stone',
+    broomPrompt: 'HOLD TO GLIDE FARTHER',
+    dryerPrompt: 'HOLD LEFT OR RIGHT',
+    blowtorchPrompt: 'HOLD TO BRAKE',
+    broomActive: 'GLIDING FARTHER',
+    dryerLeftActive: 'BLOWING LEFT',
+    dryerRightActive: 'BLOWING RIGHT',
+    blowtorchActive: 'BRAKING',
     tossBanana: '🍌 Toss Banana ({count} left)',
     endComplete: 'END {round} COMPLETE!',
     endDesc: 'The stones have settled in the House. Here are the round scores:',
@@ -129,7 +157,21 @@ export const PANIC_CURLING_TRANSLATIONS: Localized<PanicCurlingTranslation> = {
     releaseAtPeak: 'Mit etwa 50 % Kraft ins Ziel werfen',
     steerLeft: '⇦ Links lenken',
     steerRight: 'Rechts lenken ⇨',
-    sweepHarder: 'FESTER WISCHEN!',
+    sweepHarder: 'WEITERFEGEN!',
+    toolEffectLabel: 'WERKZEUGWIRKUNG',
+    brakeStone: 'GEGENWIND!',
+    blowLeft: '⇦ Nach links blasen',
+    blowRight: 'Nach rechts blasen ⇨',
+    broomHint: 'Tempo erhalten',
+    dryerHint: 'Seitlich lenken',
+    blowtorchHint: 'Stein bremsen',
+    broomPrompt: 'HALTEN: WEITER GLEITEN',
+    dryerPrompt: 'LINKS ODER RECHTS HALTEN',
+    blowtorchPrompt: 'HALTEN: BREMSEN',
+    broomActive: 'GLEITET WEITER',
+    dryerLeftActive: 'BLÄST NACH LINKS',
+    dryerRightActive: 'BLÄST NACH RECHTS',
+    blowtorchActive: 'BREMST',
     tossBanana: '🍌 Banane werfen ({count} übrig)',
     endComplete: 'END {round} BEENDET!',
     endDesc: 'Die Steine liegen im Haus. Hier ist das Rundenergebnis:',

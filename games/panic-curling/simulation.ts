@@ -209,14 +209,11 @@ export function advancePanicCurling(world: PanicCurlingWorld, now: number) {
     const activeSweeper = world.players.find(
       (p) => p.team === world.turnTeam && p.role === 'sweeper',
     );
-    if (humanDeliverer && activeSweeper) {
-      if (humanDeliverer.input.sweep || humanDeliverer.sweepIntensity > 0) {
-        activeSweeper.sweepIntensity = 1.0;
-        activeSweeper.status = 'sweeping';
-      }
-      if (humanDeliverer.steerDir !== 0) {
-        activeSweeper.steerDir = humanDeliverer.steerDir;
-      }
+    if (humanDeliverer && activeSweeper?.bot) {
+      // The deliverer controls an AI escort exactly while a button is held.
+      // A human sweeper keeps independent control of their own gadget.
+      activeSweeper.sweepIntensity = humanDeliverer.input.sweep ? 1 : 0;
+      activeSweeper.steerDir = humanDeliverer.input.steer;
       activeSweeper.gadget = humanDeliverer.gadget;
     }
   }

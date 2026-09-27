@@ -308,7 +308,7 @@ export class PanicCurlingScene {
           }
         }
         if (gadgetGroup.visible && p.status === 'sweeping')
-          this.spawnSweepParticles(fx, fz, p.gadget);
+          this.spawnSweepParticles(fx, fz, p.gadget, p.steerDir);
       }
     }
 
@@ -488,7 +488,12 @@ export class PanicCurlingScene {
     this.trauma = Math.min(1.0, this.trauma + amount);
   }
 
-  private spawnSweepParticles(x: number, z: number, gadget: GadgetId) {
+  private spawnSweepParticles(
+    x: number,
+    z: number,
+    gadget: GadgetId,
+    steerDir: number,
+  ) {
     const count = gadget === 'blowtorch' ? 3 : 2;
     for (let i = 0; i < count; i++) {
       const mat = gadget === 'broom' ? this.snowMat : this.steamMat;
@@ -501,9 +506,18 @@ export class PanicCurlingScene {
       this.scene.add(mesh);
       this.particles.push({
         mesh,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: 0.8 + Math.random() * 1.2,
-        vz: (Math.random() - 0.5) * 1.5,
+        vx:
+          gadget === 'hairdryer'
+            ? steerDir * (2 + Math.random())
+            : (Math.random() - 0.5) * 1.5,
+        vy:
+          gadget === 'broom'
+            ? 0.8 + Math.random() * 1.2
+            : 0.25 + Math.random() * 0.6,
+        vz:
+          gadget === 'blowtorch'
+            ? -(2 + Math.random())
+            : (Math.random() - 0.5) * 1.5,
         life: 0,
         maxLife: 0.35 + Math.random() * 0.2,
       });

@@ -124,7 +124,10 @@ function updatePlayers(
     if (activeStone && p.team === activeStone.team && p.role === 'sweeper') {
       const targetZ = activeStone.z + SWEEPER_LEAD_Z;
       const targetX =
-        activeStone.x + (p.steerDir !== 0 ? p.steerDir * 0.55 : 0.55);
+        activeStone.x +
+        (p.gadget === 'hairdryer' && p.steerDir !== 0
+          ? -p.steerDir * 0.55
+          : 0.55);
 
       // Match stone velocity so the sweeper is never outpaced
       p.vz = activeStone.vz;
@@ -221,13 +224,15 @@ function updateStones(
     // Base kinetic friction
     let friction = cfg.baseFriction;
 
-    // Check for sweeper influence ahead of the stone
+    // Each tool changes one part of the stone's motion while used ahead of it.
     let totalSweepCut = 0;
     let totalSteer = 0;
+    let totalBrake = 0;
 
     for (const p of players) {
       if (
         p.team === s.team &&
+        p.role === 'sweeper' &&
         p.status === 'sweeping' &&
         p.sweepIntensity > 0
       ) {
@@ -239,6 +244,7 @@ function updateStones(
         if (forwardDist > 0 && forwardDist < 2.4 && sideDist < gCfg.radius) {
           totalSweepCut += gCfg.frictionCut * p.sweepIntensity;
           totalSteer += p.steerDir * gCfg.steerPower * p.sweepIntensity;
+          totalBrake += (gCfg.brakeMultiplier - 1) * p.sweepIntensity;
 
           if (Math.random() < 0.25) {
             events.push({
@@ -252,12 +258,11 @@ function updateStones(
       }
     }
 
-    // Apply sweeping friction cut (up to 85% max reduction)
+    // The broom preserves speed; the torch's opposing jet removes it faster.
     totalSweepCut = Math.min(0.85, totalSweepCut);
     friction *= 1.0 - totalSweepCut;
 
-    // Forward deceleration = friction * g
-    const decel = friction * GRAVITY;
+    const decel = friction * GRAVITY * (1 + Math.min(1.5, totalBrake));
     const forwardX = s.vx / speed;
     const forwardZ = s.vz / speed;
 
@@ -272,14 +277,16 @@ function updateStones(
     let lateralAccel = curlSign * curlStrength;
 
     // Add sweeper steering influence
-    lateralAccel += totalSteer * 0.45;
+    lateralAccel += Math.max(-1.5, Math.min(1.5, totalSteer)) * 0.45;
 
     // Update velocity components
     const braking = Math.min(speed, decel * dt);
     s.vx -= forwardX * braking;
     s.vz -= forwardZ * braking;
-    s.vx += perpX * lateralAccel * dt;
-    s.vz += perpZ * lateralAccel * dt;
+    if (speed - braking > 0.04) {
+      s.vx += perpX * lateralAccel * dt;
+      s.vz += perpZ * lateralAccel * dt;
+    }
 
     // Update position
     s.x += s.vx * dt;

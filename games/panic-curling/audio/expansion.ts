@@ -23,9 +23,9 @@ export const expansion = [
   ),
   cue(
     'curling.hairdryer',
-    'Hairdryer sweep',
+    'Side airflow',
     'Immersive details',
-    'Compact electric fan whir with warm airflow. Original playful Foley, no speech. ',
+    'Compact electric fan whir blowing across the curling stone from one side. Original playful Foley, no speech. ',
     'event',
     0.7,
     false,
@@ -33,9 +33,9 @@ export const expansion = [
   ),
   cue(
     'curling.blowtorch',
-    'Torch sweep',
+    'Torch counterblast',
     'Immersive details',
-    'Short gas ignition puff and flame hiss. Original playful Foley, no speech. ',
+    'Short gas ignition puff and strong opposing flame hiss that slows the curling stone. Original playful Foley, no speech. ',
     'event',
     0.7,
     false,

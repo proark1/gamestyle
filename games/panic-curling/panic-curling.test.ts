@@ -78,75 +78,131 @@ void test('stone launches and decelerates over ice with rotational curl', () => 
   );
 });
 
-void test('sweeping ahead of the stone cuts friction and increases slide distance', () => {
-  const dt = 1 / 60;
-  const cfg = STONE_CONFIGS.granite;
-
-  // Stone A: unswept
-  const stoneA: Stone = {
-    id: 'stone-a',
-    kind: 'granite',
-    team: 'red',
-    x: 0,
-    y: cfg.height / 2,
-    z: 0,
-    vx: 0,
-    vz: 4.5,
-    spin: 0,
-    rotation: 0,
-    active: true,
-    stopped: false,
-    inPlay: true,
-    outOfBounds: false,
-    distanceToTee: 31,
+void test('broom extends a shot, dryer steers, and counterblast brakes', () => {
+  const run = (
+    gadget?: CurlingPlayer['gadget'],
+    steerDir = 0,
+    sweepIntensity = 1,
+  ) => {
+    const stone: Stone = {
+      id: 'tool-test',
+      kind: 'granite',
+      team: 'red',
+      x: 0,
+      y: STONE_CONFIGS.granite.height / 2,
+      z: 0,
+      vx: 0,
+      vz: 4.5,
+      spin: 0,
+      rotation: 0,
+      active: true,
+      stopped: false,
+      inPlay: true,
+      outOfBounds: false,
+      distanceToTee: 31,
+    };
+    const sweeper = gadget
+      ? newCurlingPlayer('tool-user', 'Sweeper', 0, 'red', 'sweeper', false)
+      : null;
+    if (sweeper) {
+      sweeper.gadget = gadget ?? 'broom';
+      sweeper.x = 0.55;
+      sweeper.z = 2.05;
+      sweeper.steerDir = steerDir;
+      sweeper.sweepIntensity = sweepIntensity;
+      sweeper.status = sweepIntensity ? 'sweeping' : 'normal';
+    }
+    const events: GameEvent[] = [];
+    for (let i = 0; i < 150; i++) {
+      stepCurlingPhysics(
+        [stone],
+        sweeper ? [sweeper] : [],
+        [],
+        [],
+        1 / 60,
+        events,
+      );
+    }
+    return stone;
   };
 
-  // Stone B: swept continuously by a teammate
-  const stoneB: Stone = {
-    id: 'stone-b',
-    kind: 'granite',
-    team: 'red',
-    x: 0,
-    y: cfg.height / 2,
-    z: 0,
-    vx: 0,
-    vz: 4.5,
-    spin: 0,
-    rotation: 0,
-    active: true,
-    stopped: false,
-    inPlay: true,
-    outOfBounds: false,
-    distanceToTee: 31,
-  };
+  const untouched = run();
+  const broom = run('broom');
+  const dryerLeft = run('hairdryer', -1);
+  const dryerRight = run('hairdryer', 1);
+  const blowtorch = run('blowtorch');
+  const released = run('broom', 0, 0);
 
-  const sweeper = newCurlingPlayer(
-    'sweeper-1',
-    'Sweeper',
+  assert.ok(broom.z > untouched.z + 0.5, 'Broom extends glide');
+  assert.ok(Math.abs(dryerLeft.z - untouched.z) < 0.25);
+  assert.ok(dryerLeft.x < -0.05, 'Dryer pushes left');
+  assert.ok(dryerRight.x > 0.05, 'Dryer pushes right');
+  assert.ok(blowtorch.z < untouched.z - 0.5, 'Counterblast shortens glide');
+  assert.ok(blowtorch.vz >= 0, 'Counterblast never reverses stone');
+  assert.ok(Math.abs(released.z - untouched.z) < 0.01);
+});
+
+void test('AI sweeper selects a tool for overshoot, sideways error, or shortfall', () => {
+  const world = freshCurlingWorld(1000);
+  reconcileCurlingBots(world);
+  const stone = launchDelivery(world, 0.5, 0, 0, 'granite');
+  const sweeper = world.players.find(
+    (p) => p.team === stone.team && p.role === 'sweeper',
+  );
+  assert.ok(sweeper);
+
+  stone.z = 15;
+  stone.vz = 4.5;
+  updateCurlingBots(world, 1 / 60);
+  assert.equal(sweeper.gadget, 'blowtorch');
+  assert.equal(sweeper.input.sweep, true);
+
+  stone.vz = 3.5;
+  stone.x = 0.6;
+  updateCurlingBots(world, 1 / 60);
+  assert.equal(sweeper.gadget, 'hairdryer');
+  assert.equal(sweeper.input.steer, -1);
+
+  stone.x = 0;
+  stone.vz = 2;
+  updateCurlingBots(world, 1 / 60);
+  assert.equal(sweeper.gadget, 'broom');
+  assert.equal(sweeper.input.sweep, true);
+});
+
+void test('releasing deliverer controls stops the AI escort tool immediately', () => {
+  const world = freshCurlingWorld(1000);
+  const deliverer = newCurlingPlayer(
+    'human-deliverer',
+    'You',
     0,
     'red',
-    'sweeper',
+    'deliverer',
     false,
   );
-  sweeper.status = 'sweeping';
-  sweeper.sweepIntensity = 1.0;
-  sweeper.gadget = 'blowtorch'; // Extreme friction reduction
-
-  const events: GameEvent[] = [];
-
-  for (let i = 0; i < 200; i++) {
-    // Keep sweeper directly ahead of stone B
-    sweeper.x = stoneB.x;
-    sweeper.z = stoneB.z + 1.2;
-
-    stepCurlingPhysics([stoneA], [], [], [], dt, events);
-    stepCurlingPhysics([stoneB], [sweeper], [], [], dt, events);
-  }
-
-  assert.ok(
-    stoneB.z > stoneA.z,
-    `Swept stone traveled farther (${stoneB.z.toFixed(2)}m) than unswept stone (${stoneA.z.toFixed(2)}m)`,
+  world.players.push(deliverer);
+  reconcileCurlingBots(world);
+  launchDelivery(world, 0.5, 0, 0, 'granite');
+  const sweeper = world.players.find(
+    (p) => p.team === 'red' && p.role === 'sweeper',
   );
+  assert.ok(sweeper?.bot);
+
+  deliverer.gadget = 'hairdryer';
+  deliverer.input.sweep = true;
+  deliverer.input.steer = -1;
+  updateCurlingBots(world, 1 / 60);
+  advancePanicCurling(world, 1017);
+  assert.equal(sweeper.gadget, 'hairdryer');
+  assert.equal(sweeper.sweepIntensity, 1);
+  assert.equal(sweeper.steerDir, -1);
+
+  deliverer.input.sweep = false;
+  deliverer.input.steer = 0;
+  updateCurlingBots(world, 1 / 60);
+  advancePanicCurling(world, 1034);
+  assert.equal(sweeper.sweepIntensity, 0);
+  assert.equal(sweeper.steerDir, 0);
 });
 
 void test('ice sheet remains solid and sweeper escorts stone down the sheet', () => {
