@@ -19,6 +19,17 @@ export type CameraFrame = {
 const mix = (from: number, to: number, amount: number) =>
   from + (to - from) * amount;
 
+export function smoothCameraSteer(
+  current: number,
+  target: number,
+  dt: number,
+) {
+  const from = clamp(Number.isFinite(current) ? current : 0, -1, 1);
+  const to = clamp(Number.isFinite(target) ? target : 0, -1, 1);
+  const elapsed = clamp(Number.isFinite(dt) ? dt : 0, 0, 0.1);
+  return mix(from, to, 1 - Math.exp(-elapsed * 5));
+}
+
 export function slopeCameraFrame(rider: CameraRider): CameraFrame {
   const pace = clamp((rider.speed - 5) / 14, 0, 1);
   const behind = mix(15, 18, pace);

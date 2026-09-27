@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import { slopeCameraFrame } from './camera';
+import { slopeCameraFrame, smoothCameraSteer } from './camera';
 import { coursePoint } from './course';
 
 function projection(speed: number, point: T.Vector3, aspect = 16 / 9, z = 100) {
@@ -79,5 +79,25 @@ void test('camera looks through both left and right bends', () => {
       z,
     );
     assert.ok(Math.abs(projected.x) < 0.82, `${z}: ${projected.x}`);
+  }
+});
+
+void test('camera steering crosses an abrupt direction change smoothly', () => {
+  let steer = 1;
+  const samples: number[] = [];
+
+  for (let frame = 0; frame < 30; frame++) {
+    steer = smoothCameraSteer(steer, -1, 1 / 60);
+    samples.push(steer);
+  }
+
+  assert.ok(samples[0] > 0.7, `first frame should not snap: ${samples[0]}`);
+  assert.ok(samples.at(-1)! < 0, 'camera should eventually follow the turn');
+  for (let index = 1; index < samples.length; index++) {
+    assert.ok(samples[index] < samples[index - 1]);
+    assert.ok(
+      samples[index - 1] - samples[index] < 0.18,
+      `frame ${index} moved too far`,
+    );
   }
 });

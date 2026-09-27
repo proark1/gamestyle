@@ -7,6 +7,8 @@ import type { Look } from '../../shared/wardrobe/look';
 import type { Rider } from './types';
 
 const BOARD_TOP = 0.15;
+const BOARD_WIDTH_SCALE = 0.92;
+const BOARD_LENGTH_SCALE = 0.89;
 
 type RiderRig = {
   body: T.Group;
@@ -41,11 +43,15 @@ export function snowboardOutline(): BoardOutlinePoint[] {
     { x: -0.52, z: 1.02 },
     { x: -0.5, z: 1.27 },
     { x: -0.34, z: 1.43 },
-  ];
+  ].map(({ x, z }) => ({
+    x: x * BOARD_WIDTH_SCALE,
+    z: z * BOARD_LENGTH_SCALE,
+  }));
 }
 
 const deckHeight = (z: number) =>
-  BOARD_TOP + Math.max(0, Math.abs(z) - 1.02) * 0.52;
+  BOARD_TOP +
+  Math.max(0, Math.abs(z) / BOARD_LENGTH_SCALE - 1.02) * 0.52;
 
 function boardDeck(topColor: string) {
   const outline = snowboardOutline();
@@ -115,7 +121,7 @@ function snowboard(root: T.Group, topColor: string) {
   board.add(boardDeck(topColor));
   const slash = box(
     board,
-    [0.74, 0.018, 0.12],
+    [0.68, 0.018, 0.11],
     [0, BOARD_TOP + 0.012, 0.02],
     '#f6e5a4',
     true,
@@ -124,9 +130,9 @@ function snowboard(root: T.Group, topColor: string) {
 
   const trails = new T.Group();
   trails.name = 'snowboard-trails';
-  for (const x of [-0.28, 0.28]) {
+  for (const x of [-0.26, 0.26]) {
     const trail = new T.Mesh(
-      new T.PlaneGeometry(0.08, 1.5),
+      new T.PlaneGeometry(0.075, 1.35),
       new T.MeshBasicMaterial({
         color: '#b9e8e6',
         transparent: true,
@@ -135,7 +141,7 @@ function snowboard(root: T.Group, topColor: string) {
       }),
     );
     trail.rotation.x = -Math.PI / 2;
-    trail.position.set(x, 0.025, -2.05);
+    trail.position.set(x, 0.025, -1.85);
     trails.add(trail);
   }
   root.add(trails);

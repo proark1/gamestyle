@@ -78,6 +78,9 @@ void test('the snowboard has rounded twin tips and a real sidecut', () => {
   const { root } = riderModel(2);
   const deck = root.getObjectByName('snowboard-deck') as T.Mesh;
   const bounds = new T.Box3().setFromObject(deck);
+  const size = bounds.getSize(new T.Vector3());
+  assert.ok(size.x >= 0.93 && size.x <= 0.97, `board width ${size.x}`);
+  assert.ok(size.z >= 2.6 && size.z <= 2.67, `board length ${size.z}`);
   assert.ok(
     bounds.max.y - bounds.min.y > 0.16,
     'tips should rise above the deck',

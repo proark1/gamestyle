@@ -13,7 +13,7 @@ import {
   subscribeWardrobe,
 } from '../../shared/wardrobe/wardrobe-state';
 import { pine, poseRider, riderModel } from './models';
-import { slopeCameraFrame } from './camera';
+import { slopeCameraFrame, smoothCameraSteer } from './camera';
 import { courseFrame, coursePoint, courseWidth } from './course';
 import { HAZARDS, snowballX, type Hazard } from './hazards';
 import {
@@ -174,6 +174,9 @@ export class SlopeScene {
   private unsubscribe: () => void;
   private lookVersion = 0;
   private cameraRoll = 0;
+  private cameraSteer = 0;
+  private cameraTarget = new T.Vector3();
+  private cameraTargetReady = false;
 
   constructor(private host: HTMLElement) {
     this.renderer = createRenderer(host, {
@@ -251,6 +254,8 @@ export class SlopeScene {
   setLocalPlayer(id: string) {
     this.self = id;
     this.lookVersion++;
+    this.cameraSteer = 0;
+    this.cameraTargetReady = false;
   }
   render(snapshot: Snapshot) {
     this.current = snapshot;
@@ -359,7 +364,12 @@ export class SlopeScene {
       const me = w.players.find((p) => p.id === this.self) ?? w.players[0];
       if (me) {
         const z = Math.min(me.z, FINISH_Z - 6);
-        const frame = slopeCameraFrame({ ...me, z, steer: me.input.steer });
+        this.cameraSteer = smoothCameraSteer(
+          this.cameraSteer,
+          me.input.steer,
+          dt,
+        );
+        const frame = slopeCameraFrame({ ...me, z, steer: this.cameraSteer });
         if (w.clock < me.impactUntil) {
           const course = courseFrame(z);
           const nudge = me.impactSide * 0.24;
@@ -368,13 +378,25 @@ export class SlopeScene {
         }
         const cameraSmooth = 1 - Math.exp(-dt * 6.5);
         const lensSmooth = 1 - Math.exp(-dt * 4.5);
+        const targetSmooth = 1 - Math.exp(-dt * 5.5);
         this.camera.position.lerp(
           new T.Vector3(frame.position.x, frame.position.y, frame.position.z),
           cameraSmooth,
         );
         this.camera.fov += (frame.fov - this.camera.fov) * lensSmooth;
         this.camera.updateProjectionMatrix();
-        this.camera.lookAt(frame.target.x, frame.target.y, frame.target.z);
+        const nextTarget = new T.Vector3(
+          frame.target.x,
+          frame.target.y,
+          frame.target.z,
+        );
+        if (this.cameraTargetReady)
+          this.cameraTarget.lerp(nextTarget, targetSmooth);
+        else {
+          this.cameraTarget.copy(nextTarget);
+          this.cameraTargetReady = true;
+        }
+        this.camera.lookAt(this.cameraTarget);
         this.cameraRoll += (frame.roll - this.cameraRoll) * lensSmooth;
         this.camera.rotation.z += this.cameraRoll;
       }

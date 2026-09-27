@@ -61,11 +61,19 @@ try {
     assert.ok(await page.locator('.slopewreck-canvas canvas').isVisible());
     await start.click();
     await page.getByText('LAND A TRICK. CHANGE THE COURSE.').waitFor();
+    await page.locator('.slopewreck-canvas canvas').focus();
+    for (let turn = 0; turn < 4; turn++) {
+      await page.keyboard.down('KeyA');
+      await page.waitForTimeout(90);
+      await page.keyboard.up('KeyA');
+      await page.keyboard.down('KeyD');
+      await page.waitForTimeout(90);
+      await page.keyboard.up('KeyD');
+    }
     if (mobile) {
       await page.getByRole('button', { name: /jump/i }).click();
       await page.getByRole('button', { name: 'RAMP', exact: true }).click();
     } else {
-      await page.locator('.slopewreck-canvas canvas').focus();
       await page.keyboard.down('KeyW');
       await page.keyboard.press('Space');
       await page.waitForTimeout(130);
