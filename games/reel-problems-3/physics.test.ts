@@ -8,6 +8,7 @@ import {
 import { adventurePhysics, resetAdventurePhysics } from './physics';
 import { freshWorld } from './simulation';
 import { createPlayer } from './players';
+import { HARBOR_LAYOUT } from './world-layout';
 
 void test('the boat, dock, machinery, and physical loadout produce colliders', () => {
   const world = freshWorld(0);
@@ -16,7 +17,20 @@ void test('the boat, dock, machinery, and physical loadout produce colliders', (
   assert.equal(ids.has('rail-port'), true);
   assert.equal(ids.has('wheel-house'), true);
   assert.equal(ids.has('item-ice-box-0'), true);
+  assert.equal(ids.has('harbor-bell-frame'), true);
+  assert.equal(ids.has('harbor-tower'), true);
+  assert.equal(ids.has('harbor-shed'), true);
+  assert.equal(ids.has('harbor-tree-0'), true);
+  assert.equal(ids.has('harbor-rock-0'), true);
   assert.equal(positionIsBlocked(world, 1.85, 1.9), true);
+  assert.equal(
+    positionIsBlocked(
+      world,
+      HARBOR_LAYOUT.tower.x,
+      HARBOR_LAYOUT.tower.z,
+    ),
+    true,
+  );
 });
 
 void test('cannon keeps a first-person player inside the rail', () => {

@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { dressedGameAvatar } from '../../shared/rendering/game-avatar';
+import { liveKid } from '../../shared/rendering/avatars/kid';
+import { poseWorker } from '../../shared/rendering/worker-pose';
 import { FISH_DEFINITIONS } from './content/fish';
 import { ITEM_DEFINITIONS } from './content/items';
 import { STATION_POSITIONS } from './stations';
@@ -8,6 +12,13 @@ import type {
   ItemStateRecord,
   StreamCell,
 } from './types';
+import {
+  DOCK_HEIGHT,
+  HARBOR_LAYOUT,
+  NICO_EYE_HEIGHT,
+  SHORE_HEIGHT,
+  localSurfaceHeight,
+} from './world-layout';
 
 const clay = (
   color: THREE.ColorRepresentation,
@@ -46,7 +57,8 @@ function box(
   y = 0,
   z = 0,
 ) {
-  return mesh(new THREE.BoxGeometry(w, h, d, 2, 1, 2), material, x, y, z);
+  const radius = Math.max(0.008, Math.min(0.075, w * 0.16, h * 0.16, d * 0.16));
+  return mesh(new RoundedBoxGeometry(w, h, d, 3, radius), material, x, y, z);
 }
 
 function cylinder(
@@ -76,30 +88,43 @@ function markInteractive(root: THREE.Object3D, target: string) {
 
 function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
   const group = new THREE.Group();
+  const fishMaterial = clay(color, 0.52);
   const body = mesh(
-    new THREE.SphereGeometry(0.48, 14, 9),
-    clay(color, 0.58),
+    new THREE.SphereGeometry(0.48, 18, 12),
+    fishMaterial,
     0,
     0.35,
     0,
   );
-  body.scale.set(1, 0.58, 0.44);
-  const tail = mesh(
-    new THREE.ConeGeometry(0.33, 0.48, 3),
-    clay(color, 0.62),
-    0,
-    0.35,
-    -0.55,
-  );
-  tail.rotation.x = Math.PI / 2;
-  const eye = mesh(
-    new THREE.SphereGeometry(0.045, 8, 6),
-    rubber,
-    0.25,
-    0.45,
-    0.29,
-  );
-  group.add(body, tail, eye);
+  body.scale.set(0.72, 0.52, 1.22);
+  const tail = mesh(new THREE.ConeGeometry(0.34, 0.58, 3), fishMaterial, 0, 0.35, -0.75);
+  tail.rotation.x = -Math.PI / 2;
+  tail.scale.x = 0.65;
+  const dorsal = mesh(new THREE.ConeGeometry(0.2, 0.46, 3), fishMaterial, 0, 0.72, -0.08);
+  dorsal.rotation.x = Math.PI / 2;
+  dorsal.scale.x = 0.42;
+  const mouth = mesh(new THREE.TorusGeometry(0.07, 0.018, 6, 12), clay(0x5c2730), 0, 0.31, 0.57);
+  for (const side of [-1, 1]) {
+    const eye = mesh(
+      new THREE.SphereGeometry(0.048, 9, 7),
+      rubber,
+      side * 0.25,
+      0.47,
+      0.38,
+    );
+    const glint = mesh(
+      new THREE.SphereGeometry(0.015, 6, 5),
+      cream,
+      side * 0.274,
+      0.485,
+      0.412,
+    );
+    const fin = mesh(new THREE.ConeGeometry(0.12, 0.34, 3), fishMaterial, side * 0.29, 0.28, 0.02);
+    fin.rotation.z = side * -1.05;
+    fin.rotation.x = 0.3;
+    group.add(eye, glint, fin);
+  }
+  group.add(body, tail, dorsal, mouth);
   return group;
 }
 
@@ -129,6 +154,17 @@ function makeItemModel(item: Pick<ItemStateRecord, 'kind' | 'fishSpecies'>) {
     );
     reel.rotation.y = Math.PI / 2;
     group.add(rod, reel);
+    for (let i = 0; i < 4; i++) {
+      const guide = mesh(
+        new THREE.TorusGeometry(0.045, 0.009, 5, 10),
+        brass,
+        -0.08 - i * 0.06,
+        0.82 + i * 0.27,
+        0,
+      );
+      guide.rotation.y = Math.PI / 2;
+      group.add(guide);
+    }
   } else if (item.kind === 'bait-bucket') {
     const bucket = cylinder(0.34, 0.27, 0.48, clay(0x6595a0), 0, 0.28, 0);
     const rim = mesh(
@@ -139,7 +175,8 @@ function makeItemModel(item: Pick<ItemStateRecord, 'kind' | 'fishSpecies'>) {
       0,
     );
     rim.rotation.x = Math.PI / 2;
-    group.add(bucket, rim);
+    const bait = cylinder(0.27, 0.27, 0.025, clay(0x704a35), 0, 0.55, 0);
+    group.add(bucket, rim, bait);
   } else if (item.kind === 'lantern') {
     group.add(
       box(0.3, 0.1, 0.3, brass, 0, 0.12),
@@ -217,7 +254,20 @@ function makeItemModel(item: Pick<ItemStateRecord, 'kind' | 'fishSpecies'>) {
       1.12,
     );
     ring.rotation.y = Math.PI / 2;
-    group.add(pole, ring);
+    const net = mesh(
+      new THREE.ConeGeometry(0.31, 0.52, 12, 3, true),
+      new THREE.MeshStandardMaterial({
+        color: 0xd7c79d,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.7,
+      }),
+      -0.21,
+      0.88,
+      0,
+    );
+    net.rotation.z = Math.PI / 2;
+    group.add(pole, ring, net);
   } else if (item.kind === 'chart') {
     group.add(
       box(0.58, 0.035, 0.42, clay(0xe2c88d), 0, 0.08),
@@ -280,8 +330,30 @@ function makeBoat() {
   boat.add(inner);
   for (const side of [-1, 1]) {
     boat.add(box(0.19, 0.7, 7.15, cream, side * 2.72, 1.18, 0));
+    const topRail = cylinder(
+      0.065,
+      0.065,
+      7.12,
+      brass,
+      side * 2.72,
+      2.03,
+      0,
+    );
+    topRail.rotation.x = Math.PI / 2;
+    boat.add(topRail);
     for (let z = -2.8; z <= 2.8; z += 1.4)
       boat.add(cylinder(0.07, 0.07, 0.74, brass, side * 2.72, 1.68, z));
+    for (const z of [-2.25, 0.35, 2.55]) {
+      const fender = mesh(
+        new THREE.CapsuleGeometry(0.15, 0.52, 5, 10),
+        rubber,
+        side * 2.92,
+        1.02,
+        z,
+      );
+      fender.rotation.z = side * 0.08;
+      boat.add(fender);
+    }
   }
   boat.add(
     box(5.55, 0.18, 0.24, cream, 0, 1.18, -3.55),
@@ -304,21 +376,68 @@ function makeBoat() {
     box(1.8, 0.75, 0.75, navy, 0, 1.25, -3.02),
     box(2.5, 0.68, 0.82, clay(0x37606b), 0.2, 1.28, 3.05),
   );
+  const cabin = new THREE.Group();
+  cabin.position.set(0, 1.0, -2.75);
+  cabin.add(
+    box(2.55, 1.45, 0.14, cream, 0, 0.76, -0.65),
+    box(0.14, 1.45, 1.42, cream, -1.2, 0.76, 0),
+    box(0.14, 1.45, 1.42, cream, 1.2, 0.76, 0),
+    box(2.82, 0.18, 1.68, red, 0, 1.55, 0),
+    box(0.82, 0.58, 0.06, clay(0x80b8bd, 0.25, 0.04), -0.58, 0.94, -0.74),
+    box(0.82, 0.58, 0.06, clay(0x80b8bd, 0.25, 0.04), 0.58, 0.94, -0.74),
+  );
+  for (const side of [-1, 1])
+    cabin.add(
+      box(
+        0.06,
+        0.54,
+        0.7,
+        clay(0x80b8bd, 0.25, 0.04),
+        side * 1.29,
+        0.94,
+        0,
+      ),
+    );
+  boat.add(cabin);
+
+  const mast = cylinder(0.08, 0.12, 4.5, darkWood, 2.18, 3.25, 0.15);
+  const boom = cylinder(0.055, 0.055, 2.8, brass, 2.18, 4.68, 0.15);
+  boom.rotation.z = Math.PI / 2;
+  boat.add(mast, boom);
+  const ropeMaterial = new THREE.LineBasicMaterial({ color: 0xd6bb8a });
+  for (const end of [
+    new THREE.Vector3(-2.55, 1.95, -3.35),
+    new THREE.Vector3(2.55, 1.95, -3.35),
+    new THREE.Vector3(-2.55, 1.95, 2.8),
+  ])
+    boat.add(
+      new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(2.18, 5.45, 0.15),
+          end,
+        ]),
+        ropeMaterial,
+      ),
+    );
+
+  const liveWell = box(1.45, 0.64, 1.0, teal, 1.35, 1.34, 1.2);
+  const liveWellLid = box(1.5, 0.1, 1.05, cream, 1.35, 1.71, 1.2);
+  liveWellLid.rotation.x = -0.08;
+  boat.add(liveWell, liveWellLid);
   for (const [kind, point] of Object.entries(STATION_POSITIONS)) {
     const marker = mesh(
-      new THREE.TorusGeometry(0.28, 0.032, 6, 16),
+      new THREE.CylinderGeometry(0.19, 0.21, 0.055, 10),
       new THREE.MeshStandardMaterial({
-        color: 0xf6a23b,
+        color: 0xd69a42,
         emissive: 0xe66a22,
-        emissiveIntensity: 1.4,
-        transparent: true,
-        opacity: 0.55,
+        emissiveIntensity: 0.42,
+        roughness: 0.5,
+        metalness: 0.38,
       }),
       point.x,
-      1.04,
+      1.1,
       point.z,
     );
-    marker.rotation.x = Math.PI / 2;
     marker.userData.target = `station:${kind}`;
     boat.add(marker);
   }
@@ -349,13 +468,27 @@ function makeOcean() {
     fragmentShader: `
       varying float wave; varying vec3 worldPos; uniform float time; uniform float fog;
       void main() {
-        float stripe = smoothstep(.60, .76, sin(worldPos.x * .21 + worldPos.z * .17 + time * .8) + wave * 1.8);
-        vec3 deep = vec3(.025, .18, .24);
-        vec3 high = vec3(.08, .39, .43);
+        vec3 dx = dFdx(worldPos);
+        vec3 dy = dFdy(worldPos);
+        vec3 normal = normalize(cross(dx, dy));
+        if (normal.y < 0.) normal *= -1.;
+        vec3 viewDir = normalize(cameraPosition - worldPos);
+        vec3 sunDir = normalize(vec3(-.45, .82, -.36));
+        float fresnel = pow(1. - max(dot(normal, viewDir), 0.), 3.);
+        float sparkle = pow(max(dot(reflect(-sunDir, normal), viewDir), 0.), 44.);
+        float ripples = sin(worldPos.x * .38 + worldPos.z * .24 + time * 1.15);
+        float crest = smoothstep(.40, .72, wave + ripples * .13);
+        float brokenFoam = smoothstep(.2, .92, sin(worldPos.x * .31 - worldPos.z * .27 + time * .7));
+        float foam = crest * brokenFoam;
+        vec3 deep = vec3(.018, .135, .20);
+        vec3 high = vec3(.055, .37, .40);
+        vec3 horizon = vec3(.30, .58, .58);
         vec3 color = mix(deep, high, clamp(wave + .48, 0., 1.));
-        color = mix(color, vec3(.72, .88, .79), stripe * .12);
+        color = mix(color, horizon, fresnel * .52);
+        color += vec3(1., .78, .48) * sparkle * .72;
+        color = mix(color, vec3(.78, .91, .84), foam * .38);
         color = mix(color, vec3(.65, .68, .64), fog * .35);
-        gl_FragColor = vec4(color, .97);
+        gl_FragColor = vec4(color, .985);
       }`,
     side: THREE.DoubleSide,
   });
@@ -372,16 +505,15 @@ function makeOcean() {
 }
 
 function makeCrew(color: number) {
-  const group = new THREE.Group();
-  const bodyMaterial = clay(color);
-  group.add(
-    cylinder(0.3, 0.42, 0.9, bodyMaterial, 0, 1.45),
-    mesh(new THREE.SphereGeometry(0.32, 12, 9), clay(0xe7ad78), 0, 2.12),
-    cylinder(0.34, 0.38, 0.26, bodyMaterial, 0, 2.42),
-  );
-  for (const side of [-1, 1])
-    group.add(cylinder(0.09, 0.11, 0.74, bodyMaterial, side * 0.35, 1.48));
-  return group;
+  const shirts = ['#ef7057', '#f6b94d', '#47a8a0', '#7d85c9'];
+  const { model } = dressedGameAvatar(color, {
+    shirt: shirts[color % shirts.length],
+    overalls: '#274f5a',
+    boots: '#563f30',
+    trousers: true,
+  });
+  model.name = 'nico-fishing-crew';
+  return model;
 }
 
 function makeCell(cell: StreamCell) {
@@ -440,15 +572,20 @@ export class ReelProblems3Scene {
   private latest?: AdventureSnapshot;
   private localId = 'local';
   private selected: string | null = null;
-  private yaw = 0;
+  private yaw = -Math.PI * 0.25;
   private pitch = -0.08;
   private raycaster = new THREE.Raycaster();
   private pointer = new THREE.Vector2(0, 0);
   private resize: ResizeObserver;
   private frame = 0;
   private viewModel = new THREE.Group();
+  private firstPersonAvatar?: THREE.Group;
   private heldView?: THREE.Group;
   private heldId = '';
+  private cameraPoint = new THREE.Vector3();
+  private boatQuaternion = new THREE.Quaternion();
+  private lookQuaternion = new THREE.Quaternion();
+  private lookEuler = new THREE.Euler(0, 0, 0, 'YXZ');
 
   constructor(
     private host: HTMLElement,
@@ -506,37 +643,124 @@ export class ReelProblems3Scene {
     gangway.rotation.z = -0.06;
     dock.add(gangway);
     const bell = makeBell('depart');
-    bell.position.set(7.5, 0.95, -3.15);
+    bell.position.set(
+      HARBOR_LAYOUT.bell.x,
+      DOCK_HEIGHT,
+      HARBOR_LAYOUT.bell.z,
+    );
     dock.add(bell);
     const shore = box(14, 1.4, 24, clay(0x8eaa79), 16.2, 0.15, 0);
     dock.add(shore);
     const tower = new THREE.Group();
-    tower.position.set(13.2, 0.9, -6.2);
-    tower.add(
-      cylinder(2.1, 2.5, 6.5, clay(0xd6b47a), 0, 3.25, 0, 12),
-      mesh(new THREE.ConeGeometry(2.65, 2.2, 12), red, 0, 7.45),
+    tower.position.set(
+      HARBOR_LAYOUT.tower.x,
+      SHORE_HEIGHT,
+      HARBOR_LAYOUT.tower.z,
     );
-    for (const side of [-1, 1])
-      tower.add(box(0.5, 1.4, 0.22, darkWood, side * 0.7, 4.8, -2.1));
+    tower.add(
+      cylinder(1.72, 2.08, 6.4, clay(0xd6b47a), 0, 3.2, 0, 16),
+      cylinder(1.83, 1.83, 0.24, cream, 0, 1.45, 0, 16),
+      cylinder(1.65, 1.72, 0.24, red, 0, 4.85, 0, 16),
+      mesh(new THREE.ConeGeometry(2.12, 2.0, 16), red, 0, 7.25),
+    );
+    for (const side of [-1, 1]) {
+      const window = box(0.42, 1.18, 0.12, navy, side * 0.62, 4.1, -1.63);
+      window.rotation.z = side * 0.03;
+      tower.add(window);
+    }
+    const lanternRoom = cylinder(1.35, 1.35, 1.12, brass, 0, 5.75, 0, 12);
+    const lanternGlow = cylinder(
+      1.08,
+      1.08,
+      0.74,
+      new THREE.MeshStandardMaterial({
+        color: 0xffe7a1,
+        emissive: 0xffb54a,
+        emissiveIntensity: 1.8,
+        transparent: true,
+        opacity: 0.72,
+      }),
+      0,
+      5.77,
+      0,
+      12,
+    );
+    tower.add(lanternRoom, lanternGlow);
     dock.add(tower);
+
+    const shed = new THREE.Group();
+    shed.position.set(
+      HARBOR_LAYOUT.shed.x,
+      SHORE_HEIGHT,
+      HARBOR_LAYOUT.shed.z,
+    );
+    shed.add(
+      box(HARBOR_LAYOUT.shed.width, 1.75, HARBOR_LAYOUT.shed.depth, red, 0, 0.88),
+      box(0.82, 1.35, 0.12, darkWood, 0.45, 0.68, -0.9),
+      box(0.58, 0.58, 0.12, cream, -0.55, 1.05, -0.9),
+    );
+    const shedRoof = mesh(
+      new THREE.ConeGeometry(1.85, 1.1, 4),
+      navy,
+      0,
+      2.15,
+      0,
+    );
+    shedRoof.rotation.y = Math.PI / 4;
+    shedRoof.scale.z = 0.72;
+    shed.add(shedRoof);
+    dock.add(shed);
+
+    for (const tree of HARBOR_LAYOUT.trees) {
+      const trunk = cylinder(0.2, 0.27, 2.25, wood, tree.x, 1.8, tree.z);
+      const crown = mesh(
+        new THREE.IcosahedronGeometry(1.05, 1),
+        clay(0x4f7d5f),
+        tree.x,
+        3.3,
+        tree.z,
+      );
+      crown.scale.set(1, 1.25, 1);
+      dock.add(trunk, crown);
+    }
+    for (const rock of HARBOR_LAYOUT.rocks) {
+      const stone = mesh(
+        new THREE.DodecahedronGeometry(rock.radius, 0),
+        clay(0x68756d),
+        rock.x,
+        SHORE_HEIGHT + rock.radius * 0.55,
+        rock.z,
+      );
+      stone.scale.set(1.25, 0.75, 1);
+      dock.add(stone);
+    }
     this.scene.add(dock);
   }
 
   private addViewModel() {
-    for (const side of [-1, 1]) {
-      const sleeve = cylinder(0.055, 0.08, 0.48, red, side * 0.22, -0.5, -0.75);
-      sleeve.rotation.z = side * -0.38;
-      sleeve.rotation.x = -0.75;
-      const hand = mesh(
-        new THREE.SphereGeometry(0.09, 10, 7),
-        clay(0xe7ad78),
-        side * 0.27,
-        -0.31,
-        -0.92,
-      );
-      hand.scale.set(0.85, 1.1, 0.85);
-      this.viewModel.add(sleeve, hand);
-    }
+    const { model } = dressedGameAvatar(0, {
+      shirt: '#ef7057',
+      overalls: '#274f5a',
+      boots: '#563f30',
+      trousers: true,
+    });
+    const sleeveL = model.userData.sleeveL as THREE.Object3D;
+    const sleeveR = model.userData.sleeveR as THREE.Object3D;
+    const visible = new Set<THREE.Object3D>();
+    sleeveL.traverse((part) => visible.add(part));
+    sleeveR.traverse((part) => visible.add(part));
+    model.traverse((part) => {
+      if (part instanceof THREE.Mesh) part.visible = visible.has(part);
+    });
+    model.position.set(0, -1.38, -1.05);
+    model.rotation.y = Math.PI;
+    model.scale.setScalar(0.72);
+    const armL = model.userData.armL as THREE.Group;
+    const armR = model.userData.armR as THREE.Group;
+    armL.rotation.set(-0.28, -0.08, 0.22);
+    armR.rotation.set(-0.28, 0.08, -0.22);
+    this.firstPersonAvatar = model;
+    this.viewModel.add(model);
     this.camera.add(this.viewModel);
     this.scene.add(this.camera);
   }
@@ -631,24 +855,41 @@ export class ReelProblems3Scene {
 
   private syncCrew(world: AdventureWorld) {
     const alive = new Set<string>();
+    const local = world.players.find((player) => player.id === this.localId);
     for (const player of world.players) {
       if (player.id === this.localId) continue;
       alive.add(player.id);
       let model = this.crewMeshes.get(player.id);
       if (!model) {
-        model = makeCrew(
-          [0xef7057, 0xf6b94d, 0x47a8a0, 0x7d85c9][player.color % 4],
-        );
+        model = makeCrew(player.color);
         this.crewMeshes.set(player.id, model);
       }
       const parent = player.space === 'boat' ? this.boat : this.scene;
       if (model.parent !== parent) parent.add(model);
       model.position.set(
         player.x,
-        player.space === 'boat' ? 0 : -0.7,
+        player.space === 'boat'
+          ? localSurfaceHeight(world.phase, player.x, player.z)
+          : -0.35,
         player.z,
       );
       model.rotation.y = player.yaw;
+      model.visible =
+        !local ||
+        local.space !== player.space ||
+        Math.hypot(local.x - player.x, local.z - player.z) > 1.8;
+      const moving = Math.abs(player.input.x) + Math.abs(player.input.z) > 0.08;
+      poseWorker(model, world.clock / 1000, moving ? 'walk' : 'still');
+      liveKid(model, world.clock / 1000, moving);
+      const armL = model.userData.armL as THREE.Group | undefined;
+      const armR = model.userData.armR as THREE.Group | undefined;
+      if (player.line && armL && armR) {
+        armL.rotation.x = -1.12;
+        armR.rotation.x = -1.28;
+      } else if (player.held.length > 0 && armL && armR) {
+        armL.rotation.x = -0.82;
+        armR.rotation.x = -0.82;
+      }
     }
     for (const [id, model] of this.crewMeshes)
       if (!alive.has(id)) {
@@ -765,21 +1006,35 @@ export class ReelProblems3Scene {
       return;
     }
     if (player.space === 'boat') {
-      const c = Math.cos(world.boat.yaw),
-        s = Math.sin(world.boat.yaw);
-      this.camera.position.set(
-        world.boat.x + player.x * c + player.z * s,
-        2.05,
-        world.boat.z - player.x * s + player.z * c,
+      this.boat.updateWorldMatrix(true, false);
+      this.cameraPoint.set(
+        player.x,
+        localSurfaceHeight(world.phase, player.x, player.z) + NICO_EYE_HEIGHT,
+        player.z,
       );
-      this.camera.rotation.set(this.pitch, world.boat.yaw + this.yaw, 0, 'YXZ');
+      this.boat.localToWorld(this.cameraPoint);
+      this.camera.position.copy(this.cameraPoint);
+      this.boat.getWorldQuaternion(this.boatQuaternion);
+      this.lookEuler.set(this.pitch, this.yaw, 0, 'YXZ');
+      this.lookQuaternion.setFromEuler(this.lookEuler);
+      this.camera.quaternion
+        .copy(this.boatQuaternion)
+        .multiply(this.lookQuaternion);
     } else {
-      this.camera.position.set(player.x, 0.62, player.z);
+      this.camera.position.set(player.x, 0.78, player.z);
       this.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
     }
     const walking = Math.abs(player.input.x) + Math.abs(player.input.z);
     this.camera.position.y +=
       walking > 0.05 ? Math.sin(performance.now() / 105) * 0.025 : 0;
+    if (this.firstPersonAvatar) {
+      const armL = this.firstPersonAvatar.userData.armL as THREE.Group;
+      const armR = this.firstPersonAvatar.userData.armR as THREE.Group;
+      const sway =
+        walking > 0.05 ? Math.sin(performance.now() / 130) * 0.045 : 0;
+      armL.rotation.x = -0.28 + sway;
+      armR.rotation.x = -0.28 - sway;
+    }
   }
 
   private pickTarget() {

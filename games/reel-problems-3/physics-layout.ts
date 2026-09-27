@@ -1,5 +1,6 @@
 import { ITEM_DEFINITIONS } from './content/items';
 import type { AdventureWorld, RoundPhase } from './types';
+import { HARBOR_LAYOUT } from './world-layout';
 
 export const PLAYER_RADIUS = 0.42;
 export const PLAYER_HEIGHT = 1.46;
@@ -46,6 +47,54 @@ export function adventureColliders(world: AdventureWorld): AdventureCollider[] {
     box('engine-box', 0.25, 3.15, 2.6, 0.72),
     box('ice-hold', 2.35, 1.9, 0.85, 1.25),
   );
+  if (world.phase === 'preparing') {
+    result.push(
+      {
+        id: 'harbor-bell-frame',
+        shape: 'box',
+        x: HARBOR_LAYOUT.bell.x,
+        z: HARBOR_LAYOUT.bell.z,
+        width: HARBOR_LAYOUT.bell.width,
+        depth: HARBOR_LAYOUT.bell.depth,
+      },
+      {
+        id: 'harbor-tower',
+        shape: 'cylinder',
+        x: HARBOR_LAYOUT.tower.x,
+        z: HARBOR_LAYOUT.tower.z,
+        radius: HARBOR_LAYOUT.tower.radius,
+      },
+      {
+        id: 'harbor-shed',
+        shape: 'box',
+        x: HARBOR_LAYOUT.shed.x,
+        z: HARBOR_LAYOUT.shed.z,
+        width: HARBOR_LAYOUT.shed.width,
+        depth: HARBOR_LAYOUT.shed.depth,
+      },
+      ...HARBOR_LAYOUT.trees.map((tree, index) => ({
+        id: `harbor-tree-${index}`,
+        shape: 'cylinder' as const,
+        x: tree.x,
+        z: tree.z,
+        radius: tree.radius,
+      })),
+      ...HARBOR_LAYOUT.rocks.map((rock, index) => ({
+        id: `harbor-rock-${index}`,
+        shape: 'cylinder' as const,
+        x: rock.x,
+        z: rock.z,
+        radius: rock.radius,
+      })),
+      ...HARBOR_LAYOUT.posts.map((post, index) => ({
+        id: `dock-post-${index}`,
+        shape: 'cylinder' as const,
+        x: post.x,
+        z: post.z,
+        radius: post.radius,
+      })),
+    );
+  }
   for (const item of world.items) {
     if (item.space !== 'boat' || !['loose', 'racked'].includes(item.state))
       continue;
