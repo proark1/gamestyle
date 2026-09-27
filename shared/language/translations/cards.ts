@@ -807,6 +807,35 @@ export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
     },
   },
 
+  'course-correction': {
+    en: {
+      tag: 'SIMULTANEOUS MINI-GOLF',
+      isNew: true,
+      newTag: 'NEW TO JUMBLEYARD',
+      players: '1–4 players',
+      duration: 'Three changing holes',
+      titleMain: 'Course ',
+      titleHighlight: 'Correction',
+      titleSuffix: '.',
+      desc: 'Four balls launch together on a course that refuses to stay put. Rotate walls, tip bridges, shove the cup platform, and accidentally improve somebody else’s shot.',
+      tagline: 'Every shot redraws the hole.',
+      cta: 'Play Course Correction',
+    },
+    de: {
+      tag: 'MINIGOLF FÜR ALLE GLEICHZEITIG',
+      isNew: true,
+      newTag: 'NEU IN JUMBLEYARD',
+      players: '1–4 Spieler',
+      duration: 'Drei veränderliche Bahnen',
+      titleMain: 'Course ',
+      titleHighlight: 'Correction',
+      titleSuffix: '.',
+      desc: 'Vier Bälle starten gemeinsam auf einem Kurs, der nie stillsteht. Dreht Wände, kippt Brücken, verschiebt das Loch und verbessert aus Versehen den Schlag der Konkurrenz.',
+      tagline: 'Jeder Schlag zeichnet die Bahn neu.',
+      cta: 'Course Correction spielen',
+    },
+  },
+
   'chain-of-fools': {
     en: {
       tag: 'ONE LINE. FOUR FOOLS.',

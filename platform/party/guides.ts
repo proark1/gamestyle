@@ -40,6 +40,19 @@ export const PARTY_GUIDES = {
       'Maus / Touch oder WASD zielt. Leertaste halten und bei Gold loslassen. Q sichert Punkte. E wechselt das Objekt.',
     ],
   ),
+  'course-correction': guide(
+    6,
+    'medium',
+    false,
+    [
+      'Finish three changing holes in the fewest strokes. Helpful ricochets earn assist stars.',
+      'Spielt drei veränderliche Bahnen mit möglichst wenigen Schlägen. Hilfreiche Abpraller geben Assist-Sterne.',
+    ],
+    [
+      'Drag and release to putt. A / D aims; hold and release Space for power. The first volley launches together.',
+      'Ziehen und loslassen zum Putten. A / D zielt; Leertaste halten und loslassen für Stärke. Der erste Abschlag startet gemeinsam.',
+    ],
+  ),
   'bouncy-castle-royale': guide(
     3,
     'easy',

@@ -94,6 +94,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   'drive-thru': 'Drive-Thru Static',
   'scaffold-scramble': 'Scaffold Scramble',
   'chain-of-fools': 'Chain of Fools',
+  'course-correction': 'Course Correction',
   slopewreck: 'Slopewreck',
 };
 export const isGameId = (v: unknown): v is GameId =>

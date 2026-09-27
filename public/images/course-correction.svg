@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Course Correction</title>
+  <desc id="desc">Four golf balls race through a colorful mini-golf course with rotating walls and a moving cup.</desc>
+  <rect width="1200" height="675" fill="#72cde3"/>
+  <path d="M145 50h910l76 575H69z" fill="#17354a" opacity=".2"/>
+  <path d="M180 30h840l62 575H118z" fill="#f7f4e8"/>
+  <path d="M210 58h780l52 517H158z" fill="#3fa66c"/>
+  <path d="M310 530 750 190" fill="none" stroke="#f7f4e8" stroke-width="28" stroke-linecap="round" stroke-dasharray="18 26" opacity=".7"/>
+  <g transform="translate(480 330) rotate(-22)">
+    <rect x="-175" y="-24" width="350" height="48" rx="12" fill="#f26a3d" stroke="#17354a" stroke-width="12"/>
+    <circle r="28" fill="#f5d85c" stroke="#17354a" stroke-width="10"/>
+  </g>
+  <g transform="translate(745 390) rotate(13)">
+    <rect x="-150" y="-68" width="300" height="136" rx="8" fill="#f5d85c" stroke="#17354a" stroke-width="12"/>
+    <path d="M-120-35h240M-120 0h240M-120 35h240" stroke="#17354a" stroke-width="6" opacity=".35"/>
+  </g>
+  <g transform="translate(780 160)">
+    <ellipse rx="85" ry="42" fill="#f7f4e8" stroke="#17354a" stroke-width="12"/>
+    <ellipse rx="28" ry="14" fill="#17354a"/>
+    <path d="M0 0v-105" stroke="#17354a" stroke-width="9"/>
+    <path d="M4-105h92l-16 48H4z" fill="#f26a3d" stroke="#17354a" stroke-width="7"/>
+  </g>
+  <g stroke="#17354a" stroke-width="10">
+    <circle cx="275" cy="500" r="34" fill="#c8553d"/>
+    <circle cx="355" cy="545" r="34" fill="#4d7ab0"/>
+    <circle cx="425" cy="485" r="34" fill="#5a9a55"/>
+    <circle cx="505" cy="540" r="34" fill="#e2b43c"/>
+  </g>
+  <g fill="#17354a" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-weight="900">
+    <text x="58" y="110" font-size="54" transform="rotate(-4 58 110)">EVERY SHOT</text>
+    <text x="62" y="165" font-size="70" fill="#f5d85c" stroke="#17354a" stroke-width="8" paint-order="stroke" transform="rotate(-4 62 165)">MOVES THE HOLE</text>
+  </g>
+</svg>

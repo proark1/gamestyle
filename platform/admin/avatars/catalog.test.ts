@@ -182,6 +182,7 @@ void test('games dress Nico in wardrobe items over their own clothes', () => {
     'carry-on-carnage:traveler',
     'chain-of-fools:chain-worker',
     'chaos:worker',
+    'course-correction:course-crew',
     'crane-clash:crane-crew',
     'dont-wake-the-giant:thief',
     'drive-thru:cook',

@@ -76,6 +76,18 @@ interface CardStaticConfig {
 }
 
 const CARD_CONFIGS: Record<string, CardStaticConfig> = {
+  'course-correction': {
+    slug: 'course-correction',
+    href: '/course-correction',
+    cardClass: 'bungee-doubles-card',
+    imgSrc: '/images/course-correction.svg',
+    imgAlt:
+      'Four colored golf balls ricochet through rotating walls toward a moving cup.',
+    loading: 'lazy',
+    tagIcon: CircleDot,
+    metaIcon1: Users,
+    metaIcon2: Timer,
+  },
   slopewreck: {
     slug: 'slopewreck',
     href: '/slopewreck',

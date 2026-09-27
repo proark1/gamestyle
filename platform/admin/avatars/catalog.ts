@@ -42,6 +42,7 @@ import { driveThruAvatars } from '../../../games/drive-thru/avatar';
 import { zorbAvatars } from '../../../games/zorb-clash/avatar';
 import { scaffoldAvatars } from '../../../games/scaffold-scramble/avatar';
 import { chainOfFoolsAvatars } from '../../../games/chain-of-fools/avatar';
+import { courseCorrectionAvatars } from '../../../games/course-correction/avatar';
 import { cageAvatars } from '../../../games/cage-clash/avatar';
 import { boxingAvatars } from '../../../games/on-the-ropes/avatar';
 import { GAMES } from '../../analytics/catalog';
@@ -289,6 +290,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
   'chain-of-fools': {
     looks: chainOfFoolsAvatars,
     note: 'Nico in a yellow hard hat and hi-vis harness with a back D-ring for the safety line.',
+  },
+  'course-correction': {
+    looks: courseCorrectionAvatars,
+    note: 'Nico as the roadside course crew, wearing the shared wardrobe.',
   },
 };
 

@@ -32,6 +32,11 @@ const GAMES = [
     tagline: 'Trick, build and wipe out down a changing mountain',
   },
   {
+    id: 'course-correction',
+    name: 'Course Correction',
+    tagline: 'Putt together while every impact redraws the hole',
+  },
+  {
     id: 'on-the-ropes',
     name: 'On the Ropes',
     tagline: 'Swing, wobble and tag your corner partner',

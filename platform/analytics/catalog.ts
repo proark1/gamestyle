@@ -27,6 +27,7 @@ import { driveThruAnalytics } from '../../games/drive-thru/analytics';
 import { zorbClashAnalytics } from '../../games/zorb-clash/analytics';
 import { scaffoldScrambleAnalytics } from '../../games/scaffold-scramble/analytics';
 import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
+import { courseCorrectionAnalytics } from '../../games/course-correction/analytics';
 
 import { cageAnalytics } from '../../games/cage-clash/analytics';
 import { boxingAnalytics } from '../../games/on-the-ropes/analytics';
@@ -80,6 +81,7 @@ export const GAMES: readonly CatalogGame[] = [
   ['zorb-clash', 'Zorb Clash', zorbClashAnalytics],
   ['scaffold-scramble', 'Scaffold Scramble', scaffoldScrambleAnalytics],
   ['chain-of-fools', 'Chain of Fools', chainOfFoolsAnalytics],
+  ['course-correction', 'Course Correction', courseCorrectionAnalytics],
   ['slopewreck', 'Slopewreck', slopewreckAnalytics],
 ].map(([id, name, analytics]) => {
   const game = id as string;

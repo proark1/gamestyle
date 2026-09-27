@@ -29,6 +29,7 @@ const GAMES: readonly GameId[] = [
   'cage-clash',
   'carry-on-carnage',
   'chain-of-fools',
+  'course-correction',
   'crane-clash',
   'dont-wake-the-giant',
   'drive-thru',

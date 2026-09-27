@@ -24,6 +24,7 @@ const games = {
   'bungee-doubles': lazy(() => import('../../games/bungee-doubles/Game')),
   'carry-on-carnage': lazy(() => import('../../games/carry-on-carnage/Game')),
   'chain-of-fools': lazy(() => import('../../games/chain-of-fools/Game')),
+  'course-correction': lazy(() => import('../../games/course-correction/Game')),
   chaos: lazy(() => import('../../games/chaos/Game')),
   'crane-clash': lazy(() => import('../../games/crane-clash/Game')),
   'dont-wake-the-giant': lazy(
