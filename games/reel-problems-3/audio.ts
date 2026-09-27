@@ -78,11 +78,11 @@ export class VoyageAudio {
     if (world.phase !== this.phase) {
       this.phase = world.phase;
       const frequency =
-        world.phase === 'storm'
+        world.phase === 'fishing'
           ? 49
-          : world.phase === 'sanctuary'
+          : world.phase === 'returning'
             ? 96
-            : world.phase === 'homecoming'
+            : world.phase === 'finished'
               ? 120
               : 72;
       this.hum?.frequency.setTargetAtTime(
@@ -92,7 +92,7 @@ export class VoyageAudio {
       );
       if (this.ambience)
         this.ambience.gain.setTargetAtTime(
-          world.phase === 'storm' ? 0.07 : 0.028,
+          world.phase === 'fishing' ? 0.05 : 0.028,
           this.context.currentTime,
           0.8,
         );
@@ -100,24 +100,15 @@ export class VoyageAudio {
     for (const event of world.events) {
       if (event.id <= this.lastEvent) continue;
       this.lastEvent = event.id;
-      if (event.kind === 'supply') this.tone(280, 0.16, 0.11, 'triangle');
-      else if (event.kind === 'beacon-aligned')
-        this.tone(392, 0.45, 0.16, 'triangle');
-      else if (event.kind === 'beacon-lit') this.chord([196, 294, 392]);
-      else if (event.kind === 'wave' || event.kind === 'damage')
+      if (event.kind === 'item-placed') this.tone(280, 0.16, 0.11, 'triangle');
+      else if (event.kind === 'bite') this.tone(392, 0.24, 0.16, 'triangle');
+      else if (event.kind === 'hooked') this.chord([196, 294, 392]);
+      else if (event.kind === 'incident-started' || event.kind === 'damage')
         this.tone(58, 0.45, 0.22, 'sawtooth');
       else if (event.kind === 'repair') this.tone(240, 0.12, 0.13, 'square');
       else if (event.kind === 'rescue') this.chord([262, 330, 392]);
-      else if (event.kind === 'tone')
-        this.tone(
-          [196, 294, 440][Number(event.detail) || 0],
-          1.1,
-          0.18,
-          'sine',
-        );
-      else if (event.kind === 'fish-seen') this.chord([110, 165, 220, 330]);
-      else if (event.kind === 'fish-home' || event.kind === 'home')
-        this.chord([196, 247, 294, 392]);
+      else if (event.kind === 'fish-landed') this.chord([110, 165, 220, 330]);
+      else if (event.kind === 'docked') this.chord([196, 247, 294, 392]);
     }
   }
 

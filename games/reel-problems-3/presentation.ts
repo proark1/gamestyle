@@ -1,79 +1,68 @@
-import type { AdventurePhase, AdventureWorld } from './types';
+import { ITEM_DEFINITIONS } from './content/items';
+import { awards } from './scoring';
+import type { AdventureWorld, RoundPhase } from './types';
 
-export const PHASE_NAMES: Record<AdventurePhase, string> = {
-  lobby: 'The crew gathers',
-  harbor: 'Pack the boat',
-  search: 'Follow the old beacons',
-  storm: 'Stay with the light',
-  sanctuary: 'Guide it home',
-  homecoming: 'Dawn finds you',
-  finished: 'Voyage complete',
+export const PHASE_NAMES: Record<RoundPhase, string> = {
+  lobby: 'Crew call',
+  preparing: 'Load the boat',
+  outbound: 'Run to the grounds',
+  fishing: 'Lines in',
+  returning: 'Race the harbor bell',
+  docking: 'Bring her alongside',
+  finished: 'Catch delivered',
+  failed: 'Round lost',
 };
 
 export function objective(world: AdventureWorld) {
-  if (world.phase === 'lobby') return 'Gather your crew and begin the voyage.';
-  if (world.phase === 'harbor')
-    return `Load rope, lanterns, timber and chart · ${world.loaded.length}/4 aboard`;
-  if (world.phase === 'search') {
-    const beacon = world.beacons[world.beaconIndex];
-    if (!beacon) return 'Return to the helm.';
-    if (!beacon.active)
-      return beacon.aligned < beacon.required
-        ? `Align the ${beacon.id} beacon lens · ${beacon.aligned}/${beacon.required}`
-        : 'Ring the beacon bell.';
-    return `Take the helm for the next island · ${world.routeProgress}/3`;
+  if (world.phase === 'lobby')
+    return 'Build a crew. Empty seats are filled by deckhand bots.';
+  if (world.phase === 'preparing') {
+    const loaded = world.items.filter(
+      (item) => item.station && ITEM_DEFINITIONS[item.kind].essential,
+    ).length;
+    return `Load rods, bait, safety gear and the ice box · ${Math.min(10, loaded)}/10 ready`;
   }
-  if (world.phase === 'storm') {
-    if (world.players.some((player) => player.overboard))
-      return 'Friend overboard—work the rescue line!';
-    if (world.hull < 34 || world.water > 78)
-      return 'Patch the hull and bail before the next wave.';
-    return `Keep the glowing fish in sight · ${world.stormProgress}/9 waves`;
+  if (world.phase === 'outbound')
+    return 'Follow the chart marker to the first fishing ground.';
+  if (world.phase === 'fishing') {
+    const mission = world.missions[world.activeMission];
+    return mission
+      ? `${mission.label} · ${Math.floor(mission.progress)}/${mission.goal}`
+      : 'Secure the catch.';
   }
-  if (world.phase === 'sanctuary')
-    return world.lanterns.length < 3
-      ? `Place the guiding lanterns · ${world.lanterns.length}/3`
-      : `Sound the beacon melody · ${world.toneIndex}/3 tones`;
-  if (world.phase === 'homecoming') return 'Watch the sanctuary wake.';
-  return 'The legendary fish is safe. Your crew made it home.';
+  if (world.phase === 'returning')
+    return 'All missions complete—race the catch back to harbor.';
+  if (world.phase === 'docking')
+    return 'Slow below 1.7 knots and dock inside the harbor markers.';
+  if (world.phase === 'failed')
+    return world.round.result === 'sunk'
+      ? 'The boat went down.'
+      : 'The harbor bell beat you.';
+  return 'Catch landed. Scores and crew awards are ready.';
 }
 
 export function promptFor(world: AdventureWorld, target: string | null) {
-  if (!target) return 'Look around for a warm amber marker.';
-  const prompts: Record<string, string> = {
-    'supply-rope': 'E · Carry rope aboard',
-    'supply-lanterns': 'E · Load the lantern crate',
-    'supply-timber': 'E · Stow repair timber',
-    'supply-chart': 'E · Take the hand-drawn chart',
-    'beacon-crank': 'E · Turn the beacon crank',
-    'beacon-bell': 'E · Ring the beacon bell',
-    helm: 'E · Hold the wheel through the swell',
-    repair: 'E · Patch and bail',
-    'rescue-rope': 'E · Haul your friend aboard',
-    'lantern-port': 'E · Set the port lantern',
-    'lantern-bow': 'E · Set the bow lantern',
-    'lantern-starboard': 'E · Set the starboard lantern',
-    'tone-0': 'E · Sound the low cliff tone',
-    'tone-1': 'E · Sound the clear cave tone',
-    'tone-2': 'E · Sound the high pine tone',
-  };
-  return prompts[target] ?? 'E · Interact';
+  if (!target)
+    return world.phase === 'fishing'
+      ? 'Click to cast · hold R to reel'
+      : 'Look at an object to interact';
+  if (target === 'depart') return 'E · Cast off';
+  if (target.startsWith('station:')) {
+    const name = target.slice(8).replaceAll('-', ' ');
+    if (world.phase === 'docking' && name === 'helm')
+      return 'E · Secure the boat at the dock';
+    return `E · Use ${name}`;
+  }
+  const item = world.items.find((candidate) => candidate.id === target);
+  return item
+    ? `E · Pick up ${ITEM_DEFINITIONS[item.kind].name}`
+    : 'E · Interact';
 }
 
 export function crewAwards(world: AdventureWorld) {
-  const categories = [
-    ['rescues', 'Lifeline', 'rescues'],
-    ['repairs', 'Hull Whisperer', 'repairs'],
-    ['helmTurns', 'Storm Tamer', 'turns at the helm'],
-    ['beacons', 'Beacon Keeper', 'beacons awakened'],
-  ] as const;
-  return categories.flatMap(([key, title, label]) => {
-    let best = world.players[0];
-    for (const player of world.players)
-      if ((player.stats[key] ?? 0) > (best?.stats[key] ?? 0)) best = player;
-    const value = best?.stats[key] ?? 0;
-    return best && value > 0
-      ? [{ title, player: best.name, detail: `${value} ${label}` }]
-      : [];
-  });
+  return awards(world).map((award) => ({
+    title: award.title,
+    player: award.player,
+    detail: String(award.value),
+  }));
 }

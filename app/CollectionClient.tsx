@@ -272,7 +272,7 @@ const CARD_CONFIGS: Record<string, CardStaticConfig> = {
     cardClass: 'reel-card',
     imgSrc: '/images/reel-problems-3.svg',
     imgAlt:
-      'A first-person view from a clay fishing boat following a glowing legendary fish through a storm toward a moonlit cove.',
+      'A first-person view across a polished clay fishing boat loaded with real gear, catches, and four chaotic crewmates.',
     fetchPriority: 'high',
     tagIcon: Fish,
     metaIcon1: Users,

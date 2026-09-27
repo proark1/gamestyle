@@ -300,6 +300,19 @@ export const PARTY_GUIDES = {
       'WASD bewegt. Leertaste oder Klick wirft aus; E hält die Rolle, bei roter Spannung loslassen. Shift stützt, R entwirrt, Q kappt und F rettet.',
     ],
   ),
+  'reel-problems-3': guide(
+    8,
+    'tricky',
+    false,
+    [
+      'Complete three fishing contracts on one shared boat, then dock the catch before the harbor bell.',
+      'Erfüllt drei Fangaufträge auf einem gemeinsamen Boot und legt mit dem Fang vor der Hafenglocke an.',
+    ],
+    [
+      'WASD moves. E uses or carries gear, F casts or hooks, hold R to reel at safe tension, Q drops an item, and Space braces.',
+      'WASD bewegt. E benutzt oder trägt Ausrüstung, F wirft aus oder hakt, R holt bei sicherer Spannung ein, Q legt ab und Leertaste stützt.',
+    ],
+  ),
   'uphill-delivery': guide(
     4,
     'medium',

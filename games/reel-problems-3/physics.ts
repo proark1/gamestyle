@@ -19,6 +19,7 @@ const PLAYER_GROUP = 1;
 const SCENERY_GROUP = 2;
 
 function desiredVelocity(player: AdventurePlayer) {
+  if (player.station === 'helm') return { x: 0, z: 0 };
   const { x, z, yaw, sprint } = player.input;
   const length = Math.hypot(x, z);
   if (length < 0.05) return { x: 0, z: 0 };
@@ -132,7 +133,10 @@ export class AdventurePhysics {
         this.addPlayer(player);
         continue;
       }
-      if (Math.hypot(body.position.x - player.x, body.position.z - player.z) > 0.75) {
+      if (
+        Math.hypot(body.position.x - player.x, body.position.z - player.z) >
+        0.75
+      ) {
         body.position.set(player.x, PLAYER_HEIGHT / 2, player.z);
         body.velocity.setZero();
       }

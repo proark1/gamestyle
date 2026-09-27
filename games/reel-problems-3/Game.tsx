@@ -1,5 +1,5 @@
 'use client';
-/* oxlint-disable react/react-compiler -- WebGL, input, and local simulation intentionally live in refs. */
+/* oxlint-disable react/react-compiler -- WebGL and realtime input intentionally live in refs. */
 import {
   useCallback,
   useEffect,
@@ -11,29 +11,25 @@ import {
 } from 'react';
 import {
   Anchor,
+  Bot,
   Check,
-  Compass,
   Fish,
-  Footprints,
   HelpCircle,
   LifeBuoy,
   MousePointer2,
   RotateCcw,
-  Sparkles,
+  Trophy,
   Users,
   Waves,
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import { usePeerRoom } from '../../shared/peer/usePeerRoom';
 import { useLanguage } from '../../shared/language/useLanguage';
 import { gameActive } from '../../shared/browser/game-lifecycle';
-import {
-  isTouchDevice,
-  prefersReducedMotion,
-} from '../../shared/browser/device';
+import { isTouchDevice } from '../../shared/browser/device';
 import { hudPacer } from '../../shared/ui/hud-pacer';
+import { partyGoal, partyRound } from '../../shared/ui/party-round';
 import {
   GameTracker,
   useGameTracker,
@@ -42,10 +38,10 @@ import {
   advanceWorld,
   adventureAction,
   freshWorld,
-  newPlayer,
   setInput,
   snapshot as makeSnapshot,
 } from './simulation';
+import { createPlayer } from './players';
 import {
   idleInput,
   type AdventureInput,
@@ -59,15 +55,13 @@ import type { ReelProblems3Scene } from './scene';
 import './style.css';
 
 const tracker = new GameTracker(reelProblems3Analytics);
-
-type Controls = AdventureInput;
-const freshControls = (): Controls => ({ x: 0, z: 0, yaw: 0, sprint: false });
+const crewColors = ['#ef7057', '#f6b94d', '#47a8a0', '#7d85c9'];
 
 export default function ReelProblems3Game() {
   useGameTracker(tracker);
   const { language } = useLanguage();
   const de = language === 'de';
-  const say = (en: string, german: string) => (de ? german : en);
+  const say = (english: string, german: string) => (de ? german : english);
   const host = useRef<HTMLDivElement>(null);
   const scene = useRef<ReelProblems3Scene | null>(null);
   const sound = useRef<VoyageAudio | null>(null);
@@ -76,13 +70,16 @@ export default function ReelProblems3Game() {
   const self = useRef('local');
   const connected = useRef(false);
   const blocked = useRef(true);
-  const controls = useRef<Controls>(freshControls());
+  const controls = useRef<AdventureInput>(idleInput());
   const keys = useRef(new Set<string>());
   const touchLook = useRef<{ id: number; x: number; y: number } | null>(null);
   const hud = useRef(
     hudPacer<AdventureSnapshot>((snap) => {
       const world = snap.world;
-      return `${world.phase}:${world.beaconIndex}:${world.loaded.length}:${world.beacons.map((beacon) => `${beacon.aligned}-${beacon.active}`).join('|')}:${world.routeProgress}:${world.stormProgress}:${Math.round(world.hull)}:${Math.round(world.water)}:${world.lanterns.length}:${world.toneIndex}:${world.events.at(-1)?.id ?? 0}:${Math.floor(world.clock / 500)}`;
+      const player = world.players.find(
+        (candidate) => candidate.id === snap.selfId,
+      );
+      return `${world.phase}:${world.activeMission}:${world.missions.map((mission) => mission.progress.toFixed(1)).join('|')}:${Math.round(world.boat.hull)}:${Math.round(world.boat.water)}:${Math.round(world.boat.speed)}:${player?.line?.state ?? ''}:${player?.line?.tension.toFixed(1) ?? ''}:${player?.held.join(',') ?? ''}:${world.events.at(-1)?.id ?? 0}:${Math.floor(world.clock / 500)}`;
     }),
   );
   const [snapshot, setSnapshot] = useState<AdventureSnapshot | null>(null);
@@ -91,10 +88,9 @@ export default function ReelProblems3Game() {
   const [muted, setMuted] = useState(false);
   const [help, setHelp] = useState(false);
   const [error, setError] = useState('');
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [touch] = useState(() =>
-    typeof window === 'undefined' ? false : isTouchDevice(),
-  );
+  const [touch, setTouch] = useState(false);
+
+  useEffect(() => setTouch(isTouchDevice()), []);
 
   const receive = useCallback((next: AdventureSnapshot) => {
     latest.current = next;
@@ -119,32 +115,34 @@ export default function ReelProblems3Game() {
     },
     onOpen: () => {
       keys.current.clear();
-      Object.assign(controls.current, freshControls());
+      Object.assign(controls.current, idleInput());
       if (document.pointerLockElement) document.exitPointerLock?.();
     },
     receive,
   });
 
   const world = snapshot?.world;
+  const me = world?.players.find((player) => player.id === self.current);
   const menu = !world || world.phase === 'lobby';
-  const finished = world?.phase === 'finished';
+  const ended = world ? ['finished', 'failed'].includes(world.phase) : false;
   const isHost = !room.session || snapshot?.host === self.current;
   const disabled =
     !ready ||
     menu ||
-    finished ||
-    world?.phase === 'homecoming' ||
+    ended ||
     help ||
     room.open ||
     room.busy ||
     (!!room.session && room.status !== 'online');
 
   useLayoutEffect(() => {
-    blocked.current = !!disabled;
+    blocked.current = disabled;
     if (disabled) {
       controls.current.x = 0;
       controls.current.z = 0;
-      controls.current.sprint = false;
+      controls.current.reel = false;
+      controls.current.throttle = 0;
+      controls.current.steer = 0;
       keys.current.clear();
     }
   }, [disabled]);
@@ -152,7 +150,6 @@ export default function ReelProblems3Game() {
   const act = useCallback(
     (type: string, extra: Record<string, unknown> = {}) => {
       if (!ready || !gameActive()) return;
-      if (type === 'interact' && blocked.current) return;
       setError('');
       sound.current?.unlock();
       tracker.action(type);
@@ -178,25 +175,24 @@ export default function ReelProblems3Game() {
     if (!selected) {
       setError(
         de
-          ? 'Schau zuerst auf eine leuchtende orange Markierung.'
-          : 'Face a glowing amber marker first.',
+          ? 'Schau zuerst auf ein umrandetes Objekt.'
+          : 'Look at an outlined object first.',
       );
       return;
     }
     act('interact', { target: selected });
   }, [act, target, de]);
 
-  useEffect(() => {
-    setReducedMotion(prefersReducedMotion());
-  }, []);
+  const fishAction = useCallback(() => {
+    const player = latest.current?.world.players.find(
+      (candidate) => candidate.id === self.current,
+    );
+    if (player?.line?.state === 'biting') act('hook');
+    else if (player?.line?.state === 'tangled') act('untangle');
+    else if (!player?.line) act('cast', { power: 0.72 });
+  }, [act]);
 
-  useEffect(() => {
-    scene.current?.setReducedMotion(reducedMotion);
-  }, [reducedMotion]);
-
-  useEffect(() => {
-    sound.current?.setEnabled(!muted);
-  }, [muted]);
+  useEffect(() => sound.current?.setEnabled(!muted), [muted]);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,7 +200,6 @@ export default function ReelProblems3Game() {
     let view: ReelProblems3Scene | null = null;
     let previous = performance.now();
     let published = 0;
-
     const loop = (now: number) => {
       frame = requestAnimationFrame(loop);
       controls.current.yaw = scene.current?.getYaw() ?? controls.current.yaw;
@@ -218,7 +213,7 @@ export default function ReelProblems3Game() {
         self.current,
         blocked.current ? idleInput() : controls.current,
       );
-      if (!['lobby', 'finished'].includes(active.phase))
+      if (!['lobby', 'finished', 'failed'].includes(active.phase))
         advanceWorld(active, active.clock + Math.min(100, now - previous));
       previous = now;
       if (now - published > 42) {
@@ -228,7 +223,6 @@ export default function ReelProblems3Game() {
         );
       }
     };
-
     void import('./scene')
       .then(({ ReelProblems3Scene: Scene }) => {
         if (cancelled || !host.current) return;
@@ -238,14 +232,13 @@ export default function ReelProblems3Game() {
         sound.current = new VoyageAudio();
         if (!connected.current) {
           const active = freshWorld(Date.now());
-          const player = newPlayer(0);
-          Object.assign(player, {
-            id: 'local',
-            name: 'You',
-            bot: false,
-            seen: active.clock,
-          });
-          active.players.push(player);
+          active.players = active.players.filter((player) => player.seat !== 0);
+          active.players.push(
+            Object.assign(createPlayer(0, active.clock, false, 'local'), {
+              name: 'You',
+            }),
+          );
+          active.players.sort((a, b) => a.seat - b.seat);
           local.current = active;
           receive(makeSnapshot(active, 'SOLO', 'local', 'local', 0));
         } else if (latest.current) view.render(latest.current);
@@ -257,10 +250,9 @@ export default function ReelProblems3Game() {
         setError(
           cause instanceof Error
             ? cause.message
-            : 'The archipelago could not load.',
+            : 'The fishing grounds could not load.',
         ),
       );
-
     return () => {
       cancelled = true;
       cancelAnimationFrame(frame);
@@ -273,7 +265,7 @@ export default function ReelProblems3Game() {
   }, [receive]);
 
   useEffect(() => {
-    const updateControls = () => {
+    const update = () => {
       controls.current.x =
         (keys.current.has('KeyD') || keys.current.has('ArrowRight') ? 1 : 0) -
         (keys.current.has('KeyA') || keys.current.has('ArrowLeft') ? 1 : 0);
@@ -282,10 +274,21 @@ export default function ReelProblems3Game() {
         (keys.current.has('KeyS') || keys.current.has('ArrowDown') ? 1 : 0);
       controls.current.sprint =
         keys.current.has('ShiftLeft') || keys.current.has('ShiftRight');
+      controls.current.reel = keys.current.has('KeyR');
+      controls.current.brace = keys.current.has('Space');
+      controls.current.throttle = keys.current.has('KeyW')
+        ? 1
+        : keys.current.has('KeyS')
+          ? -0.4
+          : 0;
+      controls.current.steer = keys.current.has('KeyA')
+        ? -1
+        : keys.current.has('KeyD')
+          ? 1
+          : 0;
     };
     const key = (event: KeyboardEvent) => {
       if (
-        event.defaultPrevented ||
         event.ctrlKey ||
         event.metaKey ||
         event.altKey ||
@@ -300,11 +303,11 @@ export default function ReelProblems3Game() {
           'KeyA',
           'KeyS',
           'KeyD',
-          'ArrowUp',
-          'ArrowDown',
-          'ArrowLeft',
-          'ArrowRight',
           'KeyE',
+          'KeyF',
+          'KeyQ',
+          'KeyR',
+          'Space',
           'ShiftLeft',
           'ShiftRight',
         ].includes(event.code)
@@ -312,9 +315,12 @@ export default function ReelProblems3Game() {
         event.preventDefault();
       if (event.type === 'keydown') keys.current.add(event.code);
       else keys.current.delete(event.code);
-      updateControls();
-      if (event.code === 'KeyE' && event.type === 'keydown' && !event.repeat)
-        interact();
+      update();
+      if (event.type === 'keydown' && !event.repeat) {
+        if (event.code === 'KeyE') interact();
+        if (event.code === 'KeyF') fishAction();
+        if (event.code === 'KeyQ') act('drop');
+      }
     };
     const down = (event: KeyboardEvent) => key(event);
     const up = (event: KeyboardEvent) => key(event);
@@ -324,25 +330,14 @@ export default function ReelProblems3Game() {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, [interact]);
+  }, [act, fishAction, interact]);
 
-  const setTouchMove = (axis: 'x' | 'z', value: number) => {
-    controls.current[axis] = value;
-  };
-  const moveButton = (axis: 'x' | 'z', value: number) => ({
-    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
-      event.currentTarget.setPointerCapture(event.pointerId);
-      setTouchMove(axis, value);
-    },
-    onPointerUp: () => setTouchMove(axis, 0),
-    onPointerCancel: () => setTouchMove(axis, 0),
-  });
   const touchLookMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const previousLook = touchLook.current;
-    if (!previousLook || previousLook.id !== event.pointerId) return;
+    const last = touchLook.current;
+    if (!last || last.id !== event.pointerId) return;
     scene.current?.look(
-      (event.clientX - previousLook.x) * 1.2,
-      (event.clientY - previousLook.y) * 1.2,
+      (event.clientX - last.x) * 1.2,
+      (event.clientY - last.y) * 1.2,
     );
     touchLook.current = {
       id: event.pointerId,
@@ -350,67 +345,57 @@ export default function ReelProblems3Game() {
       y: event.clientY,
     };
   };
-
-  const awards = world ? crewAwards(world) : [];
+  const mission = world?.missions[world.activeMission];
+  const incident = world?.incidents.find((candidate) => !candidate.resolved);
+  const timeLeft =
+    world && world.round.roundEndsAt > 0
+      ? Math.max(0, world.round.roundEndsAt - world.clock)
+      : 0;
   const progress = world
-    ? world.phase === 'harbor'
-      ? world.loaded.length / 4
-      : world.phase === 'search'
-        ? (world.beaconIndex +
-            (world.beacons[world.beaconIndex]?.active ? 0.75 : 0.25)) /
-          3
-        : world.phase === 'storm'
-          ? world.stormProgress / 9
-          : world.phase === 'sanctuary'
-            ? (world.lanterns.length + world.toneIndex) / 6
-            : ['homecoming', 'finished'].includes(world.phase)
-              ? 1
-              : 0
+    ? world.activeMission / Math.max(1, world.missions.length) +
+      (mission
+        ? mission.progress / Math.max(1, mission.goal) / world.missions.length
+        : 0)
     : 0;
+  const awards = world ? crewAwards(world) : [];
 
   return (
     <main
       className={`rp3 ${world ? `phase-${world.phase}` : ''} ${touch ? 'is-touch' : ''}`}
+      {...partyRound(
+        !!room.session && ended,
+        world
+          ? partyGoal(world.phase === 'finished', me?.stats.score ?? 0)
+          : null,
+      )}
     >
       <div ref={host} className="rp3-stage" />
       <div className="rp3-vignette" aria-hidden="true" />
-
       <header className="rp3-topbar">
-        <a
-          href="/"
-          className="rp3-brand"
-          aria-label={say('Return to Jumbleyard', 'Zurück zu Jumbleyard')}
-        >
+        <a href="/" className="rp3-brand">
           <span>REEL</span> PROBLEMS <b>3</b>
         </a>
         <GameToolbar
           voice={room.voice}
           multiplayer={<PeerRoomControls room={room} />}
           muted={muted}
-          onToggleSound={() => {
-            sound.current?.unlock();
-            setMuted((value) => !value);
-          }}
-          onHelp={() => {
-            if (document.pointerLockElement) document.exitPointerLock?.();
-            setHelp(true);
-          }}
+          onToggleSound={() => setMuted((value) => !value)}
+          onHelp={() => setHelp(true)}
         />
       </header>
 
-      {!menu && !finished && world ? (
+      {!menu && !ended && world ? (
         <>
-          <section className="rp3-objective" aria-live="polite">
-            <small>{PHASE_NAMES[world.phase]}</small>
+          <section className="rp3-objective">
+            <small>
+              {PHASE_NAMES[world.phase]} · {Math.ceil(timeLeft / 1000)}s
+            </small>
             <strong>{objective(world)}</strong>
             <span>
-              <i style={{ width: `${Math.round(progress * 100)}%` }} />
+              <i style={{ width: `${Math.min(100, progress * 100)}%` }} />
             </span>
           </section>
-          <section
-            className="rp3-crew"
-            aria-label={say('Crew status', 'Crewstatus')}
-          >
+          <section className="rp3-crew">
             {world.players.map((player) => (
               <div
                 key={player.id}
@@ -419,60 +404,46 @@ export default function ReelProblems3Game() {
                 <i
                   style={
                     {
-                      '--crew-color': [
-                        '#d96f56',
-                        '#f0ad55',
-                        '#4d928d',
-                        '#6576a8',
-                      ][player.color % 4],
+                      '--crew-color': crewColors[player.color % 4],
                     } as CSSProperties
                   }
                 />
                 <span>{player.name}</span>
-                {player.overboard ? (
+                {player.bot ? (
+                  <Bot size={13} />
+                ) : player.overboard ? (
                   <LifeBuoy size={14} />
                 ) : (
-                  <Check size={13} />
+                  <b>{player.stats.score}</b>
                 )}
               </div>
             ))}
           </section>
-          <section
-            className="rp3-chart"
-            aria-label={say('Voyage chart', 'Reisekarte')}
-          >
-            <div className="rp3-chart-route" aria-hidden="true">
-              <i className="is-home">
-                <Anchor />
-              </i>
-              {world.beacons.map((beacon, index) => (
-                <i
-                  key={beacon.id}
-                  className={
-                    beacon.active
-                      ? 'is-complete'
-                      : index === world.beaconIndex
-                        ? 'is-current'
-                        : ''
-                  }
-                >
-                  <span>{index + 1}</span>
-                </i>
-              ))}
-              <i
+          <section className="rp3-contracts">
+            {world.missions.map((contract, index) => (
+              <article
+                key={contract.id}
                 className={
-                  ['sanctuary', 'homecoming', 'finished'].includes(world.phase)
+                  contract.complete
                     ? 'is-complete'
-                    : ''
+                    : index === world.activeMission
+                      ? 'is-current'
+                      : ''
                 }
               >
-                <Fish />
-              </i>
-            </div>
-            <small>
-              {say('THE OLD KEEPER’S CHART', 'KARTE DES ALTEN WÄCHTERS')}
-            </small>
+                <span>{contract.complete ? <Check /> : index + 1}</span>
+                <div>
+                  <small>CONTRACT {index + 1}</small>
+                  <strong>{contract.label}</strong>
+                </div>
+              </article>
+            ))}
           </section>
+          {incident ? (
+            <output className={`rp3-chaos is-${incident.severity}`}>
+              <Waves /> DECK CHAOS · {incident.kind.replaceAll('-', ' ')}
+            </output>
+          ) : null}
           <div className="rp3-crosshair" aria-hidden="true">
             <i />
             <i />
@@ -480,36 +451,46 @@ export default function ReelProblems3Game() {
           <output className={`rp3-prompt ${target ? 'is-ready' : ''}`}>
             <MousePointer2 size={15} /> {promptFor(world, target)}
           </output>
-          <div
-            className="rp3-compass"
-            style={
-              {
-                '--heading': `${-(scene.current?.getYaw() ?? 0)}rad`,
-              } as CSSProperties
-            }
-            aria-label={say('Wrist compass', 'Handgelenkkompass')}
-          >
-            <Compass />
-            <i />
-            <span>N</span>
-          </div>
-          <div
-            className="rp3-vitals"
-            aria-label={say('Boat condition', 'Bootszustand')}
-          >
+          <section className="rp3-vitals">
             <div>
-              <span>{say('Hull', 'Rumpf')}</span>
+              <span>HULL</span>
               <i>
-                <b style={{ width: `${world.hull}%` }} />
+                <b style={{ width: `${world.boat.hull}%` }} />
               </i>
             </div>
             <div>
-              <span>{say('Bilge', 'Bilge')}</span>
+              <span>BILGE</span>
               <i>
-                <b className="water" style={{ width: `${world.water}%` }} />
+                <b
+                  className="water"
+                  style={{ width: `${world.boat.water}%` }}
+                />
               </i>
             </div>
-          </div>
+            {me?.line ? (
+              <div
+                className={`rp3-tension ${me.line.tension > 0.9 ? 'is-hot' : ''}`}
+              >
+                <span>LINE</span>
+                <i>
+                  <b
+                    style={{
+                      width: `${Math.min(100, me.line.tension * 100)}%`,
+                    }}
+                  />
+                </i>
+              </div>
+            ) : null}
+          </section>
+          {me?.held.length ? (
+            <div className="rp3-hands">
+              HOLDING ·{' '}
+              {me.held
+                .map((id) => world.items.find((item) => item.id === id)?.kind)
+                .join(' + ')}{' '}
+              <kbd>Q DROP</kbd>
+            </div>
+          ) : null}
         </>
       ) : null}
 
@@ -517,31 +498,27 @@ export default function ReelProblems3Game() {
         <section className="rp3-opening">
           <div className="rp3-journal">
             <span className="rp3-kicker">
-              <Sparkles />{' '}
-              {say(
-                'A FIRST-PERSON CREW ADVENTURE',
-                'EIN CREW-ABENTEUER IN ICH-PERSPEKTIVE',
-              )}
+              <Fish /> FIRST-PERSON PARTY FISHING
             </span>
             <h1>
-              <span>Follow the</span>
-              <em>light below.</em>
+              <span>Catch together.</span>
+              <em>Score alone.</em>
             </h1>
             <p>
               {say(
-                'Leave the clay harbor, wake three forgotten beacons, and guide a legendary fish through the storm. Everyone gets home—or nobody does.',
-                'Verlasst den Lehmhafen, erweckt drei vergessene Leuchtfeuer und führt einen legendären Fisch durch den Sturm. Alle kommen heim – oder niemand.',
+                'Load one shared boat, race between wild fishing grounds, fight physical catches and get home before the harbor bell. Empty crew slots are filled by capable chaos bots.',
+                'Beladet ein gemeinsames Boot, rast zwischen wilden Fanggründen, kämpft mit echten Fischen und kommt vor der Hafenglocke zurück. Freie Plätze werden von Chaos-Bots besetzt.',
               )}
             </p>
             <div className="rp3-feature-row">
               <span>
-                <Users /> 1–4 {say('friends', 'Freunde')}
+                <Users /> 1–4
               </span>
               <span>
-                <Footprints /> {say('First person', 'Ich-Perspektive')}
+                <Fish /> 3 CONTRACTS
               </span>
               <span>
-                <Waves /> 15–20 {say('minutes', 'Minuten')}
+                <Waves /> 8 MIN
               </span>
             </div>
             {!room.session ? (
@@ -551,143 +528,91 @@ export default function ReelProblems3Game() {
                   disabled={!ready}
                   onClick={() => act('start')}
                 >
-                  <Anchor /> {say('Begin solo voyage', 'Solo-Reise beginnen')}
+                  <Anchor /> START WITH BOTS
                 </button>
                 <button
                   className="rp3-secondary"
                   onClick={() => room.setOpen(true)}
                 >
-                  <Users /> {say('Gather a crew', 'Crew zusammenrufen')}
+                  <Users /> INVITE FRIENDS
                 </button>
               </div>
             ) : (
               <div className="rp3-lobby">
-                <div>
-                  <small>{say('ROOM', 'RAUM')}</small>
-                  <strong>{room.session.code}</strong>
-                </div>
-                <p>
-                  {room.players.map((player) => player.name).join(' · ') ||
-                    say('Waiting for crew…', 'Warte auf Crew…')}
-                </p>
+                <strong>{room.session.code}</strong>
+                <p>{room.players.map((player) => player.name).join(' · ')}</p>
                 {isHost ? (
-                  <button
-                    className="rp3-primary"
-                    disabled={!ready || room.status !== 'online'}
-                    onClick={() => act('start')}
-                  >
-                    <Anchor /> {say('Cast off together', 'Gemeinsam ablegen')}
+                  <button className="rp3-primary" onClick={() => act('start')}>
+                    <Anchor /> CAST OFF
                   </button>
                 ) : (
-                  <output>
-                    {say(
-                      'The crew leader will cast off.',
-                      'Der Crewleiter legt gleich ab.',
-                    )}
-                  </output>
+                  <output>Waiting for the crew leader.</output>
                 )}
-                <button
-                  className="rp3-secondary"
-                  onClick={() => room.setOpen(true)}
-                >
-                  <Users />{' '}
-                  {say('Invite or manage crew', 'Crew einladen oder verwalten')}
-                </button>
               </div>
             )}
             <small className="rp3-opening-note">
-              <MousePointer2 />{' '}
-              {say(
-                'Click the world to look around · WASD to move · E to use',
-                'In die Welt klicken zum Umsehen · WASD bewegen · E benutzen',
-              )}
+              WASD MOVE · E USE · F CAST/HOOK · HOLD R REEL · Q DROP
             </small>
           </div>
-          <aside className="rp3-route-note" aria-hidden="true">
-            <b>HARBOR</b>
-            <i /> <b>3 BEACONS</b>
-            <i /> <b>STORM</b>
-            <i /> <b>SANCTUARY</b>
-          </aside>
         </section>
       ) : null}
 
-      {finished && world ? (
+      {ended && world ? (
         <section className="rp3-finale">
-          <div className="rp3-photo">
-            <div className="rp3-photo-scene">
-              <span className="rp3-moon" />
-              <Fish className="rp3-photo-fish" />
-              <div className="rp3-photo-crew">
-                {world.players.map((player) => (
-                  <i
-                    key={player.id}
-                    style={
-                      {
-                        '--crew-color': [
-                          '#d96f56',
-                          '#f0ad55',
-                          '#4d928d',
-                          '#6576a8',
-                        ][player.color % 4],
-                      } as CSSProperties
-                    }
-                  >
-                    <span />
-                  </i>
-                ))}
-              </div>
-            </div>
-            <small>
-              {say(
-                'HARBOR SUNRISE · THE WHOLE CREW',
-                'HAFEN BEI SONNENAUFGANG · DIE GANZE CREW',
-              )}
-            </small>
-          </div>
           <div className="rp3-finale-copy">
             <span className="rp3-kicker">
-              <Sparkles /> {say('VOYAGE COMPLETE', 'REISE BEENDET')}
+              {world.phase === 'finished' ? <Trophy /> : <Waves />}{' '}
+              {world.phase === 'finished' ? 'CATCH DELIVERED' : 'ROUND LOST'}
             </span>
             <h2>
-              {say(
-                'The light found its way home.',
-                'Das Licht hat heimgefunden.',
-              )}
+              {world.phase === 'finished'
+                ? 'The harbor bell rang for you.'
+                : objective(world)}
             </h2>
-            <p>
-              {say(
-                'You finished the journey together. The sanctuary will remember every beacon you woke and every friend you pulled from the sea.',
-                'Ihr habt die Reise gemeinsam beendet. Das Schutzgebiet erinnert sich an jedes Leuchtfeuer und jeden Freund, den ihr aus dem Meer gezogen habt.',
-              )}
-            </p>
-            {awards.length ? (
-              <div className="rp3-awards">
-                {awards.slice(0, 3).map((award) => (
-                  <article key={award.title}>
-                    <small>{award.title}</small>
-                    <strong>{award.player}</strong>
-                    <span>{award.detail}</span>
-                  </article>
-                ))}
-              </div>
-            ) : null}
+            <div className="rp3-awards">
+              {awards.slice(0, 4).map((award) => (
+                <article key={award.title}>
+                  <small>{award.title}</small>
+                  <strong>{award.player}</strong>
+                  <span>{award.detail}</span>
+                </article>
+              ))}
+            </div>
             {isHost ? (
               <button className="rp3-primary" onClick={() => act('restart')}>
-                <RotateCcw /> {say('Sail again', 'Noch einmal segeln')}
+                <RotateCcw /> PLAY AGAIN
               </button>
             ) : (
-              <output>
-                {say(
-                  'Waiting for the crew leader.',
-                  'Warte auf den Crewleiter.',
-                )}
-              </output>
+              <output>Waiting for the crew leader.</output>
             )}
           </div>
         </section>
       ) : null}
 
+      {error ? (
+        <output className="rp3-error" onAnimationEnd={() => setError('')}>
+          {error}
+        </output>
+      ) : null}
+      {help ? (
+        <dialog open className="rp3-help">
+          <article>
+            <button onClick={() => setHelp(false)}>×</button>
+            <HelpCircle />
+            <h2>Deck guide</h2>
+            <p>
+              Load real equipment into its matching rack. One player takes the
+              helm; everyone else fishes, stores catches, repairs damage, and
+              rescues friends. Fish bite briefly—press F, then hold R only while
+              tension is safe.
+            </p>
+            <small>
+              WASD move · E interact · F cast/hook · R reel · Space brace · Q
+              drop
+            </small>
+          </article>
+        </dialog>
+      ) : null}
       {touch && !disabled ? (
         <div className="rp3-touch">
           <div
@@ -698,128 +623,38 @@ export default function ReelProblems3Game() {
                 x: event.clientX,
                 y: event.clientY,
               };
-              event.currentTarget.setPointerCapture(event.pointerId);
             }}
             onPointerMove={touchLookMove}
             onPointerUp={() => {
               touchLook.current = null;
             }}
-            onPointerCancel={() => {
-              touchLook.current = null;
-            }}
-            aria-label={say('Drag to look', 'Ziehen zum Umsehen')}
           />
-          <div className="rp3-touch-move">
+          <div className="rp3-touch-actions">
             <button
-              {...moveButton('z', 1)}
-              aria-label={say('Move forward', 'Vorwärts')}
+              onPointerDown={() => {
+                controls.current.z = 1;
+              }}
+              onPointerUp={() => {
+                controls.current.z = 0;
+              }}
             >
               ▲
             </button>
+            <button onClick={interact}>USE</button>
+            <button onClick={fishAction}>FISH</button>
             <button
-              {...moveButton('x', -1)}
-              aria-label={say('Move left', 'Links')}
+              onPointerDown={() => {
+                controls.current.reel = true;
+              }}
+              onPointerUp={() => {
+                controls.current.reel = false;
+              }}
             >
-              ◀
-            </button>
-            <button
-              {...moveButton('z', -1)}
-              aria-label={say('Move backward', 'Rückwärts')}
-            >
-              ▼
-            </button>
-            <button
-              {...moveButton('x', 1)}
-              aria-label={say('Move right', 'Rechts')}
-            >
-              ▶
+              REEL
             </button>
           </div>
-          <button className="rp3-touch-action" onClick={interact}>
-            <span>E</span>
-            {say('USE', 'NUTZEN')}
-          </button>
         </div>
       ) : null}
-
-      {error ? (
-        <output className="rp3-error" role="alert">
-          {error}
-        </output>
-      ) : null}
-      {!ready ? (
-        <div className="rp3-loading">
-          <Fish />
-          <span>
-            {say('Charting the archipelago…', 'Archipel wird kartiert…')}
-          </span>
-        </div>
-      ) : null}
-
-      <Dialog open={help} onOpenChange={setHelp}>
-        <DialogContent className="rp3-help game-dialog">
-          <DialogTitle>{say('Crew field guide', 'Crew-Handbuch')}</DialogTitle>
-          <p>
-            {say(
-              'This is one continuous first-person voyage. Face an amber marker and press E. The world—not a checklist—shows where to go next.',
-              'Dies ist eine durchgehende Reise in Ich-Perspektive. Schau auf eine orange Markierung und drücke E. Die Welt zeigt den nächsten Weg.',
-            )}
-          </p>
-          <div className="rp3-help-grid">
-            <div>
-              <Footprints />
-              <strong>WASD</strong>
-              <span>
-                {say('Move · Shift to hurry', 'Bewegen · Shift zum Laufen')}
-              </span>
-            </div>
-            <div>
-              <MousePointer2 />
-              <strong>{say('Mouse', 'Maus')}</strong>
-              <span>
-                {say('Click, then look around', 'Klicken, dann umsehen')}
-              </span>
-            </div>
-            <div>
-              <Anchor />
-              <strong>E</strong>
-              <span>
-                {say(
-                  'Use, carry, repair, rescue',
-                  'Nutzen, tragen, reparieren, retten',
-                )}
-              </span>
-            </div>
-            <div>
-              <HelpCircle />
-              <strong>Esc</strong>
-              <span>{say('Release the cursor', 'Mauszeiger freigeben')}</span>
-            </div>
-          </div>
-          <label className="rp3-motion-setting">
-            <input
-              type="checkbox"
-              aria-label={say('Reduce sea motion', 'Meeresbewegung reduzieren')}
-              checked={reducedMotion}
-              onChange={(event) => setReducedMotion(event.target.checked)}
-            />
-            <span>
-              <strong>
-                {say('Reduce sea motion', 'Meeresbewegung reduzieren')}
-              </strong>
-              <small>
-                {say(
-                  'Calms hand bob, waves, rain, and ambient movement.',
-                  'Beruhigt Hände, Wellen, Regen und Umgebungsbewegung.',
-                )}
-              </small>
-            </span>
-          </label>
-          <button className="rp3-primary" onClick={() => setHelp(false)}>
-            {say('Return to the voyage', 'Zurück zur Reise')}
-          </button>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

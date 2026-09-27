@@ -1,125 +1,91 @@
 import { clamp } from '../../shared/math/clamp';
-import { adventurePhysics, resetAdventurePhysics } from './physics';
-import { safeSpawn } from './physics-layout';
+import { stepBoat, toBoatSpace } from './boat';
+import { reconcileBots, stepBots } from './bots';
+import { stepChaos, resolveIncident } from './chaos';
+import { castLine, hookLine, stepFishing, untangleLine } from './fishing';
 import {
-  LANTERN_SOCKETS,
-  SUPPLIES,
+  dropItem,
+  loadedEssentials,
+  pickUpItem,
+  placeItem,
+  spawnLoadout,
+  stepItems,
+} from './items';
+import { generateMissions } from './missions';
+import { createPlayer, freshStats } from './players';
+import { adventurePhysics, resetAdventurePhysics } from './physics';
+import { depart, finishDocking, resetRound, stepRound } from './round';
+import { STATION_POSITIONS } from './stations';
+import {
   idleInput,
-  type AdventureEventKind,
   type AdventurePlayer,
   type AdventureSnapshot,
   type AdventureWorld,
+  type StationKind,
 } from './types';
+import { updateStream } from './world-stream';
 
-const freshStats = () => ({
-  supplies: 0,
-  beacons: 0,
-  repairs: 0,
-  rescues: 0,
-  helmTurns: 0,
-  lanterns: 0,
-});
+const STATIONS = new Set(Object.keys(STATION_POSITIONS));
 
 export function newPlayer(seat: number): AdventurePlayer {
-  return {
-    id: `crew-${seat}`,
-    name: ['Milo', 'Lola', 'Nico', 'Pip'][seat] ?? `Crew ${seat + 1}`,
-    color: seat,
-    seat,
-    bot: true,
-    seen: 0,
-    input: idleInput(),
-    x: -1.5 + seat,
-    z: 5,
-    yaw: 0,
-    overboard: false,
-    stats: freshStats(),
-  };
+  return createPlayer(seat);
 }
 
 export function freshWorld(now: number): AdventureWorld {
-  return {
+  const seed = ((Math.floor(now) || 1) ^ 0x7265656c) >>> 0;
+  const generated = generateMissions(seed);
+  const world: AdventureWorld = {
     clock: now,
     started: 0,
-    phaseAt: now,
     tick: 0,
     phase: 'lobby',
+    randomState: generated.state,
+    round: {
+      seed,
+      phase: 'lobby',
+      startedAt: 0,
+      prepEndsAt: 0,
+      roundEndsAt: 0,
+      returnEndsAt: 0,
+      finishedAt: 0,
+    },
     players: [],
-    loaded: [],
-    beacons: [
-      { id: 'cliff', aligned: 0, required: 3, active: false },
-      { id: 'cave', aligned: 0, required: 3, active: false },
-      { id: 'pines', aligned: 0, required: 3, active: false },
-    ],
-    beaconIndex: 0,
-    routeProgress: 0,
-    stormProgress: 0,
-    hull: 100,
-    water: 0,
-    wave: 0,
-    lanterns: [],
-    toneIndex: 0,
-    fishTrust: 0,
+    boat: {
+      x: 0,
+      z: 0,
+      yaw: 0,
+      speed: 0,
+      throttle: 0,
+      steer: 0,
+      roll: 0,
+      pitch: 0,
+      hull: 100,
+      water: 0,
+      engine: 'off',
+      docked: true,
+      netTorn: false,
+    },
+    items: spawnLoadout(),
+    fish: [],
+    missions: generated.missions,
+    activeMission: 0,
+    cells: [],
+    incidents: [],
+    nextIncidentAt: now + 18_000,
+    incidentId: 0,
+    fogUntil: 0,
     events: [],
     nextEvent: 0,
   };
-}
-
-function event(
-  world: AdventureWorld,
-  kind: AdventureEventKind,
-  actor?: string,
-  detail?: string,
-) {
-  world.events.push({
-    id: ++world.nextEvent,
-    kind,
-    at: world.clock,
-    ...(actor ? { actor } : {}),
-    ...(detail ? { detail } : {}),
-  });
-  if (world.events.length > 28)
-    world.events.splice(0, world.events.length - 28);
-}
-
-function resetPositions(world: AdventureWorld) {
-  world.players.forEach((player, index) => {
-    const spawn = safeSpawn(world.phase, index);
-    player.x = spawn.x;
-    player.z = spawn.z;
-    player.yaw = 0;
-    player.overboard = false;
-    player.input = idleInput();
-  });
-}
-
-function phase(world: AdventureWorld, next: AdventureWorld['phase']) {
-  world.phase = next;
-  world.phaseAt = world.clock;
-  resetPositions(world);
+  reconcileBots(world);
+  updateStream(world);
+  return world;
 }
 
 export function startAdventure(world: AdventureWorld) {
   resetAdventurePhysics(world);
-  world.started = world.clock;
-  world.loaded = [];
-  world.beacons.forEach((beacon) => {
-    beacon.aligned = 0;
-    beacon.required = Math.max(2, Math.min(4, world.players.length + 1));
-    beacon.active = false;
-  });
-  world.beaconIndex = 0;
-  world.routeProgress = 0;
-  world.stormProgress = 0;
-  world.hull = 100;
-  world.water = 0;
-  world.wave = 0;
-  world.lanterns = [];
-  world.toneIndex = 0;
-  world.fishTrust = 0;
-  for (const player of world.players) player.stats = freshStats();
-  phase(world, 'harbor');
-  event(world, 'departed');
+  reconcileBots(world);
+  resetRound(world, (world.randomState ^ (world.clock | 0)) >>> 0);
 }
 
 export function setInput(
@@ -127,179 +93,153 @@ export function setInput(
   id: string,
   raw: Record<string, unknown>,
 ) {
-  const player = world.players.find((candidate) => candidate.id === id);
+  const player = world.players.find(
+    (candidate) => candidate.id === id && !candidate.bot,
+  );
   if (!player) return;
   const yaw =
     typeof raw.yaw === 'number' && Number.isFinite(raw.yaw)
-      ? clamp(raw.yaw, -Math.PI * 8, Math.PI * 8)
+      ? clamp(raw.yaw, -Math.PI * 16, Math.PI * 16)
       : player.yaw;
   player.input = {
     x: clamp(Number(raw.x) || 0, -1, 1),
     z: clamp(Number(raw.z) || 0, -1, 1),
     yaw,
     sprint: raw.sprint === true,
+    reel: raw.reel === true,
+    brace: raw.brace === true,
+    throttle: clamp(Number(raw.throttle) || 0, -1, 1),
+    steer: clamp(Number(raw.steer) || 0, -1, 1),
     seq: Number.isSafeInteger(raw.seq) ? Number(raw.seq) : 0,
   };
   player.yaw = yaw;
+}
+
+function moveOverboardPlayers(world: AdventureWorld, dt: number) {
+  for (const player of world.players) {
+    if (player.bot || (!player.overboard && player.space !== 'world')) continue;
+    if (player.overboard || player.space === 'world') {
+      player.stats.overboardMs += dt * 1000;
+      player.x += Math.sin(player.yaw) * player.input.z * 1.15 * dt;
+      player.z += Math.cos(player.yaw) * player.input.z * 1.15 * dt;
+      continue;
+    }
+  }
 }
 
 export function advanceWorld(world: AdventureWorld, now: number) {
   const delta = Math.max(0, Math.min(100, now - world.clock));
   world.clock = now;
   world.tick++;
-  if (world.phase !== 'lobby' && world.phase !== 'finished')
-    adventurePhysics(world).step(delta / 1000);
-
-  if (world.phase === 'storm') {
-    world.water = clamp(world.water + delta * 0.0007, 0, 100);
-    if (world.water >= 100) {
-      world.water = 62;
-      world.hull = Math.max(24, world.hull - 12);
-      event(world, 'damage', undefined, 'The bilge overflowed');
-    }
-  }
-  if (world.phase === 'homecoming' && world.clock - world.phaseAt >= 8_000) {
-    phase(world, 'finished');
-    event(world, 'home');
-  }
+  const dt = delta / 1000;
+  if (dt <= 0 || ['lobby', 'finished', 'failed'].includes(world.phase)) return;
+  moveOverboardPlayers(world, dt);
+  adventurePhysics(world).step(dt);
+  for (const player of world.players)
+    if (!player.bot && player.station === 'helm') player.stats.helmTime += dt;
+  stepBots(world, dt);
+  stepBoat(world, dt);
+  stepItems(world, dt);
+  stepFishing(world, dt);
+  stepChaos(world, dt);
+  stepRound(world);
 }
 
 function actor(world: AdventureWorld, id: string) {
   const player = world.players.find((candidate) => candidate.id === id);
-  if (!player) throw new Error('That crew member is no longer aboard.');
-  if (player.overboard)
-    throw new Error('Grab the rescue line and wait for a friend.');
+  if (!player) throw new Error('That crew member is not aboard.');
   return player;
 }
 
-function harborAction(world: AdventureWorld, id: string, target: string) {
-  if (!target.startsWith('supply-'))
-    throw new Error('Load the marked supplies.');
-  const supply = target.slice(7);
-  if (!SUPPLIES.includes(supply as (typeof SUPPLIES)[number]))
-    throw new Error('That does not belong on the boat.');
-  if (world.loaded.includes(supply)) return;
-  world.loaded.push(supply);
-  actor(world, id).stats.supplies++;
-  event(world, 'supply', id, supply);
-  if (world.loaded.length === SUPPLIES.length) phase(world, 'search');
+function nearStation(player: AdventurePlayer, station: StationKind) {
+  const point = STATION_POSITIONS[station];
+  return Math.hypot(point.x - player.x, point.z - player.z) <= 2.5;
 }
 
-function searchAction(world: AdventureWorld, id: string, target: string) {
-  const beacon = world.beacons[world.beaconIndex];
-  if (!beacon) return;
-  if (!beacon.active) {
-    if (target === 'beacon-crank') {
-      beacon.aligned = Math.min(beacon.required, beacon.aligned + 1);
-      if (beacon.aligned === beacon.required)
-        event(world, 'beacon-aligned', id, beacon.id);
-      return;
-    }
-    if (target === 'beacon-bell') {
-      if (beacon.aligned < beacon.required)
-        throw new Error('Align the beacon lens first.');
-      beacon.active = true;
-      actor(world, id).stats.beacons++;
-      event(world, 'beacon-lit', id, beacon.id);
-      return;
-    }
-    throw new Error('Find the crank and align this beacon.');
-  }
-  if (target !== 'helm')
-    throw new Error('Return to the helm for the next island.');
-  world.routeProgress++;
-  actor(world, id).stats.helmTurns++;
-  if (world.routeProgress < 3) return;
-  world.routeProgress = 0;
-  world.beaconIndex++;
-  if (world.beaconIndex >= world.beacons.length) {
-    phase(world, 'storm');
-    event(world, 'fish-seen', id);
-  } else {
-    phase(world, 'search');
-    event(world, 'island-reached', id, world.beacons[world.beaconIndex].id);
-  }
-}
-
-function stormAction(world: AdventureWorld, id: string, target: string) {
-  const player = actor(world, id);
-  if (target === 'repair') {
-    if (world.hull >= 98 && world.water < 8)
-      throw new Error('The hull is holding. Stay on course.');
-    world.hull = Math.min(100, world.hull + 24);
-    world.water = Math.max(0, world.water - 30);
-    player.stats.repairs++;
-    event(world, 'repair', id);
-    return;
-  }
-  if (target === 'rescue-rope') {
-    const swimmer = world.players.find((candidate) => candidate.overboard);
-    if (!swimmer) throw new Error('Everyone is aboard.');
-    swimmer.overboard = false;
-    swimmer.x = 0;
-    swimmer.z = 4.5;
-    player.stats.rescues++;
-    event(world, 'rescue', id, swimmer.id);
-    return;
-  }
-  if (target !== 'helm')
-    throw new Error('Hold the wheel, patch the hull, or work the rescue line.');
-  if (world.players.some((candidate) => candidate.overboard))
-    throw new Error('A friend is overboard—throw the rescue line.');
-  if (world.hull < 34 || world.water > 78)
-    throw new Error(
-      'The boat cannot take another wave. Repair and bail first.',
+function interactWithStation(
+  world: AdventureWorld,
+  player: AdventurePlayer,
+  station: StationKind,
+) {
+  if (player.space !== 'boat' || !nearStation(player, station))
+    throw new Error('Move closer to that station.');
+  if (station === 'helm') {
+    if (
+      world.phase === 'docking' &&
+      Math.hypot(world.boat.x, world.boat.z) <= 8 &&
+      Math.abs(world.boat.speed) <= 1.7
+    )
+      return finishDocking(world, player.id);
+    const current = world.players.find(
+      (candidate) => candidate.station === 'helm' && candidate.id !== player.id,
     );
-  world.stormProgress++;
-  world.wave++;
-  player.stats.helmTurns++;
-  event(world, 'wave', id, String(world.wave));
-  if (world.stormProgress % 2 === 0) {
-    world.hull = Math.max(0, world.hull - 21);
-    world.water = Math.min(100, world.water + 18);
-    event(world, 'damage', id, 'A wave split the gunwale');
-  }
-  if (world.players.length > 1 && world.stormProgress === 5) {
-    const swimmer = world.players.find((candidate) => candidate.id !== id);
-    if (swimmer) {
-      swimmer.overboard = true;
-      event(world, 'overboard', swimmer.id);
-    }
-  }
-  if (world.stormProgress >= 9) {
-    phase(world, 'sanctuary');
-    event(world, 'sanctuary', id);
-  }
-}
-
-function sanctuaryAction(world: AdventureWorld, id: string, target: string) {
-  const socket = target.startsWith('lantern-') ? target.slice(8) : '';
-  if (LANTERN_SOCKETS.includes(socket as (typeof LANTERN_SOCKETS)[number])) {
-    if (!world.lanterns.includes(socket)) {
-      world.lanterns.push(socket);
-      world.fishTrust += 12;
-      actor(world, id).stats.lanterns++;
-      event(world, 'lantern', id, socket);
-    }
+    if (current && !current.bot)
+      throw new Error(`${current.name} is already at the helm.`);
+    if (current) current.station = undefined;
+    player.station = player.station === 'helm' ? undefined : 'helm';
     return;
   }
-  if (world.lanterns.length < LANTERN_SOCKETS.length)
-    throw new Error('Place all three guiding lanterns first.');
-  if (!target.startsWith('tone-'))
-    throw new Error('Sound the beacon tones in chart order.');
-  const tone = Number(target.slice(5));
-  if (tone !== world.toneIndex) {
-    world.toneIndex = 0;
-    throw new Error('The melody slipped away. Begin with the low cliff tone.');
+  if (station === 'engine') {
+    if (world.boat.engine !== 'stalled')
+      throw new Error('The engine is already running cleanly.');
+    world.boat.engine = 'running';
+    player.stats.repairs++;
+    player.stats.score += 35;
+    resolveIncident(world, 'engine-stall', player.id);
+    return;
   }
-  world.toneIndex++;
-  world.fishTrust += 21;
-  event(world, 'tone', id, String(tone));
-  if (world.toneIndex >= 3) {
-    world.fishTrust = 100;
-    phase(world, 'homecoming');
-    event(world, 'fish-home', id);
+  if (station === 'repair-bench') {
+    if (world.boat.hull >= 99 && !world.boat.netTorn)
+      throw new Error('Nothing needs patching.');
+    world.boat.hull = Math.min(100, world.boat.hull + 18);
+    world.boat.netTorn = false;
+    player.stats.repairs++;
+    player.stats.score += 20;
+    resolveIncident(world, 'hull-leak', player.id);
+    resolveIncident(world, 'torn-net', player.id);
+    return;
   }
+  if (station === 'bilge-pump') {
+    if (world.boat.water <= 1) throw new Error('The bilge is dry.');
+    world.boat.water = Math.max(0, world.boat.water - 28);
+    player.stats.bails++;
+    return;
+  }
+  if (station === 'rescue-line') {
+    const swimmer = world.players.find((candidate) => candidate.overboard);
+    if (!swimmer) throw new Error('Everyone is safely aboard.');
+    const local = toBoatSpace(world, swimmer);
+    swimmer.space = 'boat';
+    swimmer.overboard = false;
+    swimmer.x = clamp(local.x, -2.3, 2.3);
+    swimmer.z = 0.5;
+    player.stats.rescues++;
+    player.stats.score += 60;
+    return;
+  }
+  const held = player.held.at(-1);
+  if (held) placeItem(world, player, station, held);
+  else player.station = player.station === station ? undefined : station;
+}
+
+function interact(
+  world: AdventureWorld,
+  player: AdventurePlayer,
+  target: string,
+) {
+  const item = world.items.find((candidate) => candidate.id === target);
+  if (item) return pickUpItem(world, player, item.id);
+  if (target.startsWith('station:')) target = target.slice(8);
+  if (STATIONS.has(target))
+    return interactWithStation(world, player, target as StationKind);
+  if (target === 'depart') {
+    if (world.phase !== 'preparing')
+      throw new Error('The boat is already away from the pier.');
+    if (loadedEssentials(world) < 10)
+      throw new Error('Load the essential fishing and safety gear first.');
+    return depart(world, player.id);
+  }
+  throw new Error('There is nothing to use there.');
 }
 
 export function adventureAction(
@@ -309,26 +249,41 @@ export function adventureAction(
   isHost: boolean,
 ) {
   const type = String(raw.type);
-  if (type === 'start') {
-    if (!isHost) throw new Error('Only the crew leader can launch the voyage.');
-    if (world.phase !== 'lobby' && world.phase !== 'finished')
-      throw new Error('The voyage is already underway.');
-    startAdventure(world);
-    return;
+  if (type === 'start' || type === 'restart') {
+    if (!isHost) throw new Error('Only the crew leader can start the round.');
+    if (
+      type === 'start' &&
+      !['lobby', 'finished', 'failed'].includes(world.phase)
+    )
+      throw new Error('The fishing round is already underway.');
+    return startAdventure(world);
   }
-  if (type === 'restart') {
-    if (!isHost)
-      throw new Error('Only the crew leader can start another voyage.');
-    startAdventure(world);
-    return;
-  }
-  if (type !== 'interact') throw new Error('That action is not available.');
-  const target = typeof raw.target === 'string' ? raw.target : '';
-  if (world.phase === 'harbor') harborAction(world, id, target);
-  else if (world.phase === 'search') searchAction(world, id, target);
-  else if (world.phase === 'storm') stormAction(world, id, target);
-  else if (world.phase === 'sanctuary') sanctuaryAction(world, id, target);
-  else throw new Error('There is nothing to use here yet.');
+  const player = actor(world, id);
+  if (type === 'interact')
+    return interact(
+      world,
+      player,
+      typeof raw.target === 'string' ? raw.target : '',
+    );
+  if (type === 'drop')
+    return dropItem(
+      world,
+      player,
+      typeof raw.item === 'string' ? raw.item : undefined,
+    );
+  if (type === 'throw')
+    return dropItem(
+      world,
+      player,
+      typeof raw.item === 'string' ? raw.item : undefined,
+      6,
+    );
+  if (type === 'cast')
+    return castLine(world, player, Number(raw.power) || 0.65);
+  if (type === 'hook') return hookLine(world, player);
+  if (type === 'untangle') return untangleLine(world, player);
+  if (type === 'dock') return finishDocking(world, player.id);
+  throw new Error('That action is not available.');
 }
 
 export function replaceOwner(
@@ -336,8 +291,15 @@ export function replaceOwner(
   previous: string,
   next: string,
 ) {
-  for (const eventItem of world.events)
-    if (eventItem.actor === previous) eventItem.actor = next;
+  for (const event of world.events)
+    if (event.actor === previous) event.actor = next;
+  for (const item of world.items)
+    if (item.holder === previous) item.holder = next;
+}
+
+export function resetPlayerForRound(player: AdventurePlayer) {
+  player.stats = freshStats();
+  player.input = idleInput();
 }
 
 export function snapshot(
@@ -352,6 +314,7 @@ export function snapshot(
     host,
     selfId,
     version,
+    partyRoundStarted: world.partyRoundStarted,
     world: structuredClone(world),
   };
 }

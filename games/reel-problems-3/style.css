@@ -1385,3 +1385,250 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Party-fishing round HUD */
+.rp3-contracts {
+  position: absolute;
+  z-index: 7;
+  top: 7rem;
+  right: max(0.75rem, env(safe-area-inset-right));
+  left: auto;
+  display: grid;
+  gap: 0.42rem;
+  width: min(19rem, calc(100vw - 1.5rem));
+  pointer-events: none;
+}
+
+.rp3-contracts article {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  align-items: center;
+  gap: 0.62rem;
+  padding: 0.55rem 0.72rem;
+  color: #f4eedbc4;
+  background: #173e46b5;
+  border: 1px solid #f4eedb24;
+  border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
+  box-shadow: 0 0.5rem 1.2rem #173e4638;
+  backdrop-filter: blur(9px);
+  transform: translateX(-0.35rem) scale(0.94);
+  transform-origin: left center;
+  transition: 220ms ease;
+}
+
+.rp3-contracts article.is-current {
+  color: var(--rp3-foam);
+  border-color: #f0ad5588;
+  background: #173e46e8;
+  transform: translateX(0) scale(1);
+}
+
+.rp3-contracts article.is-complete {
+  opacity: 0.64;
+}
+
+.rp3-contracts article > span {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--rp3-ink);
+  background: var(--rp3-amber);
+  border-radius: 50%;
+  font:
+    700 0.78rem/1 'Fredoka',
+    sans-serif;
+}
+
+.rp3-contracts svg {
+  width: 1rem;
+}
+.rp3-contracts div {
+  min-width: 0;
+}
+.rp3-contracts small {
+  display: block;
+  font: 700 0.56rem/1.2 'DM Sans';
+  letter-spacing: 0.13em;
+  opacity: 0.7;
+}
+.rp3-contracts strong {
+  display: block;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  font: 600 0.76rem/1.2 'Fredoka';
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp3-hands {
+  position: absolute;
+  z-index: 8;
+  bottom: 1rem;
+  left: 50%;
+  padding: 0.5rem 0.72rem;
+  color: var(--rp3-foam);
+  background: #173e46d9;
+  border: 1px solid #f4eedb3d;
+  border-radius: 0.7rem;
+  box-shadow: 0 0.4rem 1.2rem #173e4645;
+  font: 700 0.65rem/1 'DM Sans';
+  letter-spacing: 0.08em;
+  transform: translateX(-50%);
+  backdrop-filter: blur(10px);
+}
+
+.rp3-chaos {
+  position: absolute;
+  z-index: 9;
+  top: 5.45rem;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.48rem 0.7rem;
+  color: #fff5df;
+  background: #d96f56e8;
+  border: 1px solid #ffd7a8;
+  border-radius: 0.25rem 0.8rem 0.25rem 0.8rem;
+  box-shadow: 0 0.6rem 1.6rem #9d3c3655;
+  font: 800 0.65rem/1 'DM Sans';
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transform: translateX(-50%) rotate(-0.5deg);
+  animation: rp3-rescue-pulse 700ms ease-in-out infinite alternate;
+}
+
+.rp3-chaos svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.rp3-hands kbd {
+  margin-left: 0.55rem;
+  padding: 0.18rem 0.32rem;
+  color: var(--rp3-ink);
+  background: var(--rp3-amber);
+  border-radius: 0.25rem;
+}
+
+.rp3-vitals .rp3-tension.is-hot b {
+  background: var(--rp3-coral);
+  box-shadow: 0 0 0.8rem #d96f56;
+}
+
+.rp3-crew b {
+  min-width: 1.5rem;
+  color: var(--rp3-amber);
+  font: 700 0.66rem/1 'Fredoka';
+  text-align: right;
+}
+
+.rp3-help {
+  position: absolute;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  background: #102f36b8;
+  backdrop-filter: blur(14px);
+}
+
+.rp3-help article {
+  position: relative;
+  width: min(31rem, 100%);
+  padding: 2rem;
+  color: var(--rp3-ink);
+  background: #f4eedb;
+  border: 2px solid #f0ad55;
+  border-radius: 1rem 1rem 1rem 0.28rem;
+  box-shadow: 0 1.4rem 5rem #102f3680;
+}
+
+.rp3-help article > button {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  color: var(--rp3-foam);
+  background: var(--rp3-ink);
+  font-size: 1.25rem;
+}
+
+.rp3-help h2 {
+  margin: 0.5rem 0;
+  font: 700 2rem/1 'Fredoka';
+}
+.rp3-help p {
+  line-height: 1.65;
+}
+.rp3-help small {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.rp3-touch-actions {
+  position: absolute;
+  z-index: 25;
+  inset: auto 0.7rem max(0.7rem, env(safe-area-inset-bottom)) 0.7rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.45rem;
+  pointer-events: none;
+}
+
+.rp3-touch-actions button {
+  min-width: 3.8rem;
+  min-height: 3.8rem;
+  padding: 0.5rem;
+  color: var(--rp3-foam);
+  background: #173e46d9;
+  border: 1px solid #f4eedb66;
+  border-radius: 50%;
+  font: 800 0.64rem/1 'DM Sans';
+  pointer-events: auto;
+}
+
+.rp3-finale:has(.rp3-finale-copy:only-child) {
+  grid-template-columns: minmax(0, 42rem);
+  place-content: center;
+}
+
+@media (max-width: 720px) {
+  .rp3-contracts {
+    top: 6rem;
+    right: 0.45rem;
+    width: 12.5rem;
+  }
+  .rp3-contracts article {
+    grid-template-columns: 1.55rem 1fr;
+    padding: 0.4rem;
+  }
+  .rp3-contracts article > span {
+    width: 1.55rem;
+    height: 1.55rem;
+  }
+  .rp3-contracts strong {
+    font-size: 0.62rem;
+  }
+  .rp3-hands {
+    bottom: 5.3rem;
+    max-width: 80vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

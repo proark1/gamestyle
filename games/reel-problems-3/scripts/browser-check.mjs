@@ -2,7 +2,7 @@ import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 
-const origin = process.env.REEL3_TEST_URL ?? 'http://127.0.0.1:4177';
+const origin = process.env.REEL3_TEST_URL ?? 'http://localhost:4177';
 if (!['127.0.0.1', 'localhost'].includes(new URL(origin).hostname))
   throw new Error('Use a local Reel Problems 3 preview.');
 
@@ -50,7 +50,7 @@ try {
       timeout: 120_000,
     });
     await page
-      .getByRole('heading', { name: /follow the light below/i })
+      .getByRole('heading', { name: /catch together.*score alone/i })
       .waitFor({ timeout: 60_000 });
     await page.screenshot({ path: `.tmp/reel-problems-3/${label}-menu.png` });
     assert.equal(
@@ -60,43 +60,10 @@ try {
       false,
       `${label}: no horizontal overflow on menu`,
     );
-    await page.getByRole('button', { name: /begin solo voyage/i }).click();
-    await page.getByText(/load rope, lanterns, timber and chart/i).waitFor();
-    if (!mobile) {
-      const canvas = page.locator('.rp3-stage canvas');
-      await canvas.focus();
-      await page.keyboard.down('KeyW');
-      await page.waitForTimeout(420);
-      await page.keyboard.up('KeyW');
-      await page.waitForFunction(() =>
-        document
-          .querySelector('.rp3-prompt')
-          ?.textContent?.includes('Load the lantern crate'),
-      );
-      await page.keyboard.press('KeyE');
-    } else {
-      await page
-        .getByRole('button', { name: /move forward/i })
-        .dispatchEvent('pointerdown', {
-          pointerId: 1,
-          pointerType: 'touch',
-        });
-      await page.waitForTimeout(260);
-      await page
-        .getByRole('button', { name: /move forward/i })
-        .dispatchEvent('pointerup', {
-          pointerId: 1,
-          pointerType: 'touch',
-        });
-      await page.waitForFunction(() =>
-        document
-          .querySelector('.rp3-prompt')
-          ?.textContent?.includes('Load the lantern crate'),
-      );
-      await page.getByRole('button', { name: /use/i }).click();
-    }
-    await page.getByText(/1\/4 aboard/i).waitFor();
-    await page.waitForTimeout(500);
+    await page.getByRole('button', { name: /start with bots/i }).click();
+    await page.getByText(/load rods, bait, safety gear/i).waitFor();
+    await page.locator('.rp3-contracts').waitFor();
+    await page.waitForTimeout(1_500);
     await page.screenshot({ path: `.tmp/reel-problems-3/${label}-harbor.png` });
     assert.equal(
       await page.evaluate(
@@ -108,6 +75,11 @@ try {
     assert.ok(
       await page.locator('.rp3-stage canvas').isVisible(),
       `${label}: WebGL canvas is visible`,
+    );
+    assert.equal(
+      await page.locator('.rp3-crew > div').count(),
+      4,
+      `${label}: one human and three bots are visible`,
     );
     assert.deepEqual(
       errors,

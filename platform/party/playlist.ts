@@ -136,6 +136,11 @@ const GAMES = [
     tagline: 'Fish from a wobbly boat, untangle lines and rescue friends',
   },
   {
+    id: 'reel-problems-3',
+    name: 'Reel Problems 3',
+    tagline: 'Load, fish, survive and race one shared boat home',
+  },
+  {
     id: 'uphill-delivery',
     name: 'Uphill Delivery',
     tagline: 'Haul an enormous sofa up a mountain trail',
@@ -159,7 +164,9 @@ export const PARTY_GAMES: readonly PartyGameInfo[] = GAMES.map((game) => ({
       ? 'team'
       : ['one-more-button', 'act-natural', 'slopewreck'].includes(game.id)
         ? 'individual'
-        : 'cooperative',
+        : game.id === 'reel-problems-3'
+          ? 'individual'
+          : 'cooperative',
   minutes: PARTY_GUIDES[game.id].minutes,
   complexity: PARTY_GUIDES[game.id].complexity,
   quick: PARTY_GUIDES[game.id].quick,

@@ -38,6 +38,7 @@ const GAMES: readonly GameId[] = [
   'one-more-button',
   'panic-curling',
   'reel-problems',
+  'reel-problems-3',
   'sample-stampede',
   'scaffold-scramble',
   'siege-and-desist',

@@ -8,22 +8,30 @@ import type { AdventureSnapshot } from './types';
 export const reelProblems3Analytics: GameAnalytics = {
   game: 'reel-problems-3',
   milestones: [
-    { key: 'departed', label: 'Left the harbor' },
-    { key: 'beacons', label: 'Awakened all beacons' },
-    { key: 'storm', label: 'Entered the storm' },
-    { key: 'sanctuary', label: 'Reached the sanctuary' },
-    { key: 'home', label: 'Finished the voyage' },
+    { key: 'loaded', label: 'Loaded the boat' },
+    { key: 'first-catch', label: 'Secured the first catch' },
+    { key: 'missions', label: 'Completed all missions' },
+    { key: 'home', label: 'Returned safely' },
   ],
-  reasons: { 'voyage-complete': 'Legendary fish reached the sanctuary' },
+  reasons: {
+    'safe-return': 'Catch delivered safely',
+    sunk: 'Boat sank',
+    timeout: 'Round timer expired',
+  },
   actions: {
-    start: 'Started voyage',
-    interact: 'Used adventure object',
-    restart: 'Started another voyage',
+    start: 'Started party round',
+    interact: 'Used boat object',
+    cast: 'Cast line',
+    hook: 'Hooked fish',
+    restart: 'Started another round',
   },
 };
 
 export function reelProblems3PlayState(snapshot: AdventureSnapshot): PlayState {
   const { world } = snapshot;
+  const catches = world.items.filter(
+    (item) => item.kind === 'fish' && item.state === 'secured',
+  ).length;
   return {
     ...crewOf(
       { code: snapshot.code, id: snapshot.selfId },
@@ -33,26 +41,28 @@ export function reelProblems3PlayState(snapshot: AdventureSnapshot): PlayState {
     stage:
       world.phase === 'lobby'
         ? 'lobby'
-        : world.phase === 'finished'
+        : ['finished', 'failed'].includes(world.phase)
           ? 'finished'
           : 'playing',
     milestones: [
-      ...(world.phase !== 'lobby' ? ['departed'] : []),
-      ...(world.beacons.every((beacon) => beacon.active) ? ['beacons'] : []),
-      ...(['storm', 'sanctuary', 'homecoming', 'finished'].includes(world.phase)
-        ? ['storm']
-        : []),
-      ...(['sanctuary', 'homecoming', 'finished'].includes(world.phase)
-        ? ['sanctuary']
-        : []),
+      ...(!['lobby', 'preparing'].includes(world.phase) ? ['loaded'] : []),
+      ...(catches > 0 ? ['first-catch'] : []),
+      ...(world.activeMission >= world.missions.length ? ['missions'] : []),
       ...(world.phase === 'finished' ? ['home'] : []),
     ],
-    ...(world.phase === 'finished'
+    ...(['finished', 'failed'].includes(world.phase)
       ? {
           result: {
-            outcome: 'won' as const,
-            reason: 'voyage-complete',
-            score: world.fishTrust,
+            outcome:
+              world.phase === 'finished' ? ('won' as const) : ('lost' as const),
+            reason:
+              world.phase === 'finished'
+                ? 'safe-return'
+                : (world.round.result ?? 'timeout'),
+            score: world.players.reduce(
+              (sum, player) => sum + player.stats.score,
+              0,
+            ),
           },
         }
       : {}),
