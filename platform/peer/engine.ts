@@ -24,6 +24,7 @@ import { createEngine as sampleStampede } from '../../games/sample-stampede/peer
 import { createEngine as driveThru } from '../../games/drive-thru/peer';
 import { createEngine as scaffoldScramble } from '../../games/scaffold-scramble/peer';
 import { createEngine as chainOfFools } from '../../games/chain-of-fools/peer';
+import { createEngine as courseCorrection } from '../../games/course-correction/peer';
 // Server-side and integration-test composition. Browser connections load only their own adapter.
 import { createEngine as cage } from '../../games/cage-clash/peer';
 import { createEngine as boxing } from '../../games/on-the-ropes/peer';
@@ -55,6 +56,7 @@ const engines = {
   'drive-thru': driveThru,
   'scaffold-scramble': scaffoldScramble,
   'chain-of-fools': chainOfFools,
+  'course-correction': courseCorrection,
   slopewreck,
 };
 export function createPeerEngine(

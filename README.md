@@ -35,6 +35,7 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Drive-Thru Static | `/drive-thru`          | `games/drive-thru/`          | `app/drive-thru/`                |
 | Scaffold Scramble | `/scaffold-scramble`   | `games/scaffold-scramble/`   | `app/scaffold-scramble/`         |
 | Chain of Fools    | `/chain-of-fools`      | `games/chain-of-fools/`      | `app/chain-of-fools/`            |
+| Course Correction | `/course-correction`   | `games/course-correction/`   | `app/course-correction/`         |
 | Bouncy Castle Royale | `/bouncy-castle-royale` | `games/bouncy-castle-royale/` | `app/bouncy-castle-royale/` |
 | Flip Happens | `/flip-happens` | `games/flip-happens/` | `app/flip-happens/` |
 | Slopewreck | `/slopewreck` | `games/slopewreck/` | `app/slopewreck/` |

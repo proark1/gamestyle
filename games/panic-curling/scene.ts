@@ -9,6 +9,7 @@ import {
 } from './models';
 import {
   HACK_Z,
+  STONE_CONFIGS,
   TEE_Z,
   type GadgetId,
   type PanicCurlingSnapshot,
@@ -205,7 +206,8 @@ export class PanicCurlingScene {
         this.stoneMeshes.set(s.id, group);
       }
 
-      group.position.set(s.x, s.y, s.z);
+      // Models are built from their base; physics stores the object's centre.
+      group.position.set(s.x, s.y - STONE_CONFIGS[s.kind].height / 2, s.z);
       group.rotation.y = s.rotation;
 
       // Basket teammate wobble

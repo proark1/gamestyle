@@ -23,6 +23,7 @@ import { sampleStampedeCatalog } from '../../games/sample-stampede/audio';
 import { driveThruCatalog } from '../../games/drive-thru/audio';
 import { scaffoldScrambleCatalog } from '../../games/scaffold-scramble/audio';
 import { chainOfFoolsCatalog } from '../../games/chain-of-fools/audio';
+import { courseCorrectionCatalog } from '../../games/course-correction/catalog';
 
 import {
   cageBundledCatalog,
@@ -59,6 +60,7 @@ const catalogs: Record<GameId, Cue[]> = {
   'drive-thru': driveThruCatalog,
   'scaffold-scramble': scaffoldScrambleCatalog,
   'chain-of-fools': chainOfFoolsCatalog,
+  'course-correction': courseCorrectionCatalog,
   slopewreck: slopewreckCatalog,
 };
 

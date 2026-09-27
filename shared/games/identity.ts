@@ -20,6 +20,7 @@ export const GAME_IDS = [
   'carry-on-carnage',
   'chain-of-fools',
   'chaos',
+  'course-correction',
   'crane-clash',
   'dont-wake-the-giant',
   'drive-thru',
