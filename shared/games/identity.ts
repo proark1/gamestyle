@@ -32,6 +32,7 @@ export const GAME_IDS = [
   'panic-curling',
   'reel-problems',
   'reel-problems-2',
+  'reel-problems-3',
   'sample-stampede',
   'scaffold-scramble',
   'shelf-control',
@@ -82,6 +83,8 @@ export const PARTY_EXCLUDED = {
     'Two-fighter duels; the party rotation requires four-player rounds',
   'reel-problems-2':
     'Experimental copy for style tests; not part of the party rotation',
+  'reel-problems-3':
+    'Long-form first-person adventure; party rotation requires short rounds',
   chaos: 'Handwerker title with its own long-form session',
   'first-person': 'Handwerker title with its own long-form session',
   'shelf-control': 'server-authoritative rooms, no peer adapter',

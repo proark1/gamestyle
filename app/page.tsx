@@ -9,6 +9,7 @@ const PINNED = [
   'uphill-delivery',
   'reel-problems',
   'reel-problems-2',
+  'reel-problems-3',
   'shelf-control',
 ] as const;
 

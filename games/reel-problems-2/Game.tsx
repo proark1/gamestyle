@@ -58,6 +58,14 @@ import {
   type ReelWorld,
 } from './types';
 import ContractSelect from './ContractSelect';
+import CameraSelect from './CameraSelect';
+import {
+  CAMERA_MODE_NAMES,
+  DEFAULT_CAMERA_MODE,
+  nextCameraMode,
+  parseCameraMode,
+  type CameraMode,
+} from './camera';
 import MissionPanel from './MissionPanel';
 import { roundDuration } from './campaign';
 import { readProgress, saveMissionResult } from './progress';
@@ -260,6 +268,7 @@ export default function ReelProblems() {
   const { t, language } = useLanguage();
   const de = language === 'de';
   const [mode, setMode] = useState<'classic' | 'campaign'>('campaign');
+  const [cameraMode, setCameraMode] = useState<CameraMode>(DEFAULT_CAMERA_MODE);
   const [completed, setCompleted] = useState(false);
   const [deckhand, setDeckhand] = useState(true);
   const strings = t(REEL_PROBLEMS_TRANSLATIONS);
@@ -271,6 +280,8 @@ export default function ReelProblems() {
     local = useRef<ReelWorld | null>(null),
     activeSession = useRef<ReelSession | null>(null),
     latest = useRef<ReelSnapshot | null>(null),
+    cameraModeRef = useRef<CameraMode>(DEFAULT_CAMERA_MODE),
+    viewNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
     input = useRef(idleInput()),
     actionRef = useRef<(a: ReelAction) => void>(() => {}),
     // The scene is handed every snapshot directly; the HUD is paced.
@@ -288,6 +299,7 @@ export default function ReelProblems() {
     [npcBusy, setNpcBusy] = useState(false),
     [muted, setMuted] = useState(false),
     [notice, setNotice] = useState(''),
+    [viewNotice, setViewNotice] = useState<CameraMode | null>(null),
     [copied, setCopied] = useState(false),
     [status, setStatus] = useState<'online' | 'reconnecting' | 'expired'>(
       'online',
@@ -295,6 +307,37 @@ export default function ReelProblems() {
     [modal, setModal] = useState<
       'help' | 'join' | 'invite' | 'leave' | 'restart' | null
     >(null);
+  const selectCamera = useCallback((next: CameraMode) => {
+    if (cameraModeRef.current === next) {
+      scene.current?.setCameraMode(next);
+      return;
+    }
+    cameraModeRef.current = next;
+    setCameraMode(next);
+    scene.current?.setCameraMode(next);
+    if (activeSession.current && latest.current?.world.phase === 'playing') {
+      setViewNotice(next);
+      if (viewNoticeTimer.current) clearTimeout(viewNoticeTimer.current);
+      viewNoticeTimer.current = setTimeout(() => {
+        setViewNotice(null);
+        viewNoticeTimer.current = null;
+      }, 1600);
+    }
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem('reel-problems-2-prefs-v1') || '{}',
+      );
+      localStorage.setItem(
+        'reel-problems-2-prefs-v1',
+        JSON.stringify({
+          ...(stored && typeof stored === 'object' ? stored : {}),
+          cameraView: next,
+        }),
+      );
+    } catch {
+      /* Preferences are optional. */
+    }
+  }, []);
   const holdMission = useCallback(
     (held: boolean) => scene.current?.hold('work', held),
     [],
@@ -352,10 +395,12 @@ export default function ReelProblems() {
       const saved = JSON.parse(
         localStorage.getItem('reel-problems-2-prefs-v1') || '{}',
       );
+      cameraModeRef.current = parseCameraMode(saved.cameraView);
       queueMicrotask(() => {
         if (!disposed) {
           setName(typeof saved.name === 'string' ? saved.name : '');
           setMuted(saved.muted === true);
+          setCameraMode(cameraModeRef.current);
         }
       });
       audio.enabled = saved.muted !== true;
@@ -397,7 +442,9 @@ export default function ReelProblems() {
               advanceReel(world, Date.now());
               accept(reelSnapshot(world, s.code, s.id, s.id, world.clock));
             },
+            camera: selectCamera,
           });
+          scene.current.setCameraMode(cameraModeRef.current);
           setReady(true);
           setCompleted(readProgress().completed);
           if (!invite) {
@@ -420,15 +467,20 @@ export default function ReelProblems() {
       network.current = null;
       scene.current?.dispose();
       scene.current = null;
+      if (viewNoticeTimer.current) clearTimeout(viewNoticeTimer.current);
       audio.dispose();
       sound.current = null;
     };
-  }, []);
+  }, [selectCamera]);
   function savePrefs() {
     try {
       localStorage.setItem(
         'reel-problems-2-prefs-v1',
-        JSON.stringify({ name, muted }),
+        JSON.stringify({
+          name,
+          muted,
+          cameraView: cameraModeRef.current,
+        }),
       );
     } catch {
       /* Preferences are optional. */
@@ -714,7 +766,11 @@ export default function ReelProblems() {
             try {
               localStorage.setItem(
                 'reel-problems-2-prefs-v1',
-                JSON.stringify({ name, muted: !muted }),
+                JSON.stringify({
+                  name,
+                  muted: !muted,
+                  cameraView: cameraModeRef.current,
+                }),
               );
             } catch {
               /* Optional. */
@@ -764,6 +820,7 @@ export default function ReelProblems() {
               </span>
             </div>
             <ContractSelect mode={mode} onChange={setMode} />
+            <CameraSelect mode={cameraMode} onChange={selectCamera} />
             {mode === 'campaign' && (
               <label className="reel-deckhand">
                 <input
@@ -953,13 +1010,26 @@ export default function ReelProblems() {
               )}
             </div>
           </aside>
+          {playing && cameraMode === 'first-person' && (
+            <div className="reel-aim-reticle" aria-hidden="true">
+              <i />
+            </div>
+          )}
+          {viewNotice && playing && (
+            <output className="reel-view-announcement" aria-live="polite">
+              {CAMERA_MODE_NAMES[viewNotice]} view
+            </output>
+          )}
           <button
-            className="reel-camera"
+            className={`reel-camera${viewNotice ? ' confirmed' : ''}`}
             onClick={() => scene.current?.changeCamera()}
-            aria-label="Switch lake camera"
+            aria-label={`Switch to ${CAMERA_MODE_NAMES[nextCameraMode(cameraMode)].toLowerCase()} view`}
+            title={`Press V to switch to ${CAMERA_MODE_NAMES[nextCameraMode(cameraMode)].toLowerCase()} view`}
+            data-mode={cameraMode}
           >
             <Camera size={19} />
-            <span>View</span>
+            <span>{CAMERA_MODE_NAMES[cameraMode]}</span>
+            <kbd aria-hidden="true">V</kbd>
           </button>
           {w?.phase === 'lobby' && (
             <section className="reel-lobby">
@@ -967,6 +1037,7 @@ export default function ReelProblems() {
               <h2>All aboard?</h2>
               <p>Share the code. The captain starts when the crew is ready.</p>
               {captain && <ContractSelect mode={mode} onChange={setMode} />}
+              <CameraSelect mode={cameraMode} onChange={selectCamera} />
               <button
                 className="reel-room-code"
                 onClick={() => {
@@ -1256,8 +1327,8 @@ export default function ReelProblems() {
               </nav>
               <span className="reel-movement-hint">
                 {w?.mission?.survival
-                  ? 'WASD / arrows · steer & move · E reel · Shift brace · C rescue, repair & build'
-                  : 'WASD / arrows · move · J jump · P paddle · E reel, patch or bail · click the water to aim'}
+                  ? 'WASD / arrows · steer & move · E reel · Shift brace · C rescue, repair & build · V view'
+                  : 'WASD / arrows · move · J jump · P paddle · E reel, patch or bail · V view · click the water to aim'}
               </span>
             </>
           )}
