@@ -226,6 +226,10 @@ const AVATARS: Record<string, Omit<AvatarCard, 'id' | 'name'>> = {
     looks: reelAvatars,
     note: 'Nico with a bucket hat, a life vest and a rod. Height includes the rod.',
   },
+  'reel-problems-3': {
+    looks: reel2Avatars,
+    note: 'Nico continues the voyage in the shared angler kit.',
+  },
   'shelf-control': {
     looks: shelfAvatars,
     note: 'The wooden mannequin stays a special character; Nico plays the guard with a badge and torch.',
