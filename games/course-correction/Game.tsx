@@ -8,7 +8,7 @@ import {
   useState,
   type PointerEvent,
 } from 'react';
-import { Flag, Lock, RotateCcw, Sparkles, Trophy } from 'lucide-react';
+import { Camera, Flag, Lock, RotateCcw, Sparkles, Trophy } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import GameToolbar from '../../shared/ui/GameToolbar';
 import PeerRoomControls from '../../shared/peer/PeerRoomControls';
@@ -32,6 +32,11 @@ import {
   type CourseWorld,
 } from './types';
 import type { CourseCorrectionScene } from './scene';
+import type { CourseCameraPreset } from './camera-presentation';
+import {
+  aimPreviewRevision,
+  classifyPointerGesture,
+} from './input-presentation';
 import { CourseCorrectionAudio } from './audio';
 import {
   CupSequenceTracker,
@@ -43,8 +48,29 @@ import {
 import './style.css';
 
 type Controls = { x: number; z: number; angle: number; power: number };
+type ActivePointer = { x: number; y: number; pointerType: string };
+type PointerGesture =
+  | { kind: 'shot'; pointerId: number }
+  | {
+      kind: 'camera';
+      pointerId: number;
+      x: number;
+      y: number;
+      distance: number;
+    };
 const freshControls = (): Controls => ({ x: 0, z: 0, angle: 0, power: 0.58 });
 const HOLES = ['Pivot Alley', 'Tipping Point', 'Moving Target'];
+
+function pointerMetrics(points: Iterable<ActivePointer>) {
+  const active = [...points];
+  const x = active.reduce((sum, point) => sum + point.x, 0) / active.length;
+  const y = active.reduce((sum, point) => sum + point.y, 0) / active.length;
+  const distance =
+    active.length > 1
+      ? Math.hypot(active[0].x - active[1].x, active[0].y - active[1].y)
+      : 0;
+  return { x, y, distance };
+}
 
 export default function CourseCorrectionGame() {
   const { language } = useLanguage();
@@ -60,7 +86,9 @@ export default function CourseCorrectionGame() {
   const connected = useRef(false);
   const blocked = useRef(false);
   const charging = useRef(0);
-  const pointer = useRef<number | null>(null);
+  const pointers = useRef(new Map<number, ActivePointer>());
+  const gesture = useRef<PointerGesture | null>(null);
+  const previewRevision = useRef('');
   const latest = useRef<CourseSnapshot | null>(null);
   const cupSequence = useRef(new CupSequenceTracker());
   const celebrationHole = useRef(-1);
@@ -74,11 +102,28 @@ export default function CourseCorrectionGame() {
   const [ready, setReady] = useState(false);
   const [help, setHelp] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [cameraPreset, setCameraPreset] =
+    useState<CourseCameraPreset>('broadcast');
   const [error, setError] = useState('');
   const [celebration, setCelebration] = useState<CupCelebration | null>(null);
 
   const receive = useCallback((next: CourseSnapshot) => {
     latest.current = next;
+    const revision = aimPreviewRevision(next.world, self.current);
+    if (revision && previewRevision.current !== revision) {
+      const player = next.world.players.find(
+        (candidate) => candidate.id === self.current,
+      );
+      if (player) {
+        controls.current.angle = player.aim;
+        controls.current.power = player.power;
+      }
+      previewRevision.current = revision;
+    }
+    scene.current?.setAimPreview(
+      controls.current.angle,
+      controls.current.power,
+    );
     if (celebrationHole.current !== next.world.hole) {
       celebrationHole.current = next.world.hole;
       cupSequence.current.reset();
@@ -101,6 +146,7 @@ export default function CourseCorrectionGame() {
       local.current = null;
       connected.current = true;
       self.current = session.id;
+      previewRevision.current = '';
       scene.current?.setLocalPlayer(session.id);
       sound.current?.resetEvents();
       hud.current.reset();
@@ -120,6 +166,10 @@ export default function CourseCorrectionGame() {
   }, [disabled]);
 
   const { send } = room;
+  const cycleView = useCallback(() => {
+    const next = scene.current?.cycleCameraPreset();
+    if (next) setCameraPreset(next);
+  }, []);
   const act = useCallback(
     (type: string, extra: Record<string, unknown> = {}) => {
       if (blocked.current || !gameActive()) return;
@@ -175,6 +225,7 @@ export default function CourseCorrectionGame() {
         scene.current = view;
         sound.current = new CourseCorrectionAudio();
         view.setLocalPlayer(self.current);
+        setCameraPreset(view.cameraPreset());
         if (!connected.current) {
           const world = freshWorld(Date.now());
           const player = world.players[0];
@@ -200,26 +251,40 @@ export default function CourseCorrectionGame() {
       });
 
     const key = (event: KeyboardEvent) => {
+      const interactiveTarget = (event.target as HTMLElement)?.closest?.(
+        'input,textarea,select,button,a,[role="dialog"]',
+      );
       if (
         event.defaultPrevented ||
         event.ctrlKey ||
         event.metaKey ||
         event.altKey ||
-        (event.target as HTMLElement)?.closest?.(
-          'input,textarea,select,button,a,[role="dialog"]',
-        )
+        (interactiveTarget && event.code !== 'KeyV')
       )
         return;
       if (
-        ['KeyA', 'ArrowLeft', 'KeyD', 'ArrowRight', 'Space'].includes(
+        ['KeyA', 'ArrowLeft', 'KeyD', 'ArrowRight', 'Space', 'KeyV'].includes(
           event.code,
         )
       )
         event.preventDefault();
-      if (event.code === 'KeyA' || event.code === 'ArrowLeft')
-        controls.current.x = event.type === 'keydown' ? -1 : 0;
-      if (event.code === 'KeyD' || event.code === 'ArrowRight')
-        controls.current.x = event.type === 'keydown' ? 1 : 0;
+      if (
+        event.type === 'keydown' &&
+        ['KeyA', 'ArrowLeft', 'KeyD', 'ArrowRight'].includes(event.code)
+      ) {
+        const direction =
+          event.code === 'KeyA' || event.code === 'ArrowLeft' ? -1 : 1;
+        controls.current.angle = Math.atan2(
+          Math.sin(controls.current.angle + direction * 0.055),
+          Math.cos(controls.current.angle + direction * 0.055),
+        );
+        scene.current?.setAimPreview(
+          controls.current.angle,
+          controls.current.power,
+        );
+      }
+      if (event.code === 'KeyV' && event.type === 'keydown' && !event.repeat)
+        cycleView();
       if (event.code === 'Space' && event.type === 'keydown' && !event.repeat)
         charging.current = performance.now();
       if (
@@ -254,7 +319,7 @@ export default function CourseCorrectionGame() {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, [act, receive]);
+  }, [act, cycleView, receive]);
 
   useEffect(() => {
     if (sound.current) sound.current.enabled = !muted;
@@ -302,8 +367,13 @@ export default function CourseCorrectionGame() {
     ),
   ][world?.hole ?? 0];
 
-  const updatePointer = (event: PointerEvent<HTMLDivElement>) => {
-    if (disabled || pointer.current !== event.pointerId) return;
+  const updateShotPointer = (event: PointerEvent<HTMLDivElement>) => {
+    if (
+      disabled ||
+      gesture.current?.kind !== 'shot' ||
+      gesture.current.pointerId !== event.pointerId
+    )
+      return;
     const point = scene.current?.aim(event.clientX, event.clientY);
     if (!point || !ball) return;
     const dx = point.x - ball.x;
@@ -314,12 +384,50 @@ export default function CourseCorrectionGame() {
       0.12,
       Math.min(1, Math.hypot(dx, dz) / 5),
     );
+    scene.current?.setAimPreview(
+      controls.current.angle,
+      controls.current.power,
+    );
+  };
+  const updatePointer = (event: PointerEvent<HTMLDivElement>) => {
+    const previous = pointers.current.get(event.pointerId);
+    if (!previous) return;
+    pointers.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+      pointerType: event.pointerType,
+    });
+    if (gesture.current?.kind === 'shot') {
+      updateShotPointer(event);
+      return;
+    }
+    const currentGesture = gesture.current;
+    if (currentGesture?.kind !== 'camera') return;
+    const metrics = pointerMetrics(pointers.current.values());
+    scene.current?.orbitCamera(
+      metrics.x - currentGesture.x,
+      metrics.y - currentGesture.y,
+    );
+    if (pointers.current.size > 1 && currentGesture.distance > 0)
+      scene.current?.zoomCamera(
+        (currentGesture.distance - metrics.distance) * 0.004,
+      );
+    gesture.current = {
+      ...currentGesture,
+      x: metrics.x,
+      y: metrics.y,
+      distance: metrics.distance,
+    };
   };
   const releasePointer = (event: PointerEvent<HTMLDivElement>) => {
-    if (pointer.current !== event.pointerId) return;
-    updatePointer(event);
-    pointer.current = null;
+    const shot =
+      gesture.current?.kind === 'shot' &&
+      gesture.current.pointerId === event.pointerId;
+    if (shot) updateShotPointer(event);
+    pointers.current.delete(event.pointerId);
+    gesture.current = null;
     scene.current?.setAiming(false);
+    if (!shot) return;
     const opening = world?.phase === 'opening';
     act(opening ? 'lock' : 'shoot', {
       angle: controls.current.angle,
@@ -343,19 +451,74 @@ export default function CourseCorrectionGame() {
           'Interaktiver Minigolfplatz',
         )}
         onPointerDown={(event) => {
-          if (disabled || ball?.moving || ball?.holed) return;
-          pointer.current = event.pointerId;
-          scene.current?.setAiming(true);
+          if (disabled) return;
+          pointers.current.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+            pointerType: event.pointerType,
+          });
           event.currentTarget.setPointerCapture(event.pointerId);
-          updatePointer(event);
+          const metrics = pointerMetrics(pointers.current.values());
+          if (pointers.current.size > 1) {
+            scene.current?.setAiming(false);
+            gesture.current = {
+              kind: 'camera',
+              pointerId: event.pointerId,
+              ...metrics,
+            };
+            return;
+          }
+          const canShoot =
+            !!ball &&
+            !ball.moving &&
+            !ball.holed &&
+            (world?.phase === 'playing' ||
+              (world?.phase === 'opening' && !me?.openingReady));
+          const kind = classifyPointerGesture({
+            pointer: { x: event.clientX, y: event.clientY },
+            ball: ball
+              ? (scene.current?.projectBall(ball.x, ball.z, ball.radius) ??
+                null)
+              : null,
+            canShoot,
+            pointerType: event.pointerType,
+            pointerCount: pointers.current.size,
+          });
+          gesture.current =
+            kind === 'shot'
+              ? { kind, pointerId: event.pointerId }
+              : {
+                  kind: 'camera',
+                  pointerId: event.pointerId,
+                  ...metrics,
+                };
+          scene.current?.setAiming(kind === 'shot');
+          if (kind === 'shot') updateShotPointer(event);
         }}
         onPointerMove={updatePointer}
         onPointerUp={releasePointer}
-        onPointerCancel={() => {
-          pointer.current = null;
+        onPointerCancel={(event) => {
+          pointers.current.delete(event.pointerId);
+          gesture.current = null;
           scene.current?.setAiming(false);
         }}
+        onWheel={(event) => {
+          if (disabled) return;
+          event.preventDefault();
+          scene.current?.zoomCamera(event.deltaY * 0.0012);
+        }}
       />
+
+      <button
+        className="course-view-button house-pill"
+        type="button"
+        onClick={cycleView}
+        aria-label={`${say('Change view', 'Ansicht wechseln')}: ${cameraPreset}`}
+      >
+        <Camera aria-hidden="true" />
+        <span>{say('View', 'Ansicht')}</span>
+        <b>{cameraPreset}</b>
+      </button>
 
       <header className="course-topbar">
         <a href="/" className="course-brand">
@@ -460,7 +623,8 @@ export default function CourseCorrectionGame() {
                   )}
         </strong>
         <small>
-          A / D · {say('hold Space for power', 'Leertaste für Stärke halten')}
+          A / D · {say('hold Space for power', 'Leertaste für Stärke halten')} ·
+          V {say('view', 'Ansicht')}
         </small>
       </section>
 
@@ -593,6 +757,12 @@ export default function CourseCorrectionGame() {
             )}
           </p>
           <ul>
+            <li>
+              {say(
+                'Drag from your ball to aim. Drag elsewhere to orbit; use the wheel or pinch to zoom, and V to change view.',
+                'Ziehe vom Ball aus zum Zielen. Ziehe daneben zum Drehen der Kamera; mit Mausrad oder Zwei-Finger-Geste zoomst du, mit V wechselst du die Ansicht.',
+              )}
+            </li>
             <li>
               {say(
                 'Hit orange walls to rotate them.',

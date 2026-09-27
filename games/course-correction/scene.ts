@@ -4,7 +4,12 @@ import {
   addHouseLight,
   HOUSE_EXPOSURE,
 } from '../../shared/rendering/house-light';
-import { COLORS, type CourseSnapshot, type CourseState } from './types';
+import {
+  BALL_RADIUS,
+  COLORS,
+  type CourseSnapshot,
+  type CourseState,
+} from './types';
 import { cupPosition } from './courses';
 import {
   addBridgeDetails,
@@ -14,7 +19,16 @@ import {
 import { CameraImpulseController } from './effects';
 import { feedbackTier, presentationProfile } from './presentation';
 import { CourseCharacters } from './characters';
-import { courseCameraPose } from './camera-presentation';
+import {
+  applyCameraView,
+  courseCameraPose,
+  cycleCameraPreset,
+  defaultCameraView,
+  orbitCameraView,
+  zoomCameraView,
+  type CourseCameraPreset,
+  type CourseCameraView,
+} from './camera-presentation';
 import { createBackyardEnvironment } from './environment';
 import { CourseSpectators } from './spectators';
 import { disposeObject } from '../../shared/rendering/dispose-object';
@@ -52,6 +66,7 @@ export class CourseCorrectionScene {
   private cameraPosition = new T.Vector3();
   private cameraLook = new T.Vector3();
   private cameraReady = false;
+  private cameraView: CourseCameraView = defaultCameraView();
   private portrait = false;
   private aiming = false;
   private reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
@@ -62,6 +77,8 @@ export class CourseCorrectionScene {
   private environment?: T.Group;
   private spectators?: CourseSpectators;
   private local = 'local';
+  private previewAngle: number | null = null;
+  private previewPower: number | null = null;
   private courseId = '';
   private ray = new T.Raycaster();
   private plane = new T.Plane(new T.Vector3(0, 1, 0), 0);
@@ -100,6 +117,33 @@ export class CourseCorrectionScene {
 
   setAiming(active: boolean) {
     this.aiming = active;
+  }
+
+  setAimPreview(angle: number | null, power: number | null) {
+    this.previewAngle = angle;
+    this.previewPower = power;
+    this.characters.setAimPreview(angle);
+  }
+
+  orbitCamera(deltaX: number, deltaY: number) {
+    this.cameraView = orbitCameraView(
+      this.cameraView,
+      -deltaX * 0.006,
+      deltaY * 0.0045,
+    );
+  }
+
+  zoomCamera(delta: number) {
+    this.cameraView = zoomCameraView(this.cameraView, delta);
+  }
+
+  cycleCameraPreset(): CourseCameraPreset {
+    this.cameraView = cycleCameraPreset(this.cameraView);
+    return this.cameraView.preset;
+  }
+
+  cameraPreset() {
+    return this.cameraView.preset;
   }
 
   private resize() {
@@ -416,11 +460,9 @@ export class CourseCorrectionScene {
     this.characters.update(snapshot, now, dt);
     this.spectators?.update(snapshot, now, dt);
     this.updateEffects(now);
-    const pose = courseCameraPose(
-      world,
-      this.portrait,
-      this.aiming,
-      this.reducedMotion,
+    const pose = applyCameraView(
+      courseCameraPose(world, this.portrait, this.aiming, this.reducedMotion),
+      this.cameraView,
     );
     const targetPosition = new T.Vector3(
       pose.position.x,
@@ -590,13 +632,15 @@ export class CourseCorrectionScene {
     const player = snapshot.world.players.find((p) => p.id === this.local);
     const ball = snapshot.world.balls.find((b) => b.owner === this.local);
     if (!player || !ball || ball.holed || ball.moving) return;
-    const length = 1.8 + player.power * 3.2;
+    const angle = this.previewAngle ?? player.aim;
+    const power = this.previewPower ?? player.power;
+    const length = 1.8 + power * 3.2;
     const points = [
       new T.Vector3(ball.x, 0.1, ball.z),
       new T.Vector3(
-        ball.x + Math.sin(player.aim) * length,
+        ball.x + Math.sin(angle) * length,
         0.1,
-        ball.z + Math.cos(player.aim) * length,
+        ball.z + Math.cos(angle) * length,
       ),
     ];
     this.aimLine = new T.Line(
@@ -617,6 +661,17 @@ export class CourseCorrectionScene {
     return this.ray.ray.intersectPlane(this.plane, point)
       ? { x: point.x, z: point.z }
       : null;
+  }
+
+  projectBall(x: number, z: number, radius = BALL_RADIUS) {
+    const rect = this.host.getBoundingClientRect();
+    this.camera.updateMatrixWorld();
+    const point = new T.Vector3(x, radius, z).project(this.camera);
+    if (point.z < -1 || point.z > 1) return null;
+    return {
+      x: rect.left + ((point.x + 1) / 2) * rect.width,
+      y: rect.top + ((1 - point.y) / 2) * rect.height,
+    };
   }
 
   dispose() {

@@ -47,6 +47,7 @@ export class CourseCharacters {
   private golfers = new Map<string, Golfer>();
   private events = new CharacterEventTracker();
   private local = 'local';
+  private previewAngle: number | null = null;
   private lookVersion = 0;
   private unsubscribe = subscribeWardrobe(() => this.lookVersion++);
 
@@ -61,6 +62,10 @@ export class CourseCharacters {
     if (this.local === id) return;
     this.local = id;
     this.lookVersion++;
+  }
+
+  setAimPreview(angle: number | null) {
+    this.previewAngle = angle;
   }
 
   update(snapshot: CourseSnapshot, now: number, dt: number) {
@@ -118,9 +123,13 @@ export class CourseCharacters {
     player: CoursePlayer,
     ball: GolfBall,
   ): CharacterPoint {
+    const aim =
+      player.id === this.local && this.previewAngle !== null
+        ? this.previewAngle
+        : player.aim;
     return ball.holed
       ? celebrationPosition(snapshot.world.course, player.seat)
-      : stagingPosition(snapshot.world.course, ball, player.aim);
+      : stagingPosition(snapshot.world.course, ball, aim);
   }
 
   private updateGolfer(

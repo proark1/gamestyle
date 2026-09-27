@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cameraMode, courseCameraPose } from './camera-presentation';
+import {
+  applyCameraView,
+  cameraMode,
+  courseCameraPose,
+  cycleCameraPreset,
+  defaultCameraView,
+  orbitCameraView,
+  zoomCameraView,
+} from './camera-presentation';
 import { freshWorld } from './simulation';
 
 void test('aiming and reduced motion hold the stable camera', () => {
@@ -43,4 +51,36 @@ void test('portrait framing is higher and farther back', () => {
   const portrait = courseCameraPose(world, true);
   assert.ok(portrait.position.y > desktop.position.y);
   assert.ok(portrait.position.z < desktop.position.z);
+});
+
+void test('camera presets cycle and establish distinct baselines', () => {
+  const broadcast = defaultCameraView('broadcast');
+  const low = cycleCameraPreset(broadcast);
+  const overview = cycleCameraPreset(low);
+  assert.equal(low.preset, 'low');
+  assert.equal(overview.preset, 'overview');
+  assert.equal(cycleCameraPreset(overview).preset, 'broadcast');
+  assert.ok(low.pitch < broadcast.pitch);
+  assert.ok(overview.pitch > broadcast.pitch);
+});
+
+void test('manual camera controls clamp pitch and zoom', () => {
+  const view = defaultCameraView();
+  const orbited = orbitCameraView(view, Math.PI * 9, 5);
+  const zoomedOut = zoomCameraView(orbited, 9);
+  assert.ok(orbited.pitch <= 0.48);
+  assert.ok(orbited.yaw <= Math.PI && orbited.yaw >= -Math.PI);
+  assert.equal(zoomedOut.zoom, 0.65);
+});
+
+void test('manual camera offsets survive automatic base-pose changes', () => {
+  const world = freshWorld(0);
+  const view = orbitCameraView(defaultCameraView(), 0.32, -0.08);
+  const aim = applyCameraView(courseCameraPose(world, false), view);
+  world.balls[0].moving = true;
+  const follow = applyCameraView(courseCameraPose(world, false), view);
+  assert.equal(view.yaw, 0.32);
+  assert.notDeepEqual(aim.look, follow.look);
+  assert.equal(aim.mode, 'aim');
+  assert.equal(follow.mode, 'follow');
 });

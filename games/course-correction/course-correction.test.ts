@@ -4,6 +4,7 @@ import { createEngine } from './peer';
 import { cupPosition } from './courses';
 import { launchBall, stepPhysics } from './physics';
 import { advanceWorld, courseAction, freshWorld } from './simulation';
+import { BALL_RADIUS } from './types';
 
 function advance(world: ReturnType<typeof freshWorld>, milliseconds: number) {
   const end = world.clock + milliseconds;
@@ -44,7 +45,7 @@ void test('ball contact attributes a later cup assist to the hitter', () => {
   const hitter = world.balls[0];
   const target = world.balls[1];
   hitter.x = cup.x;
-  hitter.z = cup.z - 0.65;
+  hitter.z = cup.z - 0.2 - BALL_RADIUS * 2 - 0.01;
   hitter.vz = 3;
   hitter.moving = true;
   target.x = cup.x;
@@ -54,6 +55,12 @@ void test('ball contact attributes a later cup assist to the hitter', () => {
   for (let i = 0; i < 90 && !target.holed; i++) stepPhysics(world, 1 / 60);
   assert.equal(target.holed, true);
   assert.equal(world.players[0].assists, 1);
+});
+
+void test('playable balls use the compact shared radius', () => {
+  const world = freshWorld(0);
+  assert.equal(BALL_RADIUS, 0.12);
+  assert.ok(world.balls.every((ball) => ball.radius === BALL_RADIUS));
 });
 
 void test('hard shots rotate walls while damping keeps them constrained', () => {
