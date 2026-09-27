@@ -1,9 +1,10 @@
 import { FISH_DEFINITIONS, FISH_SPECIES } from './content/fish';
-import { toBoatSpace, toWorldSpace } from './boat';
+import { toWorldSpace } from './boat';
 import { emit } from './events';
 import { createFishItem } from './items';
 import { currentMission, insideMissionZone } from './missions';
 import { nextRandom } from './random';
+import { BOAT_LAYOUT } from './boat-layout';
 import type {
   AdventurePlayer,
   AdventureWorld,
@@ -169,19 +170,61 @@ function landFish(
       helper.stats.score += 45;
     }
   }
-  fish.state = 'landed';
-  const local = toBoatSpace(world, fish);
-  createFishItem(world, fish.species, fish.weight, {
-    x: Math.max(-2.4, Math.min(2.4, local.x)),
-    z: Math.max(-3.1, Math.min(3.1, local.z)),
-  });
-  player.line = null;
-  emit(world, 'fish-landed', player.id, fish.species, { x: fish.x, z: fish.z });
+  fish.state = 'landing';
+  fish.landing = {
+    startX: fish.x,
+    startZ: fish.z,
+    targetX: BOAT_LAYOUT.fishLanding.x,
+    targetZ: BOAT_LAYOUT.fishLanding.z + ((player.seat % 3) - 1) * 0.36,
+    startedAt: world.clock,
+    duration: 820 + Math.min(320, fish.weight * 14),
+  };
   return true;
+}
+
+function landingKick(weight: number) {
+  return Math.sin(weight * 2.17) * 0.42;
+}
+
+function stepLandingFish(world: AdventureWorld) {
+  for (const fish of world.fish) {
+    const landing = fish.landing;
+    if (fish.state !== 'landing' || !landing) continue;
+    const progress = Math.max(
+      0,
+      Math.min(1, (world.clock - landing.startedAt) / landing.duration),
+    );
+    const target = toWorldSpace(world, {
+      x: landing.targetX,
+      z: landing.targetZ,
+    });
+    fish.x = landing.startX + (target.x - landing.startX) * progress;
+    fish.z = landing.startZ + (target.z - landing.startZ) * progress;
+    if (progress < 1) continue;
+    fish.state = 'landed';
+    fish.landing = undefined;
+    createFishItem(
+      world,
+      fish.species,
+      fish.weight,
+      { x: landing.targetX, z: landing.targetZ },
+      { y: 1.15, vy: -2.4, vx: -0.3, vz: landingKick(fish.weight) },
+    );
+    const angler = world.players.find(
+      (candidate) => candidate.line?.fishId === fish.id,
+    );
+    for (const candidate of world.players)
+      if (candidate.line?.fishId === fish.id) candidate.line = null;
+    emit(world, 'fish-landed', angler?.id, fish.species, {
+      x: fish.x,
+      z: fish.z,
+    });
+  }
 }
 
 export function stepFishing(world: AdventureWorld, dt: number) {
   ensureMissionFish(world);
+  stepLandingFish(world);
   const mission = currentMission(world);
   for (const fish of world.fish) {
     if (fish.state !== 'swimming' && fish.state !== 'hooked') continue;
@@ -256,12 +299,13 @@ export function stepFishing(world: AdventureWorld, dt: number) {
       0,
       line.strain +
         dt *
-          (line.tension > definition.safeTension + (player.bot ? 0.14 : 0)
+          (line.tension > definition.safeTension + (player.bot ? 0.1 : 0)
             ? 1.25
             : -1.7),
     );
     line.x = fish.x;
     line.z = fish.z;
+    if (fish.state === 'landing') continue;
     if (line.strain >= 1) {
       fish.state = 'swimming';
       fish.hookedBy = fish.hookedBy.filter((id) => id !== player.id);

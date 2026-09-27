@@ -13,6 +13,7 @@ export type AdventureInput = {
   z: number;
   yaw: number;
   sprint: boolean;
+  jump: boolean;
   reel: boolean;
   brace: boolean;
   throttle: number;
@@ -25,6 +26,7 @@ export const idleInput = (): AdventureInput => ({
   z: 0,
   yaw: 0,
   sprint: false,
+  jump: false,
   reel: false,
   brace: false,
   throttle: 0,
@@ -102,6 +104,7 @@ export type ItemStateRecord = {
   y: number;
   z: number;
   vx: number;
+  vy?: number;
   vz: number;
   yaw: number;
   holder?: string;
@@ -111,6 +114,7 @@ export type ItemStateRecord = {
   fishSpecies?: FishSpecies;
   fishWeight?: number;
   recoverAt?: number;
+  landedAt?: number;
 };
 
 export type FishingLine = {
@@ -171,6 +175,10 @@ export type AdventurePlayer = {
   x: number;
   z: number;
   yaw: number;
+  height: number;
+  verticalVelocity: number;
+  grounded: boolean;
+  jumpHeld: boolean;
   overboard: boolean;
   station?: StationKind;
   held: string[];
@@ -204,7 +212,15 @@ export type FishState = {
   vz: number;
   weight: number;
   stamina: number;
-  state: 'swimming' | 'biting' | 'hooked' | 'landed' | 'secured';
+  state: 'swimming' | 'biting' | 'hooked' | 'landing' | 'landed' | 'secured';
+  landing?: {
+    startX: number;
+    startZ: number;
+    targetX: number;
+    targetZ: number;
+    startedAt: number;
+    duration: number;
+  };
   hookedBy: string[];
   zoneId: string;
   respawnAt: number;

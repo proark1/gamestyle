@@ -4,6 +4,7 @@ import { generateMissions, insideMissionZone } from './missions';
 import { safeReturnBonus } from './scoring';
 import { freshStats } from './players';
 import type { AdventureWorld } from './types';
+import { BOAT_LAYOUT } from './boat-layout';
 
 export const PREPARATION_MS = 60_000;
 export const ROUND_MS = 8 * 60_000;
@@ -89,8 +90,13 @@ export function finishDocking(world: AdventureWorld, actor?: string) {
 }
 
 export function stepRound(world: AdventureWorld) {
-  if (world.phase === 'preparing' && world.clock >= world.round.prepEndsAt)
-    depart(world);
+  if (world.phase === 'preparing' && world.clock >= world.round.prepEndsAt) {
+    const botsAboard = world.players
+      .filter((player) => player.bot && player.space === 'boat')
+      .every((player) => player.x < BOAT_LAYOUT.starboardX - 0.15);
+    if (botsAboard) depart(world);
+    else world.round.prepEndsAt = world.clock + 1000;
+  }
   if (world.phase === 'outbound' && insideMissionZone(world))
     world.phase = world.round.phase = 'fishing';
   if (

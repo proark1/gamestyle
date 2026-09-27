@@ -6,7 +6,7 @@ export const DOCK_HEIGHT = 0.95;
 export const SHORE_HEIGHT = 0.86;
 
 export const HARBOR_LAYOUT = {
-  gangway: { x: 3.65, z: 0, width: 1.8, depth: 2.2 },
+  gangway: { x: 3.9, z: 0, width: 1.72, depth: 2.45 },
   bell: { x: 6.65, z: -2.9, width: 2.15, depth: 0.55 },
   tower: { x: 9.15, z: -3.35, radius: 1.38 },
   shed: { x: 8.65, z: 3.45, width: 2.45, depth: 1.7 },
@@ -25,11 +25,7 @@ export const HARBOR_LAYOUT = {
   ],
 } as const;
 
-export function localSurfaceHeight(
-  phase: RoundPhase,
-  x: number,
-  z: number,
-) {
+export function localSurfaceHeight(phase: RoundPhase, x: number, z: number) {
   if (phase === 'preparing') {
     if (x >= 8.9) return SHORE_HEIGHT;
     if (x >= 4.4 || (x >= 2.75 && Math.abs(z) <= 1.15)) return DOCK_HEIGHT;

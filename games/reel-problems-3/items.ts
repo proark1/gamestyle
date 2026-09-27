@@ -164,17 +164,19 @@ export function createFishItem(
   species: FishSpecies,
   weight: number,
   local: { x: number; z: number },
+  motion: { y?: number; vx?: number; vy?: number; vz?: number } = {},
 ) {
   const item: ItemStateRecord = {
     id: `catch-${world.nextEvent + 1}-${world.items.length}`,
     kind: 'fish',
-    state: 'loose',
+    state: motion.vy ? 'thrown' : 'loose',
     space: 'boat',
     x: local.x,
-    y: 0.35,
+    y: motion.y ?? 0.35,
     z: local.z,
-    vx: 0,
-    vz: 0,
+    vx: motion.vx ?? 0,
+    vy: motion.vy ?? 0,
+    vz: motion.vz ?? 0,
     yaw: 0,
     fishSpecies: species,
     fishWeight: weight,
@@ -209,7 +211,19 @@ export function stepItems(world: AdventureWorld, dt: number) {
       item.z += item.vz * dt;
       item.vx *= Math.exp(-dt * 3.4);
       item.vz *= Math.exp(-dt * 3.4);
-      if (item.state === 'thrown' && Math.hypot(item.vx, item.vz) < 0.25)
+      if (item.kind === 'fish' && ((item.vy ?? 0) !== 0 || item.y > 0.35)) {
+        item.vy = (item.vy ?? 0) - 12 * dt;
+        item.y += item.vy * dt;
+        if (item.y <= 0.35) {
+          item.y = 0.35;
+          if (Math.abs(item.vy) > 1.1) item.vy *= -0.28;
+          else {
+            item.vy = 0;
+            item.state = 'loose';
+            item.landedAt ??= world.clock;
+          }
+        }
+      } else if (item.state === 'thrown' && Math.hypot(item.vx, item.vz) < 0.25)
         item.state = 'loose';
       const outsideDeck = Math.abs(item.x) > 3.45 || Math.abs(item.z) > 4.25;
       const onDock = world.phase === 'preparing' && item.x > 3.3 && item.x < 10;

@@ -140,6 +140,8 @@ export default function ReelProblems3Game() {
     if (disabled) {
       controls.current.x = 0;
       controls.current.z = 0;
+      controls.current.jump = false;
+      controls.current.brace = false;
       controls.current.reel = false;
       controls.current.throttle = 0;
       controls.current.steer = 0;
@@ -215,6 +217,7 @@ export default function ReelProblems3Game() {
       );
       if (!['lobby', 'finished', 'failed'].includes(active.phase))
         advanceWorld(active, active.clock + Math.min(100, now - previous));
+      scene.current?.renderWorld(active);
       previous = now;
       if (now - published > 42) {
         published = now;
@@ -275,7 +278,8 @@ export default function ReelProblems3Game() {
       controls.current.sprint =
         keys.current.has('ShiftLeft') || keys.current.has('ShiftRight');
       controls.current.reel = keys.current.has('KeyR');
-      controls.current.brace = keys.current.has('Space');
+      controls.current.jump = keys.current.has('Space');
+      controls.current.brace = keys.current.has('KeyB');
       controls.current.throttle = keys.current.has('KeyW')
         ? 1
         : keys.current.has('KeyS')
@@ -307,6 +311,7 @@ export default function ReelProblems3Game() {
           'KeyF',
           'KeyQ',
           'KeyR',
+          'KeyB',
           'Space',
           'ShiftLeft',
           'ShiftRight',
@@ -607,8 +612,8 @@ export default function ReelProblems3Game() {
               tension is safe.
             </p>
             <small>
-              WASD move · E interact · F cast/hook · R reel · Space brace · Q
-              drop
+              WASD move · E interact · F cast/hook · R reel · Space jump · B
+              brace · Q drop
             </small>
           </article>
         </dialog>
@@ -642,6 +647,34 @@ export default function ReelProblems3Game() {
             </button>
             <button onClick={interact}>USE</button>
             <button onClick={fishAction}>FISH</button>
+            <button
+              aria-label="Jump"
+              onPointerDown={() => {
+                controls.current.jump = true;
+              }}
+              onPointerUp={() => {
+                controls.current.jump = false;
+              }}
+              onPointerCancel={() => {
+                controls.current.jump = false;
+              }}
+            >
+              JUMP
+            </button>
+            <button
+              aria-label="Brace"
+              onPointerDown={() => {
+                controls.current.brace = true;
+              }}
+              onPointerUp={() => {
+                controls.current.brace = false;
+              }}
+              onPointerCancel={() => {
+                controls.current.brace = false;
+              }}
+            >
+              BRACE
+            </button>
             <button
               onPointerDown={() => {
                 controls.current.reel = true;

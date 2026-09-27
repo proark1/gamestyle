@@ -1585,14 +1585,15 @@
   inset: auto 0.7rem max(0.7rem, env(safe-area-inset-bottom)) 0.7rem;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.45rem;
+  justify-content: center;
+  gap: 0.28rem;
   pointer-events: none;
 }
 
 .rp3-touch-actions button {
-  min-width: 3.8rem;
-  min-height: 3.8rem;
+  width: clamp(3.1rem, 14.2vw, 3.8rem);
+  min-width: 0;
+  min-height: clamp(3.1rem, 14.2vw, 3.8rem);
   padding: 0.5rem;
   color: var(--rp3-foam);
   background: #173e46d9;

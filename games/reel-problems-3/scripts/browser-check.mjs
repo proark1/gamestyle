@@ -81,6 +81,21 @@ try {
       4,
       `${label}: one human and three bots are visible`,
     );
+    if (mobile) {
+      for (const name of ['Jump', 'Brace']) {
+        const button = page.getByRole('button', { name });
+        assert.equal(
+          await button.isVisible(),
+          true,
+          `${label}: ${name} is visible`,
+        );
+        const bounds = await button.boundingBox();
+        assert.ok(
+          bounds && bounds.x >= 0 && bounds.x + bounds.width <= 390,
+          `${label}: ${name} stays inside the viewport`,
+        );
+      }
+    }
     assert.deepEqual(
       errors,
       [],

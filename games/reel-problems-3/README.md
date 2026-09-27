@@ -25,7 +25,7 @@ Play at `/reel-problems-3`. Reel Problems 2 remains unchanged at `/reel-problems
 - E: use, carry, or place the centered object.
 - F: cast, hook a bite, or clear a tangle.
 - Hold R: reel while line tension is safe.
-- Q: drop the held item; Space braces against a deck wave.
+- Q: drop the held item; Space jumps; B braces against a deck wave.
 - Escape: release the mouse cursor.
 - Touch: directional pad, drag the right side to look, and tap Use.
 

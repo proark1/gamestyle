@@ -1,6 +1,11 @@
 import { ITEM_DEFINITIONS } from './content/items';
 import type { AdventureWorld, RoundPhase } from './types';
 import { HARBOR_LAYOUT } from './world-layout';
+import {
+  BOAT_FIXTURES,
+  BOAT_LAYOUT,
+  STARBOARD_RAIL_SEGMENTS,
+} from './boat-layout';
 
 export const PLAYER_RADIUS = 0.42;
 export const PLAYER_HEIGHT = 1.46;
@@ -27,26 +32,54 @@ const box = (
 ): AdventureCollider => ({ id, shape: 'box', x, z, width, depth });
 
 function boundaries(preparing: boolean): AdventureCollider[] {
-  const west = -3.35;
-  const east = preparing ? 10.55 : 3.35;
-  const north = -4.05;
-  const south = 4.05;
-  return [
-    box('rail-port', west - 0.15, 0, 0.3, 8.4),
-    box('rail-starboard', east + 0.15, 0, 0.3, 8.4),
-    box('rail-bow', (west + east) / 2, north - 0.15, east - west + 0.6, 0.3),
-    box('rail-stern', (west + east) / 2, south + 0.15, east - west + 0.6, 0.3),
-    ...(preparing ? [box('dock-water-gap', 3.45, -2.7, 0.55, 2.1)] : []),
+  const halfLength = BOAT_LAYOUT.deck.halfLength;
+  const result: AdventureCollider[] = [
+    box('rail-port', BOAT_LAYOUT.portX, 0, 0.3, halfLength * 2 + 0.45),
+    box('rail-bow', 0, -halfLength, BOAT_LAYOUT.deck.halfWidth * 2 + 0.45, 0.3),
+    box(
+      'rail-stern',
+      0,
+      halfLength,
+      BOAT_LAYOUT.deck.halfWidth * 2 + 0.45,
+      0.3,
+    ),
+    ...STARBOARD_RAIL_SEGMENTS.map((segment, index) =>
+      box(
+        `rail-starboard-${index}`,
+        BOAT_LAYOUT.starboardX,
+        segment.z,
+        0.3,
+        segment.depth,
+      ),
+    ),
   ];
+  if (!preparing)
+    result.push(
+      box(
+        'rail-starboard-gate-closed',
+        BOAT_LAYOUT.starboardX,
+        BOAT_LAYOUT.gate.z,
+        0.3,
+        BOAT_LAYOUT.gate.width,
+      ),
+    );
+  return result;
 }
 
 export function adventureColliders(world: AdventureWorld): AdventureCollider[] {
   const result = boundaries(world.phase === 'preparing');
-  result.push(
-    box('wheel-house', 0, -3.1, 2.2, 0.72),
-    box('engine-box', 0.25, 3.15, 2.6, 0.72),
-    box('ice-hold', 2.35, 1.9, 0.85, 1.25),
-  );
+  for (const fixture of BOAT_FIXTURES)
+    result.push(
+      'radius' in fixture
+        ? {
+            id: fixture.id,
+            shape: 'cylinder',
+            x: fixture.x,
+            z: fixture.z,
+            radius: fixture.radius,
+          }
+        : box(fixture.id, fixture.x, fixture.z, fixture.width, fixture.depth),
+    );
   if (world.phase === 'preparing') {
     result.push(
       {
@@ -126,7 +159,7 @@ export function physicsEnvironmentKey(world: AdventureWorld) {
 }
 
 export function safeSpawn(_phase: RoundPhase, seat: number) {
-  return { x: -1.35 + seat * 0.9, z: 0.55 };
+  return BOAT_LAYOUT.spawns[seat % BOAT_LAYOUT.spawns.length];
 }
 
 function circleBox(

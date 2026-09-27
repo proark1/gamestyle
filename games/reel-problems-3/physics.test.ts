@@ -24,11 +24,7 @@ void test('the boat, dock, machinery, and physical loadout produce colliders', (
   assert.equal(ids.has('harbor-rock-0'), true);
   assert.equal(positionIsBlocked(world, 1.85, 1.9), true);
   assert.equal(
-    positionIsBlocked(
-      world,
-      HARBOR_LAYOUT.tower.x,
-      HARBOR_LAYOUT.tower.z,
-    ),
+    positionIsBlocked(world, HARBOR_LAYOUT.tower.x, HARBOR_LAYOUT.tower.z),
     true,
   );
 });
@@ -44,6 +40,7 @@ void test('cannon keeps a first-person player inside the rail', () => {
     z: 0,
     yaw: 0,
     sprint: true,
+    jump: false,
     reel: false,
     brace: false,
     throttle: 0,
@@ -52,5 +49,31 @@ void test('cannon keeps a first-person player inside the rail', () => {
   const physics = adventurePhysics(world);
   for (let index = 0; index < 200; index++) physics.step(1 / 60);
   assert.ok(player.x > -3.35);
+  resetAdventurePhysics(world);
+});
+
+void test('jump is edge-triggered and lands back on the deck', () => {
+  const world = freshWorld(0);
+  world.players = [createPlayer(0, 0, false, 'p1')];
+  world.phase = world.round.phase = 'outbound';
+  const player = world.players[0];
+  player.input.jump = true;
+  const physics = adventurePhysics(world);
+  physics.step(1 / 60);
+  assert.equal(player.grounded, false);
+  assert.ok(player.height > 0);
+  const firstVelocity = player.verticalVelocity;
+  for (let index = 0; index < 10; index++) physics.step(1 / 60);
+  assert.ok(player.verticalVelocity < firstVelocity);
+  for (let index = 0; index < 90; index++) physics.step(1 / 60);
+  assert.equal(player.grounded, true);
+  assert.equal(player.height, 0);
+  physics.step(1 / 60);
+  assert.equal(player.grounded, true, 'held jump must not retrigger');
+  player.input.jump = false;
+  physics.step(1 / 60);
+  player.input.jump = true;
+  physics.step(1 / 60);
+  assert.equal(player.grounded, false, 'a released jump can trigger again');
   resetAdventurePhysics(world);
 });

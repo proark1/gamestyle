@@ -7,6 +7,9 @@ import { finishDocking } from './round';
 import { STATION_POSITIONS } from './stations';
 import { ITEM_DEFINITIONS } from './content/items';
 import { FISH_DEFINITIONS } from './content/fish';
+import { BOAT_LAYOUT } from './boat-layout';
+import { commitTask, profileFor, reelWindow } from './bot-behavior';
+import { positionIsBlocked } from './physics-layout';
 import type {
   AdventurePlayer,
   AdventureWorld,
@@ -15,6 +18,7 @@ import type {
 } from './types';
 
 const CREW_SIZE = 4;
+const BOT_REACH = 0.96;
 
 export function reconcileBots(world: AdventureWorld) {
   const humans = new Set(
@@ -31,22 +35,50 @@ export function reconcileBots(world: AdventureWorld) {
 }
 
 function moveTo(
+  world: AdventureWorld,
   player: AdventurePlayer,
   target: { x: number; z: number },
   dt: number,
 ) {
   if (player.space !== 'boat')
     return Math.hypot(target.x - player.x, target.z - player.z);
-  const dx = target.x - player.x;
-  const dz = target.z - player.z;
-  const distance = Math.hypot(dx, dz);
-  if (distance > 0.06) {
-    const step = Math.min(distance, dt * 3.25);
-    player.x += (dx / distance) * step;
-    player.z += (dz / distance) * step;
+  const targetDistance = Math.hypot(target.x - player.x, target.z - player.z);
+  let goal = target;
+  if (world.phase === 'preparing') {
+    const goingToDock = target.x > BOAT_LAYOUT.starboardX + 0.3;
+    const goingToBoat = target.x < BOAT_LAYOUT.starboardX - 0.3;
+    if (goingToDock && player.x < BOAT_LAYOUT.starboardX + 0.2)
+      goal =
+        Math.abs(player.z) > 0.32
+          ? { x: BOAT_LAYOUT.gate.thresholdX - 0.08, z: 0 }
+          : { x: BOAT_LAYOUT.starboardX + 0.55, z: 0 };
+    else if (goingToBoat && player.x > BOAT_LAYOUT.starboardX - 0.2)
+      goal =
+        Math.abs(player.z) > 0.32
+          ? { x: BOAT_LAYOUT.starboardX + 0.55, z: 0 }
+          : { x: BOAT_LAYOUT.gate.thresholdX - 0.08, z: 0 };
+  }
+  const dx = goal.x - player.x;
+  const dz = goal.z - player.z;
+  const routeDistance = Math.hypot(dx, dz);
+  if (routeDistance > 0.06) {
+    const step = Math.min(
+      routeDistance,
+      dt * profileFor(world, player).walkSpeed,
+    );
+    const nextX = player.x + (dx / routeDistance) * step;
+    const nextZ = player.z + (dz / routeDistance) * step;
+    if (!positionIsBlocked(world, nextX, nextZ, 0.12)) {
+      player.x = nextX;
+      player.z = nextZ;
+    } else if (!positionIsBlocked(world, nextX, player.z, 0.12)) {
+      player.x = nextX;
+    } else if (!positionIsBlocked(world, player.x, nextZ, 0.12)) {
+      player.z = nextZ;
+    }
     player.yaw = Math.atan2(dx, dz);
   }
-  return distance;
+  return targetDistance;
 }
 
 function station(
@@ -55,9 +87,9 @@ function station(
   kind: StationKind,
   dt: number,
 ) {
-  const distance = moveTo(player, STATION_POSITIONS[kind], dt);
-  if (distance < 0.65) player.station = kind;
-  return distance < 0.8;
+  const distance = moveTo(world, player, STATION_POSITIONS[kind], dt);
+  if (distance < 0.9) player.station = kind;
+  return distance < 1.02;
 }
 
 function loadTarget(world: AdventureWorld, player: AdventurePlayer) {
@@ -89,9 +121,9 @@ function stepLoading(
     station(world, player, 'helm', dt);
     return;
   }
-  player.task = { kind: 'load', target: item.id, claimedAt: world.clock };
+  if (!commitTask(world, player, { kind: 'load', target: item.id })) return;
   if (!player.held.includes(item.id)) {
-    if (moveTo(player, item, dt) < 0.8)
+    if (moveTo(world, player, item, dt) < BOT_REACH)
       pickUpItem(world, player, item.id, true);
     return;
   }
@@ -118,7 +150,7 @@ function wrapAngle(angle: number) {
 
 function stepHelm(world: AdventureWorld, player: AdventurePlayer, dt: number) {
   if (!station(world, player, 'helm', dt)) return;
-  player.task = { kind: 'helm', claimedAt: world.clock };
+  if (!commitTask(world, player, { kind: 'helm' })) return;
   const mission = currentMission(world);
   const target =
     world.phase === 'returning' || world.phase === 'docking'
@@ -159,7 +191,8 @@ function acquire(
       candidate.kind === kind && ['racked', 'loose'].includes(candidate.state),
   );
   if (!item) return false;
-  if (moveTo(player, item, dt) < 0.8) pickUpItem(world, player, item.id, true);
+  if (moveTo(world, player, item, dt) < BOT_REACH)
+    pickUpItem(world, player, item.id, true);
   return false;
 }
 
@@ -168,14 +201,14 @@ function stepAngler(
   player: AdventurePlayer,
   dt: number,
 ) {
-  player.task = { kind: 'fish', claimedAt: world.clock };
+  if (!commitTask(world, player, { kind: 'fish' })) return;
   player.station = undefined;
   if (!acquire(world, player, 'rod', dt)) return;
   const rail = {
     x: player.seat % 2 ? 2.45 : -2.45,
-    z: player.seat < 2 ? 0.4 : 1.5,
+    z: player.seat < 2 ? 0.4 : -1.35,
   };
-  if (moveTo(player, rail, dt) > 0.65) return;
+  if (moveTo(world, player, rail, dt) > 0.65) return;
   player.yaw = rail.x < 0 ? -Math.PI / 2 : Math.PI / 2;
   if (!player.line) {
     const hasBait = world.items.some(
@@ -194,11 +227,12 @@ function stepAngler(
     : 0.7;
   player.input.reel =
     player.line?.state === 'hooked' &&
-    player.line.tension < safeTension - 0.025;
+    player.line.tension < safeTension - 0.06 &&
+    reelWindow(world, player);
 }
 
 function stepNet(world: AdventureWorld, player: AdventurePlayer, dt: number) {
-  player.task = { kind: 'net', claimedAt: world.clock };
+  if (!commitTask(world, player, { kind: 'net' })) return;
   if (!acquire(world, player, 'landing-net', dt)) return;
   station(world, player, 'net-rack', dt);
 }
@@ -213,13 +247,20 @@ function stepStore(world: AdventureWorld, player: AdventurePlayer, dt: number) {
         (item) =>
           item.kind === 'fish' &&
           item.state === 'loose' &&
-          item.space === 'boat',
+          item.space === 'boat' &&
+          !world.players.some(
+            (candidate) =>
+              candidate.id !== player.id &&
+              candidate.task?.kind === 'store' &&
+              candidate.task.target === item.id,
+          ),
       );
   if (!fish) return false;
-  player.task = { kind: 'store', target: fish.id, claimedAt: world.clock };
+  if (!commitTask(world, player, { kind: 'store', target: fish.id }))
+    return true;
   if (!heldFish) {
     if (player.held.length) dropItem(world, player, player.held[0]);
-    if (moveTo(player, fish, dt) < 0.75)
+    if (moveTo(world, player, fish, dt) < 0.75)
       pickUpItem(world, player, fish.id, true);
     return true;
   }
@@ -328,6 +369,13 @@ export function stepBots(world: AdventureWorld, dt: number) {
       if (stepStore(world, player, dt)) continue;
       if (world.phase === 'fishing' && insideMissionZone(world))
         stepAngler(world, player, dt);
+      else {
+        const idle = BOAT_LAYOUT.idle[player.seat % BOAT_LAYOUT.idle.length];
+        if (moveTo(world, player, idle, dt) < 0.22) {
+          player.task = undefined;
+          player.yaw = world.phase === 'returning' ? Math.PI : 0;
+        }
+      }
     }
   }
 }

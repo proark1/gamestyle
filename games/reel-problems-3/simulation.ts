@@ -106,6 +106,7 @@ export function setInput(
     z: clamp(Number(raw.z) || 0, -1, 1),
     yaw,
     sprint: raw.sprint === true,
+    jump: raw.jump === true,
     reel: raw.reel === true,
     brace: raw.brace === true,
     throttle: clamp(Number(raw.throttle) || 0, -1, 1),

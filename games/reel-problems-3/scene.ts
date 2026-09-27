@@ -6,6 +6,13 @@ import { poseWorker } from '../../shared/rendering/worker-pose';
 import { FISH_DEFINITIONS } from './content/fish';
 import { ITEM_DEFINITIONS } from './content/items';
 import { STATION_POSITIONS } from './stations';
+import { BOAT_LAYOUT, STARBOARD_RAIL_SEGMENTS } from './boat-layout';
+import { fillFishingLine } from './rendering/fishing-line';
+import {
+  interpolateAngle,
+  sampleMotion,
+  type MotionSample,
+} from './rendering/motion';
 import type {
   AdventureSnapshot,
   AdventureWorld,
@@ -97,13 +104,31 @@ function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
     0,
   );
   body.scale.set(0.72, 0.52, 1.22);
-  const tail = mesh(new THREE.ConeGeometry(0.34, 0.58, 3), fishMaterial, 0, 0.35, -0.75);
+  const tail = mesh(
+    new THREE.ConeGeometry(0.34, 0.58, 3),
+    fishMaterial,
+    0,
+    0.35,
+    -0.75,
+  );
   tail.rotation.x = -Math.PI / 2;
   tail.scale.x = 0.65;
-  const dorsal = mesh(new THREE.ConeGeometry(0.2, 0.46, 3), fishMaterial, 0, 0.72, -0.08);
+  const dorsal = mesh(
+    new THREE.ConeGeometry(0.2, 0.46, 3),
+    fishMaterial,
+    0,
+    0.72,
+    -0.08,
+  );
   dorsal.rotation.x = Math.PI / 2;
   dorsal.scale.x = 0.42;
-  const mouth = mesh(new THREE.TorusGeometry(0.07, 0.018, 6, 12), clay(0x5c2730), 0, 0.31, 0.57);
+  const mouth = mesh(
+    new THREE.TorusGeometry(0.07, 0.018, 6, 12),
+    clay(0x5c2730),
+    0,
+    0.31,
+    0.57,
+  );
   for (const side of [-1, 1]) {
     const eye = mesh(
       new THREE.SphereGeometry(0.048, 9, 7),
@@ -119,7 +144,13 @@ function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
       0.485,
       0.412,
     );
-    const fin = mesh(new THREE.ConeGeometry(0.12, 0.34, 3), fishMaterial, side * 0.29, 0.28, 0.02);
+    const fin = mesh(
+      new THREE.ConeGeometry(0.12, 0.34, 3),
+      fishMaterial,
+      side * 0.29,
+      0.28,
+      0.02,
+    );
     fin.rotation.z = side * -1.05;
     fin.rotation.x = 0.3;
     group.add(eye, glint, fin);
@@ -322,32 +353,52 @@ function makeBoat() {
     0.45,
     0,
   );
-  hull.scale.set(1, 0.33, 1.15);
+  // CapsuleGeometry is Y-aligned before rotation: local Z becomes vertical.
+  // Keep that axis shallow so the hull never rises through the working deck.
+  hull.scale.set(1.08, 1.15, 0.3);
   hull.rotation.x = Math.PI / 2;
   boat.add(hull);
-  boat.add(box(5.3, 0.18, 6.9, clay(0xc8884a), 0, 0.86, 0));
-  const inner = box(4.55, 0.12, 6.15, clay(0xdeb06c), 0, 0.98, 0);
-  boat.add(inner);
-  for (const side of [-1, 1]) {
-    boat.add(box(0.19, 0.7, 7.15, cream, side * 2.72, 1.18, 0));
-    const topRail = cylinder(
-      0.065,
-      0.065,
-      7.12,
-      brass,
-      side * 2.72,
-      2.03,
+  boat.add(
+    box(
+      BOAT_LAYOUT.deck.halfWidth * 2,
+      0.18,
+      BOAT_LAYOUT.deck.halfLength * 2 - 0.18,
+      clay(0xc8884a),
       0,
-    );
+      0.86,
+      0,
+    ),
+  );
+  const inner = box(
+    BOAT_LAYOUT.deck.innerHalfWidth * 2,
+    0.12,
+    BOAT_LAYOUT.deck.innerHalfLength * 2,
+    clay(0xdeb06c),
+    0,
+    0.98,
+    0,
+  );
+  boat.add(inner);
+  const addRailSegment = (x: number, z: number, depth: number) => {
+    boat.add(box(0.19, 0.7, depth, cream, x, 1.18, z));
+    const topRail = cylinder(0.065, 0.065, depth, brass, x, 2.03, z);
     topRail.rotation.x = Math.PI / 2;
     boat.add(topRail);
-    for (let z = -2.8; z <= 2.8; z += 1.4)
-      boat.add(cylinder(0.07, 0.07, 0.74, brass, side * 2.72, 1.68, z));
-    for (const z of [-2.25, 0.35, 2.55]) {
+    const posts = Math.max(2, Math.floor(depth / 1.35));
+    for (let index = 0; index <= posts; index++) {
+      const postZ = z - depth / 2 + (depth * index) / posts;
+      boat.add(cylinder(0.07, 0.07, 0.74, brass, x, 1.68, postZ));
+    }
+  };
+  addRailSegment(BOAT_LAYOUT.portX, 0, BOAT_LAYOUT.deck.halfLength * 2);
+  for (const segment of STARBOARD_RAIL_SEGMENTS)
+    addRailSegment(BOAT_LAYOUT.starboardX, segment.z, segment.depth);
+  for (const side of [-1, 1]) {
+    for (const z of [-2.35, 2.55]) {
       const fender = mesh(
         new THREE.CapsuleGeometry(0.15, 0.52, 5, 10),
         rubber,
-        side * 2.92,
+        side * 3.15,
         1.02,
         z,
       );
@@ -355,9 +406,62 @@ function makeBoat() {
       boat.add(fender);
     }
   }
+  const gateWidth = BOAT_LAYOUT.gate.width;
   boat.add(
-    box(5.55, 0.18, 0.24, cream, 0, 1.18, -3.55),
-    box(5.55, 0.18, 0.24, cream, 0, 1.18, 3.55),
+    box(
+      0.62,
+      0.12,
+      gateWidth,
+      clay(0xd8aa63),
+      BOAT_LAYOUT.gate.thresholdX,
+      1.08,
+      BOAT_LAYOUT.gate.z,
+    ),
+  );
+  for (const z of [-gateWidth / 2, gateWidth / 2]) {
+    boat.add(
+      cylinder(0.085, 0.085, 0.94, brass, BOAT_LAYOUT.starboardX, 1.57, z),
+      mesh(
+        new THREE.SphereGeometry(0.11, 10, 8),
+        new THREE.MeshStandardMaterial({
+          color: 0xffd36a,
+          emissive: 0xff8a22,
+          emissiveIntensity: 1.2,
+        }),
+        BOAT_LAYOUT.starboardX - 0.04,
+        2.08,
+        z,
+      ),
+    );
+  }
+  const openGate = cylinder(
+    0.045,
+    0.045,
+    gateWidth * 0.82,
+    brass,
+    BOAT_LAYOUT.starboardX - 0.32,
+    1.72,
+    -gateWidth / 2,
+  );
+  openGate.rotation.x = Math.PI / 2;
+  openGate.rotation.z = -0.34;
+  openGate.name = 'boarding-gate-open';
+  const closedGate = cylinder(
+    0.05,
+    0.05,
+    gateWidth,
+    brass,
+    BOAT_LAYOUT.starboardX,
+    1.72,
+    0,
+  );
+  closedGate.rotation.x = Math.PI / 2;
+  closedGate.name = 'boarding-gate-closed';
+  closedGate.visible = false;
+  boat.add(openGate, closedGate);
+  boat.add(
+    box(5.92, 0.18, 0.24, cream, 0, 1.18, -3.55),
+    box(5.92, 0.18, 0.24, cream, 0, 1.18, 3.55),
   );
   const wheel = mesh(
     new THREE.TorusGeometry(0.55, 0.075, 8, 18),
@@ -373,35 +477,43 @@ function makeBoat() {
   }
   boat.add(
     wheel,
-    box(1.8, 0.75, 0.75, navy, 0, 1.25, -3.02),
-    box(2.5, 0.68, 0.82, clay(0x37606b), 0.2, 1.28, 3.05),
+    box(1.65, 0.68, 0.62, navy, -0.25, 1.23, -3.02),
+    box(2.05, 0.58, 0.68, clay(0x37606b), 0.05, 1.23, 3.0),
   );
   const cabin = new THREE.Group();
-  cabin.position.set(0, 1.0, -2.75);
+  cabin.position.set(BOAT_LAYOUT.cabin.x, 1.0, BOAT_LAYOUT.cabin.z);
   cabin.add(
-    box(2.55, 1.45, 0.14, cream, 0, 0.76, -0.65),
-    box(0.14, 1.45, 1.42, cream, -1.2, 0.76, 0),
-    box(0.14, 1.45, 1.42, cream, 1.2, 0.76, 0),
-    box(2.82, 0.18, 1.68, red, 0, 1.55, 0),
-    box(0.82, 0.58, 0.06, clay(0x80b8bd, 0.25, 0.04), -0.58, 0.94, -0.74),
-    box(0.82, 0.58, 0.06, clay(0x80b8bd, 0.25, 0.04), 0.58, 0.94, -0.74),
+    box(2.08, 1.28, 0.12, cream, 0, 0.68, -0.48),
+    box(0.12, 1.28, 1.04, cream, -0.98, 0.68, 0),
+    box(0.12, 1.28, 1.04, cream, 0.98, 0.68, 0),
+    box(2.32, 0.16, 1.24, red, 0, 1.38, 0),
+    box(0.7, 0.5, 0.05, clay(0x80b8bd, 0.25, 0.04), -0.5, 0.84, -0.55),
+    box(0.7, 0.5, 0.05, clay(0x80b8bd, 0.25, 0.04), 0.5, 0.84, -0.55),
   );
   for (const side of [-1, 1])
     cabin.add(
-      box(
-        0.06,
-        0.54,
-        0.7,
-        clay(0x80b8bd, 0.25, 0.04),
-        side * 1.29,
-        0.94,
-        0,
-      ),
+      box(0.06, 0.54, 0.7, clay(0x80b8bd, 0.25, 0.04), side * 1.03, 0.84, 0),
     );
   boat.add(cabin);
 
-  const mast = cylinder(0.08, 0.12, 4.5, darkWood, 2.18, 3.25, 0.15);
-  const boom = cylinder(0.055, 0.055, 2.8, brass, 2.18, 4.68, 0.15);
+  const mast = cylinder(
+    0.08,
+    0.12,
+    4.5,
+    darkWood,
+    BOAT_LAYOUT.mast.x,
+    3.25,
+    BOAT_LAYOUT.mast.z,
+  );
+  const boom = cylinder(
+    0.055,
+    0.055,
+    2.8,
+    brass,
+    BOAT_LAYOUT.mast.x,
+    4.68,
+    BOAT_LAYOUT.mast.z,
+  );
   boom.rotation.z = Math.PI / 2;
   boat.add(mast, boom);
   const ropeMaterial = new THREE.LineBasicMaterial({ color: 0xd6bb8a });
@@ -413,15 +525,15 @@ function makeBoat() {
     boat.add(
       new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(2.18, 5.45, 0.15),
+          new THREE.Vector3(BOAT_LAYOUT.mast.x, 5.45, BOAT_LAYOUT.mast.z),
           end,
         ]),
         ropeMaterial,
       ),
     );
 
-  const liveWell = box(1.45, 0.64, 1.0, teal, 1.35, 1.34, 1.2);
-  const liveWellLid = box(1.5, 0.1, 1.05, cream, 1.35, 1.71, 1.2);
+  const liveWell = box(1.15, 0.58, 0.82, teal, 1.82, 1.31, 1.72);
+  const liveWellLid = box(1.2, 0.1, 0.87, cream, 1.82, 1.64, 1.72);
   liveWellLid.rotation.x = -0.08;
   boat.add(liveWell, liveWellLid);
   for (const [kind, point] of Object.entries(STATION_POSITIONS)) {
@@ -566,10 +678,25 @@ export class ReelProblems3Scene {
   private boat = makeBoat();
   private itemMeshes = new Map<string, THREE.Group>();
   private crewMeshes = new Map<string, THREE.Group>();
+  private crewMotion = new Map<
+    string,
+    MotionSample & {
+      targetX: number;
+      targetY: number;
+      targetZ: number;
+      targetYaw: number;
+      line: boolean;
+      held: boolean;
+    }
+  >();
   private fishMeshes = new Map<string, THREE.Group>();
-  private lineMeshes = new Map<string, THREE.Line>();
+  private lineMeshes = new Map<
+    string,
+    { line: THREE.Line; positions: Float32Array }
+  >();
   private cellMeshes = new Map<string, THREE.Group>();
   private latest?: AdventureSnapshot;
+  private visualWorld?: AdventureWorld;
   private localId = 'local';
   private selected: string | null = null;
   private yaw = -Math.PI * 0.25;
@@ -578,6 +705,7 @@ export class ReelProblems3Scene {
   private pointer = new THREE.Vector2(0, 0);
   private resize: ResizeObserver;
   private frame = 0;
+  private lastFrame = 0;
   private viewModel = new THREE.Group();
   private firstPersonAvatar?: THREE.Group;
   private heldView?: THREE.Group;
@@ -639,15 +767,34 @@ export class ReelProblems3Scene {
     for (const z of [-4.2, 0, 4.2])
       for (const x of [4.6, 9.8])
         dock.add(cylinder(0.18, 0.25, 3, darkWood, x, -0.05, z));
-    const gangway = box(1.8, 0.18, 2.2, clay(0xc18a50), 3.65, 1.02, 0);
+    const gangway = box(
+      HARBOR_LAYOUT.gangway.depth,
+      0.18,
+      HARBOR_LAYOUT.gangway.width,
+      clay(0xc18a50),
+      HARBOR_LAYOUT.gangway.x,
+      1.02,
+      HARBOR_LAYOUT.gangway.z,
+    );
     gangway.rotation.z = -0.06;
     dock.add(gangway);
+    for (const z of [-0.72, 0.72]) {
+      const handrail = cylinder(
+        0.045,
+        0.045,
+        HARBOR_LAYOUT.gangway.depth,
+        brass,
+        HARBOR_LAYOUT.gangway.x,
+        1.62,
+        z,
+      );
+      handrail.rotation.z = Math.PI / 2 - 0.06;
+      dock.add(handrail);
+      for (const x of [3.0, 3.9, 4.75])
+        dock.add(cylinder(0.045, 0.05, 0.62, brass, x, 1.32, z));
+    }
     const bell = makeBell('depart');
-    bell.position.set(
-      HARBOR_LAYOUT.bell.x,
-      DOCK_HEIGHT,
-      HARBOR_LAYOUT.bell.z,
-    );
+    bell.position.set(HARBOR_LAYOUT.bell.x, DOCK_HEIGHT, HARBOR_LAYOUT.bell.z);
     dock.add(bell);
     const shore = box(14, 1.4, 24, clay(0x8eaa79), 16.2, 0.15, 0);
     dock.add(shore);
@@ -689,13 +836,16 @@ export class ReelProblems3Scene {
     dock.add(tower);
 
     const shed = new THREE.Group();
-    shed.position.set(
-      HARBOR_LAYOUT.shed.x,
-      SHORE_HEIGHT,
-      HARBOR_LAYOUT.shed.z,
-    );
+    shed.position.set(HARBOR_LAYOUT.shed.x, SHORE_HEIGHT, HARBOR_LAYOUT.shed.z);
     shed.add(
-      box(HARBOR_LAYOUT.shed.width, 1.75, HARBOR_LAYOUT.shed.depth, red, 0, 0.88),
+      box(
+        HARBOR_LAYOUT.shed.width,
+        1.75,
+        HARBOR_LAYOUT.shed.depth,
+        red,
+        0,
+        0.88,
+      ),
       box(0.82, 1.35, 0.12, darkWood, 0.45, 0.68, -0.9),
       box(0.58, 0.58, 0.12, cream, -0.55, 1.05, -0.9),
     );
@@ -791,7 +941,16 @@ export class ReelProblems3Scene {
 
   render(snapshot: AdventureSnapshot) {
     this.latest = snapshot;
-    const { world } = snapshot;
+    this.renderWorld(snapshot.world);
+  }
+
+  renderWorld(world: AdventureWorld) {
+    this.visualWorld = world;
+    const gateOpen = world.phase === 'preparing' || world.phase === 'lobby';
+    const openGate = this.boat.getObjectByName('boarding-gate-open');
+    const closedGate = this.boat.getObjectByName('boarding-gate-closed');
+    if (openGate) openGate.visible = gateOpen;
+    if (closedGate) closedGate.visible = !gateOpen;
     this.boat.position.set(world.boat.x, 0.12, world.boat.z);
     this.boat.rotation.set(world.boat.pitch, world.boat.yaw, -world.boat.roll);
     this.syncItems(world);
@@ -830,6 +989,12 @@ export class ReelProblems3Scene {
       );
       model.rotation.y = item.yaw;
       model.scale.setScalar(item.state === 'secured' ? 0.75 : 1);
+      if (item.kind === 'fish' && item.state === 'loose' && item.landedAt) {
+        const age = Math.max(0, (world.clock - item.landedAt) / 1000);
+        const flop = Math.sin(age * 13) * Math.exp(-age * 0.72);
+        model.rotation.z = flop * 0.38;
+        model.rotation.x = flop * 0.18;
+      }
     }
     for (const [id, model] of this.itemMeshes)
       if (!alive.has(id)) {
@@ -866,42 +1031,75 @@ export class ReelProblems3Scene {
       }
       const parent = player.space === 'boat' ? this.boat : this.scene;
       if (model.parent !== parent) parent.add(model);
-      model.position.set(
+      const previousMotion = this.crewMotion.get(player.id);
+      const sample = sampleMotion(
+        previousMotion,
         player.x,
-        player.space === 'boat'
-          ? localSurfaceHeight(world.phase, player.x, player.z)
-          : -0.35,
         player.z,
+        world.clock,
       );
-      model.rotation.y = player.yaw;
+      const targetY =
+        (player.space === 'boat'
+          ? localSurfaceHeight(world.phase, player.x, player.z)
+          : -0.35) + (player.height ?? 0);
+      this.crewMotion.set(player.id, {
+        ...sample,
+        targetX: player.x,
+        targetY,
+        targetZ: player.z,
+        targetYaw: player.yaw,
+        line: !!player.line,
+        held: player.held.length > 0,
+      });
+      if (!previousMotion) {
+        model.position.set(player.x, targetY, player.z);
+        model.rotation.y = player.yaw;
+      }
       model.visible =
         !local ||
         local.space !== player.space ||
         Math.hypot(local.x - player.x, local.z - player.z) > 1.8;
-      const moving = Math.abs(player.input.x) + Math.abs(player.input.z) > 0.08;
-      poseWorker(model, world.clock / 1000, moving ? 'walk' : 'still');
-      liveKid(model, world.clock / 1000, moving);
-      const armL = model.userData.armL as THREE.Group | undefined;
-      const armR = model.userData.armR as THREE.Group | undefined;
-      if (player.line && armL && armR) {
-        armL.rotation.x = -1.12;
-        armR.rotation.x = -1.28;
-      } else if (player.held.length > 0 && armL && armR) {
-        armL.rotation.x = -0.82;
-        armR.rotation.x = -0.82;
-      }
     }
     for (const [id, model] of this.crewMeshes)
       if (!alive.has(id)) {
         model.removeFromParent();
         this.crewMeshes.delete(id);
+        this.crewMotion.delete(id);
       }
+  }
+
+  private animateCrew(delta: number, elapsed: number) {
+    const blend = 1 - Math.exp(-delta * 18);
+    for (const [id, model] of this.crewMeshes) {
+      const motion = this.crewMotion.get(id);
+      if (!motion) continue;
+      model.position.x += (motion.targetX - model.position.x) * blend;
+      model.position.y += (motion.targetY - model.position.y) * blend;
+      model.position.z += (motion.targetZ - model.position.z) * blend;
+      model.rotation.y = interpolateAngle(
+        model.rotation.y,
+        motion.targetYaw,
+        blend,
+      );
+      const moving = motion.speed > 0.12;
+      poseWorker(model, motion.phase, moving ? 'walk' : 'still');
+      liveKid(model, elapsed, moving);
+      const armL = model.userData.armL as THREE.Group | undefined;
+      const armR = model.userData.armR as THREE.Group | undefined;
+      if (motion.line && armL && armR) {
+        armL.rotation.x = -1.12;
+        armR.rotation.x = -1.28;
+      } else if (motion.held && armL && armR) {
+        armL.rotation.x = -0.82;
+        armR.rotation.x = -0.82;
+      }
+    }
   }
 
   private syncFish(world: AdventureWorld) {
     const alive = new Set<string>();
     for (const fish of world.fish) {
-      if (!['swimming', 'hooked'].includes(fish.state)) continue;
+      if (!['swimming', 'hooked', 'landing'].includes(fish.state)) continue;
       alive.add(fish.id);
       let model = this.fishMeshes.get(fish.id);
       if (!model) {
@@ -909,9 +1107,22 @@ export class ReelProblems3Scene {
         this.fishMeshes.set(fish.id, model);
         this.scene.add(model);
       }
+      const landingProgress = fish.landing
+        ? Math.max(
+            0,
+            Math.min(
+              1,
+              (world.clock - fish.landing.startedAt) / fish.landing.duration,
+            ),
+          )
+        : 0;
       model.position.set(
         fish.x,
-        -0.65 + Math.sin(world.clock / 350 + fish.weight) * 0.2,
+        fish.state === 'landing'
+          ? -0.2 +
+              landingProgress * 1.35 +
+              Math.sin(landingProgress * Math.PI) * 2.2
+          : -0.65 + Math.sin(world.clock / 350 + fish.weight) * 0.2,
         fish.z,
       );
       model.rotation.y = Math.atan2(fish.vx, fish.vz);
@@ -929,17 +1140,24 @@ export class ReelProblems3Scene {
     for (const player of world.players) {
       if (!player.line) continue;
       alive.add(player.id);
-      let line = this.lineMeshes.get(player.id);
-      if (!line) {
-        line = new THREE.Line(
-          new THREE.BufferGeometry(),
+      let record = this.lineMeshes.get(player.id);
+      if (!record) {
+        const positions = new Float32Array(16 * 3);
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute(
+          'position',
+          new THREE.BufferAttribute(positions, 3),
+        );
+        const line = new THREE.Line(
+          geometry,
           new THREE.LineBasicMaterial({
             color: 0xf7ddb2,
             transparent: true,
             opacity: 0.9,
           }),
         );
-        this.lineMeshes.set(player.id, line);
+        record = { line, positions };
+        this.lineMeshes.set(player.id, record);
         this.scene.add(line);
       }
       const cosine = Math.cos(world.boat.yaw);
@@ -952,16 +1170,43 @@ export class ReelProblems3Scene {
         player.space === 'boat'
           ? world.boat.z - player.x * sine + player.z * cosine
           : player.z;
-      line.geometry.dispose();
-      line.geometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(startX, 1.75, startZ),
-        new THREE.Vector3(
-          player.line.x,
-          player.line.state === 'hooked' ? -0.25 : 0.08,
-          player.line.z,
-        ),
-      ]);
-      (line.material as THREE.LineBasicMaterial).color.set(
+      const hookedFish = player.line.fishId
+        ? world.fish.find((fish) => fish.id === player.line?.fishId)
+        : undefined;
+      const landingProgress = hookedFish?.landing
+        ? Math.max(
+            0,
+            Math.min(
+              1,
+              (world.clock - hookedFish.landing.startedAt) /
+                hookedFish.landing.duration,
+            ),
+          )
+        : 0;
+      fillFishingLine(
+        record.positions,
+        { x: startX, y: 2.08 + (player.height ?? 0), z: startZ },
+        {
+          x: player.line.x,
+          y:
+            hookedFish?.state === 'landing'
+              ? -0.2 +
+                landingProgress * 1.35 +
+                Math.sin(landingProgress * Math.PI) * 2.2
+              : player.line.state === 'hooked'
+                ? -0.25
+                : 0.08,
+          z: player.line.z,
+        },
+        player.line.state,
+        player.line.tension,
+        world.clock / 1000,
+        landingProgress,
+      );
+      const attribute = record.line.geometry.getAttribute('position');
+      attribute.needsUpdate = true;
+      record.line.geometry.computeBoundingSphere();
+      (record.line.material as THREE.LineBasicMaterial).color.set(
         player.line.tension > 0.88
           ? 0xff5f45
           : player.line.state === 'biting'
@@ -969,11 +1214,11 @@ export class ReelProblems3Scene {
             : 0xf7ddb2,
       );
     }
-    for (const [id, line] of this.lineMeshes)
+    for (const [id, record] of this.lineMeshes)
       if (!alive.has(id)) {
-        line.geometry.dispose();
-        (line.material as THREE.Material).dispose();
-        line.removeFromParent();
+        record.line.geometry.dispose();
+        (record.line.material as THREE.Material).dispose();
+        record.line.removeFromParent();
         this.lineMeshes.delete(id);
       }
   }
@@ -1009,7 +1254,9 @@ export class ReelProblems3Scene {
       this.boat.updateWorldMatrix(true, false);
       this.cameraPoint.set(
         player.x,
-        localSurfaceHeight(world.phase, player.x, player.z) + NICO_EYE_HEIGHT,
+        localSurfaceHeight(world.phase, player.x, player.z) +
+          NICO_EYE_HEIGHT +
+          (player.height ?? 0),
         player.z,
       );
       this.boat.localToWorld(this.cameraPoint);
@@ -1058,11 +1305,17 @@ export class ReelProblems3Scene {
   private animate = () => {
     this.frame = requestAnimationFrame(this.animate);
     const elapsed = performance.now() / 1000;
+    const delta = Math.min(
+      0.05,
+      Math.max(0, elapsed - (this.lastFrame || elapsed)),
+    );
+    this.lastFrame = elapsed;
     this.oceanMaterial.uniforms.time.value = elapsed;
-    if (this.latest) {
-      this.updateCamera(this.latest.world);
+    this.animateCrew(delta, elapsed);
+    if (this.visualWorld) {
+      this.updateCamera(this.visualWorld);
       this.pickTarget();
-      const roll = this.latest.world.boat.roll;
+      const roll = this.visualWorld.boat.roll;
       this.viewModel.rotation.z +=
         (-roll * 0.8 - this.viewModel.rotation.z) * 0.08;
     }

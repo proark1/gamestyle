@@ -22,8 +22,7 @@ void test('the harbor keeps the bell clear of the tower and the gangway open', (
     HARBOR_LAYOUT.bell.z - HARBOR_LAYOUT.tower.z,
   );
   assert.ok(
-    bellToTower >
-      HARBOR_LAYOUT.tower.radius + HARBOR_LAYOUT.bell.width / 2,
+    bellToTower > HARBOR_LAYOUT.tower.radius + HARBOR_LAYOUT.bell.width / 2,
   );
   assert.ok(HARBOR_LAYOUT.gangway.x < HARBOR_LAYOUT.bell.x - 1);
 });

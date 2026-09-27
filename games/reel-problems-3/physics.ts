@@ -15,6 +15,8 @@ const STEP = 1 / 60;
 const MAX_SUBSTEPS = 8;
 const WALK_SPEED = 4.2;
 const SPRINT_SPEED = 6.2;
+const JUMP_SPEED = 4.7;
+const GRAVITY = 13.5;
 const PLAYER_GROUP = 1;
 const SCENERY_GROUP = 2;
 
@@ -150,6 +152,34 @@ export class AdventurePhysics {
     const seconds = Math.max(0, Math.min(0.1, deltaSeconds));
     if (seconds <= 0) return;
     for (const player of this.state.players) {
+      if (!Number.isFinite(player.height)) player.height = 0;
+      if (!Number.isFinite(player.verticalVelocity))
+        player.verticalVelocity = 0;
+      if (typeof player.grounded !== 'boolean') player.grounded = true;
+      if (typeof player.jumpHeld !== 'boolean') player.jumpHeld = false;
+      const requestedJump = player.input.jump && !player.jumpHeld;
+      player.jumpHeld = player.input.jump;
+      if (
+        requestedJump &&
+        player.grounded &&
+        !player.overboard &&
+        player.station !== 'helm'
+      ) {
+        player.verticalVelocity = JUMP_SPEED;
+        player.grounded = false;
+      }
+      if (!player.grounded) {
+        player.verticalVelocity -= GRAVITY * seconds;
+        player.height += player.verticalVelocity * seconds;
+        if (player.height <= 0) {
+          player.height = 0;
+          player.verticalVelocity = 0;
+          player.grounded = true;
+        }
+      } else {
+        player.height = 0;
+        player.verticalVelocity = 0;
+      }
       const body = this.playerBodies.get(player.id);
       if (!body) continue;
       const velocity = desiredVelocity(player);

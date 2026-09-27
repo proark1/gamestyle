@@ -31,6 +31,13 @@ void test('a baited cast can hook, tire, and land a mission fish', () => {
   fish.z = world.boat.z + 1;
   player.input.reel = true;
   stepFishing(world, 0.1);
+  assert.equal(fish.state, 'landing');
+  assert.equal(
+    world.items.some((item) => item.kind === 'fish'),
+    false,
+  );
+  world.clock += fish.landing!.duration;
+  stepFishing(world, 0.1);
   assert.ok(world.items.some((item) => item.kind === 'fish'));
   assert.equal(player.line, null);
 });
