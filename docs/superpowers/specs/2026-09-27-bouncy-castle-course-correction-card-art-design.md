@@ -14,7 +14,9 @@ Replace the Bouncy Castle Royale gameplay screenshot and the Course Correction S
 
 ## Bouncy Castle Royale scene
 
-Show the four boys split into red and blue teams inside the inflatable castle volleyball arena. Two players are airborne around one volleyball while a third player's landing visibly deforms the bouncy floor and launches a teammate. Preserve the recognizable red and blue castle halves, central net, inflatable corner towers, soft walls, floor seams, and air-pump equipment. The action must read as buoyant team volleyball rather than an ordinary rigid court.
+Show the four boys split into red and blue teams inside the inflatable castle volleyball arena. Use a centered, slightly elevated camera at the near end of the arena. The net must begin at the lower center of the image and recede toward the back-center vanishing point, dividing the court into a red left half and a blue right half. Do not place the net horizontally across the image, and do not arrange the teams as near and far sides.
+
+Exactly two red-team boys occupy the left half and exactly two blue-team boys occupy the right half. Keep all four boys visible, with players airborne around one volleyball above the central net. A landing should visibly deform the bouncy floor and launch a teammate. Preserve the recognizable inflatable corner towers, soft walls, floor seams, and air-pump equipment. The action must read as buoyant team volleyball rather than an ordinary rigid court.
 
 ## Course Correction scene
 
@@ -23,6 +25,7 @@ Show all four boys as visible mini-golfers on the sunny Backyard Open course. Th
 ## Integration
 
 - Save both final images as new assets under `public/images/court-cast-v1/boys/`.
+- Preserve the first Bouncy Castle Royale illustration and save the corrected front-to-back-net composition as a versioned sibling asset.
 - Update only the Bouncy Castle Royale and Course Correction homepage card image paths and alternative text.
 - Keep Party Mode gameplay screenshots unchanged because they intentionally show live gameplay.
 - Keep the existing source screenshot and SVG files unless they are proven unused; do not delete unrelated assets.
@@ -30,6 +33,7 @@ Show all four boys as visible mini-golfers on the sunny Backyard Open course. Th
 ## Verification
 
 - Inspect both generated images for cast consistency, gameplay fidelity, coherent anatomy, clean crop safety, and forbidden text or UI.
+- For Bouncy Castle Royale, verify at card size that red reads exclusively on the left, blue exclusively on the right, and the net clearly runs from foreground to background through the center.
 - Confirm both public asset paths resolve and the homepage cards use them.
 - Run TypeScript and production/client build checks.
 - Visually inspect the rendered homepage and show both completed cards to the user.
