@@ -176,21 +176,24 @@ void test('ice sheet remains solid and sweeper escorts stone down the sheet', ()
   // Deliver stone
   const stone = launchDelivery(world, 0.6, 0, 1, 'granite');
   const events: GameEvent[] = [];
+  let closestEscortGap = Infinity;
 
   // Step physics
   for (let i = 0; i < 60; i++) {
     stepCurlingPhysics([stone], [sweeper], [tile], [], 1 / 60, events);
+    closestEscortGap = Math.min(closestEscortGap, sweeper.z - stone.z);
   }
 
   // Ice remains solid
   assert.equal(tile.broken, false, 'Ice tile never breaks');
   assert.equal(tile.cracked, false, 'Ice tile never cracks');
 
-  // Sweeper stays ahead of the stone ready to sweep
+  // The curler and broom have breathing room without losing sweep range.
   assert.ok(
-    sweeper.z >= stone.z,
-    `Sweeper stayed ahead of stone (sweeper Z: ${sweeper.z.toFixed(2)}, stone Z: ${stone.z.toFixed(2)})`,
+    closestEscortGap > 1.5,
+    `Sweeper stayed clear of stone (closest gap: ${closestEscortGap.toFixed(2)}m)`,
   );
+  assert.ok(sweeper.z - stone.z < 2.4, 'Sweeper remains in sweep range');
   assert.ok(
     sweeper.vz > 0,
     'Sweeper matches forward velocity of the active stone',

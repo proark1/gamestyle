@@ -3,6 +3,7 @@ import {
   HACK_Z,
   RINK_WIDTH,
   STONE_CONFIGS,
+  SWEEPER_LEAD_Z,
   TEE_Z,
   type CurlingPlayer,
   type IceTile,
@@ -158,14 +159,14 @@ export function launchDelivery(
     deliverer.rotation = angle;
   }
 
-  // 2. Position the active sweeper directly in front of the stone to escort it
+  // 2. Give the active sweeper room to work ahead of the stone.
   const sweeper = world.players.find(
     (p) => p.team === world.turnTeam && p.role === 'sweeper',
   );
   if (sweeper) {
     sweeper.status = 'normal';
-    sweeper.x = stone.x + 0.45;
-    sweeper.z = stone.z + 1.2;
+    sweeper.x = stone.x + 0.55;
+    sweeper.z = stone.z + SWEEPER_LEAD_Z;
     sweeper.vx = vx;
     sweeper.vz = vz;
     sweeper.rotation = Math.PI;

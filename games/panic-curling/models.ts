@@ -19,29 +19,39 @@ export function createStoneMesh(kind: StoneKind, team: TeamId): T.Group {
   const teamColor = TEAM_COLORS[team];
 
   if (kind === 'granite') {
-    // Polished stone body
-    box(
-      g,
-      [cfg.radius * 2, cfg.height * 0.7, cfg.radius * 2],
-      [0, cfg.height * 0.35, 0],
-      '#42484d',
-      true,
+    const rock = new T.Mesh(
+      new T.CylinderGeometry(
+        cfg.radius,
+        cfg.radius * 0.95,
+        cfg.height * 0.7,
+        32,
+      ),
+      new T.MeshStandardMaterial({
+        color: '#475058',
+        roughness: 0.48,
+        metalness: 0.12,
+        flatShading: true,
+      }),
     );
-    // Polished metal perimeter band
-    box(
-      g,
-      [cfg.radius * 2.05, cfg.height * 0.25, cfg.radius * 2.05],
-      [0, cfg.height * 0.45, 0],
-      '#cfd8dc',
+    rock.position.y = cfg.height * 0.35;
+    rock.castShadow = true;
+    g.add(rock);
+    const band = new T.Mesh(
+      new T.CylinderGeometry(cfg.radius * 1.025, cfg.radius * 1.025, 0.035, 32),
+      new T.MeshStandardMaterial({
+        color: '#c6d6dd',
+        roughness: 0.34,
+        metalness: 0.45,
+      }),
     );
-    // Stone top dish
-    box(
-      g,
-      [cfg.radius * 1.5, 0.04, cfg.radius * 1.5],
-      [0, cfg.height * 0.72, 0],
-      '#525960',
-      true,
+    band.position.y = cfg.height * 0.48;
+    g.add(band);
+    const top = new T.Mesh(
+      new T.CylinderGeometry(cfg.radius * 0.76, cfg.radius * 0.76, 0.03, 32),
+      new T.MeshStandardMaterial({ color: '#35414a', roughness: 0.52 }),
     );
+    top.position.y = cfg.height * 0.72;
+    g.add(top);
     // Team-colored handle mount
     box(g, [0.08, 0.12, 0.08], [0, cfg.height * 0.78, 0], '#2c3135');
     // Curved grip handle
@@ -106,6 +116,35 @@ export function createCurlingRinkMesh(): T.Group {
   iceMesh.receiveShadow = true;
   g.add(iceMesh);
 
+  // A cool wash near the rails and faint skate marks give the ice depth
+  // without competing with the stone or the painted scoring lines.
+  const edgeWash = new T.MeshBasicMaterial({
+    color: '#7ca9bd',
+    transparent: true,
+    opacity: 0.12,
+    depthWrite: false,
+  });
+  const edgeGeo = new T.PlaneGeometry(1.3, RINK_LENGTH + 5);
+  const scratchGeo = new T.PlaneGeometry(0.025, 0.85);
+  const scratchMat = new T.MeshBasicMaterial({
+    color: '#5b8ca3',
+    transparent: true,
+    opacity: 0.17,
+    depthWrite: false,
+  });
+  for (const side of [-1, 1]) {
+    const wash = new T.Mesh(edgeGeo, edgeWash);
+    wash.rotation.x = -Math.PI / 2;
+    wash.position.set(side * (RINK_WIDTH / 2 - 0.7), 0.006, 16);
+    g.add(wash);
+    for (let i = 0; i < 9; i++) {
+      const scratch = new T.Mesh(scratchGeo, scratchMat);
+      scratch.rotation.x = -Math.PI / 2;
+      scratch.position.set(side * (1.8 + (i % 3) * 0.25), 0.009, 1.2 + i * 3.7);
+      g.add(scratch);
+    }
+  }
+
   // 3. Painted curling House rings at the tee line (z = 31)
   const rings = [
     {
@@ -136,6 +175,13 @@ export function createCurlingRinkMesh(): T.Group {
     const m = new T.Mesh(ringGeo, ringMat);
     m.position.set(0, ring.y, TEE_Z);
     g.add(m);
+    const outline = new T.Mesh(
+      new T.TorusGeometry(ring.r, 0.035, 6, 64),
+      new T.MeshBasicMaterial({ color: '#244d62' }),
+    );
+    outline.rotation.x = -Math.PI / 2;
+    outline.position.set(0, ring.y + 0.014, TEE_Z);
+    g.add(outline);
   }
 
   // 4. Painted lines on the ice
@@ -162,6 +208,20 @@ export function createCurlingRinkMesh(): T.Group {
   // Side boards
   box(g, [0.18, 0.35, RINK_LENGTH + 6], [-halfW - 0.09, 0.15, 16], '#534537');
   box(g, [0.18, 0.35, RINK_LENGTH + 6], [halfW + 0.09, 0.15, 16], '#534537');
+  for (const side of [-1, 1]) {
+    box(
+      g,
+      [0.24, 0.06, RINK_LENGTH + 6],
+      [side * (halfW + 0.09), 0.36, 16],
+      '#e6f4f7',
+    );
+    box(
+      g,
+      [0.025, 0.11, RINK_LENGTH + 6],
+      [side * (halfW + 0.005), 0.2, 16],
+      '#8cb4c5',
+    );
+  }
   // Snowdrifts along sides
   box(
     g,
@@ -206,8 +266,8 @@ export function createCurlingRinkMesh(): T.Group {
   // 8. Spectator Grandstands with cheering fans and snowmen
   createSpectatorBleachers(g, halfW);
 
-  // 9. Overhead rustic timber arches with glowing festoon fairy lights
-  createFestoonArches(g, halfW);
+  // 9. Side lights frame the sheet without crossing the gameplay camera.
+  createRinkLanterns(g, halfW);
 
   // 10. Alpine Mountain Range Silhouette
   createMountainBackdrop(g);
@@ -223,7 +283,8 @@ function createClubhouse(parent: T.Group) {
   const g = new T.Group();
   g.userData.cameraOccluder = true;
   parent.add(g);
-  const cz = -9.0;
+  // Keep the porch behind the follow camera as it rides down the sheet.
+  const cz = -13.0;
   // Main timber walls
   box(g, [8.4, 3.2, 5.0], [0, 1.6, cz], '#422818', true);
   // Log corner pillars
@@ -363,33 +424,33 @@ function createFanSpectator(
   ball(g, [0.09, 0.09, 0.09], [x, y + 0.97, z], '#ffffff');
 }
 
-/** Overhead rustic timber arches with festoon Edison fairy string lights. */
-function createFestoonArches(parent: T.Group, halfW: number) {
-  const archZList = [-1.0, 11.0, 23.0, 34.0];
-  const postX = halfW + 1.2;
+/** Festoon lighting sits beside the ice so it cannot hide the moving stone. */
+function createRinkLanterns(parent: T.Group, halfW: number) {
+  const postZ = [1, 12, 23, 34];
+  const bulbGeo = new T.SphereGeometry(0.09, 8, 6);
+  const bulbMat = new T.MeshBasicMaterial({ color: '#ffe9a1' });
 
-  for (const az of archZList) {
-    const g = new T.Group();
-    g.userData.cameraOccluder = true;
-    parent.add(g);
-    // Left & right rustic timber posts
-    box(g, [0.25, 4.2, 0.25], [-postX, 2.1, az], '#4a3322');
-    box(g, [0.25, 4.2, 0.25], [postX, 2.1, az], '#4a3322');
-    // Top cross-beam
-    box(g, [postX * 2 + 0.5, 0.25, 0.25], [0, 4.15, az], '#4a3322');
-    // Snow on beam
-    box(g, [postX * 2 + 0.6, 0.12, 0.3], [0, 4.3, az], '#f0f8ff', true);
-
-    // Draped festoon Edison bulbs across the beam
-    const bulbCount = 6;
-    for (let b = 0; b < bulbCount; b++) {
-      const bx = -postX + 0.6 + (b * (postX * 2 - 1.2)) / (bulbCount - 1);
-      const sag = Math.sin((b / (bulbCount - 1)) * Math.PI) * 0.35;
-      const by = 4.0 - sag;
-      // Cord dropper
-      beam(g, [bx, 4.15, az], [bx, by + 0.1, az], 0.02, '#222222');
-      // Glowing warm bulb
-      ball(g, [0.12, 0.15, 0.12], [bx, by, az], '#ffe082');
+  for (const side of [-1, 1]) {
+    const x = side * (halfW + 1.55);
+    for (const z of postZ) {
+      box(parent, [0.18, 3.4, 0.18], [x, 1.7, z], '#5b4030');
+      box(parent, [0.32, 0.11, 0.32], [x, 3.45, z], '#edf6fa', true);
+      const lantern = new T.Mesh(bulbGeo, bulbMat);
+      lantern.position.set(x, 3.22, z);
+      parent.add(lantern);
+    }
+    for (let segment = 0; segment < postZ.length - 1; segment++) {
+      const from = postZ[segment];
+      const to = postZ[segment + 1];
+      beam(parent, [x, 3.25, from], [x, 3.25, to], 0.018, '#3a3836');
+      for (let bulb = 1; bulb <= 4; bulb++) {
+        const z = from + ((to - from) * bulb) / 5;
+        const sag = Math.sin((bulb / 5) * Math.PI) * 0.22;
+        beam(parent, [x, 3.25, z], [x, 3.08 - sag, z], 0.014, '#3a3836');
+        const lantern = new T.Mesh(bulbGeo, bulbMat);
+        lantern.position.set(x, 3.05 - sag, z);
+        parent.add(lantern);
+      }
     }
   }
 }

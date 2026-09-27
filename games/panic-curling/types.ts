@@ -21,6 +21,8 @@ export const RELEASE_HOG_Z = 6.0; // deliverer must release stone before here
 export const FAR_HOG_Z = 22.0; // stone must cross here to remain in play
 export const TEE_Z = 31.0; // center of the curling house ("button")
 export const BACK_LINE_Z = 35.5; // back of the house
+export const SWEEPER_LEAD_Z = 2.05; // room for the curler and the broom ahead of the stone
+export const SWEEPER_MIN_LEAD_Z = 1.7;
 
 export const HOUSE_RINGS = {
   button: { radius: 0.45, points: 5, color: '#f3c742' },

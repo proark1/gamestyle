@@ -4,6 +4,8 @@ import {
   HOUSE_RINGS,
   RINK_WIDTH,
   STONE_CONFIGS,
+  SWEEPER_LEAD_Z,
+  SWEEPER_MIN_LEAD_Z,
   TEE_Z,
   type BananaHazard,
   type CurlingPlayer,
@@ -120,9 +122,9 @@ function updatePlayers(
 
     // Sweeper dynamic escorting: stay ahead of active stone along its travel path
     if (activeStone && p.team === activeStone.team && p.role === 'sweeper') {
-      const targetZ = activeStone.z + 1.15;
+      const targetZ = activeStone.z + SWEEPER_LEAD_Z;
       const targetX =
-        activeStone.x + (p.steerDir !== 0 ? p.steerDir * 0.35 : 0.45);
+        activeStone.x + (p.steerDir !== 0 ? p.steerDir * 0.55 : 0.55);
 
       // Match stone velocity so the sweeper is never outpaced
       p.vz = activeStone.vz;
@@ -133,8 +135,8 @@ function updatePlayers(
       p.x += (targetX - p.x) * Math.min(1, dt * 10);
 
       // Sweeper must never fall behind the rock
-      if (p.z < activeStone.z + 0.75) {
-        p.z = activeStone.z + 0.75;
+      if (p.z < activeStone.z + SWEEPER_MIN_LEAD_Z) {
+        p.z = activeStone.z + SWEEPER_MIN_LEAD_Z;
       }
 
       p.status = p.sweepIntensity > 0 ? 'sweeping' : 'normal';
