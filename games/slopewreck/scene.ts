@@ -5,7 +5,7 @@ import {
   addHouseLight,
   HOUSE_EXPOSURE,
 } from '../../shared/rendering/house-light';
-import { box, label } from '../../shared/rendering/primitives';
+import { ball, box, label } from '../../shared/rendering/primitives';
 import { batchScenery } from '../../shared/rendering/batch-scenery';
 import { disposeObject } from '../../shared/rendering/dispose-object';
 import {
@@ -14,11 +14,12 @@ import {
 } from '../../shared/wardrobe/wardrobe-state';
 import { pine, poseRider, riderModel } from './models';
 import { slopeCameraFrame } from './camera';
+import { courseFrame, coursePoint, courseWidth } from './course';
+import { HAZARDS, snowballX, type Hazard } from './hazards';
 import {
   FINISH_Z,
   HALF_WIDTH,
   KICKERS,
-  slopeY,
   type Feature,
   type Snapshot,
 } from './types';
@@ -30,33 +31,35 @@ function slopeMesh() {
   const verts: number[] = [],
     colors: number[] = [];
   const tint = [new T.Color('#e7f3ee'), new T.Color('#d2e9e6')];
-  for (let z = -24; z < FINISH_Z + 44; z += 16) {
+  for (let z = -24; z < FINISH_Z + 44; z += 8) {
     for (const [x0, x1, lane] of [
       [-38, -HALF_WIDTH, 0],
       [-HALF_WIDTH, HALF_WIDTH, 1],
       [HALF_WIDTH, 38, 0],
     ] as const) {
-      const y0 = slopeY(z),
-        y1 = slopeY(z + 16);
+      const p00 = coursePoint(x0, z);
+      const p01 = coursePoint(x0, z + 8);
+      const p10 = coursePoint(x1, z);
+      const p11 = coursePoint(x1, z + 8);
       verts.push(
-        x0,
-        y0,
-        z,
-        x0,
-        y1,
-        z + 16,
-        x1,
-        y0,
-        z,
-        x1,
-        y0,
-        z,
-        x0,
-        y1,
-        z + 16,
-        x1,
-        y1,
-        z + 16,
+        p00.x,
+        p00.y,
+        p00.z,
+        p01.x,
+        p01.y,
+        p01.z,
+        p10.x,
+        p10.y,
+        p10.z,
+        p10.x,
+        p10.y,
+        p10.z,
+        p01.x,
+        p01.y,
+        p01.z,
+        p11.x,
+        p11.y,
+        p11.z,
       );
       const c = tint[lane];
       for (let i = 0; i < 6; i++) colors.push(c.r, c.g, c.b);
@@ -75,6 +78,19 @@ function slopeMesh() {
   );
 }
 
+function placeOnCourse(
+  root: T.Object3D,
+  lateral: number,
+  distance: number,
+  height = 0,
+) {
+  const point = coursePoint(lateral, distance, height);
+  const frame = courseFrame(distance);
+  root.position.set(point.x, point.y, point.z);
+  root.rotation.order = 'YXZ';
+  root.rotation.set(frame.pitch, frame.heading, -frame.bank);
+}
+
 function featureModel(f: Feature) {
   const root = new T.Group();
   const main = f.wild ? '#fa8154' : f.kind === 'ramp' ? '#e7b24d' : '#24a5aa';
@@ -91,7 +107,55 @@ function featureModel(f: Feature) {
     box(root, [1.15, 0.18, 5.5], [0, 1.08, 0], main, true);
     box(root, [1.26, 0.055, 5.62], [0, 1.19, 0], '#fff3cf', true);
   }
-  root.position.set(f.x, slopeY(f.z), f.z);
+  placeOnCourse(root, f.x, f.z);
+  return root;
+}
+
+function hazardModel(hazard: Hazard) {
+  const root = new T.Group();
+  root.name = `hazard-${hazard.id}`;
+  if (hazard.type === 'snowball') {
+    ball(
+      root,
+      [hazard.radius * 0.92, 0.05, hazard.radius * 0.7],
+      [0, 0.045, 0],
+      '#9bcaca',
+      10,
+    );
+    const snowball = ball(
+      root,
+      [hazard.radius, hazard.radius, hazard.radius],
+      [0, hazard.radius, 0],
+      '#f8fbf2',
+      12,
+    );
+    snowball.name = 'rolling-snowball';
+    const warningBand = new T.Mesh(
+      new T.TorusGeometry(hazard.radius * 0.72, 0.085, 6, 16),
+      new T.MeshStandardMaterial({ color: '#f26f4d', roughness: 0.68 }),
+    );
+    warningBand.position.y = hazard.radius;
+    warningBand.rotation.y = Math.PI / 2;
+    warningBand.castShadow = true;
+    root.add(warningBand);
+  } else if (hazard.type === 'gate') {
+    for (const side of [-1, 1]) {
+      const x = side * hazard.gap * 0.5;
+      box(root, [0.18, 2.25, 0.18], [x, 1.12, 0], '#173e5a', true);
+      const flag = box(
+        root,
+        [0.9, 0.46, 0.06],
+        [x + side * 0.42, 1.72, 0],
+        side < 0 ? '#f26f4d' : '#f1bd43',
+        true,
+      );
+      flag.rotation.z = side * -0.12;
+    }
+  } else {
+    box(root, [hazard.halfX * 2, 0.86, 1.15], [0, 0.42, 0], '#d9efec', true);
+    for (let x = -hazard.halfX + 0.7; x < hazard.halfX; x += 1.35)
+      ball(root, [0.78, 0.42, 0.58], [x, 0.76, 0], '#f6fbef', 8);
+  }
   return root;
 }
 
@@ -106,8 +170,10 @@ export class SlopeScene {
   private current: Snapshot | null = null;
   private avatars = new Map<string, Avatar>();
   private features = new Map<number, T.Group>();
+  private hazards = new Map<string, T.Group>();
   private unsubscribe: () => void;
   private lookVersion = 0;
+  private cameraRoll = 0;
 
   constructor(private host: HTMLElement) {
     this.renderer = createRenderer(host, {
@@ -127,22 +193,26 @@ export class SlopeScene {
     for (let z = -16; z <= FINISH_Z + 28; z += 16) {
       for (const side of [-1, 1]) {
         const x =
-          side * (HALF_WIDTH + 3 + (Math.sin(z * 0.34 + side) + 1) * 2.2);
+          side * (courseWidth(z) + 3 + (Math.sin(z * 0.34 + side) + 1) * 2.2);
+        const point = coursePoint(x, z + Math.sin(z * 2.5) * 4);
         pine(
           scenery,
-          x,
-          z + Math.sin(z * 2.5) * 4,
-          slopeY(z),
+          point.x,
+          point.z,
+          point.y,
           0.9 + (Math.sin(z * 0.18 + side) + 1) * 0.32,
         );
       }
-      for (const x of [-HALF_WIDTH, HALF_WIDTH]) {
-        box(scenery, [0.18, 0.09, 2.3], [x, slopeY(z) + 0.06, z], '#078d9f');
+      for (const x of [-courseWidth(z), courseWidth(z)]) {
+        const marker = new T.Group();
+        box(marker, [0.18, 0.09, 2.3], [0, 0.06, 0], '#078d9f');
+        placeOnCourse(marker, x, z);
+        scenery.add(marker);
       }
     }
     for (const z of KICKERS) {
       const root = new T.Group();
-      root.position.set(0, slopeY(z), z);
+      placeOnCourse(root, 0, z);
       box(root, [16.5, 0.12, 3.9], [0, 0.08, 0], '#234b63', true);
       box(root, [16, 0.46, 3.6], [0, 0.23, 0], '#eea72f', true);
       for (const x of [-6, -2, 2, 6])
@@ -151,14 +221,24 @@ export class SlopeScene {
     }
     {
       const z = FINISH_Z;
-      box(scenery, [0.45, 6.2, 0.45], [-11, slopeY(z) + 3, z], '#234b63', true);
-      box(scenery, [0.45, 6.2, 0.45], [11, slopeY(z) + 3, z], '#234b63', true);
-      box(scenery, [22.4, 1.1, 0.55], [0, slopeY(z) + 6.2, z], '#f5885b', true);
+      const finish = new T.Group();
+      box(finish, [0.45, 6.2, 0.45], [-11, 3, 0], '#234b63', true);
+      box(finish, [0.45, 6.2, 0.45], [11, 3, 0], '#234b63', true);
+      box(finish, [22.4, 1.1, 0.55], [0, 6.2, 0], '#f5885b', true);
       const sign = label('FINISH', '#173e5a', '#f8f3df', 5.5);
-      sign.position.set(0, slopeY(z) + 6.2, z - 0.42);
-      scenery.add(sign);
+      sign.position.set(0, 6.2, -0.42);
+      finish.add(sign);
+      placeOnCourse(finish, 0, z);
+      scenery.add(finish);
     }
     batchScenery(scenery);
+    for (const hazard of HAZARDS) {
+      const root = hazardModel(hazard);
+      const x = hazard.type === 'snowball' ? snowballX(hazard, 0) : hazard.x;
+      placeOnCourse(root, x, hazard.z);
+      this.scene.add(root);
+      this.hazards.set(hazard.id, root);
+    }
     this.unsubscribe = subscribeWardrobe(() => {
       this.lookVersion++;
     });
@@ -222,15 +302,47 @@ export class SlopeScene {
           avatar = { root, body, signature };
           this.avatars.set(p.id, avatar);
         }
+        const point = coursePoint(p.x, p.z, p.height);
+        const course = courseFrame(p.z);
         avatar.root.position.lerp(
-          new T.Vector3(p.x, slopeY(p.z) + p.height, p.z),
+          new T.Vector3(point.x, point.y, point.z),
           smooth,
         );
-        avatar.root.rotation.x = Math.atan(0.085);
-        avatar.root.rotation.y = p.trick ? (p.spin / 180) * Math.PI : 0;
+        avatar.root.rotation.order = 'YXZ';
+        avatar.root.rotation.x = course.pitch;
+        avatar.root.rotation.y =
+          course.heading + (p.trick ? (p.spin / 180) * Math.PI : 0);
         avatar.root.rotation.z =
-          w.clock < p.wipeoutUntil ? 0.78 : -p.input.steer * 0.16;
+          -course.bank +
+          (w.clock < p.wipeoutUntil ? 0.78 : -p.input.steer * 0.2) +
+          (w.clock < p.impactUntil ? p.impactSide * 0.1 : 0);
+        const trails = avatar.root.getObjectByName('snowboard-trails');
+        if (trails) {
+          trails.visible = p.grounded && p.speed > 8;
+          trails.scale.z = T.MathUtils.clamp((p.speed - 6) / 7, 0.35, 1.35);
+        }
+        const spray = avatar.root.getObjectByName('snow-impact');
+        if (spray) {
+          spray.visible = w.clock < p.impactUntil;
+          spray.position.x = p.impactSide * 0.46;
+          spray.rotation.y = p.impactSide * -0.35;
+        }
         poseRider(avatar.body, p, w.clock / 1000);
+      }
+      for (const hazard of HAZARDS) {
+        const mesh = this.hazards.get(hazard.id);
+        if (!mesh) continue;
+        const x =
+          hazard.type === 'snowball' ? snowballX(hazard, w.clock) : hazard.x;
+        placeOnCourse(mesh, x, hazard.z, hazard.type === 'snowball' ? 0.02 : 0);
+        if (hazard.type === 'snowball') {
+          const ballMesh = mesh.getObjectByName('rolling-snowball');
+          if (ballMesh) ballMesh.rotation.x = w.clock * 0.002 * hazard.speed;
+        } else if (hazard.type === 'snowbank') {
+          const collapsed = w.collapsedHazards.includes(hazard.id);
+          const target = collapsed ? 0.18 : 1;
+          mesh.scale.y += (target - mesh.scale.y) * smooth;
+        }
       }
       for (const [id, mesh] of this.features)
         if (!w.features.some((f) => f.id === id)) {
@@ -247,7 +359,13 @@ export class SlopeScene {
       const me = w.players.find((p) => p.id === this.self) ?? w.players[0];
       if (me) {
         const z = Math.min(me.z, FINISH_Z - 6);
-        const frame = slopeCameraFrame({ ...me, z });
+        const frame = slopeCameraFrame({ ...me, z, steer: me.input.steer });
+        if (w.clock < me.impactUntil) {
+          const course = courseFrame(z);
+          const nudge = me.impactSide * 0.24;
+          frame.position.x += course.sideX * nudge;
+          frame.position.z += course.sideZ * nudge;
+        }
         const cameraSmooth = 1 - Math.exp(-dt * 6.5);
         const lensSmooth = 1 - Math.exp(-dt * 4.5);
         this.camera.position.lerp(
@@ -257,6 +375,8 @@ export class SlopeScene {
         this.camera.fov += (frame.fov - this.camera.fov) * lensSmooth;
         this.camera.updateProjectionMatrix();
         this.camera.lookAt(frame.target.x, frame.target.y, frame.target.z);
+        this.cameraRoll += (frame.roll - this.cameraRoll) * lensSmooth;
+        this.camera.rotation.z += this.cameraRoll;
       }
     }
     this.renderer.render(this.scene, this.camera);

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { advanceWorld, freshWorld, raceAction, setInput } from './simulation';
 import { FINISH_Z, RACE_MS } from './types';
+import { HAZARDS } from './hazards';
 
 const advance = (w: ReturnType<typeof freshWorld>, duration: number) => {
   let remaining = duration;
@@ -71,6 +72,32 @@ void test('a trailing rider can use a newly built ramp for air and speed', () =>
   assert.ok(follower.speed > 8);
 });
 
+void test('a rail side is solid when the rider misses its rideable center', () => {
+  const w = freshWorld(1_000);
+  const leader = w.players[0];
+  const follower = w.players[1];
+  leader.id = 'leader';
+  leader.bot = false;
+  follower.id = 'follower';
+  follower.bot = false;
+  raceAction(w, 'leader', { type: 'start' }, true);
+  follower.x = 1.12;
+  follower.z = 17;
+  follower.speed = 19;
+  w.features.push({
+    id: 1,
+    owner: 'leader',
+    kind: 'rail',
+    x: 0,
+    z: 21,
+    wild: false,
+    born: w.clock,
+  });
+  advance(w, 300);
+  assert.ok(follower.z < 18, `${follower.z} should remain before the rail`);
+  assert.equal(follower.wipeouts, 1);
+});
+
 void test('solo bots finish and a 60-second race chooses a winner', () => {
   const w = freshWorld(1_000);
   w.players[0].id = 'human';
@@ -119,4 +146,54 @@ void test('rematches keep event and feature identifiers increasing', () => {
   advance(w, 1_200);
   assert.ok(w.nextEvent > firstEvent);
   assert.ok(w.nextFeature > firstFeature);
+});
+
+void test('solid gate poles stop a maximum-speed rider instead of tunneling', () => {
+  const w = freshWorld(1_000);
+  const p = w.players[0];
+  const gate = HAZARDS.find((hazard) => hazard.type === 'gate');
+  assert.ok(gate && gate.type === 'gate');
+  p.id = 'human';
+  p.bot = false;
+  raceAction(w, 'human', { type: 'start' }, true);
+  p.x = gate.x - gate.gap * 0.5;
+  p.z = gate.z - 1.2;
+  p.speed = 19;
+  setInput(w, 'human', { steer: 0, tuck: true });
+  advance(w, 160);
+  assert.ok(p.z < gate.z, `${p.z} should remain before the gate`);
+  assert.equal(p.wipeouts, 1);
+});
+
+void test('riders jostle apart without reversing or launching', () => {
+  const w = freshWorld(1_000);
+  raceAction(w, w.players[0].id, { type: 'start' }, true);
+  const [a, b] = w.players;
+  a.bot = false;
+  b.bot = false;
+  a.x = 0;
+  b.x = 0.1;
+  a.z = b.z = 100;
+  a.speed = 14;
+  b.speed = 11;
+  advance(w, 50);
+  assert.ok(Math.abs(a.x - b.x) > 0.6);
+  assert.ok(a.speed > 0 && b.speed > 0);
+  assert.ok(Math.abs(a.lateralSpeed) <= 8 && Math.abs(b.lateralSpeed) <= 8);
+});
+
+void test('a snowbank collapses only after a rider finds the safe line', () => {
+  const w = freshWorld(1_000);
+  const p = w.players[0];
+  const bank = HAZARDS.find((hazard) => hazard.type === 'snowbank');
+  assert.ok(bank && bank.type === 'snowbank');
+  p.id = 'human';
+  p.bot = false;
+  raceAction(w, 'human', { type: 'start' }, true);
+  p.x = bank.x < 0 ? 7 : -7;
+  p.z = bank.z - 1;
+  p.speed = 14;
+  advance(w, 300);
+  assert.ok(w.collapsedHazards.includes(bank.id));
+  assert.equal(p.wipeouts, 0);
 });

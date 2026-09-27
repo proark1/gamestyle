@@ -40,6 +40,7 @@ export type Rider = {
   x: number;
   z: number;
   speed: number;
+  lateralSpeed: number;
   height: number;
   vy: number;
   grounded: boolean;
@@ -50,6 +51,8 @@ export type Rider = {
   lastJump: number;
   lastKicker: number;
   wipeoutUntil: number;
+  impactUntil: number;
+  impactSide: number;
   finishAt: number;
   style: number;
   cleanLandings: number;
@@ -86,6 +89,7 @@ export type World = {
   partyRound?: number;
   players: Rider[];
   features: Feature[];
+  collapsedHazards: string[];
   events: RaceEvent[];
   nextFeature: number;
   nextEvent: number;

@@ -17,54 +17,165 @@ type RiderRig = {
   armR: T.Group;
 };
 
-function snowboard(root: T.Group) {
+export type BoardOutlinePoint = { x: number; z: number };
+
+export function snowboardOutline(): BoardOutlinePoint[] {
+  return [
+    { x: 0, z: 1.48 },
+    { x: 0.34, z: 1.43 },
+    { x: 0.5, z: 1.27 },
+    { x: 0.52, z: 1.02 },
+    { x: 0.46, z: 0.52 },
+    { x: 0.41, z: 0 },
+    { x: 0.46, z: -0.52 },
+    { x: 0.52, z: -1.02 },
+    { x: 0.5, z: -1.27 },
+    { x: 0.34, z: -1.43 },
+    { x: 0, z: -1.48 },
+    { x: -0.34, z: -1.43 },
+    { x: -0.5, z: -1.27 },
+    { x: -0.52, z: -1.02 },
+    { x: -0.46, z: -0.52 },
+    { x: -0.41, z: 0 },
+    { x: -0.46, z: 0.52 },
+    { x: -0.52, z: 1.02 },
+    { x: -0.5, z: 1.27 },
+    { x: -0.34, z: 1.43 },
+  ];
+}
+
+const deckHeight = (z: number) =>
+  BOARD_TOP + Math.max(0, Math.abs(z) - 1.02) * 0.52;
+
+function boardDeck(topColor: string) {
+  const outline = snowboardOutline();
+  const positions: number[] = [];
+  const add = (...points: Array<[number, number, number]>) => {
+    for (const point of points) positions.push(...point);
+  };
+  const topStart = 0;
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[i];
+    const b = outline[(i + 1) % outline.length];
+    add(
+      [0, BOARD_TOP, 0],
+      [a.x, deckHeight(a.z), a.z],
+      [b.x, deckHeight(b.z), b.z],
+    );
+  }
+  const topCount = positions.length / 3;
+  const bottomStart = topCount;
+  for (let i = outline.length - 1; i >= 0; i--) {
+    const a = outline[i];
+    const b = outline[(i - 1 + outline.length) % outline.length];
+    add(
+      [0, 0.065, 0],
+      [a.x, deckHeight(a.z) - 0.085, a.z],
+      [b.x, deckHeight(b.z) - 0.085, b.z],
+    );
+  }
+  const bottomCount = positions.length / 3 - bottomStart;
+  const edgeStart = positions.length / 3;
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[i];
+    const b = outline[(i + 1) % outline.length];
+    const ay = deckHeight(a.z);
+    const by = deckHeight(b.z);
+    add(
+      [a.x, ay, a.z],
+      [a.x, ay - 0.085, a.z],
+      [b.x, by, b.z],
+      [b.x, by, b.z],
+      [a.x, ay - 0.085, a.z],
+      [b.x, by - 0.085, b.z],
+    );
+  }
+  const geometry = new T.BufferGeometry();
+  geometry.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+  geometry.addGroup(topStart, topCount, 0);
+  geometry.addGroup(bottomStart, bottomCount, 1);
+  geometry.addGroup(edgeStart, positions.length / 3 - edgeStart, 2);
+  geometry.computeVertexNormals();
+  const deck = new T.Mesh(geometry, [
+    new T.MeshStandardMaterial({ color: topColor, roughness: 0.64 }),
+    new T.MeshStandardMaterial({ color: '#173e5a', roughness: 0.78 }),
+    new T.MeshStandardMaterial({ color: '#23b5b1', roughness: 0.48 }),
+  ]);
+  deck.name = 'snowboard-deck';
+  deck.castShadow = true;
+  deck.receiveShadow = true;
+  deck.userData.outline = outline;
+  return deck;
+}
+
+function snowboard(root: T.Group, topColor: string) {
   const board = new T.Group();
   board.name = 'snowboard';
   root.add(board);
+  board.add(boardDeck(topColor));
+  const slash = box(
+    board,
+    [0.74, 0.018, 0.12],
+    [0, BOARD_TOP + 0.012, 0.02],
+    '#f6e5a4',
+    true,
+  );
+  slash.rotation.y = -0.28;
 
-  box(board, [1, 0.06, 1.82], [0, 0.06, 0], '#20a5a5', true);
-  box(board, [0.92, 0.08, 1.84], [0, 0.11, 0], '#173e5a', true);
-  for (const side of [-1, 1]) {
-    const edge = box(
-      board,
-      [1, 0.06, 0.38],
-      [0, 0.085, side * 1.06],
-      '#20a5a5',
-      true,
+  const trails = new T.Group();
+  trails.name = 'snowboard-trails';
+  for (const x of [-0.28, 0.28]) {
+    const trail = new T.Mesh(
+      new T.PlaneGeometry(0.08, 1.5),
+      new T.MeshBasicMaterial({
+        color: '#b9e8e6',
+        transparent: true,
+        opacity: 0.58,
+        depthWrite: false,
+      }),
     );
-    edge.rotation.x = side * -0.17;
-    const tip = box(
-      board,
-      [0.92, 0.075, 0.4],
-      [0, 0.135, side * 1.055],
-      side > 0 ? '#f0b33f' : '#173e5a',
-      true,
-    );
-    tip.rotation.x = side * -0.17;
+    trail.rotation.x = -Math.PI / 2;
+    trail.position.set(x, 0.025, -2.05);
+    trails.add(trail);
   }
-  box(board, [0.76, 0.018, 0.16], [0, 0.158, 0], '#f6e5a4', true);
+  root.add(trails);
+
+  const spray = new T.Group();
+  spray.name = 'snow-impact';
+  spray.visible = false;
+  for (let i = 0; i < 7; i++)
+    ball(
+      spray,
+      [0.08 + (i % 3) * 0.025, 0.06, 0.08],
+      [((i % 4) - 1.5) * 0.16, 0.12 + (i % 2) * 0.12, -0.4 - i * 0.09],
+      i % 2 ? '#ffffff' : '#cceceb',
+      6,
+    );
+  root.add(spray);
 }
 
 function binding(root: T.Group, position: T.Vector3, side: number) {
   const mount = new T.Group();
   mount.name = 'snowboard-binding';
   mount.position.set(position.x, BOARD_TOP, position.z);
+  mount.rotation.y = side * 0.16;
   root.add(mount);
-  box(mount, [0.36, 0.045, 0.23], [0, 0.022, 0], '#f4d068', true);
+  box(mount, [0.38, 0.045, 0.25], [0, 0.022, 0], '#f4d068', true);
+  box(mount, [0.08, 0.22, 0.27], [-0.16, 0.12, -0.01], '#173e5a', true);
   box(
     mount,
-    [0.34, 0.075, 0.065],
-    [side * 0.02, 0.085, 0.015],
+    [0.36, 0.07, 0.065],
+    [0.02, 0.095, 0.055],
     '#f8f3df',
     true,
-  ).rotation.z = side * 0.08;
+  ).rotation.z = -0.12;
   box(
     mount,
-    [0.32, 0.2, 0.055],
-    [-0.11, 0.12, -0.085],
+    [0.34, 0.075, 0.06],
+    [-0.02, 0.14, -0.065],
     '#f0b33f',
     true,
-  ).rotation.z = side * -0.12;
+  ).rotation.z = 0.14;
 }
 
 function winterGear(body: T.Group, suit: string, faceCovered: boolean) {
@@ -106,7 +217,7 @@ export function riderModel(color: number, look?: Look) {
     },
     look,
   );
-  snowboard(root);
+  snowboard(root, suit);
   body.rotation.y = Math.PI / 2;
   root.add(body);
   const rig = body.userData as RiderRig;
@@ -139,6 +250,7 @@ export function poseRider(body: T.Group, p: Rider, time: number) {
   const rig = body.userData as RiderRig;
   const steer = Math.max(-1, Math.min(1, p.input.steer));
   const wipingOut = time * 1000 < p.wipeoutUntil;
+  const impact = time * 1000 < p.impactUntil ? p.impactSide : 0;
 
   if (wipingOut) {
     rig.body.rotation.set(0.22, steer * -0.08, steer * 0.08);
@@ -166,7 +278,11 @@ export function poseRider(body: T.Group, p: Rider, time: number) {
       ? (1 - sinceJump / 1100) * 0.065
       : 0;
   rig.body.position.y = Math.sin(time * 2) * 0.006 - landingCompression;
-  rig.body.rotation.set(tuck ? 0.4 : 0.17, steer * -0.1, steer * 0.07);
+  rig.body.rotation.set(
+    tuck ? 0.4 : 0.17,
+    steer * -0.14 + impact * 0.12,
+    steer * 0.09 + impact * 0.08,
+  );
   rig.legL.rotation.set(steer * 0.06, 0, flex);
   rig.legR.rotation.set(steer * -0.06, 0, -flex);
   rig.armL.rotation.set(tuck ? -0.88 : -0.48, 0.08, tuck ? 0.3 : 0.68);

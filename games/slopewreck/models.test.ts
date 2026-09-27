@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as T from 'three';
 import { newRider } from './simulation';
-import { poseRider, riderModel } from './models';
+import { poseRider, riderModel, snowboardOutline } from './models';
 
 const near = (actual: number, expected: number, tolerance = 0.08) =>
   Math.abs(actual - expected) <= tolerance;
@@ -45,6 +45,42 @@ void test('Park Pro adds winter gear without replacing a worn face item', () => 
   assert.equal(
     dressed.root.getObjectsByProperty('name', 'snowboard-mitten').length,
     2,
+  );
+});
+
+void test('the snowboard has rounded twin tips and a real sidecut', () => {
+  const outline = snowboardOutline();
+  assert.ok(outline.length >= 16);
+  const nose = outline.filter((point) => point.z > 1.25);
+  const tail = outline.filter((point) => point.z < -1.25);
+  assert.ok(nose.length >= 3);
+  assert.ok(tail.length >= 3);
+  assert.equal(
+    nose.some((point) => point.x === 0),
+    true,
+  );
+  assert.equal(
+    tail.some((point) => point.x === 0),
+    true,
+  );
+  const waist = Math.max(
+    ...outline
+      .filter((point) => Math.abs(point.z) < 0.1)
+      .map((point) => Math.abs(point.x)),
+  );
+  const contact = Math.max(
+    ...outline
+      .filter((point) => Math.abs(point.z) > 0.9)
+      .map((point) => Math.abs(point.x)),
+  );
+  assert.ok(waist < contact, `${waist} should be narrower than ${contact}`);
+
+  const { root } = riderModel(2);
+  const deck = root.getObjectByName('snowboard-deck') as T.Mesh;
+  const bounds = new T.Box3().setFromObject(deck);
+  assert.ok(
+    bounds.max.y - bounds.min.y > 0.16,
+    'tips should rise above the deck',
   );
 });
 

@@ -1,15 +1,17 @@
 import { clamp } from '../../shared/math/clamp';
-import { slopeY } from './types';
+import { courseFrame, coursePoint } from './course';
 
 export type CameraRider = {
   x: number;
   z: number;
   height: number;
   speed: number;
+  steer?: number;
 };
 
 export type CameraFrame = {
   fov: number;
+  roll: number;
   position: { x: number; y: number; z: number };
   target: { x: number; y: number; z: number };
 };
@@ -22,18 +24,19 @@ export function slopeCameraFrame(rider: CameraRider): CameraFrame {
   const behind = mix(15, 18, pace);
   const height = mix(12.5, 14, pace);
   const lookAhead = mix(70, 88, pace);
+  const position = coursePoint(rider.x * 0.58, rider.z - behind);
+  const riderGround = coursePoint(rider.x, rider.z);
+  const target = coursePoint(
+    rider.x * 0.26 + clamp(rider.steer ?? 0, -1, 1) * 2.4,
+    rider.z + lookAhead,
+    -7 + rider.height * 0.06,
+  );
+  position.y = riderGround.y + height + rider.height * 0.2;
 
   return {
     fov: mix(60, 65, pace),
-    position: {
-      x: rider.x * 0.58,
-      y: slopeY(rider.z) + height + rider.height * 0.2,
-      z: rider.z - behind,
-    },
-    target: {
-      x: rider.x * 0.26,
-      y: slopeY(rider.z + lookAhead) - 7 + rider.height * 0.06,
-      z: rider.z + lookAhead,
-    },
+    roll: courseFrame(rider.z + lookAhead * 0.3).bank * 0.32,
+    position,
+    target,
   };
 }

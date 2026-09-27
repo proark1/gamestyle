@@ -538,8 +538,8 @@ export default function SlopewreckGame() {
             <h2>{say('Ride. Trick. Rebuild.', 'Fahr. Trickse. Bau um.')}</h2>
             <p>
               {say(
-                'Steer around the markers. Hold W to tuck for speed or S to brake. Jump with Space; while airborne press Q for a ramp or E for a rail. Complete your spin before landing. Every trick leaves its feature behind for the other riders. Even a wipeout builds a wilder shortcut.',
-                'Lenke zwischen den Markierungen. Halte W für Tempo oder S zum Bremsen. Springe mit Leertaste; drücke in der Luft Q für eine Rampe oder E für eine Schiene. Beende die Drehung vor der Landung. Jeder Trick hinterlässt ein Hindernis für die anderen. Auch ein Sturz baut eine wilde Abkürzung.',
+                'Carve through the bends, dodge snowballs and gates, and bump rivals off the fast line. Hold W to tuck or S to brake. Jump with Space; while airborne press Q for a ramp or E for a rail. Solid obstacles deflect side hits and punish direct impacts. Every landed trick rebuilds the course behind you.',
+                'Carve durch die Kurven, weiche Schneebällen und Toren aus und dränge Rivalen von der Ideallinie. Halte W für Tempo oder S zum Bremsen. Springe mit Leertaste; drücke in der Luft Q für eine Rampe oder E für eine Schiene. Feste Hindernisse lenken Streifschüsse ab und bestrafen Frontalaufpralle. Jeder gelandete Trick baut die Strecke hinter dir um.',
               )}
             </p>
             <button onClick={() => setHelp(false)}>

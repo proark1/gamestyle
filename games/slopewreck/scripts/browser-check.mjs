@@ -4,6 +4,7 @@ import { mkdirSync } from 'node:fs';
 
 const origin = process.env.SLOPEWRECK_TEST_URL ?? 'http://localhost:4191';
 const stubAnalytics = process.env.SLOPEWRECK_STUB_ANALYTICS === '1';
+const longQa = process.env.SLOPEWRECK_LONG_QA === '1';
 if (!['127.0.0.1', 'localhost'].includes(new URL(origin).hostname))
   throw new Error('Use a local preview.');
 mkdirSync('.tmp/slopewreck', { recursive: true });
@@ -26,6 +27,23 @@ try {
     if (stubAnalytics)
       await page.route('**/api/analytics', (route) =>
         route.fulfill({ status: 204 }),
+      );
+    if (stubAnalytics)
+      await page.route('**/api/audio/slopewreck**', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            settings: {
+              effects: 0.75,
+              speech: 0.85,
+              ambience: 0.25,
+              music: 0.18,
+              voiceId: '',
+            },
+            cues: {},
+          }),
+        }),
       );
     const errors = [],
       failed = [];
@@ -65,6 +83,10 @@ try {
     );
     const path = `.tmp/slopewreck/${mobile ? 'mobile' : 'desktop'}.png`;
     await page.screenshot({ path });
+    if (longQa && !mobile) {
+      await page.waitForTimeout(6_500);
+      await page.screenshot({ path: '.tmp/slopewreck/desktop-chaos.png' });
+    }
     assert.deepEqual(errors, [], `Browser errors: ${errors.join('; ')}`);
     assert.deepEqual(failed, [], `Failed requests: ${failed.join('; ')}`);
     console.log(`${mobile ? 'Mobile' : 'Desktop'} race passed: ${path}`);
