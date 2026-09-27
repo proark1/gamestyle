@@ -1,6 +1,6 @@
 # Reel Problems 3 Physics and Presentation Polish
 
-**Date:** 2026-09-27  
+**Date:** 2026-09-27
 **Status:** Approved design
 
 ## Goal

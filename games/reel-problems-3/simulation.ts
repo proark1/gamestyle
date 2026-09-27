@@ -1,4 +1,6 @@
 import { clamp } from '../../shared/math/clamp';
+import { adventurePhysics, resetAdventurePhysics } from './physics';
+import { safeSpawn } from './physics-layout';
 import {
   LANTERN_SOCKETS,
   SUPPLIES,
@@ -8,10 +10,6 @@ import {
   type AdventureSnapshot,
   type AdventureWorld,
 } from './types';
-
-const MOVE_SPEED = 0.0042;
-const SPRINT_SPEED = 0.0062;
-const WORLD_LIMIT = 17;
 
 const freshStats = () => ({
   supplies: 0,
@@ -86,8 +84,9 @@ function event(
 
 function resetPositions(world: AdventureWorld) {
   world.players.forEach((player, index) => {
-    player.x = -1.5 + index;
-    player.z = world.phase === 'search' ? 8 : 5;
+    const spawn = safeSpawn(world.phase, index);
+    player.x = spawn.x;
+    player.z = spawn.z;
     player.yaw = 0;
     player.overboard = false;
     player.input = idleInput();
@@ -101,6 +100,7 @@ function phase(world: AdventureWorld, next: AdventureWorld['phase']) {
 }
 
 export function startAdventure(world: AdventureWorld) {
+  resetAdventurePhysics(world);
   world.started = world.clock;
   world.loaded = [];
   world.beacons.forEach((beacon) => {
@@ -143,36 +143,12 @@ export function setInput(
   player.yaw = yaw;
 }
 
-function movePlayers(world: AdventureWorld, delta: number) {
-  if (world.phase === 'lobby' || world.phase === 'finished') return;
-  for (const player of world.players) {
-    if (player.bot || player.overboard) continue;
-    const { x, z, yaw, sprint } = player.input;
-    const length = Math.hypot(x, z);
-    if (length < 0.05) continue;
-    const nx = x / Math.max(1, length);
-    const nz = z / Math.max(1, length);
-    const speed = sprint ? SPRINT_SPEED : MOVE_SPEED;
-    const sin = Math.sin(yaw);
-    const cos = Math.cos(yaw);
-    player.x = clamp(
-      player.x + (nx * cos - nz * sin) * speed * delta,
-      -WORLD_LIMIT,
-      WORLD_LIMIT,
-    );
-    player.z = clamp(
-      player.z + (-nz * cos - nx * sin) * speed * delta,
-      -WORLD_LIMIT,
-      WORLD_LIMIT,
-    );
-  }
-}
-
 export function advanceWorld(world: AdventureWorld, now: number) {
   const delta = Math.max(0, Math.min(100, now - world.clock));
   world.clock = now;
   world.tick++;
-  movePlayers(world, delta);
+  if (world.phase !== 'lobby' && world.phase !== 'finished')
+    adventurePhysics(world).step(delta / 1000);
 
   if (world.phase === 'storm') {
     world.water = clamp(world.water + delta * 0.0007, 0, 100);

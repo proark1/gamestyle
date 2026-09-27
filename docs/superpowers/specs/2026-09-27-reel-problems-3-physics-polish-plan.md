@@ -1,6 +1,6 @@
 # Reel Problems 3 Physics and Presentation Polish Plan
 
-**Date:** 2026-09-27  
+**Date:** 2026-09-27
 **Design:** [2026-09-27-reel-problems-3-physics-polish-design.md](2026-09-27-reel-problems-3-physics-polish-design.md)
 
 ## Outcome
