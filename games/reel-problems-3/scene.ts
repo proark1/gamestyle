@@ -3,6 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { dressedGameAvatar } from '../../shared/rendering/game-avatar';
 import { liveKid } from '../../shared/rendering/avatars/kid';
 import { poseWorker } from '../../shared/rendering/worker-pose';
+import { createRenderer } from '../../shared/rendering/create-renderer';
 import { FISH_DEFINITIONS } from './content/fish';
 import { ITEM_DEFINITIONS } from './content/items';
 import { STATION_POSITIONS } from './stations';
@@ -40,6 +41,9 @@ const red = clay(0xd64d3d, 0.75);
 const teal = clay(0x2f817d, 0.75);
 const navy = clay(0x20364a, 0.8);
 const rubber = clay(0x18222a, 0.94);
+const cork = clay(0xc6935d, 0.96);
+const rodBlank = clay(0x26383a, 0.62, 0.12);
+const steel = clay(0x9aa5a0, 0.3, 0.7);
 
 function mesh(
   geometry: THREE.BufferGeometry,
@@ -85,6 +89,32 @@ function cylinder(
     y,
     z,
   );
+}
+
+function taperedSegment(
+  start: THREE.Vector3,
+  end: THREE.Vector3,
+  startRadius: number,
+  endRadius: number,
+  material: THREE.Material,
+) {
+  const direction = end.clone().sub(start);
+  const segment = mesh(
+    new THREE.CylinderGeometry(
+      endRadius,
+      startRadius,
+      direction.length(),
+      10,
+      1,
+    ),
+    material,
+  );
+  segment.position.copy(start).add(end).multiplyScalar(0.5);
+  segment.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    direction.normalize(),
+  );
+  return segment;
 }
 
 function markInteractive(root: THREE.Object3D, target: string) {
@@ -159,6 +189,116 @@ function makeFish(color: THREE.ColorRepresentation = 0x60a8b3) {
   return group;
 }
 
+function makeFishingRod() {
+  const group = new THREE.Group();
+  const assembly = new THREE.Group();
+  const points = [
+    new THREE.Vector3(0, 0.64, 0),
+    new THREE.Vector3(-0.008, 1.02, 0),
+    new THREE.Vector3(-0.026, 1.38, 0),
+    new THREE.Vector3(-0.068, 1.7, 0),
+    new THREE.Vector3(-0.13, 1.96, 0),
+  ];
+  assembly.add(
+    cylinder(0.064, 0.072, 0.46, cork, 0, 0.34, 0, 12),
+    cylinder(0.076, 0.076, 0.07, rubber, 0, 0.075, 0, 12),
+    cylinder(0.052, 0.056, 0.12, brass, 0, 0.61, 0, 12),
+  );
+  for (let index = 0; index < points.length - 1; index++)
+    assembly.add(
+      taperedSegment(
+        points[index],
+        points[index + 1],
+        0.031 - index * 0.0055,
+        0.026 - index * 0.0055,
+        rodBlank,
+      ),
+    );
+
+  const reelBody = cylinder(0.082, 0.082, 0.16, navy, -0.13, 0.56, 0, 14);
+  reelBody.rotation.x = Math.PI / 2;
+  const reelFront = cylinder(0.1, 0.1, 0.018, brass, -0.13, 0.56, 0.09, 14);
+  reelFront.rotation.x = Math.PI / 2;
+  const reelBack = cylinder(0.1, 0.1, 0.018, brass, -0.13, 0.56, -0.09, 14);
+  reelBack.rotation.x = Math.PI / 2;
+  const reelSeat = box(0.19, 0.045, 0.055, navy, -0.065, 0.62, 0);
+  reelSeat.rotation.z = -0.22;
+  const crank = box(0.15, 0.022, 0.022, steel, -0.19, 0.61, 0.115);
+  crank.rotation.z = 0.5;
+  const crankKnob = cylinder(
+    0.024,
+    0.024,
+    0.075,
+    rubber,
+    -0.255,
+    0.645,
+    0.13,
+    8,
+  );
+  crankKnob.rotation.x = Math.PI / 2;
+  assembly.add(reelBody, reelFront, reelBack, reelSeat, crank, crankKnob);
+
+  const guidePoints = [points[1], points[2], points[3], points[4]];
+  for (let index = 0; index < guidePoints.length; index++) {
+    const point = guidePoints[index];
+    const radius = 0.029 - index * 0.0035;
+    const guide = mesh(
+      new THREE.TorusGeometry(radius, 0.0045, 5, 12),
+      steel,
+      point.x - 0.038,
+      point.y,
+      0,
+    );
+    const foot = box(0.04, 0.008, 0.012, steel, point.x - 0.018, point.y, 0);
+    assembly.add(foot, guide);
+  }
+  const localLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.13, 0.56, 0.105),
+      ...guidePoints.map(
+        (point) => new THREE.Vector3(point.x - 0.038, point.y, 0.006),
+      ),
+      new THREE.Vector3(points.at(-1)!.x - 0.01, points.at(-1)!.y + 0.015, 0),
+    ]),
+    new THREE.LineBasicMaterial({
+      color: 0xf3e2bd,
+      transparent: true,
+      opacity: 0.82,
+    }),
+  );
+  localLine.name = 'rod-line';
+  assembly.add(localLine);
+  assembly.rotation.z = -0.075;
+  assembly.userData.rodTip = points.at(-1)!.clone();
+  group.userData.itemKind = 'rod';
+  group.add(assembly);
+  return group;
+}
+
+function makeGuidanceMarker() {
+  const group = new THREE.Group();
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xf0ad55,
+    emissive: 0xf08a3b,
+    emissiveIntensity: 1.1,
+    roughness: 0.42,
+    metalness: 0.18,
+  });
+  const diamond = mesh(
+    new THREE.OctahedronGeometry(0.12, 0),
+    material,
+    0,
+    0.28,
+    0,
+  );
+  diamond.scale.y = 1.45;
+  const ring = mesh(new THREE.TorusGeometry(0.2, 0.022, 6, 18), material);
+  ring.rotation.x = Math.PI / 2;
+  group.add(diamond, ring);
+  group.visible = false;
+  return group;
+}
+
 function makeItemModel(item: Pick<ItemStateRecord, 'kind' | 'fishSpecies'>) {
   const group = new THREE.Group();
   if (item.kind === 'rope') {
@@ -174,28 +314,7 @@ function makeItemModel(item: Pick<ItemStateRecord, 'kind' | 'fishSpecies'>) {
       group.add(loop);
     }
   } else if (item.kind === 'rod') {
-    const rod = cylinder(0.022, 0.045, 1.55, clay(0x3e241c), 0, 0.8, 0);
-    rod.rotation.z = -0.2;
-    const reel = mesh(
-      new THREE.TorusGeometry(0.13, 0.035, 7, 13),
-      brass,
-      -0.14,
-      0.48,
-      0,
-    );
-    reel.rotation.y = Math.PI / 2;
-    group.add(rod, reel);
-    for (let i = 0; i < 4; i++) {
-      const guide = mesh(
-        new THREE.TorusGeometry(0.045, 0.009, 5, 10),
-        brass,
-        -0.08 - i * 0.06,
-        0.82 + i * 0.27,
-        0,
-      );
-      guide.rotation.y = Math.PI / 2;
-      group.add(guide);
-    }
+    return makeFishingRod();
   } else if (item.kind === 'bait-bucket') {
     const bucket = cylinder(0.34, 0.27, 0.48, clay(0x6595a0), 0, 0.28, 0);
     const rim = mesh(
@@ -710,6 +829,9 @@ export class ReelProblems3Scene {
   private firstPersonAvatar?: THREE.Group;
   private heldView?: THREE.Group;
   private heldId = '';
+  private guidanceTarget: string | null = null;
+  private guidanceMarker = makeGuidanceMarker();
+  private guidancePoint = new THREE.Vector3();
   private cameraPoint = new THREE.Vector3();
   private boatQuaternion = new THREE.Quaternion();
   private lookQuaternion = new THREE.Quaternion();
@@ -721,21 +843,17 @@ export class ReelProblems3Scene {
   ) {
     this.scene.background = new THREE.Color(0x9dd0c5);
     this.scene.fog = new THREE.FogExp2(0x9cc8bd, 0.0065);
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
-    host.append(this.renderer.domElement);
+    this.renderer = createRenderer(host, {
+      label:
+        'First-person fishing boat. WASD moves, E uses equipment, F casts or hooks, and R reels.',
+      shadows: 'hard',
+      exposure: 1.05,
+      weight: 'heavy',
+    }).renderer;
     const ocean = makeOcean();
     this.ocean = ocean.ocean;
     this.oceanMaterial = ocean.material;
-    this.scene.add(this.ocean, this.boat);
+    this.scene.add(this.ocean, this.boat, this.guidanceMarker);
     this.addHarbor();
     this.addLights();
     this.addViewModel();
@@ -918,6 +1036,10 @@ export class ReelProblems3Scene {
   setLocalPlayer(id: string) {
     this.localId = id;
   }
+  setGuidanceTarget(target: string | null) {
+    this.guidanceTarget = target;
+    if (!target) this.guidanceMarker.visible = false;
+  }
   setReducedMotion(_reduced: boolean) {}
   getYaw() {
     return this.yaw;
@@ -1010,9 +1132,15 @@ export class ReelProblems3Scene {
       const held = world.items.find((item) => item.id === heldId);
       if (held) {
         this.heldView = makeItemModel(held);
-        this.heldView.position.set(0.28, -0.48, -0.95);
-        this.heldView.rotation.set(-0.3, 0.2, -0.08);
-        this.heldView.scale.setScalar(0.48);
+        if (held.kind === 'rod') {
+          this.heldView.position.set(0.46, -0.78, -1.02);
+          this.heldView.rotation.set(-0.24, 0.08, -0.12);
+          this.heldView.scale.setScalar(0.52);
+        } else {
+          this.heldView.position.set(0.28, -0.48, -0.95);
+          this.heldView.rotation.set(-0.3, 0.2, -0.08);
+          this.heldView.scale.setScalar(0.48);
+        }
         this.viewModel.add(this.heldView);
       }
     }
@@ -1162,14 +1290,18 @@ export class ReelProblems3Scene {
       }
       const cosine = Math.cos(world.boat.yaw);
       const sine = Math.sin(world.boat.yaw);
-      const startX =
+      let startX =
         player.space === 'boat'
           ? world.boat.x + player.x * cosine + player.z * sine
           : player.x;
-      const startZ =
+      let startZ =
         player.space === 'boat'
           ? world.boat.z - player.x * sine + player.z * cosine
           : player.z;
+      const rodYaw =
+        player.space === 'boat' ? world.boat.yaw + player.yaw : player.yaw;
+      startX += Math.sin(rodYaw) * 0.62;
+      startZ += Math.cos(rodYaw) * 0.62;
       const hookedFish = player.line.fishId
         ? world.fish.find((fish) => fish.id === player.line?.fishId)
         : undefined;
@@ -1185,7 +1317,7 @@ export class ReelProblems3Scene {
         : 0;
       fillFishingLine(
         record.positions,
-        { x: startX, y: 2.08 + (player.height ?? 0), z: startZ },
+        { x: startX, y: 2.3 + (player.height ?? 0), z: startZ },
         {
           x: player.line.x,
           y:
@@ -1279,8 +1411,83 @@ export class ReelProblems3Scene {
       const armR = this.firstPersonAvatar.userData.armR as THREE.Group;
       const sway =
         walking > 0.05 ? Math.sin(performance.now() / 130) * 0.045 : 0;
-      armL.rotation.x = -0.28 + sway;
-      armR.rotation.x = -0.28 - sway;
+      const held = player.held.length
+        ? world.items.find((item) => item.id === player.held[0])
+        : undefined;
+      if (held?.kind === 'rod') {
+        const fighting = player.line?.state === 'hooked';
+        armL.rotation.set(fighting ? -0.94 : -0.72, -0.12, 0.2);
+        armR.rotation.set(fighting ? -1.08 : -0.84, 0.12, -0.22);
+      } else {
+        armL.rotation.x = -0.28 + sway;
+        armR.rotation.x = -0.28 - sway;
+      }
+      if (this.heldView?.userData.itemKind === 'rod') {
+        const line = player.line;
+        const time = world.clock / 1000;
+        let targetX = 0.46;
+        let targetY = -0.78;
+        let targetZ = -1.02;
+        let targetRX = -0.24;
+        let targetRY = 0.08;
+        let targetRZ = -0.12;
+        if (line?.state === 'casting') {
+          targetX = 0.3;
+          targetY = -0.55;
+          targetZ = -1.2;
+          targetRX = -0.74;
+          targetRZ = 0.02;
+        } else if (line?.state === 'waiting') {
+          targetY += Math.sin(time * 2.4) * 0.008;
+          targetRZ += Math.sin(time * 2.4) * 0.012;
+        } else if (line?.state === 'biting') {
+          const tug = Math.max(0, Math.sin(time * 17));
+          targetY -= tug * 0.055;
+          targetRX += tug * 0.2;
+          targetRZ -= tug * 0.05;
+        } else if (line?.state === 'hooked') {
+          const load = Math.min(1, line.tension);
+          const reel = player.input.reel ? Math.sin(time * 11) * 0.025 : 0;
+          targetX = 0.39 + reel;
+          targetY = -0.66 - load * 0.045;
+          targetRX = -0.48 + load * 0.16;
+          targetRY = 0.02;
+          targetRZ = -0.2 - load * 0.08;
+        } else if (line?.state === 'tangled') {
+          targetX += Math.sin(time * 7) * 0.015;
+          targetRZ = -0.26;
+        }
+        this.heldView.position.x = THREE.MathUtils.lerp(
+          this.heldView.position.x,
+          targetX,
+          0.16,
+        );
+        this.heldView.position.y = THREE.MathUtils.lerp(
+          this.heldView.position.y,
+          targetY,
+          0.16,
+        );
+        this.heldView.position.z = THREE.MathUtils.lerp(
+          this.heldView.position.z,
+          targetZ,
+          0.16,
+        );
+        this.heldView.rotation.x = THREE.MathUtils.lerp(
+          this.heldView.rotation.x,
+          targetRX,
+          0.16,
+        );
+        this.heldView.rotation.y = THREE.MathUtils.lerp(
+          this.heldView.rotation.y,
+          targetRY,
+          0.16,
+        );
+        this.heldView.rotation.z = THREE.MathUtils.lerp(
+          this.heldView.rotation.z,
+          targetRZ,
+          0.16,
+        );
+      }
     }
   }
 
@@ -1302,6 +1509,43 @@ export class ReelProblems3Scene {
     }
   }
 
+  private updateGuidanceMarker(elapsed: number) {
+    const target = this.guidanceTarget;
+    const world = this.visualWorld;
+    if (!target || !world) {
+      this.guidanceMarker.visible = false;
+      return;
+    }
+    if (target.startsWith('station:')) {
+      const station = target.slice(8) as keyof typeof STATION_POSITIONS;
+      const point = STATION_POSITIONS[station];
+      if (!point) {
+        this.guidanceMarker.visible = false;
+        return;
+      }
+      this.guidancePoint.set(point.x, 2.05, point.z);
+      this.boat.localToWorld(this.guidancePoint);
+    } else {
+      const model = this.itemMeshes.get(target);
+      if (!model?.parent) {
+        this.guidanceMarker.visible = false;
+        return;
+      }
+      model.getWorldPosition(this.guidancePoint);
+      this.guidancePoint.y += 1.35;
+    }
+    this.guidanceMarker.visible = true;
+    this.guidanceMarker.position.copy(this.guidancePoint);
+    this.guidanceMarker.position.y += Math.sin(elapsed * 3.2) * 0.08;
+    this.guidanceMarker.rotation.y = elapsed * 0.85;
+    const distance = this.guidanceMarker.position.distanceTo(
+      this.camera.position,
+    );
+    this.guidanceMarker.scale.setScalar(
+      THREE.MathUtils.clamp(distance / 12, 0.72, 1.15),
+    );
+  }
+
   private animate = () => {
     this.frame = requestAnimationFrame(this.animate);
     const elapsed = performance.now() / 1000;
@@ -1315,6 +1559,7 @@ export class ReelProblems3Scene {
     if (this.visualWorld) {
       this.updateCamera(this.visualWorld);
       this.pickTarget();
+      this.updateGuidanceMarker(elapsed);
       const roll = this.visualWorld.boat.roll;
       this.viewModel.rotation.z +=
         (-roll * 0.8 - this.viewModel.rotation.z) * 0.08;

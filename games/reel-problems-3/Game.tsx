@@ -13,10 +13,10 @@ import {
   Anchor,
   Bot,
   Check,
+  ClipboardList,
   Fish,
   HelpCircle,
   LifeBuoy,
-  MousePointer2,
   RotateCcw,
   Trophy,
   Users,
@@ -48,7 +48,12 @@ import {
   type AdventureSnapshot,
   type AdventureWorld,
 } from './types';
-import { crewAwards, objective, PHASE_NAMES, promptFor } from './presentation';
+import {
+  crewAwards,
+  nextStepFor,
+  objective,
+  PHASE_NAMES,
+} from './presentation';
 import { reelProblems3Analytics, reelProblems3PlayState } from './analytics';
 import { VoyageAudio } from './audio';
 import type { ReelProblems3Scene } from './scene';
@@ -363,6 +368,13 @@ export default function ReelProblems3Game() {
         : 0)
     : 0;
   const awards = world ? crewAwards(world) : [];
+  const nextStep = world
+    ? nextStepFor(world, me, target, { touch, german: de })
+    : null;
+
+  useEffect(() => {
+    scene.current?.setGuidanceTarget(nextStep?.target ?? null);
+  }, [nextStep?.target]);
 
   return (
     <main
@@ -453,9 +465,26 @@ export default function ReelProblems3Game() {
             <i />
             <i />
           </div>
-          <output className={`rp3-prompt ${target ? 'is-ready' : ''}`}>
-            <MousePointer2 size={15} /> {promptFor(world, target)}
-          </output>
+          {nextStep ? (
+            <section
+              className={`rp3-next-step is-${nextStep.tone}`}
+              aria-live={
+                nextStep.tone === 'urgent' || nextStep.tone === 'danger'
+                  ? 'assertive'
+                  : 'polite'
+              }
+            >
+              <span className="rp3-next-step-icon" aria-hidden="true">
+                <ClipboardList />
+              </span>
+              <div>
+                <small>{nextStep.eyebrow}</small>
+                <strong>{nextStep.title}</strong>
+                <span>{nextStep.detail}</span>
+              </div>
+              {nextStep.control ? <kbd>{nextStep.control}</kbd> : null}
+            </section>
+          ) : null}
           <section className="rp3-vitals">
             <div>
               <span>HULL</span>
@@ -487,15 +516,6 @@ export default function ReelProblems3Game() {
               </div>
             ) : null}
           </section>
-          {me?.held.length ? (
-            <div className="rp3-hands">
-              HOLDING ·{' '}
-              {me.held
-                .map((id) => world.items.find((item) => item.id === id)?.kind)
-                .join(' + ')}{' '}
-              <kbd>Q DROP</kbd>
-            </div>
-          ) : null}
         </>
       ) : null}
 

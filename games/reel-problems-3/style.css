@@ -659,6 +659,154 @@
   color: var(--rp3-amber);
 }
 
+.rp3-next-step {
+  position: absolute;
+  z-index: 12;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 50%;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.72rem;
+  width: min(36rem, calc(100% - 16rem));
+  min-height: 4.25rem;
+  padding: 0.58rem 0.68rem 0.58rem 0.58rem;
+  color: var(--rp3-foam);
+  background:
+    linear-gradient(90deg, #f0ad5524 0 0.25rem, transparent 0.25rem), #173e46eb;
+  border: 1px solid #f4eedb52;
+  border-radius: 0.45rem 1rem 0.45rem 0.85rem;
+  box-shadow:
+    0 0.7rem 2rem #102f3661,
+    inset 0 1px #ffffff14;
+  transform: translateX(-50%);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.rp3-next-step-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--rp3-ink);
+  background: var(--rp3-amber);
+  border: 2px solid #ffe3ab;
+  border-radius: 0.72rem 0.72rem 0.72rem 0.22rem;
+  box-shadow: 0 0.3rem 0.8rem #0a242a52;
+  transform: rotate(-1.5deg);
+}
+
+.rp3-next-step-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke-width: 2.35;
+}
+
+.rp3-next-step > div {
+  min-width: 0;
+}
+
+.rp3-next-step small,
+.rp3-next-step strong,
+.rp3-next-step > div > span {
+  display: block;
+}
+
+.rp3-next-step small {
+  color: var(--rp3-amber);
+  font:
+    850 0.52rem/1 'DM Sans',
+    sans-serif;
+  letter-spacing: 0.16em;
+}
+
+.rp3-next-step strong {
+  margin-top: 0.16rem;
+  overflow: hidden;
+  font:
+    650 clamp(0.78rem, 1.35vw, 0.98rem)/1.12 'Fredoka',
+    sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp3-next-step > div > span {
+  margin-top: 0.18rem;
+  overflow: hidden;
+  color: #d9e3df;
+  font:
+    650 0.62rem/1.15 'DM Sans',
+    sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp3-next-step kbd {
+  min-width: 3.3rem;
+  padding: 0.5rem 0.58rem;
+  color: var(--rp3-ink);
+  background: #f4eedb;
+  border: 1px solid #fff9e9;
+  border-bottom: 3px solid #bfae8d;
+  border-radius: 0.48rem;
+  box-shadow: 0 0.2rem 0.6rem #0d2a305c;
+  font:
+    900 0.6rem/1 'DM Sans',
+    sans-serif;
+  letter-spacing: 0.06em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rp3-next-step.is-ready {
+  border-color: #f0ad55c4;
+  box-shadow:
+    0 0.7rem 2rem #102f3661,
+    0 0 0 0.18rem #f0ad5529;
+}
+
+.rp3-next-step.is-ready .rp3-next-step-icon {
+  box-shadow:
+    0 0.3rem 0.8rem #0a242a52,
+    0 0 1rem #f0ad5561;
+}
+
+.rp3-next-step.is-urgent,
+.rp3-next-step.is-danger {
+  background:
+    linear-gradient(90deg, #ff9a7c 0 0.28rem, transparent 0.28rem), #492f31ef;
+  border-color: #ffc0a5;
+  animation: rp3-next-step-pulse 620ms ease-in-out infinite alternate;
+}
+
+.rp3-next-step.is-urgent .rp3-next-step-icon,
+.rp3-next-step.is-danger .rp3-next-step-icon,
+.rp3-next-step.is-urgent kbd,
+.rp3-next-step.is-danger kbd {
+  color: #3e2527;
+  background: #ff9a7c;
+  border-color: #ffd6c5;
+  border-bottom-color: #b95448;
+}
+
+.rp3-next-step.is-urgent small,
+.rp3-next-step.is-danger small {
+  color: #ffc0a5;
+}
+
+@keyframes rp3-next-step-pulse {
+  to {
+    box-shadow:
+      0 0.7rem 2rem #102f3661,
+      0 0 0 0.26rem #ff9a7c45;
+  }
+}
+
 .rp3-compass {
   --heading: 0rad;
   position: absolute;
@@ -750,7 +898,7 @@
 .rp3-error {
   position: absolute;
   z-index: 30;
-  bottom: 5rem;
+  bottom: 6.4rem;
   left: 50%;
   width: max-content;
   max-width: calc(100% - 2rem);
@@ -1609,10 +1757,41 @@
 }
 
 @media (max-width: 720px) {
+  .rp3-crew {
+    display: none;
+  }
+  .rp3-next-step {
+    bottom: max(5.2rem, calc(env(safe-area-inset-bottom) + 4.65rem));
+    grid-template-columns: 2.35rem minmax(0, 1fr) auto;
+    gap: 0.52rem;
+    width: calc(100% - 1rem);
+    min-height: 3.7rem;
+    padding: 0.48rem 0.52rem 0.48rem 0.46rem;
+  }
+  .rp3-next-step-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+  .rp3-next-step > div > span {
+    font-size: 0.56rem;
+  }
+  .rp3-next-step kbd {
+    min-width: 2.7rem;
+    max-width: 7rem;
+    padding-inline: 0.42rem;
+    font-size: 0.52rem;
+    white-space: normal;
+  }
+  .rp3-error {
+    bottom: max(9.6rem, calc(env(safe-area-inset-bottom) + 9rem));
+  }
   .rp3-contracts {
-    top: 6rem;
+    top: 8.75rem;
     right: 0.45rem;
     width: 12.5rem;
+  }
+  .rp3-contracts article:not(.is-current) {
+    display: none;
   }
   .rp3-contracts article {
     grid-template-columns: 1.55rem 1fr;

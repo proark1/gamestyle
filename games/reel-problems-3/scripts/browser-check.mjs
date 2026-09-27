@@ -63,6 +63,18 @@ try {
     await page.getByRole('button', { name: /start with bots/i }).click();
     await page.getByText(/load rods, bait, safety gear/i).waitFor();
     await page.locator('.rp3-contracts').waitFor();
+    const nextStep = page.locator('.rp3-next-step');
+    await nextStep.waitFor();
+    assert.match(
+      await nextStep.innerText(),
+      /next step[\s\S]*pick up equipment from the dock[\s\S]*E|USE/i,
+      `${label}: the deck order gives one clear actionable next step`,
+    );
+    assert.equal(
+      await page.locator('.rp3-prompt, .rp3-hands').count(),
+      0,
+      `${label}: legacy competing prompts are removed`,
+    );
     await page.waitForTimeout(1_500);
     await page.screenshot({ path: `.tmp/reel-problems-3/${label}-harbor.png` });
     assert.equal(
@@ -82,6 +94,33 @@ try {
       `${label}: one human and three bots are visible`,
     );
     if (mobile) {
+      const guideBounds = await nextStep.boundingBox();
+      const actionsBounds = await page
+        .locator('.rp3-touch-actions')
+        .boundingBox();
+      const objectiveBounds = await page
+        .locator('.rp3-objective')
+        .boundingBox();
+      const contractBounds = await page
+        .locator('.rp3-contracts article:visible')
+        .boundingBox();
+      assert.ok(
+        guideBounds &&
+          actionsBounds &&
+          guideBounds.y + guideBounds.height <= actionsBounds.y,
+        `${label}: the next-step card stays above touch controls`,
+      );
+      assert.equal(
+        await page.locator('.rp3-contracts article:visible').count(),
+        1,
+        `${label}: only the active contract uses limited HUD space`,
+      );
+      assert.ok(
+        objectiveBounds &&
+          contractBounds &&
+          objectiveBounds.y + objectiveBounds.height <= contractBounds.y,
+        `${label}: objective and active contract do not overlap`,
+      );
       for (const name of ['Jump', 'Brace']) {
         const button = page.getByRole('button', { name });
         assert.equal(
