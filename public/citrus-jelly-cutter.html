@@ -804,14 +804,14 @@
           <legend>Material</legend>
           <div class="range">
             <label for="firmness">Firmness</label
-            ><output id="firmnessValue">58%</output
-            ><input id="firmness" type="range" min="18" max="92" value="58" />
+            ><output id="firmnessValue">48%</output
+            ><input id="firmness" type="range" min="18" max="92" value="48" />
             <div class="range-ends"><span>trembling</span><span>set</span></div>
           </div>
           <div class="range">
             <label for="damping">Internal damping</label
-            ><output id="dampingValue">42%</output
-            ><input id="damping" type="range" min="8" max="88" value="42" />
+            ><output id="dampingValue">36%</output
+            ><input id="damping" type="range" min="8" max="88" value="36" />
             <div class="range-ends"><span>lively</span><span>syrupy</span></div>
           </div>
         </fieldset>
@@ -858,8 +858,8 @@
           <div>
             <b>Physics</b>
             <p>
-              A fixed-step constraint lattice gives each piece weight, stretch,
-              damping, and a soft return.
+              Weighted soft grabs, volume recovery, and compliant contact give
+              each piece a slow, heavy gummy return.
             </p>
           </div>
           <div>
@@ -879,8 +879,8 @@
           <div>
             <b>Rendering</b>
             <p>
-              WGSL layers absorption, pith scattering, Fresnel highlights, soft
-              shadows, and citrus detail.
+              A smoothed bevel surface carries WGSL absorption, studio-softbox
+              highlights, internal detail, and warm transmitted shadows.
             </p>
           </div>
         </div>
@@ -901,8 +901,8 @@
         '(prefers-reduced-motion: reduce)',
       ).matches;
       const TAU = Math.PI * 2;
-      const GRID_W = 64;
-      const GRID_H = 34;
+      const GRID_W = 96;
+      const GRID_H = 52;
       const X0 = -1.58;
       const X1 = 1.58;
       const Z0 = 0;
@@ -914,18 +914,39 @@
       const MIN_CELLS = 9;
       const MAX_VERTICES = 220000;
       const MAX_INDICES = 520000;
+      const MAX_PRESENTATION_OFFSET = 0.085;
+      const BEVEL_SIZE = Math.min(DX, DZ) * 0.48;
       const STRIDE = 10;
       const vertexScratch = new Float32Array(MAX_VERTICES * STRIDE);
       const indexScratch = new Uint32Array(MAX_INDICES);
+      const QUALITY_PROFILES = {
+        high: { dpr: 1.6, detail: 1, label: 'high' },
+        balanced: { dpr: 1.35, detail: 0.72, label: 'balanced' },
+        mobile: { dpr: 1.05, detail: 0.48, label: 'mobile' },
+      };
       const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
       const mix = (a, b, t) => a + (b - a) * t;
       const hypot3 = (x, y, z) => Math.hypot(x, y, z);
+      function smoothstep01(value) {
+        const t = clamp(value, 0, 1);
+        return t * t * (3 - 2 * t);
+      }
+      function weightedGrab(distance, radius = 0.52) {
+        return 1 - smoothstep01(distance / radius);
+      }
+      function chooseQuality() {
+        if (innerWidth < 700 || navigator.maxTouchPoints > 1)
+          return QUALITY_PROFILES.mobile;
+        if ((devicePixelRatio || 1) > 1.7 || innerWidth * innerHeight > 1900000)
+          return QUALITY_PROFILES.balanced;
+        return QUALITY_PROFILES.high;
+      }
       const state = {
         tool: 'hand',
         shape: 'star',
         variety: 'orange',
-        firmness: 0.58,
-        damping: 0.42,
+        firmness: 0.48,
+        damping: 0.36,
         paused: false,
         slow: false,
         showMesh: false,
@@ -947,6 +968,9 @@
         milestones: new Set(),
         available: false,
         ready: false,
+        quality: chooseQuality(),
+        presentationFinite: true,
+        presentationOffset: 0,
       };
       const camera = {
         yaw: 0,
@@ -1067,6 +1091,8 @@
                   const oldIndex = sourceNodes ? sourceNodes[key] : -1;
                   const old = oldIndex >= 0 ? source.nodes[oldIndex] : null;
                   const node = {
+                    gx: nx,
+                    gz: nz,
                     rx: restX(nx),
                     rz: restZ(nz),
                     x: old?.x ?? restX(nx),
@@ -1078,6 +1104,9 @@
                     vx: old?.vx ?? 0,
                     vy: old?.vy ?? 0,
                     vz: old?.vz ?? 0,
+                    boundary: false,
+                    outX: 0,
+                    outZ: 0,
                   };
                   this.nodeMap[key] = this.nodes.length;
                   this.nodes.push(node);
@@ -1091,6 +1120,47 @@
           }
           this.rcx = rcx / this.nodes.length;
           this.rcz = rcz / this.nodes.length;
+          let restSpread = 0;
+          for (const node of this.nodes) {
+            restSpread += Math.hypot(node.rx - this.rcx, node.rz - this.rcz);
+            let occupied = 0,
+              outX = 0,
+              outZ = 0;
+            for (const [cx, cz] of [
+              [node.gx - 1, node.gz - 1],
+              [node.gx, node.gz - 1],
+              [node.gx - 1, node.gz],
+              [node.gx, node.gz],
+            ])
+              if (
+                cx >= 0 &&
+                cx < GRID_W &&
+                cz >= 0 &&
+                cz < GRID_H &&
+                mask[cellIndex(cx, cz)]
+              ) {
+                occupied++;
+                outX += node.gx - (cx + 0.5);
+                outZ += node.gz - (cz + 0.5);
+              }
+            node.boundary = occupied > 0 && occupied < 4;
+            const outLength = Math.hypot(outX, outZ) || 1;
+            node.outX = outX / outLength;
+            node.outZ = outZ / outLength;
+          }
+          this.restSpread = restSpread / this.nodes.length;
+          this.presentation = this.nodes.map((node) => ({
+            x: node.x,
+            y: node.y,
+            z: node.z,
+            nx: 0,
+            ny: 1,
+            nz: 0,
+            bulge: 0,
+          }));
+          this.presentationFinite = true;
+          this.presentationOffset = 0;
+          this.freshness = source ? 1 : 0;
           const addConstraint = (aKey, bKey) => {
             const a = this.nodeMap[aKey],
               b = this.nodeMap[bKey];
@@ -1156,6 +1226,103 @@
           });
         }
       }
+      function preparePresentation(piece) {
+        let presentationFinite = true;
+        let presentationOffset = 0;
+        for (let index = 0; index < piece.nodes.length; index++) {
+          const node = piece.nodes[index];
+          let ax = 0,
+            ay = 0,
+            az = 0,
+            count = 0;
+          for (const [gx, gz] of [
+            [node.gx - 1, node.gz],
+            [node.gx + 1, node.gz],
+            [node.gx, node.gz - 1],
+            [node.gx, node.gz + 1],
+          ]) {
+            if (gx < 0 || gx > GRID_W || gz < 0 || gz > GRID_H) continue;
+            const neighborIndex = piece.nodeMap[nodeKey(gx, gz)];
+            if (neighborIndex < 0) continue;
+            const neighbor = piece.nodes[neighborIndex];
+            ax += neighbor.x;
+            ay += neighbor.y;
+            az += neighbor.z;
+            count++;
+          }
+          const amount = node.boundary ? 0.11 : 0.2;
+          let x = node.x,
+            y = node.y,
+            z = node.z;
+          if (count > 1) {
+            x = mix(node.x, ax / count, amount);
+            y = mix(node.y, ay / count, amount * 0.58);
+            z = mix(node.z, az / count, amount);
+          }
+          let dx = x - node.x,
+            dy = y - node.y,
+            dz = z - node.z;
+          const distance = hypot3(dx, dy, dz);
+          if (distance > MAX_PRESENTATION_OFFSET) {
+            const scale = MAX_PRESENTATION_OFFSET / distance;
+            dx *= scale;
+            dy *= scale;
+            dz *= scale;
+            x = node.x + dx;
+            y = node.y + dy;
+            z = node.z + dz;
+          }
+          const finite = Number.isFinite(x + y + z);
+          presentationFinite &&= finite;
+          if (!finite) continue;
+          const p = piece.presentation[index];
+          p.x = x;
+          p.y = y;
+          p.z = z;
+          const radial = Math.hypot(node.rx, node.rz),
+            radialBody = smoothstep01((1.53 - radial) / 0.42),
+            flatEdge = smoothstep01(node.rz / 0.18);
+          p.bulge = node.boundary
+            ? 0.008
+            : 0.018 + 0.026 * radialBody * flatEdge;
+          presentationOffset = Math.max(presentationOffset, distance);
+        }
+        const sample = (gx, gz, fallback) => {
+          if (gx < 0 || gx > GRID_W || gz < 0 || gz > GRID_H) return fallback;
+          const index = piece.nodeMap[nodeKey(gx, gz)];
+          return index < 0 ? fallback : piece.presentation[index];
+        };
+        for (let index = 0; index < piece.nodes.length; index++) {
+          const node = piece.nodes[index],
+            p = piece.presentation[index],
+            left = sample(node.gx - 1, node.gz, p),
+            right = sample(node.gx + 1, node.gz, p),
+            back = sample(node.gx, node.gz - 1, p),
+            front = sample(node.gx, node.gz + 1, p),
+            xx = right.x - left.x,
+            xy = right.y - left.y,
+            xz = right.z - left.z,
+            zx = front.x - back.x,
+            zy = front.y - back.y,
+            zz = front.z - back.z,
+            nx = zy * xz - zz * xy,
+            ny = zz * xx - zx * xz,
+            nz = zx * xy - zy * xx,
+            length = hypot3(nx, ny, nz) || 1,
+            sign = ny < 0 ? -1 : 1;
+          p.nx = (nx / length) * sign;
+          p.ny = (ny / length) * sign;
+          p.nz = (nz / length) * sign;
+          presentationFinite &&= Number.isFinite(p.nx + p.ny + p.nz);
+        }
+        piece.presentationFinite = presentationFinite;
+        piece.presentationOffset = presentationOffset;
+        state.presentationFinite &&= presentationFinite;
+        state.presentationOffset = Math.max(
+          state.presentationOffset,
+          presentationOffset,
+        );
+      }
       function components(mask) {
         const seen = new Uint8Array(mask.length),
           result = [],
@@ -1211,13 +1378,14 @@
         updateReadouts();
       }
       function solvePiece(piece, dt) {
-        const damp = Math.exp(-mix(0.45, 5.5, state.damping) * dt);
+        let averageSpeed = 0;
         for (const n of piece.nodes) {
           n.px = n.x;
           n.py = n.y;
           n.pz = n.z;
           n.vy -= 4.2 * dt;
           const speed = hypot3(n.vx, n.vy, n.vz);
+          averageSpeed += speed;
           if (speed > 7) {
             const s = 7 / speed;
             n.vx *= s;
@@ -1228,6 +1396,11 @@
           n.y += n.vy * dt;
           n.z += n.vz * dt;
         }
+        averageSpeed /= piece.nodes.length;
+        const settling = 1 - smoothstep01(averageSpeed / 0.42),
+          damp = Math.exp(
+            -(mix(0.32, 4.7, state.damping) + settling * 0.9) * dt,
+          );
         const compliance = mix(0.72, 0.1, state.firmness);
         for (let iteration = 0; iteration < 5; iteration++) {
           for (const c of piece.constraints) {
@@ -1239,8 +1412,13 @@
               len = hypot3(dx, dy, dz) || 1;
             const maxLen = c.rest * 1.8;
             const target = Math.min(len, maxLen);
+            const materialBoost =
+                Math.max(Math.hypot(a.rx, a.rz), Math.hypot(b.rx, b.rz)) > 1.27
+                  ? 0.14
+                  : 0,
+              localCompliance = clamp(compliance - materialBoost, 0.035, 0.78);
             const correction =
-              ((target - c.rest) * (1 - compliance) * 0.5) / len;
+              ((target - c.rest) * (1 - localCompliance) * 0.5) / len;
             a.x += dx * correction;
             a.y += dy * correction;
             a.z += dz * correction;
@@ -1279,32 +1457,65 @@
             n.x += (tx - n.x) * shape;
             n.z += (tz - n.z) * shape;
           }
+          let spread = 0;
+          for (const n of piece.nodes) spread += Math.hypot(n.x - cx, n.z - cz);
+          spread /= piece.nodes.length;
+          const volumeCorrection = clamp(
+            (piece.restSpread / Math.max(0.001, spread) - 1) *
+              0.045 *
+              (1 - compliance),
+            -0.012,
+            0.012,
+          );
+          for (const n of piece.nodes) {
+            n.x += (n.x - cx) * volumeCorrection;
+            n.z += (n.z - cz) * volumeCorrection;
+          }
           if (state.grab?.piece === piece) {
             const g = state.grab;
-            for (const index of g.indices) {
+            for (let j = 0; j < g.indices.length; j++) {
+              const index = g.indices[j];
               const n = piece.nodes[index],
-                weight =
-                  1 -
-                  clamp(Math.hypot(n.rx - g.rrx, n.rz - g.rrz) / 0.38, 0, 1);
-              n.x += (g.target[0] - g.offset[0] - n.x) * weight * 0.38;
-              n.y += (g.target[1] - g.offset[1] - n.y) * weight * 0.38;
-              n.z += (g.target[2] - g.offset[2] - n.z) * weight * 0.38;
+                weight = g.weights[j];
+              n.x += (g.target[0] - g.offset[0] - n.x) * weight * 0.26;
+              n.y += (g.target[1] - g.offset[1] - n.y) * weight * 0.26;
+              n.z += (g.target[2] - g.offset[2] - n.z) * weight * 0.26;
             }
           }
           for (const n of piece.nodes)
             if (n.y < HALF_THICKNESS) {
-              n.y = HALF_THICKNESS;
-              n.x += (n.px - n.x) * 0.035;
-              n.z += (n.pz - n.z) * 0.035;
+              const contactCompression = clamp(
+                HALF_THICKNESS - n.y + Math.max(0, -n.vy) * 0.0015,
+                0,
+                0.018,
+              );
+              n.y = HALF_THICKNESS - contactCompression;
+              const ox = n.x - cx,
+                oz = n.z - cz,
+                radial = Math.hypot(ox, oz) || 1,
+                bulge = contactCompression * 0.028;
+              n.x += (ox / radial) * bulge + (n.px - n.x) * 0.025;
+              n.z += (oz / radial) * bulge + (n.pz - n.z) * 0.025;
             }
         }
+        let verticalCenter = 0;
+        for (const n of piece.nodes) verticalCenter += n.y;
+        verticalCenter /= piece.nodes.length;
         for (const n of piece.nodes) {
+          n.y = clamp(n.y, verticalCenter - 0.34, verticalCenter + 0.34);
           n.vx = ((n.x - n.px) / dt) * damp;
           n.vy = ((n.y - n.py) / dt) * damp;
           n.vz = ((n.z - n.pz) / dt) * damp;
+          const correctedSpeed = hypot3(n.vx, n.vy, n.vz);
+          if (correctedSpeed > 5.2) {
+            const scale = 5.2 / correctedSpeed;
+            n.vx *= scale;
+            n.vy *= scale;
+            n.vz *= scale;
+          }
           if (n.y <= HALF_THICKNESS + 0.001) {
-            n.vx *= 0.91;
-            n.vz *= 0.91;
+            n.vx *= 0.89;
+            n.vz *= 0.89;
             if (n.vy < 0) n.vy = 0;
           }
           if (!Number.isFinite(n.x + n.y + n.z + n.vx + n.vy + n.vz)) {
@@ -1314,6 +1525,7 @@
             n.vx = n.vy = n.vz = 0;
           }
         }
+        piece.freshness *= Math.exp(-dt * 1.7);
         piece.updateBounds();
       }
       function collidePieces() {
@@ -1649,15 +1861,21 @@
           startOrbit(event);
           return;
         }
-        const indices = [];
+        const indices = [],
+          weights = [];
         for (let i = 0; i < hit.piece.nodes.length; i++) {
-          const n = hit.piece.nodes[i];
-          if (Math.hypot(n.rx - hit.node.rx, n.rz - hit.node.rz) < 0.38)
+          const n = hit.piece.nodes[i],
+            distance = Math.hypot(n.rx - hit.node.rx, n.rz - hit.node.rz),
+            weight = weightedGrab(distance);
+          if (weight > 0) {
             indices.push(i);
+            weights.push(weight);
+          }
         }
         state.grab = {
           piece: hit.piece,
           indices,
+          weights,
           rrx: hit.node.rx,
           rrz: hit.node.rz,
           target: [hit.node.x, hit.node.y, hit.node.z],
@@ -1706,6 +1924,7 @@
           const g = state.grab,
             world = screenWorld(event.clientX, event.clientY, g.startYWorld),
             lift = clamp((g.startY - event.clientY) * 0.006, -0.05, 1.45);
+          g.lastTarget = [...g.target];
           g.target = [
             world[0],
             Math.max(HALF_THICKNESS, g.startYWorld + lift),
@@ -1745,11 +1964,13 @@
             dx = g.target[0] - g.lastTarget[0],
             dy = g.target[1] - g.lastTarget[1],
             dz = g.target[2] - g.lastTarget[2];
-          for (const i of g.indices) {
+          for (let j = 0; j < g.indices.length; j++) {
+            const i = g.indices[j],
+              weight = g.weights[j];
             const n = g.piece.nodes[i];
-            n.vx += dx * 18;
-            n.vy += dy * 18;
-            n.vz += dz * 18;
+            n.vx += dx * 15 * weight;
+            n.vy += dy * 15 * weight;
+            n.vz += dz * 15 * weight;
           }
           state.grab = null;
         } else if (state.gesture?.type === 'knife') {
@@ -1939,21 +2160,89 @@
         struct VIn { @location(0) pos: vec3f, @location(1) normal: vec3f, @location(2) rest: vec2f, @location(3) kind: f32, @location(4) alpha: f32 }
         struct VOut { @builtin(position) position: vec4f, @location(0) world: vec3f, @location(1) normal: vec3f, @location(2) rest: vec2f, @location(3) kind: f32, @location(4) alpha: f32 }
         @vertex fn vs(input: VIn) -> VOut { var o:VOut; o.position=u.viewProj*vec4f(input.pos,1);o.world=input.pos;o.normal=input.normal;o.rest=input.rest;o.kind=input.kind;o.alpha=input.alpha;return o; }
+        fn saturate(value:f32)->f32{return clamp(value,0.0,1.0);}
         fn hash(p:vec2f)->f32{return fract(sin(dot(p,vec2f(127.1,311.7)))*43758.5453);}
+        fn beerLambert(base:vec3f,thickness:f32)->vec3f {
+          let density=vec3f(.3,.58,.92);
+          return base*exp(-density*vec3f(thickness));
+        }
+        fn softboxLobe(n:vec3f,v:vec3f,l:vec3f,size:f32)->f32 {
+          let halfVector=normalize(v+l);
+          return pow(max(dot(n,halfVector),0.0),mix(68.0,8.0,size));
+        }
+        fn microRoughness(rest:vec2f)->f32 {
+          return .78+.22*hash(floor(rest*vec2f(91.0,83.0)));
+        }
         @fragment fn fs(input: VOut)->@location(0) vec4f {
-          let n=normalize(input.normal);let l=normalize(vec3f(-.42,.88,.28));let v=normalize(vec3f(0,1.2,2.8)-input.world);let ndl=max(dot(n,l),0.0);
-          if(input.kind>.5&&input.kind<1.5){let grain=hash(floor(input.world.xz*22.0))*.012;return vec4f(vec3f(.949,.925,.886)-grain,1);}
-          if(input.kind>1.5&&input.kind<2.5){let stripe=.06*sin(input.world.x*95.0);let spec=pow(max(dot(reflect(-l,n),v),0.0),42.0);return vec4f(vec3f(.57+.23*ndl+stripe+spec*.55),1);}
-          if(input.kind>2.5&&input.kind<3.5){let wood=.08*sin(input.world.x*27.0+sin(input.world.z*11.0));return vec4f(.34+wood,.19+wood*.5,.1,1);}
-          if(input.kind>3.5){let spec=pow(max(dot(reflect(-l,n),v),0.0),36.0);return vec4f(vec3f(.55+.25*ndl+spec*.5),1);}
-          let r=length(input.rest);let angle=atan2(input.rest.x,max(input.rest.y,.001));let membrane=abs(sin(angle*5.0));var color=u.flesh;var milk=0.0;
-          if(r>1.42){color=u.rind;}else if(r>1.28||r<.16||membrane<.075||input.rest.y<.055){color=u.pith;milk=1.0;}
-          let pore=smoothstep(.93,1.0,hash(floor(input.rest*78.0)))*select(.025,.09,r>1.42);color=vec4f(color.rgb-vec3f(pore),color.a);
-          let fres=pow(1.0-max(dot(n,v),0.0),3.0);let spec=pow(max(dot(reflect(-l,n),v),0.0),54.0);let ves=.035*sin(r*64.0+angle*13.0);
-          var rgb=color.rgb*(.48+.52*ndl)+vec3f(1,.72,.38)*(fres*.2+spec*.72)+ves*(1.0-milk);
-          rgb=mix(rgb,vec3f(.99,.9,.68),milk*.3);let alpha=clamp(color.a+fres*.12,0.0,1.0)*input.alpha;
+          let n=normalize(input.normal);
+          let v=normalize(vec3f(0.0,1.35,3.2)-input.world);
+          let keyLight=normalize(vec3f(-.46,.82,.34));
+          let rimLight=normalize(vec3f(.72,.5,-.48));
+          let keyDiffuse=max(dot(n,keyLight),0.0);
+          if(input.kind>.5&&input.kind<1.5){
+            let grain=hash(floor(input.world.xz*22.0))*.009;
+            return vec4f(vec3f(.949,.925,.886)-vec3f(grain),1.0);
+          }
+          if(input.kind>4.5){
+            let shadowShape=pow(saturate(1.0-length(input.rest)),1.7);
+            let transmissionGlow=.12*shadowShape*(.55+.45*u.params.z);
+            let paper=vec3f(.949,.925,.886);
+            let amber=mix(paper,vec3f(.73,.31,.075),.34+transmissionGlow);
+            return vec4f(amber,shadowShape*.2*input.alpha);
+          }
+          if(input.kind>1.5&&input.kind<2.5){
+            let stripe=.035*sin(input.world.x*95.0);
+            let spec=softboxLobe(n,v,keyLight,.25);
+            return vec4f(vec3f(.48+.3*keyDiffuse+stripe+spec*.5),1.0);
+          }
+          if(input.kind>2.5&&input.kind<3.5){
+            let wood=.065*sin(input.world.x*27.0+sin(input.world.z*11.0));
+            return vec4f(.31+wood,.16+wood*.5,.075,1.0);
+          }
+          if(input.kind>3.5){
+            let spec=softboxLobe(n,v,keyLight,.32)+softboxLobe(n,v,rimLight,.16)*.42;
+            return vec4f(vec3f(.5+.26*keyDiffuse+spec*.48),1.0);
+          }
+          let r=length(input.rest);
+          let fresh=saturate(input.kind*4.0);
+          let angle=atan2(input.rest.x,max(input.rest.y,.001));
+          let membraneDistance=abs(sin(angle*5.0));
+          let membrane=1.0-smoothstep(.035,.11,membraneDistance);
+          let core=1.0-smoothstep(.11,.2,r);
+          let flatPith=1.0-smoothstep(.035,.09,input.rest.y);
+          let rind=smoothstep(1.27,1.43,r);
+          var color=u.flesh;
+          var milk=saturate(max(max(membrane,core),max(flatPith,rind*.7)));
+          if(r>1.42){color=u.rind;}else if(r>1.28||milk>.62){color=mix(u.flesh,u.pith,milk);}
+          let poreCell=floor(input.rest*74.0);
+          let pore=smoothstep(.9,1.0,hash(poreCell))*rind;
+          let rough=microRoughness(input.rest);
+          color=vec4f(color.rgb*(1.0-.055*pore),color.a);
+          let ndv=max(dot(n,v),0.0);
+          let fresnel=pow(1.0-ndv,3.0);
+          let thickness=.18+.5*abs(n.y)+.16*(1.0-rind);
+          let absorbed=mix(color.rgb,beerLambert(color.rgb,thickness*(1.0-.22*milk)),.5);
+          let keySpec=softboxLobe(n,v,keyLight,.72)*rough*(.35+.65*abs(n.y));
+          let rimSpec=softboxLobe(n,v,rimLight,.46);
+          let vesicleCell=floor(vec2f(r*19.0,angle*8.0));
+          let vesicleNoise=hash(vesicleCell);
+          let vesicle=.016*sin(r*(47.0+vesicleNoise*17.0)+angle*(9.0+vesicleNoise*5.0));
+          let bubbleCell=floor(input.rest*8.0);
+          let bubbleLocal=fract(input.rest*8.0)-vec2f(.5);
+          let bubbleCenter=vec2f(hash(bubbleCell)-.5,hash(bubbleCell+vec2f(7.0,19.0))-.5)*.55;
+          let bubbleMask=step(.79,hash(bubbleCell+vec2f(31.0,5.0)))*(1.0-smoothstep(.055,.13,length(bubbleLocal-bubbleCenter)));
+          let transmissionGlow=(1.0-saturate(thickness/.82))*(.32+.68*fresnel);
+          var rgb=absorbed*(.5+.42*keyDiffuse);
+          rgb+=vec3f(1.0,.82,.58)*(keySpec*(.58+fresh*.24)+fresnel*.18+transmissionGlow*.32);
+          rgb+=color.rgb*transmissionGlow*.28;
+          rgb+=vec3f(.72,.86,1.0)*rimSpec*.16;
+          rgb+=vec3f(vesicle*(1.0-milk)*u.params.z);
+          rgb=mix(rgb,vec3f(.99,.9,.68),milk*.34);
+          rgb=mix(rgb,vec3f(1.0,.94,.76),bubbleMask*.36*u.params.z);
+          let alpha=clamp(color.a+fresnel*.08+milk*.05,0.0,1.0)*input.alpha;
           if(u.params.y>.5){let lines=step(.965,abs(sin(input.rest.x*54.0))*abs(sin(input.rest.y*54.0)));rgb=mix(rgb,vec3f(.18),lines*.32);}
-          let dither=(hash(input.position.xy)-.5)/255.0;return vec4f(rgb+dither,alpha);
+          let dither=(hash(input.position.xy)-.5)/255.0;
+          return vec4f(rgb+vec3f(dither),alpha);
         }`;
       let gpu = {
         adapter: null,
@@ -2099,7 +2388,8 @@
       }
       function resizeGPU() {
         if (!gpu.device) return;
-        const dpr = Math.min(devicePixelRatio || 1, 1.5),
+        state.quality = chooseQuality();
+        const dpr = Math.min(devicePixelRatio || 1, state.quality.dpr),
           w = Math.max(2, Math.floor(canvas.clientWidth * dpr)),
           h = Math.max(2, Math.floor(canvas.clientHeight * dpr));
         if (canvas.width === w && canvas.height === h && gpu.depth) return;
@@ -2163,7 +2453,68 @@
         vc = writeVertex(vc, 9, -0.02, 9, 0, 1, 0, 0, 0, 1);
         vc = writeVertex(vc, -9, -0.02, 9, 0, 1, 0, 0, 0, 1);
         quad(base, base + 1, base + 2, base + 3);
-        for (const piece of state.pieces)
+        state.presentationFinite = true;
+        state.presentationOffset = 0;
+        for (const piece of state.pieces) {
+          preparePresentation(piece);
+          const width = Math.max(0.16, piece.bounds.maxX - piece.bounds.minX),
+            depth = Math.max(0.16, piece.bounds.maxZ - piece.bounds.minZ),
+            shadowY = -0.012,
+            shadowAlpha = clamp(0.96 - piece.bounds.minY * 0.5, 0.34, 0.88);
+          base = vc;
+          vc = writeVertex(
+            vc,
+            piece.bounds.cx - width * 0.58,
+            shadowY,
+            piece.bounds.cz - depth * 0.62,
+            0,
+            1,
+            0,
+            -1,
+            -1,
+            5,
+            shadowAlpha,
+          );
+          vc = writeVertex(
+            vc,
+            piece.bounds.cx + width * 0.58,
+            shadowY,
+            piece.bounds.cz - depth * 0.62,
+            0,
+            1,
+            0,
+            1,
+            -1,
+            5,
+            shadowAlpha,
+          );
+          vc = writeVertex(
+            vc,
+            piece.bounds.cx + width * 0.58,
+            shadowY,
+            piece.bounds.cz + depth * 0.62,
+            0,
+            1,
+            0,
+            1,
+            1,
+            5,
+            shadowAlpha,
+          );
+          vc = writeVertex(
+            vc,
+            piece.bounds.cx - width * 0.58,
+            shadowY,
+            piece.bounds.cz + depth * 0.62,
+            0,
+            1,
+            0,
+            -1,
+            1,
+            5,
+            shadowAlpha,
+          );
+          quad(base, base + 1, base + 2, base + 3);
           for (let z = 0; z < GRID_H; z++)
             for (let x = 0; x < GRID_W; x++) {
               if (!piece.mask[cellIndex(x, z)]) continue;
@@ -2173,38 +2524,43 @@
                   piece.nodeMap[nodeKey(x + 1, z + 1)],
                   piece.nodeMap[nodeKey(x, z + 1)],
                 ],
-                nodes = ids.map((i) => piece.nodes[i]);
+                nodes = ids.map((index) => piece.nodes[index]),
+                surface = ids.map((index) => piece.presentation[index]);
               base = vc;
-              for (const n of nodes)
+              for (let k = 0; k < 4; k++) {
+                const p = surface[k],
+                  n = nodes[k];
                 vc = writeVertex(
                   vc,
-                  n.x,
-                  n.y + HALF_THICKNESS,
-                  n.z,
-                  0,
-                  1,
-                  0,
+                  p.x,
+                  p.y + HALF_THICKNESS + p.bulge,
+                  p.z,
+                  p.nx,
+                  p.ny,
+                  p.nz,
                   n.rx,
                   n.rz,
                   0,
-                  0.84,
+                  0.92,
                 );
+              }
               quad(base, base + 1, base + 2, base + 3);
               base = vc;
               for (let k = 3; k >= 0; k--) {
-                const n = nodes[k];
+                const p = surface[k],
+                  n = nodes[k];
                 vc = writeVertex(
                   vc,
-                  n.x,
-                  n.y - HALF_THICKNESS,
-                  n.z,
-                  0,
-                  -1,
-                  0,
+                  p.x,
+                  p.y - HALF_THICKNESS - p.bulge * 0.45,
+                  p.z,
+                  -p.nx,
+                  -p.ny,
+                  -p.nz,
                   n.rx,
                   n.rz,
                   0,
-                  0.9,
+                  0.94,
                 );
               }
               quad(base, base + 1, base + 2, base + 3);
@@ -2226,64 +2582,185 @@
                 )
                   continue;
                 const [ia, ib, nnx, nnz] = sides[s],
-                  a = nodes[ia],
-                  b = nodes[ib];
+                  a = surface[ia],
+                  b = surface[ib],
+                  an = nodes[ia],
+                  bn = nodes[ib],
+                  edgeLength =
+                    Math.hypot(an.outX + bn.outX, an.outZ + bn.outZ) || 1,
+                  edgeNx =
+                    edgeLength > 0.01 ? (an.outX + bn.outX) / edgeLength : nnx,
+                  edgeNz =
+                    edgeLength > 0.01 ? (an.outZ + bn.outZ) / edgeLength : nnz,
+                  bevelNormalY = Math.SQRT1_2,
+                  bevelNormalX = edgeNx * Math.SQRT1_2,
+                  bevelNormalZ = edgeNz * Math.SQRT1_2,
+                  freshKind = piece.freshness * 0.24;
                 base = vc;
                 vc = writeVertex(
                   vc,
                   a.x,
-                  a.y - HALF_THICKNESS,
+                  a.y + HALF_THICKNESS + a.bulge,
                   a.z,
-                  nnx,
-                  0,
-                  nnz,
-                  a.rx,
-                  a.rz,
-                  0,
-                  0.93,
+                  bevelNormalX,
+                  bevelNormalY,
+                  bevelNormalZ,
+                  an.rx,
+                  an.rz,
+                  freshKind,
+                  0.94,
                 );
                 vc = writeVertex(
                   vc,
                   b.x,
-                  b.y - HALF_THICKNESS,
+                  b.y + HALF_THICKNESS + b.bulge,
                   b.z,
-                  nnx,
+                  bevelNormalX,
+                  bevelNormalY,
+                  bevelNormalZ,
+                  bn.rx,
+                  bn.rz,
+                  freshKind,
+                  0.94,
+                );
+                vc = writeVertex(
+                  vc,
+                  b.x + edgeNx * BEVEL_SIZE,
+                  b.y + HALF_THICKNESS - BEVEL_SIZE * 0.72,
+                  b.z + edgeNz * BEVEL_SIZE,
+                  bevelNormalX,
+                  bevelNormalY,
+                  bevelNormalZ,
+                  bn.rx,
+                  bn.rz,
+                  freshKind,
+                  0.95,
+                );
+                vc = writeVertex(
+                  vc,
+                  a.x + edgeNx * BEVEL_SIZE,
+                  a.y + HALF_THICKNESS - BEVEL_SIZE * 0.72,
+                  a.z + edgeNz * BEVEL_SIZE,
+                  bevelNormalX,
+                  bevelNormalY,
+                  bevelNormalZ,
+                  an.rx,
+                  an.rz,
+                  freshKind,
+                  0.95,
+                );
+                quad(base, base + 1, base + 2, base + 3);
+                base = vc;
+                vc = writeVertex(
+                  vc,
+                  a.x + edgeNx * BEVEL_SIZE,
+                  a.y + HALF_THICKNESS - BEVEL_SIZE * 0.72,
+                  a.z + edgeNz * BEVEL_SIZE,
+                  edgeNx,
                   0,
-                  nnz,
-                  b.rx,
-                  b.rz,
+                  edgeNz,
+                  an.rx,
+                  an.rz,
+                  freshKind,
+                  0.96,
+                );
+                vc = writeVertex(
+                  vc,
+                  b.x + edgeNx * BEVEL_SIZE,
+                  b.y + HALF_THICKNESS - BEVEL_SIZE * 0.72,
+                  b.z + edgeNz * BEVEL_SIZE,
+                  edgeNx,
                   0,
-                  0.93,
+                  edgeNz,
+                  bn.rx,
+                  bn.rz,
+                  freshKind,
+                  0.96,
+                );
+                vc = writeVertex(
+                  vc,
+                  b.x + edgeNx * BEVEL_SIZE,
+                  b.y - HALF_THICKNESS + BEVEL_SIZE * 0.72,
+                  b.z + edgeNz * BEVEL_SIZE,
+                  edgeNx,
+                  0,
+                  edgeNz,
+                  bn.rx,
+                  bn.rz,
+                  freshKind,
+                  0.97,
+                );
+                vc = writeVertex(
+                  vc,
+                  a.x + edgeNx * BEVEL_SIZE,
+                  a.y - HALF_THICKNESS + BEVEL_SIZE * 0.72,
+                  a.z + edgeNz * BEVEL_SIZE,
+                  edgeNx,
+                  0,
+                  edgeNz,
+                  an.rx,
+                  an.rz,
+                  freshKind,
+                  0.97,
+                );
+                quad(base, base + 1, base + 2, base + 3);
+                base = vc;
+                vc = writeVertex(
+                  vc,
+                  a.x + edgeNx * BEVEL_SIZE,
+                  a.y - HALF_THICKNESS + BEVEL_SIZE * 0.72,
+                  a.z + edgeNz * BEVEL_SIZE,
+                  bevelNormalX,
+                  -bevelNormalY,
+                  bevelNormalZ,
+                  an.rx,
+                  an.rz,
+                  freshKind,
+                  0.96,
+                );
+                vc = writeVertex(
+                  vc,
+                  b.x + edgeNx * BEVEL_SIZE,
+                  b.y - HALF_THICKNESS + BEVEL_SIZE * 0.72,
+                  b.z + edgeNz * BEVEL_SIZE,
+                  bevelNormalX,
+                  -bevelNormalY,
+                  bevelNormalZ,
+                  bn.rx,
+                  bn.rz,
+                  freshKind,
+                  0.96,
                 );
                 vc = writeVertex(
                   vc,
                   b.x,
-                  b.y + HALF_THICKNESS,
+                  b.y - HALF_THICKNESS - b.bulge * 0.45,
                   b.z,
-                  nnx,
-                  0,
-                  nnz,
-                  b.rx,
-                  b.rz,
-                  0,
-                  0.9,
+                  bevelNormalX,
+                  -bevelNormalY,
+                  bevelNormalZ,
+                  bn.rx,
+                  bn.rz,
+                  freshKind,
+                  0.94,
                 );
                 vc = writeVertex(
                   vc,
                   a.x,
-                  a.y + HALF_THICKNESS,
+                  a.y - HALF_THICKNESS - a.bulge * 0.45,
                   a.z,
-                  nnx,
-                  0,
-                  nnz,
-                  a.rx,
-                  a.rz,
-                  0,
-                  0.9,
+                  bevelNormalX,
+                  -bevelNormalY,
+                  bevelNormalZ,
+                  an.rx,
+                  an.rz,
+                  freshKind,
+                  0.94,
                 );
                 quad(base, base + 1, base + 2, base + 3);
               }
             }
+        }
         const addBox = (cx, cy, cz, sx, sy, sz, angle, kind) => {
           const co = Math.cos(angle),
             si = Math.sin(angle),
@@ -2409,7 +2886,15 @@
         uniform.set(palette.rind, 20);
         uniform.set(palette.pith, 24);
         uniform.set(
-          [state.time, state.showMesh ? 1 : 0, canvas.width, canvas.height],
+          [
+            state.time,
+            state.showMesh ? 1 : 0,
+            state.quality.detail,
+            state.pieces.reduce(
+              (value, piece) => Math.max(value, piece.freshness),
+              0,
+            ),
+          ],
           28,
         );
         gpu.device.queue.writeBuffer(gpu.uniform, 0, uniform);
@@ -2497,6 +2982,9 @@
             time: state.time,
             revision: state.topologyRevision,
             available: state.available,
+            quality: state.quality.label,
+            presentationFinite: state.presentationFinite,
+            presentationOffset: state.presentationOffset,
           };
         },
         get camera() {
@@ -2568,17 +3056,38 @@
           resetWorld();
         },
         stats() {
-          return state.pieces.map((piece) => ({
-            id: piece.id,
-            cells: cellCount(piece.mask),
-            particles: piece.nodes.length,
-            constraints: piece.constraints.length,
-            finite: piece.nodes.every((n) =>
-              Number.isFinite(n.x + n.y + n.z + n.vx + n.vy + n.vz),
-            ),
-            minY: piece.bounds.minY,
-            maxY: piece.bounds.maxY,
-          }));
+          return state.pieces.map((piece) => {
+            let cx = 0,
+              cz = 0,
+              speed = 0;
+            for (const n of piece.nodes) {
+              cx += n.x;
+              cz += n.z;
+              speed = Math.max(speed, hypot3(n.vx, n.vy, n.vz));
+            }
+            cx /= piece.nodes.length;
+            cz /= piece.nodes.length;
+            let spread = 0;
+            for (const n of piece.nodes)
+              spread += Math.hypot(n.x - cx, n.z - cz);
+            spread /= piece.nodes.length;
+            return {
+              id: piece.id,
+              cells: cellCount(piece.mask),
+              particles: piece.nodes.length,
+              constraints: piece.constraints.length,
+              finite:
+                piece.presentationFinite &&
+                piece.nodes.every((n) =>
+                  Number.isFinite(n.x + n.y + n.z + n.vx + n.vy + n.vz),
+                ),
+              minY: piece.bounds.minY,
+              maxY: piece.bounds.maxY,
+              maxSpeed: speed,
+              areaRatio: spread / Math.max(0.001, piece.restSpread),
+              presentationOffset: piece.presentationOffset,
+            };
+          });
         },
         forceDeviceLoss() {
           gpu.device?.destroy();
