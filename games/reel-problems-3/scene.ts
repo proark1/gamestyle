@@ -961,6 +961,9 @@ export class ReelProblems3Scene {
   private pitch = -0.08;
   private raycaster = new THREE.Raycaster();
   private pointer = new THREE.Vector2(0, 0);
+  private dragPointerId: number | null = null;
+  private dragPointerX = 0;
+  private dragPointerY = 0;
   private resize: ResizeObserver;
   private frame = 0;
   private lastFrame = 0;
@@ -984,7 +987,7 @@ export class ReelProblems3Scene {
     this.scene.fog = new THREE.FogExp2(0x9cc8bd, 0.0065);
     this.renderer = createRenderer(host, {
       label:
-        'First-person fishing boat. WASD moves, E uses equipment, F casts or hooks, and R reels.',
+        'First-person fishing boat. Click to capture the pointer or hold and drag to look. WASD moves, E uses equipment, F casts or hooks, and R reels.',
       shadows: 'hard',
       exposure: 1.05,
       weight: 'heavy',
@@ -1000,7 +1003,18 @@ export class ReelProblems3Scene {
     this.resize.observe(host);
     this.fit();
     this.renderer.domElement.addEventListener('click', this.lock);
+    this.renderer.domElement.addEventListener(
+      'pointerdown',
+      this.beginDragLook,
+    );
+    this.renderer.domElement.addEventListener('pointermove', this.dragLook);
+    this.renderer.domElement.addEventListener('pointerup', this.endDragLook);
+    this.renderer.domElement.addEventListener(
+      'pointercancel',
+      this.endDragLook,
+    );
     document.addEventListener('mousemove', this.mouse);
+    document.addEventListener('pointerlockchange', this.pointerLockChange);
     this.frame = requestAnimationFrame(this.animate);
   }
 
@@ -1192,8 +1206,49 @@ export class ReelProblems3Scene {
   }
 
   private lock = () => {
-    if (!document.pointerLockElement)
-      void this.renderer.domElement.requestPointerLock?.();
+    if (document.pointerLockElement) return;
+    try {
+      void this.renderer.domElement.requestPointerLock?.().catch(() => {
+        // Drag-to-look remains available when pointer lock is unavailable.
+      });
+    } catch {
+      // Older browsers can throw synchronously; drag-to-look still works.
+    }
+  };
+  private beginDragLook = (event: PointerEvent) => {
+    if (event.pointerType === 'touch' || event.button !== 0) return;
+    this.dragPointerId = event.pointerId;
+    this.dragPointerX = event.clientX;
+    this.dragPointerY = event.clientY;
+    this.host.classList.add('is-looking');
+    this.renderer.domElement.setPointerCapture?.(event.pointerId);
+  };
+  private dragLook = (event: PointerEvent) => {
+    if (
+      document.pointerLockElement === this.renderer.domElement ||
+      event.pointerId !== this.dragPointerId
+    )
+      return;
+    const dx = event.clientX - this.dragPointerX;
+    const dy = event.clientY - this.dragPointerY;
+    this.dragPointerX = event.clientX;
+    this.dragPointerY = event.clientY;
+    this.look(dx, dy);
+  };
+  private endDragLook = (event: PointerEvent) => {
+    if (event.pointerId !== this.dragPointerId) return;
+    this.dragPointerId = null;
+    if (this.renderer.domElement.hasPointerCapture?.(event.pointerId))
+      this.renderer.domElement.releasePointerCapture?.(event.pointerId);
+    if (document.pointerLockElement !== this.renderer.domElement)
+      this.host.classList.remove('is-looking');
+  };
+  private pointerLockChange = () => {
+    this.host.classList.toggle(
+      'is-looking',
+      document.pointerLockElement === this.renderer.domElement ||
+        this.dragPointerId !== null,
+    );
   };
   private mouse = (event: MouseEvent) => {
     if (document.pointerLockElement === this.renderer.domElement)
@@ -1844,7 +1899,19 @@ export class ReelProblems3Scene {
     cancelAnimationFrame(this.frame);
     this.resize.disconnect();
     this.renderer.domElement.removeEventListener('click', this.lock);
+    this.renderer.domElement.removeEventListener(
+      'pointerdown',
+      this.beginDragLook,
+    );
+    this.renderer.domElement.removeEventListener('pointermove', this.dragLook);
+    this.renderer.domElement.removeEventListener('pointerup', this.endDragLook);
+    this.renderer.domElement.removeEventListener(
+      'pointercancel',
+      this.endDragLook,
+    );
     document.removeEventListener('mousemove', this.mouse);
+    document.removeEventListener('pointerlockchange', this.pointerLockChange);
+    this.host.classList.remove('is-looking');
     this.scene.traverse((object) => {
       if (object instanceof THREE.Mesh) {
         object.geometry.dispose();

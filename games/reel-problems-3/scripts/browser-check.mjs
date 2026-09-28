@@ -88,6 +88,29 @@ try {
       await page.locator('.rp3-stage canvas').isVisible(),
       `${label}: WebGL canvas is visible`,
     );
+    if (!mobile) {
+      const canvas = page.locator('.rp3-stage canvas');
+      const canvasBounds = await canvas.boundingBox();
+      assert.ok(canvasBounds, `${label}: canvas has interactive bounds`);
+      await page.mouse.move(
+        canvasBounds.x + canvasBounds.width * 0.5,
+        canvasBounds.y + canvasBounds.height * 0.62,
+      );
+      await page.mouse.down();
+      await page.mouse.move(
+        canvasBounds.x + canvasBounds.width * 0.56,
+        canvasBounds.y + canvasBounds.height * 0.58,
+      );
+      assert.equal(
+        await page
+          .locator('.rp3-stage')
+          .evaluate((stage) => stage.classList.contains('is-looking')),
+        true,
+        `${label}: mouse drag activates camera look`,
+      );
+      await page.mouse.up();
+      await page.evaluate(() => document.exitPointerLock?.());
+    }
     assert.equal(
       await page.locator('.rp3-crew > div').count(),
       4,
