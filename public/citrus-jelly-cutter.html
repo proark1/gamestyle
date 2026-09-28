@@ -1948,7 +1948,7 @@
           if(input.kind>3.5){let spec=pow(max(dot(reflect(-l,n),v),0.0),36.0);return vec4f(vec3f(.55+.25*ndl+spec*.5),1);}
           let r=length(input.rest);let angle=atan2(input.rest.x,max(input.rest.y,.001));let membrane=abs(sin(angle*5.0));var color=u.flesh;var milk=0.0;
           if(r>1.42){color=u.rind;}else if(r>1.28||r<.16||membrane<.075||input.rest.y<.055){color=u.pith;milk=1.0;}
-          let pore=smoothstep(.93,1.0,hash(floor(input.rest*78.0)))*select(.025,.09,r>1.42);color.rgb-=pore;
+          let pore=smoothstep(.93,1.0,hash(floor(input.rest*78.0)))*select(.025,.09,r>1.42);color=vec4f(color.rgb-vec3f(pore),color.a);
           let fres=pow(1.0-max(dot(n,v),0.0),3.0);let spec=pow(max(dot(reflect(-l,n),v),0.0),54.0);let ves=.035*sin(r*64.0+angle*13.0);
           var rgb=color.rgb*(.48+.52*ndl)+vec3f(1,.72,.38)*(fres*.2+spec*.72)+ves*(1.0-milk);
           rgb=mix(rgb,vec3f(.99,.9,.68),milk*.3);let alpha=clamp(color.a+fres*.12,0.0,1.0)*input.alpha;
