@@ -15,6 +15,34 @@ export interface CardTranslation {
 }
 
 export const CARDS_TRANSLATIONS: Record<string, Localized<CardTranslation>> = {
+  'citrus-jelly-cutter': {
+    en: {
+      tag: 'INTERACTIVE MATERIAL STUDY',
+      isNew: true,
+      newTag: 'NEW',
+      players: '1 maker',
+      duration: 'Open-ended',
+      titleMain: 'Citrus ',
+      titleHighlight: 'Jelly',
+      titleSuffix: '.',
+      desc: 'Stretch a translucent gummy orange, slice it with a steel knife, then stamp and lift tiny stars, hearts, flowers, and rounds.',
+      tagline: 'SOFT ENOUGH TO SLICE. SWEET ENOUGH TO SHARE.',
+      cta: 'Open Citrus Jelly',
+    },
+    de: {
+      tag: 'INTERAKTIVE MATERIALSTUDIE',
+      isNew: true,
+      newTag: 'NEU',
+      players: '1 Gestalter',
+      duration: 'Ohne Zeitlimit',
+      titleMain: 'Citrus ',
+      titleHighlight: 'Jelly',
+      titleSuffix: '.',
+      desc: 'Dehne eine durchscheinende Gummi-Orange, schneide sie mit einem Stahlmesser und stich kleine Sterne, Herzen, Blumen und Kreise aus.',
+      tagline: 'WEICH GENUG ZUM SCHNEIDEN. SÜSS GENUG ZUM TEILEN.',
+      cta: 'Citrus Jelly öffnen',
+    },
+  },
   slopewreck: {
     en: {
       tag: 'CHAOTIC DOWNHILL RACING',

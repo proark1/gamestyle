@@ -36,11 +36,12 @@ Every game has its own folder under `games/` holding the simulation, scene, room
 | Scaffold Scramble | `/scaffold-scramble`   | `games/scaffold-scramble/`   | `app/scaffold-scramble/`         |
 | Chain of Fools    | `/chain-of-fools`      | `games/chain-of-fools/`      | `app/chain-of-fools/`            |
 | Course Correction | `/course-correction`   | `games/course-correction/`   | `app/course-correction/`         |
+| Citrus Jelly | `/citrus-jelly-cutter` | `games/citrus-jelly-cutter/` | `app/citrus-jelly-cutter/` |
 | Bouncy Castle Royale | `/bouncy-castle-royale` | `games/bouncy-castle-royale/` | `app/bouncy-castle-royale/` |
 | Flip Happens | `/flip-happens` | `games/flip-happens/` | `app/flip-happens/` |
 | Slopewreck | `/slopewreck` | `games/slopewreck/` | `app/slopewreck/` |
 
-Every game but Shelf Control has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
+Every game but Shelf Control and the intentionally silent Citrus Jelly study has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
 
 The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, all of the sound workshops, and every game's player avatar walking side by side against a chosen template. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
 
@@ -126,7 +127,7 @@ Run `node scripts/test.mjs games/chain-of-fools` for the line solver, hauling, b
 
 ## Code structure
 
-All twenty-two games live in their own folder under `games/`, listed in the table above. Reusable infrastructure lives in `shared/` (audio, browser, http, input, math, peer, physics, rendering, rooms, styles, ui, voice); `platform/` composes game catalogs, and `app/` contains thin routes. Permit Pending and Brick by Hand sit in the `app/(handwerker)/` route group, which does not change their public URLs. See the [architecture and contributor guide](docs/architecture.md) for ownership rules, shared interfaces, and how to add a game. Run `npm run check` for types, lint, dependency boundaries, and the complete test suite.
+All games live in their own folder under `games/`, listed in the table above. Reusable infrastructure lives in `shared/` (audio, browser, http, input, math, peer, physics, rendering, rooms, styles, ui, voice); `platform/` composes game catalogs, and `app/` contains thin routes. Permit Pending and Brick by Hand sit in the `app/(handwerker)/` route group, which does not change their public URLs. See the [architecture and contributor guide](docs/architecture.md) for ownership rules, shared interfaces, and how to add a game. Run `npm run check` for types, lint, dependency boundaries, and the complete test suite.
 
 ## Handwerker: Permit Pending and Brick by Hand
 

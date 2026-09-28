@@ -1,6 +1,7 @@
 import {
   BORROWED_AUDIO,
   GAME_IDS,
+  SILENT_GAMES,
   isGame,
   isHandwerkerGame,
   type Game,
@@ -15,12 +16,14 @@ import {
  */
 export type GameId = Exclude<
   Game,
-  HandwerkerGame | keyof typeof BORROWED_AUDIO
+  HandwerkerGame | keyof typeof BORROWED_AUDIO | keyof typeof SILENT_GAMES
 >;
 
 export const GAME_IDS_WITH_AUDIO: readonly GameId[] = GAME_IDS.filter(
   (game): game is GameId =>
-    !isHandwerkerGame(game) && !(game in BORROWED_AUDIO),
+    !isHandwerkerGame(game) &&
+    !(game in BORROWED_AUDIO) &&
+    !(game in SILENT_GAMES),
 );
 export type AudioCategory =
   | 'material'
@@ -98,7 +101,10 @@ export const GAME_NAMES: Record<GameId, string> = {
   slopewreck: 'Slopewreck',
 };
 export const isGameId = (v: unknown): v is GameId =>
-  isGame(v) && !isHandwerkerGame(v) && !(v in BORROWED_AUDIO);
+  isGame(v) &&
+  !isHandwerkerGame(v) &&
+  !(v in BORROWED_AUDIO) &&
+  !(v in SILENT_GAMES);
 /** Reused clips keep their original immutable storage path. */
 export function audioFileUrl(file: string) {
   const [game, name] = file.split('/');

@@ -1,0 +1,2595 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f2ece2" />
+    <title>Citrus Jelly — Knife &amp; Cookie Cutters</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M7 46a25 25 0 0 1 50 0Z' fill='%23f28a24' stroke='%23ffe7ae' stroke-width='7'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f2ece2;
+        --paper-deep: #e8dfd3;
+        --ink: #24211d;
+        --muted: #777066;
+        --line: rgba(36, 33, 29, 0.2);
+        --orange: #f28a24;
+        --pith: #ffe7ae;
+        --steel: #a8aeaa;
+        --shadow: #59624b;
+        --serif:
+          'Iowan Old Style', Baskerville, 'Times New Roman', Georgia, serif;
+        --sans:
+          'Avenir Next', 'Gill Sans', 'Trebuchet MS', system-ui, sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      body {
+        overflow: hidden;
+        font-family: var(--sans);
+      }
+      button,
+      input,
+      summary {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      summary:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 3px;
+      }
+      .study {
+        position: relative;
+        width: 100vw;
+        height: 100dvh;
+        min-height: 620px;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 52% 42%,
+            rgba(255, 255, 255, 0.58),
+            transparent 37%
+          ),
+          linear-gradient(112deg, rgba(255, 255, 255, 0.22), transparent 50%),
+          var(--paper);
+        isolation: isolate;
+      }
+      .masthead {
+        position: absolute;
+        z-index: 8;
+        top: clamp(24px, 4.2vw, 64px);
+        left: clamp(22px, 4.6vw, 74px);
+        width: min(32vw, 420px);
+        pointer-events: none;
+      }
+      .return {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 28px;
+        color: var(--ink);
+        text-decoration: none;
+        font: 650 10px/1 var(--sans);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .return::before {
+        content: '←';
+        font-size: 15px;
+        letter-spacing: 0;
+        transition: transform 0.2s ease;
+      }
+      .return:hover::before {
+        transform: translateX(-3px);
+      }
+      .eyebrow {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font: 700 10px/1.2 var(--sans);
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+      .eyebrow::after {
+        content: '';
+        width: 42px;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.46;
+      }
+      h1 {
+        margin: 22px 0 20px;
+        font: italic 500 clamp(62px, 8.6vw, 132px)/0.73 var(--serif);
+        letter-spacing: -0.065em;
+      }
+      h1 span {
+        display: block;
+        margin-left: 0.34em;
+      }
+      .caption {
+        margin: 0;
+        font: italic 500 clamp(17px, 1.7vw, 23px)/1.25 var(--serif);
+        color: #4c473f;
+      }
+      .status {
+        position: absolute;
+        z-index: 9;
+        top: clamp(24px, 4.2vw, 64px);
+        right: clamp(22px, 4.2vw, 66px);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 14px 9px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(247, 242, 234, 0.78);
+        backdrop-filter: blur(12px);
+        font: 700 9px/1 var(--sans);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .status::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #7d9b61;
+        box-shadow: 0 0 0 4px rgba(125, 155, 97, 0.12);
+      }
+      .status[data-state='paused']::before {
+        background: #b98237;
+      }
+      .status[data-state='recovering']::before {
+        background: #d4a03c;
+        animation: pulse 1s infinite alternate;
+      }
+      .status[data-state='unavailable']::before {
+        background: #a55b4d;
+      }
+      @keyframes pulse {
+        to {
+          transform: scale(1.35);
+          opacity: 0.5;
+        }
+      }
+      .stage {
+        position: absolute;
+        z-index: 1;
+        inset: 0;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        touch-action: none;
+        cursor: grab;
+      }
+      canvas[data-tool='hand'] {
+        cursor: grab;
+      }
+      canvas[data-tool='knife'],
+      canvas[data-tool='cutter'] {
+        cursor: crosshair;
+      }
+      canvas.is-dragging {
+        cursor: grabbing;
+      }
+      .cut-guide {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      .cut-guide.visible {
+        opacity: 1;
+      }
+      .cut-guide line {
+        stroke: #37332e;
+        stroke-width: 1.5;
+        stroke-dasharray: 7 8;
+        vector-effect: non-scaling-stroke;
+      }
+      .fallback {
+        position: absolute;
+        z-index: 5;
+        left: 37%;
+        top: 50%;
+        width: min(450px, calc(100vw - 44px));
+        transform: translate(-50%, -50%);
+        padding: 30px 32px;
+        border: 1px solid var(--line);
+        background: rgba(247, 242, 234, 0.92);
+        box-shadow: 0 26px 80px rgba(74, 59, 37, 0.09);
+        display: none;
+      }
+      .fallback.visible {
+        display: block;
+      }
+      .fallback small {
+        font: 700 9px/1 var(--sans);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+      .fallback h2 {
+        margin: 18px 0 12px;
+        font: italic 500 40px/1 var(--serif);
+      }
+      .fallback p {
+        margin: 0;
+        max-width: 42ch;
+        color: #625c53;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .diagnostics {
+        margin-top: 18px;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      .diagnostics summary {
+        cursor: pointer;
+        font: 700 10px/1.2 var(--sans);
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+      }
+      .diagnostics pre {
+        white-space: pre-wrap;
+        font: 10px/1.5 var(--mono);
+        color: #8e3f34;
+      }
+      .panel {
+        position: absolute;
+        z-index: 8;
+        top: clamp(84px, 12vh, 140px);
+        right: clamp(22px, 4.2vw, 66px);
+        width: clamp(270px, 22vw, 334px);
+        max-height: calc(100dvh - 205px);
+        overflow: auto;
+        padding: 20px 20px 18px;
+        border-top: 1px solid var(--ink);
+        border-bottom: 1px solid var(--line);
+        background: rgba(242, 236, 226, 0.72);
+        backdrop-filter: blur(15px);
+        scrollbar-width: thin;
+        scrollbar-color: rgba(36, 33, 29, 0.24) transparent;
+      }
+      .panel-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .panel-head h2 {
+        margin: 0;
+        font: 750 10px/1 var(--sans);
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+      .panel-head span {
+        color: var(--muted);
+        font: italic 13px/1 var(--serif);
+      }
+      fieldset {
+        margin: 0 0 18px;
+        padding: 0;
+        border: 0;
+      }
+      legend {
+        width: 100%;
+        margin-bottom: 9px;
+        color: var(--muted);
+        font: 750 8px/1 var(--sans);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border: 1px solid var(--line);
+      }
+      .segmented button {
+        min-height: 39px;
+        border: 0;
+        border-right: 1px solid var(--line);
+        background: transparent;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .segmented button:last-child {
+        border-right: 0;
+      }
+      .segmented button.active {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .shape-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+      }
+      .shape {
+        aspect-ratio: 1;
+        min-height: 48px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.18);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+      }
+      .shape.active {
+        border-color: var(--ink);
+        background: rgba(255, 255, 255, 0.55);
+        box-shadow: inset 0 0 0 1px var(--ink);
+      }
+      .shape svg {
+        width: 24px;
+        height: 24px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.35;
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .swatch {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+        text-align: left;
+      }
+      .fruit {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 30px;
+        margin-bottom: 6px;
+        overflow: hidden;
+        border: 1px solid rgba(36, 33, 29, 0.16);
+        border-radius: 100px 100px 8px 8px;
+        background: var(--fruit);
+        box-shadow:
+          inset 0 0 0 5px var(--rind),
+          inset 0 0 0 8px var(--fruit);
+      }
+      .fruit::before,
+      .fruit::after {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 50%;
+        width: 1px;
+        height: 42px;
+        background: rgba(255, 247, 211, 0.72);
+        transform-origin: bottom;
+      }
+      .fruit::before {
+        transform: rotate(-34deg);
+      }
+      .fruit::after {
+        transform: rotate(34deg);
+      }
+      .swatch b {
+        display: block;
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 1.15;
+      }
+      .swatch.active .fruit {
+        outline: 1px solid var(--ink);
+        outline-offset: 2px;
+      }
+      .range {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 7px 12px;
+        align-items: center;
+        margin-bottom: 13px;
+      }
+      .range label {
+        font-size: 11px;
+      }
+      .range output {
+        font: 9px/1 var(--mono);
+        color: var(--muted);
+      }
+      .range input {
+        grid-column: 1/-1;
+        width: 100%;
+        accent-color: var(--orange);
+      }
+      .range-ends {
+        grid-column: 1/-1;
+        display: flex;
+        justify-content: space-between;
+        margin-top: -4px;
+        color: var(--muted);
+        font: italic 10px/1 var(--serif);
+      }
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .actions button {
+        min-height: 40px;
+        border: 1px solid var(--line);
+        background: transparent;
+        cursor: pointer;
+        font-size: 10px;
+      }
+      .actions button:first-child {
+        grid-column: 1/-1;
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .checks {
+        display: flex;
+        gap: 16px;
+        margin-top: 14px;
+      }
+      .checks label {
+        display: inline-flex;
+        gap: 7px;
+        align-items: center;
+        font-size: 10px;
+        cursor: pointer;
+      }
+      .checks input {
+        accent-color: var(--ink);
+      }
+      .readout {
+        position: absolute;
+        z-index: 8;
+        left: clamp(22px, 4.6vw, 74px);
+        bottom: clamp(22px, 4.2vw, 54px);
+        width: min(46vw, 610px);
+        pointer-events: none;
+      }
+      .tool-hint {
+        margin: 0 0 13px;
+        font: italic 500 clamp(17px, 1.6vw, 23px)/1.2 var(--serif);
+      }
+      .metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 21px;
+        margin: 0;
+      }
+      .metrics div {
+        display: flex;
+        gap: 7px;
+        align-items: baseline;
+      }
+      .metrics dt {
+        color: var(--muted);
+        font: 700 8px/1 var(--sans);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      .metrics dd {
+        margin: 0;
+        font: 10px/1 var(--mono);
+      }
+      .footnote {
+        margin: 11px 0 0;
+        color: var(--muted);
+        font: italic 10px/1.3 var(--serif);
+      }
+      .notes {
+        position: absolute;
+        z-index: 8;
+        right: clamp(22px, 4.2vw, 66px);
+        bottom: clamp(22px, 4.2vw, 54px);
+        width: clamp(270px, 22vw, 334px);
+        border-top: 1px solid var(--line);
+      }
+      .notes summary {
+        padding: 11px 0;
+        list-style: none;
+        cursor: pointer;
+        font: italic 15px/1 var(--serif);
+      }
+      .notes summary::-webkit-details-marker {
+        display: none;
+      }
+      .notes summary::after {
+        content: '+';
+        float: right;
+        font: 16px/1 var(--sans);
+      }
+      .notes[open] summary::after {
+        content: '–';
+      }
+      .notes-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 2px 0 14px;
+      }
+      .notes-grid b {
+        display: block;
+        margin-bottom: 4px;
+        font: 700 8px/1 var(--sans);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .notes-grid p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.4;
+      }
+      .toast {
+        position: absolute;
+        z-index: 12;
+        left: 50%;
+        bottom: 12%;
+        transform: translate(-50%, 10px);
+        padding: 9px 14px;
+        border: 1px solid var(--line);
+        background: rgba(247, 242, 234, 0.94);
+        opacity: 0;
+        transition: 0.24s ease;
+        pointer-events: none;
+        font: italic 14px/1 var(--serif);
+      }
+      .toast.visible {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+      }
+      [disabled] {
+        opacity: 0.42;
+        cursor: not-allowed !important;
+      }
+      @media (max-width: 1040px) {
+        h1 {
+          font-size: clamp(58px, 8vw, 92px);
+        }
+        .masthead {
+          width: 30vw;
+        }
+        .panel {
+          width: 280px;
+        }
+        .notes {
+          width: 280px;
+        }
+      }
+      @media (max-width: 860px) {
+        body {
+          overflow: auto;
+        }
+        .study {
+          min-height: 1120px;
+          height: auto;
+          overflow: visible;
+          display: grid;
+          grid-template-rows: auto minmax(440px, 58vh) auto auto;
+        }
+        .masthead,
+        .status,
+        .panel,
+        .readout,
+        .notes,
+        .stage {
+          position: relative;
+          inset: auto;
+          width: auto;
+          max-width: none;
+        }
+        .masthead {
+          grid-row: 1;
+          padding: 24px 20px 0;
+        }
+        .return {
+          margin-bottom: 20px;
+        }
+        h1 {
+          margin: 16px 0;
+          font-size: clamp(58px, 18vw, 90px);
+        }
+        .caption {
+          font-size: 17px;
+        }
+        .status {
+          position: absolute;
+          top: 22px;
+          right: 18px;
+          width: max-content;
+        }
+        .stage {
+          grid-row: 2;
+          min-height: 440px;
+          margin-top: -36px;
+        }
+        .fallback {
+          left: 50%;
+          top: 52%;
+        }
+        .panel {
+          grid-row: 3;
+          margin: 0 16px;
+          padding: 22px 4px;
+          max-height: none;
+          background: transparent;
+          backdrop-filter: none;
+        }
+        .readout {
+          grid-row: 4;
+          padding: 24px 20px 12px;
+        }
+        .notes {
+          grid-row: 5;
+          margin: 0 20px 34px;
+        }
+        .shape {
+          min-height: 56px;
+        }
+        .segmented button,
+        .actions button {
+          min-height: 48px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="study" id="study">
+      <header class="masthead">
+        <a class="return" href="/">Jumbleyard</a>
+        <div class="eyebrow">Material studies / No. 010</div>
+        <h1>Citrus<span>Jelly.</span></h1>
+        <p class="caption">
+          Sunshine in segments.<br />Soft enough to slice.<br />Sweet enough to
+          share.
+        </p>
+      </header>
+      <output class="status" id="status" data-state="recovering"
+        >WebGPU · preparing</output
+      >
+      <section class="stage" aria-label="Interactive citrus jelly specimen">
+        <canvas id="gpu" data-tool="hand"></canvas>
+        <svg class="cut-guide" id="cutGuide" aria-hidden="true">
+          <line id="cutLine" x1="0" y1="0" x2="0" y2="0" />
+        </svg>
+        <section class="fallback" id="fallback" role="alert">
+          <small>Material unavailable</small>
+          <h2>This slice needs WebGPU.</h2>
+          <p id="fallbackCopy">
+            Open this study in a current Chrome, Edge, or other WebGPU-enabled
+            browser over HTTPS. The jelly simulation uses modern GPU rendering
+            that this context cannot provide.
+          </p>
+          <details class="diagnostics" id="diagnostics">
+            <summary>Technical details</summary>
+            <pre id="diagnosticText">No compatible adapter was found.</pre>
+          </details>
+        </section>
+      </section>
+      <aside class="panel" aria-label="Specimen controls">
+        <div class="panel-head">
+          <h2>The specimen</h2>
+          <span>fig. 10</span>
+        </div>
+        <fieldset>
+          <legend>Tool</legend>
+          <div class="segmented" id="tools">
+            <button type="button" data-tool="hand" class="active">Hand</button
+            ><button type="button" data-tool="knife">Knife</button
+            ><button type="button" data-tool="cutter">Cutter</button>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Cookie cutter</legend>
+          <div class="shape-row" id="shapes">
+            <button
+              class="shape active"
+              type="button"
+              data-shape="star"
+              aria-label="Star cutter"
+            >
+              <svg viewBox="0 0 32 32">
+                <path
+                  d="m16 3 3.7 8 8.8 1-6.5 6 1.8 8.7-7.8-4.4-7.8 4.4L10 18l-6.5-6 8.8-1Z"
+                />
+              </svg>
+            </button>
+            <button
+              class="shape"
+              type="button"
+              data-shape="heart"
+              aria-label="Heart cutter"
+            >
+              <svg viewBox="0 0 32 32">
+                <path
+                  d="M16 27S5 20 5 11.5C5 5 13 4 16 10c3-6 11-5 11 1.5C27 20 16 27 16 27Z"
+                />
+              </svg>
+            </button>
+            <button
+              class="shape"
+              type="button"
+              data-shape="flower"
+              aria-label="Flower cutter"
+            >
+              <svg viewBox="0 0 32 32">
+                <path
+                  d="M16 7c2-7 9-3 7 3 7-2 8 6 2 8 5 5-1 10-6 6-2 7-10 4-8-3-7 2-9-6-3-9-5-5 1-10 6-6 2-7 10-5 8 2Z"
+                />
+              </svg>
+            </button>
+            <button
+              class="shape"
+              type="button"
+              data-shape="round"
+              aria-label="Round cutter"
+            >
+              <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" /></svg>
+            </button>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Variety</legend>
+          <div class="swatches" id="varieties">
+            <button type="button" class="swatch active" data-variety="orange">
+              <span
+                class="fruit"
+                style="--fruit: #f28a24; --rind: #df6d17"
+              ></span
+              ><b>Orange</b>
+            </button>
+            <button type="button" class="swatch" data-variety="blood">
+              <span
+                class="fruit"
+                style="--fruit: #b8372c; --rind: #d96a25"
+              ></span
+              ><b>Blood orange</b>
+            </button>
+            <button type="button" class="swatch" data-variety="lemon">
+              <span
+                class="fruit"
+                style="--fruit: #f3d34a; --rind: #dabd28"
+              ></span
+              ><b>Lemon</b>
+            </button>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Material</legend>
+          <div class="range">
+            <label for="firmness">Firmness</label
+            ><output id="firmnessValue">58%</output
+            ><input id="firmness" type="range" min="18" max="92" value="58" />
+            <div class="range-ends"><span>trembling</span><span>set</span></div>
+          </div>
+          <div class="range">
+            <label for="damping">Internal damping</label
+            ><output id="dampingValue">42%</output
+            ><input id="damping" type="range" min="8" max="88" value="42" />
+            <div class="range-ends"><span>lively</span><span>syrupy</span></div>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="button" id="nudge">Give it a nudge</button
+          ><button type="button" id="reset">Reset</button
+          ><button type="button" id="pause">Pause</button>
+        </div>
+        <div class="checks">
+          <label><input id="slow" type="checkbox" /> ¼ speed</label
+          ><label><input id="mesh" type="checkbox" /> Show mesh</label>
+        </div>
+      </aside>
+      <section class="readout" aria-live="polite">
+        <p class="tool-hint" id="hint">
+          Take hold anywhere. Pull slowly; release to toss.
+        </p>
+        <dl class="metrics">
+          <div>
+            <dt>Mass</dt>
+            <dd id="mass">≈ 164 g</dd>
+          </div>
+          <div>
+            <dt>Volume</dt>
+            <dd id="volume">100% of rest</dd>
+          </div>
+          <div>
+            <dt>Kinetic</dt>
+            <dd id="kinetic">0.0 µJ</dd>
+          </div>
+          <div>
+            <dt>Pieces</dt>
+            <dd id="pieces">1 / 14</dd>
+          </div>
+        </dl>
+        <p class="footnote">
+          Illustrative scale · readings are interpretive, not laboratory
+          measurements.
+        </p>
+      </section>
+      <details class="notes">
+        <summary>Inside the experiment</summary>
+        <div class="notes-grid">
+          <div>
+            <b>Physics</b>
+            <p>
+              A fixed-step constraint lattice gives each piece weight, stretch,
+              damping, and a soft return.
+            </p>
+          </div>
+          <div>
+            <b>Cutting</b>
+            <p>
+              The knife removes a narrow rest-space band, then rebuilds each
+              connected component.
+            </p>
+          </div>
+          <div>
+            <b>Cookie cutters</b>
+            <p>
+              Rounded distance fields preserve the lifted shape and the matching
+              hole around it.
+            </p>
+          </div>
+          <div>
+            <b>Rendering</b>
+            <p>
+              WGSL layers absorption, pith scattering, Fresnel highlights, soft
+              shadows, and citrus detail.
+            </p>
+          </div>
+        </div>
+      </details>
+      <output class="toast" id="toast"></output>
+    </main>
+    <script type="module">
+      const $ = (selector) => document.querySelector(selector);
+      const canvas = $('#gpu');
+      const statusEl = $('#status');
+      const fallback = $('#fallback');
+      const fallbackCopy = $('#fallbackCopy');
+      const diagnosticText = $('#diagnosticText');
+      const toastEl = $('#toast');
+      const cutGuide = $('#cutGuide');
+      const cutLine = $('#cutLine');
+      const reducedMotion = matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches;
+      const TAU = Math.PI * 2;
+      const GRID_W = 64;
+      const GRID_H = 34;
+      const X0 = -1.58;
+      const X1 = 1.58;
+      const Z0 = 0;
+      const Z1 = 1.62;
+      const DX = (X1 - X0) / GRID_W;
+      const DZ = (Z1 - Z0) / GRID_H;
+      const HALF_THICKNESS = 0.28;
+      const MAX_PIECES = 14;
+      const MIN_CELLS = 9;
+      const MAX_VERTICES = 220000;
+      const MAX_INDICES = 520000;
+      const STRIDE = 10;
+      const vertexScratch = new Float32Array(MAX_VERTICES * STRIDE);
+      const indexScratch = new Uint32Array(MAX_INDICES);
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      const mix = (a, b, t) => a + (b - a) * t;
+      const hypot3 = (x, y, z) => Math.hypot(x, y, z);
+      const state = {
+        tool: 'hand',
+        shape: 'star',
+        variety: 'orange',
+        firmness: 0.58,
+        damping: 0.42,
+        paused: false,
+        slow: false,
+        showMesh: false,
+        pieces: [],
+        nextPiece: 1,
+        grab: null,
+        pointer: {
+          x: 0,
+          y: 0,
+          world: [0, HALF_THICKNESS, 0.7],
+          visible: false,
+        },
+        gesture: null,
+        animation: null,
+        time: 0,
+        accumulator: 0,
+        last: 0,
+        topologyRevision: 0,
+        milestones: new Set(),
+        available: false,
+        ready: false,
+      };
+      const camera = {
+        yaw: 0,
+        pitch: 0.91,
+        distance: 6.35,
+        target: [0, 0.12, 0.72],
+        desired: [0, 0.12, 0.72],
+      };
+      const varieties = {
+        orange: {
+          flesh: [1, 0.39, 0.055, 0.83],
+          rind: [0.93, 0.23, 0.018, 0.96],
+          pith: [1, 0.81, 0.42, 0.93],
+          shadow: [0.56, 0.25, 0.09, 1],
+        },
+        blood: {
+          flesh: [0.74, 0.045, 0.035, 0.84],
+          rind: [0.89, 0.24, 0.04, 0.96],
+          pith: [1, 0.73, 0.48, 0.93],
+          shadow: [0.42, 0.05, 0.05, 1],
+        },
+        lemon: {
+          flesh: [1, 0.72, 0.08, 0.82],
+          rind: [0.91, 0.61, 0.025, 0.96],
+          pith: [1, 0.9, 0.53, 0.94],
+          shadow: [0.52, 0.45, 0.08, 1],
+        },
+      };
+      const hints = {
+        hand: 'Take hold anywhere. Pull slowly; release to toss.',
+        knife:
+          'Draw a stroke across the jelly. Release to press the blade through.',
+        cutter: 'Place the ring over a flat piece. Click once to stamp.',
+      };
+      const post = (kind, key) =>
+        parent !== window &&
+        parent.postMessage(
+          { source: 'citrus-jelly-cutter', kind, ...(key ? { key } : {}) },
+          location.origin,
+        );
+      function milestone(key) {
+        if (!state.milestones.has(key)) {
+          state.milestones.add(key);
+          post('milestone', key);
+        }
+      }
+      let toastTimer = 0;
+      function toast(message) {
+        toastEl.textContent = message;
+        toastEl.classList.add('visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(
+          () => toastEl.classList.remove('visible'),
+          1800,
+        );
+      }
+      function setStatus(mode, label) {
+        statusEl.dataset.state = mode;
+        statusEl.textContent = `WebGPU · ${label}`;
+      }
+      function setUnavailable(reason, details = '') {
+        state.available = false;
+        setStatus('unavailable', 'unavailable');
+        fallback.classList.add('visible');
+        fallbackCopy.textContent = reason;
+        diagnosticText.textContent =
+          details || 'No compatible adapter was found.';
+        document
+          .querySelectorAll('.panel button,.panel input')
+          .forEach((control) => (control.disabled = true));
+      }
+      function setControlsEnabled(enabled) {
+        document
+          .querySelectorAll('.panel button,.panel input')
+          .forEach((control) => (control.disabled = !enabled));
+      }
+      const cellIndex = (x, z) => z * GRID_W + x;
+      const nodeKey = (x, z) => z * (GRID_W + 1) + x;
+      const restX = (x) => X0 + x * DX;
+      const restZ = (z) => Z0 + z * DZ;
+      function initialMask() {
+        const mask = new Uint8Array(GRID_W * GRID_H);
+        for (let z = 0; z < GRID_H; z++)
+          for (let x = 0; x < GRID_W; x++) {
+            const px = restX(x + 0.5),
+              pz = restZ(z + 0.5);
+            if (pz >= 0.025 && px * px + pz * pz < 1.56 * 1.56)
+              mask[cellIndex(x, z)] = 1;
+          }
+        return mask;
+      }
+      function cellCount(mask) {
+        let count = 0;
+        for (const value of mask) count += value;
+        return count;
+      }
+      class Piece {
+        constructor(mask, source = null) {
+          this.id = state.nextPiece++;
+          this.mask = mask;
+          this.nodeMap = new Int32Array((GRID_W + 1) * (GRID_H + 1));
+          this.nodeMap.fill(-1);
+          this.nodes = [];
+          this.constraints = [];
+          this.restArea = cellCount(mask) * DX * DZ;
+          const sourceNodes = source?.nodeMap;
+          for (let z = 0; z < GRID_H; z++)
+            for (let x = 0; x < GRID_W; x++)
+              if (mask[cellIndex(x, z)]) {
+                for (const [nx, nz] of [
+                  [x, z],
+                  [x + 1, z],
+                  [x + 1, z + 1],
+                  [x, z + 1],
+                ]) {
+                  const key = nodeKey(nx, nz);
+                  if (this.nodeMap[key] >= 0) continue;
+                  const oldIndex = sourceNodes ? sourceNodes[key] : -1;
+                  const old = oldIndex >= 0 ? source.nodes[oldIndex] : null;
+                  const node = {
+                    rx: restX(nx),
+                    rz: restZ(nz),
+                    x: old?.x ?? restX(nx),
+                    y: old?.y ?? HALF_THICKNESS + 0.015,
+                    z: old?.z ?? restZ(nz),
+                    px: 0,
+                    py: 0,
+                    pz: 0,
+                    vx: old?.vx ?? 0,
+                    vy: old?.vy ?? 0,
+                    vz: old?.vz ?? 0,
+                  };
+                  this.nodeMap[key] = this.nodes.length;
+                  this.nodes.push(node);
+                }
+              }
+          let rcx = 0,
+            rcz = 0;
+          for (const node of this.nodes) {
+            rcx += node.rx;
+            rcz += node.rz;
+          }
+          this.rcx = rcx / this.nodes.length;
+          this.rcz = rcz / this.nodes.length;
+          const addConstraint = (aKey, bKey) => {
+            const a = this.nodeMap[aKey],
+              b = this.nodeMap[bKey];
+            if (a < 0 || b < 0) return;
+            const na = this.nodes[a],
+              nb = this.nodes[b];
+            this.constraints.push({
+              a,
+              b,
+              rest: Math.hypot(na.rx - nb.rx, na.rz - nb.rz),
+            });
+          };
+          for (let z = 0; z <= GRID_H; z++)
+            for (let x = 0; x <= GRID_W; x++)
+              if (this.nodeMap[nodeKey(x, z)] >= 0) {
+                if (x < GRID_W) addConstraint(nodeKey(x, z), nodeKey(x + 1, z));
+                if (z < GRID_H) addConstraint(nodeKey(x, z), nodeKey(x, z + 1));
+                if (x < GRID_W && z < GRID_H)
+                  addConstraint(nodeKey(x, z), nodeKey(x + 1, z + 1));
+                if (x > 0 && z < GRID_H)
+                  addConstraint(nodeKey(x, z), nodeKey(x - 1, z + 1));
+              }
+          this.bounds = {
+            minX: 0,
+            maxX: 0,
+            minZ: 0,
+            maxZ: 0,
+            cx: 0,
+            cz: 0,
+            minY: 0,
+            maxY: 0,
+          };
+          this.updateBounds();
+        }
+        updateBounds() {
+          let minX = Infinity,
+            maxX = -Infinity,
+            minZ = Infinity,
+            maxZ = -Infinity,
+            minY = Infinity,
+            maxY = -Infinity,
+            cx = 0,
+            cz = 0;
+          for (const n of this.nodes) {
+            minX = Math.min(minX, n.x);
+            maxX = Math.max(maxX, n.x);
+            minZ = Math.min(minZ, n.z);
+            maxZ = Math.max(maxZ, n.z);
+            minY = Math.min(minY, n.y);
+            maxY = Math.max(maxY, n.y);
+            cx += n.x;
+            cz += n.z;
+          }
+          Object.assign(this.bounds, {
+            minX,
+            maxX,
+            minZ,
+            maxZ,
+            minY,
+            maxY,
+            cx: cx / this.nodes.length,
+            cz: cz / this.nodes.length,
+          });
+        }
+      }
+      function components(mask) {
+        const seen = new Uint8Array(mask.length),
+          result = [],
+          queue = new Int32Array(mask.length);
+        for (let start = 0; start < mask.length; start++)
+          if (mask[start] && !seen[start]) {
+            let head = 0,
+              tail = 0;
+            queue[tail++] = start;
+            seen[start] = 1;
+            const cells = [];
+            while (head < tail) {
+              const i = queue[head++];
+              cells.push(i);
+              const x = i % GRID_W,
+                z = (i / GRID_W) | 0;
+              for (const [nx, nz] of [
+                [x - 1, z],
+                [x + 1, z],
+                [x, z - 1],
+                [x, z + 1],
+              ])
+                if (nx >= 0 && nx < GRID_W && nz >= 0 && nz < GRID_H) {
+                  const ni = cellIndex(nx, nz);
+                  if (mask[ni] && !seen[ni]) {
+                    seen[ni] = 1;
+                    queue[tail++] = ni;
+                  }
+                }
+            }
+            if (cells.length >= MIN_CELLS) {
+              const part = new Uint8Array(mask.length);
+              for (const i of cells) part[i] = 1;
+              result.push(part);
+            }
+          }
+        return result;
+      }
+      function resetWorld() {
+        state.nextPiece = 1;
+        state.pieces = [new Piece(initialMask())];
+        state.grab = null;
+        state.animation = null;
+        state.topologyRevision++;
+        state.time = 0;
+        state.accumulator = 0;
+        state.milestones.clear();
+        camera.yaw = 0;
+        camera.pitch = 0.91;
+        camera.distance = 6.35;
+        camera.target = [0, 0.12, 0.72];
+        camera.desired = [0, 0.12, 0.72];
+        updateReadouts();
+      }
+      function solvePiece(piece, dt) {
+        const damp = Math.exp(-mix(0.45, 5.5, state.damping) * dt);
+        for (const n of piece.nodes) {
+          n.px = n.x;
+          n.py = n.y;
+          n.pz = n.z;
+          n.vy -= 4.2 * dt;
+          const speed = hypot3(n.vx, n.vy, n.vz);
+          if (speed > 7) {
+            const s = 7 / speed;
+            n.vx *= s;
+            n.vy *= s;
+            n.vz *= s;
+          }
+          n.x += n.vx * dt;
+          n.y += n.vy * dt;
+          n.z += n.vz * dt;
+        }
+        const compliance = mix(0.72, 0.1, state.firmness);
+        for (let iteration = 0; iteration < 5; iteration++) {
+          for (const c of piece.constraints) {
+            const a = piece.nodes[c.a],
+              b = piece.nodes[c.b],
+              dx = b.x - a.x,
+              dy = b.y - a.y,
+              dz = b.z - a.z,
+              len = hypot3(dx, dy, dz) || 1;
+            const maxLen = c.rest * 1.8;
+            const target = Math.min(len, maxLen);
+            const correction =
+              ((target - c.rest) * (1 - compliance) * 0.5) / len;
+            a.x += dx * correction;
+            a.y += dy * correction;
+            a.z += dz * correction;
+            b.x -= dx * correction;
+            b.y -= dy * correction;
+            b.z -= dz * correction;
+          }
+          let cx = 0,
+            cy = 0,
+            cz = 0;
+          for (const n of piece.nodes) {
+            cx += n.x;
+            cy += n.y;
+            cz += n.z;
+          }
+          cx /= piece.nodes.length;
+          cy /= piece.nodes.length;
+          cz /= piece.nodes.length;
+          let a = 0,
+            b = 0;
+          for (const n of piece.nodes) {
+            const rx = n.rx - piece.rcx,
+              rz = n.rz - piece.rcz;
+            a += rx * (n.x - cx) + rz * (n.z - cz);
+            b += rx * (n.z - cz) - rz * (n.x - cx);
+          }
+          const angle = Math.atan2(b, a),
+            co = Math.cos(angle),
+            si = Math.sin(angle),
+            shape = mix(0.018, 0.105, state.firmness);
+          for (const n of piece.nodes) {
+            const rx = n.rx - piece.rcx,
+              rz = n.rz - piece.rcz;
+            const tx = cx + rx * co - rz * si,
+              tz = cz + rx * si + rz * co;
+            n.x += (tx - n.x) * shape;
+            n.z += (tz - n.z) * shape;
+          }
+          if (state.grab?.piece === piece) {
+            const g = state.grab;
+            for (const index of g.indices) {
+              const n = piece.nodes[index],
+                weight =
+                  1 -
+                  clamp(Math.hypot(n.rx - g.rrx, n.rz - g.rrz) / 0.38, 0, 1);
+              n.x += (g.target[0] - g.offset[0] - n.x) * weight * 0.38;
+              n.y += (g.target[1] - g.offset[1] - n.y) * weight * 0.38;
+              n.z += (g.target[2] - g.offset[2] - n.z) * weight * 0.38;
+            }
+          }
+          for (const n of piece.nodes)
+            if (n.y < HALF_THICKNESS) {
+              n.y = HALF_THICKNESS;
+              n.x += (n.px - n.x) * 0.035;
+              n.z += (n.pz - n.z) * 0.035;
+            }
+        }
+        for (const n of piece.nodes) {
+          n.vx = ((n.x - n.px) / dt) * damp;
+          n.vy = ((n.y - n.py) / dt) * damp;
+          n.vz = ((n.z - n.pz) / dt) * damp;
+          if (n.y <= HALF_THICKNESS + 0.001) {
+            n.vx *= 0.91;
+            n.vz *= 0.91;
+            if (n.vy < 0) n.vy = 0;
+          }
+          if (!Number.isFinite(n.x + n.y + n.z + n.vx + n.vy + n.vz)) {
+            n.x = n.rx;
+            n.y = HALF_THICKNESS;
+            n.z = n.rz;
+            n.vx = n.vy = n.vz = 0;
+          }
+        }
+        piece.updateBounds();
+      }
+      function collidePieces() {
+        for (let i = 0; i < state.pieces.length; i++)
+          for (let j = i + 1; j < state.pieces.length; j++) {
+            const a = state.pieces[i],
+              b = state.pieces[j],
+              A = a.bounds,
+              B = b.bounds;
+            if (
+              A.maxX < B.minX ||
+              B.maxX < A.minX ||
+              A.maxZ < B.minZ ||
+              B.maxZ < A.minZ ||
+              A.maxY + HALF_THICKNESS < B.minY ||
+              B.maxY + HALF_THICKNESS < A.minY
+            )
+              continue;
+            let dx = B.cx - A.cx,
+              dz = B.cz - A.cz,
+              len = Math.hypot(dx, dz);
+            if (len < 0.001) {
+              dx = 1;
+              dz = 0;
+              len = 1;
+            }
+            const push = 0.004;
+            for (const n of a.nodes) {
+              n.x -= (dx / len) * push;
+              n.z -= (dz / len) * push;
+            }
+            for (const n of b.nodes) {
+              n.x += (dx / len) * push;
+              n.z += (dz / len) * push;
+            }
+          }
+      }
+      function step(dt) {
+        if (state.paused) return;
+        for (const piece of state.pieces) solvePiece(piece, dt);
+        collidePieces();
+        state.time += dt;
+      }
+      function shapeDistance(shape, x, y) {
+        const r = Math.hypot(x, y),
+          a = Math.atan2(y, x);
+        if (shape === 'round') return r - 1;
+        if (shape === 'flower') return r - (0.77 + 0.16 * Math.cos(a * 6));
+        if (shape === 'star') return r - (0.66 + 0.22 * Math.cos(a * 5));
+        const heartR = 0.72 - 0.16 * Math.sin(a) + 0.1 * Math.cos(a * 2);
+        return r - heartR;
+      }
+      function nearestNode(world, pieceFilter = null) {
+        let best = null,
+          bestD = Infinity;
+        for (const piece of state.pieces) {
+          if (pieceFilter && piece !== pieceFilter) continue;
+          for (let i = 0; i < piece.nodes.length; i++) {
+            const n = piece.nodes[i],
+              d =
+                Math.hypot(n.x - world[0], n.z - world[2]) +
+                0.18 * Math.abs(n.y - world[1]);
+            if (d < bestD) {
+              bestD = d;
+              best = { piece, index: i, node: n, d };
+            }
+          }
+        }
+        return best;
+      }
+      function cutPlan(from, to) {
+        const plans = [];
+        for (const piece of state.pieces) {
+          const a = nearestNode(from, piece),
+            b = nearestNode(to, piece);
+          if (!a || !b) continue;
+          const dx = b.node.rx - a.node.rx,
+            dz = b.node.rz - a.node.rz,
+            len = Math.hypot(dx, dz);
+          if (len < 0.22) continue;
+          const left = new Uint8Array(piece.mask.length),
+            right = new Uint8Array(piece.mask.length);
+          for (let z = 0; z < GRID_H; z++)
+            for (let x = 0; x < GRID_W; x++) {
+              const i = cellIndex(x, z);
+              if (!piece.mask[i]) continue;
+              const px = restX(x + 0.5),
+                pz = restZ(z + 0.5),
+                d = ((px - a.node.rx) * dz - (pz - a.node.rz) * dx) / len;
+              if (d < -0.025) left[i] = 1;
+              else if (d > 0.025) right[i] = 1;
+            }
+          const parts = [...components(left), ...components(right)];
+          if (parts.length > 1) plans.push({ piece, parts });
+        }
+        return plans;
+      }
+      function applyCut(from, to) {
+        const plans = cutPlan(from, to);
+        if (!plans.length) {
+          toast('Too thin to cut there.');
+          return false;
+        }
+        const added = plans.reduce((sum, p) => sum + p.parts.length - 1, 0);
+        if (state.pieces.length + added > MAX_PIECES) {
+          toast("That's plenty of pieces.");
+          return false;
+        }
+        const changed = new Set(plans.map((p) => p.piece)),
+          next = state.pieces.filter((p) => !changed.has(p));
+        for (const plan of plans)
+          for (const mask of plan.parts) next.push(new Piece(mask, plan.piece));
+        state.pieces = next;
+        state.topologyRevision++;
+        milestone('first-cut');
+        updateReadouts();
+        return true;
+      }
+      function stampPlan(world, shape = state.shape) {
+        const hit = nearestNode(world);
+        if (!hit || hit.d > 0.5)
+          return { error: 'Place the cutter over the jelly.' };
+        const piece = hit.piece;
+        if (piece.bounds.maxY - piece.bounds.minY > 0.2)
+          return { error: 'Lay that piece flat to stamp it.' };
+        const cx = hit.node.rx,
+          cz = hit.node.rz,
+          inside = new Uint8Array(piece.mask.length),
+          outside = new Uint8Array(piece.mask.length),
+          scale = 0.43;
+        for (let z = 0; z < GRID_H; z++)
+          for (let x = 0; x < GRID_W; x++) {
+            const i = cellIndex(x, z);
+            if (!piece.mask[i]) continue;
+            const d = shapeDistance(
+              shape,
+              (restX(x + 0.5) - cx) / scale,
+              (restZ(z + 0.5) - cz) / scale,
+            );
+            if (d < -0.075) inside[i] = 1;
+            else if (d > 0.075) outside[i] = 1;
+          }
+        const inner = components(inside),
+          outer = components(outside);
+        if (!inner.length) return { error: 'Place the cutter over the jelly.' };
+        return { piece, inner, outer, center: [cx, cz], shape };
+      }
+      function applyStamp(world, shape = state.shape) {
+        const plan = stampPlan(world, shape);
+        if (plan.error) {
+          toast(plan.error);
+          return false;
+        }
+        const parts = [...plan.outer, ...plan.inner];
+        const added = parts.length - 1;
+        if (state.pieces.length + added > MAX_PIECES) {
+          toast("That's plenty of pieces.");
+          return false;
+        }
+        state.pieces = state.pieces.filter((p) => p !== plan.piece);
+        for (let i = 0; i < parts.length; i++) {
+          const piece = new Piece(parts[i], plan.piece);
+          if (i >= plan.outer.length) for (const n of piece.nodes) n.vy += 0.72;
+          state.pieces.push(piece);
+        }
+        state.topologyRevision++;
+        milestone('first-stamp');
+        updateReadouts();
+        return true;
+      }
+      function mat4Perspective(fov, aspect, near, far, shiftX = 0) {
+        const f = 1 / Math.tan(fov / 2),
+          nf = 1 / (near - far),
+          m = new Float32Array(16);
+        m[0] = f / aspect;
+        m[5] = f;
+        m[8] = shiftX;
+        m[10] = (far + near) * nf;
+        m[11] = -1;
+        m[14] = 2 * far * near * nf;
+        return m;
+      }
+      function mat4LookAt(eye, target) {
+        let zx = eye[0] - target[0],
+          zy = eye[1] - target[1],
+          zz = eye[2] - target[2],
+          zl = hypot3(zx, zy, zz);
+        zx /= zl;
+        zy /= zl;
+        zz /= zl;
+        let xx = zz,
+          xz = -zx,
+          xl = Math.hypot(xx, xz);
+        xx /= xl;
+        xz /= xl;
+        const yx = zy * xz,
+          yz = -zy * xx,
+          yy = zz * xx - zx * xz;
+        const m = new Float32Array(16);
+        m[0] = xx;
+        m[1] = yx;
+        m[2] = zx;
+        m[4] = 0;
+        m[5] = yy;
+        m[6] = zy;
+        m[8] = xz;
+        m[9] = yz;
+        m[10] = zz;
+        m[12] = -(xx * eye[0] + xz * eye[2]);
+        m[13] = -(yx * eye[0] + yy * eye[1] + yz * eye[2]);
+        m[14] = -(zx * eye[0] + zy * eye[1] + zz * eye[2]);
+        m[15] = 1;
+        return m;
+      }
+      function mat4Multiply(a, b) {
+        const out = new Float32Array(16);
+        for (let c = 0; c < 4; c++)
+          for (let r = 0; r < 4; r++)
+            out[c * 4 + r] =
+              a[r] * b[c * 4] +
+              a[4 + r] * b[c * 4 + 1] +
+              a[8 + r] * b[c * 4 + 2] +
+              a[12 + r] * b[c * 4 + 3];
+        return out;
+      }
+      function cameraPose() {
+        const cp = Math.cos(camera.pitch),
+          sp = Math.sin(camera.pitch),
+          sy = Math.sin(camera.yaw),
+          cy = Math.cos(camera.yaw);
+        const eye = [
+          camera.target[0] + sy * cp * camera.distance,
+          camera.target[1] + sp * camera.distance,
+          camera.target[2] + cy * cp * camera.distance,
+        ];
+        const forward = [
+          camera.target[0] - eye[0],
+          camera.target[1] - eye[1],
+          camera.target[2] - eye[2],
+        ];
+        let fl = hypot3(...forward);
+        forward[0] /= fl;
+        forward[1] /= fl;
+        forward[2] /= fl;
+        const right = [forward[2], 0, -forward[0]];
+        let rl = Math.hypot(right[0], right[2]);
+        right[0] /= rl;
+        right[2] /= rl;
+        const up = [
+          right[2] * forward[1],
+          right[0] * forward[2] - right[2] * forward[0],
+          -right[0] * forward[1],
+        ];
+        return { eye, forward, right, up };
+      }
+      function screenRay(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect(),
+          nx = ((clientX - rect.left) / rect.width) * 2 - 1,
+          ny = 1 - ((clientY - rect.top) / rect.height) * 2,
+          { eye, forward, right, up } = cameraPose(),
+          tan = Math.tan(0.66 / 2),
+          aspect = rect.width / rect.height,
+          shift = rect.width > 860 ? -0.04 : 0;
+        const dx =
+            forward[0] +
+            right[0] * (nx - shift) * aspect * tan +
+            up[0] * ny * tan,
+          dy = forward[1] + up[1] * ny * tan,
+          dz =
+            forward[2] +
+            right[2] * (nx - shift) * aspect * tan +
+            up[2] * ny * tan,
+          l = hypot3(dx, dy, dz);
+        return { origin: eye, dir: [dx / l, dy / l, dz / l] };
+      }
+      function screenWorld(x, y, planeY = HALF_THICKNESS) {
+        const ray = screenRay(x, y),
+          t = (planeY - ray.origin[1]) / (ray.dir[1] || -0.001);
+        return [
+          ray.origin[0] + ray.dir[0] * t,
+          planeY,
+          ray.origin[2] + ray.dir[2] * t,
+        ];
+      }
+      function selectTool(tool, report = true) {
+        state.tool = tool;
+        canvas.dataset.tool = tool;
+        $('#hint').textContent = hints[tool];
+        document
+          .querySelectorAll('#tools button')
+          .forEach((b) =>
+            b.classList.toggle('active', b.dataset.tool === tool),
+          );
+        if (report) post('action', tool);
+      }
+      function selectShape(shape) {
+        state.shape = shape;
+        document
+          .querySelectorAll('#shapes button')
+          .forEach((b) =>
+            b.classList.toggle('active', b.dataset.shape === shape),
+          );
+        selectTool('cutter');
+      }
+      function pointerWorld(event, plane = HALF_THICKNESS) {
+        const world = screenWorld(event.clientX, event.clientY, plane);
+        state.pointer.x = event.clientX;
+        state.pointer.y = event.clientY;
+        state.pointer.world = world;
+        state.pointer.visible = true;
+        return world;
+      }
+      function startKnife(event) {
+        const world = pointerWorld(event);
+        state.gesture = {
+          type: 'knife',
+          startX: event.clientX,
+          startY: event.clientY,
+          startWorld: world,
+          lastWorld: world,
+          moved: false,
+        };
+        cutLine.setAttribute('x1', event.clientX);
+        cutLine.setAttribute('y1', event.clientY);
+        cutLine.setAttribute('x2', event.clientX);
+        cutLine.setAttribute('y2', event.clientY);
+        cutGuide.classList.add('visible');
+      }
+      function startGrab(event) {
+        const world = pointerWorld(event),
+          hit = nearestNode(world);
+        if (!hit || hit.d > 0.42) {
+          startOrbit(event);
+          return;
+        }
+        const indices = [];
+        for (let i = 0; i < hit.piece.nodes.length; i++) {
+          const n = hit.piece.nodes[i];
+          if (Math.hypot(n.rx - hit.node.rx, n.rz - hit.node.rz) < 0.38)
+            indices.push(i);
+        }
+        state.grab = {
+          piece: hit.piece,
+          indices,
+          rrx: hit.node.rx,
+          rrz: hit.node.rz,
+          target: [hit.node.x, hit.node.y, hit.node.z],
+          offset: [0, 0, 0],
+          startX: event.clientX,
+          startY: event.clientY,
+          startYWorld: hit.node.y,
+          lastTarget: [hit.node.x, hit.node.y, hit.node.z],
+        };
+        canvas.classList.add('is-dragging');
+        milestone('first-grab');
+      }
+      function startOrbit(event) {
+        state.gesture = {
+          type: 'orbit',
+          startX: event.clientX,
+          startY: event.clientY,
+          lastX: event.clientX,
+          lastY: event.clientY,
+          moved: false,
+        };
+        canvas.classList.add('is-dragging');
+      }
+      function startCutter(event) {
+        pointerWorld(event);
+        state.gesture = {
+          type: 'cutter',
+          startX: event.clientX,
+          startY: event.clientY,
+          lastX: event.clientX,
+          lastY: event.clientY,
+          moved: false,
+        };
+      }
+      canvas.addEventListener('pointerdown', (event) => {
+        if (!state.available || state.animation) return;
+        canvas.setPointerCapture(event.pointerId);
+        if (state.tool === 'hand') startGrab(event);
+        else if (state.tool === 'knife') startKnife(event);
+        else startCutter(event);
+      });
+      canvas.addEventListener('pointermove', (event) => {
+        const plane = state.grab?.startYWorld ?? HALF_THICKNESS;
+        pointerWorld(event, plane);
+        if (state.grab) {
+          const g = state.grab,
+            world = screenWorld(event.clientX, event.clientY, g.startYWorld),
+            lift = clamp((g.startY - event.clientY) * 0.006, -0.05, 1.45);
+          g.target = [
+            world[0],
+            Math.max(HALF_THICKNESS, g.startYWorld + lift),
+            world[2],
+          ];
+        } else if (state.gesture?.type === 'knife') {
+          state.gesture.lastWorld = state.pointer.world;
+          state.gesture.moved ||=
+            Math.hypot(
+              event.clientX - state.gesture.startX,
+              event.clientY - state.gesture.startY,
+            ) > 5;
+          cutLine.setAttribute('x2', event.clientX);
+          cutLine.setAttribute('y2', event.clientY);
+        } else if (
+          state.gesture?.type === 'orbit' ||
+          state.gesture?.type === 'cutter'
+        ) {
+          const g = state.gesture,
+            dx = event.clientX - g.lastX,
+            dy = event.clientY - g.lastY;
+          if (
+            Math.hypot(event.clientX - g.startX, event.clientY - g.startY) > 8
+          )
+            g.moved = true;
+          if (g.moved) {
+            camera.yaw = clamp(camera.yaw - dx * 0.006, -0.8, 0.8);
+            camera.pitch = clamp(camera.pitch - dy * 0.005, 0.5, 1.22);
+          }
+          g.lastX = event.clientX;
+          g.lastY = event.clientY;
+        }
+      });
+      canvas.addEventListener('pointerup', (event) => {
+        if (state.grab) {
+          const g = state.grab,
+            dx = g.target[0] - g.lastTarget[0],
+            dy = g.target[1] - g.lastTarget[1],
+            dz = g.target[2] - g.lastTarget[2];
+          for (const i of g.indices) {
+            const n = g.piece.nodes[i];
+            n.vx += dx * 18;
+            n.vy += dy * 18;
+            n.vz += dz * 18;
+          }
+          state.grab = null;
+        } else if (state.gesture?.type === 'knife') {
+          const g = state.gesture;
+          cutGuide.classList.remove('visible');
+          if (g.moved && cutPlan(g.startWorld, g.lastWorld).length)
+            state.animation = {
+              type: 'knife',
+              time: 0,
+              duration: reducedMotion ? 0.42 : 1.1,
+              from: g.startWorld,
+              to: g.lastWorld,
+              committed: false,
+            };
+          else toast('Too thin to cut there.');
+        } else if (state.gesture?.type === 'cutter') {
+          const g = state.gesture;
+          if (g.moved) {
+          } else {
+            const plan = stampPlan(state.pointer.world);
+            if (plan.error) toast(plan.error);
+            else
+              state.animation = {
+                type: 'cutter',
+                time: 0,
+                duration: reducedMotion ? 0.42 : 1.08,
+                world: [...state.pointer.world],
+                shape: state.shape,
+                committed: false,
+              };
+          }
+        }
+        state.gesture = null;
+        canvas.classList.remove('is-dragging');
+      });
+      canvas.addEventListener('pointercancel', () => {
+        state.grab = null;
+        state.gesture = null;
+        cutGuide.classList.remove('visible');
+        canvas.classList.remove('is-dragging');
+      });
+      canvas.addEventListener(
+        'wheel',
+        (event) => {
+          event.preventDefault();
+          if (state.grab) {
+            const center = state.grab.target,
+              angle = -event.deltaY * 0.0015,
+              co = Math.cos(angle),
+              si = Math.sin(angle);
+            for (const i of state.grab.indices) {
+              const n = state.grab.piece.nodes[i],
+                x = n.x - center[0],
+                z = n.z - center[2];
+              n.x = center[0] + x * co - z * si;
+              n.z = center[2] + x * si + z * co;
+            }
+          } else
+            camera.distance = clamp(
+              camera.distance + event.deltaY * 0.0038,
+              4.4,
+              7.2,
+            );
+        },
+        { passive: false },
+      );
+      canvas.addEventListener('dblclick', () => {
+        camera.yaw = 0;
+        camera.pitch = 0.91;
+        camera.distance = 6.35;
+        camera.desired = [0, 0.12, 0.72];
+      });
+      function advanceAnimation(dt) {
+        const a = state.animation;
+        if (!a) return;
+        a.time += dt;
+        const p = a.time / a.duration;
+        if (!a.committed && p >= 0.43) {
+          a.committed = true;
+          if (a.type === 'knife') applyCut(a.from, a.to);
+          else applyStamp(a.world, a.shape);
+        }
+        if (p >= 1) {
+          if (a.type === 'cutter') selectTool('hand', false);
+          state.animation = null;
+        }
+      }
+      document
+        .querySelectorAll('#tools button')
+        .forEach((button) =>
+          button.addEventListener('click', () =>
+            selectTool(button.dataset.tool),
+          ),
+        );
+      document
+        .querySelectorAll('#shapes button')
+        .forEach((button) =>
+          button.addEventListener('click', () =>
+            selectShape(button.dataset.shape),
+          ),
+        );
+      document.querySelectorAll('#varieties button').forEach((button) =>
+        button.addEventListener('click', () => {
+          state.variety = button.dataset.variety;
+          document
+            .querySelectorAll('#varieties button')
+            .forEach((b) => b.classList.toggle('active', b === button));
+          post('action', 'variety');
+        }),
+      );
+      $('#firmness').addEventListener('input', (event) => {
+        state.firmness = event.target.value / 100;
+        $('#firmnessValue').textContent = `${event.target.value}%`;
+      });
+      $('#damping').addEventListener('input', (event) => {
+        state.damping = event.target.value / 100;
+        $('#dampingValue').textContent = `${event.target.value}%`;
+      });
+      $('#slow').addEventListener(
+        'change',
+        (event) => (state.slow = event.target.checked),
+      );
+      $('#mesh').addEventListener(
+        'change',
+        (event) => (state.showMesh = event.target.checked),
+      );
+      $('#nudge').addEventListener('click', () => {
+        for (const piece of state.pieces)
+          for (const n of piece.nodes) {
+            n.vx += (Math.random() - 0.5) * 0.8;
+            n.vy += 0.6 + Math.random() * 0.35;
+            n.vz += (Math.random() - 0.5) * 0.55;
+          }
+        post('action', 'nudge');
+      });
+      $('#reset').addEventListener('click', () => {
+        resetWorld();
+        post('action', 'reset');
+      });
+      function togglePause() {
+        state.paused = !state.paused;
+        $('#pause').textContent = state.paused ? 'Resume' : 'Pause';
+        setStatus(
+          state.paused ? 'paused' : 'live',
+          state.paused ? 'paused' : 'live',
+        );
+        post('action', 'pause');
+      }
+      $('#pause').addEventListener('click', togglePause);
+      addEventListener('keydown', (event) => {
+        if (event.target.matches('input,button,summary')) return;
+        const key = event.key.toLowerCase();
+        if (event.code === 'Space') {
+          event.preventDefault();
+          togglePause();
+        } else if (key === 'n') $('#nudge').click();
+        else if (key === 'r') $('#reset').click();
+        else if (key === 'h') selectTool('hand');
+        else if (key === 'k') selectTool('knife');
+        else if (key === 'c') selectTool('cutter');
+        else if (['1', '2', '3', '4'].includes(key))
+          selectShape(['star', 'heart', 'flower', 'round'][+key - 1]);
+      });
+      function updateReadouts() {
+        let cells = 0,
+          energy = 0,
+          height = 0,
+          nodes = 0;
+        for (const piece of state.pieces) {
+          cells += cellCount(piece.mask);
+          for (const n of piece.nodes) {
+            energy += (n.vx * n.vx + n.vy * n.vy + n.vz * n.vz) * 0.5;
+            height += Math.max(0, n.y - HALF_THICKNESS);
+            nodes++;
+          }
+        }
+        const base = cellCount(initialMask());
+        $('#mass').textContent = `≈ ${Math.round((164 * cells) / base)} g`;
+        $('#volume').textContent =
+          `${Math.round((cells / base) * 100)}% of rest`;
+        $('#kinetic').textContent = `${(energy * 0.018).toFixed(1)} µJ`;
+        $('#pieces').textContent = `${state.pieces.length} / ${MAX_PIECES}`;
+      }
+      const WGSL = `
+        struct Uniforms { viewProj: mat4x4<f32>, flesh: vec4f, rind: vec4f, pith: vec4f, params: vec4f }
+        @group(0) @binding(0) var<uniform> u: Uniforms;
+        struct VIn { @location(0) pos: vec3f, @location(1) normal: vec3f, @location(2) rest: vec2f, @location(3) kind: f32, @location(4) alpha: f32 }
+        struct VOut { @builtin(position) position: vec4f, @location(0) world: vec3f, @location(1) normal: vec3f, @location(2) rest: vec2f, @location(3) kind: f32, @location(4) alpha: f32 }
+        @vertex fn vs(input: VIn) -> VOut { var o:VOut; o.position=u.viewProj*vec4f(input.pos,1);o.world=input.pos;o.normal=input.normal;o.rest=input.rest;o.kind=input.kind;o.alpha=input.alpha;return o; }
+        fn hash(p:vec2f)->f32{return fract(sin(dot(p,vec2f(127.1,311.7)))*43758.5453);}
+        @fragment fn fs(input: VOut)->@location(0) vec4f {
+          let n=normalize(input.normal);let l=normalize(vec3f(-.42,.88,.28));let v=normalize(vec3f(0,1.2,2.8)-input.world);let ndl=max(dot(n,l),0.0);
+          if(input.kind>.5&&input.kind<1.5){let grain=hash(floor(input.world.xz*22.0))*.012;return vec4f(vec3f(.949,.925,.886)-grain,1);}
+          if(input.kind>1.5&&input.kind<2.5){let stripe=.06*sin(input.world.x*95.0);let spec=pow(max(dot(reflect(-l,n),v),0.0),42.0);return vec4f(vec3f(.57+.23*ndl+stripe+spec*.55),1);}
+          if(input.kind>2.5&&input.kind<3.5){let wood=.08*sin(input.world.x*27.0+sin(input.world.z*11.0));return vec4f(.34+wood,.19+wood*.5,.1,1);}
+          if(input.kind>3.5){let spec=pow(max(dot(reflect(-l,n),v),0.0),36.0);return vec4f(vec3f(.55+.25*ndl+spec*.5),1);}
+          let r=length(input.rest);let angle=atan2(input.rest.x,max(input.rest.y,.001));let membrane=abs(sin(angle*5.0));var color=u.flesh;var milk=0.0;
+          if(r>1.42){color=u.rind;}else if(r>1.28||r<.16||membrane<.075||input.rest.y<.055){color=u.pith;milk=1.0;}
+          let pore=smoothstep(.93,1.0,hash(floor(input.rest*78.0)))*select(.025,.09,r>1.42);color.rgb-=pore;
+          let fres=pow(1.0-max(dot(n,v),0.0),3.0);let spec=pow(max(dot(reflect(-l,n),v),0.0),54.0);let ves=.035*sin(r*64.0+angle*13.0);
+          var rgb=color.rgb*(.48+.52*ndl)+vec3f(1,.72,.38)*(fres*.2+spec*.72)+ves*(1.0-milk);
+          rgb=mix(rgb,vec3f(.99,.9,.68),milk*.3);let alpha=clamp(color.a+fres*.12,0.0,1.0)*input.alpha;
+          if(u.params.y>.5){let lines=step(.965,abs(sin(input.rest.x*54.0))*abs(sin(input.rest.y*54.0)));rgb=mix(rgb,vec3f(.18),lines*.32);}
+          let dither=(hash(input.position.xy)-.5)/255.0;return vec4f(rgb+dither,alpha);
+        }`;
+      let gpu = {
+        adapter: null,
+        device: null,
+        context: null,
+        pipeline: null,
+        uniform: null,
+        bind: null,
+        vertices: null,
+        indices: null,
+        depth: null,
+        msaa: null,
+        format: null,
+        rebuilds: 0,
+      };
+      async function initGPU(recovery = false) {
+        try {
+          if (new URLSearchParams(location.search).has('forceWebGPUFallback'))
+            throw new Error('Fallback forced by the test query.');
+          if (!navigator.gpu)
+            throw new Error(
+              'navigator.gpu is not available in this browser context.',
+            );
+          setStatus('recovering', recovery ? 'recovering' : 'preparing');
+          gpu.adapter = await navigator.gpu.requestAdapter({
+            powerPreference: 'high-performance',
+          });
+          if (!gpu.adapter)
+            throw new Error('No compatible WebGPU adapter was found.');
+          gpu.device = await gpu.adapter.requestDevice();
+          gpu.context = canvas.getContext('webgpu');
+          gpu.format = navigator.gpu.getPreferredCanvasFormat();
+          gpu.context.configure({
+            device: gpu.device,
+            format: gpu.format,
+            alphaMode: 'premultiplied',
+          });
+          const module = gpu.device.createShaderModule({
+            label: 'Citrus Jelly material',
+            code: WGSL,
+          });
+          const info = await module.getCompilationInfo();
+          const failures = info.messages.filter((m) => m.type === 'error');
+          if (failures.length)
+            throw new Error(
+              failures
+                .map((m) => `${m.lineNum}:${m.linePos} ${m.message}`)
+                .join('\n'),
+            );
+          gpu.pipeline = gpu.device.createRenderPipeline({
+            label: 'Citrus Jelly scene',
+            layout: 'auto',
+            vertex: {
+              module,
+              entryPoint: 'vs',
+              buffers: [
+                {
+                  arrayStride: STRIDE * 4,
+                  attributes: [
+                    { shaderLocation: 0, offset: 0, format: 'float32x3' },
+                    { shaderLocation: 1, offset: 12, format: 'float32x3' },
+                    { shaderLocation: 2, offset: 24, format: 'float32x2' },
+                    { shaderLocation: 3, offset: 32, format: 'float32' },
+                    { shaderLocation: 4, offset: 36, format: 'float32' },
+                  ],
+                },
+              ],
+            },
+            fragment: {
+              module,
+              entryPoint: 'fs',
+              targets: [
+                {
+                  format: gpu.format,
+                  blend: {
+                    color: {
+                      srcFactor: 'src-alpha',
+                      dstFactor: 'one-minus-src-alpha',
+                      operation: 'add',
+                    },
+                    alpha: {
+                      srcFactor: 'one',
+                      dstFactor: 'one-minus-src-alpha',
+                      operation: 'add',
+                    },
+                  },
+                },
+              ],
+            },
+            primitive: { topology: 'triangle-list', cullMode: 'none' },
+            depthStencil: {
+              format: 'depth24plus',
+              depthWriteEnabled: true,
+              depthCompare: 'less',
+            },
+            multisample: { count: 4 },
+          });
+          gpu.uniform = gpu.device.createBuffer({
+            size: 128,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+          });
+          gpu.vertices = gpu.device.createBuffer({
+            size: vertexScratch.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          gpu.indices = gpu.device.createBuffer({
+            size: indexScratch.byteLength,
+            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+          });
+          gpu.bind = gpu.device.createBindGroup({
+            layout: gpu.pipeline.getBindGroupLayout(0),
+            entries: [{ binding: 0, resource: { buffer: gpu.uniform } }],
+          });
+          gpu.device.lost.then((info) => {
+            if (info.reason === 'destroyed' && !state.available) return;
+            if (gpu.rebuilds < 2) {
+              gpu.rebuilds++;
+              initGPU(true);
+            } else
+              setUnavailable(
+                'The graphics device was lost repeatedly. Reload the page after checking your browser or graphics driver.',
+                `${info.reason}: ${info.message}`,
+              );
+          });
+          resizeGPU();
+          fallback.classList.remove('visible');
+          state.available = true;
+          state.ready = true;
+          setControlsEnabled(true);
+          setStatus(
+            state.paused ? 'paused' : 'live',
+            state.paused ? 'paused' : 'live',
+          );
+          post('ready');
+        } catch (error) {
+          setUnavailable(
+            'Open this study in a current Chrome, Edge, or other WebGPU-enabled browser over HTTPS. The jelly simulation uses modern GPU rendering that this context cannot provide.',
+            String(error?.message || error),
+          );
+          state.ready = true;
+          post('ready');
+        }
+      }
+      function resizeGPU() {
+        if (!gpu.device) return;
+        const dpr = Math.min(devicePixelRatio || 1, 1.5),
+          w = Math.max(2, Math.floor(canvas.clientWidth * dpr)),
+          h = Math.max(2, Math.floor(canvas.clientHeight * dpr));
+        if (canvas.width === w && canvas.height === h && gpu.depth) return;
+        canvas.width = w;
+        canvas.height = h;
+        gpu.depth?.destroy();
+        gpu.msaa?.destroy();
+        gpu.depth = gpu.device.createTexture({
+          size: [w, h],
+          sampleCount: 4,
+          format: 'depth24plus',
+          usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        gpu.msaa = gpu.device.createTexture({
+          size: [w, h],
+          sampleCount: 4,
+          format: gpu.format,
+          usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+      }
+      function writeVertex(
+        cursor,
+        x,
+        y,
+        z,
+        nx,
+        ny,
+        nz,
+        rx,
+        rz,
+        kind,
+        alpha = 1,
+      ) {
+        const o = cursor * STRIDE;
+        vertexScratch[o] = x;
+        vertexScratch[o + 1] = y;
+        vertexScratch[o + 2] = z;
+        vertexScratch[o + 3] = nx;
+        vertexScratch[o + 4] = ny;
+        vertexScratch[o + 5] = nz;
+        vertexScratch[o + 6] = rx;
+        vertexScratch[o + 7] = rz;
+        vertexScratch[o + 8] = kind;
+        vertexScratch[o + 9] = alpha;
+        return cursor + 1;
+      }
+      function buildSceneMesh() {
+        let vc = 0,
+          ic = 0;
+        const quad = (a, b, c, d) => {
+          indexScratch[ic++] = a;
+          indexScratch[ic++] = b;
+          indexScratch[ic++] = c;
+          indexScratch[ic++] = a;
+          indexScratch[ic++] = c;
+          indexScratch[ic++] = d;
+        };
+        let base = vc;
+        vc = writeVertex(vc, -9, -0.02, -7, 0, 1, 0, 0, 0, 1);
+        vc = writeVertex(vc, 9, -0.02, -7, 0, 1, 0, 0, 0, 1);
+        vc = writeVertex(vc, 9, -0.02, 9, 0, 1, 0, 0, 0, 1);
+        vc = writeVertex(vc, -9, -0.02, 9, 0, 1, 0, 0, 0, 1);
+        quad(base, base + 1, base + 2, base + 3);
+        for (const piece of state.pieces)
+          for (let z = 0; z < GRID_H; z++)
+            for (let x = 0; x < GRID_W; x++) {
+              if (!piece.mask[cellIndex(x, z)]) continue;
+              const ids = [
+                  piece.nodeMap[nodeKey(x, z)],
+                  piece.nodeMap[nodeKey(x + 1, z)],
+                  piece.nodeMap[nodeKey(x + 1, z + 1)],
+                  piece.nodeMap[nodeKey(x, z + 1)],
+                ],
+                nodes = ids.map((i) => piece.nodes[i]);
+              base = vc;
+              for (const n of nodes)
+                vc = writeVertex(
+                  vc,
+                  n.x,
+                  n.y + HALF_THICKNESS,
+                  n.z,
+                  0,
+                  1,
+                  0,
+                  n.rx,
+                  n.rz,
+                  0,
+                  0.84,
+                );
+              quad(base, base + 1, base + 2, base + 3);
+              base = vc;
+              for (let k = 3; k >= 0; k--) {
+                const n = nodes[k];
+                vc = writeVertex(
+                  vc,
+                  n.x,
+                  n.y - HALF_THICKNESS,
+                  n.z,
+                  0,
+                  -1,
+                  0,
+                  n.rx,
+                  n.rz,
+                  0,
+                  0.9,
+                );
+              }
+              quad(base, base + 1, base + 2, base + 3);
+              const sides = [
+                [0, 1, 0, -1, 0],
+                [1, 2, 1, 0, 0],
+                [2, 3, 0, 1, 0],
+                [3, 0, -1, 0, 0],
+              ];
+              for (let s = 0; s < 4; s++) {
+                const nx = x + (s === 1 ? 1 : s === 3 ? -1 : 0),
+                  nz = z + (s === 2 ? 1 : s === 0 ? -1 : 0);
+                if (
+                  nx >= 0 &&
+                  nx < GRID_W &&
+                  nz >= 0 &&
+                  nz < GRID_H &&
+                  piece.mask[cellIndex(nx, nz)]
+                )
+                  continue;
+                const [ia, ib, nnx, nnz] = sides[s],
+                  a = nodes[ia],
+                  b = nodes[ib];
+                base = vc;
+                vc = writeVertex(
+                  vc,
+                  a.x,
+                  a.y - HALF_THICKNESS,
+                  a.z,
+                  nnx,
+                  0,
+                  nnz,
+                  a.rx,
+                  a.rz,
+                  0,
+                  0.93,
+                );
+                vc = writeVertex(
+                  vc,
+                  b.x,
+                  b.y - HALF_THICKNESS,
+                  b.z,
+                  nnx,
+                  0,
+                  nnz,
+                  b.rx,
+                  b.rz,
+                  0,
+                  0.93,
+                );
+                vc = writeVertex(
+                  vc,
+                  b.x,
+                  b.y + HALF_THICKNESS,
+                  b.z,
+                  nnx,
+                  0,
+                  nnz,
+                  b.rx,
+                  b.rz,
+                  0,
+                  0.9,
+                );
+                vc = writeVertex(
+                  vc,
+                  a.x,
+                  a.y + HALF_THICKNESS,
+                  a.z,
+                  nnx,
+                  0,
+                  nnz,
+                  a.rx,
+                  a.rz,
+                  0,
+                  0.9,
+                );
+                quad(base, base + 1, base + 2, base + 3);
+              }
+            }
+        const addBox = (cx, cy, cz, sx, sy, sz, angle, kind) => {
+          const co = Math.cos(angle),
+            si = Math.sin(angle),
+            points = [
+              [-sx, -sy, -sz],
+              [sx, -sy, -sz],
+              [sx, sy, -sz],
+              [-sx, sy, -sz],
+              [-sx, -sy, sz],
+              [sx, -sy, sz],
+              [sx, sy, sz],
+              [-sx, sy, sz],
+            ],
+            faces = [
+              [0, 1, 2, 3, 0, 0, -1],
+              [5, 4, 7, 6, 0, 0, 1],
+              [4, 0, 3, 7, -1, 0, 0],
+              [1, 5, 6, 2, 1, 0, 0],
+              [3, 2, 6, 7, 0, 1, 0],
+              [4, 5, 1, 0, 0, -1, 0],
+            ];
+          for (const f of faces) {
+            base = vc;
+            for (let q = 0; q < 4; q++) {
+              const p = points[f[q]],
+                wx = cx + p[0] * co - p[2] * si,
+                wz = cz + p[0] * si + p[2] * co,
+                nx = f[4] * co - f[6] * si,
+                nz = f[4] * si + f[6] * co;
+              vc = writeVertex(vc, wx, cy + p[1], wz, nx, f[5], nz, 0, 0, kind);
+            }
+            quad(base, base + 1, base + 2, base + 3);
+          }
+        };
+        const a = state.animation;
+        if (
+          a?.type === 'knife' ||
+          (state.tool === 'knife' && state.pointer.visible)
+        ) {
+          const from = a?.from ?? [
+              state.pointer.world[0] - 0.45,
+              HALF_THICKNESS,
+              state.pointer.world[2],
+            ],
+            to = a?.to ?? [
+              state.pointer.world[0] + 0.45,
+              HALF_THICKNESS,
+              state.pointer.world[2],
+            ],
+            dx = to[0] - from[0],
+            dz = to[2] - from[2],
+            len = Math.max(0.8, Math.hypot(dx, dz)),
+            angle = Math.atan2(dz, dx),
+            p = a ? clamp(a.time / a.duration, 0, 1) : 0,
+            lift = a ? Math.abs(p - 0.5) * 1.1 + 0.34 : 0.78,
+            cx = (from[0] + to[0]) / 2,
+            cz = (from[2] + to[2]) / 2;
+          addBox(cx, lift, cz, len / 2, 0.32, 0.035, angle, 2);
+          addBox(
+            cx - Math.cos(angle) * (len / 2 + 0.28),
+            lift + 0.08,
+            cz - Math.sin(angle) * (len / 2 + 0.28),
+            0.28,
+            0.08,
+            0.065,
+            angle,
+            3,
+          );
+        }
+        if (
+          (state.tool === 'cutter' && state.pointer.visible) ||
+          a?.type === 'cutter'
+        ) {
+          const center = a?.world ?? state.pointer.world,
+            shape = a?.shape ?? state.shape,
+            p = a ? clamp(a.time / a.duration, 0, 1) : 0,
+            y = a
+              ? mix(0.95, 0.35, Math.sin((Math.min(1, p) * Math.PI) / 2))
+              : 0.72,
+            points = [];
+          for (let i = 0; i < 40; i++) {
+            const ang = (i / 40) * TAU,
+              r =
+                shape === 'round'
+                  ? 1
+                  : shape === 'flower'
+                    ? 0.77 + 0.16 * Math.cos(ang * 6)
+                    : shape === 'star'
+                      ? 0.66 + 0.22 * Math.cos(ang * 5)
+                      : 0.72 - 0.16 * Math.sin(ang) + 0.1 * Math.cos(ang * 2);
+            points.push([
+              center[0] + Math.cos(ang) * r * 0.43,
+              center[2] + Math.sin(ang) * r * 0.43,
+            ]);
+          }
+          for (let i = 0; i < points.length; i++) {
+            const p0 = points[i],
+              p1 = points[(i + 1) % points.length],
+              mx = (p0[0] + p1[0]) / 2,
+              mz = (p0[1] + p1[1]) / 2,
+              len = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]),
+              angle = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]);
+            addBox(mx, y, mz, len / 2, 0.24, 0.018, angle, 4);
+          }
+        }
+        return { vertices: vc, indices: ic };
+      }
+      function render() {
+        if (!state.available || !gpu.device) return;
+        resizeGPU();
+        const mesh = buildSceneMesh(),
+          aspect = canvas.width / canvas.height,
+          shift = canvas.clientWidth > 860 ? -0.04 : 0,
+          pose = cameraPose(),
+          vp = mat4Multiply(
+            mat4Perspective(0.66, aspect, 0.1, 30, shift),
+            mat4LookAt(pose.eye, camera.target),
+          ),
+          uniform = new Float32Array(32),
+          palette = varieties[state.variety];
+        uniform.set(vp, 0);
+        uniform.set(palette.flesh, 16);
+        uniform.set(palette.rind, 20);
+        uniform.set(palette.pith, 24);
+        uniform.set(
+          [state.time, state.showMesh ? 1 : 0, canvas.width, canvas.height],
+          28,
+        );
+        gpu.device.queue.writeBuffer(gpu.uniform, 0, uniform);
+        gpu.device.queue.writeBuffer(
+          gpu.vertices,
+          0,
+          vertexScratch,
+          0,
+          mesh.vertices * STRIDE,
+        );
+        gpu.device.queue.writeBuffer(
+          gpu.indices,
+          0,
+          indexScratch,
+          0,
+          mesh.indices,
+        );
+        const encoder = gpu.device.createCommandEncoder(),
+          pass = encoder.beginRenderPass({
+            colorAttachments: [
+              {
+                view: gpu.msaa.createView(),
+                resolveTarget: gpu.context.getCurrentTexture().createView(),
+                clearValue: { r: 0.949, g: 0.925, b: 0.886, a: 1 },
+                loadOp: 'clear',
+                storeOp: 'discard',
+              },
+            ],
+            depthStencilAttachment: {
+              view: gpu.depth.createView(),
+              depthClearValue: 1,
+              depthLoadOp: 'clear',
+              depthStoreOp: 'discard',
+            },
+          });
+        pass.setPipeline(gpu.pipeline);
+        pass.setBindGroup(0, gpu.bind);
+        pass.setVertexBuffer(0, gpu.vertices);
+        pass.setIndexBuffer(gpu.indices, 'uint32');
+        pass.drawIndexed(mesh.indices);
+        pass.end();
+        gpu.device.queue.submit([encoder.finish()]);
+      }
+      function frame(now) {
+        requestAnimationFrame(frame);
+        if (!state.last) state.last = now;
+        let dt = Math.min(0.05, (now - state.last) / 1000);
+        state.last = now;
+        if (state.slow) dt *= 0.25;
+        state.accumulator += dt;
+        while (state.accumulator >= 1 / 60) {
+          step(1 / 60);
+          advanceAnimation(1 / 60);
+          state.accumulator -= 1 / 60;
+        }
+        const follow = state.pieces.reduce(
+          (best, p) => {
+            let speed = 0;
+            for (const n of p.nodes) speed += Math.hypot(n.vx, n.vz);
+            return speed / p.nodes.length > best.speed
+              ? {
+                  speed: speed / p.nodes.length,
+                  x: p.bounds.cx,
+                  z: p.bounds.cz,
+                }
+              : best;
+          },
+          { speed: 0, x: 0, z: 0.72 },
+        );
+        if (!state.grab && !reducedMotion && follow.speed > 0.5) {
+          camera.desired[0] = clamp(follow.x, -0.55, 0.55);
+          camera.desired[2] = clamp(follow.z, 0.35, 1.15);
+        }
+        camera.target[0] = mix(camera.target[0], camera.desired[0], 0.035);
+        camera.target[2] = mix(camera.target[2], camera.desired[2], 0.035);
+        if ((now | 0) % 220 < 18) updateReadouts();
+        render();
+      }
+      const testHook = {
+        get sim() {
+          return {
+            paused: state.paused,
+            slow: state.slow,
+            pieces: state.pieces.length,
+            time: state.time,
+            revision: state.topologyRevision,
+            available: state.available,
+          };
+        },
+        get camera() {
+          return { ...camera, target: [...camera.target] };
+        },
+        pick(x, y) {
+          const world = screenWorld(x, y),
+            hit = nearestNode(world);
+          return hit
+            ? { piece: hit.piece.id, node: hit.index, distance: hit.d, world }
+            : null;
+        },
+        planCut(stroke) {
+          const from = [stroke.from[0], HALF_THICKNESS, stroke.from[1]],
+            to = [stroke.to[0], HALF_THICKNESS, stroke.to[1]];
+          const plans = cutPlan(from, to);
+          return {
+            crossed: plans.length,
+            resultPieces:
+              state.pieces.length +
+              plans.reduce((n, p) => n + p.parts.length - 1, 0),
+          };
+        },
+        startCut(stroke) {
+          const from = [stroke.from[0], HALF_THICKNESS, stroke.from[1]],
+            to = [stroke.to[0], HALF_THICKNESS, stroke.to[1]];
+          state.animation = {
+            type: 'knife',
+            time: 0,
+            duration: reducedMotion ? 0.42 : 1.1,
+            from,
+            to,
+            committed: false,
+          };
+          return true;
+        },
+        planStamp(shape, transform) {
+          const world = [
+              transform.center[0],
+              HALF_THICKNESS,
+              transform.center[1],
+            ],
+            plan = stampPlan(world, shape);
+          return plan.error
+            ? { error: plan.error }
+            : { parts: plan.inner.length + plan.outer.length };
+        },
+        startStamp(shape, transform) {
+          state.animation = {
+            type: 'cutter',
+            time: 0,
+            duration: reducedMotion ? 0.42 : 1.08,
+            world: [transform.center[0], HALF_THICKNESS, transform.center[1]],
+            shape,
+            committed: false,
+          };
+          return true;
+        },
+        advance(seconds) {
+          const steps = Math.ceil(seconds * 60);
+          for (let i = 0; i < steps; i++) {
+            step(1 / 60);
+            advanceAnimation(1 / 60);
+          }
+          render();
+          return this.sim;
+        },
+        reset() {
+          resetWorld();
+        },
+        stats() {
+          return state.pieces.map((piece) => ({
+            id: piece.id,
+            cells: cellCount(piece.mask),
+            particles: piece.nodes.length,
+            constraints: piece.constraints.length,
+            finite: piece.nodes.every((n) =>
+              Number.isFinite(n.x + n.y + n.z + n.vx + n.vy + n.vz),
+            ),
+            minY: piece.bounds.minY,
+            maxY: piece.bounds.maxY,
+          }));
+        },
+        forceDeviceLoss() {
+          gpu.device?.destroy();
+        },
+      };
+      window.citrusJellyTest = testHook;
+      resetWorld();
+      setControlsEnabled(false);
+      selectTool('hand', false);
+      requestAnimationFrame(frame);
+      initGPU();
+    </script>
+  </body>
+</html>

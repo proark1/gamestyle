@@ -539,6 +539,16 @@
   background: #f3ddae;
   color: #5b6247;
 }
+.citrus-jelly-card .game-card-tag {
+  background: #fff0c8;
+  color: #8b481c;
+}
+.citrus-jelly-card .game-title-dot {
+  color: #ee7f24;
+}
+.citrus-jelly-card .game-card-art {
+  background: #f2ece2;
+}
 .button-card .game-card-tag {
   background: #f8d9aa;
   color: #9f4936;

@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import {
   GAME_IDS,
   PARTY_EXCLUDED,
+  SILENT_GAMES,
   isHandwerkerGame,
   workshopOf,
   type Game,
@@ -51,6 +52,7 @@ void test('every game reports play analytics', () => {
 
 void test('every game has a sound workshop, its own or the one it borrows', () => {
   for (const game of GAME_IDS) {
+    if (game in SILENT_GAMES) continue;
     const workshop = workshopOf(game);
     assert.ok(
       adminRoute(workshop),
@@ -68,7 +70,8 @@ void test('a game owns an audio catalog unless it is Handwerker or borrows one',
     const cues = getCatalog(game);
     assert.ok(cues?.length, `${game} has an empty audio catalog`);
   }
-  // The audio id is the collection minus Handwerker titles and borrowers.
+  // The audio id is the collection minus Handwerker titles, borrowers, and
+  // deliberately silent experiences.
   for (const game of GAME_IDS)
     assert.equal(
       isGameId(game),

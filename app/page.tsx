@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import CollectionClient from './CollectionClient';
 
 const PINNED = [
+  'citrus-jelly-cutter',
   'slopewreck',
   'chain-of-fools',
   'scaffold-scramble',

@@ -25,6 +25,7 @@ import {
   Utensils,
   Building2,
   Link2,
+  Cookie,
 } from 'lucide-react';
 import {
   useSyncExternalStore,
@@ -76,6 +77,19 @@ interface CardStaticConfig {
 }
 
 const CARD_CONFIGS: Record<string, CardStaticConfig> = {
+  'citrus-jelly-cutter': {
+    slug: 'citrus-jelly-cutter',
+    href: '/citrus-jelly-cutter',
+    cardClass: 'citrus-jelly-card',
+    imgSrc: '/images/citrus-jelly-cutter.svg',
+    imgAlt:
+      'A translucent gummy orange slice beside a steel knife and small star, heart, flower, and round cutters.',
+    fetchPriority: 'high',
+    loading: 'eager',
+    tagIcon: Cookie,
+    metaIcon1: CircleDot,
+    metaIcon2: Timer,
+  },
   'course-correction': {
     slug: 'course-correction',
     href: '/course-correction',

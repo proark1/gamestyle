@@ -28,6 +28,8 @@ import { zorbClashAnalytics } from '../../games/zorb-clash/analytics';
 import { scaffoldScrambleAnalytics } from '../../games/scaffold-scramble/analytics';
 import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
 import { courseCorrectionAnalytics } from '../../games/course-correction/analytics';
+import { citrusJellyAnalytics } from '../../games/citrus-jelly-cutter/analytics';
+import { SILENT_GAMES } from '../../shared/games/identity';
 
 import { cageAnalytics } from '../../games/cage-clash/analytics';
 import { boxingAnalytics } from '../../games/on-the-ropes/analytics';
@@ -40,7 +42,7 @@ export type CatalogGame = {
   href: string;
   analytics: GameAnalytics;
   /** The workshop that edits this game's sounds. */
-  workshop: {
+  workshop?: {
     kind: 'standard' | 'construction';
     game: string;
     href: string;
@@ -82,9 +84,18 @@ export const GAMES: readonly CatalogGame[] = [
   ['scaffold-scramble', 'Scaffold Scramble', scaffoldScrambleAnalytics],
   ['chain-of-fools', 'Chain of Fools', chainOfFoolsAnalytics],
   ['course-correction', 'Course Correction', courseCorrectionAnalytics],
+  ['citrus-jelly-cutter', 'Citrus Jelly', citrusJellyAnalytics],
   ['slopewreck', 'Slopewreck', slopewreckAnalytics],
 ].map(([id, name, analytics]) => {
   const game = id as string;
+  if (game in SILENT_GAMES)
+    return {
+      id: game,
+      name: name as string,
+      href: `/${game}`,
+      analytics: analytics as GameAnalytics,
+      soundNote: 'Intentionally silent material study.',
+    };
   const construction = game === 'chaos' || game === 'first-person';
   // Shelf Control plays the farm's material clips through its own mapping.
   const workshopGame = game === 'shelf-control' ? 'act-natural' : game;

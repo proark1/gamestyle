@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Citrus Jelly material study</title>
+  <desc id="desc">A translucent gummy orange half-slice, a steel knife, and four cookie cutters on a cream studio surface.</desc>
+  <defs>
+    <linearGradient id="paper" x2="0" y2="1"><stop stop-color="#f7f1e8"/><stop offset="1" stop-color="#e8dfd1"/></linearGradient>
+    <radialGradient id="flesh" cx="48%" cy="32%" r="70%"><stop stop-color="#ffc760" stop-opacity=".92"/><stop offset=".72" stop-color="#f18a26" stop-opacity=".86"/><stop offset="1" stop-color="#dc6519" stop-opacity=".94"/></radialGradient>
+    <linearGradient id="steel" x2="0" y2="1"><stop stop-color="#fafcfb"/><stop offset=".35" stop-color="#aeb7b6"/><stop offset=".55" stop-color="#f5f7f6"/><stop offset="1" stop-color="#747d7d"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="20"/></filter>
+    <clipPath id="half"><path d="M219 411A275 275 0 0 1 769 411Z"/></clipPath>
+  </defs>
+  <rect width="1200" height="675" fill="url(#paper)"/>
+  <ellipse cx="510" cy="485" rx="330" ry="60" fill="#ba6a2f" opacity=".18" filter="url(#shadow)"/>
+  <g transform="translate(6 -8)">
+    <path d="M219 411A275 275 0 0 1 769 411Z" fill="#f07920" stroke="#df6818" stroke-width="34" stroke-linejoin="round"/>
+    <path d="M242 400A252 252 0 0 1 746 400Z" fill="#ffe6a6" stroke="#fff0c7" stroke-width="20"/>
+    <path d="M266 390A228 228 0 0 1 722 390Z" fill="url(#flesh)" stroke="#ffd985" stroke-width="8"/>
+    <g clip-path="url(#half)" stroke="#ffe9b5" stroke-width="8" opacity=".8"><path d="M494 408 327 220M494 408 418 190M494 408 570 188M494 408 663 222"/></g>
+    <circle cx="494" cy="405" r="23" fill="#fff0bd"/>
+    <g fill="#fff6d8" opacity=".46"><ellipse cx="364" cy="314" rx="8" ry="24" transform="rotate(-42 364 314)"/><ellipse cx="440" cy="267" rx="7" ry="28" transform="rotate(-16 440 267)"/><ellipse cx="548" cy="264" rx="7" ry="29" transform="rotate(15 548 264)"/><ellipse cx="627" cy="316" rx="8" ry="25" transform="rotate(42 627 316)"/></g>
+    <path d="M235 410H754" stroke="#fff2c7" stroke-width="13" stroke-linecap="round" opacity=".9"/>
+  </g>
+  <g transform="translate(676 102) rotate(8)">
+    <path d="M0 42h325l-50 126H0Z" fill="url(#steel)" stroke="#6d7473" stroke-width="4"/>
+    <path d="M4 153h270" stroke="#fff" stroke-opacity=".8" stroke-width="4"/>
+    <rect x="-180" y="39" width="185" height="64" rx="26" fill="#76513b" stroke="#3e2d24" stroke-width="5"/>
+    <circle cx="-132" cy="71" r="8" fill="#c4c7c3"/><circle cx="-81" cy="71" r="8" fill="#c4c7c3"/><circle cx="-30" cy="71" r="8" fill="#c4c7c3"/>
+  </g>
+  <g fill="none" stroke="#98a09e" stroke-width="11" opacity=".95">
+    <path d="m838 426 16-38 39-4-30-25 9-39-34 21-34-21 9 39-30 25 39 4Z"/>
+    <path d="M965 404c-50-34-78-68-50-94 20-18 43-4 50 13 8-17 31-31 51-13 28 26 0 60-51 94Z"/>
+    <path d="M1082 402c-18-11-23-32-12-48-18-4-29-22-23-40 6-18 25-27 42-19 8-17 28-24 45-15 16 9 22 30 12 46 17 7 24 27 15 44-10 17-31 22-47 11-12 15-34 17-49 4-14-13-15-35-3-49"/>
+    <circle cx="777" cy="526" r="54"/>
+  </g>
+  <g fill="#2b2925" font-family="Georgia,serif"><text x="66" y="82" font-size="25" letter-spacing="5">MATERIAL STUDIES / NO. 010</text><text x="68" y="594" font-size="54" font-style="italic">Citrus Jelly.</text></g>
+</svg>

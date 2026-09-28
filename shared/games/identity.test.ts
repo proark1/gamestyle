@@ -6,6 +6,7 @@ import {
   GAME_IDS,
   HANDWERKER_GAMES,
   PARTY_EXCLUDED,
+  SILENT_GAMES,
   isGame,
   isHandwerkerGame,
   workshopOf,
@@ -31,6 +32,10 @@ void test('every trait names a real game', () => {
     assert.notEqual(game, source, `${game} cannot borrow from itself`);
   }
   for (const [game, reason] of Object.entries(PARTY_EXCLUDED)) {
+    assert.ok(isGame(game), game);
+    assert.ok(reason.length > 10, `${game} needs a reason, not a placeholder`);
+  }
+  for (const [game, reason] of Object.entries(SILENT_GAMES)) {
     assert.ok(isGame(game), game);
     assert.ok(reason.length > 10, `${game} needs a reason, not a placeholder`);
   }

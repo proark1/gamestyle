@@ -108,13 +108,15 @@ function GameReportView({
         >
           <ListTree size={14} /> Its sessions
         </button>
-        <button
-          type="button"
-          className={styles.quiet}
-          onClick={() => onSound(entry.workshop.game)}
-        >
-          <AudioLines size={14} /> Sound workshop
-        </button>
+        {entry.workshop ? (
+          <button
+            type="button"
+            className={styles.quiet}
+            onClick={() => onSound(entry.workshop!.game)}
+          >
+            <AudioLines size={14} /> Sound workshop
+          </button>
+        ) : null}
       </div>
     </header>
   );

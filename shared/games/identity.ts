@@ -20,6 +20,7 @@ export const GAME_IDS = [
   'carry-on-carnage',
   'chain-of-fools',
   'chaos',
+  'citrus-jelly-cutter',
   'course-correction',
   'crane-clash',
   'dont-wake-the-giant',
@@ -74,12 +75,20 @@ export const BORROWED_AUDIO = {
   'shelf-control': 'act-natural',
 } as const satisfies Partial<Record<Game, Game>>;
 
+/** Games whose deliberate presentation has no soundtrack or sound effects. */
+export const SILENT_GAMES = {
+  'citrus-jelly-cutter':
+    'Single-player material study whose prototype is intentionally silent',
+} as const satisfies Partial<Record<Game, string>>;
+
 /**
  * Games that do not appear in the party playlist, with the reason. Party rounds
  * need the peer engine and a short round, so a game is excluded when it cannot
  * provide both — not merely because nobody has added it yet.
  */
 export const PARTY_EXCLUDED = {
+  'citrus-jelly-cutter':
+    'Single-player material sandbox without a timed multiplayer round',
   'cage-clash':
     'Two-fighter duels; the party rotation requires four-player rounds',
   'reel-problems-2':

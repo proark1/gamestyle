@@ -38,13 +38,19 @@ type Status =
   | { error: string };
 
 /** Shelf Control plays the farm's clips, so only games with their own workshop get a card. */
-const WORKSHOPS = GAMES.filter((game) => game.workshop.game === game.id);
-const endpointOf = (game: CatalogGame) =>
+type WorkshopGame = CatalogGame & {
+  workshop: NonNullable<CatalogGame['workshop']>;
+};
+const WORKSHOPS = GAMES.filter(
+  (game): game is WorkshopGame =>
+    !!game.workshop && game.workshop.game === game.id,
+);
+const endpointOf = (game: WorkshopGame) =>
   game.workshop.kind === 'construction'
     ? `/api/handwerker/audio/${game.id}`
     : `/api/audio/${game.id}`;
 
-function summarize(game: CatalogGame, library: Library): Status {
+function summarize(game: WorkshopGame, library: Library): Status {
   const construction = game.workshop.kind === 'construction';
   // The two workshops count "ready" the same way their own counters do.
   const ready = (cue: Library['cues'][number]) =>
