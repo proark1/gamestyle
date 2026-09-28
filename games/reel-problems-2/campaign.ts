@@ -1,4 +1,5 @@
 import type { Survival } from './survival';
+import { CHAOS_VOYAGE_DURATION_MS } from './chaos-voyage';
 import type { Angler, CatchKind, ReelWorld, Vector } from './types';
 
 export const FIRST_DELIVERY = {
@@ -71,11 +72,13 @@ export const freshMission = (): Mission => ({
   rebuilds: 0,
 });
 export const roundDuration = (w?: ReelWorld | null) =>
-  w?.mission?.survival
-    ? 240_000
-    : w?.mission
-      ? FIRST_DELIVERY.duration
-      : 300_000;
+  w?.voyage
+    ? CHAOS_VOYAGE_DURATION_MS
+    : w?.mission?.survival
+      ? 240_000
+      : w?.mission
+        ? FIRST_DELIVERY.duration
+        : 300_000;
 export const distance = (a: Vector, b: Vector) =>
   Math.hypot(a.x - b.x, a.z - b.z);
 export const carriedCargo = (w: ReelWorld) =>

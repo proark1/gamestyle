@@ -53,6 +53,7 @@ import {
   idleInput,
   type Angler,
   type ReelAction,
+  type GameMode,
   type ReelSession,
   type ReelSnapshot,
   type ReelWorld,
@@ -67,6 +68,8 @@ import {
   type CameraMode,
 } from './camera';
 import MissionPanel from './MissionPanel';
+import ChaosHud from './ChaosHud';
+import VoyageRecap from './VoyageRecap';
 import { roundDuration } from './campaign';
 import { readProgress, saveMissionResult } from './progress';
 import './mission.css';
@@ -267,7 +270,7 @@ const tracker = new GameTracker(reelAnalytics);
 export default function ReelProblems() {
   const { t, language } = useLanguage();
   const de = language === 'de';
-  const [mode, setMode] = useState<'classic' | 'campaign'>('campaign');
+  const [mode, setMode] = useState<GameMode>('chaos-voyage');
   const [cameraMode, setCameraMode] = useState<CameraMode>(DEFAULT_CAMERA_MODE);
   const [completed, setCompleted] = useState(false);
   const [deckhand, setDeckhand] = useState(true);
@@ -538,7 +541,11 @@ export default function ReelProblems() {
     reelAction(
       world,
       s.id,
-      { type: 'start', mode, contract: 'last-boat-home' },
+      {
+        type: 'start',
+        mode,
+        contract: mode === 'chaos-voyage' ? 'giant-catch' : 'last-boat-home',
+      },
       s.id,
     );
     local.current = world;
@@ -816,7 +823,11 @@ export default function ReelProblems() {
                   ? de
                     ? '4 Minuten bis zur Sturmflut'
                     : '4 minutes. Everyone comes home.'
-                  : '5-minute tournaments'}
+                  : mode === 'chaos-voyage'
+                    ? de
+                      ? '9 Minuten kontrolliertes Chaos'
+                      : '9 minutes of controlled chaos'
+                    : '5-minute tournaments'}
               </span>
             </div>
             <ContractSelect mode={mode} onChange={setMode} />
@@ -897,6 +908,7 @@ export default function ReelProblems() {
               disabled={uiDisabled}
             />
           )}
+          {playing && w?.voyage && <ChaosHud world={w} playerId={me?.id} />}
           <section className="reel-scoreboard" aria-label="Tournament score">
             <div>
               <span>{practice ? 'SOLO TOURNAMENT' : 'CREW TOURNAMENT'}</span>
@@ -918,7 +930,9 @@ export default function ReelProblems() {
                 {w?.phase === 'lobby'
                   ? mode === 'campaign'
                     ? '4:00'
-                    : '5:00'
+                    : mode === 'chaos-voyage'
+                      ? '9:00'
+                      : '5:00'
                   : time(
                       roundDuration(w) - ((w?.clock ?? 0) - (w?.started ?? 0)),
                     )}
@@ -1057,7 +1071,14 @@ export default function ReelProblems() {
                 className="reel-primary"
                 disabled={!captain || busy || npcBusy || status !== 'online'}
                 onClick={() =>
-                  action({ type: 'start', mode, contract: 'last-boat-home' })
+                  action({
+                    type: 'start',
+                    mode,
+                    contract:
+                      mode === 'chaos-voyage'
+                        ? 'giant-catch'
+                        : 'last-boat-home',
+                  })
                 }
               >
                 {captain
@@ -1065,7 +1086,9 @@ export default function ReelProblems() {
                     ? de
                       ? 'Abenteuer starten'
                       : 'Start adventure'
-                    : 'Start tournament'
+                    : mode === 'chaos-voyage'
+                      ? 'Start Chaos Voyage'
+                      : 'Start tournament'
                   : 'Waiting for the captain…'}{' '}
                 <ArrowUpRight size={18} />
               </button>
@@ -1380,6 +1403,7 @@ export default function ReelProblems() {
                   </span>
                 ))}
               </div>
+              {w?.voyage && <VoyageRecap world={w} />}
               {w && (
                 <div
                   className="reel-awards"
@@ -1423,7 +1447,9 @@ export default function ReelProblems() {
                     ? de
                       ? 'Noch ein Versuch'
                       : 'Try the delivery again'
-                    : 'One more tournament'
+                    : w?.voyage
+                      ? 'Sail into chaos again'
+                      : 'One more tournament'
                   : 'Waiting for the captain…'}
               </button>
               <button className="reel-text-button" onClick={() => void leave()}>

@@ -20,6 +20,7 @@ import {
   type ReelWorld,
 } from './types';
 import { freshDebris, freshWeather, freshWildlife } from './chaos';
+import { freshChaosVoyage, upgradeChaosVoyage } from './chaos-voyage';
 
 const adapter: GameAdapter<ReelWorld, ReelSnapshot> = {
   game: 'reel-problems-2',
@@ -67,7 +68,19 @@ export function createEngine(now: number, checkpoint?: EngineCheckpoint) {
   if (checkpoint) {
     const w = engine.world;
     w.mode ??= 'classic';
-    w.schemaVersion = 2;
+    w.schemaVersion = 3;
+    if (w.mode === 'chaos-voyage') {
+      w.voyage ??= freshChaosVoyage(
+        'giant-catch',
+        w.seed,
+        w.started,
+        w.players.filter((player) => !player.bot).map((player) => player.id),
+      );
+      upgradeChaosVoyage(
+        w.voyage,
+        w.players.filter((player) => !player.bot).map((player) => player.id),
+      );
+    } else delete w.voyage;
     if (w.mission) {
       w.mission.holds = {};
       w.mission.latched = [];

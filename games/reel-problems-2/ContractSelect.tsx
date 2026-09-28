@@ -1,16 +1,36 @@
 'use client';
 import { useLanguage } from '../../shared/language/useLanguage';
+import type { GameMode } from './types';
 export default function ContractSelect({
   mode,
   onChange,
 }: {
-  mode: 'classic' | 'campaign';
-  onChange: (mode: 'classic' | 'campaign') => void;
+  mode: GameMode;
+  onChange: (mode: GameMode) => void;
 }) {
   const de = useLanguage().language === 'de';
   return (
     <fieldset className="reel-contracts">
       <legend>{de ? 'Wähle deinen Ausflug' : 'Choose your trip'}</legend>
+      <label
+        aria-label="Chaos Voyage"
+        className={mode === 'chaos-voyage' ? 'selected' : ''}
+      >
+        <input
+          type="radio"
+          name="reel-mode"
+          checked={mode === 'chaos-voyage'}
+          onChange={() => onChange('chaos-voyage')}
+        />
+        <span>
+          <b>Chaos Voyage</b>
+          <small>
+            {de
+              ? '9 Minuten · Eskalation · Rettbare Katastrophen'
+              : '9 minutes · Escalation · Recoverable disasters'}
+          </small>
+        </span>
+      </label>
       <label
         aria-label={de ? 'Letztes Boot nach Hause' : 'Last Boat Home'}
         className={mode === 'campaign' ? 'selected' : ''}

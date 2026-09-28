@@ -545,3 +545,168 @@
     display: none;
   }
 }
+
+.chaos-hud {
+  position: absolute;
+  top: 310px;
+  left: 18px;
+  z-index: 4;
+  display: grid;
+  width: min(360px, calc(100vw - 36px));
+  gap: 7px;
+  pointer-events: none;
+  color: #f7fbff;
+}
+.chaos-hud-acts {
+  display: flex;
+  width: max-content;
+  overflow: hidden;
+  border: 1px solid #57798b;
+  border-radius: 999px;
+  background: #0b2537dd;
+}
+.chaos-hud-acts span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  color: #8ea9b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.chaos-hud-acts span.active {
+  background: #f4d36a;
+  color: #172937;
+}
+.chaos-hud-objective,
+.chaos-hud-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid #52758a;
+  border-radius: 12px;
+  background: #0c293bdc;
+  box-shadow: 0 8px 24px #00121f55;
+}
+.chaos-hud-objective > div,
+.chaos-hud-event > div {
+  display: grid;
+  flex: 1;
+}
+.chaos-hud small,
+.voyage-recap small {
+  color: #f4d36a;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+.chaos-hud-objective span {
+  color: #c8dbe5;
+  font-size: 11px;
+}
+.chaos-hud-objective .complete {
+  color: #78d89a;
+}
+.chaos-hud-event.warned {
+  border-color: #ffb84d;
+  background: #4a2a12e8;
+  animation: chaos-warning-pulse 0.85s ease-in-out infinite alternate;
+}
+.chaos-hud-event.active {
+  border-color: #ff6b61;
+  background: #42191be8;
+}
+@keyframes chaos-warning-pulse {
+  to {
+    transform: scale(1.015);
+    box-shadow: 0 0 24px #ff9b3d55;
+  }
+}
+
+.voyage-recap {
+  width: min(760px, 92vw);
+  margin: 8px auto 16px;
+  padding: 16px;
+  border: 1px solid #56788a;
+  border-radius: 18px;
+  background: #0b2537;
+  text-align: left;
+}
+.voyage-recap-heading,
+.voyage-recap-grid article,
+.voyage-objective-reveal span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.voyage-recap-heading h3 {
+  margin: 3px 0 0;
+  color: #fff4cf;
+}
+.voyage-recap-heading code {
+  align-self: flex-start;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #051824;
+  color: #91cadd;
+}
+.voyage-recap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+.voyage-recap-grid article {
+  min-height: 100px;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 11px;
+  border-radius: 11px;
+  background: #12364a;
+}
+.voyage-recap-grid article span {
+  color: #bad0db;
+  font-size: 11px;
+}
+.voyage-objective-reveal {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+}
+.voyage-objective-reveal span {
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #244b60;
+  font-size: 12px;
+}
+.voyage-objective-reveal em {
+  color: #a9bec8;
+  font-style: normal;
+  text-transform: capitalize;
+}
+.voyage-objective-reveal em[data-status='completed'] {
+  color: #78d89a;
+}
+.voyage-objective-reveal em[data-status='failed'] {
+  color: #ff8b83;
+}
+
+@media (max-width: 700px) {
+  .chaos-hud {
+    top: 150px;
+    left: 8px;
+    width: min(330px, calc(100vw - 16px));
+  }
+  .chaos-hud-objective span {
+    display: none;
+  }
+  .voyage-recap-grid {
+    grid-template-columns: 1fr;
+  }
+  .voyage-recap-heading {
+    align-items: flex-start;
+  }
+}

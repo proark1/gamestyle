@@ -24,6 +24,7 @@ import {
   type Vector,
 } from './types';
 import { random } from './chaos';
+import { emitVoyageFact } from './voyage-story';
 
 type Emit = (w: ReelWorld, kind: ReelEvent['kind'], text: string) => void;
 
@@ -134,6 +135,19 @@ export function advanceHull(w: ReelWorld, dt: number, emit: Emit) {
       'patched',
       `${patchers.map((p) => p.name).join(' & ')} patched the leak!${boat.flood > 0.05 ? ' Now bail her out.' : ''}`,
     );
+    for (const patcher of patchers)
+      emitVoyageFact(
+        w,
+        {
+          kind: 'repair',
+          actorId: patcher.id,
+          severity: 0,
+          benefit: 2,
+          playerCaused: true,
+          tags: ['hull-repair'],
+        },
+        `repair:${patcher.id}:${leak.at}`,
+      );
     settle(w);
     return false;
   }

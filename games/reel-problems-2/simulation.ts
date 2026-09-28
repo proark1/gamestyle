@@ -1,5 +1,13 @@
 import { prepareSurvival } from './survival';
 import {
+  advanceChaosVoyage,
+  CHAOS_VOYAGE_DURATION_MS,
+  freshChaosVoyage,
+  isChaosContract,
+  nextVoyageSeed,
+  normalizeVoyageSeed,
+} from './chaos-voyage';
+import {
   roundDuration,
   prepareMission,
   HARBOR,
@@ -69,6 +77,8 @@ import {
   type NpcSlot,
 } from '../../shared/rooms/npc-slots';
 import { tickReelNpcs } from './npcs';
+import { neutralizePersonalObjective } from './personal-objectives';
+import { emitVoyageFact } from './voyage-story';
 
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
@@ -213,7 +223,7 @@ export function newAngler(
 }
 export function freshReel(now: number): ReelWorld {
   const w: ReelWorld = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     mode: 'classic',
     clock: now,
     started: 0,
@@ -295,6 +305,7 @@ export function cutLine(_w: ReelWorld, p: Angler) {
   p.line = null;
 }
 export function removeAngler(w: ReelWorld, id: string) {
+  neutralizePersonalObjective(w.voyage?.objectives, id);
   releaseMaterial(w, id);
   const p = w.players.find((p) => p.id === id);
   if (p) cutLine(w, p);
@@ -371,6 +382,18 @@ function splash(w: ReelWorld, p: Angler) {
     'splash',
     `${p.name} went overboard! Swim to the hull, then hold E to climb.`,
   );
+  emitVoyageFact(
+    w,
+    {
+      kind: 'overboard',
+      actorId: p.id,
+      severity: 2,
+      benefit: 0,
+      playerCaused: false,
+      tags: ['unplanned'],
+    },
+    `overboard:${p.id}:${p.overboardAt}`,
+  );
 }
 /**
  * A jump that cleared the gunwale. It lands out past the side it went over and
@@ -396,6 +419,18 @@ function dive(w: ReelWorld, p: Angler) {
             z: Math.sign(p.z) * (HULL_HALF.z + DIVE_REACH),
           },
     ),
+  );
+  emitVoyageFact(
+    w,
+    {
+      kind: 'overboard',
+      actorId: p.id,
+      severity: 1,
+      benefit: 0,
+      playerCaused: true,
+      tags: ['intentional'],
+    },
+    `dive:${p.id}:${p.overboardAt}`,
   );
   if (pinched) {
     p.splashes++;
@@ -535,10 +570,21 @@ export function reelAction(
   }
   if (a.type === 'start' || a.type === 'restart') {
     const mode = a.mode ?? w.mode ?? 'classic';
-    const contract = a.contract ?? w.mission?.id ?? 'first-delivery';
-    if (contract !== 'first-delivery' && contract !== 'last-boat-home')
+    const contract =
+      a.contract ??
+      (mode === 'chaos-voyage'
+        ? (w.voyage?.contract ?? 'giant-catch')
+        : (w.mission?.id ?? 'first-delivery'));
+    const chaosContract = isChaosContract(contract) ? contract : null;
+    if (
+      mode === 'campaign' &&
+      contract !== 'first-delivery' &&
+      contract !== 'last-boat-home'
+    )
       throw Error('Unknown adventure.');
-    if (mode !== 'classic' && mode !== 'campaign')
+    if (mode === 'chaos-voyage' && !chaosContract)
+      throw Error('Unknown chaos contract.');
+    if (mode !== 'classic' && mode !== 'campaign' && mode !== 'chaos-voyage')
       throw new Error('Choose a valid game mode.');
     if (id !== host)
       throw new Error('Only the captain can start a tournament.');
@@ -549,7 +595,15 @@ export function reelAction(
       ...(p.bot ? { bot: true as const, task: 'Ready' } : {}),
     }));
     const eventId = w.eventId;
+    const previousVoyageSeed = w.voyage?.seed ?? w.seed;
+    const voyageSeed =
+      a.seed === undefined
+        ? a.newSeed
+          ? nextVoyageSeed(previousVoyageSeed)
+          : normalizeVoyageSeed(previousVoyageSeed)
+        : normalizeVoyageSeed(a.seed, previousVoyageSeed);
     delete w.mission;
+    delete w.voyage;
     Object.assign(w, freshReel(w.clock));
     w.players = members;
     w.eventId = eventId;
@@ -559,6 +613,15 @@ export function reelAction(
     if (mode === 'campaign') {
       prepareMission(w);
       if (contract === 'last-boat-home') prepareSurvival(w);
+    } else if (mode === 'chaos-voyage') {
+      w.mode = 'chaos-voyage';
+      w.seed = voyageSeed;
+      w.voyage = freshChaosVoyage(
+        chaosContract!,
+        voyageSeed,
+        w.started,
+        members.filter((member) => !member.bot).map((member) => member.id),
+      );
     }
     announce(
       w,
@@ -567,7 +630,9 @@ export function reelAction(
         ? contract === 'last-boat-home'
           ? 'GIANT ON THE LINE! Hold Reel when calm. Release and Brace during surges. Move left/right to dodge rocks.'
           : 'First Delivery: catch three fish and unload at the café. Choose a course to begin.'
-        : 'Five minutes. One tiny boat. Bring in the big ones!',
+        : mode === 'chaos-voyage'
+          ? 'CHAOS VOYAGE! Make a plan now. The lake will complicate it soon.'
+          : 'Five minutes. One tiny boat. Bring in the big ones!',
     );
     return;
   }
@@ -622,8 +687,18 @@ export function reelAction(
       const friend = w.players.find(
         (other) => other.swimming && distance(anglerPosition(w, p), other) < 7,
       );
-      if (friend) board(w, friend, `${friend.name} is back aboard!`);
-      else throw new Error('Get closer to an overboard friend to help.');
+      if (friend) {
+        board(w, friend, `${friend.name} is back aboard!`);
+        emitVoyageFact(w, {
+          kind: 'rescue',
+          actorId: p.id,
+          targetId: friend.id,
+          severity: 0,
+          benefit: 3,
+          playerCaused: true,
+          tags: ['crew-save'],
+        });
+      } else throw new Error('Get closer to an overboard friend to help.');
     } else throw new Error('Swim closer to the boat, then climb aboard.');
     return;
   }
@@ -809,6 +884,21 @@ export function bank(
     kind === 'monster' ? 'trophy' : 'catch',
     `${lead}${names} landed ${spec.name}! +${spec.value}.${bonus}`,
   );
+  for (const angler of crew)
+    emitVoyageFact(
+      w,
+      {
+        kind: 'catch',
+        actorId: angler.id,
+        objectId: kind,
+        severity: 0,
+        benefit: Math.max(1, spec.value / 20),
+        playerCaused: true,
+        tags:
+          w.weather.kind === 'calm' ? ['catch'] : ['catch', 'rough-weather'],
+      },
+      `catch:${angler.id}:${kind}:${w.clock}`,
+    );
 }
 /** A seagull's dive ends: scared off by anyone in the air, or away with the catch. */
 function settleGull(w: ReelWorld) {
@@ -1377,8 +1467,18 @@ export function step(w: ReelWorld, dt: number) {
         if (friend.swimming) {
           friend.x -= dx * pull * dt * 0.14;
           friend.z -= dz * pull * dt * 0.14;
-          if (distance(friend, boat) < 5.5 && reel)
+          if (distance(friend, boat) < 5.5 && reel) {
             board(w, friend, `${friend.name} is back aboard!`);
+            emitVoyageFact(w, {
+              kind: 'rescue',
+              actorId: p.id,
+              targetId: friend.id,
+              severity: 0,
+              benefit: 3,
+              playerCaused: true,
+              tags: ['line-save'],
+            });
+          }
         } else if (reel && !friend.input.brace) {
           friend.x -= localX * dt * pull * 0.065;
           friend.z -= localZ * dt * pull * 0.065;
@@ -1483,7 +1583,7 @@ export function advanceReel(w: ReelWorld, now: number) {
     Math.min(
       100,
       now - w.clock,
-      w.mission && w.phase === 'playing'
+      (w.mission || w.voyage) && w.phase === 'playing'
         ? w.started + roundDuration(w) - w.clock
         : Infinity,
     ),
@@ -1506,12 +1606,13 @@ export function advanceReel(w: ReelWorld, now: number) {
   while (w.remainder >= 1 / 60) {
     w.remainder -= 1 / 60;
     step(w, 1 / 60);
+    if (w.voyage) advanceChaosVoyage(w, announce);
     if (w.mission) {
       advanceMission(w, 1 / 60, announce);
       if (w.phase !== 'playing') break;
       continue;
     }
-    if (w.clock - w.started >= ROUND_MS) {
+    if (!w.voyage && w.clock - w.started >= ROUND_MS) {
       // A catch still in a seagull's dive at the buzzer counts.
       const pending = w.pending;
       if (pending) {
@@ -1554,6 +1655,36 @@ export function advanceReel(w: ReelWorld, now: number) {
       w.mission.survival
         ? 'The storm gate closed. One more run — we can get everyone home.'
         : 'Lunch service has ended. Try the delivery again.',
+    );
+  }
+  if (
+    w.voyage &&
+    w.phase === 'playing' &&
+    w.clock - w.started >= CHAOS_VOYAGE_DURATION_MS
+  ) {
+    w.phase = w.score >= w.goal ? 'won' : 'lost';
+    for (const p of w.players) {
+      cutLine(w, p);
+      p.input = idleInput();
+    }
+    emitVoyageFact(
+      w,
+      {
+        kind: 'run-finished',
+        severity: 0,
+        benefit: w.phase === 'won' ? 2 : 0,
+        playerCaused: false,
+        tags: [w.phase],
+      },
+      'run-finished',
+    );
+    advanceChaosVoyage(w, announce);
+    announce(
+      w,
+      'finish',
+      w.phase === 'won'
+        ? 'Chaos survived! Somehow, the plan worked.'
+        : 'Voyage over. The lake gets this story; the crew gets a rematch.',
     );
   }
 }

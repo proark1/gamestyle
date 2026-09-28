@@ -1,4 +1,5 @@
 import type { Mission, Course } from './campaign';
+import type { ChaosContractId, ChaosVoyageState } from './chaos-voyage';
 import type { Session } from '../../shared/rooms/session';
 import type { NpcAction } from '../../shared/rooms/npc-slots';
 import { COLORS } from '../../shared/rendering/palette';
@@ -415,10 +416,12 @@ export type DeckFish = {
   angle: number;
   until: number;
 };
+export type GameMode = 'classic' | 'campaign' | 'chaos-voyage';
 export type ReelWorld = {
   schemaVersion?: number;
-  mode?: 'classic' | 'campaign';
+  mode?: GameMode;
   mission?: Mission;
+  voyage?: ChaosVoyageState;
   clock: number;
   started: number;
   phase: 'lobby' | 'playing' | 'won' | 'lost';
@@ -478,9 +481,11 @@ export type ReelControlAction = {
     | 'paddle'
     | 'sail'
     | 'drop';
-  mode?: 'classic' | 'campaign';
+  mode?: GameMode;
   destination?: Course;
-  contract?: 'first-delivery' | 'last-boat-home';
+  contract?: 'first-delivery' | 'last-boat-home' | ChaosContractId;
+  seed?: number;
+  newSeed?: boolean;
   x?: number;
   z?: number;
 };
