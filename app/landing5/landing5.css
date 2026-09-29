@@ -1,0 +1,362 @@
+.clubhouse-trailer .trailer-intro {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--enhanced-sky);
+  color: var(--enhanced-ink);
+  transition:
+    opacity 650ms ease,
+    transform 760ms cubic-bezier(0.2, 0.82, 0.2, 1),
+    visibility 0s linear;
+}
+
+.clubhouse-trailer.is-entered .trailer-intro {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.055);
+  transition-delay: 0s, 0s, 760ms;
+}
+
+.clubhouse-trailer .trailer-media {
+  z-index: 0;
+  inset: 0;
+}
+
+.clubhouse-trailer .trailer-media > img,
+.clubhouse-trailer .trailer-media > video {
+  transform: scale(1.02);
+}
+
+.trailer-shade {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      #fff6dff2 0,
+      #fff6dfd9 34%,
+      #fff6df42 60%,
+      transparent 78%
+    ),
+    linear-gradient(
+      180deg,
+      #bee5eab5 0,
+      transparent 24%,
+      transparent 72%,
+      #24494342 100%
+    );
+}
+
+.trailer-header {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(1440px, calc(100% - 80px));
+  height: 94px;
+  margin: auto;
+  border-bottom: 1px solid #24494329;
+}
+
+.trailer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--enhanced-ink);
+  text-decoration: none;
+  font:
+    700 26px 'DM Sans',
+    sans-serif;
+  letter-spacing: -1.5px;
+}
+
+.trailer-brand img {
+  width: 46px;
+  height: 46px;
+}
+
+.trailer-header > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #24494335;
+  border-radius: 999px;
+  background: #fff6dfd9;
+  color: var(--enhanced-ink);
+  font:
+    700 12px 'DM Sans',
+    sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.trailer-copy {
+  position: relative;
+  z-index: 3;
+  align-self: center;
+  width: min(1440px, calc(100% - 80px));
+  margin: 34px auto 0;
+}
+
+.trailer-copy > p:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: #365b56;
+  font:
+    800 11px/1.5 'DM Sans',
+    sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.trailer-copy > p:first-child::before {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--enhanced-coral);
+  box-shadow: 0 0 0 5px #d9684620;
+  content: '';
+}
+
+.trailer-title {
+  max-width: 710px;
+  margin: 0;
+  color: var(--enhanced-ink);
+  font:
+    600 clamp(58px, 7vw, 108px) / 0.92 'Fredoka',
+    sans-serif;
+  letter-spacing: -0.045em;
+}
+
+.trailer-title em {
+  color: #b74d30;
+  font-style: normal;
+}
+
+.trailer-copy > span {
+  display: block;
+  max-width: 510px;
+  margin-top: 26px;
+  color: #3f5e58;
+  font:
+    400 17px/1.7 'DM Sans',
+    sans-serif;
+}
+
+.trailer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 29px;
+}
+
+.trailer-actions > a,
+.trailer-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 53px;
+  padding: 13px 21px;
+  border: 2px solid #226369;
+  border-radius: 17px;
+  background: var(--enhanced-teal);
+  box-shadow: 0 5px 0 #1b565b;
+  color: #fff;
+  text-decoration: none;
+  font:
+    700 14px/1.2 'DM Sans',
+    sans-serif;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.trailer-actions > a:nth-child(2) {
+  border-color: #d8caaa;
+  background: var(--enhanced-plaster);
+  box-shadow: 0 5px 0 #c9b58f;
+  color: var(--enhanced-ink);
+}
+
+.trailer-actions > button {
+  border-color: #d6a52f;
+  background: var(--enhanced-sun);
+  box-shadow: 0 5px 0 #bd8129;
+  color: var(--enhanced-ink);
+}
+
+.trailer-actions > a:hover,
+.trailer-actions > button:hover {
+  box-shadow: 0 8px 0 #1b565b;
+  transform: translateY(-3px);
+}
+
+.trailer-actions > a:nth-child(2):hover {
+  box-shadow: 0 8px 0 #c9b58f;
+}
+
+.trailer-actions > button:hover {
+  box-shadow: 0 8px 0 #bd8129;
+}
+
+.trailer-actions > a:focus-visible,
+.trailer-actions > button:focus-visible,
+.trailer-header > button:focus-visible,
+.trailer-brand:focus-visible {
+  outline: 4px solid var(--enhanced-sun);
+  outline-offset: 4px;
+}
+
+.trailer-progress {
+  position: absolute;
+  z-index: 3;
+  right: 40px;
+  bottom: 30px;
+  left: 40px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff9;
+}
+
+.trailer-progress i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--enhanced-coral);
+  transform-origin: left;
+  animation: trailer-progress 10s linear both;
+}
+
+.clubhouse-trailer .yard-path {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease 420ms;
+}
+
+.clubhouse-trailer.is-entered .yard-path {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.clubhouse-trailer.is-entered .clubhouse-hero-copy {
+  animation: trailer-page-arrive 620ms 180ms cubic-bezier(0.2, 0.82, 0.2, 1)
+    both;
+}
+
+@keyframes trailer-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes trailer-page-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .trailer-header {
+    width: calc(100% - 28px);
+    height: 72px;
+  }
+
+  .trailer-brand {
+    font-size: 18px;
+    letter-spacing: -1px;
+  }
+
+  .trailer-brand img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .trailer-header > button {
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 10px;
+  }
+
+  .trailer-shade {
+    background:
+      linear-gradient(180deg, #c9e9ec8f 0, transparent 28%),
+      linear-gradient(0deg, #fff6dff5 0, #fff6dfdf 58%, #fff6df2b 100%);
+  }
+
+  .trailer-copy {
+    align-self: end;
+    width: calc(100% - 34px);
+    margin-bottom: 56px;
+  }
+
+  .trailer-title {
+    font-size: clamp(52px, 17vw, 72px);
+  }
+
+  .trailer-copy > span {
+    max-width: 360px;
+    margin-top: 18px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .trailer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trailer-actions > button {
+    grid-column: 1 / -1;
+  }
+
+  .trailer-actions > a,
+  .trailer-actions > button {
+    min-height: 49px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .trailer-progress {
+    right: 17px;
+    bottom: 22px;
+    left: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clubhouse-trailer .trailer-intro {
+    display: none;
+  }
+
+  .clubhouse-trailer .yard-path,
+  .clubhouse-trailer.is-entered .clubhouse-hero-copy {
+    opacity: 1;
+    animation: none;
+    transition: none;
+  }
+}
