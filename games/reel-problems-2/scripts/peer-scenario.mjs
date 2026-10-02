@@ -186,6 +186,9 @@ export async function campaignScenario({
     'host carries the next plank',
   );
   stop();
+  // Repair work uses continuous input. An acknowledged action waits for the
+  // prepared state to reach the recovery checkpoint before we crash the host.
+  await connections[0].action({ type: 'cut' });
   console.log(
     'reel-problems-2: four WebRTC clients caught, delivered, sank, reached the dock, and attached a raft deck.',
   );

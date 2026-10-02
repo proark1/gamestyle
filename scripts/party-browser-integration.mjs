@@ -71,6 +71,21 @@ const server = createServer(async (req, res) => {
           };
         else if (b.op === 'get')
           result = { state: await party.getPartyRoom(store, b.code) };
+        else if (b.op === 'lobby_presence')
+          result = {
+            state: await party.updateLobbyPresence(
+              store,
+              b.code,
+              { id: b.playerId, token: b.token },
+              {
+                pose: b.pose,
+                browsing: b.browsing,
+                look: {},
+                fullGame: false,
+                accountId: null,
+              },
+            ),
+          };
         else if (b.op === 'game_session')
           result = {
             session: await partyGameSession(
