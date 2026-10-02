@@ -103,9 +103,6 @@ jobs:
       - run: npx playwright install --with-deps chrome firefox
       - run: npm run test:peer
       - run: npm run test:voice:browser -- --ui --interruptions
-      - run: npm run test:voice:browser
-        env:
-          VOICE_TEST_ENGINE: firefox
       - run: npm run test:voice:browser -- --early
       - run: npm run test:voice:browser -- --server-room=shelf-control
       - run: npm run test:voice:browser -- --server-room=chaos
@@ -127,3 +124,31 @@ jobs:
           path: |
             .tmp/improvements
             .tmp/voice
+  firefox-voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps firefox
+      - name: Start virtual audio for Firefox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pulseaudio
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=jumbleyard_ci
+          pactl set-default-sink jumbleyard_ci
+      - name: Verify Firefox peer voice
+        timeout-minutes: 3
+        run: npm run test:voice:browser
+        env:
+          VOICE_TEST_ENGINE: firefox
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: firefox-voice-diagnostics
+          path: .tmp/voice
