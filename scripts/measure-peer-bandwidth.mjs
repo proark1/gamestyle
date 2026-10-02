@@ -1,4 +1,4 @@
-import { GAME_IDS } from '../shared/games/identity.ts';
+import { GAME_IDS, roomCapacity } from '../shared/games/identity.ts';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import {
@@ -7,29 +7,71 @@ import {
   snapshotJson,
 } from '../shared/peer/snapshot-codec.ts';
 import assert from 'node:assert/strict';
-const members = Array.from({ length: 4 }, (_, order) => ({
-  id: `player-${order}`,
-  name: `Player ${order}`,
-  color: order,
-  order,
-  instance: `browser-${order}`,
-  seen: 1000,
-}));
 const results = [];
 for (const game of GAME_IDS.filter((g) => existsSync(`games/${g}/peer.ts`))) {
+  const members = Array.from({ length: roomCapacity(game) }, (_, order) => ({
+    id: `player-${order}`,
+    name: `Player ${order}`,
+    color: order,
+    order,
+    instance: `browser-${order}`,
+    seen: 1000,
+  }));
   const { createEngine } = await import(`../games/${game}/peer.ts`);
   const engine = createEngine(1000);
   engine.reconcile(members);
-  engine.execute(
-    members[0].id,
-    'start',
-    {
-      type: ['zorb-clash', 'sample-stampede'].includes(game)
-        ? 'ready'
-        : 'start',
-    },
-    members[0].id,
-  );
+  if (game === 'cage-clash') {
+    const { commitment, newNonce } =
+      await import('../games/cage-clash/selection.ts');
+    const selection = engine.world.selection;
+    const choices = members.map((member, i) => ({
+      member,
+      style: i ? 'jiu-jitsu' : 'boxer',
+      nonce: newNonce(),
+    }));
+    for (const { member, style, nonce } of choices)
+      assert.deepEqual(
+        engine.execute(
+          member.id,
+          'commit',
+          {
+            type: 'commit',
+            selection,
+            commitment: commitment(selection, member.id, style, nonce),
+          },
+          members[0].id,
+        ),
+        {},
+      );
+    for (const { member, style, nonce } of choices)
+      assert.deepEqual(
+        engine.execute(
+          member.id,
+          'reveal',
+          {
+            type: 'reveal',
+            selection,
+            style,
+            nonce,
+          },
+          members[0].id,
+        ),
+        {},
+      );
+  } else
+    assert.deepEqual(
+      engine.execute(
+        members[0].id,
+        'start',
+        {
+          type: ['zorb-clash', 'sample-stampede'].includes(game)
+            ? 'ready'
+            : 'start',
+        },
+        members[0].id,
+      ),
+      {},
+    );
   const senders = members.slice(1).map(() => new SnapshotSender()),
     receivers = senders.map(() => new SnapshotReceiver());
   let full = 0,
@@ -43,7 +85,7 @@ for (const game of GAME_IDS.filter((g) => existsSync(`games/${g}/peer.ts`))) {
         frame,
       );
     engine.advance(50);
-    for (let peer = 0; peer < 3; peer++) {
+    for (let peer = 0; peer < senders.length; peer++) {
       const snap = engine.snapshot(
         'ABCDEF',
         members[0].id,
@@ -66,6 +108,7 @@ for (const game of GAME_IDS.filter((g) => existsSync(`games/${g}/peer.ts`))) {
   }
   results.push({
     game,
+    players: members.length,
     fullKBps: +(full / 10000).toFixed(1),
     encodedKBps: +(encoded / 10000).toFixed(1),
     savedPercent: Math.round((1 - encoded / full) * 100),
