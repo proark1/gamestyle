@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
+ARG GAME_BUILD_ID
 RUN npm run build:railway
 
 FROM node:24-bookworm-slim AS runtime

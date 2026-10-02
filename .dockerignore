@@ -18,3 +18,13 @@ coverage
 /.work-npm-cache/
 
 .tmp
+
+/tmp/
+
+/.sites-checkout*/
+
+/.sites-live-*/
+
+/.sites-publish-runtime-*/
+
+/.setup/
