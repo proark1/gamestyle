@@ -56,10 +56,16 @@ jobs:
       - run: npm run build:client
       - run: npx playwright install --with-deps ${{ matrix.engine }}
       - name: Verify every game in the selected browser
-        run: node scripts/ci-smoke.mjs ${{ matrix.mode }}
+        run: |
+          if [ "${{ matrix.engine }}" = "firefox" ]; then
+            xvfb-run -a node scripts/ci-smoke.mjs ${{ matrix.mode }}
+          else
+            node scripts/ci-smoke.mjs ${{ matrix.mode }}
+          fi
         env:
           SMOKE_ENGINE: ${{ matrix.engine }}
           SMOKE_BROWSER: chromium
+          SMOKE_HEADLESS: ${{ matrix.engine != 'firefox' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

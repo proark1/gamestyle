@@ -7,7 +7,7 @@ const engine = process.env.SMOKE_ENGINE ?? 'chromium';
 if (!['chromium', 'firefox', 'webkit'].includes(engine))
   throw Error('Unknown smoke browser engine.');
 const browser = await { chromium, firefox, webkit }[engine].launch({
-  headless: true,
+  headless: process.env.SMOKE_HEADLESS !== 'false',
   ...(engine === 'chromium'
     ? {
         channel: process.env.SMOKE_BROWSER ?? 'chrome',
@@ -29,6 +29,17 @@ const automatic = new Set(['bungee-doubles', 'drive-thru', 'panic-curling']);
 // These existing games require a coordinator even for a one-player room.
 const onlineOnly = new Set(['chaos', 'first-person', 'shelf-control']);
 try {
+  const probe = await browser.newPage();
+  const webgl2 = await probe.evaluate(() => {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    return !!gl;
+  });
+  await probe.close();
+  if (!webgl2)
+    throw Error(
+      'The smoke browser has no WebGL 2 context. Configure a graphics-capable runner before testing game startup.',
+    );
   for (const game of games) {
     const context = await browser.newContext({
       viewport: mobile
