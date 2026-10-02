@@ -1,0 +1,231 @@
+import type { SceneAudioPlan } from '../../../shared/audio/scene-plan';
+import { type ReelWorld } from '../types';
+import { roundDuration } from '../campaign';
+import { anglerPosition } from '../simulation';
+import { handsOnHull } from '../hull';
+
+export class ReelAudioDirector {
+  private previous: ReelWorld | null = null;
+  private lastEvent = 0;
+  private steps = new Map<string, number>();
+  private hullAt = 0;
+  reset() {
+    this.previous = null;
+    this.lastEvent = 0;
+    this.steps.clear();
+    this.hullAt = 0;
+  }
+  update(w: ReelWorld | null, localId?: string): SceneAudioPlan {
+    const plan: SceneAudioPlan = { reset: false, hits: [], loops: [] };
+    const loop = (channel: string, id: string | null, strength = 1) =>
+      plan.loops.push({ channel, id, strength });
+    const hit = (
+      id: string,
+      strength = 1,
+      position?: { x: number; z: number },
+    ) => plan.hits.push({ id, strength, position });
+    if (!w) {
+      this.reset();
+      plan.reset = true;
+      loop('music', 'music.menu', 0.7);
+      loop('lake', 'ambience.lake', 0.5);
+      return plan;
+    }
+    let old = this.previous;
+    if (old && old.started === w.started && w.clock < old.clock) return plan;
+    const fresh =
+      !old ||
+      old.started !== w.started ||
+      w.clock - old.clock > 2500 ||
+      w.eventId < this.lastEvent;
+    if (fresh) {
+      plan.reset = true;
+      this.steps.clear();
+      this.hullAt = w.clock;
+      this.lastEvent =
+        w.phase === 'playing' && w.clock - w.started < 1500
+          ? Math.max(0, w.eventId - 1)
+          : w.eventId;
+      old = null;
+    }
+    const playing = w.phase === 'playing';
+    const me = w.players.find((p) => p.id === localId);
+    plan.listener = me ? anglerPosition(w, me) : w.boat;
+    const lines = w.players.filter((p) => p.line && !p.swimming);
+    const maxTension = Math.max(0, ...lines.map((p) => p.line!.tension));
+    const urgent = playing && w.clock - w.started >= roundDuration(w) - 60_000;
+    const challenged = urgent || w.weather.kind === 'storm' || maxTension > 0.7;
+    loop(
+      'music',
+      `music.${w.phase === 'lobby' ? 'menu' : playing ? (challenged ? 'challenge' : 'build') : w.phase === 'won' ? 'win' : 'fail'}`,
+      0.7,
+    );
+    loop('lake', 'ambience.lake', playing ? 0.75 : 0.5);
+    loop(
+      'wind',
+      playing && w.weather.kind !== 'calm' ? 'ambience.wind' : null,
+      w.weather.kind === 'storm' ? 0.8 : 0.45,
+    );
+    loop(
+      'rain',
+      playing && w.weather.rain > 0.05 ? 'ambience.rain' : null,
+      Math.min(0.8, w.weather.rain),
+    );
+    loop(
+      'reel',
+      playing && lines.some((p) => p.input.reel) ? 'ambience.reel' : null,
+      0.55,
+    );
+    loop(
+      'strain',
+      playing && maxTension > 0.45 ? 'ambience.strain' : null,
+      maxTension > 0.85 ? 1.0 : Math.min(0.8, maxTension),
+    );
+    const sharkHuntingSwimmer =
+      playing &&
+      w.wildlife.some(
+        (s) =>
+          s.kind === 'shark' &&
+          s.activeUntil > w.clock &&
+          w.players.some(
+            (p) => p.swimming && Math.hypot(s.x - p.x, s.z - p.z) < 18,
+          ),
+      );
+    loop(
+      'dread',
+      playing && sharkHuntingSwimmer ? 'ambience.dread' : null,
+      0.75,
+    );
+    const speed = Math.hypot(w.boat.vx, w.boat.vz);
+    loop(
+      'wake',
+      playing && speed > 0.25 ? 'ambience.wake' : null,
+      Math.min(0.7, speed / 5),
+    );
+    loop(
+      'swim',
+      playing && me?.swimming && Math.hypot(me.input.x, me.input.z) > 0.1
+        ? 'ambience.swim'
+        : null,
+      0.65,
+    );
+    const aboard = w.players.filter((p) => !p.swimming);
+    loop('leak', playing && w.leak ? 'ambience.leak' : null, 0.6);
+    loop(
+      'paddle',
+      playing && aboard.some((p) => p.paddle && Math.abs(p.input.z) > 0.2)
+        ? 'ambience.paddle'
+        : null,
+      0.55,
+    );
+    loop(
+      'bail',
+      playing &&
+        aboard.some((p) => p.input.reel && handsOnHull(w, p) === 'bail')
+        ? 'ambience.bail'
+        : null,
+      0.55,
+    );
+    const untangled =
+      !!old &&
+      w.players.some(
+        (p) =>
+          old!.players.find((b) => b.id === p.id)?.line?.tangled &&
+          p.line &&
+          !p.line.tangled,
+      );
+    for (const e of w.events)
+      if (e.id > this.lastEvent) {
+        this.lastEvent = e.id;
+        if (e.kind === 'finish') {
+          hit(w.phase === 'won' ? 'event.finish' : 'event.fail');
+          hit(w.phase === 'won' ? 'speech.win' : 'speech.fail');
+        } else if (e.kind === 'rescue' && untangled)
+          hit('event.untangle', 0.75, w.boat);
+        else {
+          hit(
+            `event.${e.kind}`,
+            e.kind === 'chomp' ? 1 : 0.85,
+            e.position ?? w.boat,
+          );
+          if (e.kind === 'slip' || e.kind === 'slap') {
+            hit('event.oof', 0.8, w.boat);
+          } else if (e.kind === 'shock') {
+            hit('event.oof', 0.85, w.boat);
+          } else if (e.kind === 'splash') {
+            hit('event.waaah', 0.85, w.boat);
+          } else if (e.kind === 'boss') {
+            hit('event.boss', 1.1, w.boat);
+          }
+          if (e.kind === 'start') hit('speech.start');
+        }
+      }
+    if (old) {
+      if (w.phase === 'lobby' && old.phase === 'lobby') {
+        const before = new Set(old.players.map((p) => p.id)),
+          now = new Set(w.players.map((p) => p.id));
+        if ([...now].some((id) => !before.has(id))) hit('event.join', 0.6);
+        if ([...before].some((id) => !now.has(id))) hit('event.leave', 0.6);
+      }
+      if (playing) {
+        if (urgent && old.clock - w.started < roundDuration(w) - 60_000)
+          hit('event.time-warning');
+        if (
+          w.clock - w.started >= roundDuration(w) - 15_000 &&
+          old.clock - w.started < roundDuration(w) - 15_000
+        )
+          hit('event.time-warning', 1.0);
+        if (
+          Object.keys(w.gear).some(
+            (key) =>
+              w.gear[key as keyof typeof w.gear] &&
+              !old!.gear[key as keyof typeof w.gear],
+          )
+        )
+          hit('event.gear', 0.7, w.boat);
+        if (
+          Math.abs(w.boat.roll - old.boat.roll) > 0.025 &&
+          Math.abs(w.boat.roll) > 0.2 &&
+          w.clock - this.hullAt > 3500
+        ) {
+          hit('event.hull', 0.6, w.boat);
+          hit('event.timber', 0.5, w.boat);
+          this.hullAt = w.clock;
+        }
+        for (const p of w.players) {
+          const before = old.players.find((b) => b.id === p.id);
+          // Both feet back on the planks after a jump.
+          if (before && !p.swimming && !before.swimming && before.y > 0 && !p.y)
+            plan.hits.push({
+              id: 'step.deck',
+              variant: true,
+              strength: 0.9,
+              position: anglerPosition(w, p),
+              sourceId: p.id,
+            });
+          const distance = before
+            ? Math.hypot(p.x - before.x, p.z - before.z)
+            : 0;
+          if (!before || p.swimming || before.swimming || distance > 1.5) {
+            this.steps.delete(p.id);
+            continue;
+          }
+          const stride = (this.steps.get(p.id) ?? 0) + distance;
+          if (stride >= 0.9)
+            plan.hits.push({
+              id: 'step.deck',
+              variant: true,
+              strength: p.input.brace ? 0.35 : 0.6,
+              position: anglerPosition(w, p),
+              sourceId: p.id,
+            });
+          this.steps.set(p.id, stride % 0.9);
+        }
+        for (const id of this.steps.keys())
+          if (!w.players.some((p) => p.id === id)) this.steps.delete(id);
+      }
+    }
+    this.previous = structuredClone(w);
+    return plan;
+  }
+}

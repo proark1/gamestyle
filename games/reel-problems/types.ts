@@ -332,6 +332,8 @@ export type PendingCatch = {
   gull: string;
 };
 export type ReelEvent = {
+  /** World-space impact location, retained in multiplayer snapshots. */
+  position?: { x: number; z: number };
   id: number;
   text: string;
   kind:

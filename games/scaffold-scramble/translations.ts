@@ -78,10 +78,10 @@ export const SCAFFOLD_TRANSLATIONS: Localized<ScaffoldTranslations> = {
       'The helicopter landed on the roof while smudges and dirty grime remained on the facade!',
 
     hintMove: 'Walk Deck',
-    hintWinchLeft: 'Left Winch (Q/Z)',
-    hintWinchRight: 'Right Winch (E/R)',
+    hintWinchLeft: 'Left Winch ',
+    hintWinchRight: 'Right Winch ',
     hintAction: 'Soap / Squeegee / Shoo (Space/F)',
-    hintSwitchTool: 'Swap Tool (Tab/T)',
+    hintSwitchTool: 'Swap Tool (T)',
     hintClimb: 'Climb Tether (Space)',
     hintShoo: 'Shoo Cable Pigeon',
 
@@ -122,10 +122,10 @@ export const SCAFFOLD_TRANSLATIONS: Localized<ScaffoldTranslations> = {
       'Der Hubschrauber ist gelandet, aber die Fassade war voller Schmutz und Schlieren!',
 
     hintMove: 'Gehen',
-    hintWinchLeft: 'Linke Winde (Q/Z)',
-    hintWinchRight: 'Rechte Winde (E/R)',
+    hintWinchLeft: 'Linke Winde ',
+    hintWinchRight: 'Rechte Winde ',
     hintAction: 'Einseifen / Abziehen (Leertaste/F)',
-    hintSwitchTool: 'Werkzeug wechseln (Tab/T)',
+    hintSwitchTool: 'Werkzeug wechseln (T)',
     hintClimb: 'Am Seil hochklettern (Leertaste)',
     hintShoo: 'Taube verscheuchen',
 

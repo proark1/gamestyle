@@ -1,44 +1,11 @@
-import { TEAMS, type BungeeWorld, type Player } from './types';
-import { bungeeAction, newPlayer } from './simulation';
-
-const BOT_NAMES_RED = ['Ace-Bot', 'Lob-Bot'];
-const BOT_NAMES_BLUE = ['Smash-Bot', 'Volley-Bot'];
-
-export function reconcileBungeeBots(w: BungeeWorld): void {
-  for (const team of TEAMS) {
-    const humansOnTeam = w.players.filter(
-      (p) => !p.bot && p.team === team,
-    ).length;
-    const botsOnTeam = w.players.filter((p) => p.bot && p.team === team);
-    const neededBots = Math.max(0, 2 - humansOnTeam);
-
-    if (botsOnTeam.length < neededBots) {
-      for (let i = botsOnTeam.length; i < neededBots; i++) {
-        const botNames = team === 'red' ? BOT_NAMES_RED : BOT_NAMES_BLUE;
-        const name = botNames[i % botNames.length];
-        const botId = `bot-${team}-${i + 1}`;
-        w.players.push(
-          newPlayer(botId, name, team === 'red' ? 0 : 1, team, true, i),
-        );
-      }
-    } else if (botsOnTeam.length > neededBots) {
-      const toRemove = botsOnTeam.length - neededBots;
-      let removed = 0;
-      w.players = w.players.filter((p) => {
-        if (p.bot && p.team === team && removed < toRemove) {
-          removed++;
-          return false;
-        }
-        return true;
-      });
-    }
-  }
-}
+import { type BungeeWorld, type Player } from './types';
+import { bungeeAction } from './simulation';
+export { reconcileBungeeBots } from './simulation';
 
 export function stepBungeeBot(
   bot: Player,
   w: BungeeWorld,
-  _dt: number,
+  dt: number,
   now = Date.now(),
 ): void {
   bot.input.swing = false;
@@ -46,7 +13,7 @@ export function stepBungeeBot(
   bot.input.dive = false;
   bot.input.jump = false;
 
-  if (bot.stunnedUntil > now) {
+  if (bot.stunnedUntil > now || !['serving', 'rally'].includes(w.phase)) {
     bot.input.x = 0;
     bot.input.z = 0;
     return;
@@ -61,7 +28,7 @@ export function stepBungeeBot(
     bot.input.x = 0;
     bot.input.z = 0;
     bot.facing = bot.team === 'red' ? 0 : Math.PI;
-    if (Math.random() < 0.08) {
+    if (Math.random() < 1 - Math.pow(0.92, dt * 60)) {
       bungeeAction(w, bot.id, { type: 'swing' }, now);
     }
     return;
@@ -80,7 +47,11 @@ export function stepBungeeBot(
 
   const ballOnOurSide = (isRed && ball.z < 0) || (!isRed && ball.z > 0);
 
-  if (ballOnOurSide && ball.state === 'in_play') {
+  if (
+    ballOnOurSide &&
+    ball.state === 'in_play' &&
+    ball.lastHitTeam !== bot.team
+  ) {
     // Intercept ball
     const distToBall = Math.hypot(ball.x - bot.x, ball.z - bot.z);
     const partnerDistToBall = partner
@@ -88,7 +59,9 @@ export function stepBungeeBot(
       : 999;
 
     // Decide whether bot or partner should go for it
-    const shouldGoForBall = distToBall <= partnerDistToBall + 0.8;
+    const shouldGoForBall =
+      distToBall < partnerDistToBall ||
+      (distToBall === partnerDistToBall && bot.id < (partner?.id ?? ''));
 
     if (shouldGoForBall) {
       // Padel glass wall anticipation:
@@ -113,7 +86,10 @@ export function stepBungeeBot(
           // Jump for overhead smash
           bungeeAction(w, bot.id, { type: 'jump' }, now);
           bungeeAction(w, bot.id, { type: 'smash' }, now);
-        } else if (distToBall > 1.7 && Math.random() < 0.3) {
+        } else if (
+          distToBall > 1.7 &&
+          Math.random() < 1 - Math.pow(0.7, dt * 60)
+        ) {
           // Dive save
           bungeeAction(w, bot.id, { type: 'dive' }, now);
           bungeeAction(w, bot.id, { type: 'swing' }, now);

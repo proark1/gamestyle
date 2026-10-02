@@ -35,7 +35,7 @@
 .shelf-canvas {
   position: absolute;
   inset: 0;
-  background: #c7d3b6 url('/images/shelf-control.png?v=toy-style-2') center /
+  background: #c7d3b6 url('/images/shelf-control.webp?v=toy-style-2') center /
     cover;
   touch-action: none;
 }

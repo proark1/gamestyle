@@ -1,3 +1,4 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import {
   PeerGameConnection,
   enterPeerRoom,
@@ -41,7 +42,7 @@ export async function requestGiant(body: object): Promise<Reply> {
         throw error;
     }
   }
-  const res = await fetch('/api/dont-wake-the-giant', {
+  const res = await apiFetch('/api/dont-wake-the-giant', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

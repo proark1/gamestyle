@@ -1,8 +1,10 @@
 import type { GameDatabase } from '@/db/contract';
-import { getCatalog } from './catalog';
+import { getBundledCatalog, getCatalog } from './catalog';
+import { CASTLE_DEFAULT_AUDIO } from '../../games/bouncy-castle-royale/catalog';
+import { SLOPE_DEFAULT_AUDIO } from '../../games/slopewreck/catalog';
 import { FARM_FENCE_CUES } from '../../games/act-natural/audio/fence';
 import { GIANT_DEFAULT_AUDIO } from '../../games/dont-wake-the-giant/audio/profile';
-import { BUTTON_DEFAULT_AUDIO } from '../../games/one-more-button/audio/profile';
+import { bundledCues } from '../../shared/audio/bundled-profile';
 import { decryptKey, encryptKey } from '../../shared/audio/crypto';
 import {
   AudioError,
@@ -25,6 +27,16 @@ import {
   type Cue,
   type GameId,
 } from '../../shared/audio/types';
+
+const BUNDLED_GAMES = new Set([
+  'cage-clash',
+  'crane-clash',
+  'load-bearing',
+  'panic-curling',
+  'zorb-clash',
+  'one-more-button',
+  'siege-and-desist',
+]);
 
 type SettingsRow = {
   secret: string | null;
@@ -170,6 +182,9 @@ export async function library(
         .bind(narrator.voice.sourceGame)
         .first<{ available: number }>()
     : null;
+  const bundledIds = new Set(
+    BUNDLED_GAMES.has(game) ? getBundledCatalog(game).map((cue) => cue.id) : [],
+  );
   return {
     game,
     keySaved: !!row?.key_saved,
@@ -182,8 +197,14 @@ export async function library(
       return {
         ...cue,
         file: stored?.file ?? null,
-        ...(game === 'one-more-button' && BUTTON_DEFAULT_AUDIO[base.id]
-          ? { bundledUrl: BUTTON_DEFAULT_AUDIO[base.id].url }
+        ...(game === 'bouncy-castle-royale' && CASTLE_DEFAULT_AUDIO[base.id]
+          ? { bundledUrl: CASTLE_DEFAULT_AUDIO[base.id].url }
+          : {}),
+        ...(game === 'slopewreck' && SLOPE_DEFAULT_AUDIO[base.id]
+          ? { bundledUrl: SLOPE_DEFAULT_AUDIO[base.id].url }
+          : {}),
+        ...(bundledIds.has(base.id)
+          ? { bundledUrl: `/audio/${game}/${base.id}.wav` }
           : {}),
         generated: stored?.generated ?? null,
         error: stored?.error || '',
@@ -196,13 +217,17 @@ export async function library(
 }
 export function manifest(data: AudioLibrary): AudioManifest {
   const bundled =
-    data.game === 'act-natural'
-      ? FARM_FENCE_CUES
-      : data.game === 'dont-wake-the-giant'
-        ? GIANT_DEFAULT_AUDIO
-        : data.game === 'one-more-button'
-          ? BUTTON_DEFAULT_AUDIO
-          : {};
+    data.game === 'bouncy-castle-royale'
+      ? CASTLE_DEFAULT_AUDIO
+      : data.game === 'slopewreck'
+        ? SLOPE_DEFAULT_AUDIO
+        : data.game === 'act-natural'
+          ? FARM_FENCE_CUES
+          : data.game === 'dont-wake-the-giant'
+            ? GIANT_DEFAULT_AUDIO
+            : BUNDLED_GAMES.has(data.game)
+              ? bundledCues(data.game, getBundledCatalog(data.game))
+              : {};
   return {
     settings: data.settings,
     cues: Object.fromEntries(

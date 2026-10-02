@@ -1,5 +1,6 @@
 import { cowExposed, fenceDistance, shockAge, SHOCK_STUN_MS } from './fence';
 import { distance, GATE, LADDER_EXIT, PANEL, type FarmSnapshot } from './types';
+import { farmerRepair } from './farmer-actions';
 
 /** Touch copy and available actions are derived only from this player's private snapshot. */
 export function mobileHud(
@@ -18,6 +19,15 @@ export function mobileHud(
       : 'Blending in';
   let warning = hud.watched;
   if (snapshot.you.role === 'farmer') {
+    const repair = farmerRepair(w);
+    if (repair)
+      return {
+        label: repair.label,
+        available: true,
+        hint: `${repair.label} to block the escape.`,
+        status: `${w.inspections} inspections left`,
+        warning: false,
+      };
     const target = w.cows.find(
       (c) => c.id === hud.target && !c.captured && !c.escaped,
     );

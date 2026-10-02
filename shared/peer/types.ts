@@ -1,3 +1,4 @@
+import type { Game } from '../games/identity';
 import type { GameId } from '../audio/types';
 import type { Session } from '../rooms/session';
 import type { NpcRoster } from '../rooms/npc-slots';
@@ -14,6 +15,7 @@ export type Member = {
   color: number;
   instance: string;
   seen: number;
+  suspended?: boolean;
 };
 export type Signal = {
   id: string;
@@ -37,7 +39,7 @@ export type SealedCheckpoint = {
 };
 export type PeerView = {
   code: string;
-  game: GameId;
+  game: Game | 'party';
   host: string;
   epoch: number;
   members: Member[];
@@ -49,6 +51,11 @@ export type PeerView = {
   cursor: number;
   iceServers: RTCIceServer[];
   relayConfigured: boolean;
+  relayOnly?: boolean;
+  voiceRecovered?: boolean;
+  party?: { code: string; round: number; run: string };
+  protocol?: number;
+  rules?: number;
   // Only the currently elected host receives checkpoint keys or recovery state.
   key?: string;
   checkpoint?: SealedCheckpoint & { key: string };

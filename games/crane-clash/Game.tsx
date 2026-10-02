@@ -1,5 +1,13 @@
 'use client';
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { gameActive } from '../../shared/browser/game-lifecycle';
 import { ArrowRight, Construction, RotateCcw, Timer } from 'lucide-react';
 import {
   Dialog,
@@ -8,7 +16,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import GameToolbar from '../../shared/ui/GameToolbar';
-import type { PeerGameConnection } from '../../shared/peer/connection';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import {
   advanceCraneClash,
   craneClashAction,
@@ -41,6 +50,7 @@ import {
 import { craneClashAnalytics, craneClashPlayState } from './analytics';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyRound, partyVersus } from '../../shared/ui/party-round';
+import CraneTouchControls from './TouchControls';
 
 const tracker = new GameTracker(craneClashAnalytics);
 
@@ -53,15 +63,15 @@ const formatTime = (ms: number) => {
 
 export default function CraneClash() {
   useGameTracker(tracker);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const strings = t(CRANE_CLASH_TRANSLATIONS);
 
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<CraneClashScene | null>(null);
   const sound = useRef<CraneClashSound | null>(null);
-  const network = useRef<PeerGameConnection<CraneClashSnapshot> | null>(null);
   const localWorld = useRef<CraneClashWorld | null>(null);
   const currentInput = useRef(idleInput());
+  const blocked = useRef(false);
   // The scene is handed every snapshot directly; the HUD is paced, so a
   // 20Hz feed does not rebuild it twenty times a second.
   const hud = useRef(
@@ -85,25 +95,64 @@ export default function CraneClash() {
     name: 'Bauarbeiter',
   });
 
-  const dispatchAction = useCallback((act: CraneClashAction) => {
-    tracker.action(act.type);
-    sound.current?.unlock();
-    if (network.current) {
-      void network.current.action(act);
-    } else if (localWorld.current) {
-      craneClashAction(localWorld.current, sessionRef.current.id, act, true);
-      const snap = craneClashSnapshot(
-        localWorld.current,
-        'SOLO',
-        sessionRef.current.id,
-        sessionRef.current.id,
-        Date.now(),
-      );
+  const room = usePeerRoom<CraneClashSnapshot>({
+    game: 'crane-clash',
+    loadEngine: () => import('./peer'),
+    readInput: () =>
+      blocked.current || !gameActive() ? idleInput() : currentInput.current,
+    idleInput,
+    onAttach: (next) => {
+      localWorld.current = null;
+      currentInput.current = idleInput();
+      sessionRef.current = { ...sessionRef.current, ...next };
+      hud.current.reset();
+    },
+    receive: (snap) => {
       if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(snap.world, sessionRef.current.id);
-    }
-  }, []);
+      const me = snap.world.players.find((p) => p.id === sessionRef.current.id);
+      if (me) {
+        setTeam(me.team);
+        setRole(me.role);
+        scene.current?.setLocalPlayer(me.id, me.team, me.role);
+      }
+    },
+  });
+  const disabled =
+    helpOpen ||
+    room.open ||
+    room.busy ||
+    (!!room.session && room.status !== 'online');
+  useLayoutEffect(() => {
+    blocked.current = disabled;
+    scene.current?.setBlocked(disabled);
+    if (disabled) currentInput.current = idleInput();
+  }, [disabled]);
+  const { send } = room;
+
+  const dispatchAction = useCallback(
+    (act: CraneClashAction) => {
+      if (blocked.current || !gameActive()) return;
+      tracker.action(act.type);
+      sound.current?.unlock();
+      if (send(act)) return;
+      if (localWorld.current) {
+        craneClashAction(localWorld.current, sessionRef.current.id, act, true);
+        const snap = craneClashSnapshot(
+          localWorld.current,
+          'SOLO',
+          sessionRef.current.id,
+          sessionRef.current.id,
+          Date.now(),
+        );
+        if (hud.current.due(snap)) setSnapshot(snap);
+        scene.current?.render(snap);
+        sound.current?.update(snap.world, sessionRef.current.id);
+      }
+    },
+    [send],
+  );
 
   // Initialize scene and sound
   useEffect(() => {
@@ -113,6 +162,7 @@ export default function CraneClash() {
 
     scene.current = new CraneClashScene(container.current, {
       input: (inp: PlayerInput) => {
+        if (blocked.current || !gameActive()) inp = idleInput();
         currentInput.current = inp;
         if (localWorld.current) {
           const p = localWorld.current.players.find(
@@ -128,6 +178,7 @@ export default function CraneClash() {
         dispatchAction(act);
       },
     });
+    scene.current.setBlocked(blocked.current);
 
     const initialWorld = freshClashWorld(Date.now());
     initialWorld.players.push(
@@ -153,9 +204,14 @@ export default function CraneClash() {
     );
     setSnapshot(initialSnap);
 
+    let previous = Date.now();
     const timer = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.max(0, Math.min(100, now - previous));
+      previous = now;
+      if (!gameActive()) return;
       if (!localWorld.current) return;
-      advanceCraneClash(localWorld.current, Date.now());
+      advanceCraneClash(localWorld.current, localWorld.current.clock + elapsed);
       const snap = craneClashSnapshot(
         localWorld.current,
         'SOLO',
@@ -172,10 +228,8 @@ export default function CraneClash() {
       clearInterval(timer);
       scene.current?.destroy();
       scene.current = null;
-      sound.current?.reset();
+      sound.current?.dispose();
       sound.current = null;
-      network.current?.stop();
-      network.current = null;
     };
   }, [dispatchAction]);
 
@@ -264,7 +318,17 @@ export default function CraneClash() {
   return (
     <main
       className="cc-game"
-      {...partyRound(isEnded, partyVersus(team, world?.winner))}
+      {...partyRound(
+        isEnded,
+        partyVersus(
+          team,
+          world?.winner,
+          world
+            ? { red: world.scores.red.height, blue: world.scores.blue.height }
+            : undefined,
+          'height',
+        ),
+      )}
     >
       <div ref={container} className="cc-canvas" />
       <header className="topbar">
@@ -275,6 +339,8 @@ export default function CraneClash() {
           CRANE CLASH<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={muted}
           onToggleSound={toggleSound}
           onHelp={() => setHelpOpen(true)}
@@ -394,6 +460,7 @@ export default function CraneClash() {
             {blueScore.toFixed(1)}m
           </p>
           <button
+            data-party-setup-action=""
             type="button"
             className="cc-btn primary primary-button"
             onClick={handleRestart}
@@ -403,6 +470,19 @@ export default function CraneClash() {
         </div>
       )}
 
+      {isPlaying && (
+        <CraneTouchControls
+          solo={isSolo}
+          role={role}
+          de={language === 'de'}
+          disabled={disabled}
+          move={(nextRole, vector) =>
+            scene.current?.setTouchMove(nextRole, vector)
+          }
+          hoist={(direction) => scene.current?.setTouchHoist(direction)}
+          grab={() => dispatchAction({ type: 'grab' })}
+        />
+      )}
       {/* Controls Bar at bottom */}
       <div className="cc-hint-bar">
         {hints.map((hint) => (

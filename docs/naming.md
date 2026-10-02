@@ -34,6 +34,10 @@ Added 2026-09-18:
 
 Chain of Fools is a one-to-four player co-op obstacle course where the whole crew is clipped to one unbreakable safety line across a demolition site. The display name is `Chain of Fools`, and the route, game identifier and audio namespace are `chain-of-fools`.
 
+Added 2026-09-24: **Bouncy Castle Royale** is 2v2 inflatable volleyball with landing waves and shared team air. Its route, room and audio identifier is `bouncy-castle-royale`.
+
+Added 2026-09-24: **Slopewreck** is a four-rider downhill snowboard race where landed tricks leave ramps and rails for the riders behind. Its route, room and audio identifier is `slopewreck`.
+
 The platform is **Jumbleyard**, with this exact spelling. Blend Business and
 Tiptoe Thieves are deliberately independent of a particular animal, disguise,
 map, or opponent. Current game descriptions still describe their playable maps;

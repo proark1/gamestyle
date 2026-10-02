@@ -1,3 +1,4 @@
+import { apiFetch } from '../browser/api-fetch';
 import {
   ANALYTICS_ENDPOINT,
   ANALYTICS_VERSION,
@@ -112,7 +113,7 @@ export function browserEnvironment(
     },
     async send(body) {
       try {
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
           method: 'POST',
           body,
           keepalive: true,

@@ -35,6 +35,37 @@ export class PeerMemoryStore implements RoomStore {
 }
 const NOW = 1_000_000;
 
+void test('a suspended player can reload a heavy scene beyond the heartbeat timeout', async () => {
+  const { sessions, call } = await crew('stack-or-sink');
+  await call(1, 'suspend', NOW + 1);
+  for (let elapsed = 5000; elapsed <= 45000; elapsed += 5000)
+    await call(0, 'poll', NOW + elapsed);
+  const reloaded = await call(1, 'hello', NOW + 45001, {
+    instance: 'reloaded-browser',
+  });
+  const member = reloaded.view.members.find((m) => m.id === sessions[1].id);
+  assert.ok(member);
+  assert.equal(member.suspended, false);
+  assert.equal(member.instance, 'reloaded-browser');
+});
+
+void test('background hosts yield authority without losing their seat and can resume', async () => {
+  const { sessions, call } = await crew('stack-or-sink');
+  const sleeping = await call(0, 'suspend', NOW + 1);
+  assert.equal(sleeping.view.host, sessions[1].id);
+  assert.equal(sleeping.view.members.length, 4);
+  assert.equal(
+    sleeping.view.members.find((m) => m.id === sessions[0].id)?.suspended,
+    true,
+  );
+  const resumed = await call(0, 'resume', NOW + 2);
+  assert.equal(resumed.view.host, sessions[1].id);
+  assert.equal(
+    resumed.view.members.find((m) => m.id === sessions[0].id)?.suspended,
+    false,
+  );
+});
+
 void test('peer signals strip unrecognized fields and bound the total persisted queue', async () => {
   const { store, sessions, call } = await crew('stack-or-sink');
   const signal = (id: string) => ({
@@ -102,6 +133,47 @@ async function crew(game: GameId) {
     );
   return { store, sessions, views, call };
 }
+void test('candidate bursts apply backpressure instead of silently evicting an undelivered offer', async () => {
+  const { sessions, call } = await crew('stack-or-sink');
+  const envelope = { to: sessions[1].id, instance: 'browser-1', link: 'link' };
+  await call(0, 'signal', NOW + 1, {
+    signals: [
+      {
+        ...envelope,
+        id: 'offer',
+        description: { type: 'offer', sdp: 'offer-to-preserve' },
+      },
+    ],
+  });
+  for (let batch = 0; batch < 5; batch++)
+    await call(0, 'signal', NOW + 2, {
+      signals: Array.from({ length: 32 }, (_, i) => ({
+        ...envelope,
+        id: `candidate-${batch}-${i}`,
+        candidate: { candidate: 'candidate:1' },
+      })),
+    });
+  await assert.rejects(
+    call(0, 'signal', NOW + 3, {
+      signals: Array.from({ length: 32 }, (_, i) => ({
+        ...envelope,
+        id: `overflow-${i}`,
+        candidate: { candidate: 'candidate:1' },
+      })),
+    }),
+    (e: unknown) => e instanceof PeerError && e.status === 429,
+  );
+  const delivered = (await call(1, 'poll', NOW + 4)).view;
+  assert.equal(delivered.signals[0].description?.sdp, 'offer-to-preserve');
+  assert.equal(delivered.signals.length, 161);
+  await call(1, 'poll', NOW + 5, { cursor: delivered.cursor });
+  await call(0, 'signal', NOW + 6, {
+    signals: [
+      { ...envelope, id: 'retry', candidate: { candidate: 'candidate:1' } },
+    ],
+  });
+  assert.equal((await call(1, 'poll', NOW + 7)).view.signals.length, 1);
+});
 for (const game of [
   'stack-or-sink',
   'act-natural',

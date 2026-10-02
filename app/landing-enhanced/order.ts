@@ -12,6 +12,7 @@ export const STANDARD_PINNED = [
 ] as const;
 
 export const STANDARD_SHUFFLED = [
+  'course-correction',
   'bouncy-castle-royale',
   'cage-clash',
   'on-the-ropes',

@@ -3,7 +3,15 @@
  * goals that unlock the few that cannot be bought. Data only, so the server
  * and the browser can both import it. Item ids are never reused.
  */
-export const SLOTS = ['hat', 'top', 'legs', 'shoes', 'face', 'beard'] as const;
+export const SLOTS = [
+  'costume',
+  'hat',
+  'top',
+  'legs',
+  'shoes',
+  'face',
+  'beard',
+] as const;
 export type Slot = (typeof SLOTS)[number];
 
 export type Goal = {
@@ -18,14 +26,16 @@ export type Item = {
   id: string;
   slot: Slot;
   name: string;
-  /** Coins to buy it. An item has either a price or a goal. */
+  /** Coins to buy it; absent for goal and premium items. */
   price?: number;
   /** The goal that unlocks it instead. */
   goal?: string;
+  /** A paid item, granted only after a verified storefront purchase. */
+  premium?: boolean;
 };
 
 /** Raise when an item changes meaning, so an old shop page cannot buy the wrong thing. */
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 2;
 
 export const GOALS: readonly Goal[] = [
   {
@@ -63,6 +73,17 @@ export const GOALS: readonly Goal[] = [
 ];
 
 export const ITEMS: readonly Item[] = [
+  // Complete costumes leave the player's face uncovered.
+  { id: 'mossweaver', slot: 'costume', name: 'Mossweaver', premium: true },
+  { id: 'thunder-hen', slot: 'costume', name: 'Thunder Hen', premium: true },
+  { id: 'kite-knight', slot: 'costume', name: 'Kite Knight', premium: true },
+  { id: 'comet-diver', slot: 'costume', name: 'Comet Diver', premium: true },
+  {
+    id: 'puddle-dragon',
+    slot: 'costume',
+    name: 'Puddle Dragon',
+    premium: true,
+  },
   // Hats
   { id: 'bobble-beanie', slot: 'hat', name: 'Bobble Beanie', price: 80 },
   { id: 'party-cone', slot: 'hat', name: 'Party Cone', price: 150 },
@@ -156,6 +177,25 @@ export const ITEMS: readonly Item[] = [
   { id: 'big-moustache', slot: 'beard', name: 'Big Moustache', price: 120 },
   { id: 'trimmed-beard', slot: 'beard', name: 'Trimmed Beard', price: 150 },
   { id: 'wizard-beard', slot: 'beard', name: 'Wizard Beard', price: 200 },
+
+  // Woodland, Snack Time and Cosmic collections; every piece can be mixed.
+  { id: 'frog-bucket-hat', slot: 'hat', name: 'Frog Bucket Hat', price: 180 },
+  { id: 'mushroom-cap', slot: 'hat', name: 'Mushroom Cap', price: 220 },
+  { id: 'bear-paw-shoes', slot: 'shoes', name: 'Bear Paw Shoes', price: 200 },
+  { id: 'leaf-dungarees', slot: 'legs', name: 'Leaf Dungarees', price: 220 },
+  { id: 'strawberry-beret', slot: 'hat', name: 'Strawberry Beret', price: 240 },
+  { id: 'toast-puffer', slot: 'top', name: 'Toast Puffer', price: 260 },
+  { id: 'ducky-boots', slot: 'shoes', name: 'Ducky Boots', price: 200 },
+  {
+    id: 'watermelon-shorts',
+    slot: 'legs',
+    name: 'Watermelon Shorts',
+    price: 160,
+  },
+  { id: 'saturn-hat', slot: 'hat', name: 'Saturn Hat', price: 320 },
+  { id: 'cloud-jacket', slot: 'top', name: 'Cloud Jacket', price: 280 },
+  { id: 'comet-sneakers', slot: 'shoes', name: 'Comet Sneakers', price: 280 },
+  { id: 'moon-glasses', slot: 'face', name: 'Moon Glasses', price: 180 },
 ];
 
 export function findItem(id: string) {

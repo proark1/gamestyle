@@ -16,6 +16,65 @@ import {
   stepBungeeTether,
 } from './physics';
 
+export const POINT_PAUSE_MS = 1800;
+export const HIT_COOLDOWN_MS = 250;
+export const EVENT_LIMIT = 128;
+
+/** Keep two players on each team without reusing live bot identities. */
+export function reconcileBungeeBots(world: BungeeWorld): void {
+  for (const team of ['red', 'blue'] as const) {
+    const humans = world.players.filter((p) => p.team === team && !p.bot);
+    const bots = world.players.filter((p) => p.team === team && p.bot);
+    const needed = Math.max(0, 2 - humans.length);
+    const removed = new Set(bots.slice(needed).map((p) => p.id));
+    world.players = world.players.filter((p) => !removed.has(p.id));
+    for (
+      let slot = humans.length + Math.min(needed, bots.length);
+      slot < 2;
+      slot++
+    ) {
+      let index = 1;
+      while (world.players.some((p) => p.id === `bot-${team}-${index}`))
+        index++;
+      world.players.push(
+        newPlayer(
+          `bot-${team}-${index}`,
+          team === 'red' ? 'Ace-Bot' : 'Volley-Bot',
+          team === 'red' ? 0 : 1,
+          team,
+          true,
+          slot,
+        ),
+      );
+    }
+  }
+}
+
+function resetPositions(world: BungeeWorld, resetStats = false) {
+  for (const team of ['red', 'blue'] as const) {
+    world.players
+      .filter((p) => p.team === team)
+      .forEach((p, slot) => {
+        const fresh = newPlayer(p.id, p.name, p.color, team, p.bot, slot);
+        const stats = {
+          hits: p.hits,
+          smashes: p.smashes,
+          slingshots: p.slingshots,
+          bonks: p.bonks,
+          score: p.score,
+          seen: p.seen,
+        };
+        Object.assign(p, fresh, resetStats ? {} : stats);
+      });
+  }
+  world.tethers = { red: null, blue: null };
+}
+
+function trimEvents(world: BungeeWorld) {
+  if (world.events.length > EVENT_LIMIT)
+    world.events.splice(0, world.events.length - EVENT_LIMIT);
+}
+
 export function freshBall(): Ball {
   return {
     x: 0,
@@ -89,6 +148,7 @@ export function freshBungeeWorld(now = Date.now()): BungeeWorld {
     phase: 'serving',
     started: now,
     endedAt: 0,
+    nextServeAt: 0,
     scores: { red: 0, blue: 0 },
     serverTeam: 'red',
     servingPlayerId: null,
@@ -109,6 +169,8 @@ export function prepareServe(world: BungeeWorld, team: TeamId) {
   world.phase = 'serving';
   world.serverTeam = team;
   world.rallyCount = 0;
+  world.nextServeAt = 0;
+  world.scoreBanner = null;
 
   const server = world.players.find((p) => p.team === team) ?? world.players[0];
   world.servingPlayerId = server ? server.id : null;
@@ -164,10 +226,14 @@ export function scorePoint(
   reason: string,
   now: number,
 ) {
-  if (world.phase === 'ended') return;
+  if (world.phase === 'ended' || world.phase === 'scored') return;
 
   world.scores[winningTeam]++;
   world.phase = 'scored';
+  world.nextServeAt = now + POINT_PAUSE_MS;
+  world.ball.state = 'dead';
+  world.ball.vx = world.ball.vy = world.ball.vz = 0;
+  world.ball.speedTrail = world.ball.isSmash = false;
   world.scoreBanner = {
     team: winningTeam,
     text: `POINT ${winningTeam.toUpperCase()}!`,
@@ -194,6 +260,7 @@ export function scorePoint(
       team: winningTeam,
     });
   }
+  trimEvents(world);
 }
 
 /** Handles player input actions like swings, jumps, dives */
@@ -211,15 +278,31 @@ export function bungeeAction(
     world.winner = null;
     world.endedAt = 0;
     world.rallyCount = 0;
+    world.maxRally = 0;
+    world.started = now;
+    world.events = [];
+    reconcileBungeeBots(world);
+    resetPositions(world, true);
     prepareServe(world, 'red');
     return;
   }
 
   if (action.type === 'switchTeam') {
-    p.team = p.team === 'red' ? 'blue' : 'red';
+    const next = p.team === 'red' ? 'blue' : 'red';
+    if (
+      world.players.filter((other) => !other.bot && other.team === next)
+        .length >= 2
+    )
+      return;
+    p.team = next;
+    reconcileBungeeBots(world);
+    resetPositions(world);
+    // Changing sides deliberately abandons the current point, without awarding it.
+    if (world.phase !== 'ended') prepareServe(world, world.serverTeam);
     return;
   }
 
+  if (world.phase !== 'serving' && world.phase !== 'rally') return;
   if (p.stunnedUntil > now) return;
 
   if (action.type === 'jump' && p.grounded) {
@@ -264,6 +347,7 @@ export function bungeeAction(
   if (action.type === 'swing' || action.type === 'smash') {
     executeRacketHit(world, p, action.type === 'smash', now);
   }
+  trimEvents(world);
 }
 
 function executeRacketHit(
@@ -274,17 +358,22 @@ function executeRacketHit(
 ) {
   const ball = world.ball;
   const isServing = ball.state === 'serving';
+  if (player.swingCooldown > now) return;
 
   // If serving, only the designated server can hit
   if (isServing) {
-    if (player.team !== world.serverTeam) return;
+    if (awaitedServer(world)?.id !== player.id) return;
+    // Also repairs an unnamed opening serve for older checkpoints.
+    ball.x = player.x;
+    ball.y = 1.1;
+    ball.z = player.z + (player.team === 'red' ? 0.9 : -0.9);
 
     ball.state = 'in_play';
     world.phase = 'rally';
     const shot = calculateRacketShot(
-      player.x,
+      ball.x,
       ball.y,
-      player.z,
+      ball.z,
       player.team,
       false,
       false,
@@ -300,6 +389,7 @@ function executeRacketHit(
     player.specialState = 'swinging';
     player.stateTimer = 0.35;
     player.hits++;
+    player.swingCooldown = now + HIT_COOLDOWN_MS;
 
     world.events.push({
       id: ++world.eventId,
@@ -310,6 +400,12 @@ function executeRacketHit(
     });
     return;
   }
+
+  if (ball.state !== 'in_play' || world.phase !== 'rally') return;
+  // A team gets one return per opponent shot. This is also the contact latch:
+  // neither the hitter nor their partner can re-hit an outgoing ball.
+  if (ball.lastHitBy && ball.lastHitTeam === player.team) return;
+  if ((ball.z < 0 ? 'red' : 'blue') !== player.team) return;
 
   // During rally, check distance to ball
   const dx = ball.x - player.x;
@@ -328,9 +424,9 @@ function executeRacketHit(
     const isDive = player.specialState === 'diving';
 
     const shot = calculateRacketShot(
-      player.x,
+      ball.x,
       ball.y,
-      player.z,
+      ball.z,
       player.team,
       isSmash,
       isDive,
@@ -352,6 +448,7 @@ function executeRacketHit(
     player.specialState = isSmash ? 'smashing' : 'swinging';
     player.stateTimer = 0.35;
     player.hits++;
+    player.swingCooldown = now + HIT_COOLDOWN_MS;
     if (isSmash) player.smashes++;
 
     world.rallyCount++;
@@ -378,23 +475,36 @@ export function advanceBungee(
   now = Date.now(),
 ) {
   world.clock += dt * 1000;
+  trimEvents(world);
+
+  if (world.phase === 'ended') return;
 
   // Handle post-score delay before next serve
   if (world.phase === 'scored') {
-    if (!world.scoreBanner) {
+    if (now >= world.nextServeAt) {
       const nextServer = world.serverTeam === 'red' ? 'blue' : 'red';
+      resetPositions(world);
       prepareServe(world, nextServer);
     }
+    return;
   }
 
-  const eventIdRef = { current: world.eventId };
+  // Physics and scoring must share the same allocator, including within a step.
+  const eventIdRef = {
+    get current() {
+      return world.eventId;
+    },
+    set current(value: number) {
+      world.eventId = value;
+    },
+  };
 
   // Step players
   for (const p of world.players) {
     if (p.stunnedUntil > now) {
       p.specialState = 'stunned';
-      p.vx *= 0.85;
-      p.vz *= 0.85;
+      p.vx *= Math.pow(0.85, dt * 60);
+      p.vz *= Math.pow(0.85, dt * 60);
     } else {
       if (p.specialState === 'stunned') p.specialState = 'none';
 
@@ -411,8 +521,9 @@ export function advanceBungee(
       const targetVx = p.input.x * speed;
       const targetVz = p.input.z * speed;
 
-      p.vx += (targetVx - p.vx) * 0.25;
-      p.vz += (targetVz - p.vz) * 0.25;
+      const blend = 1 - Math.pow(0.75, dt * 60);
+      p.vx += (targetVx - p.vx) * blend;
+      p.vz += (targetVz - p.vz) * blend;
 
       if (Math.hypot(p.input.x, p.input.z) > 0.1) {
         p.facing = Math.atan2(p.input.x, p.input.z);
@@ -465,60 +576,67 @@ export function advanceBungee(
 
   // Step Ball
   if (world.ball.state === 'in_play') {
-    const { bounced, hitWall, wallPos } = stepBallPhysics(
+    const { contacts } = stepBallPhysics(
       world.ball,
       dt,
       world.events,
       eventIdRef,
     );
-
-    // Current side tracking: Z < 0 is Red, Z > 0 is Blue
-    const currentSide: TeamId = world.ball.z < 0 ? 'red' : 'blue';
-
-    if (world.ball.currentSide !== currentSide) {
-      world.ball.currentSide = currentSide;
-      world.ball.bouncesOnCurrentSide = 0;
-      world.ball.hitCountOnSide = 0;
-      world.ball.wallHitsOnCurrentSide = 0;
-    }
-
-    if (hitWall) {
-      if (world.ball.bouncesOnCurrentSide === 0) {
-        // In padel, hitting the wall directly on the fly is OUT!
-        const pointWinner: TeamId =
-          world.ball.lastHitTeam === 'red' ? 'blue' : 'red';
-        const wallName = hitWall === 'back' ? 'Glass Wall' : 'Side Mesh';
-        scorePoint(world, pointWinner, `Out! Direct ${wallName} hit`, now);
+    const trackSide = (z: number) => {
+      const side: TeamId = z < 0 ? 'red' : 'blue';
+      if (world.ball.currentSide !== side) {
+        world.ball.currentSide = side;
+        world.ball.bouncesOnCurrentSide = 0;
+        world.ball.hitCountOnSide = 0;
+        world.ball.wallHitsOnCurrentSide = 0;
+      }
+      return side;
+    };
+    for (const contact of contacts) {
+      const side = trackSide(contact.pos[2]);
+      const opponent: TeamId =
+        world.ball.lastHitTeam === 'red' ? 'blue' : 'red';
+      if (contact.type === 'floor') {
+        world.ball.bouncesOnCurrentSide++;
+        if (!isInsideCourt(contact.pos[0], contact.pos[2])) {
+          scorePoint(world, opponent, 'Out of Bounds!', now);
+        } else if (side === world.ball.lastHitTeam) {
+          scorePoint(
+            world,
+            opponent,
+            'Ball did not reach the other side!',
+            now,
+          );
+        } else if (world.ball.bouncesOnCurrentSide >= 2) {
+          scorePoint(
+            world,
+            side === 'red' ? 'blue' : 'red',
+            'Double Bounce!',
+            now,
+          );
+        }
+      } else if (world.ball.bouncesOnCurrentSide === 0) {
+        scorePoint(
+          world,
+          opponent,
+          contact.type === 'back'
+            ? 'Out! Direct Glass Wall hit'
+            : 'Out! Direct Side Mesh hit',
+          now,
+        );
       } else {
-        // Legal wall rebound: ball bounced on the court floor first!
         world.ball.wallHitsOnCurrentSide++;
         world.events.push({
-          id: ++eventIdRef.current,
+          id: ++world.eventId,
           type: 'wall_rebound',
-          text: hitWall === 'back' ? 'Glass Rebound!' : 'Side Mesh Rebound!',
-          pos: wallPos ?? [world.ball.x, world.ball.y, world.ball.z],
+          text:
+            contact.type === 'back' ? 'Glass Rebound!' : 'Side Mesh Rebound!',
+          pos: contact.pos,
         });
       }
+      if (world.nextServeAt > 0) break;
     }
-
-    if (bounced) {
-      world.ball.bouncesOnCurrentSide++;
-      const inCourt = isInsideCourt(world.ball.x, world.ball.z);
-
-      if (world.ball.bouncesOnCurrentSide === 1) {
-        if (!inCourt) {
-          // Ball bounced outside court on first bounce: OUT!
-          // Point goes to team that did NOT hit the ball
-          const pointWinner: TeamId =
-            world.ball.lastHitTeam === 'red' ? 'blue' : 'red';
-          scorePoint(world, pointWinner, 'Out of Bounds!', now);
-        }
-      } else if (world.ball.bouncesOnCurrentSide >= 2) {
-        // Double bounce! Point goes to the team that hit it across
-        const pointWinner: TeamId = currentSide === 'red' ? 'blue' : 'red';
-        scorePoint(world, pointWinner, 'Double Bounce!', now);
-      }
-    }
+    if (world.ball.state === 'in_play') trackSide(world.ball.z);
   } else if (world.ball.state === 'serving') {
     // Ball hovers in front of server
     const server = world.players.find((p) => p.id === world.servingPlayerId);
@@ -529,7 +647,7 @@ export function advanceBungee(
     }
   }
 
-  world.eventId = eventIdRef.current;
+  trimEvents(world);
 }
 
 export function bungeeSnapshot(
@@ -545,7 +663,18 @@ export function bungeeSnapshot(
     isHost: host === localId,
     world: {
       ...world,
-      events: [...world.events],
+      scores: { ...world.scores },
+      ball: { ...world.ball },
+      players: world.players.map((p) => ({ ...p, input: { ...p.input } })),
+      tethers: {
+        red: world.tethers.red ? { ...world.tethers.red } : null,
+        blue: world.tethers.blue ? { ...world.tethers.blue } : null,
+      },
+      scoreBanner: world.scoreBanner ? { ...world.scoreBanner } : null,
+      events: world.events.map((event) => ({
+        ...event,
+        pos: event.pos ? [...event.pos] : undefined,
+      })),
     },
     localId,
     version,

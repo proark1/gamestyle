@@ -1,3 +1,4 @@
+import { expansion } from './expansion';
 import { cue } from '../../../shared/audio/catalog-helpers';
 import type { Cue } from '../../../shared/audio/types';
 
@@ -23,6 +24,7 @@ const fx = (
   );
 
 export const zorbClashCatalog: Cue[] = [
+  ...expansion,
   fx(
     'event.zorb_bonk',
     'Explosive Zorb Collision',

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Compact four-color Jumbleyard gesture">
+  <defs><mask id="mark" maskUnits="userSpaceOnUse">
+    <rect width="100" height="100" fill="#000"/>
+    <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M25 25C40 24 48 36 53 51" stroke-width="18"/>
+      <path d="M79 25C76 39 64 48 53 51" stroke-width="18"/>
+      <path d="M53 51C57 65 48 79 35 83C22 87 16 79 23 68" stroke-width="20"/>
+    </g>
+  </mask></defs>
+  <g mask="url(#mark)">
+    <rect width="100" height="100" fill="#504CE0"/>
+    <path d="M0 0H56L59 61H0Z" fill="#F6C42A"/>
+    <path d="M56 0H100V62H60L53 51Z" fill="#EF405A"/>
+    <path d="M0 52H35C48 55 52 71 59 100H0Z" fill="#05A8BF"/>
+  </g>
+</svg>

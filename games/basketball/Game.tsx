@@ -9,9 +9,9 @@ import {
   Volleyball,
   Zap,
 } from 'lucide-react';
-import type { PeerGameConnection } from '../../shared/peer/connection';
 import { useMediaQuery } from '../../shared/browser/use-media-query';
 import { TOUCH_CONTROLS_QUERY } from '../../shared/input/gestures';
+import { TouchControls } from '../../shared/input/TouchControls';
 import {
   advanceBasketball,
   basketballAction,
@@ -35,6 +35,8 @@ import { BasketballScene } from './scene';
 import './style.css';
 import { useLanguage } from '../../shared/language/useLanguage';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import { BASKETBALL_TRANSLATIONS } from './translations';
 import {
   GameTracker,
@@ -57,7 +59,6 @@ export default function BasketballGame() {
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<BasketballScene | null>(null);
   const sound = useRef<BasketballSound | null>(null);
-  const network = useRef<PeerGameConnection<BasketballSnapshot> | null>(null);
   const localWorld = useRef<BasketballWorld | null>(null);
   const currentInput = useRef(idleInput());
   // The scene is handed every snapshot directly; the HUD is paced, so a
@@ -99,25 +100,46 @@ export default function BasketballGame() {
     team: 'red',
   });
 
-  const dispatchAction = useCallback((act: BasketballAction) => {
-    tracker.action(act.type);
-    sound.current?.unlock();
-    if (network.current) {
-      void network.current.action(act);
-    } else if (localWorld.current) {
-      basketballAction(localWorld.current, sessionRef.current.id, act, true);
-      const snap = basketballSnapshot(
-        localWorld.current,
-        'SOLO',
-        sessionRef.current.id,
-        sessionRef.current.id,
-        Date.now(),
-      );
+  const room = usePeerRoom<BasketballSnapshot>({
+    game: 'basketball',
+    loadEngine: () => import('./peer'),
+    readInput: () => currentInput.current,
+    idleInput,
+    onAttach: (next) => {
+      localWorld.current = null;
+      currentInput.current = idleInput();
+      sessionRef.current = { ...sessionRef.current, ...next };
+      hud.current.reset();
+    },
+    receive: (snap) => {
       if (hud.current.due(snap)) setSnapshot(snap);
       scene.current?.render(snap);
       sound.current?.update(snap.world, sessionRef.current.id);
-    }
-  }, []);
+    },
+  });
+  const { send, active } = room;
+
+  const dispatchAction = useCallback(
+    (act: BasketballAction) => {
+      tracker.action(act.type);
+      sound.current?.unlock();
+      if (send(act)) return;
+      if (localWorld.current) {
+        basketballAction(localWorld.current, sessionRef.current.id, act, true);
+        const snap = basketballSnapshot(
+          localWorld.current,
+          'SOLO',
+          sessionRef.current.id,
+          sessionRef.current.id,
+          Date.now(),
+        );
+        if (hud.current.due(snap)) setSnapshot(snap);
+        scene.current?.render(snap);
+        sound.current?.update(snap.world, sessionRef.current.id);
+      }
+    },
+    [send],
+  );
 
   // Initialize scene and sound
   useEffect(() => {
@@ -166,7 +188,7 @@ export default function BasketballGame() {
       const dt = Math.min(0.05, (time - lastTime) / 1000);
       lastTime = time;
 
-      if (localWorld.current && !network.current) {
+      if (localWorld.current && !active.current) {
         // Step AI bots
         for (const p of localWorld.current.players) {
           if (p.bot) {
@@ -249,7 +271,7 @@ export default function BasketballGame() {
       sound.current?.dispose();
       sound.current = null;
     };
-  }, [dispatchAction]);
+  }, [dispatchAction, active]);
 
   const world = snapshot?.world;
   const localPlayer = snapshot
@@ -296,7 +318,7 @@ export default function BasketballGame() {
       className="bb-game"
       {...partyRound(
         world?.phase === 'ended',
-        partyVersus(localPlayer?.team, world?.winner),
+        partyVersus(localPlayer?.team, world?.winner, world?.scores),
       )}
     >
       <div ref={container} className="bb-canvas" />
@@ -308,6 +330,8 @@ export default function BasketballGame() {
           COURT CLASH<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={muted}
           onToggleSound={toggleSound}
           onHelp={toggleHints}
@@ -411,6 +435,12 @@ export default function BasketballGame() {
       {/* Mobile Touch Controls Overlay */}
       {touchMode && world?.phase === 'playing' && (
         <div className="bb-touch-controls">
+          <TouchControls
+            disabled={room.open}
+            showJump={false}
+            jump={() => {}}
+            move={(vector) => scene.current?.setTouchMove(vector)}
+          />
           <div className="bb-touch-buttons">
             <div className="bb-touch-row">
               <button
@@ -445,20 +475,34 @@ export default function BasketballGame() {
               <button
                 type="button"
                 className="bb-touch-btn shoot"
-                onPointerDown={() => {
-                  if (localWorld.current) {
-                    const p = localWorld.current.players.find(
-                      (pl) => pl.id === sessionRef.current.id,
-                    );
-                    if (p) p.input.shoot = true;
-                  }
+                onPointerDown={(event) => {
+                  if (event.button !== 0) return;
+                  event.preventDefault();
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  scene.current?.setTouchShoot(true);
+                }}
+                onPointerCancel={() => {
+                  scene.current?.setTouchShoot(false);
+                }}
+                onLostPointerCapture={() => {
+                  scene.current?.setTouchShoot(false);
                 }}
                 onPointerUp={() => {
-                  if (localWorld.current) {
-                    const p = localWorld.current.players.find(
-                      (pl) => pl.id === sessionRef.current.id,
-                    );
-                    if (p) p.input.shoot = false;
+                  scene.current?.setTouchShoot(false);
+                }}
+                onBlur={() => scene.current?.setTouchShoot(false)}
+                onKeyDown={(event) => {
+                  if (event.key === ' ' || event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    scene.current?.setTouchShoot(true);
+                  }
+                }}
+                onKeyUp={(event) => {
+                  if (event.key === ' ' || event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    scene.current?.setTouchShoot(false);
                   }
                 }}
               >
@@ -493,6 +537,7 @@ export default function BasketballGame() {
 
           <div className="bb-team-selector">
             <button
+              data-party-setup-action=""
               type="button"
               className={`bb-btn red ${team === 'red' ? 'active' : ''}`}
               onClick={() => handleSwitchTeam('red')}
@@ -500,6 +545,7 @@ export default function BasketballGame() {
               {strings.teamRed}
             </button>
             <button
+              data-party-setup-action=""
               type="button"
               className={`bb-btn blue ${team === 'blue' ? 'active' : ''}`}
               onClick={() => handleSwitchTeam('blue')}
@@ -532,6 +578,7 @@ export default function BasketballGame() {
             )}
           </div>
           <button
+            data-party-setup-action=""
             type="button"
             className="bb-btn primary primary-button"
             onClick={handleRestart}

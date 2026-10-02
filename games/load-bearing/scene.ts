@@ -1,5 +1,8 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { gameActive } from '../../shared/browser/game-lifecycle';
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import { poseWrecker } from './avatar';
 import { SiteMotion, emptyPose } from './motion';
@@ -149,7 +152,14 @@ export class LoadBearingScene {
     const dom = this.renderer.domElement;
     addEventListener('keydown', this.onKey, { signal });
     addEventListener('keyup', this.onKey, { signal });
-    addEventListener('blur', () => this.keys.clear(), { signal });
+    addEventListener('blur', this.clearInput, { signal });
+    document.addEventListener(
+      'visibilitychange',
+      () => {
+        if (document.hidden) this.clearInput();
+      },
+      { signal },
+    );
     dom.addEventListener('pointerdown', this.onPointerDown, { signal });
     dom.addEventListener('pointermove', this.onPointerMove, { signal });
     addEventListener('pointerup', () => (this.dragging = false), { signal });
@@ -183,20 +193,45 @@ export class LoadBearingScene {
   }
   setBlocked(blocked: boolean) {
     this.blocked = blocked;
-    if (blocked) this.keys.clear();
+    if (blocked) this.clearInput();
   }
+  private clearInput = () => {
+    this.keys.clear();
+    this.touch = { x: 0, z: 0 };
+    this.touchJump = false;
+    this.dragging = false;
+    this.cb.input(idleInput());
+  };
   toggleCamera() {
     this.overview = !this.overview;
   }
 
   private onKey = (event: KeyboardEvent) => {
-    if (event.repeat) return;
     const down = event.type === 'keydown';
+    if (!down) {
+      this.keys.delete(event.code);
+      return;
+    }
+    if (
+      event.repeat ||
+      this.blocked ||
+      !gameActive() ||
+      event.defaultPrevented ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      (event.target instanceof HTMLElement &&
+        event.target.closest(
+          'input,textarea,select,[contenteditable],[role="dialog"]',
+        )) ||
+      (event.code === 'Space' &&
+        event.target instanceof HTMLElement &&
+        event.target.closest('button,a'))
+    )
+      return;
     if (KEY_AXES[event.code] || ['Space'].includes(event.code))
       event.preventDefault();
-    if (down) this.keys.add(event.code);
-    else this.keys.delete(event.code);
-    if (!down || this.blocked) return;
+    this.keys.add(event.code);
     if (event.code === 'KeyV') return this.toggleCamera();
     const action = ACTION_KEYS[event.code];
     if (!action) return;
@@ -340,6 +375,7 @@ export class LoadBearingScene {
           1.3,
         );
         this.scene.remove(mesh);
+        disposeObject(mesh);
         this.parts.delete(id);
         // Something just left the structure: rattle the camera for it.
         if (!this.reduceMotion) this.shake = Math.min(1, this.shake + 0.55);
@@ -385,6 +421,7 @@ export class LoadBearingScene {
     for (const [id, mesh] of this.people)
       if (!live.has(id)) {
         this.scene.remove(mesh);
+        disposeObject(mesh);
         this.people.delete(id);
       }
   }
@@ -477,14 +514,14 @@ export class LoadBearingScene {
     }
   }
 
+  private lastVisual = 0;
   private loop = (time: number) => {
     if (this.disposed) return;
     this.frame = requestAnimationFrame(this.loop);
     const delta = Math.min(0.1, (time - this.last) / 1000) || 0;
     this.last = time;
     this.time += delta;
-    this.motion.advance(time);
-    this.dust.update(delta);
+
     try {
       this.cb.tick();
     } catch {
@@ -493,11 +530,18 @@ export class LoadBearingScene {
     if (this.snapshot?.world.crane.owner === this.localId)
       this.driveCrane(time);
     else this.sendInput(time);
+    if (!shouldRenderFrame(this.renderer)) return;
+    const visualDelta = this.lastVisual
+      ? Math.min(0.1, (time - this.lastVisual) / 1000)
+      : delta;
+    this.lastVisual = time;
+    this.motion.advance(time);
+    this.dust.update(visualDelta);
     this.syncParts();
     this.syncPeople();
     this.syncMachinery();
     this.syncAim();
-    this.placeCamera(delta);
+    this.placeCamera(visualDelta);
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -506,6 +550,7 @@ export class LoadBearingScene {
     cancelAnimationFrame(this.frame);
     this.abort.abort();
     this.observer.disconnect();
+    disposeObject(this.scene);
     this.renderer.dispose();
     this.renderer.domElement.remove();
     this.cb.input(idleInput());

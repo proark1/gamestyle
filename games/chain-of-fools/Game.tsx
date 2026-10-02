@@ -33,7 +33,10 @@ import {
 } from '../../shared/analytics/game-tracker';
 import { TOUCH_QUERY } from '../../shared/browser/device';
 import { TouchControls } from '../../shared/input/TouchControls';
+import { usePeerRoom } from '../../shared/peer/usePeerRoom';
+import PeerRoomControls from '../../shared/peer/PeerRoomControls';
 import GameToolbar from '../../shared/ui/GameToolbar';
+import { idleInput } from './types';
 import { hudPacer } from '../../shared/ui/hud-pacer';
 import { partyGoal, partyRound } from '../../shared/ui/party-round';
 import { useLanguage } from '../../shared/language/useLanguage';
@@ -43,9 +46,10 @@ import { ChainOfFoolsSound } from './audio';
 import { reconcileChainBots, stepChainBot } from './bots';
 import {
   ANCHORS,
-  CHECKPOINTS,
-  FINISH_X,
   PENDULUM,
+  SWITCHYARD,
+  checkpointsFor,
+  finishXFor,
   nearNet,
   pendulumBall,
   sectionAt,
@@ -77,8 +81,7 @@ import './style.css';
 const tracker = new GameTracker(chainOfFoolsAnalytics);
 
 /** Local practice, by the collection's convention. */
-const SESSION = { id: 'me', code: 'PRACTICE', name: 'You', color: 0 };
-const TRACK_START = CHECKPOINTS[0].x;
+const SOLO_SESSION = { id: 'me', code: 'PRACTICE', name: 'You', color: 0 };
 
 /**
  * What the HUD must show the moment it changes: the phase, a banked
@@ -87,7 +90,7 @@ const TRACK_START = CHECKPOINTS[0].x;
  */
 const pacer = hudPacer<ChainWorld>(
   (w) =>
-    `${w.phase}|${w.checkpoint}|${w.wipes}|${w.players
+    `${w.mapId}|${w.phase}|${w.checkpoint}|${w.gatesOpen.join('')}|${w.plateActive.join('')}|${w.wipes}|${w.players
       .map(
         (p) =>
           `${p.state[0]}${p.anchorId ? 'c' : ''}${p.braced ? 'b' : ''}${p.braceCooldown > 0 ? 'x' : ''}`,
@@ -100,8 +103,13 @@ const formatTime = (ms: number) => {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 };
 
-const progress = (x: number) =>
-  Math.max(0, Math.min(1, (x - TRACK_START) / (FINISH_X - TRACK_START)));
+const progress = (x: number, world: ChainWorld) => {
+  const start = checkpointsFor(world.mapId)[0].x;
+  return Math.max(
+    0,
+    Math.min(1, (x - start) / (finishXFor(world.mapId) - start)),
+  );
+};
 
 function haptic(pattern: number | number[]) {
   try {
@@ -169,6 +177,21 @@ function promptFor(
   if (others.some((p) => p.state === 'dangling') && me.grounded && !me.braced)
     return { text: s.promptBrace(k), tone: 'urgent', focus: 'brace' };
 
+  if (world.mapId === 'switchyard') {
+    const gateIndex = world.gatesOpen[0] ? 1 : 0;
+    const gate = SWITCHYARD.gates[gateIndex];
+    if (!world.gatesOpen[gateIndex] && me.x > gate.x - 16 && me.x < gate.x) {
+      const offset = gateIndex === 0 ? 0 : SWITCHYARD.gates[0].plates.length;
+      const active = world.plateActive
+        .slice(offset, offset + gate.plates.length)
+        .filter(Boolean).length;
+      return {
+        text: s.switchPrompt(active, gate.plates.length),
+        tone: 'info',
+      };
+    }
+  }
+
   if (!me.grounded && nearNet(me.x, me.y, me.z))
     return { text: s.promptNet(touch), tone: 'info' };
 
@@ -186,7 +209,8 @@ function promptFor(
   )
     return { text: s.promptClip(k), tone: 'info', focus: 'clip' };
 
-  return null;
+  const hint = s.routeHints[sectionAt(me.x, world.mapId)];
+  return hint ? { text: hint, tone: 'info' } : null;
 }
 
 function useStrings() {
@@ -248,6 +272,8 @@ export default function ChainOfFoolsGame() {
   const scene = useRef<ChainScene | null>(null);
   const sound = useRef<ChainOfFoolsSound | null>(null);
   const world = useRef<ChainWorld | null>(null);
+  const sessionRef = useRef(SOLO_SESSION);
+  const currentInput = useRef(idleInput());
   const lastHaptic = useRef(0);
 
   const [snapshot, setSnapshot] = useState<ChainSnapshot | null>(null);
@@ -255,18 +281,46 @@ export default function ChainOfFoolsGame() {
   const [muted, setMuted] = useState(false);
   const [help, setHelp] = useState(false);
 
+  const room = usePeerRoom<ChainSnapshot>({
+    game: 'chain-of-fools',
+    loadEngine: () => import('./peer'),
+    idleInput,
+    readInput: () => currentInput.current,
+    onAttach: (next) => {
+      world.current = null;
+      sessionRef.current = { ...sessionRef.current, ...next };
+      currentInput.current = idleInput();
+      scene.current?.setLocal(next.id);
+      pacer.reset();
+    },
+    receive: (snap) => {
+      scene.current?.update(snap);
+      sound.current?.update(
+        snap.world,
+        sessionRef.current.id,
+        scene.current?.listenerYaw(),
+      );
+      if (pacer.due(snap.world)) setSnapshot(snap);
+    },
+  });
+  const { send } = room;
+
   const publish = useCallback((force = false) => {
     const current = world.current;
     if (!current) return;
     const snap = chainSnapshot(
       current,
-      SESSION.code,
-      SESSION.id,
-      SESSION.id,
+      sessionRef.current.code,
+      sessionRef.current.id,
+      sessionRef.current.id,
       current.clock,
     );
     scene.current?.update(snap);
-    sound.current?.update(current, SESSION.id, scene.current?.listenerYaw());
+    sound.current?.update(
+      current,
+      sessionRef.current.id,
+      scene.current?.listenerYaw(),
+    );
 
     if (pacer.due(current) || force) {
       // A copy, so React sees a new object and the HUD re-renders.
@@ -274,7 +328,7 @@ export default function ChainOfFoolsGame() {
         ...snap,
         world: { ...current, players: current.players.map((p) => ({ ...p })) },
       });
-      tracker.observe(chainPlayState(snap, SESSION));
+      tracker.observe(chainPlayState(snap, sessionRef.current));
     }
   }, []);
 
@@ -282,12 +336,12 @@ export default function ChainOfFoolsGame() {
     (action: ChainAction) => {
       tracker.action(action.type);
       sound.current?.unlock();
-      if (!world.current) return;
-      chainOfFoolsAction(world.current, SESSION.id, action);
+      if (send(action) || !world.current) return;
+      chainOfFoolsAction(world.current, sessionRef.current.id, action);
       if (action.type === 'clip') haptic(25);
       publish(true);
     },
-    [publish],
+    [publish, send],
   );
 
   useEffect(() => {
@@ -295,21 +349,31 @@ export default function ChainOfFoolsGame() {
     sound.current = new ChainOfFoolsSound();
     scene.current = new ChainScene(container.current, {
       input: (input) => {
-        const me = world.current?.players.find((p) => p.id === SESSION.id);
+        currentInput.current = input;
+        const me = world.current?.players.find(
+          (p) => p.id === sessionRef.current.id,
+        );
         if (me) {
           me.input = input;
           me.seen = world.current?.clock ?? 0;
         }
       },
       action: dispatch,
+      camera: setCamera,
     });
-    scene.current.setLocal(SESSION.id);
+    scene.current.setLocal(sessionRef.current.id);
 
     pacer.reset();
     const start = Date.now();
     const fresh = freshChainWorld(start);
     fresh.players.push(
-      newPlayer(SESSION.id, SESSION.name, SESSION.color, 0, false),
+      newPlayer(
+        sessionRef.current.id,
+        sessionRef.current.name,
+        sessionRef.current.color,
+        0,
+        false,
+      ),
     );
     reconcileChainBots(fresh);
     world.current = fresh;
@@ -328,7 +392,7 @@ export default function ChainOfFoolsGame() {
       publish();
 
       // A buzz when the local worker is yanked or goes over.
-      const me = current.players.find((p) => p.id === SESSION.id);
+      const me = current.players.find((p) => p.id === sessionRef.current.id);
       const recent = current.events[current.events.length - 1];
       if (
         me &&
@@ -359,7 +423,10 @@ export default function ChainOfFoolsGame() {
   }, [dispatch, publish]);
 
   const w = snapshot?.world;
-  const me = w?.players.find((p) => p.id === SESSION.id);
+  const description =
+    w?.mapId === 'switchyard' ? strings.switchDesc : strings.desc;
+  const rules = w?.mapId === 'switchyard' ? strings.switchRules : strings.rules;
+  const me = w?.players.find((p) => p.id === sessionRef.current.id);
   const playing = w?.phase === 'playing';
   const ended = w?.phase === 'ended';
 
@@ -404,8 +471,6 @@ export default function ChainOfFoolsGame() {
       className="cof-game"
       {...partyRound(
         ended,
-        // The time bonus keeps shrinking after the whistle; the ribbon keeps
-        // the first ended frame, where it is still the finishing score.
         w ? partyGoal(w.winner === 'crew', crewScore(w)) : null,
       )}
     >
@@ -419,10 +484,14 @@ export default function ChainOfFoolsGame() {
           CHAIN OF FOOLS<span className="title-dot">.</span>
         </a>
         <GameToolbar
+          multiplayer={<PeerRoomControls room={room} />}
+          voice={room.voice}
           muted={muted}
           onToggleSound={toggleMute}
-          onHelp={() => setHelp(true)}
-          voiceHint="Use your group call to talk with friends. In-game voice is not available in Chain of Fools yet."
+          onHelp={() => {
+            scene.current?.resetInput();
+            setHelp(true);
+          }}
         />
       </header>
 
@@ -445,11 +514,7 @@ export default function ChainOfFoolsGame() {
           <div className="cof-hud-badge cof-badge-timer">
             <Timer size={18} />
             <div>
-              <strong className="cof-timer">
-                {formatTime(
-                  playing ? timeLeft(w) : Math.max(0, w.endsAt - w.clock),
-                )}
-              </strong>
+              <strong className="cof-timer">{formatTime(timeLeft(w))}</strong>
               <small>{strings.hudTime}</small>
             </div>
           </div>
@@ -457,14 +522,16 @@ export default function ChainOfFoolsGame() {
           <div className="cof-hud-badge cof-track-badge">
             <div className="cof-track">
               <div className="cof-track-rail" />
-              {CHECKPOINTS.slice(1).map((point) => (
-                <span
-                  key={point.index}
-                  className={`cof-track-flag ${w.checkpoint >= point.index ? 'banked' : ''}`}
-                  style={{ left: `${progress(point.x) * 100}%` }}
-                  title={point.label}
-                />
-              ))}
+              {checkpointsFor(w.mapId)
+                .slice(1)
+                .map((point) => (
+                  <span
+                    key={point.index}
+                    className={`cof-track-flag ${w.checkpoint >= point.index ? 'banked' : ''}`}
+                    style={{ left: `${progress(point.x, w) * 100}%` }}
+                    title={point.label}
+                  />
+                ))}
               <Flag
                 size={14}
                 className="cof-track-finish"
@@ -473,17 +540,31 @@ export default function ChainOfFoolsGame() {
               {w.players.map((p) => (
                 <span
                   key={p.id}
-                  className={`cof-track-dot ${p.id === SESSION.id ? 'me' : ''} ${p.state}`}
+                  className={`cof-track-dot ${p.id === sessionRef.current.id ? 'me' : ''} ${p.state}`}
                   style={{
-                    left: `${progress(p.x) * 100}%`,
+                    left: `${progress(p.x, w) * 100}%`,
                     background: COLORS[p.color % 4],
                   }}
                 />
               ))}
             </div>
-            <small>
-              {strings.sections[sectionAt(trailingX)] ?? sectionAt(trailingX)}
-            </small>
+            <div className="cof-route-summary">
+              <small>
+                {strings.sections[sectionAt(trailingX, w.mapId)] ??
+                  sectionAt(trailingX, w.mapId)}
+              </small>
+              <span>
+                {strings.distanceLeft(
+                  Math.ceil(Math.max(0, finishXFor(w.mapId) - trailingX)),
+                )}
+              </span>
+            </div>
+            <span className="cof-checkpoint-count">
+              {strings.checkpointSaved(
+                w.checkpoint,
+                checkpointsFor(w.mapId).length - 1,
+              )}
+            </span>
           </div>
 
           <div className="cof-hud-badge cof-meters">
@@ -532,9 +613,33 @@ export default function ChainOfFoolsGame() {
               {strings.titleMain}
               <span>{strings.titleHighlight}</span>.
             </h1>
-            <p className="cof-desc">{strings.desc}</p>
+            <div className="cof-map-picker" aria-label={strings.mapLabel}>
+              <button
+                type="button"
+                className={`cof-map-choice ${w.mapId === 'demolition' ? 'selected' : ''}`}
+                aria-pressed={w.mapId === 'demolition'}
+                onClick={() =>
+                  dispatch({ type: 'select_map', mapId: 'demolition' })
+                }
+              >
+                <strong>{strings.mapClassicName}</strong>
+                <span>{strings.mapClassicDesc}</span>
+              </button>
+              <button
+                type="button"
+                className={`cof-map-choice ${w.mapId === 'switchyard' ? 'selected' : ''}`}
+                aria-pressed={w.mapId === 'switchyard'}
+                onClick={() =>
+                  dispatch({ type: 'select_map', mapId: 'switchyard' })
+                }
+              >
+                <strong>{strings.mapSwitchName}</strong>
+                <span>{strings.mapSwitchDesc}</span>
+              </button>
+            </div>
+            <p className="cof-desc">{description}</p>
             <ul className="cof-rules">
-              {strings.rules.map((rule) => (
+              {rules.map((rule) => (
                 <li key={rule}>{rule}</li>
               ))}
             </ul>
@@ -542,7 +647,9 @@ export default function ChainOfFoolsGame() {
               {w.players.map((p) => (
                 <span key={p.id} className="cof-crew-chip">
                   <i style={{ background: COLORS[p.color % 4] }} />
-                  {p.id === SESSION.id ? SESSION.name : p.name}
+                  {p.id === sessionRef.current.id
+                    ? sessionRef.current.name
+                    : p.name}
                 </span>
               ))}
             </div>
@@ -564,13 +671,10 @@ export default function ChainOfFoolsGame() {
           <h2>{w.winner === 'crew' ? strings.wonTitle : strings.lostTitle}</h2>
           <p>
             {w.winner === 'crew'
-              ? strings.wonDesc(
-                  Math.round(Math.max(0, w.endsAt - w.clock) / 1000),
-                  w.wipes,
-                )
+              ? strings.wonDesc(Math.round(timeLeft(w) / 1000), w.wipes)
               : strings.lostDesc(
-                  strings.sections[sectionAt(trailingX)] ??
-                    sectionAt(trailingX),
+                  strings.sections[sectionAt(trailingX, w.mapId)] ??
+                    sectionAt(trailingX, w.mapId),
                 )}
           </p>
           <div className="cof-score">
@@ -578,6 +682,7 @@ export default function ChainOfFoolsGame() {
             <strong>{crewScore(w)}</strong>
           </div>
           <button
+            data-party-setup-action=""
             type="button"
             className="cof-btn primary primary-button"
             onClick={() => dispatch({ type: 'restart' })}
@@ -603,9 +708,9 @@ export default function ChainOfFoolsGame() {
             {strings.titleMain}
             {strings.titleHighlight}
           </DialogTitle>
-          <DialogDescription>{strings.desc}</DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
           <ul className="cof-rules">
-            {strings.rules.map((rule) => (
+            {rules.map((rule) => (
               <li key={rule}>{rule}</li>
             ))}
           </ul>

@@ -1,14 +1,14 @@
 import * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
 import { box, taper } from '../../shared/rendering/primitives';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { GAME_HEAD_TOP as WORKER_HEAD_TOP } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import type { PlayerState } from './types';
 
 /** Where the safety line clips onto the harness, in the worker's own frame. */
-export const D_RING = new T.Vector3(0, 1.05, -0.27);
+export const D_RING = new T.Vector3(0, 0.84, -0.18);
 
 const HARNESS = CLOTH.hivis;
 const HARD_HAT = CLOTH.gold;
@@ -34,18 +34,18 @@ export function chainWorker(color: number, look?: Look) {
   }
 
   // Harness webbing, front and back, and the steel ring the line clips to.
-  box(body, [0.08, 0.5, 0.05], [-0.17, 1.02, 0.235], HARNESS);
-  box(body, [0.08, 0.5, 0.05], [0.17, 1.02, 0.235], HARNESS);
-  box(body, [0.5, 0.07, 0.05], [0, 0.82, 0.24], HARNESS);
-  box(body, [0.08, 0.5, 0.05], [-0.17, 1.02, -0.235], HARNESS);
-  box(body, [0.08, 0.5, 0.05], [0.17, 1.02, -0.235], HARNESS);
-  box(body, [0.46, 0.07, 0.05], [0, D_RING.y, -0.24], HARNESS);
+  box(body, [0.06, 0.32, 0.04], [-0.13, 0.8, 0.18], HARNESS);
+  box(body, [0.08, 0.5, 0.05], [0.13, 0.8, 0.18], HARNESS);
+  box(body, [0.43, 0.06, 0.04], [0, 0.66, 0.19], HARNESS);
+  box(body, [0.08, 0.5, 0.05], [-0.13, 0.8, -0.18], HARNESS);
+  box(body, [0.08, 0.5, 0.05], [0.13, 0.8, -0.18], HARNESS);
+  box(body, [0.4, 0.06, 0.04], [0, D_RING.y, -0.17], HARNESS);
   const ring = taper(
     body,
     0.09,
     0.09,
     0.04,
-    [0, D_RING.y, -0.28],
+    [0, D_RING.y, D_RING.z],
     CLOTH.silver,
     10,
   );
@@ -54,11 +54,14 @@ export function chainWorker(color: number, look?: Look) {
 
   // Hi-vis stripes on the sleeves. They are clothing, so they sit in their own
   // group and leave the arm's body parts exactly as the shared worker has them.
-  for (const arm of [model.userData.armL, model.userData.armR] as T.Group[]) {
+  for (const arm of [
+    model.userData.sleeveL,
+    model.userData.sleeveR,
+  ] as T.Group[]) {
     const sleeve = new T.Group();
     sleeve.name = 'chain-sleeve';
     arm.add(sleeve);
-    box(sleeve, [0.23, 0.06, 0.29], [0, -0.2, 0], CLOTH.cream).castShadow =
+    box(sleeve, [0.14, 0.05, 0.14], [0, -0.2, 0], CLOTH.cream).castShadow =
       false;
   }
 

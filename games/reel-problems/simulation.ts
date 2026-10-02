@@ -58,8 +58,18 @@ import { tickReelNpcs } from './npcs';
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 const distance = (a: Vector, b: Vector) => Math.hypot(a.x - b.x, a.z - b.z);
-export function announce(w: ReelWorld, kind: ReelEvent['kind'], text: string) {
-  w.events.push({ id: ++w.eventId, kind, text });
+export function announce(
+  w: ReelWorld,
+  kind: ReelEvent['kind'],
+  text: string,
+  position?: { x: number; z: number },
+) {
+  w.events.push({
+    id: ++w.eventId,
+    kind,
+    text,
+    ...(position ? { position: { ...position } } : {}),
+  });
   if (w.events.length > 8) w.events.shift();
 }
 export function anglerPosition(w: ReelWorld, p: Angler): Vector {

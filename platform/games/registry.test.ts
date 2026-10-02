@@ -13,6 +13,7 @@ import { CARDS_TRANSLATIONS } from '../../shared/language/translations/cards';
 import { GAMES } from '../analytics/catalog';
 import { PARTY_GAMES } from '../party/playlist';
 import { getCatalog } from '../audio/catalog';
+import { STANDARD_GAME_SLUGS } from '../../app/landing-enhanced/order';
 
 /**
  * Adding a game means registering it in several places. Each check below turns one
@@ -118,6 +119,16 @@ void test('every game has a collection card and its translations', () => {
     );
 });
 
+void test('the main and enhanced collection order includes every game exactly once', () => {
+  assert.equal(new Set(STANDARD_GAME_SLUGS).size, STANDARD_GAME_SLUGS.length);
+  assert.deepEqual(new Set(STANDARD_GAME_SLUGS), new Set(GAME_IDS));
+  assert.match(
+    readFileSync('app/page.tsx', 'utf8'),
+    /createEnhancedCollectionOrder\(\)/,
+    'the main collection must use the same checked order as enhanced landings',
+  );
+});
+
 void test('the README game table lists the whole collection', () => {
   const readme = readFileSync('README.md', 'utf8');
   const table = readme.slice(
@@ -125,7 +136,7 @@ void test('the README game table lists the whole collection', () => {
     readme.indexOf('## Code structure'),
   );
   const listed = new Set(
-    [...table.matchAll(/`games\/([a-z-]+)\/`/g)].map((match) => match[1]),
+    [...table.matchAll(/`games\/([a-z0-9-]+)\/`/g)].map((match) => match[1]),
   );
   const missing = GAME_IDS.filter((game: Game) => !listed.has(game));
   assert.deepEqual(

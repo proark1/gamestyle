@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* oxlint-disable react/react-compiler -- This uncompiled WebGL host synchronizes mutable scene controllers and saved browser state; hook rules and exhaustive dependencies remain enforced. */
 /* oxlint-disable jsx-a11y/autocomplete-valid -- nickname is a standard HTML autocomplete token. */
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- HUD live regions use styled containers with explicit ARIA semantics. */
@@ -71,6 +73,7 @@ import {
 import { stackAnalytics, stackPlayState } from './analytics';
 import { looksLikeRoomCode } from '../../shared/rooms/identity';
 import { inPartyMode } from '../../shared/ui/party-mode';
+import StackChallengePanel from '../../shared/challenges/StackChallengePanel';
 
 const sessions = sessionStore('stack-or-sink-session-v1');
 
@@ -80,6 +83,7 @@ const INITIAL_HUD: Hud = {
   placementError: null,
   height: 0,
   crane: false,
+  craneAngle: false,
 };
 const clock = (seconds: number) =>
   `${Math.floor(Math.max(0, seconds) / 60)}:${String(Math.floor(Math.max(0, seconds) % 60)).padStart(2, '0')}`;
@@ -126,6 +130,7 @@ export default function Game() {
     [notice, setNotice] = useState(''),
     [help, setHelp] = useState(false),
     [join, setJoin] = useState(false),
+    [verifiedJoin, setVerifiedJoin] = useState(false),
     [invite, setInvite] = useState(false),
     [code, setCode] = useState(''),
     [copied, setCopied] = useState(false),
@@ -195,6 +200,7 @@ export default function Game() {
       audio.enabled = !saved.muted;
     } catch {}
     const url = new URL(location.href);
+    setVerifiedJoin(url.searchParams.get('challenge') === 'verified');
     const room = url.searchParams.get('room');
     if (room && looksLikeRoomCode(room)) {
       setCode(room.toUpperCase());
@@ -244,16 +250,18 @@ export default function Game() {
                 previous.carrying === h.carrying &&
                 previous.placementError === h.placementError &&
                 Math.abs(previous.height - h.height) < 0.1 &&
-                previous.crane === h.crane
+                previous.crane === h.crane &&
+                previous.craneAngle === h.craneAngle
                   ? previous
                   : h,
               ),
             error: notify,
           });
           setReady(true);
-          if (!room) {
-            const saved = sessions.load();
-            if (saved) attach(saved);
+          const saved = sessions.load();
+          if (saved && (!room || saved.code === room.toUpperCase())) {
+            attach(saved);
+            setJoin(false);
           }
         } catch {
           notify(
@@ -345,13 +353,13 @@ export default function Game() {
     actionRef.current = action;
     practiceRef.current = practice;
   });
-  async function create() {
+  async function create(verified = false) {
     if (!ready || busy) return;
     setBusy(true);
     setNotice('');
     sound.current?.unlock();
     try {
-      const reply = await requestRoom({ op: 'create', name, color });
+      const reply = await requestRoom({ op: 'create', name, color, verified });
       if (reply.session && reply.snapshot)
         attach(reply.session, reply.snapshot);
     } catch (e) {
@@ -370,6 +378,7 @@ export default function Game() {
     try {
       const reply = await requestRoom({
         op: 'join',
+        verified: verifiedJoin,
         code: code.trim().toUpperCase(),
         name,
         color,
@@ -429,7 +438,8 @@ export default function Game() {
     if (!session) return;
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/stack-or-sink?room=${session.code}`,
+        gameInviteUrl('stack-or-sink', session.code) +
+          (session.verified ? '&challenge=verified' : ''),
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
@@ -443,7 +453,9 @@ export default function Game() {
       await navigator.share({
         title: 'Join my Stack or Sink crew',
         text: `Crew code: ${session.code}`,
-        url: `${location.origin}/stack-or-sink?room=${session.code}`,
+        url:
+          gameInviteUrl('stack-or-sink', session.code) +
+          (session.verified ? '&challenge=verified' : ''),
       });
     } catch (error) {
       if (!(error instanceof Error && error.name === 'AbortError'))
@@ -587,7 +599,7 @@ export default function Game() {
         )}
         <GameToolbar
           voice={
-            session && !isLocal && state
+            session && !isLocal && !session.verified && state
               ? {
                   session: { ...session, game: 'stack-or-sink' },
                   snapshot: { players: state.world.players, nearby: false },
@@ -596,9 +608,11 @@ export default function Game() {
               : undefined
           }
           voiceHint={
-            isLocal
-              ? 'Voice is available in multiplayer. Create or join a crew to talk with friends.'
-              : undefined
+            session?.verified
+              ? 'Voice is not yet available in verified challenge rooms.'
+              : isLocal
+                ? 'Voice is available in multiplayer. Create or join a crew to talk with friends.'
+                : undefined
           }
           muted={muted}
           onToggleSound={() => {
@@ -695,6 +709,27 @@ export default function Game() {
               </button>
               <button
                 disabled={!ready || busy}
+                className="secondary-button"
+                onClick={() => void create(true)}
+              >
+                Create verified crew · earn coins <Trophy size={18} />
+              </button>
+              <button
+                disabled={!ready || busy}
+                className="practice-link"
+                onClick={() => {
+                  setVerifiedJoin(true);
+                  setJoin(true);
+                }}
+              >
+                Join a verified room
+              </button>
+              <details className="challenge-details">
+                <summary>Weekly target &amp; mastery rewards</summary>
+                <StackChallengePanel />
+              </details>
+              <button
+                disabled={!ready || busy}
                 className="practice-link"
                 onClick={practice}
               >
@@ -724,7 +759,11 @@ export default function Game() {
             <div className="clipboard-clip" />
             <div className="mission-eyebrow">
               <Flag size={13} />
-              {isLocal ? 'LEARN THE ROPES' : 'THE ESCAPE PLAN'}
+              {session.verified
+                ? 'VERIFIED CHALLENGE'
+                : isLocal
+                  ? 'LEARN THE ROPES'
+                  : 'THE ESCAPE PLAN'}
             </div>
             <h2>
               Higher ground.
@@ -738,6 +777,12 @@ export default function Game() {
                   ? 'No rising water. Get a feel for the junk.'
                   : 'Get one teammate to the rescue platform to save the whole crew.'}
             </p>
+            {state.challenge && (
+              <p className="verified-target">
+                This attempt: {state.challenge.week.height} m settled tower,
+                then finish the round. Weekly reward: 100 coins.
+              </p>
+            )}
             <div className="mission-progress">
               <span>RESCUE PLATFORM</span>
               <strong>
@@ -843,13 +888,20 @@ export default function Game() {
           </aside>
           <div className="camera-tools">
             <button
-              className={`icon-button ${overview ? 'active' : ''}`}
+              className={`icon-button ${hud.crane ? (hud.craneAngle ? 'active' : '') : overview ? 'active' : ''}`}
               onClick={() => {
-                scene.current?.toggleOverview();
-                setOverview(!overview);
+                if (hud.crane) scene.current?.toggleCraneView();
+                else {
+                  scene.current?.toggleOverview();
+                  setOverview(!overview);
+                }
               }}
-              aria-label="Toggle yard overview"
-              aria-pressed={overview}
+              aria-label={
+                hud.crane
+                  ? `Switch to ${hud.craneAngle ? 'top' : 'angled'} crane view`
+                  : 'Toggle yard overview'
+              }
+              aria-pressed={hud.crane ? hud.craneAngle : overview}
             >
               <Eye size={19} />
             </button>
@@ -867,8 +919,14 @@ export default function Game() {
             >
               <Minus size={20} />
             </button>
-            <span>
-              View <kbd>V</kbd>
+            <span className={hud.crane ? 'crane-view-label' : ''}>
+              {hud.crane ? (
+                `${hud.craneAngle ? 'Angle' : 'Top'} view`
+              ) : (
+                <>
+                  View <kbd>V</kbd>
+                </>
+              )}
             </span>
           </div>
           {world.phase === 'lobby' && (
@@ -947,11 +1005,12 @@ export default function Game() {
               <div className="crane-panel">
                 <Construction size={29} />
                 <div>
-                  <strong>You have the crane</strong>
+                  <strong>Crane · XY positioning</strong>
                   <span>
                     {touchMode
-                      ? notice || 'Joystick moves · Arrows lift and lower'
-                      : 'Move with WASD · Q up · Z down · E release'}
+                      ? notice ||
+                        'Drag XY joystick · ↑ ↓ height · Release below'
+                      : 'WASD / arrows move XY · Q / Z change height · V changes view'}
                   </span>
                 </div>
                 <button
@@ -962,6 +1021,7 @@ export default function Game() {
                   aria-label="Raise crane"
                 >
                   <ArrowUp size={19} />
+                  <b>Up</b>
                 </button>
                 <button
                   onClick={() => {
@@ -971,15 +1031,7 @@ export default function Game() {
                   aria-label="Lower crane"
                 >
                   <ArrowDown size={19} />
-                </button>
-                <button
-                  className="crane-release"
-                  onClick={() => {
-                    void triggerHaptic('medium');
-                    void action({ type: 'crane-drop' });
-                  }}
-                >
-                  Release
+                  <b>Down</b>
                 </button>
               </div>
             ) : (
@@ -1078,25 +1130,54 @@ export default function Game() {
               </button>
             </div>
             <div className="touch-guide">
-              Tap to aim · Drag to orbit · Pinch to zoom
+              {hud.crane
+                ? 'Joystick moves XY · View button changes angle · Pinch to zoom'
+                : 'Tap to aim · Drag to orbit · Pinch to zoom'}
             </div>
             <div className="movement-hint">
-              <span>
-                <kbd>W</kbd>
-                <kbd>A</kbd>
-                <kbd>S</kbd>
-                <kbd>D</kbd> Move
-              </span>
-              <span>
-                <kbd>SPACE</kbd> Jump
-              </span>
-              <span>Drag to orbit · Scroll to zoom</span>
+              {hud.crane ? (
+                <>
+                  <span>
+                    <kbd>W</kbd>
+                    <kbd>A</kbd>
+                    <kbd>S</kbd>
+                    <kbd>D</kbd> XY
+                  </span>
+                  <span>
+                    <kbd>Q</kbd>
+                    <kbd>Z</kbd> Height
+                  </span>
+                  <span>
+                    <kbd>V</kbd> View · Scroll to zoom
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    <kbd>W</kbd>
+                    <kbd>A</kbd>
+                    <kbd>S</kbd>
+                    <kbd>D</kbd> Move
+                  </span>
+                  <span>
+                    <kbd>SPACE</kbd> Jump
+                  </span>
+                  <span>Drag to orbit · Scroll to zoom</span>
+                </>
+              )}
             </div>
           </div>
           <TouchControls
             disabled={controlsPaused || !!player?.down || !!player?.rescued}
             move={(vector) => scene.current?.setTouch(vector)}
             jump={() => scene.current?.jump()}
+            showJump={!hud.crane}
+            moveLabel={hud.crane ? 'CRANE XY' : 'MOVE'}
+            joystickLabel={
+              hud.crane
+                ? 'Crane XY joystick. Drag toward the target; release to stop.'
+                : undefined
+            }
           />
         </>
       )}
@@ -1222,6 +1303,14 @@ export default function Game() {
             <label className="field-label" htmlFor="join-code">
               Room code
             </label>
+            <label className="verified-room-choice">
+              <input
+                type="checkbox"
+                checked={verifiedJoin}
+                onChange={(event) => setVerifiedJoin(event.target.checked)}
+              />{' '}
+              Verified challenge room · sign-in required
+            </label>
             <input
               id="join-code"
               className="dialog-input code-input"
@@ -1325,16 +1414,27 @@ export default function Game() {
               <strong>{world?.bestHeight.toFixed(1)} m</strong>Best stack
             </span>
           </div>
+          {session?.verified && <StackChallengePanel finished />}
           {isHost ? (
             <button
+              data-party-setup-action=""
               className="primary-button"
-              onClick={() => void action({ type: 'restart' })}
+              onClick={() =>
+                session?.verified
+                  ? void leave()
+                  : void action({ type: 'restart' })
+              }
             >
-              Build it better <RotateCw size={18} />
+              {session?.verified
+                ? 'Back to challenge lobby'
+                : 'Build it better'}{' '}
+              <RotateCw size={18} />
             </button>
           ) : (
             <p className="help-note">
-              Waiting for your captain to start another round.
+              {session?.verified
+                ? 'Leave this room to create or join another verified attempt.'
+                : 'Waiting for your captain to start another round.'}
             </p>
           )}
           <button className="secondary-button" onClick={() => void leave()}>

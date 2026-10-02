@@ -4,6 +4,8 @@ import {
   HOUSE_RINGS,
   RINK_WIDTH,
   STONE_CONFIGS,
+  SWEEPER_LEAD_Z,
+  SWEEPER_MIN_LEAD_Z,
   TEE_Z,
   type BananaHazard,
   type CurlingPlayer,
@@ -82,6 +84,22 @@ function updatePlayers(
       continue;
     }
 
+    // Check for banana hazard slip
+    for (const h of hazards) {
+      if (!h.active) continue;
+      const d = Math.hypot(p.x - h.x, p.z - h.z);
+      if (d < 0.65) {
+        h.active = false;
+        p.status = 'slipping';
+        p.statusTimer = 1.8;
+        p.vx *= 1.4;
+        p.vz *= 1.4;
+        events.push({ type: 'banana_slip', playerId: p.id });
+        break;
+      }
+    }
+    if (p.status === 'slipping') continue;
+
     // Deliverer sliding lunge from hack towards hog line
     if (p.status === 'sliding') {
       p.x += p.vx * dt;
@@ -104,9 +122,9 @@ function updatePlayers(
 
     // Sweeper dynamic escorting: stay ahead of active stone along its travel path
     if (activeStone && p.team === activeStone.team && p.role === 'sweeper') {
-      const targetZ = activeStone.z + 1.15;
+      const targetZ = activeStone.z + SWEEPER_LEAD_Z;
       const targetX =
-        activeStone.x + (p.steerDir !== 0 ? p.steerDir * 0.35 : 0.45);
+        activeStone.x + (p.steerDir !== 0 ? p.steerDir * 0.55 : 0.55);
 
       // Match stone velocity so the sweeper is never outpaced
       p.vz = activeStone.vz;
@@ -117,17 +135,17 @@ function updatePlayers(
       p.x += (targetX - p.x) * Math.min(1, dt * 10);
 
       // Sweeper must never fall behind the rock
-      if (p.z < activeStone.z + 0.75) {
-        p.z = activeStone.z + 0.75;
+      if (p.z < activeStone.z + SWEEPER_MIN_LEAD_Z) {
+        p.z = activeStone.z + SWEEPER_MIN_LEAD_Z;
       }
 
-      if (p.sweepIntensity > 0) {
-        p.status = 'sweeping';
-        p.rotation = Math.PI; // Face the incoming rock while scrubbing
-      } else {
-        p.status = 'normal';
-        p.rotation = 0;
-      }
+      p.status = p.sweepIntensity > 0 ? 'sweeping' : 'normal';
+      const facing = Math.atan2(activeStone.x - p.x, activeStone.z - p.z);
+      const turn = Math.atan2(
+        Math.sin(facing - p.rotation),
+        Math.cos(facing - p.rotation),
+      );
+      p.rotation += turn * (1 - Math.exp(-10 * dt));
 
       p.x = Math.max(-halfWidth, Math.min(halfWidth, p.x));
       p.z = Math.max(-4.0, Math.min(38.0, p.z));
@@ -167,21 +185,6 @@ function updatePlayers(
 
     if (isMoving) {
       p.rotation = Math.atan2(p.vx, p.vz);
-    }
-
-    // Check for banana hazard slip
-    for (const h of hazards) {
-      if (!h.active) continue;
-      const d = Math.hypot(p.x - h.x, p.z - h.z);
-      if (d < 0.65) {
-        h.active = false;
-        p.status = 'slipping';
-        p.statusTimer = 1.8;
-        p.vx *= 1.4;
-        p.vz *= 1.4;
-        events.push({ type: 'banana_slip', playerId: p.id });
-        break;
-      }
     }
   }
 }
@@ -263,17 +266,18 @@ function updateStones(
     const perpX = forwardZ;
     const perpZ = -forwardX;
 
-    const curlSign = Math.sign(s.spin) || 1;
+    const curlSign = Math.sign(s.spin);
     // Curl acceleration is stronger as stone slows down (authentic curling pebble effect!)
-    const curlStrength = (0.28 / Math.max(0.4, speed)) * cfg.curlMultiplier;
+    const curlStrength = 0.045 * Math.min(1, speed) * cfg.curlMultiplier;
     let lateralAccel = curlSign * curlStrength;
 
     // Add sweeper steering influence
     lateralAccel += totalSteer * 0.45;
 
     // Update velocity components
-    s.vx -= forwardX * decel * dt;
-    s.vz -= forwardZ * decel * dt;
+    const braking = Math.min(speed, decel * dt);
+    s.vx -= forwardX * braking;
+    s.vz -= forwardZ * braking;
     s.vx += perpX * lateralAccel * dt;
     s.vz += perpZ * lateralAccel * dt;
 

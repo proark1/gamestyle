@@ -1,3 +1,4 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import { MIN_POLL_MS, quantizeAxis } from '../../shared/rooms/input-rate';
 import {
   idleInput,
@@ -20,7 +21,7 @@ export async function requestShelf(
   body: object,
   signal?: AbortSignal,
 ): Promise<Reply> {
-  const response = await fetch('/api/shelf-control', {
+  const response = await apiFetch('/api/shelf-control', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

@@ -1,7 +1,7 @@
 import * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
 import { box } from '../../shared/rendering/primitives';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
 import type { Look } from '../../shared/wardrobe/look';
 import type { PlayerState } from './types';
@@ -28,15 +28,15 @@ function ensureHarness(model: T.Object3D) {
   const harnessColor = CLOTH.hivis;
 
   // Chest cross straps
-  box(rig.body, [0.46, 0.07, 0.05], [0, 0.96, 0.24], harnessColor);
+  box(rig.body, [0.43, 0.06, 0.04], [0, 0.78, 0.18], harnessColor);
   // Shoulder webbing straps
-  box(rig.body, [0.08, 0.46, 0.05], [-0.18, 1.05, 0.23], harnessColor);
-  box(rig.body, [0.08, 0.46, 0.05], [0.18, 1.05, 0.23], harnessColor);
+  box(rig.body, [0.06, 0.32, 0.04], [-0.13, 0.8, 0.18], harnessColor);
+  box(rig.body, [0.06, 0.32, 0.04], [0.13, 0.8, 0.18], harnessColor);
 
   // Back webbing & fall-arrest D-Ring
-  box(rig.body, [0.08, 0.48, 0.05], [-0.18, 1.05, -0.23], harnessColor);
-  box(rig.body, [0.08, 0.48, 0.05], [0.18, 1.05, -0.23], harnessColor);
-  box(rig.body, [0.44, 0.07, 0.05], [0, 1.05, -0.24], harnessColor);
+  box(rig.body, [0.06, 0.32, 0.04], [-0.13, 0.8, -0.18], harnessColor);
+  box(rig.body, [0.06, 0.32, 0.04], [0.13, 0.8, -0.18], harnessColor);
+  box(rig.body, [0.4, 0.06, 0.04], [0, 0.84, -0.18], harnessColor);
 
   // Steel D-ring on the upper back where lanyard connects
   const dRingGeo = new T.TorusGeometry(0.08, 0.02, 6, 16);
@@ -46,8 +46,9 @@ function ensureHarness(model: T.Object3D) {
     roughness: 0.2,
   });
   const dRing = new T.Mesh(dRingGeo, dRingMat);
-  dRing.position.set(0, 1.05, -0.26);
+  dRing.position.set(0, 0.84, -0.19);
   rig.body.add(dRing);
+  model.userData.harnessRing = dRing;
 }
 
 export function poseScaffoldWorker(

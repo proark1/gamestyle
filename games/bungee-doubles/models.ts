@@ -1,8 +1,12 @@
+import { batchScenery } from '../../shared/rendering/batch-scenery';
 import * as T from 'three';
 import { box, material } from '../../shared/rendering/primitives';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
-import { WORKER_HAND_Y, WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import {
+  GAME_HAND_Y as WORKER_HAND_Y,
+  GAME_HEAD_TOP as WORKER_HEAD_TOP,
+} from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import { BALL_RADIUS, COURT, TEAM_COLORS, type TeamId } from './types';
 
@@ -29,7 +33,8 @@ export function tennisPlayer(team: TeamId, look?: Look) {
       shirt: shirtColor,
       overalls: shortsColor,
       boots: shoesColor,
-      cap: false,
+      cap: true,
+      trousers: false,
     },
     look,
   );
@@ -38,16 +43,15 @@ export function tennisPlayer(team: TeamId, look?: Look) {
 
   // Sun visor / athletic sweatband if player is not wearing a wardrobe hat
   if (!worn.hat) {
-    // Hair base
-    box(
-      body,
-      [0.54, 0.12, 0.52],
-      [0, WORKER_HEAD_TOP + 0.03, 0],
-      '#36281e',
-      true,
-    );
     // Sweatband around forehead
-    box(body, [0.55, 0.08, 0.53], [0, WORKER_HEAD_TOP - 0.04, 0], teamColor);
+    const band = new T.Mesh(
+      new T.TorusGeometry(0.31, 0.035, 8, 32),
+      material(teamColor),
+    );
+    band.rotation.x = Math.PI / 2;
+    band.scale.y = 0.94;
+    band.position.y = WORKER_HEAD_TOP - 0.08;
+    body.add(band);
     // Visor brim extending forward
     box(
       body,
@@ -58,15 +62,15 @@ export function tennisPlayer(team: TeamId, look?: Look) {
   }
 
   // Polo shirt collar and button placket
-  box(body, [0.26, 0.18, 0.03], [0, 1.05, 0.22], CLOTH.white);
-  box(body, [0.06, 0.14, 0.04], [0, 0.95, 0.22], CLOTH.white);
+  box(body, [0.2, 0.12, 0.03], [0, 0.92, 0.14], CLOTH.white);
+  box(body, [0.05, 0.1, 0.04], [0, 0.84, 0.17], CLOTH.white);
 
   // Padel bat firmly gripped in player's right hand
   const racket = createTennisRacket(team);
   racket.name = 'tennis-racket';
-  const armR = g.userData.armR as T.Group | undefined;
+  const armR = g.userData.sleeveR as T.Group | undefined;
   if (armR) {
-    racket.position.set(0, WORKER_HAND_Y + 0.01, 0.12);
+    racket.position.set(0, WORKER_HAND_Y + 0.01, 0.04);
     racket.rotation.set(Math.PI / 2 + 0.15, 0, 0);
     armR.add(racket);
   } else {
@@ -569,6 +573,7 @@ export function tennisCourt(): T.Group {
   box(g, [14.0, 0.75, 0.15], [0, bannerY, bannerZ], '#0f172a');
   box(g, [13.8, 0.65, 0.02], [0, bannerY, bannerZ - 0.08], '#0284c7');
 
+  batchScenery(g, [], true);
   return g;
 }
 

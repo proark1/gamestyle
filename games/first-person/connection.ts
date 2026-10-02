@@ -1,3 +1,4 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import type { Action, Position, Session, Snapshot } from './model';
 const ENDPOINT = '/api/handwerker/first-person/rooms';
 export class ConnectionError extends Error {
@@ -15,7 +16,7 @@ export async function request(
   const timed = signal
     ? AbortSignal.any([signal, AbortSignal.timeout(10_000)])
     : AbortSignal.timeout(10_000);
-  const response = await fetch(ENDPOINT, {
+  const response = await apiFetch(ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

@@ -1,7 +1,12 @@
+import { SiteAudio } from '../../shared/audio/player';
+import { bundledProfile } from '../../shared/audio/bundled-profile';
+import { CurlingAudioDirector } from './audio/director';
+import type { PanicCurlingWorld } from './types';
 import type { Cue } from '../../shared/audio/types';
-import type { GameEvent } from './types';
+import { expansion } from './audio/expansion';
 
 export const panicCurlingCatalog: Cue[] = [
+  ...expansion,
   {
     id: 'curling.stone_slide',
     name: 'Stone Sliding',
@@ -88,7 +93,7 @@ export const panicCurlingCatalog: Cue[] = [
     id: 'curling.crowd_cheer',
     name: 'House Score Cheer',
     group: 'curling',
-    category: 'music',
+    category: 'event',
     prompt:
       'Enthusiastic winter arena crowd cheering with referee whistle and horn',
     text: 'cheer',
@@ -98,222 +103,37 @@ export const panicCurlingCatalog: Cue[] = [
   },
 ];
 
-/** Procedural Web Audio synthesizer for immediate, zero-latency curling effects. */
-export class CurlingAudio {
-  private ctx: AudioContext | null = null;
-
-  public unlock() {
-    if (!this.ctx) {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-      }
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      void this.ctx.resume();
-    }
-  }
-
-  public playEvent(event: GameEvent) {
-    if (!this.ctx) return;
-    try {
-      switch (event.type) {
-        case 'stone_delivered':
-          this.playStoneLaunch(event.speed);
-          break;
-        case 'stone_clack':
-          this.playStoneClack(event.volume);
-          break;
-        case 'sweep_burst':
-          this.playSweepBurst();
-          break;
-        case 'banana_slip':
-          this.playBananaSlip();
-          break;
-        case 'end_scored':
-          this.playScoreFanfare();
-          break;
-      }
-    } catch {
-      // Audio context might be restricted before user gesture
-    }
-  }
-
-  private playStoneLaunch(speed: number) {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(80 + speed * 15, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.6);
-
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(350, this.ctx.currentTime);
-
-    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.6);
-  }
-
-  private playStoneClack(volume: number) {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(420, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(90, this.ctx.currentTime + 0.12);
-
-    gain.gain.setValueAtTime(0.5 * volume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.12);
-  }
-
-  private playSweepBurst() {
-    if (!this.ctx) return;
-    const bufferSize = this.ctx.sampleRate * 0.08;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.18;
-    }
-
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
-    filter.Q.setValueAtTime(2.0, this.ctx.currentTime);
-
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
-
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    noise.start();
-  }
-
-  private playIceCreak() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(160, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(90, this.ctx.currentTime + 0.4);
-
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.4);
-  }
-
-  private playIceBreak() {
-    if (!this.ctx) return;
-    // Low snap
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(240, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.35);
-
-    gain.gain.setValueAtTime(0.45, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.35);
-  }
-
-  private playWaterSplash() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.3);
-
-    gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.3);
-  }
-
-  private playBananaSlip() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(650, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(
-      180,
-      this.ctx.currentTime + 0.45,
+export class CurlingAudio extends SiteAudio {
+  private director = new CurlingAudioDirector();
+  constructor() {
+    super(
+      'panic-curling',
+      bundledProfile('panic-curling', panicCurlingCatalog),
     );
-
-    gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.45);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.45);
   }
-
-  private playScoreFanfare() {
-    if (!this.ctx) return;
-    const notes = [261.63, 329.63, 392.0, 523.25]; // C chord
-    notes.forEach((freq, idx) => {
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
-
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.1);
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        this.ctx.currentTime + idx * 0.1 + 0.6,
-      );
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start(this.ctx.currentTime + idx * 0.1);
-      osc.stop(this.ctx.currentTime + idx * 0.1 + 0.6);
-    });
+  update(world: PanicCurlingWorld | null, localId?: string) {
+    const plan = this.director.update(world);
+    this.listen(
+      world?.players.find((p) => p.id === localId) ?? { x: 0, z: 15 },
+      0,
+    );
+    this.setLoop('rink', plan.playing ? 'ambience.rink' : null, 0.6);
+    this.setLoop('music', plan.playing ? 'music.play' : null, 0.6);
+    this.setLoop(
+      'slide',
+      plan.slide > 0.02 ? 'curling.stone_slide' : null,
+      plan.slide,
+    );
+    this.setLoop(
+      'sweep',
+      plan.sweep > 0.02 ? 'curling.sweep_scrub' : null,
+      plan.sweep,
+    );
+    for (const hit of plan.hits)
+      this.play(hit.cue, hit.strength, hit.position, hit.source);
+  }
+  override reset() {
+    super.reset();
+    this.director.reset();
   }
 }

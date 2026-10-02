@@ -1,0 +1,145 @@
+{
+  "checkedAt": "2026-09-22T10:13:06.939Z",
+  "origin": "https://www.jumbleyard.com",
+  "health": {
+    "status": "ok",
+    "game": "stack-or-sink"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/party",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/act-natural",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/basketball",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/bungee-doubles",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/carry-on-carnage",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/chain-of-fools",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/chaos",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/crane-clash",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/dont-wake-the-giant",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/drive-thru",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/first-person",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/four-brain-cells",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/load-bearing",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/on-the-ropes",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/one-more-button",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/panic-curling",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/reel-problems",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/reel-problems-2",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/sample-stampede",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/scaffold-scramble",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/shelf-control",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/siege-and-desist",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/stack-or-sink",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/uphill-delivery",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/wrong-floor",
+      "status": 200,
+      "html": true
+    },
+    {
+      "path": "/zorb-clash",
+      "status": 200,
+      "html": true
+    }
+  ]
+}

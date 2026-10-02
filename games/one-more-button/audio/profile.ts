@@ -15,8 +15,8 @@ export const BUTTON_DEFAULT_AUDIO: AudioManifest['cues'] = Object.fromEntries(
 export const buttonAudioProfile: AudioProfile = {
   crossfadeMusic: true,
   effectLimit: 22,
-  bufferLimit: 40,
-  warmLimit: 32,
+  bufferLimit: 64,
+  warmLimit: 48,
   musicVolume: 1.15,
   ambienceVolume: 0.8,
   preload: () => true,

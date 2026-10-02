@@ -4,6 +4,7 @@
 import { useCallback, useState } from 'react';
 import {
   AudioLines,
+  Activity,
   Gamepad2,
   LayoutDashboard,
   ListTree,
@@ -16,6 +17,7 @@ import { GAMES } from '../analytics/catalog';
 import AvatarsPanel from './AvatarsPanel';
 import GamePanel from './GamePanel';
 import OverviewPanel from './OverviewPanel';
+import HealthPanel from './HealthPanel';
 import SessionsPanel, { type SessionFilter } from './SessionsPanel';
 import SoundPanel from './SoundPanel';
 import WardrobePanel from './WardrobePanel';
@@ -24,6 +26,7 @@ import styles from './admin.module.css';
 
 export type Tab =
   | 'overview'
+  | 'health'
   | 'games'
   | 'sessions'
   | 'sound'
@@ -31,6 +34,7 @@ export type Tab =
   | 'wardrobe';
 export const TABS = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
+  { id: 'health', label: 'Health', Icon: Activity },
   { id: 'games', label: 'Games', Icon: Gamepad2 },
   { id: 'sessions', label: 'Sessions', Icon: ListTree },
   { id: 'sound', label: 'Sound', Icon: AudioLines },
@@ -152,7 +156,11 @@ function Dashboard({
   const [filter, setFilter] = useState<SessionFilter>({});
   const [soundGame, setSoundGame] = useState<string | null>(null);
   const scope: Scope = { credential, from, tz, revision, signOut };
-  const reports = tab === 'overview' || tab === 'games' || tab === 'sessions';
+  const reports =
+    tab === 'overview' ||
+    tab === 'games' ||
+    tab === 'sessions' ||
+    tab === 'health';
 
   const choosePeriod = (next: Period) => {
     setPeriod(next);
@@ -238,6 +246,7 @@ function Dashboard({
           </div>
         )}
         <main className={styles.content}>
+          {tab === 'health' && <HealthPanel scope={scope} game={game} />}
           {tab === 'overview' && (
             <OverviewPanel
               scope={scope}

@@ -1,3 +1,4 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import { MIN_POLL_MS, quantizeAxis } from '../../shared/rooms/input-rate';
 import {
   PeerGameConnection,
@@ -20,7 +21,9 @@ export class NetworkError extends Error {
   }
 }
 export async function requestRoom(body: object): Promise<Reply> {
+  const verified = (body as { verified?: boolean }).verified === true;
   if (
+    !verified &&
     typeof window !== 'undefined' &&
     ['create', 'join'].includes(String((body as { op?: string }).op))
   ) {
@@ -38,12 +41,15 @@ export async function requestRoom(body: object): Promise<Reply> {
         throw error;
     }
   }
-  const response = await fetch('/api/rooms', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(10000),
-  });
+  const response = await apiFetch(
+    verified ? '/api/challenges/stack-or-sink' : '/api/rooms',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10000),
+    },
+  );
   let data: Reply;
   try {
     data = await response.json();

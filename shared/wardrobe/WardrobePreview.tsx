@@ -157,7 +157,10 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
         }
 
         if (modeRef.current === 'item' && itemIdRef.current) {
-          const itemModel = buildStandaloneItem(itemIdRef.current);
+          const itemModel = buildStandaloneItem(
+            itemIdRef.current,
+            kitRef.current,
+          );
           itemModel.position.set(0, 0, 0);
           turn.add(itemModel);
           currentModel = itemModel;
@@ -199,6 +202,7 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
       };
 
       const onPointerDown = (e: PointerEvent) => {
+        if (!e.isPrimary || e.button !== 0) return;
         dragging = true;
         previousX = e.clientX;
         renderer.domElement.setPointerCapture(e.pointerId);
@@ -223,11 +227,17 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
       renderer.domElement.addEventListener('pointerdown', onPointerDown);
       window.addEventListener('pointermove', onPointerMove);
       window.addEventListener('pointerup', onPointerUp);
+      renderer.domElement.addEventListener('pointercancel', onPointerUp);
+      renderer.domElement.addEventListener('lostpointercapture', onPointerUp);
 
+      let previousTime = performance.now();
       const render = () => {
-        const now = performance.now() / 1000;
+        const time = performance.now();
+        const delta = Math.min((time - previousTime) / 1000, 0.05);
+        previousTime = time;
+        const now = time / 1000;
         if (spinningRef.current && !dragging) {
-          rotation += modeRef.current === 'item' ? 0.012 : 0.007;
+          rotation += delta * (modeRef.current === 'item' ? 0.72 : 0.42);
         }
         turn.rotation.y = rotation;
 
@@ -260,6 +270,11 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
         renderer.domElement.removeEventListener('pointerdown', onPointerDown);
         window.removeEventListener('pointermove', onPointerMove);
         window.removeEventListener('pointerup', onPointerUp);
+        renderer.domElement.removeEventListener('pointercancel', onPointerUp);
+        renderer.domElement.removeEventListener(
+          'lostpointercapture',
+          onPointerUp,
+        );
         if (currentModel) {
           disposeTree(currentModel);
         }
@@ -300,7 +315,7 @@ const WardrobePreview = forwardRef<WardrobePreviewHandle, WardrobePreviewProps>(
           width: '100%',
           height: '100%',
           position: 'relative',
-          touchAction: 'none',
+          touchAction: 'pan-y',
           cursor: 'grab',
         }}
         title="Drag horizontally to rotate 3D preview"

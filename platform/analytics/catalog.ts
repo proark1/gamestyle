@@ -1,4 +1,6 @@
 import type { GameAnalytics } from '../../shared/analytics/protocol';
+import { castleAnalytics } from '../../games/bouncy-castle-royale/analytics';
+import { partyAnalytics } from '../party/analytics';
 import { farmAnalytics } from '../../games/act-natural/analytics';
 import { chaosAnalytics } from '../../games/chaos/analytics';
 import { giantAnalytics } from '../../games/dont-wake-the-giant/analytics';
@@ -6,6 +8,9 @@ import { siteAnalytics } from '../../games/first-person/analytics';
 import { breakfastAnalytics } from '../../games/four-brain-cells/analytics';
 import { loadBearingAnalytics } from '../../games/load-bearing/analytics';
 import { buttonAnalytics } from '../../games/one-more-button/analytics';
+import { reelAnalytics as reel2Analytics } from '../../games/reel-problems-2/analytics';
+import { reelProblems3Analytics } from '../../games/reel-problems-3/analytics';
+import { reelAnalytics as reel4Analytics } from '../../games/reel-problems-4/analytics';
 import { reelAnalytics } from '../../games/reel-problems/analytics';
 import { shelfAnalytics } from '../../games/shelf-control/analytics';
 import { siegeAnalytics } from '../../games/siege-and-desist/analytics';
@@ -22,6 +27,11 @@ import { driveThruAnalytics } from '../../games/drive-thru/analytics';
 import { zorbClashAnalytics } from '../../games/zorb-clash/analytics';
 import { scaffoldScrambleAnalytics } from '../../games/scaffold-scramble/analytics';
 import { chainOfFoolsAnalytics } from '../../games/chain-of-fools/analytics';
+import { courseCorrectionAnalytics } from '../../games/course-correction/analytics';
+
+import { cageAnalytics } from '../../games/cage-clash/analytics';
+import { boxingAnalytics } from '../../games/on-the-ropes/analytics';
+import { slopewreckAnalytics } from '../../games/slopewreck/analytics';
 
 export type CatalogGame = {
   id: string;
@@ -41,6 +51,9 @@ export type CatalogGame = {
 // Each game's analytics module holds plain definitions and type-only imports,
 // so this list stays light enough for the admin page and the report route.
 export const GAMES: readonly CatalogGame[] = [
+  ['bouncy-castle-royale', 'Bouncy Castle Royale', castleAnalytics],
+  ['cage-clash', 'Cage Clash', cageAnalytics],
+  ['on-the-ropes', 'On the Ropes', boxingAnalytics],
   ['siege-and-desist', 'Siege and Desist', siegeAnalytics],
   ['stack-or-sink', 'Stack or Sink', stackAnalytics],
   ['act-natural', 'Blend Business', farmAnalytics],
@@ -51,6 +64,9 @@ export const GAMES: readonly CatalogGame[] = [
   ['wrong-floor', 'Wrong Floor', hotelAnalytics],
   ['one-more-button', 'One More Button', buttonAnalytics],
   ['four-brain-cells', 'Four Brain Cells', breakfastAnalytics],
+  ['reel-problems-2', 'Reel Problems 2', reel2Analytics],
+  ['reel-problems-3', 'Reel Problems 3', reelProblems3Analytics],
+  ['reel-problems-4', 'Reel Problems 4', reel4Analytics],
   ['reel-problems', 'Reel Problems', reelAnalytics],
   ['shelf-control', 'Shelf Control', shelfAnalytics],
   ['load-bearing', 'Load Bearing', loadBearingAnalytics],
@@ -64,6 +80,8 @@ export const GAMES: readonly CatalogGame[] = [
   ['zorb-clash', 'Zorb Clash', zorbClashAnalytics],
   ['scaffold-scramble', 'Scaffold Scramble', scaffoldScrambleAnalytics],
   ['chain-of-fools', 'Chain of Fools', chainOfFoolsAnalytics],
+  ['course-correction', 'Course Correction', courseCorrectionAnalytics],
+  ['slopewreck', 'Slopewreck', slopewreckAnalytics],
 ].map(([id, name, analytics]) => {
   const game = id as string;
   const construction = game === 'chaos' || game === 'first-person';
@@ -85,12 +103,16 @@ export const GAMES: readonly CatalogGame[] = [
   };
 });
 
-export const ANALYTICS_GAMES = GAMES.map((game) => game.analytics);
+export const ANALYTICS_GAMES = [
+  ...GAMES.map((game) => game.analytics),
+  partyAnalytics,
+];
 
 export function catalogGame(id: string): CatalogGame | undefined {
   return GAMES.find((game) => game.id === id);
 }
 
 export function analyticsGame(id: string): GameAnalytics | undefined {
+  if (id === 'party') return partyAnalytics;
   return catalogGame(id)?.analytics;
 }

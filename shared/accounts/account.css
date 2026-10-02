@@ -1,4 +1,104 @@
 /* Account UI stands alone: game-ui.css does not apply on construction pages. */
+.account-clubhouse.account-dialog {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(460px, calc(100vw - 28px));
+  border: 3px solid #fffdf2;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #d6ece4 0, #fff6df 215px);
+  box-shadow:
+    0 8px 0 #b7c7a9,
+    0 22px 80px #173f4940;
+}
+.account-clubhouse > .cast-guide {
+  margin: -8px 16px -5px -12px;
+}
+.account-clubhouse > .cast-guide .clay-cast {
+  width: 108px;
+  flex-basis: 108px;
+}
+.account-clubhouse > .cast-guide .cast-speech {
+  font-size: 12px;
+  padding: 12px;
+}
+.account-clubhouse .account-title {
+  font-size: 32px;
+}
+.account-clubhouse .account-input {
+  min-width: 0;
+  background: #fffdf5;
+  border: 2px solid #c9d5c5;
+  border-radius: 13px;
+}
+.account-clubhouse .account-primary {
+  background: #287c80;
+  color: #fff;
+  border-color: #226369;
+  border-radius: 14px;
+  box-shadow: 0 4px 0 #1b565b;
+}
+.account-clubhouse .account-primary:hover:not(:disabled) {
+  background: #216b70;
+}
+.account-guest {
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-size: 13px;
+  padding: 10px;
+  color: #365d53;
+}
+@media (max-width: 400px) {
+  .account-clubhouse.account-dialog {
+    padding: 22px 18px;
+    gap: 12px;
+  }
+  .account-clubhouse > .cast-guide {
+    margin: 0 8px 0 -6px;
+    min-width: 0;
+  }
+  .account-clubhouse > .cast-guide .clay-cast {
+    width: 74px;
+    flex-basis: 74px;
+  }
+  .account-clubhouse > .cast-guide .cast-speech {
+    min-width: 0;
+    padding: 10px;
+    overflow-wrap: anywhere;
+  }
+  .account-clubhouse .account-links {
+    flex-wrap: wrap;
+  }
+  .account-clubhouse .account-description {
+    overflow-wrap: anywhere;
+  }
+}
+.account-welcome {
+  position: fixed;
+  z-index: 72;
+  right: 20px;
+  top: 85px;
+  width: min(350px, calc(100vw - 40px));
+  filter: drop-shadow(0 10px 20px #24494325);
+}
+.account-welcome > button {
+  position: absolute;
+  right: -6px;
+  top: 24px;
+  border: 1px solid #c9d5c5;
+  background: #fff6df;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+@media (max-height: 720px) {
+  .account-clubhouse > .cast-guide .clay-cast {
+    width: 70px;
+    flex-basis: 70px;
+  }
+}
 .account-backdrop {
   position: fixed;
   inset: 0;
@@ -229,8 +329,8 @@
   right: 14px;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -296,19 +396,18 @@
   .account-header-button span {
     display: none;
   }
-  /* One more toolbar button must still fit a 360px top bar: with the account
-     button present, the voice control shows only its icon and every toolbar
-     button shrinks to 40px. */
+  /* Secondary controls live in the mobile settings panel. Keep touch targets
+     full-sized when the account service enables its button. */
   .game-toolbar:has(.account-toolbar-button) {
     gap: 3px;
   }
   .game-toolbar:has(.account-toolbar-button) .game-toolbar-button {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
   .game-toolbar:has(.account-toolbar-button) .voice-trigger {
-    width: 40px;
+    width: 44px;
     padding: 0;
     gap: 0;
   }

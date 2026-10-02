@@ -28,6 +28,14 @@ export type ZorbPlayer = {
   dashing: number; // countdown in seconds when active burst
   braced: boolean;
   turtle: boolean; // upside-down stuck state
+  posture: 'upright' | 'unstable' | 'fallen' | 'recovering';
+  balance: number; // 0 stable, 1 falling; independent of shell rotation
+  heading: number;
+  gait: number;
+  grounded: boolean;
+  fallX: number;
+  fallZ: number;
+  recovery: number;
   turtleTimer: number; // seconds left in turtle state
   wiggleProgress: number; // 0 to 1 towards wiggle escape
   bonks: number; // total explosive player bumps
@@ -78,7 +86,7 @@ export type GoalScoredEvent = {
   team: TeamId;
   scorerId: string | null;
   scorerName: string;
-  isTurtleGoal: boolean; // style points if a turtle was punted in!
+  ownGoal: boolean;
   clock: number;
 };
 

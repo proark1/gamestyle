@@ -749,3 +749,28 @@
   color: var(--hud-muted);
   font: 700 11px/1 var(--hud-body);
 }
+
+/* Long game names must yield space to the fixed-size toolbar controls. */
+@media (max-width: 700px) {
+  .castle-topbar:has(.game-toolbar) .castle-brand {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .castle-topbar:has(.game-toolbar) .castle-brand > span,
+  .castle-topbar:has(.game-toolbar) .castle-brand small {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .course-topbar:has(.game-toolbar) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .course-topbar:has(.game-toolbar) .course-brand {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}

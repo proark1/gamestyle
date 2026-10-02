@@ -111,3 +111,30 @@ void test('an invite code is read from the query and normalised', () => {
   assert.equal(inviteCode(''), null);
   assert.equal(inviteCode('?other=ABC234'), null);
 });
+
+void test('a shared party restores only its authenticated game and round seat without an invitation', () => {
+  const global = globalThis as {
+    location?: { search: string; pathname: string };
+  };
+  global.location = {
+    search: '?party=XYZ789&round=1',
+    pathname: '/four-brain-cells',
+  };
+  const store = sessionStore('four-brain-cells-session-v1');
+  const session = { ...valid, game: 'four-brain-cells' };
+  sessionStorage.setItem(
+    'jumbleyard:party-game',
+    JSON.stringify({ party: 'XYZ789', round: 1, session }),
+  );
+  try {
+    assert.equal(inviteCode(), null);
+    assert.deepEqual(store.loadPeer(), session);
+    global.location.search = '?party=XYZ789&round=2';
+    assert.equal(store.loadPeer(), null);
+    global.location.search = '?party=XYZ789&round=1';
+    global.location.pathname = '/wrong-floor';
+    assert.equal(store.loadPeer(), null);
+  } finally {
+    delete global.location;
+  }
+});

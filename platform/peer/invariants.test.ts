@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createPeerEngine } from './engine';
 import type { Member } from '../../shared/peer/types';
 import type { GameId } from '../../shared/audio/types';
+import { roomCapacity } from '../../shared/games/identity';
 
 /**
  * Invariants every peer game must keep, checked through the same engine entry
@@ -22,9 +23,12 @@ import type { GameId } from '../../shared/audio/types';
 const GAMES: readonly GameId[] = [
   'act-natural',
   'basketball',
+  'bouncy-castle-royale',
   'bungee-doubles',
+  'cage-clash',
   'carry-on-carnage',
   'chain-of-fools',
+  'course-correction',
   'crane-clash',
   'dont-wake-the-giant',
   'drive-thru',
@@ -33,9 +37,12 @@ const GAMES: readonly GameId[] = [
   'one-more-button',
   'panic-curling',
   'reel-problems',
+  'reel-problems-3',
+  'reel-problems-4',
   'sample-stampede',
   'scaffold-scramble',
   'siege-and-desist',
+  'slopewreck',
   'stack-or-sink',
   'uphill-delivery',
   'wrong-floor',
@@ -152,7 +159,10 @@ function assertWireSafe(game: string, label: string, value: unknown) {
 function play(game: GameId, seed: number, ticks: number) {
   const next = random(seed);
   const engine = createPeerEngine(game, 1_000_000);
-  const members = [member('a', 0), member('b', 1), member('c', 2)];
+  const members = [member('a', 0), member('b', 1), member('c', 2)].slice(
+    0,
+    roomCapacity(game),
+  );
   engine.reconcile(members);
   let order = 0;
   for (let tick = 0; tick < ticks; tick++) {
@@ -166,7 +176,10 @@ for (const game of GAMES) {
   void test(`${game}: snapshots stay wire-safe through a round of random play`, () => {
     const next = random(7);
     const engine = createPeerEngine(game, 1_000_000);
-    const members = [member('a', 0), member('b', 1), member('c', 2)];
+    const members = [member('a', 0), member('b', 1), member('c', 2)].slice(
+      0,
+      roomCapacity(game),
+    );
     engine.reconcile(members);
     let order = 0;
     for (let tick = 0; tick < 200; tick++) {

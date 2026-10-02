@@ -634,3 +634,36 @@ void test('a restart empties all hands and keeps event ids rising', () => {
   playBots(world, 30, ref);
   assert.ok(world.approvedCount > 0, 'the bots carry on in the new round');
 });
+
+void test('departure charges every unapproved bag once and ignores later interactions', () => {
+  const world = soloRound();
+  const ref = { current: 100 };
+  world.suitcases[0].approved = true;
+  world.approvedCount = 1;
+  world.totalScore = 500;
+  world.deadline = world.clock;
+  advanceCarryOn(world, 1 / 60, ref);
+  assert.equal(world.phase, 'flight_departed');
+  assert.equal(world.feesPaid, 450);
+  assert.equal(world.totalScore, 50);
+  const ended = JSON.stringify(world);
+  carryOnAction(world, 'me', { type: 'interact', action: 'grab' }, ref);
+  assert.equal(JSON.stringify(world), ended);
+  advanceCarryOn(world, 1 / 60, ref);
+  // An ended simulation neither charges again nor accepts item actions.
+  assert.equal(world.feesPaid, 450);
+  assert.equal(world.totalScore, 50);
+  carryOnAction(world, 'me', { type: 'restart' }, ref);
+  assert.equal(world.feesPaid, 0);
+  assert.equal(world.totalScore, 0);
+});
+
+void test('fully approved baggage incurs no departure fee', () => {
+  const world = soloRound();
+  const ref = { current: 100 };
+  for (const bag of world.suitcases) bag.approved = true;
+  world.approvedCount = world.targetBags;
+  world.deadline = world.clock;
+  advanceCarryOn(world, 1 / 60, ref);
+  assert.equal(world.feesPaid, 0);
+});

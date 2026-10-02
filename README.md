@@ -1,40 +1,62 @@
 # Jumbleyard
 
-**Jumbleyard** is a collection of twenty-three matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
+**Jumbleyard** is a collection of matching browser party games, all served by a single application at [jumbleyard.up.railway.app](https://jumbleyard.up.railway.app). The landing page at `/` offers illustrated cards for every game. Old Stack or Sink and Handwerker root invite links still work.
 
-## The twenty-three games
+## The games
 
 Every game has its own folder under `games/` holding the simulation, scene, rooms and tests. The matching folder under `app/` holds only the thin route. Several routes keep their original slug for invitation compatibility, so the display name and the folder name differ — the table below is the authoritative mapping.
 
-| Game              | Play at                | Game code                    | Route                            |
-| ----------------- | ---------------------- | ---------------------------- | -------------------------------- |
-| Siege and Desist  | `/siege-and-desist`    | `games/siege-and-desist/`    | `app/siege-and-desist/`          |
-| Stack or Sink     | `/stack-or-sink`       | `games/stack-or-sink/`       | `app/stack-or-sink/`             |
-| Blend Business    | `/act-natural`         | `games/act-natural/`         | `app/act-natural/`               |
-| Uphill Delivery   | `/uphill-delivery`     | `games/uphill-delivery/`     | `app/uphill-delivery/`           |
-| Tiptoe Thieves    | `/dont-wake-the-giant` | `games/dont-wake-the-giant/` | `app/dont-wake-the-giant/`       |
-| Permit Pending    | `/chaos`               | `games/chaos/`               | `app/(handwerker)/chaos/`        |
-| Brick by Hand     | `/first-person`        | `games/first-person/`        | `app/(handwerker)/first-person/` |
-| Wrong Floor       | `/wrong-floor`         | `games/wrong-floor/`         | `app/wrong-floor/`               |
-| One More Button   | `/one-more-button`     | `games/one-more-button/`     | `app/one-more-button/`           |
-| Four Brain Cells  | `/four-brain-cells`    | `games/four-brain-cells/`    | `app/four-brain-cells/`          |
-| Reel Problems     | `/reel-problems`       | `games/reel-problems/`       | `app/reel-problems/`             |
-| Shelf Control     | `/shelf-control`       | `games/shelf-control/`       | `app/shelf-control/`             |
-| Load Bearing      | `/load-bearing`        | `games/load-bearing/`        | `app/load-bearing/`              |
-| Crane Clash       | `/crane-clash`         | `games/crane-clash/`         | `app/crane-clash/`               |
-| Court Clash       | `/basketball`          | `games/basketball/`          | `app/basketball/`                |
-| Bungee Doubles    | `/bungee-doubles`      | `games/bungee-doubles/`      | `app/bungee-doubles/`            |
-| Panic Curling     | `/panic-curling`       | `games/panic-curling/`       | `app/panic-curling/`             |
-| Zorb Clash        | `/zorb-clash`          | `games/zorb-clash/`          | `app/zorb-clash/`                |
-| Carry-On Carnage  | `/carry-on-carnage`    | `games/carry-on-carnage/`    | `app/carry-on-carnage/`          |
-| Sample Stampede   | `/sample-stampede`     | `games/sample-stampede/`     | `app/sample-stampede/`           |
-| Drive-Thru Static | `/drive-thru`          | `games/drive-thru/`          | `app/drive-thru/`                |
-| Scaffold Scramble | `/scaffold-scramble`   | `games/scaffold-scramble/`   | `app/scaffold-scramble/`         |
-| Chain of Fools    | `/chain-of-fools`      | `games/chain-of-fools/`      | `app/chain-of-fools/`            |
+| Game                 | Play at                 | Game code                     | Route                            |
+| -------------------- | ----------------------- | ----------------------------- | -------------------------------- |
+| Siege and Desist     | `/siege-and-desist`     | `games/siege-and-desist/`     | `app/siege-and-desist/`          |
+| Stack or Sink        | `/stack-or-sink`        | `games/stack-or-sink/`        | `app/stack-or-sink/`             |
+| Blend Business       | `/act-natural`          | `games/act-natural/`          | `app/act-natural/`               |
+| Uphill Delivery      | `/uphill-delivery`      | `games/uphill-delivery/`      | `app/uphill-delivery/`           |
+| Tiptoe Thieves       | `/dont-wake-the-giant`  | `games/dont-wake-the-giant/`  | `app/dont-wake-the-giant/`       |
+| Permit Pending       | `/chaos`                | `games/chaos/`                | `app/(handwerker)/chaos/`        |
+| Brick by Hand        | `/first-person`         | `games/first-person/`         | `app/(handwerker)/first-person/` |
+| Wrong Floor          | `/wrong-floor`          | `games/wrong-floor/`          | `app/wrong-floor/`               |
+| One More Button      | `/one-more-button`      | `games/one-more-button/`      | `app/one-more-button/`           |
+| Four Brain Cells     | `/four-brain-cells`     | `games/four-brain-cells/`     | `app/four-brain-cells/`          |
+| Reel Problems 2      | `/reel-problems-2`      | `games/reel-problems-2/`      | `app/reel-problems-2/`           |
+| Reel Problems 3      | `/reel-problems-3`      | `games/reel-problems-3/`      | `app/reel-problems-3/`           |
+| Reel Problems 4      | `/reel-problems-4`      | `games/reel-problems-4/`      | `app/reel-problems-4/`           |
+| Reel Problems        | `/reel-problems`        | `games/reel-problems/`        | `app/reel-problems/`             |
+| Shelf Control        | `/shelf-control`        | `games/shelf-control/`        | `app/shelf-control/`             |
+| Load Bearing         | `/load-bearing`         | `games/load-bearing/`         | `app/load-bearing/`              |
+| Crane Clash          | `/crane-clash`          | `games/crane-clash/`          | `app/crane-clash/`               |
+| Court Clash          | `/basketball`           | `games/basketball/`           | `app/basketball/`                |
+| Bungee Doubles       | `/bungee-doubles`       | `games/bungee-doubles/`       | `app/bungee-doubles/`            |
+| Bouncy Castle Royale | `/bouncy-castle-royale` | `games/bouncy-castle-royale/` | `app/bouncy-castle-royale/`      |
+| Slopewreck           | `/slopewreck`           | `games/slopewreck/`           | `app/slopewreck/`                |
+| Panic Curling        | `/panic-curling`        | `games/panic-curling/`        | `app/panic-curling/`             |
+| Cage Clash           | `/cage-clash`           | `games/cage-clash/`           | `app/cage-clash/`                |
+| On the Ropes         | `/on-the-ropes`         | `games/on-the-ropes/`         | `app/on-the-ropes/`              |
+| Zorb Clash           | `/zorb-clash`           | `games/zorb-clash/`           | `app/zorb-clash/`                |
+| Carry-On Carnage     | `/carry-on-carnage`     | `games/carry-on-carnage/`     | `app/carry-on-carnage/`          |
+| Sample Stampede      | `/sample-stampede`      | `games/sample-stampede/`      | `app/sample-stampede/`           |
+| Drive-Thru Static    | `/drive-thru`           | `games/drive-thru/`           | `app/drive-thru/`                |
+| Scaffold Scramble    | `/scaffold-scramble`    | `games/scaffold-scramble/`    | `app/scaffold-scramble/`         |
+| Chain of Fools       | `/chain-of-fools`       | `games/chain-of-fools/`       | `app/chain-of-fools/`            |
+| Course Correction    | `/course-correction`    | `games/course-correction/`    | `app/course-correction/`         |
 
 Every game but Shelf Control has a sound workshop at `<route>/admin`; Shelf Control plays the Blend Business recordings through its own mapping. See [naming](docs/naming.md) for the approved display names.
 
 The admin page at `/admin` brings every game together behind the workshop password: how often each game is played, how far visitors get and where they leave, how rounds end, whether they play alone, with NPCs or with real players, what they press, every individual session with its timeline, all of the sound workshops, and every game's player avatar walking side by side against a chosen template. See [play analytics](docs/analytics.md) for what is collected and how a game reports it.
+
+## Bouncy Castle Royale
+
+Play at `/bouncy-castle-royale`. One to four humans play 2v2 inflatable volleyball, with bots filling empty seats. First to seven points or the leader after three minutes wins. Landing waves launch nearby players; each team redirects a shared air supply between jump height, protective walls and powerful bumpers. Air leaks during rallies and a gold pump refills it.
+
+WASD/arrows move, Space jumps, F volleys (an airborne hit smashes), Shift braces, Q cycles air allocation and E holds the pump. Touch controls and the shared gamepad mapping work too. Nico avatars, all wardrobe items, room controls, voice chat, rendering, sports recordings, analytics and party results use the collection’s existing modules. Only court models, rules and controls are game-specific.
+
+Run `node scripts/test.mjs games/bouncy-castle-royale` for rules and checkpoint checks, and `node scripts/peer-integration.mjs bouncy-castle-royale` for four local WebRTC clients, voice and host recovery.
+
+## Slopewreck
+
+Play at `/slopewreck`. One to four riders race down a snowy mountain for up to 60 seconds; bots fill empty seats. Steer with A/D, tuck with W, brake with S, and jump with Space. While airborne, press Q for a ramp trick or E for a rail trick. Landing a trick leaves that feature behind for trailing riders. A clean spin earns style and speed; a messy landing creates a wilder shortcut but slows its maker. Natural kickers along the course keep the race moving.
+
+SLOPEWRECK uses the shared Nico avatar and wardrobe, peer rooms, voice, sound workshop, gamepad/touch input, analytics, and party results. Run `node scripts/test.mjs games/slopewreck` for race rules, `node scripts/peer-integration.mjs slopewreck` for four-client WebRTC and host recovery, and `node games/slopewreck/scripts/browser-check.mjs` against a local preview for desktop/mobile browser checks.
 
 ## Siege and Desist
 
@@ -215,3 +237,26 @@ Redeploy with `npm run deploy`. The service is `jumbleyard`; only the volume sti
 That flag is what lets a worktree deploy. Without it the CLI names every uploaded file relative to the directory the project was linked in, which is the root checkout, so a worktree's app arrives nested under `.claude/worktrees/<name>/`: the builder finds no Dockerfile at the top, falls back to railpack and fails with "could not determine how to build the app". Bare `railway up` from a worktree, with no path, is worse — it walks the root checkout instead, skips `.claude` as `.railwayignore` says, and ships stale code successfully.
 
 Prefer a behavioural check over a status code when confirming a deploy: count WebGL draw calls in the browser, or exercise a route whose output you know. HTTP 200 does not distinguish the build you meant from the one you replaced. GitHub automatic deployment is not configured.
+
+## Game health and release checks
+
+The administrator's **Health** tab reports time to the first available renderer diagnostic, sampled FPS and frame/work timings, peak geometry/texture counts, and fixed categories of technical interruptions. Filter by game, platform, browser engine, build and the existing date range. The build identifier comes from `GAME_BUILD_ID`, then `GITHUB_SHA`, with `local` as the development fallback.
+
+Diagnostics use an in-memory random visit ID and cumulative summaries, so retries do not double-count visits or errors. Sampling is capped at 120 samples, at most once every 30 seconds while the page is visible and no dialog is open. Reports contain no error messages, stacks, URLs, player names or hardware identifiers. Do Not Track and Global Privacy Control disable diagnostics. Records have the same 180-day retention as gameplay analytics.
+
+Apply `drizzle/0008_diagnostics.sql` before serving the new endpoint. The Node production startup already runs all migrations through `scripts/migrate.mjs`; D1 deployments must apply the new migration through their normal database migration step. No production migration is performed by local smoke tests.
+
+After building, run the same checks used by CI:
+
+```sh
+npm run build:railway
+npm run build:client
+node scripts/ci-smoke.mjs production
+node scripts/ci-smoke.mjs games
+SMOKE_ENGINE=webkit node scripts/ci-smoke.mjs mobile
+node --import tsx scripts/voice-browser-integration.mjs --ui --interruptions
+```
+
+The smoke launcher owns and stops its localhost server and uses a fresh isolated SQLite database. Reports and screenshots are saved under `.tmp/platform-audit` and `.tmp/mobile-audit`. CI also runs Firefox/WebKit game checks, Chromium/WebKit phone-layout checks and a Windows package/startup check.
+
+For device and newcomer playtests, exercise a weaker Android phone, an iPhone and a desktop for 20–30 minutes. Include repeated game changes, portrait/landscape rotation, background/foreground transitions, denied microphone permission and Wi-Fi/mobile handover. Compare Health data by platform/build; software-rendered CI frame rates are not device benchmarks. Start with Cage Clash and On the Ropes. Ask a new player to explain the objective and perform one useful action within the first 30 seconds, then use the existing gameplay completion/rematch reports to choose the next usability changes.

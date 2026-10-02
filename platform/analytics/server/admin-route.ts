@@ -3,6 +3,14 @@ import { audioAccess } from '@/shared/audio/access';
 import { RequestBudget, budgetError } from '@/shared/http/request-budget';
 import { RoomError } from '@/shared/rooms/types';
 import { ANALYTICS_GAMES, analyticsGame } from '../catalog';
+import { isGame } from '@/shared/games/identity';
+import {
+  PLATFORMS,
+  ENGINES,
+  type DiagnosticPlatform,
+  type DiagnosticEngine,
+} from '@/shared/diagnostics/protocol';
+import { healthReport } from './diagnostics-store';
 import {
   gameReport,
   listSessions,
@@ -54,6 +62,27 @@ export async function GET(request: Request) {
     };
     const db = getBinding();
     switch (query.get('view')) {
+      case 'health': {
+        const game = query.get('game') || undefined;
+        const platform = query.get('platform') || undefined;
+        const engine = query.get('engine') || undefined;
+        const release = query.get('release') || undefined;
+        if (
+          (game && !isGame(game)) ||
+          (platform && !PLATFORMS.includes(platform as DiagnosticPlatform)) ||
+          (engine && !ENGINES.includes(engine as DiagnosticEngine)) ||
+          (release && !/^[a-zA-Z0-9._-]{1,64}$/.test(release))
+        )
+          return json({ error: 'Invalid health filter.' }, 400);
+        return json(
+          await healthReport(db, range, {
+            game: game as import('@/shared/games/identity').Game | undefined,
+            platform: platform as DiagnosticPlatform | undefined,
+            engine: engine as DiagnosticEngine | undefined,
+            release,
+          }),
+        );
+      }
       case 'overview':
         return json(await overview(db, ANALYTICS_GAMES, range));
       case 'game': {

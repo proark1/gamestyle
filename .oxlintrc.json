@@ -31,6 +31,10 @@
     "coverage/**",
     "next-env.d.ts",
     ".tmp/**",
+    ".sites-*/**",
+    ".claude/**",
+    "tmp/**",
+    "output/**",
     "work/**",
     "outputs/**",
     "components/ui/**"

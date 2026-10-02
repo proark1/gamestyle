@@ -1,0 +1,533 @@
+import { applyScenePlan } from '../../shared/audio/apply-scene-plan';
+import { reelDetails } from './audio/details';
+import { ReelAudioDirector } from './audio/director';
+import { SiteAudio } from '../../shared/audio/player';
+import type { Cue } from '../../shared/audio/types';
+import type { ReelEvent, ReelWorld } from './types';
+
+const effects = {
+  cast: [
+    'Cast a line',
+    'A fishing rod swishes through the air followed by a tiny lake splash.',
+  ],
+  bite: [
+    'Fish on',
+    'A fishing float dips, a quick watery plop and a wooden fishing rod creak.',
+  ],
+  catch: [
+    'Catch landed',
+    'A wet fish flops twice onto a wooden boat deck. A happy short bell flourish.',
+  ],
+  splash: [
+    'Overboard',
+    'One comically large body splash into a quiet lake, followed by water dripping.',
+  ],
+  tangle: [
+    'Tangled lines',
+    'Fishing reels rattle and nylon lines squeak as a knot pulls tight.',
+  ],
+  snap: [
+    'Line snapped',
+    'A nylon fishing line stretches then snaps with a sharp twang.',
+  ],
+  rescue: [
+    'Back aboard',
+    'Water drips onto wood as a person climbs into a small wooden boat.',
+  ],
+  start: [
+    'Tournament starts',
+    'A short friendly outdoor boat horn signals a fishing tournament start.',
+  ],
+  finish: [
+    'Tournament ends',
+    'Three short happy brass horn notes signal the end of a fishing tournament.',
+  ],
+  weather: [
+    'Wind and rain arrive',
+    'A gust of wind whistles over lake water with pattering rain on wood.',
+  ],
+  thunder: [
+    'Thunder cracks',
+    'A sharp thunder crack followed by a low rolling rumble over open water.',
+  ],
+  shark: [
+    'Shark bump',
+    'A large fin slices the water followed by a hollow wooden boat hull thump.',
+  ],
+  chomp: [
+    'Shark bite',
+    'A huge jaw snaps shut twice underwater with a heavy wet crunch and a thrashing splash.',
+  ],
+  jellyfish: [
+    'Jellyfish snag',
+    'A wobbly wet squelch with a tiny electric fizz and nylon line squeak.',
+  ],
+  sting: [
+    'Jellyfish sting',
+    'A crackling electric zap fizzes over wet skin and rises into a stinging burn.',
+  ],
+  leak: [
+    'Plank springs a leak',
+    'A wooden boat plank cracks with a sharp pop and a jet of water starts spraying.',
+  ],
+  patched: [
+    'Leak patched',
+    'A hammer taps a patch onto a wet wooden plank three times, then the spraying stops.',
+  ],
+  flooding: [
+    'Water pouring in',
+    'Lake water gushes and sloshes into a small wooden boat with a hollow rising gurgle.',
+  ],
+  sink: [
+    'Boat sinks',
+    'A small wooden boat fills and slips under the water with heavy glugging bubbles.',
+  ],
+  launch: [
+    'New boat launched',
+    'A small wooden boat is shoved off a dock with a knock and settles onto calm water.',
+  ],
+  ram: [
+    'Rammed driftwood',
+    'A wooden boat bow thumps hard into a floating log with a hollow knock.',
+  ],
+  gull: ['Seagulls arrive', 'Two seagulls cry and flap overhead above a lake.'],
+  steal: [
+    'Seagull steals a fish',
+    'A seagull swoops with a flurry of wings, snatches a wet fish and squawks.',
+  ],
+  crab: [
+    'Crab aboard',
+    'A small crab scuttles with quick clicking legs across wet wooden planks.',
+  ],
+  pinch: [
+    'Crab pinch',
+    'A crab claw snaps shut with a sharp click and a quick scuffle of boots on wood.',
+  ],
+  stomp: [
+    'Crab punted overboard',
+    'A boot stomps a wooden deck with a thud, then a small crab plops into the water.',
+  ],
+  slap: [
+    'Salmon slap',
+    'A flying fish smacks a fisherman on deck with a loud cartoon splat.',
+  ],
+  trophy: [
+    'Trophy catch fanfare',
+    'A triumphant brass fanfare and sparkling bells celebrate catching a record fish.',
+  ],
+  bump: [
+    'Angler bump',
+    'Two fishermen bump into each other on a wet boat deck with a cartoon thud.',
+  ],
+  slip: [
+    'Fish slip',
+    'A slapstick cartoon whoosh, squeak and wet flop onto wooden deck planks.',
+  ],
+  shock: [
+    'Electric shock',
+    'A buzzy cartoon electric zap and vibrating comic zizzle.',
+  ],
+  boss: [
+    'The Lake Manager',
+    'A deep reverberant underwater leviathan boom and ominous aquatic hum.',
+  ],
+  oof: ['Angler groan', 'A quick comical slapstick grunt or oof on impact.'],
+  waaah: [
+    'Overboard panic',
+    'A comical vocal gasp and waaaah as an angler tumbles into the lake.',
+  ],
+  timber: [
+    'Creaking timber',
+    'Heavy wooden boat hull planks creaking and groaning under stress.',
+  ],
+} as const;
+/**
+ * Filtered-noise stand-ins used until the workshop generates real clips, so a
+ * shark or a jellyfish is never silent on a fresh deployment.
+ */
+const textures: Partial<
+  Record<
+    ReelEvent['kind'],
+    {
+      duration: number;
+      from: number;
+      to: number;
+      filter: BiquadFilterType;
+      peak: number;
+      hits: number;
+    }
+  >
+> = {
+  thunder: {
+    duration: 2.1,
+    from: 700,
+    to: 90,
+    filter: 'lowpass',
+    peak: 1.2,
+    hits: 1,
+  },
+  weather: {
+    duration: 1.4,
+    from: 450,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.65,
+    hits: 1,
+  },
+  shark: {
+    duration: 0.55,
+    from: 450,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.65,
+    hits: 1,
+  },
+  jellyfish: {
+    duration: 0.55,
+    from: 1800,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.65,
+    hits: 1,
+  },
+  chomp: {
+    duration: 0.9,
+    from: 1500,
+    to: 70,
+    filter: 'lowpass',
+    peak: 1.1,
+    hits: 2,
+  },
+  leak: {
+    duration: 0.8,
+    from: 3000,
+    to: 900,
+    filter: 'bandpass',
+    peak: 0.7,
+    hits: 1,
+  },
+  flooding: {
+    duration: 1.6,
+    from: 900,
+    to: 200,
+    filter: 'lowpass',
+    peak: 0.8,
+    hits: 3,
+  },
+  sink: {
+    duration: 2.4,
+    from: 600,
+    to: 60,
+    filter: 'lowpass',
+    peak: 1.1,
+    hits: 4,
+  },
+  ram: {
+    duration: 0.5,
+    from: 500,
+    to: 80,
+    filter: 'lowpass',
+    peak: 0.9,
+    hits: 1,
+  },
+  stomp: {
+    duration: 0.6,
+    from: 700,
+    to: 100,
+    filter: 'lowpass',
+    peak: 0.8,
+    hits: 2,
+  },
+  sting: {
+    duration: 0.7,
+    from: 900,
+    to: 3400,
+    filter: 'bandpass',
+    peak: 0.85,
+    hits: 5,
+  },
+  slap: {
+    duration: 0.35,
+    from: 800,
+    to: 120,
+    filter: 'lowpass',
+    peak: 1.1,
+    hits: 2,
+  },
+  bump: {
+    duration: 0.25,
+    from: 400,
+    to: 100,
+    filter: 'lowpass',
+    peak: 0.7,
+    hits: 1,
+  },
+  slip: {
+    duration: 0.45,
+    from: 1400,
+    to: 120,
+    filter: 'lowpass',
+    peak: 0.9,
+    hits: 2,
+  },
+  shock: {
+    duration: 0.45,
+    from: 2600,
+    to: 450,
+    filter: 'bandpass',
+    peak: 0.95,
+    hits: 6,
+  },
+  boss: {
+    duration: 2.2,
+    from: 220,
+    to: 45,
+    filter: 'lowpass',
+    peak: 1.2,
+    hits: 1,
+  },
+  timber: {
+    duration: 0.8,
+    from: 350,
+    to: 90,
+    filter: 'lowpass',
+    peak: 0.7,
+    hits: 3,
+  },
+};
+export const reelCatalog: Cue[] = [
+  ...Object.entries(effects).map(([id, [name, prompt]]) => ({
+    id: `event.${id}`,
+    name,
+    group: 'On the lake',
+    category: 'event' as const,
+    prompt: `${prompt} Clear playful physical Foley, no speech or background music.`,
+    text: '',
+    duration: 2,
+    loop: false,
+    volume: 0.65,
+  })),
+  ...reelDetails,
+];
+export class ReelSound {
+  private clips: SiteAudio;
+  private available = new Set<string>();
+  private context: AudioContext | null = null;
+  private gain: GainNode | null = null;
+  private underwaterFilter: BiquadFilterNode | null = null;
+  private enabledValue = true;
+  private director = new ReelAudioDirector();
+  constructor() {
+    this.clips = new SiteAudio('reel-problems-2', {
+      preload: () => true,
+      availableVariants: true,
+      crossfadeMusic: true,
+      bufferLimit: 48,
+      warmLimit: 48,
+      cooldownKey: (id, source) => `${id}:${source ?? ''}`,
+      prepareManifest: (manifest) => {
+        this.available = new Set(Object.keys(manifest.cues));
+        return manifest;
+      },
+    });
+    this.update(null);
+  }
+  duck(active: boolean) {
+    this.clips.duck(active);
+  }
+  set enabled(value: boolean) {
+    this.enabledValue = value;
+    this.clips.enabled = value;
+    if (this.gain && this.context)
+      this.gain.gain.setTargetAtTime(
+        value ? 0.12 : 0,
+        this.context.currentTime,
+        0.03,
+      );
+  }
+  unlock() {
+    this.clips.unlock();
+    try {
+      if (!this.context) {
+        this.context = new AudioContext();
+        this.gain = this.context.createGain();
+        this.gain.gain.value = this.enabledValue ? 0.12 : 0;
+        this.underwaterFilter = this.context.createBiquadFilter();
+        this.underwaterFilter.type = 'lowpass';
+        this.underwaterFilter.frequency.value = 20000;
+        this.gain.connect(this.underwaterFilter);
+        this.underwaterFilter.connect(this.context.destination);
+      }
+      void this.context.resume().catch(() => {});
+    } catch {
+      /* Visual cues remain usable when audio is unavailable. */
+    }
+  }
+  update(world: ReelWorld | null, localId?: string) {
+    const me = world?.players.find((p) => p.id === localId);
+    const isSwimming = !!me?.swimming && world?.phase === 'playing';
+    if (this.underwaterFilter && this.context) {
+      const targetFreq = isSwimming ? 450 : 20000;
+      this.underwaterFilter.frequency.setTargetAtTime(
+        targetFreq,
+        this.context.currentTime,
+        0.05,
+      );
+    }
+    applyScenePlan(
+      this.clips,
+      this.director.update(world, localId),
+      this.available,
+      (id) => this.fallback(id),
+    );
+  }
+  private fallback(id: string) {
+    const kind = id.slice(6) as ReelEvent['kind'];
+    if (!id.startsWith('event.') || !(kind in effects)) return;
+    if (!this.context || !this.gain || !this.enabledValue || document.hidden)
+      return;
+    const ctx = this.context,
+      t = ctx.currentTime;
+    const shaped = textures[kind];
+    if (shaped) {
+      const buffer = ctx.createBuffer(
+        1,
+        Math.ceil(ctx.sampleRate * shaped.duration),
+        ctx.sampleRate,
+      );
+      const samples = buffer.getChannelData(0);
+      for (let i = 0; i < samples.length; i++)
+        samples[i] = Math.random() * 2 - 1;
+      const source = ctx.createBufferSource(),
+        filter = ctx.createBiquadFilter(),
+        envelope = ctx.createGain();
+      source.buffer = buffer;
+      filter.type = shaped.filter;
+      filter.Q.value = shaped.filter === 'bandpass' ? 6 : 1;
+      filter.frequency.setValueAtTime(shaped.from, t);
+      filter.frequency.exponentialRampToValueAtTime(
+        shaped.to,
+        t + shaped.duration,
+      );
+      // One hump is a rumble; repeats are jaws closing or a current crackling.
+      const beat = shaped.duration / shaped.hits;
+      envelope.gain.setValueAtTime(0.001, t);
+      for (let i = 0; i < shaped.hits; i++) {
+        envelope.gain.linearRampToValueAtTime(
+          shaped.peak * (1 - (i / shaped.hits) * 0.45),
+          t + i * beat + 0.045,
+        );
+        envelope.gain.exponentialRampToValueAtTime(0.001, t + (i + 1) * beat);
+      }
+      source.connect(filter);
+      filter.connect(envelope);
+      envelope.connect(this.gain);
+      source.start(t);
+      source.stop(t + shaped.duration);
+      source.onended = () => {
+        source.disconnect();
+        filter.disconnect();
+        envelope.disconnect();
+      };
+      return;
+    }
+    if (kind === 'trophy') {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+        env.gain.setValueAtTime(0.001, t + idx * 0.08);
+        env.gain.linearRampToValueAtTime(0.4, t + idx * 0.08 + 0.02);
+        env.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.4);
+        osc.connect(env);
+        env.connect(this.gain!);
+        osc.start(t + idx * 0.08);
+        osc.stop(t + idx * 0.08 + 0.45);
+        osc.onended = () => {
+          osc.disconnect();
+          env.disconnect();
+        };
+      });
+      return;
+    }
+    if (kind === 'oof') {
+      const osc = ctx.createOscillator(),
+        env = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(280, t);
+      osc.frequency.exponentialRampToValueAtTime(75, t + 0.16);
+      env.gain.setValueAtTime(0.001, t);
+      env.gain.linearRampToValueAtTime(0.65, t + 0.015);
+      env.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.connect(env);
+      env.connect(this.gain!);
+      osc.start(t);
+      osc.stop(t + 0.22);
+      osc.onended = () => {
+        osc.disconnect();
+        env.disconnect();
+      };
+      return;
+    }
+    if (kind === 'waaah') {
+      const osc = ctx.createOscillator(),
+        env = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, t);
+      osc.frequency.linearRampToValueAtTime(480, t + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(140, t + 0.35);
+      env.gain.setValueAtTime(0.001, t);
+      env.gain.linearRampToValueAtTime(0.6, t + 0.03);
+      env.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+      osc.connect(env);
+      env.connect(this.gain!);
+      osc.start(t);
+      osc.stop(t + 0.4);
+      osc.onended = () => {
+        osc.disconnect();
+        env.disconnect();
+      };
+      return;
+    }
+    const frequency =
+      kind === 'catch'
+        ? 660
+        : kind === 'bite'
+          ? 500
+          : kind === 'splash'
+            ? 110
+            : kind === 'snap'
+              ? 220
+              : kind === 'tangle'
+                ? 180
+                : 350;
+    const oscillator = ctx.createOscillator(),
+      envelope = ctx.createGain();
+    oscillator.type = kind === 'splash' ? 'triangle' : 'sine';
+    oscillator.frequency.setValueAtTime(frequency, t);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      kind === 'catch' ? frequency * 1.7 : frequency * 0.5,
+      t + 0.22,
+    );
+    envelope.gain.setValueAtTime(0.001, t);
+    envelope.gain.linearRampToValueAtTime(0.7, t + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    oscillator.connect(envelope);
+    envelope.connect(this.gain);
+    oscillator.start(t);
+    oscillator.stop(t + 0.3);
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      envelope.disconnect();
+    };
+  }
+  reset() {
+    this.update(null);
+  }
+  dispose() {
+    this.clips.dispose();
+    void this.context?.close().catch(() => {});
+  }
+}

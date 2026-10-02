@@ -593,11 +593,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
 }
-:where(body:not(:has(.handwerker))) .crane-panel .crane-release {
-  font-size: 12px;
+:where(body:not(:has(.handwerker))) .crane-panel button b {
+  font-size: 10px;
+  line-height: 1;
+}
+:where(body:not(:has(.handwerker))) .crane-panel button[aria-label^='Raise'],
+:where(body:not(:has(.handwerker))) .crane-panel button[aria-label^='Lower'] {
+  flex-direction: column;
+  min-width: 48px;
+}
+:where(body:not(:has(.handwerker))) .camera-tools .crane-view-label {
+  max-width: 72px;
+  text-align: center;
+  color: #365a4a;
   font-weight: 700;
-  padding: 10px 14px;
+  line-height: 1.1;
 }
 :where(body:not(:has(.handwerker))) .rescue-banner,
 :where(body:not(:has(.handwerker))) .breath-warning {
@@ -945,10 +957,6 @@
   }
   :where(body:not(:has(.handwerker))) .crane-panel span {
     font-size: 9px;
-  }
-  :where(body:not(:has(.handwerker))) .crane-panel .crane-release {
-    padding: 9px;
-    font-size: 11px;
   }
 }
 @media (pointer: coarse) {

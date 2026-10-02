@@ -1,6 +1,5 @@
 'use client';
 /* eslint-disable next/no-img-element, @next/next/no-img-element */
-/* oxlint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events, jsx-a11y/prefer-tag-over-role */
 
 import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
@@ -25,12 +24,25 @@ import { KIT } from '../rendering/palette';
 import { GOALS, ITEMS, SLOTS, type Item, type Slot } from './catalog';
 import type { Look } from './look';
 import {
+  inventorySnapshot,
+  serverInventorySnapshot,
+  subscribeInventory,
+  refreshInventory,
+  purchaseWardrobeItem,
+  saveWardrobeItem,
+} from '../commerce/client';
+import {
+  openAccountDialog,
+  accountSnapshot,
+  serverAccountSnapshot,
+  subscribeAccount,
+} from '../accounts/client';
+import { toggleTryOn } from './fitting';
+import {
   adminAddCoins,
   adminResetWardrobe,
   adminUnlockAllItems,
-  buyItem,
   checkAndUnlockGoals,
-  equipItem,
   getGoalProgress,
   isItemUnlocked,
   serverWardrobeSnapshot,
@@ -46,6 +58,7 @@ import './wardrobe.css';
 
 const SLOT_NAMES: Record<Slot | 'all', string> = {
   all: 'All',
+  costume: 'Costumes',
   hat: 'Hats',
   top: 'Tops',
   legs: 'Trousers',
@@ -60,6 +73,8 @@ export type WardrobeViewProps = {
   showAdminControls?: boolean;
   title?: string;
   extraHeaderActions?: React.ReactNode;
+  initialSlot?: Slot | 'all';
+  initialItemId?: string;
 };
 
 export default function WardrobeView({
@@ -68,26 +83,44 @@ export default function WardrobeView({
   showAdminControls = false,
   title = 'Wardrobe & Perks',
   extraHeaderActions,
+  initialSlot = 'all',
+  initialItemId,
 }: WardrobeViewProps) {
   const state = useSyncExternalStore(
     subscribeWardrobe,
     wardrobeSnapshot,
     serverWardrobeSnapshot,
   );
+  const inventory = useSyncExternalStore(
+    subscribeInventory,
+    inventorySnapshot,
+    serverInventorySnapshot,
+  );
+  const account = useSyncExternalStore(
+    subscribeAccount,
+    accountSnapshot,
+    serverAccountSnapshot,
+  );
+  const writable =
+    !inventory.busy &&
+    (inventory.mode === 'guest' || inventory.mode === 'account');
 
   const [activeTab, setActiveTab] = useState<'wardrobe' | 'goals'>('wardrobe');
-  const [selectedSlot, setSelectedSlot] = useState<Slot | 'all'>('all');
+  const [selectedSlot, setSelectedSlot] = useState<Slot | 'all'>(initialSlot);
   const [previewMode, setPreviewMode] = useState<WardrobePreviewMode>('avatar');
-  const [avatarPose, setAvatarPose] = useState<WorkerPose>('walk');
+  const [avatarPose, setAvatarPose] = useState<WorkerPose>('still');
   // Which kit the preview shows; each game picks the real one.
   const [kit, setKit] = useState<string>(KIT.red);
-  const [isSpinning, setIsSpinning] = useState(true);
+  const [isSpinning, setIsSpinning] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(
-    ITEMS[0] ?? null,
+    ITEMS.find((item) => item.id === initialItemId) ?? ITEMS[0] ?? null,
   );
   const [fittedOverrides, setFittedOverrides] = useState<
     Partial<Record<Slot, string | null>>
-  >({});
+  >(() => {
+    const item = ITEMS.find((candidate) => candidate.id === initialItemId);
+    return item ? { [item.slot]: item.id } : {};
+  });
 
   const previewRef = useRef<WardrobePreviewHandle>(null);
 
@@ -105,23 +138,48 @@ export default function WardrobeView({
         else delete look[slot];
       }
     }
+    if (
+      SLOTS.some(
+        (slot) => slot !== 'costume' && fittedOverrides[slot] !== undefined,
+      )
+    )
+      delete look.costume;
     return look;
   }, [state.look, fittedOverrides]);
 
-  const hasFittedChanges = Object.keys(fittedOverrides).length > 0;
+  const hasFittedChanges = SLOTS.some(
+    (slot) => previewLook[slot] !== state.look[slot],
+  );
+
+  const clearFit = (slot: Slot) => {
+    setFittedOverrides((prev) => {
+      const next = { ...prev };
+      delete next[slot];
+      return next;
+    });
+  };
 
   const toggleFit = (item: Item) => {
-    const currentlyFitted = previewLook[item.slot] === item.id;
-    if (currentlyFitted) {
-      setFittedOverrides((prev) => {
-        const next = { ...prev };
-        delete next[item.slot];
-        return next;
-      });
-    } else {
-      setFittedOverrides((prev) => ({ ...prev, [item.slot]: item.id }));
-      setPreviewMode('avatar');
-    }
+    setSelectedItem(item);
+    setPreviewMode('avatar');
+    setFittedOverrides((prev) =>
+      toggleTryOn(
+        state.look,
+        item.slot === 'costume' ? { costume: prev.costume } : prev,
+        item,
+      ),
+    );
+  };
+
+  const commitItem = async (item: Item, remove = false) => {
+    if (
+      !writable ||
+      !(await saveWardrobeItem(item.slot, remove ? null : item.id))
+    )
+      return;
+    clearFit(item.slot);
+    setSelectedItem(item);
+    setPreviewMode('avatar');
   };
 
   const filteredItems = ITEMS.filter((item) =>
@@ -159,7 +217,32 @@ export default function WardrobeView({
       </div>
 
       {/* Admin Debug / Quick Controls Bar */}
-      {showAdminControls && (
+      <output className="wardrobe-sync" aria-live="polite">
+        <span>
+          {inventory.error ||
+            (inventory.busy
+              ? 'Saving your wardrobe…'
+              : inventory.mode === 'account'
+                ? 'Saved to your account · available on your other devices'
+                : 'Guest wardrobe · saved on this device')}
+        </span>
+        {inventory.error ? (
+          <button type="button" onClick={() => void refreshInventory()}>
+            Retry
+          </button>
+        ) : inventory.mode === 'guest' &&
+          (account.methods.email || account.methods.google) ? (
+          <button
+            type="button"
+            onClick={() =>
+              openAccountDialog('Sign in to keep your wardrobe across devices.')
+            }
+          >
+            Save to account
+          </button>
+        ) : null}
+      </output>
+      {showAdminControls && inventory.mode === 'guest' && (
         <div className="wardrobe-admin-bar">
           <div className="wardrobe-admin-actions">
             <span>Admin tools:</span>
@@ -202,22 +285,26 @@ export default function WardrobeView({
         <button
           type="button"
           className="wardrobe-nav-btn"
+          aria-pressed={activeTab === 'wardrobe'}
           data-active={activeTab === 'wardrobe'}
           onClick={() => setActiveTab('wardrobe')}
         >
           <Shirt size={15} /> Customizer & Shop
         </button>
-        <button
-          type="button"
-          className="wardrobe-nav-btn"
-          data-active={activeTab === 'goals'}
-          onClick={() => {
-            checkAndUnlockGoals();
-            setActiveTab('goals');
-          }}
-        >
-          <Trophy size={15} /> Unlockable Perks & Goals
-        </button>
+        {inventory.mode === 'guest' && (
+          <button
+            type="button"
+            className="wardrobe-nav-btn"
+            aria-pressed={activeTab === 'goals'}
+            data-active={activeTab === 'goals'}
+            onClick={() => {
+              checkAndUnlockGoals();
+              setActiveTab('goals');
+            }}
+          >
+            <Trophy size={15} /> Unlockable Perks & Goals
+          </button>
+        )}
       </div>
 
       {/* Content: 3D preview active across both Wardrobe and Perks */}
@@ -227,9 +314,8 @@ export default function WardrobeView({
           <div className="wardrobe-preview-panel">
             {/* A kit colour to try items in; each game picks the real one */}
             <div className="wardrobe-kit-bar">
-              <div
+              <fieldset
                 className="wardrobe-kit-swatches"
-                role="group"
                 aria-label="Kit colour"
               >
                 {Object.entries(KIT).map(([name, colour]) => (
@@ -238,14 +324,14 @@ export default function WardrobeView({
                     type="button"
                     className="wardrobe-kit-swatch"
                     style={{ background: colour }}
-                    data-active={kit === colour}
                     aria-pressed={kit === colour}
+                    data-active={kit === colour}
                     aria-label={`${name} kit`}
                     title={`${name[0].toUpperCase()}${name.slice(1)} kit`}
                     onClick={() => setKit(colour)}
                   />
                 ))}
-              </div>
+              </fieldset>
             </div>
 
             {/* Mode Toggle Bar */}
@@ -253,20 +339,22 @@ export default function WardrobeView({
               <button
                 type="button"
                 className="wardrobe-mode-btn"
+                aria-pressed={previewMode === 'item'}
                 data-active={previewMode === 'item'}
                 onClick={() => setPreviewMode('item')}
                 title="View selected item alone in 3D"
               >
-                <Box size={13} /> View Item Alone
+                <Box size={13} /> Item only
               </button>
               <button
                 type="button"
                 className="wardrobe-mode-btn"
+                aria-pressed={previewMode === 'avatar'}
                 data-active={previewMode === 'avatar'}
                 onClick={() => setPreviewMode('avatar')}
                 title="Preview avatar wearing fitted outfit"
               >
-                <User size={13} /> Fit to Avatar
+                <User size={13} /> On avatar
               </button>
             </div>
 
@@ -294,6 +382,7 @@ export default function WardrobeView({
                   <button
                     type="button"
                     className="wardrobe-ctrl-btn"
+                    aria-pressed={avatarPose === 'still'}
                     data-active={avatarPose === 'still'}
                     onClick={() => setAvatarPose('still')}
                     title="Stand still with natural breathing"
@@ -303,6 +392,7 @@ export default function WardrobeView({
                   <button
                     type="button"
                     className="wardrobe-ctrl-btn"
+                    aria-pressed={avatarPose === 'walk'}
                     data-active={avatarPose === 'walk'}
                     onClick={() => setAvatarPose('walk')}
                     title="Walk in place"
@@ -312,6 +402,7 @@ export default function WardrobeView({
                   <button
                     type="button"
                     className="wardrobe-ctrl-btn"
+                    aria-pressed={avatarPose === 'wave'}
                     data-active={avatarPose === 'wave'}
                     onClick={() => setAvatarPose('wave')}
                     title="Friendly greeting wave"
@@ -321,6 +412,7 @@ export default function WardrobeView({
                   <button
                     type="button"
                     className="wardrobe-ctrl-btn"
+                    aria-pressed={avatarPose === 'hero'}
                     data-active={avatarPose === 'hero'}
                     onClick={() => setAvatarPose('hero')}
                     title="Hero stance with hands on hips"
@@ -335,6 +427,7 @@ export default function WardrobeView({
                 <button
                   type="button"
                   className="wardrobe-turn-btn wardrobe-turn-toggle"
+                  aria-pressed={isSpinning}
                   data-active={isSpinning}
                   onClick={() => setIsSpinning((v) => !v)}
                   title={
@@ -352,7 +445,11 @@ export default function WardrobeView({
                 <button
                   type="button"
                   className="wardrobe-turn-btn"
-                  onClick={() => previewRef.current?.turnBy(-Math.PI / 4)}
+                  onClick={() => {
+                    setIsSpinning(false);
+                    previewRef.current?.turnBy(-Math.PI / 4);
+                  }}
+                  aria-label="Turn left 45 degrees"
                   title="Turn left 45°"
                 >
                   <RotateCcw size={12} />
@@ -371,7 +468,11 @@ export default function WardrobeView({
                 <button
                   type="button"
                   className="wardrobe-turn-btn"
-                  onClick={() => previewRef.current?.turnBy(Math.PI / 4)}
+                  onClick={() => {
+                    setIsSpinning(false);
+                    previewRef.current?.turnBy(Math.PI / 4);
+                  }}
+                  aria-label="Turn right 45 degrees"
                   title="Turn right 45°"
                 >
                   <RotateCw size={12} />
@@ -393,11 +494,18 @@ export default function WardrobeView({
                   type="button"
                   className="wardrobe-btn-fit-action"
                   onClick={() => {
-                    toggleFit(selectedItem);
+                    if (state.look[selectedItem.slot] === selectedItem.id) {
+                      clearFit(selectedItem.slot);
+                    } else {
+                      setFittedOverrides((prev) => ({
+                        ...prev,
+                        [selectedItem.slot]: selectedItem.id,
+                      }));
+                    }
                     setPreviewMode('avatar');
                   }}
                 >
-                  <Sparkles size={13} /> Fit to Avatar
+                  <Sparkles size={13} /> Try on
                 </button>
               </div>
             ) : (
@@ -407,13 +515,13 @@ export default function WardrobeView({
                 </div>
                 {hasFittedChanges && (
                   <div className="wardrobe-fitted-notice">
-                    <span>Previewing fitted items</span>
+                    <span>Try-on only · not saved</span>
                     <button
                       type="button"
                       className="wardrobe-reset-fit-btn"
                       onClick={() => setFittedOverrides({})}
                     >
-                      Reset
+                      Reset try-on
                     </button>
                   </div>
                 )}
@@ -422,7 +530,7 @@ export default function WardrobeView({
           </div>
 
           {/* Right Panel: Customizer & Shop OR Unlockable Perks & Goals */}
-          {activeTab === 'wardrobe' ? (
+          {activeTab === 'wardrobe' || inventory.mode !== 'guest' ? (
             <div className="wardrobe-catalog-panel">
               {/* Slot Filter Buttons */}
               <div className="wardrobe-slots-filter">
@@ -431,6 +539,7 @@ export default function WardrobeView({
                     key={slot}
                     type="button"
                     className="wardrobe-slot-btn"
+                    aria-pressed={selectedSlot === slot}
                     data-active={selectedSlot === slot}
                     onClick={() => setSelectedSlot(slot)}
                   >
@@ -458,55 +567,74 @@ export default function WardrobeView({
                       data-fitted={isFitted && !isEquipped}
                       data-unlocked={unlocked}
                       data-selected={isSelected}
-                      onClick={() => {
-                        setSelectedItem(item);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setSelectedItem(item);
-                        }
-                      }}
                     >
-                      <div className="wardrobe-item-thumb-box">
-                        {thumbnails[item.id] ? (
-                          <img
-                            src={thumbnails[item.id]}
-                            alt={item.name}
-                            className="wardrobe-item-thumb"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="wardrobe-thumb-fallback" />
-                        )}
-                        {isEquipped && (
-                          <span className="wardrobe-item-badge">
-                            <Check size={11} strokeWidth={3} /> Equipped
-                          </span>
-                        )}
-                        {!isEquipped && isFitted && (
-                          <span className="wardrobe-item-badge wardrobe-badge-fitted">
-                            <Sparkles size={10} /> Fitted
-                          </span>
-                        )}
-                      </div>
+                      <button
+                        type="button"
+                        className="wardrobe-item-select"
+                        aria-label={`Inspect ${item.name}`}
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setPreviewMode('item');
+                        }}
+                      >
+                        <div className="wardrobe-item-thumb-box">
+                          {thumbnails[item.id] ? (
+                            <img
+                              src={thumbnails[item.id]}
+                              alt={item.name}
+                              className="wardrobe-item-thumb-img"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="wardrobe-item-thumb-placeholder" />
+                          )}
+                          {isEquipped && (
+                            <span className="wardrobe-item-badge">
+                              <Check size={11} strokeWidth={3} /> Equipped
+                            </span>
+                          )}
+                          {!isEquipped && isFitted && (
+                            <span className="wardrobe-item-badge wardrobe-badge-fitted">
+                              <Sparkles size={10} /> Trying on
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="wardrobe-item-info">
-                        <span className="wardrobe-item-name">{item.name}</span>
-                        <span className="wardrobe-item-slot-name">
-                          {SLOT_NAMES[item.slot]}
-                        </span>
-                      </div>
-
+                        <div className="wardrobe-item-info">
+                          <span className="wardrobe-item-name">
+                            {item.name}
+                          </span>
+                          <span className="wardrobe-item-slot-name">
+                            {SLOT_NAMES[item.slot]}
+                          </span>
+                        </div>
+                      </button>
                       <div className="wardrobe-item-actions">
+                        <button
+                          type="button"
+                          className="wardrobe-item-btn wardrobe-btn-fit"
+                          aria-pressed={isFitted}
+                          data-active={isFitted}
+                          onClick={() => toggleFit(item)}
+                          title="Try on without changing your saved outfit"
+                        >
+                          <Sparkles size={11} />
+                          {isFitted
+                            ? isEquipped
+                              ? 'Preview without'
+                              : 'Undo try-on'
+                            : 'Try on'}
+                        </button>
                         {unlocked ? (
                           isEquipped ? (
                             <button
                               type="button"
                               className="wardrobe-item-btn wardrobe-btn-unequip"
+                              disabled={!writable}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                equipItem(item.slot, null);
+                                void commitItem(item, true);
                               }}
                             >
                               Take Off
@@ -515,14 +643,10 @@ export default function WardrobeView({
                             <button
                               type="button"
                               className="wardrobe-item-btn wardrobe-btn-equip"
+                              disabled={!writable}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                equipItem(item.slot, item.id);
-                                setFittedOverrides((prev) => {
-                                  const next = { ...prev };
-                                  delete next[item.slot];
-                                  return next;
-                                });
+                                void commitItem(item);
                               }}
                             >
                               Equip
@@ -530,27 +654,14 @@ export default function WardrobeView({
                           )
                         ) : (
                           <>
-                            <button
-                              type="button"
-                              className="wardrobe-item-btn wardrobe-btn-fit"
-                              data-fitted={isFitted}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleFit(item);
-                              }}
-                              title="Preview on avatar without buying"
-                            >
-                              <Sparkles size={11} />{' '}
-                              {isFitted ? 'Fitted' : 'Fit'}
-                            </button>
                             {item.price ? (
                               <button
                                 type="button"
                                 className="wardrobe-item-btn wardrobe-btn-buy"
-                                disabled={state.coins < item.price}
+                                disabled={!writable || state.coins < item.price}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  buyItem(item.id);
+                                  void purchaseWardrobeItem(item.id);
                                 }}
                                 title={
                                   state.coins < item.price
@@ -558,12 +669,12 @@ export default function WardrobeView({
                                     : `Buy for ${item.price} coins`
                                 }
                               >
-                                <Coins size={12} /> {item.price}
+                                <Coins size={12} /> Buy · {item.price}
                               </button>
-                            ) : associatedGoal ? (
+                            ) : item.premium ? (
                               <div
                                 className="wardrobe-item-goal-hint"
-                                title={`Unlocked by: ${associatedGoal.label}`}
+                                title="Premium costume · storefront purchases are coming soon"
                               >
                                 <Lock
                                   size={12}
@@ -573,7 +684,28 @@ export default function WardrobeView({
                                     verticalAlign: '-1px',
                                   }}
                                 />
-                                {associatedGoal.label}
+                                Premium · coming soon
+                              </div>
+                            ) : associatedGoal ? (
+                              <div
+                                className="wardrobe-item-goal-hint"
+                                title={
+                                  inventory.mode === 'guest'
+                                    ? `Unlocked by: ${associatedGoal.label}`
+                                    : 'Account mastery rewards are coming in a future update.'
+                                }
+                              >
+                                <Lock
+                                  size={12}
+                                  style={{
+                                    display: 'inline',
+                                    marginRight: '3px',
+                                    verticalAlign: '-1px',
+                                  }}
+                                />
+                                {inventory.mode === 'guest'
+                                  ? associatedGoal.label
+                                  : 'Mastery reward · coming soon'}
                               </div>
                             ) : null}
                           </>
@@ -653,7 +785,11 @@ export default function WardrobeView({
                             title="Try on this reward item on your avatar"
                           >
                             <Sparkles size={11} />{' '}
-                            {isFitted ? 'Fitted' : 'Preview'}
+                            {isFitted
+                              ? isEquipped
+                                ? 'Preview without'
+                                : 'Undo try-on'
+                              : 'Try on'}
                           </button>
                         </div>
                       )}
@@ -683,16 +819,7 @@ export default function WardrobeView({
                               marginTop: 0,
                             }}
                             onClick={() => {
-                              if (isEquipped) {
-                                equipItem(rewardItem.slot, null);
-                              } else {
-                                equipItem(rewardItem.slot, rewardItem.id);
-                                setFittedOverrides((prev) => {
-                                  const next = { ...prev };
-                                  delete next[rewardItem.slot];
-                                  return next;
-                                });
-                              }
+                              void commitItem(rewardItem, !!isEquipped);
                             }}
                           >
                             {isEquipped ? 'Unequip' : 'Equip Reward'}

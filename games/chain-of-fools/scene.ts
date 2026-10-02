@@ -1,3 +1,5 @@
+import { disposeObject } from '../../shared/rendering/dispose-object';
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
 import * as T from 'three';
 import {
   isTouchDevice,
@@ -13,7 +15,7 @@ import {
 import { label, material } from '../../shared/rendering/primitives';
 import { COLORS } from '../../shared/rendering/palette';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
-import { ANCHORS, CHECKPOINTS, PLANK, nearNet } from './course';
+import { ANCHORS, PLANK, checkpointsFor, finishXFor, nearNet } from './course';
 import { chainWorker, D_RING, poseChainWorker } from './avatar';
 import { SITE, createSite, type SiteModel } from './models';
 import {
@@ -31,6 +33,7 @@ import {
 export type SceneCallbacks = {
   input: (input: PlayerInput) => void;
   action: (action: ChainAction) => void;
+  camera?: (mode: CameraMode) => void;
 };
 
 export type CameraMode = 'crew' | 'close' | 'side';
@@ -152,7 +155,9 @@ export class ChainScene {
       this.site.plank,
       this.site.pendulum,
       ...this.site.anchors.values(),
-      ...this.site.checkpointFlags,
+      ...Object.values(this.site.checkpointFlags).flat(),
+      ...this.site.switchPlates,
+      ...this.site.switchGates,
     ]);
     // The plank and the wrecking load each move as one rigid piece, so their
     // parts can share draw calls inside their own groups.
@@ -231,6 +236,7 @@ export class ChainScene {
   cycleCamera(): CameraMode {
     const next = (CAMERA_MODES.indexOf(this.mode) + 1) % CAMERA_MODES.length;
     this.mode = CAMERA_MODES[next];
+    this.cb.camera?.(this.mode);
     this.yaw = 0;
     this.pitch = 0;
     return this.mode;
@@ -262,7 +268,13 @@ export class ChainScene {
 
   private keyDown = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement | null;
-    if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    if (
+      target &&
+      (target.isContentEditable ||
+        target.closest('[role="dialog"]') ||
+        /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+    )
+      return;
     if (
       [
         'Space',
@@ -394,11 +406,19 @@ export class ChainScene {
     this.site.plank.rotation.z = world.plankTilt;
     this.site.pendulum.rotation.x = -world.pendulumAngle;
 
-    CHECKPOINTS.slice(1).forEach((point, i) => {
-      const banked = world.checkpoint >= point.index;
-      this.site.checkpointFlags[i].material = material(
-        banked ? '#5aa469' : '#d5d0c4',
-      );
+    checkpointsFor(world.mapId)
+      .slice(1)
+      .forEach((point, i) => {
+        const banked = world.checkpoint >= point.index;
+        this.site.checkpointFlags[world.mapId][i].material = material(
+          banked ? '#5aa469' : '#d5d0c4',
+        );
+      });
+    this.site.switchPlates.forEach((plate, i) => {
+      plate.material = material(world.plateActive[i] ? '#58bd69' : '#e04b32');
+    });
+    this.site.switchGates.forEach((gate, i) => {
+      gate.visible = !world.gatesOpen[i];
     });
 
     const clipped = new Set(
@@ -633,7 +653,7 @@ export class ChainScene {
           break;
         case 'checkpoint':
           if (!event.playerId) {
-            const point = CHECKPOINTS[world.checkpoint];
+            const point = checkpointsFor(world.mapId)[world.checkpoint];
             if (point) {
               const [x, y] = point.spawn;
               this.burst(
@@ -661,7 +681,13 @@ export class ChainScene {
         case 'win':
           for (let i = 0; i < 4; i++) {
             const colour = COLORS[i];
-            this.burst(new T.Vector3(146, 3, -3 + i * 2), colour, 20, 7, 1.8);
+            this.burst(
+              new T.Vector3(finishXFor(world.mapId), 3, -3 + i * 2),
+              colour,
+              20,
+              7,
+              1.8,
+            );
           }
           break;
       }
@@ -755,10 +781,10 @@ export class ChainScene {
     // is on screen above the crew rather than off the side of it.
     const portrait = this.camera.aspect < PORTRAIT_ASPECT;
     const ahead = portrait && this.mode !== 'side' ? 4 : 2;
-    this.cameraTarget.lerp(
-      this.tmpA.set(tx + ahead, ty + 1.1, tz),
-      1 - Math.exp(-dt * 4),
-    );
+    const snapToCourse = Math.abs(tx - this.cameraTarget.x) > 40;
+    this.tmpA.set(tx + ahead, ty + 1.1, tz);
+    if (snapToCourse) this.cameraTarget.copy(this.tmpA);
+    else this.cameraTarget.lerp(this.tmpA, 1 - Math.exp(-dt * 4));
 
     let back: number;
     let up: number;
@@ -788,7 +814,8 @@ export class ChainScene {
     offset.applyAxisAngle(Y_AXIS, yaw);
     offset.y += this.pitch * 10;
     const wanted = this.tmpA.copy(this.cameraTarget).add(offset);
-    this.cameraPosition.lerp(wanted, 1 - Math.exp(-dt * 3.2));
+    if (snapToCourse) this.cameraPosition.copy(wanted);
+    else this.cameraPosition.lerp(wanted, 1 - Math.exp(-dt * 3.2));
     this.camera.position.copy(this.cameraPosition);
 
     if (this.calmMotion) this.trauma = 0;
@@ -820,6 +847,7 @@ export class ChainScene {
   private loop = () => {
     if (this.destroyed) return;
     this.animId = requestAnimationFrame(this.loop);
+    if (!shouldRenderFrame(this.renderer)) return;
     const now = performance.now();
     const dt = Math.min(0.05, (now - this.lastFrame) / 1000);
     this.lastFrame = now;
@@ -857,11 +885,7 @@ export class ChainScene {
     );
     window.removeEventListener('pointermove', this.pointerMove);
     window.removeEventListener('pointerup', this.pointerUp);
-    this.scene.traverse((object) => {
-      const mesh = object as T.Mesh;
-      if (mesh.geometry && !mesh.geometry.userData?.shared)
-        mesh.geometry.dispose();
-    });
+    disposeObject(this.scene);
     for (const mat of this.particleMaterials.values()) mat.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();

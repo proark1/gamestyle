@@ -3,7 +3,7 @@ import PartyClient from './PartyClient';
 export const metadata = {
   title: 'Party Mode — Jumbleyard',
   description:
-    '4-Player Party Mode: assemble your crew in the waiting room and battle across 6 random mini-games for the championship crown!',
+    'Bring 2–4 friends for a Quick or Classic Party. Play together, choose the next game and celebrate your crew. Solo practice is welcome too.',
 };
 
 export default async function Page({

@@ -10,6 +10,7 @@ import {
 } from './course';
 import {
   PLAYER_RADIUS,
+  ROUND_TIME_MS,
   WALK_SPEED,
   clamp,
   timeLeft,
@@ -265,7 +266,7 @@ export function chainAudioStep(
     const before = previous.endsAt - previous.clock;
     const after = timeLeft(world);
     const crossed = (ms: number) => before > ms && after <= ms;
-    if (crossed(120_000)) lines.push('speech.encourage');
+    if (crossed(ROUND_TIME_MS / 2)) lines.push('speech.encourage');
     if (crossed(TENSION_MS)) lines.push('speech.minute');
     if (crossed(10_000)) lines.push('speech.ten');
     for (let second = 10; second >= 1; second--)

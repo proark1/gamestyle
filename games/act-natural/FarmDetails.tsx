@@ -30,7 +30,7 @@ export function FarmDetails({
         </h2>
         <p>
           {farmer
-            ? 'Sweep your flashlight to find the cows. Hay blocks the beam. Listen for clues; carried keys stay concealed.'
+            ? 'Sweep your flashlight to find the cows. Press E nearby to relock the gate, put the ladder away, or restore fence power. Repairs cost no inspections.'
             : 'Wander, pause, or graze near other cows. You don’t have to match every move.'}
         </p>
         <div className={w.keysDelivered === 2 ? 'complete' : ''}>

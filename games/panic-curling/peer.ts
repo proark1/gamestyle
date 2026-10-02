@@ -3,7 +3,7 @@ import {
   type EngineCheckpoint,
   type GameAdapter,
 } from '../../shared/peer/engine';
-import { reconcileCurlingBots } from './bots';
+import { reconcileCurlingBots, updateCurlingBots } from './bots';
 import {
   advancePanicCurling,
   freshCurlingWorld,
@@ -23,6 +23,9 @@ import {
 
 const adapter: GameAdapter<PanicCurlingWorld, PanicCurlingSnapshot> = {
   game: 'panic-curling',
+  party: (w) => {
+    w.aimPatience = 20;
+  },
   autonomous: (p) => !!p.bot,
   actions: [
     'start',
@@ -87,9 +90,13 @@ const adapter: GameAdapter<PanicCurlingWorld, PanicCurlingSnapshot> = {
   idle: (p) => {
     p.input = idleInput();
   },
-  advance: advancePanicCurling,
+  advance: (w, now) => {
+    updateCurlingBots(w, Math.min(0.1, (now - w.clock) / 1000));
+    advancePanicCurling(w, now);
+  },
   act: (w, id, a, host) => {
     panicCurlingAction(w, id, a as PanicCurlingAction, host === id);
+    reconcileCurlingBots(w);
   },
   snapshot: (w, code, host, id, version) =>
     panicCurlingSnapshot(w, code, host, id, version),

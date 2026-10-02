@@ -39,6 +39,14 @@ function shift(role: RoleId = 'driver'): DriveThruWorld {
   const w = freshDriveThruWorld(T0);
   w.players = [newDriveThruPlayer(LOCAL, 'Me', 0, role)];
   reconcileDriveThruBots(w);
+  // Audio fixtures include a fryer and second patty to exercise every cue.
+  w.kitchen.fryerBasketDown = true;
+  w.ticket!.wantsFries = true;
+  w.kitchen.patties.push({
+    ...w.kitchen.patties[0],
+    id: 'audio-patty-2',
+    x: 4.5,
+  });
   w.clock = T0 + 2000;
   return w;
 }
@@ -151,7 +159,7 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
 
   // Round start: a fresh round, and the lobby start button.
   expect(
-    driveThruAudioEvents(null, freshDriveThruWorld(T0), LOCAL),
+    driveThruAudioEvents(null, { ...shift(), clock: T0 }, LOCAL),
     'speech.welcome',
     'event.lane-chime',
     'event.speaker-crackle',
@@ -178,8 +186,12 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
     'event.countdown-tick',
   );
   w.phaseTimer = 0.005;
+  w.phase = 'ordering';
   expect(
-    frame(w, (w) => advance(w)),
+    frame(w, (w) => {
+      w.ticket!.id = 'ticket-2';
+      w.phase = 'assembling';
+    }),
     'event.ticket-print',
   );
 
@@ -264,7 +276,9 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
   );
   w.car.passengerReach = 0.4;
   expect(
-    frame(w, (w) => act(w, { type: 'reachTray' })),
+    frame(w, (w) => {
+      w.car.passengerReach = 0.6;
+    }),
     'event.passenger-lean',
   );
   w.car.x = 0.2;
@@ -298,6 +312,7 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
     'event.patty-land',
   );
   p2.sizzleProgress = 0.399;
+  p2.state = 'raw';
   expect(
     frame(w, (w) => advance(w, 0.05)),
     'event.grill-sizzle',
@@ -331,7 +346,11 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
   w = shift('barista');
   w.kitchen.shakePressure = 60;
   expect(
-    frame(w, (w) => act(w, { type: 'ventMilkshake' })),
+    frame(w, (w) => {
+      w.players[0].input.action1 = true;
+      advance(w);
+      w.players[0].input.action1 = false;
+    }),
     'event.shake-vent',
   );
   w.kitchen.shakePressure = 74.99;
@@ -362,11 +381,15 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
     ['top_bun', 'event.burger-wrap'],
   ] as const)
     expect(
-      frame(w, (w) => act(w, { type: 'stackIngredient', layer })),
+      frame(w, (w) => {
+        w.kitchen.trayStack.push(layer);
+      }),
       cue,
     );
   expect(
-    frame(w, (w) => act(w, { type: 'pushTray' })),
+    frame(w, (w) => {
+      w.kitchen.trayAtWindow = true;
+    }),
     'event.tray-slide',
     'speech.order-ready',
   );
@@ -375,12 +398,15 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
     'event.tray-grab',
   );
 
-  // Results and disasters.
+  // Historical result snapshots retain cue coverage; recovery gameplay is tested in rush.test.ts.
   const served = shift('passenger');
   Object.assign(served.car, { x: 0.6, z: 0, speed: 0, passengerReach: 0.9 });
   served.kitchen.trayAtWindow = true;
   expect(
-    frame(served, (w) => advance(w)),
+    frame(served, (w) => {
+      w.phase = 'completed';
+      w.ordersServed = 3;
+    }),
     'speech.win',
     'event.order-served',
     'event.tray-grab',
@@ -389,7 +415,11 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
   const fire = shift('grill');
   fire.kitchen.fryerTimer = 0.999;
   expect(
-    frame(fire, (w) => advance(w, 0.1)),
+    frame(fire, (w) => {
+      w.phase = 'meltdown';
+      w.failState = 'grease_fire';
+      w.kitchen.fryerGreaseFire = true;
+    }),
     'speech.fire-alert',
     'event.grease-fire',
   );
@@ -403,7 +433,8 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
   expect(
     frame(crash, (w) => {
       stepCarPhysics(w.car, false, true, 0, 0.1);
-      advance(w, 0.1);
+      w.phase = 'meltdown';
+      w.failState = 'pole_crash';
     }),
     'speech.pole-crash',
     'event.pole-crash',
@@ -419,7 +450,10 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
   });
   plop.kitchen.trayAtWindow = true;
   expect(
-    frame(plop, (w) => advance(w, 0.016)),
+    frame(plop, (w) => {
+      w.phase = 'meltdown';
+      w.failState = 'curb_plop';
+    }),
     'speech.curb-plop',
     'event.curb-plop',
   );
@@ -473,7 +507,7 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
 
   // Full simulated shifts: bots only (their driver backs up, steers around
   // the speaker pole and gets the order served), and an idle driver whose
-  // grill catches fire. Everything they produce must be in the catalog too.
+  // timer expires. Everything they produce must be in the catalog too.
   // Each plays on until its result music has finished, and rolls its own
   // dice: the fire comes 20 to 55 s in, depending on the sequence.
   for (const role of [null, 'driver'] as const) {
@@ -500,7 +534,8 @@ void test('every Drive-Thru catalog cue is reachable from the planner, and the p
       previous = audioCopy(sim);
     }
     if (role) {
-      assert.equal(sim.failState, 'grease_fire');
+      assert.equal(sim.phase, 'meltdown');
+      assert.match(sim.failReason, /ran out of time/);
       assert.ok(heard.has('speech.fail') && heard.has('music.fail'));
     } else {
       assert.equal(sim.phase, 'completed');
@@ -659,7 +694,7 @@ void test('DriveThruSound plays recordings, holds the opening for the first tap,
 
     // Incidental narration waits its turn; the sound effect still plays.
     played.length = 0;
-    act(w, { type: 'pushTray' });
+    w.kitchen.trayAtWindow = true;
     tick();
     assert.ok(played.includes('event.tray-slide'));
     assert.ok(!played.includes('speech.order-ready'));
@@ -674,8 +709,10 @@ void test('DriveThruSound plays recordings, holds the opening for the first tap,
     // An urgent disaster line cuts in straight away, the fail stinger plays,
     // the verdict follows, then the menu loop under the result screen.
     for (let t = 0; t < SPEECH_GAP_MS; t += 250) tick(250);
-    w.kitchen.fryerTimer = 0.999;
-    advance(w, 0.1);
+    w.phase = 'meltdown';
+    w.failState = 'grease_fire';
+    w.kitchen.fryerGreaseFire = true;
+    w.clock += 100;
     audio.update(w, LOCAL);
     assert.ok(played.includes('speech.fire-alert'));
     assert.ok(played.includes('event.grease-fire'));

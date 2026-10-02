@@ -5,9 +5,8 @@ import { looksLikeRoomCode } from '../rooms/identity';
  *
  * Detected the way the party ribbon does: a `?party=` room code in the URL, or
  * the `jumbleyard-party-mode` class the ribbon puts on `<body>`. The ribbon
- * starts each round from the game's practice run and waits for the final
- * result, so games use this for party-only rules that make an idle or solo run
- * end on its own. Normal play never sees them.
+ * identifies the shared round while the peer adapter configures party rules
+ * so idle matches still end on their own. Normal play never sees them.
  */
 export function inPartyMode(
   search: string = typeof location === 'undefined' ? '' : location.search,

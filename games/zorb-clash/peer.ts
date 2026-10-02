@@ -17,15 +17,18 @@ import {
   type ZorbClashSnapshot,
   type ZorbClashWorld,
 } from './types';
+import { movement } from './controls';
 
 const adapter: GameAdapter<ZorbClashWorld, ZorbClashSnapshot> = {
   game: 'zorb-clash',
+  canJoin: () => true,
   autonomous: (p) => !!p.bot,
   actions: ['input', 'ready', 'reset', 'switch_team'],
   create: (now) => {
     const w = freshZorbWorld(now);
     // Add default bots to fill the arena if needed
     w.players.push(newZorbPlayer('bot-red-1', 'Bumper Bob', 1, 'red', true));
+    w.players.push(newZorbPlayer('bot-red-2', 'Bouncer Bea', 0, 'red', true));
     w.players.push(newZorbPlayer('bot-blue-1', 'Sumo Sam', 2, 'blue', true));
     w.players.push(newZorbPlayer('bot-blue-2', 'Rollin Ron', 3, 'blue', true));
     return w;
@@ -43,17 +46,34 @@ const adapter: GameAdapter<ZorbClashWorld, ZorbClashSnapshot> = {
       w.players.splice(botIdx, 1);
     }
 
-    w.players.push(newZorbPlayer(m.id, m.name, m.color, team, false));
+    const p = newZorbPlayer(m.id, m.name, m.color, team, false);
+    for (let i = 0; i < 30; i++) {
+      if (
+        !w.players.some(
+          (other) => Math.hypot(other.x - p.x, other.z - p.z) < 2.6,
+        )
+      )
+        break;
+      p.x = -12 + (i % 9) * 3;
+      p.z = (team === 'red' ? -1 : 1) * (12 + Math.floor(i / 9) * 3);
+    }
+    w.players.push(p);
   },
   remove: (w, id) => {
-    w.players = w.players.filter((p) => p.id !== id);
+    const player = w.players.find((p) => p.id === id);
+    if (player) {
+      player.id = `bot-${id}`;
+      player.name = 'Bumper Bot';
+      player.bot = true;
+      player.input = idleInput();
+      player.dashCharge = 0;
+    }
   },
   input: (w, id, raw) => {
     const player = w.players.find((p) => p.id === id);
     if (!player) return;
     player.input = {
-      x: Number(raw.x) || 0,
-      z: Number(raw.z) || 0,
+      ...movement(Number(raw.x), Number(raw.z)),
       dash: raw.dash === true,
       brace: raw.brace === true,
       wiggle: raw.wiggle === true,
@@ -62,6 +82,7 @@ const adapter: GameAdapter<ZorbClashWorld, ZorbClashSnapshot> = {
   },
   idle: (p) => {
     p.input = idleInput();
+    p.dashCharge = 0;
   },
   advance: advanceZorbClashWorld,
   act: (w, id, a, host) => {

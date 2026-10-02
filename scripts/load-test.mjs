@@ -1,3 +1,6 @@
+import { GAME_IDS } from '../shared/games/identity.ts';
+import { existsSync } from 'node:fs';
+import { compatibility } from '../shared/peer/protocol.ts';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { sealCheckpoint } from '../shared/peer/crypto.ts';
@@ -18,10 +21,9 @@ if (
 )
   throw new Error('Use 1–8 rooms per game and 5–300 seconds.');
 const games = [
-  ['stack-or-sink', '/api/peer', 1000],
-  ['act-natural', '/api/peer', 1000],
-  ['uphill-delivery', '/api/peer', 1000],
-  ['dont-wake-the-giant', '/api/peer', 1000],
+  ...GAME_IDS.filter((game) =>
+    existsSync(new URL('../games/' + game + '/peer.ts', import.meta.url)),
+  ).map((game) => [game, '/api/peer', 1000]),
   ['shelf-control', '/api/shelf-control', 65],
   ['chaos', '/api/handwerker/rooms', 220],
   ['first-person', '/api/handwerker/first-person/rooms', 220],
@@ -37,7 +39,9 @@ async function request(path, body, game, record = measuring) {
   const response = await fetch(new URL(path, origin), {
     method: 'POST',
     headers: { 'content-type': 'application/json', origin: origin.origin },
-    body: JSON.stringify(body),
+    body: JSON.stringify(
+      path === '/api/peer' ? { ...compatibility(game), ...body } : body,
+    ),
     signal: AbortSignal.timeout(15_000),
   });
   const text = await response.text();
@@ -53,6 +57,25 @@ async function request(path, body, game, record = measuring) {
       `${game} ${body.op}: HTTP ${response.status} ${text.slice(0, 150)}`,
     );
   return JSON.parse(text);
+}
+async function voicePoll(player) {
+  while (running) {
+    try {
+      await request(
+        '/api/voice/peer',
+        {
+          ...player.session,
+          game: player.game,
+          instance: player.instance,
+          op: 'poll',
+        },
+        player.game + ':voice',
+      );
+    } catch (error) {
+      failures.push(error.message);
+    }
+    await sleep(1000);
+  }
 }
 async function poll(player) {
   let seq = 0;
@@ -131,6 +154,7 @@ const stats = (values) => {
     p99Ms: percentile(0.99),
     maxMs: percentile(1),
     errors: values.filter((v) => v.status !== 200).length,
+    responseBytes: values.reduce((sum, value) => sum + value.bytes, 0),
   };
 };
 try {
@@ -170,6 +194,20 @@ try {
               game,
               false,
             );
+          if (!player.peer) {
+            await request(
+              '/api/voice/peer',
+              {
+                ...player.session,
+                game,
+                instance: player.instance,
+                op: 'hello',
+              },
+              game + ':voice',
+              false,
+            );
+            loops.push(voicePoll(player));
+          }
           loops.push(
             poll(player).catch((error) => {
               failures.push(error.message);
@@ -225,7 +263,7 @@ try {
       requestsPerSecond: +(samples.length / duration).toFixed(1),
       ...stats(samples),
       byGame: Object.fromEntries(
-        games.map(([game]) => [
+        [...new Set(samples.map((sample) => sample.game))].map((game) => [
           game,
           stats(samples.filter((s) => s.game === game)),
         ]),

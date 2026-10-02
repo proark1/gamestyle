@@ -12,6 +12,9 @@ import {
   verifyEmailCode,
 } from './client';
 import type { SignInMethods } from './types';
+import { CastGuide } from '../clubhouse/Cast';
+import { CLUBHOUSE_COPY } from '../clubhouse/copy';
+import { useLanguage } from '../language/useLanguage';
 
 function GoogleMark() {
   return (
@@ -46,6 +49,8 @@ export default function SignInDialog({
   /** In a game, Google opens in a popup so the room stays connected. */
   popup: boolean;
 }) {
+  const { t } = useLanguage();
+  const copy = t(CLUBHOUSE_COPY);
   const [step, setStep] = useState<'start' | 'code'>('start');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -58,9 +63,9 @@ export default function SignInDialog({
       onAccountMessage((message) => {
         if (message.type !== 'sign-in-failed') return;
         setWaiting(false);
-        setError('Google sign-in didn’t finish. Please try again.');
+        setError(copy.googleError);
       }),
-    [],
+    [copy.googleError],
   );
 
   const attempt = async (work: () => Promise<void>) => {
@@ -72,7 +77,7 @@ export default function SignInDialog({
       setError(
         caught instanceof AccountRequestError
           ? caught.message
-          : 'Something went wrong. Please try again.',
+          : copy.genericError,
       );
     } finally {
       setBusy(false);
@@ -95,18 +100,21 @@ export default function SignInDialog({
     >
       <Dialog.Portal>
         <Dialog.Backdrop className="account-backdrop" />
-        <Dialog.Popup className="account-dialog">
+        <Dialog.Popup className="account-dialog account-clubhouse">
+          <CastGuide
+            pose={step === 'code' ? 'mail' : 'wave'}
+            message={step === 'code' ? 'code' : 'signIn'}
+          />
           <Dialog.Title className="account-title">
-            {step === 'code' ? 'Check your email' : 'Sign in to Jumbleyard'}
+            {step === 'code' ? copy.codeTitle : copy.joinTitle}
           </Dialog.Title>
           <Dialog.Description className="account-description">
             {step === 'code' ? (
               <>
-                We sent a 6-digit code to <b>{email}</b>. It works for 10
-                minutes.
+                {copy.sentBefore} <b>{email}</b>. {copy.sentAfter}
               </>
             ) : (
-              'Keep your progress on every device. Every game still works without an account.'
+              copy.signInHint
             )}
           </Dialog.Description>
           {error && (
@@ -128,11 +136,11 @@ export default function SignInDialog({
                   }}
                 >
                   <GoogleMark />
-                  {waiting ? 'Waiting for Google…' : 'Continue with Google'}
+                  {waiting ? copy.waiting : copy.google}
                 </button>
               )}
               {methods.google && methods.email && (
-                <div className="account-divider">or</div>
+                <div className="account-divider">{copy.or}</div>
               )}
               {methods.email && (
                 <form
@@ -143,7 +151,7 @@ export default function SignInDialog({
                   }}
                 >
                   <label className="account-label" htmlFor="account-email">
-                    Email address
+                    {copy.email}
                   </label>
                   <input
                     id="account-email"
@@ -162,7 +170,7 @@ export default function SignInDialog({
                     disabled={busy}
                   >
                     <Mail size={17} />
-                    {busy ? 'Sending…' : 'Email me a code'}
+                    {busy ? copy.sending : copy.send}
                   </button>
                 </form>
               )}
@@ -176,7 +184,7 @@ export default function SignInDialog({
               }}
             >
               <label className="account-label" htmlFor="account-code">
-                6-digit code
+                {copy.codeLabel}
               </label>
               <input
                 id="account-code"
@@ -196,7 +204,7 @@ export default function SignInDialog({
                 type="submit"
                 disabled={busy || code.length !== 6}
               >
-                {busy ? 'Checking…' : 'Sign in'}
+                {busy ? copy.checking : copy.confirm}
               </button>
               <div className="account-links">
                 <button
@@ -207,7 +215,7 @@ export default function SignInDialog({
                     setError(undefined);
                   }}
                 >
-                  Use a different email
+                  {copy.different}
                 </button>
                 <button
                   type="button"
@@ -215,18 +223,19 @@ export default function SignInDialog({
                   disabled={busy}
                   onClick={() => void sendCode()}
                 >
-                  Send a new code
+                  {copy.resend}
                 </button>
               </div>
             </form>
           )}
+          <Dialog.Close className="account-guest">{copy.guest}</Dialog.Close>
           <p className="account-fineprint">
-            We keep only what’s needed to sign you in.{' '}
+            {copy.privacyNote}{' '}
             <a href="/privacy" target="_blank" rel="noopener">
-              Privacy
+              {copy.privacy}
             </a>
           </p>
-          <Dialog.Close className="account-close" aria-label="Close">
+          <Dialog.Close className="account-close" aria-label={copy.close}>
             <X size={18} />
           </Dialog.Close>
         </Dialog.Popup>

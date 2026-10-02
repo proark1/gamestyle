@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { box, beam, label, material } from '../../shared/rendering/primitives';
-import { worker } from '../../shared/rendering/worker';
+import { gameAvatar as worker } from '../../shared/rendering/game-avatar';
 import { GATE, PANEL, LADDER_EXIT } from './types';
 import { FARM_COVER } from './visibility';
 export function ladder() {
@@ -162,6 +162,7 @@ export function farmerModel() {
   flashlight.add(barrel, lens);
   flashlight.visible = false;
   farmer.add(flashlight);
+  farmer.userData.flashlight = flashlight;
   return { farmer, flashlight };
 }
 /**
@@ -182,6 +183,17 @@ export function poseFarmer(
   ] as const) {
     const limb = farmer.userData[name] as T.Group;
     limb.rotation.x = T.MathUtils.lerp(limb.rotation.x, angle, blend);
+  }
+  const flashlight = farmer.userData.flashlight as T.Group | undefined;
+  if (flashlight) {
+    farmer.updateMatrixWorld(true);
+    const hand = farmer.userData.armR.getObjectByName(
+      'worker-hand',
+    ) as T.Object3D;
+    flashlight.position.copy(
+      farmer.worldToLocal(hand.getWorldPosition(new T.Vector3())),
+    );
+    flashlight.position.z += 0.08;
   }
 }
 function tree(g: T.Group, x: number, z: number, size = 1) {

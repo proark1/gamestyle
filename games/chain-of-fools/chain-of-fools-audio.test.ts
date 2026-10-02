@@ -557,7 +557,7 @@ void test('old and replayed events never sound twice, and a new shift starts afr
     round.world.events.some((event) => event.type === 'timeout'),
     'the old horn is still in the log',
   );
-  const second = round.wait(121);
+  const second = round.wait(ROUND_TIME_MS / 2000 + 1);
   assert.ok(!second.includes('event.fail'), 'and is not replayed');
   assert.ok(second.includes('speech.encourage'), 'warnings reset per shift');
 });

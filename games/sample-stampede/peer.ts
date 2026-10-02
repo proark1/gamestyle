@@ -102,7 +102,13 @@ const adapter: GameAdapter<SampleStampedeWorld, SampleStampedeSnapshot> = {
     );
   },
   remove: (w, id) => {
-    w.players = w.players.filter((p) => p.id !== id);
+    const player = w.players.find((p) => p.id === id);
+    if (player) {
+      player.id = `bot-${id}`;
+      player.name = player.role === 'driver' ? 'Cart Bot' : 'Grabber Bot';
+      player.bot = true;
+      player.input = idleInput();
+    }
   },
   input: (w, id, raw) => {
     const player = w.players.find((p) => p.id === id);

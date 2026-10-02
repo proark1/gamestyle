@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Four falling game pieces">
+  <rect x="9" y="25" width="17" height="54" rx="7" fill="#203C49"/>
+  <rect x="34" y="22" width="17" height="54" rx="7" fill="#1B718D" transform="rotate(-22 42.5 49)"/>
+  <rect x="57" y="28" width="17" height="54" rx="7" fill="#D65B45" transform="rotate(-48 65.5 55)"/>
+  <rect x="68" y="58" width="17" height="48" rx="7" fill="#E5A342" transform="rotate(-74 76.5 82)"/>
+</svg>

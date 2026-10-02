@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-html-link-for-pages */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -389,7 +391,7 @@ export default function UphillDelivery() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/uphill-delivery?room=${session?.code}`,
+        gameInviteUrl('uphill-delivery', session?.code),
       );
       setCopied(true);
     } catch {
@@ -625,6 +627,7 @@ export default function UphillDelivery() {
             </button>
             {host && (
               <button
+                data-party-setup-action=""
                 onClick={() => setModal('restart')}
                 aria-label="Restart from the bottom"
               >
@@ -774,6 +777,7 @@ export default function UphillDelivery() {
                 />
               )}
               <button
+                data-party-setup-action=""
                 className="delivery-primary"
                 disabled={!host || crewBusy || busy || status !== 'online'}
                 onClick={() => void crewAction({ type: 'restart' })}
@@ -900,7 +904,7 @@ export default function UphillDelivery() {
               <input
                 aria-label="Invitation link"
                 readOnly
-                value={`${typeof location !== 'undefined' ? location.origin : ''}/uphill-delivery?room=${session?.code}`}
+                value={gameInviteUrl('uphill-delivery', session?.code)}
                 onFocus={(e) => e.target.select()}
               />
               <button
@@ -919,6 +923,7 @@ export default function UphillDelivery() {
                 going and retrieve the sofa wherever it fell.
               </DialogDescription>
               <button
+                data-party-setup-action=""
                 className="delivery-primary"
                 onClick={() => {
                   setModal(null);

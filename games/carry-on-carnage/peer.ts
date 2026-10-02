@@ -22,6 +22,7 @@ const eventIdRef = { current: 100 };
 
 const adapter: GameAdapter<CarryOnWorld, CarryOnSnapshot> = {
   game: 'carry-on-carnage',
+  snapshotDetached: true,
   autonomous: (p) => !!p.bot,
   actions: ['start', 'restart', 'interact'],
   create: (now) => {

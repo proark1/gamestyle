@@ -1,0 +1,77 @@
+import {
+  modeOf,
+  type GameAnalytics,
+  type PlayState,
+} from '../../shared/analytics/protocol';
+import type { ReelSnapshot } from './types';
+
+export const reelAnalytics: GameAnalytics = {
+  game: 'reel-problems-2',
+  milestones: [
+    { key: 'delivered', label: 'Delivered mission cargo' },
+    { key: 'rebuilt', label: 'Rebuilt a raft' },
+    { key: 'overboard', label: 'Someone fell overboard' },
+    { key: 'leak', label: 'The boat sprang a leak' },
+    { key: 'sank', label: 'The boat sank' },
+    { key: 'first-catch', label: 'Landed the first catch' },
+    { key: 'half-goal', label: 'Reached half the catch target' },
+    { key: 'goal', label: 'Reached the catch target' },
+  ],
+  reasons: {
+    'goal-reached': 'Beat the catch target',
+    'goal-missed': 'Missed the catch target',
+  },
+  actions: {
+    sail: 'Set a mission course',
+    drop: 'Put down a building component',
+    cast: 'Cast a line',
+    cut: 'Cut a line free',
+    untangle: 'Untangled lines',
+    rescue: 'Pulled a friend aboard',
+    jump: 'Jumped',
+    paddle: 'Took or stowed a paddle',
+    'add-npc': 'Added an NPC',
+    'fill-npcs': 'Filled seats with NPCs',
+    'remove-npc': 'Removed an NPC',
+    start: 'Started the tournament',
+    restart: 'Started another tournament',
+  },
+};
+
+export function reelPlayState(
+  snapshot: ReelSnapshot,
+  session: { code: string; id: string },
+): PlayState {
+  const { world } = snapshot;
+  const bots = world.players.filter((player) => player.bot).length;
+  const base = {
+    mode: modeOf(session, snapshot.host),
+    room: session.code,
+    humans: world.players.length - bots,
+    npcs: bots,
+    round: world.started,
+  };
+  if (world.phase === 'lobby') return { stage: 'lobby', ...base };
+  const milestones: string[] = [];
+  if (world.mission?.delivered) milestones.push('delivered');
+  if (world.mission?.rebuilds) milestones.push('rebuilt');
+  if (world.players.some((player) => player.swimming))
+    milestones.push('overboard');
+  if (world.leaks) milestones.push('leak');
+  if (world.sinks) milestones.push('sank');
+  if (Object.values(world.haul).some((count) => (count ?? 0) > 0))
+    milestones.push('first-catch');
+  if (world.score >= world.goal / 2) milestones.push('half-goal');
+  if (world.score >= world.goal) milestones.push('goal');
+  if (world.phase === 'playing')
+    return { stage: 'playing', ...base, milestones };
+  return {
+    stage: 'finished',
+    ...base,
+    milestones,
+    result:
+      world.phase === 'won'
+        ? { outcome: 'won', reason: 'goal-reached', score: world.score }
+        : { outcome: 'lost', reason: 'goal-missed', score: world.score },
+  };
+}

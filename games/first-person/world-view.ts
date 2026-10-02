@@ -1,3 +1,4 @@
+import { gameAvatar } from '../../shared/rendering/game-avatar';
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { FLOOR, STATIONS, dimensions, type PartKind } from './model';
@@ -609,36 +610,24 @@ export function makeBuilder(
   color: number,
   mats: BuilderMaterials,
 ) {
-  const g = new T.Group(),
-    shirt = new T.MeshStandardMaterial({
-      color: COLORS[color % COLORS.length],
-      roughness: 0.92,
-      bumpMap: mats.sleeve.bumpMap,
-      bumpScale: 0.002,
-    });
-  rounded(g, [0.48, 0.58, 0.28], [0, 1.02, 0], shirt, 0.07);
-  rounded(g, [0.29, 0.34, 0.29], [0, 1.5, 0], mats.skin, 0.072);
-  for (const x of [-0.16, 0.16])
-    rounded(g, [0.045, 0.5, 0.012], [x, 1.03, -0.144], mats.pale, 0.004);
-  rounded(g, [0.13, 0.13, 0.018], [-0.075, 1.08, -0.15], shirt, 0.012);
-  rounded(g, [0.46, 0.055, 0.29], [0, 0.77, 0], mats.rubber, 0.018);
-  rounded(g, [0.07, 0.042, 0.025], [0, 0.77, -0.151], mats.steel, 0.004);
+  const g = new T.Group();
+  const avatar = gameAvatar(color, {
+    shirt: '#' + COLORS[color % COLORS.length].toString(16).padStart(6, '0'),
+    cap: false,
+  });
+  // Network headings face -Z; Nico faces +Z.
+  avatar.rotation.y = Math.PI;
+  g.add(avatar);
+  const legs = avatar.userData.legs as T.Group[];
+  const body = avatar.userData.body as T.Group;
   const helmet = new T.Mesh(
-    new T.SphereGeometry(0.215, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+    new T.SphereGeometry(0.34, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2),
     mats.orange,
   );
-  helmet.position.y = 1.65;
-  g.add(helmet);
-  cylinder(g, 0.25, 0.25, 0.035, mats.orange, [0, 1.64, 0]);
-  const legs: T.Mesh[] = [];
-  for (const x of [-0.14, 0.14]) {
-    legs.push(rounded(g, [0.18, 0.6, 0.22], [x, 0.43, 0], mats.metal, 0.04));
-    rounded(g, [0.22, 0.17, 0.35], [x, 0.1, -0.05], mats.rubber, 0.043);
-    rounded(g, [0.15, 0.49, 0.17], [x * 2.5, 1.05, 0], shirt, 0.065);
-    rounded(g, [0.13, 0.14, 0.14], [x * 2.5, 0.765, -0.01], mats.skin, 0.045);
-  }
-  for (const x of [-0.07, 0.07])
-    box(g, [0.035, 0.035, 0.012], [x, 1.53, -0.151], mats.rubber);
+  helmet.scale.y = 0.65;
+  helmet.position.y = 1.59;
+  body.add(helmet);
+  cylinder(body, 0.37, 0.37, 0.035, mats.orange, [0, 1.59, 0]);
   const tag = label(
     g,
     name,
@@ -649,7 +638,7 @@ export function makeBuilder(
   return { group: g, legs, tag };
 }
 /** Scissors a builder's legs; `time` is in milliseconds. */
-export function stepBuilder(legs: T.Mesh[], time: number, moving: boolean) {
+export function stepBuilder(legs: T.Object3D[], time: number, moving: boolean) {
   legs.forEach((leg, i) => {
     leg.rotation.x = moving ? Math.sin(time * 0.012 + i * Math.PI) * 0.3 : 0;
   });

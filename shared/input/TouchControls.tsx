@@ -16,7 +16,13 @@ export function TouchControls({
   disabled,
   move,
   jump,
+  showJump = true,
+  moveLabel = 'MOVE',
+  joystickLabel = 'Movement joystick. Drag or use arrow keys; release to stop.',
 }: {
+  showJump?: boolean;
+  moveLabel?: string;
+  joystickLabel?: string;
   disabled: boolean;
   move: (vector: Vector) => void;
   jump: () => void;
@@ -136,7 +142,7 @@ export function TouchControls({
         type="button"
         className="joystick"
         ref={pad}
-        aria-label="Movement joystick. Drag or use arrow keys; release to stop."
+        aria-label={joystickLabel}
         disabled={disabled}
         aria-disabled={disabled}
         onKeyDown={(event) => keyboard(event, true)}
@@ -184,30 +190,32 @@ export function TouchControls({
         <span ref={thumb}>
           <ArrowUp size={24} />
         </span>
-        <small>MOVE</small>
+        <small>{moveLabel}</small>
       </button>
-      <button
-        className="touch-jump"
-        disabled={disabled}
-        onContextMenu={(event) => event.preventDefault()}
-        onPointerDown={(event) => {
-          stop(event);
-          if (event.button === 0 && !disabledRef.current) {
-            void triggerHaptic('light');
-            jump();
-          }
-        }}
-        onClick={(event) => {
-          if (event.detail === 0 && !disabledRef.current) {
-            void triggerHaptic('light');
-            jump();
-          }
-        }}
-        aria-label="Jump"
-      >
-        <ArrowUp size={26} />
-        <span>JUMP</span>
-      </button>
+      {showJump && (
+        <button
+          className="touch-jump"
+          disabled={disabled}
+          onContextMenu={(event) => event.preventDefault()}
+          onPointerDown={(event) => {
+            stop(event);
+            if (event.button === 0 && !disabledRef.current) {
+              void triggerHaptic('light');
+              jump();
+            }
+          }}
+          onClick={(event) => {
+            if (event.detail === 0 && !disabledRef.current) {
+              void triggerHaptic('light');
+              jump();
+            }
+          }}
+          aria-label="Jump"
+        >
+          <ArrowUp size={26} />
+          <span>JUMP</span>
+        </button>
+      )}
     </div>
   );
 }

@@ -1,3 +1,6 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { gameActive } from '../../shared/browser/game-lifecycle';
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import {
   createCraneMesh,
@@ -9,6 +12,7 @@ import { craneWorker, poseCraneWorker } from './avatar';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
   CRANE_CONFIG,
+  idleInput,
   PAD_Y,
   TEAMS,
   type CraneClashAction,
@@ -41,15 +45,25 @@ export class CraneClashScene {
   private playerMeshes = new Map<string, T.Group>();
 
   private orbit = {
-    angle: -Math.PI / 2,
-    pitch: 0.58,
-    distance: 32,
-    target: new T.Vector3(0, 3.5, 2.5),
+    angle: -0.35,
+    pitch: 0.52,
+    distance: 36,
+    target: new T.Vector3(0, 4.5, 2.5),
   };
 
   private dragging = false;
   private cameraMode: 'overview' | 'follow' = 'overview';
   private keys = new Set<string>();
+  private touchMove = { role: 'swinger' as Role, x: 0, z: 0 };
+  private touchHoist = 0;
+
+  public setTouchMove(role: Role, vector: { x: number; z: number }) {
+    this.touchMove = { role, ...vector };
+  }
+
+  public setTouchHoist(direction: number) {
+    this.touchHoist = direction;
+  }
   private localId = '';
   private localTeam: TeamId = 'red';
   private localRole: Role = 'swinger';
@@ -59,6 +73,24 @@ export class CraneClashScene {
   private rafId = 0;
   private lastInputSend = 0;
   private destroyed = false;
+  private blocked = false;
+
+  setBlocked(blocked: boolean) {
+    this.blocked = blocked;
+    if (blocked) this.resetInput();
+  }
+
+  private resetInput = () => {
+    this.keys.clear();
+    this.touchMove.x = this.touchMove.z = 0;
+    this.touchHoist = 0;
+    this.dragging = false;
+    this.cb.input(idleInput());
+  };
+
+  private hidden = () => {
+    if (document.hidden) this.resetInput();
+  };
 
   public isControlsSwapped(): boolean {
     return this.swappedControls;
@@ -139,6 +171,8 @@ export class CraneClashScene {
     window.addEventListener('resize', this.onResize);
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', this.resetInput);
+    document.addEventListener('visibilitychange', this.hidden);
     container.addEventListener('pointerdown', this.onPointerDown);
     window.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('pointerup', this.onPointerUp);
@@ -173,7 +207,7 @@ export class CraneClashScene {
         // Hook is the grabber/pulley block just above swinger's head
         craneMesh.userData.hook.position.set(
           craneState.hookX - cfg.mast.x,
-          craneState.hookY + 0.65,
+          craneState.hookY + 1.2,
           craneState.hookZ - cfg.mast.z,
         );
       }
@@ -184,7 +218,7 @@ export class CraneClashScene {
         const tLocalZ = craneState.trolleyZ - cfg.mast.z;
 
         const hLocalX = craneState.hookX - cfg.mast.x;
-        const hLocalY = craneState.hookY + 0.75;
+        const hLocalY = craneState.hookY + 1.3;
         const hLocalZ = craneState.hookZ - cfg.mast.z;
 
         const pA = new T.Vector3(tLocalX, tLocalY, tLocalZ);
@@ -218,6 +252,7 @@ export class CraneClashScene {
     for (const [id, mesh] of this.crateMeshes) {
       if (!activeCrateIds.has(id)) {
         this.scene.remove(mesh);
+        disposeObject(mesh);
         this.crateMeshes.delete(id);
       }
     }
@@ -249,7 +284,8 @@ export class CraneClashScene {
     const activePlayerIds = new Set(world.players.map((p) => p.id));
     for (const [id, mesh] of this.playerMeshes) {
       if (!activePlayerIds.has(id)) {
-        this.scene.remove(mesh);
+        mesh.removeFromParent();
+        disposeObject(mesh);
         this.playerMeshes.delete(id);
       }
     }
@@ -259,8 +295,12 @@ export class CraneClashScene {
       let mesh = this.playerMeshes.get(p.id);
       // The crew wears its team's shirt, so a player who switches team in
       // the lobby needs a fresh worker.
-      if (mesh && mesh.userData.team !== p.team) {
-        this.scene.remove(mesh);
+      if (
+        mesh &&
+        (mesh.userData.team !== p.team || mesh.userData.role !== p.role)
+      ) {
+        mesh.removeFromParent();
+        disposeObject(mesh);
         mesh = undefined;
       }
       if (!mesh) {
@@ -268,33 +308,44 @@ export class CraneClashScene {
           p.team,
           p.color,
           p.id === this.localId ? getEquippedLook() : undefined,
+          p.role,
         );
         mesh.userData.team = p.team;
-        this.scene.add(mesh);
+        mesh.userData.role = p.role;
+        if (p.role === 'operator') {
+          const seat = this.cranes[p.team].userData.operatorSeat as T.Group;
+          seat.add(mesh);
+          mesh.position.set(0, 0, 0);
+          mesh.rotation.set(0, 0, 0);
+          mesh.scale.setScalar(0.82);
+        } else {
+          this.scene.add(mesh);
+        }
         this.playerMeshes.set(p.id, mesh);
       }
 
-      if (p.role === 'operator') {
-        const craneState = world.cranes[p.team];
-        const cfg = CRANE_CONFIG[p.team];
-        if (craneState) {
-          const ang = craneState.angle;
-          const cabX = cfg.mast.x + 1.1 * Math.cos(ang) + 0.9 * Math.sin(ang);
-          const cabZ = cfg.mast.z + 1.1 * Math.sin(ang) - 0.9 * Math.cos(ang);
-          mesh.position.set(cabX, cfg.cabinY - 0.4, cabZ);
-          mesh.rotation.y = -ang;
-        } else {
-          mesh.position.set(p.x, p.y, p.z);
-          mesh.rotation.y = p.facing;
-        }
-      } else {
-        mesh.position.set(p.x, p.y, p.z);
+      if (p.role === 'swinger') {
+        // The physics body is at the worker's waist; the avatar starts at its feet.
+        mesh.position.set(p.x, p.y - 0.8, p.z);
         mesh.rotation.y = p.facing;
       }
 
+      // A solo player drives both roles, including their seated bot partner.
+      const soleHuman = world.players.filter(
+        (worker) => worker.team === p.team && !worker.bot,
+      );
+      const controls =
+        p.role === 'operator' && soleHuman.length === 1
+          ? soleHuman[0].input
+          : p.input;
       poseCraneWorker(mesh, nowSec, {
         moving: Math.hypot(p.vx, p.vz) > 0.3,
         swinging: p.role === 'swinger',
+        operating: p.role === 'operator',
+        steering: controls.craneX ?? controls.x,
+        lift: controls.craneY ?? controls.y ?? 0,
+        velocityX: p.vx,
+        velocityZ: p.vz,
         color: p.color,
         still: Math.hypot(p.vx, p.vy, p.vz) < 0.1,
       });
@@ -304,13 +355,19 @@ export class CraneClashScene {
     if (this.cameraMode === 'follow') {
       const myPlayer = world.players.find((p) => p.id === this.localId);
       if (myPlayer) {
+        const target =
+          myPlayer.role === 'operator'
+            ? this.playerMeshes
+                .get(myPlayer.id)
+                ?.getWorldPosition(new T.Vector3())
+            : undefined;
         this.orbit.target.lerp(
-          new T.Vector3(myPlayer.x, myPlayer.y + 1.5, myPlayer.z),
+          target ?? new T.Vector3(myPlayer.x, myPlayer.y + 1.5, myPlayer.z),
           0.08,
         );
       }
     } else {
-      this.orbit.target.lerp(new T.Vector3(0, 3.5, 2.5), 0.05);
+      this.orbit.target.lerp(new T.Vector3(0, 4.5, 2.5), 0.05);
     }
   }
 
@@ -318,6 +375,11 @@ export class CraneClashScene {
     if (this.destroyed) return;
     const now = performance.now();
     if (now - this.lastInputSend < 30) return; // 33Hz input rate
+    if (this.blocked || !gameActive()) {
+      this.lastInputSend = now;
+      this.resetInput();
+      return;
+    }
 
     // Gather WASD inputs
     let wasdX = 0;
@@ -344,7 +406,7 @@ export class CraneClashScene {
     let swingRawZ = 0;
     let craneX = 0;
     let craneZ = 0;
-    const craneY = hoistY;
+    const craneY = hoistY + this.touchHoist;
 
     if (this.isSoloTeam) {
       // Solo player on team: Simultaneous Dual Control!
@@ -374,6 +436,14 @@ export class CraneClashScene {
       }
     }
 
+    if (this.touchMove.role === 'operator') {
+      craneX += this.touchMove.x;
+      craneZ -= this.touchMove.z;
+    } else {
+      swingRawX += this.touchMove.x;
+      swingRawZ += this.touchMove.z;
+    }
+
     // Rotate swing input relative to camera azimuth
     const camAngle = this.orbit.angle;
     const cos = Math.cos(camAngle);
@@ -401,6 +471,7 @@ export class CraneClashScene {
     this.rafId = requestAnimationFrame(this.animate);
 
     this.pollInput();
+    if (!shouldRenderFrame(this.renderer)) return;
 
     // Position camera using spherical orbit
     const cosPitch = Math.cos(this.orbit.pitch);
@@ -421,13 +492,22 @@ export class CraneClashScene {
 
   private onKeyDown = (e: KeyboardEvent) => {
     if (
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
+      this.blocked ||
+      !gameActive() ||
+      e.defaultPrevented ||
+      e.ctrlKey ||
+      e.metaKey ||
+      e.altKey ||
+      (e.target instanceof HTMLElement &&
+        e.target.closest(
+          'input,textarea,select,button,a,[contenteditable],[role="dialog"]',
+        ))
     ) {
       return;
     }
     this.keys.add(e.code);
 
+    if (e.repeat) return;
     if (e.code === 'KeyV') {
       this.cameraMode = this.cameraMode === 'overview' ? 'follow' : 'overview';
     } else if (e.code === 'Tab') {
@@ -477,10 +557,13 @@ export class CraneClashScene {
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.resetInput);
+    document.removeEventListener('visibilitychange', this.hidden);
     this.container.removeEventListener('pointerdown', this.onPointerDown);
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);
     this.container.removeEventListener('wheel', this.onWheel);
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

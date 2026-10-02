@@ -18,6 +18,9 @@ import {
 } from './types';
 
 export const STEP = 1 / 60;
+const WALK_ACCELERATION = 40;
+const MIN_STANDING_NORMAL = 0.95;
+const SLIDE_ACCELERATION = 12;
 const vec = (x = 0, y = 0, z = 0) => new C.Vec3(x, y, z);
 export function orientation(p: Piece) {
   const q = new C.Quaternion();
@@ -267,10 +270,40 @@ function addShapes(
       q.mult(sceneryOrientation(s)),
     );
 }
+function obstacleDistance(
+  player: C.Body,
+  piece: C.Body,
+  x: number,
+  z: number,
+  foot: number,
+) {
+  if (piece.aabbNeedsUpdate) piece.updateAABB();
+  const { lowerBound: low, upperBound: high } = piece.aabb;
+  if (low.y > foot + 0.5 || high.y < foot + 0.05) return Infinity;
+  let entry = 0,
+    exit = 1.6;
+  for (const [axis, direction] of [
+    ['x', x],
+    ['z', z],
+  ] as const) {
+    const origin = player.position[axis];
+    if (Math.abs(direction) < 1e-6) {
+      if (origin < low[axis] || origin > high[axis]) return Infinity;
+      continue;
+    }
+    const a = (low[axis] - origin) / direction,
+      b = (high[axis] - origin) / direction;
+    entry = Math.max(entry, Math.min(a, b));
+    exit = Math.min(exit, Math.max(a, b));
+    if (entry > exit) return Infinity;
+  }
+  return entry;
+}
 export class Physics {
   engine = new C.World({ gravity: vec(0, -9.81, 0), allowSleep: true });
   pieces = new Map<string, C.Body>();
   players = new Map<string, C.Body>();
+  unstableSupport = new Map<string, { x: number; z: number; slope: boolean }>();
   constructor(
     public world: World,
     public prediction = false,
@@ -353,6 +386,7 @@ export class Physics {
         fixedRotation: true,
         allowSleep: false,
         linearDamping: 0,
+        collisionFilterGroup: 2,
         material: new C.Material({ friction: 0, restitution: 0 }),
       });
       body.addShape(
@@ -416,19 +450,74 @@ export class Physics {
       body.aabbNeedsUpdate = true;
     }
   }
-  controls(p: Player, input: Input, _dt: number) {
+  controls(p: Player, input: Input, dt: number) {
     const body = this.players.get(p.id);
     if (!body) return;
     const length = Math.max(1, Math.hypot(input.x, input.z)),
       speed = this.world.pieces.some((s) => s.heldBy === p.id) ? 3.6 : 4.4;
     const x = this.world.crane.owner === p.id ? 0 : input.x / length,
       z = this.world.crane.owner === p.id ? 0 : input.z / length;
-    // Idle characters have no horizontal momentum, including contact impulses
-    // from sloped salvage. Gravity and vertical support stay fully simulated.
-    const moving = Math.hypot(x, z) > 0.001;
-    body.linearFactor.set(moving ? 1 : 0, 1, moving ? 1 : 0);
-    body.velocity.x = moving ? x * speed : 0;
-    body.velocity.z = moving ? z * speed : 0;
+    const directionLength = Math.hypot(x, z);
+    const moving = directionLength > 0.001;
+    let targetSpeed = speed;
+    let approachingSalvage = false;
+    if (moving) {
+      // The whole footprint matters: a narrow ray misses some pallet and
+      // sofa rails even while the player's wider body strikes them.
+      const foot = body.position.y - PLAYER_HEIGHT / 2;
+      let nearest = Infinity;
+      for (const piece of this.pieces.values())
+        nearest = Math.min(
+          nearest,
+          obstacleDistance(
+            body,
+            piece,
+            x / directionLength,
+            z / directionLength,
+            foot,
+          ),
+        );
+      if (nearest < Infinity) {
+        approachingSalvage = true;
+        const gap = nearest - PLAYER_RADIUS;
+        targetSpeed = Math.min(speed, Math.max(0, gap * 1.2));
+      }
+    }
+    // A walking motor has finite strength. Resetting velocity every frame
+    // turns a sustained walk into repeated high-energy impacts with salvage.
+    const unstable = this.unstableSupport.get(p.id);
+    const planted = !moving && !unstable;
+    // Side contact with a low object should not lift a walking player onto it.
+    // Jumping and falling still use unrestricted vertical physics.
+    const blockedStep = approachingSalvage && p.grounded && !input.jump;
+    body.linearFactor.set(
+      planted ? 0 : 1,
+      blockedStep ? 0 : 1,
+      planted ? 0 : 1,
+    );
+    if (blockedStep) body.velocity.y = 0;
+    if (planted) {
+      body.velocity.x = 0;
+      body.velocity.z = 0;
+    } else if (moving) {
+      const acceleration = unstable?.slope ? 5 : WALK_ACCELERATION;
+      body.force.x +=
+        body.mass *
+        Math.max(
+          -acceleration,
+          Math.min(acceleration, (x * targetSpeed - body.velocity.x) / dt),
+        );
+      body.force.z +=
+        body.mass *
+        Math.max(
+          -acceleration,
+          Math.min(acceleration, (z * targetSpeed - body.velocity.z) / dt),
+        );
+    }
+    if (unstable) {
+      body.force.x += body.mass * unstable.x * SLIDE_ACCELERATION;
+      body.force.z += body.mass * unstable.z * SLIDE_ACCELERATION;
+    }
     if (moving) p.angle = Math.atan2(x, z);
     if (input.jump && input.seq !== p.lastJump && p.grounded) {
       body.velocity.y = 5.9;
@@ -475,11 +564,46 @@ export class Physics {
     p.y = b.position.y - PLAYER_HEIGHT / 2;
     p.z = b.position.z;
     p.vy = b.velocity.y;
-    p.grounded = this.engine.contacts.some(
+    const upwardContact = this.engine.contacts.find(
       (c) =>
         c.enabled &&
         ((c.bi === b && -c.ni.y > 0.55) || (c.bj === b && c.ni.y > 0.55)),
     );
+    // A contact at the outer corner of the feet can hold an upright body in
+    // place even when its centre is over empty space. Check the actual surface
+    // below the feet and reject slopes that cannot support a standing player.
+    const foot = b.position.y - PLAYER_HEIGHT / 2;
+    const support = new C.RaycastResult();
+    const underFoot = this.engine.raycastClosest(
+      vec(b.position.x, foot + 0.12, b.position.z),
+      vec(b.position.x, foot - 0.25, b.position.z),
+      { collisionFilterMask: 1, skipBackfaces: true },
+      support,
+    );
+    p.grounded = Boolean(
+      upwardContact &&
+      underFoot &&
+      support.hitNormalWorld.y >= MIN_STANDING_NORMAL &&
+      Math.abs(support.hitPointWorld.y - foot) < 0.15,
+    );
+    if (upwardContact && !p.grounded) {
+      const slope = underFoot && support.hitNormalWorld.y < MIN_STANDING_NORMAL;
+      const normal = slope
+        ? support.hitNormalWorld
+        : vec(
+            -(upwardContact.bi === b ? upwardContact.ri.x : upwardContact.rj.x),
+            0,
+            -(upwardContact.bi === b ? upwardContact.ri.z : upwardContact.rj.z),
+          );
+      const length = Math.hypot(normal.x, normal.z);
+      if (length > 0.001)
+        this.unstableSupport.set(p.id, {
+          x: normal.x / length,
+          z: normal.z / length,
+          slope,
+        });
+      else this.unstableSupport.delete(p.id);
+    } else this.unstableSupport.delete(p.id);
     if (p.grounded && Math.abs(p.vy) < 0.08) p.vy = 0;
   }
   save() {

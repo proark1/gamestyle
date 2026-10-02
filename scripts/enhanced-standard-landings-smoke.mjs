@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readdirSync } from 'node:fs';
 
 const origin = process.env.SMOKE_URL ?? 'http://127.0.0.1:3000';
 if (!['127.0.0.1', 'localhost'].includes(new URL(origin).hostname)) {
@@ -9,6 +9,9 @@ if (!['127.0.0.1', 'localhost'].includes(new URL(origin).hostname)) {
 }
 
 const routes = ['landing4', 'landing5'];
+const gameCountExpected = readdirSync('games', { withFileTypes: true }).filter(
+  (entry) => entry.isDirectory(),
+).length;
 const viewports = {
   desktop: { width: 1440, height: 900 },
   phone: { width: 390, height: 844 },
@@ -98,8 +101,10 @@ async function assertStandardExperience(page) {
   if (h1Count !== 1) throw new Error(`expected one h1, found ${h1Count}`);
 
   const gameCount = await page.locator('.game-shelf .game-card').count();
-  if (gameCount !== 30) {
-    throw new Error(`expected 30 standard game cards, found ${gameCount}`);
+  if (gameCount !== gameCountExpected) {
+    throw new Error(
+      `expected ${gameCountExpected} standard game cards, found ${gameCount}`,
+    );
   }
 
   const partyLinks = page.locator('a[href="/party"]');

@@ -1,6 +1,6 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
 import type { Look } from '../../shared/wardrobe/look';
 import { TEAM_COLORS, type PlayerStatus, type TeamId } from './types';
@@ -65,7 +65,7 @@ export function poseCurler(
       rig.legR.rotation.set(0.35, 0, -0.1);
       // Arms aggressively pumping broom handle
       rig.armL.rotation.set(-1.2 + scrub * 0.5, 0, 0.35);
-      rig.armR.rotation.set(-1.2 - scrub * 0.5, 0, -0.35);
+      rig.armR.rotation.set(-1.2 + scrub * 0.5, 0, -0.35);
       break;
     }
 

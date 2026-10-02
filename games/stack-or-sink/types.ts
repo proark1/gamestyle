@@ -84,6 +84,10 @@ export type World = {
   physicsSignature?: string;
 };
 export type Snapshot = {
+  challenge?: {
+    verified: true;
+    week: { start: number; end: number; height: number; coins: number };
+  };
   code: string;
   host: string;
   world: World;

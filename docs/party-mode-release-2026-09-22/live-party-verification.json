@@ -1,0 +1,15 @@
+{
+  "origin": "https://www.jumbleyard.com",
+  "checkedAt": "2026-09-22T10:13:03.881Z",
+  "checks": [
+    "Health and database check",
+    "Host/join forms, invitation, Quick Party, readiness gate and mobile bounds",
+    "Shared briefing, break/resume and game launch: crane-clash",
+    "Push-to-talk from the embedded game",
+    "Confirmed forfeits award zero; skipped result; voice survives return",
+    "Three visible vote choices, human voting, lock-in and next briefing"
+  ],
+  "errors": [],
+  "game": "crane-clash",
+  "passed": true
+}

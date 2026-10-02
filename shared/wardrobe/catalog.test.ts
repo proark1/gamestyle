@@ -3,16 +3,18 @@ import assert from 'node:assert/strict';
 import { GOALS, ITEMS, SLOTS } from './catalog';
 import { parseLook } from './look';
 
-void test('every item has its own id, a real slot, and either a price or a goal', () => {
+void test('every item has its own id, a real slot, and one unlock path', () => {
   const ids = ITEMS.map((item) => item.id);
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
   for (const item of ITEMS) {
     assert.ok(SLOTS.includes(item.slot), `${item.id} has a real slot`);
     assert.match(item.id, /^[a-z0-9-]+$/);
-    assert.notEqual(
-      item.price === undefined,
-      item.goal === undefined,
-      `${item.id} has a price or a goal, not both`,
+    assert.equal(
+      [item.price, item.goal, item.premium].filter(
+        (value) => value !== undefined,
+      ).length,
+      1,
+      `${item.id} has exactly one unlock path`,
     );
     if (item.price !== undefined)
       assert.ok(Number.isInteger(item.price) && item.price > 0, item.id);
@@ -110,4 +112,27 @@ void test('players start with nothing equipped, and an untouched old starter out
   const partial = { hat: 'bobble-beanie', face: 'round-glasses' };
   assert.deepEqual(storedLook(partial), partial, 'a trimmed outfit stays');
   assert.deepEqual(storedLook('junk'), {}, 'junk reads as empty');
+});
+
+void test('a costume preserves the underlying look until a separate piece is equipped', async () => {
+  const {
+    adminResetWardrobe,
+    adminUnlockAllItems,
+    equipItem,
+    wardrobeSnapshot,
+  } = await import('./wardrobe-state');
+  adminResetWardrobe();
+  adminUnlockAllItems();
+  equipItem('hat', 'top-hat');
+  equipItem('costume', 'mossweaver');
+  assert.deepEqual(wardrobeSnapshot().look, {
+    hat: 'top-hat',
+    costume: 'mossweaver',
+  });
+  equipItem('top', 'hero-cape');
+  assert.deepEqual(wardrobeSnapshot().look, {
+    hat: 'top-hat',
+    top: 'hero-cape',
+  });
+  adminResetWardrobe();
 });

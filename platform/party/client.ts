@@ -1,9 +1,12 @@
+import { apiFetch } from '../../shared/browser/api-fetch';
 import type { PartyResult } from '../../shared/ui/party-round';
+import type { GameId } from '../../shared/audio/types';
 import type { PartyAction, PartyPass, PartyRoomState } from './types';
 
-async function partyRequest<T>(action: PartyAction): Promise<T> {
-  const res = await fetch('/api/party', {
+export async function partyRequest<T>(action: PartyAction): Promise<T> {
+  const res = await apiFetch('/api/party', {
     method: 'POST',
+    signal: AbortSignal.timeout(8000),
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(action),
     cache: 'no-store',
@@ -11,7 +14,9 @@ async function partyRequest<T>(action: PartyAction): Promise<T> {
 
   const data = (await res.json()) as { error?: string } & T;
   if (!res.ok) {
-    throw new Error(data.error ?? 'Party request failed.');
+    throw Object.assign(new Error(data.error ?? 'Party request failed.'), {
+      status: res.status,
+    });
   }
   return data;
 }
@@ -45,7 +50,7 @@ export async function getParty(code: string): Promise<PartyRoomState | null> {
   }
 }
 
-async function stateOf(action: PartyAction): Promise<PartyRoomState> {
+export async function stateOf(action: PartyAction): Promise<PartyRoomState> {
   return (await partyRequest<{ state: PartyRoomState }>(action)).state;
 }
 
@@ -130,6 +135,22 @@ export function nextPartyRound(
     code,
     hostId: host.id,
     token: host.token,
+  });
+}
+
+export function voteForPartyGame(
+  code: string,
+  round: number,
+  player: PartyPass,
+  game: GameId,
+): Promise<PartyRoomState> {
+  return stateOf({
+    op: 'vote',
+    code,
+    round,
+    playerId: player.id,
+    token: player.token,
+    game,
   });
 }
 

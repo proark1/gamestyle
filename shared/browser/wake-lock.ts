@@ -13,6 +13,9 @@ type WakeLockSentinel = {
 };
 
 let activeSentinel: WakeLockSentinel | null = null;
+let pendingRequest: Promise<boolean> | null = null;
+let generation = 0;
+let hookUsers = 0;
 
 export async function requestWakeLock(): Promise<boolean> {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
@@ -26,32 +29,46 @@ export async function requestWakeLock(): Promise<boolean> {
     return false;
   }
 
-  try {
-    if (activeSentinel && !activeSentinel.released) {
-      return true;
-    }
-    const sentinel = await nav.wakeLock.request('screen');
-    activeSentinel = sentinel;
-    sentinel.addEventListener('release', () => {
-      if (activeSentinel === sentinel) {
-        activeSentinel = null;
+  if (activeSentinel && !activeSentinel.released) return true;
+  if (pendingRequest) return pendingRequest;
+
+  const requestedGeneration = generation;
+  const request = (async () => {
+    try {
+      const sentinel = await nav.wakeLock!.request('screen');
+      if (requestedGeneration !== generation) {
+        // A game can close before the browser finishes granting its lock.
+        await sentinel.release().catch(() => {});
+        return false;
       }
-    });
-    return true;
-  } catch {
-    // Browser denied wake lock or visibility hidden
-    return false;
+      activeSentinel = sentinel;
+      sentinel.addEventListener('release', () => {
+        if (activeSentinel === sentinel) activeSentinel = null;
+      });
+      return true;
+    } catch {
+      // Browser denied wake lock or visibility hidden.
+      return false;
+    }
+  })();
+  pendingRequest = request;
+  try {
+    return await request;
+  } finally {
+    if (pendingRequest === request) pendingRequest = null;
   }
 }
 
 export async function releaseWakeLock(): Promise<void> {
-  if (activeSentinel && !activeSentinel.released) {
+  generation++;
+  pendingRequest = null;
+  const sentinel = activeSentinel;
+  activeSentinel = null;
+  if (sentinel && !sentinel.released) {
     try {
-      await activeSentinel.release();
+      await sentinel.release();
     } catch {
       // Ignored
-    } finally {
-      activeSentinel = null;
     }
   }
 }
@@ -62,6 +79,7 @@ export async function releaseWakeLock(): Promise<void> {
 export function useWakeLock(enabled = true): void {
   useEffect(() => {
     if (!enabled) return;
+    hookUsers++;
     void requestWakeLock();
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -71,7 +89,7 @@ export function useWakeLock(enabled = true): void {
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
-      void releaseWakeLock();
+      if (--hookUsers === 0) void releaseWakeLock();
     };
   }, [enabled]);
 }

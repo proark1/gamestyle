@@ -1,0 +1,19 @@
+# Verified Stack or Sink pilot
+
+Continue the approved retention plan with one complete, opt-in, free co-operative challenge. Keep ordinary peer parties unchanged. All participants sign in. Reuse the existing server-run Stack or Sink simulation and controls through a separate account-authenticated endpoint and room namespace; browser scores, clocks, account IDs and world snapshots are never accepted as evidence.
+
+Freeze a rules version and the Monday-UTC week when a round starts. Four prepared weekly targets rotate: build a settled tower of 3, 4, 5 or 6 metres and finish the round. Completion awards 100 coins once per account/week. Permanent mastery milestones are a 3-metre settled tower (50 coins), a 6-metre settled tower (100 coins), and reaching rescue (200 coins). Milestones are evaluated from server simulation at a won/lost finish, not lobby building, practice, abandonment or client reports. This pilot awards existing spendable coins; cosmetic trophies and ranked boards are later increments.
+
+Private membership rows bind game seats to accounts. Require both the game pass and the current account for every request. Do not expose account identifiers in game snapshots. Membership and round results use foreign keys cascading on account deletion. Make room CAS, result insertion and reward ledger writes one transaction, gated by a unique persisted commit token so a losing concurrent request cannot pay rewards. Repeated requests and later runs cannot repay a milestone. Leave removes eligibility; joining is allowed only before a run begins. Restart creates a fresh attempt through the lobby.
+
+Expose verified creation/join controls, preserve invite mode and reconnects, and show the weekly target and earned milestones. Test real SQLite transactions, spoofed/borrowed credentials, forged client scores, concurrent finish, failure rollback, week rollover, departures and ordinary-mode separation; build and browser-check before considering a release. No deployment or mastery coverage beyond this pilot is implied.
+
+## Validation and pilot limits
+
+- 275 related tests pass, including nine challenge tests. Coverage includes borrowed accounts/passes, ignored browser worlds/scores/clocks, simultaneous completion, full transaction rollback and retry, departures/account deletion, Monday rollover and repeat rewards.
+- Verified height uses only unheld cargo marked asleep by the server physics solver. Held loads and the zero-vertical-speed apex of a thrown object are excluded. The ordinary game's best-height HUD keeps its existing meaning; the challenge card shows the saved verified best separately.
+- The real server simulation was stepped through a complete losing round. Reward transaction tests use explicitly trusted server-state fixtures, not client-reported wins.
+- Two signed-in browser contexts passed creation, invitation join, guest invitation reload, host reconnect, persistent mastery and desktop/mobile result layout checks against isolated SQLite databases. The winning-result UI and coin credits use an isolated server-state fixture; they do not claim a human completed the rescue during the browser test.
+- TypeScript, scoped lint/formatting, architecture checks and the Node production build were checked. Release is isolated from unrelated working-tree changes and based on main `52ccd56`.
+- This is an opt-in standalone co-operative challenge, linked from the party lobby. Existing party rounds do not award these rewards. Voice is not available in verified rooms in this pilot; ordinary-room voice remains available. Ranked boards, trophy cosmetics, the other mastery tracks and paid weekly challenges remain future increments.
+- Keep rules version 1 immutable. Changes to target definitions, qualifying mechanics or reward identity require a deliberate rules-version/migration decision. Weekly targets are fixed at start; leaving before settlement forfeits that attempt's reward eligibility.

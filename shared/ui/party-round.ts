@@ -20,21 +20,27 @@ export const PARTY_RESULT_ATTRIBUTE = 'data-party-result';
 export const PARTY_ROUND_ENDED_SELECTOR = `[${PARTY_ROUND_ATTRIBUTE}="ended"]`;
 
 export type PartyOutcome = 'won' | 'lost' | 'draw';
+export type PartyScoreMetric = 'points' | 'height' | 'towers' | 'knockdowns';
 
 /**
- * One player's result. Party mode runs each player's match on their own
- * device, against NPCs, so a result only ever speaks for the local player.
+ * One player's result in the shared match. Teammates report the same outcome;
+ * the coordinator awards humans points without inventing tournament teams.
  *
  * - `versus`: two sides played each other, and `outcome` is how the local
  *   player's side did. Every team game (`teams: true` in the playlist)
  *   reports this.
- * - `goal`: the player, alone or with NPC crewmates, played against the
+ * - `goal`: the player, alone or with crewmates, played against the
  *   game's own goal or clock. `cleared` says whether they beat it. `score`
  *   ranks two players who both cleared it, or both failed: higher is better,
  *   and it only has to be comparable between two plays of the same game.
  */
 export type PartyResult =
-  | { kind: 'versus'; outcome: PartyOutcome }
+  | {
+      kind: 'versus';
+      outcome: PartyOutcome;
+      scores?: { red: number; blue: number };
+      metric?: PartyScoreMetric;
+    }
   | { kind: 'goal'; cleared: boolean; score: number };
 
 /**
@@ -44,9 +50,17 @@ export type PartyResult =
 export function partyVersus(
   side: string | undefined,
   winner: string | null | undefined,
+  scores?: { red: number; blue: number },
+  metric: PartyScoreMetric = 'points',
 ): PartyResult {
-  if (!winner || winner === 'draw') return { kind: 'versus', outcome: 'draw' };
-  return { kind: 'versus', outcome: winner === side ? 'won' : 'lost' };
+  return {
+    kind: 'versus',
+    outcome:
+      !winner || winner === 'draw' ? 'draw' : winner === side ? 'won' : 'lost',
+    ...(scores && Number.isFinite(scores.red) && Number.isFinite(scores.blue)
+      ? { scores: { red: scores.red, blue: scores.blue }, metric }
+      : {}),
+  };
 }
 
 /** The side with the highest score, or 'draw' when the top is shared. */
@@ -111,7 +125,29 @@ export function parsePartyResult(value: unknown): PartyResult | null {
   if (!value || typeof value !== 'object') return null;
   const raw = value as Record<string, unknown>;
   if (raw.kind === 'versus' && OUTCOMES.includes(raw.outcome)) {
-    return { kind: 'versus', outcome: raw.outcome as PartyOutcome };
+    const scores = raw.scores as Record<string, unknown> | undefined;
+    const validScores =
+      scores &&
+      typeof scores === 'object' &&
+      typeof scores.red === 'number' &&
+      Number.isFinite(scores.red) &&
+      typeof scores.blue === 'number' &&
+      Number.isFinite(scores.blue);
+    const metric = ['points', 'height', 'towers', 'knockdowns'].includes(
+      String(raw.metric),
+    )
+      ? (raw.metric as PartyScoreMetric)
+      : 'points';
+    return {
+      kind: 'versus',
+      outcome: raw.outcome as PartyOutcome,
+      ...(validScores
+        ? {
+            scores: { red: scores.red as number, blue: scores.blue as number },
+            metric,
+          }
+        : {}),
+    };
   }
   if (
     raw.kind === 'goal' &&

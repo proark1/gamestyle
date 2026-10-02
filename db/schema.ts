@@ -17,6 +17,28 @@ export const rooms = sqliteTable(
   },
   (table) => [index('idx_rooms_updated').on(table.updated)],
 );
+export const analyticsDiagnostics = sqliteTable(
+  'analytics_diagnostics',
+  {
+    id: text('id').primaryKey(),
+    game: text('game').notNull(),
+    delivery: integer('delivery').notNull(),
+    started: integer('started').notNull(),
+    updated: integer('updated').notNull(),
+    platform: text('platform').notNull(),
+    engine: text('engine').notNull(),
+    release: text('release').notNull(),
+    summary: text('summary').notNull(),
+  },
+  (table) => [
+    index('analytics_diagnostics_started_idx').on(table.started),
+    index('analytics_diagnostics_game_started_idx').on(
+      table.game,
+      table.started,
+    ),
+    index('analytics_diagnostics_updated_idx').on(table.updated),
+  ],
+);
 export const audioSettings = sqliteTable('audio_settings', {
   game: text('game').primaryKey(),
   secret: text('secret'),
@@ -241,4 +263,139 @@ export const accountEmailCodes = sqliteTable(
     ),
     index('account_email_codes_created_idx').on(table.created),
   ],
+);
+
+/** Commerce balances are maintained by the ledger trigger in 0005_commerce.sql. */
+export const commerceProfiles = sqliteTable('commerce_profiles', {
+  accountId: text('account_id')
+    .primaryKey()
+    .references(() => accounts.id, { onDelete: 'cascade' }),
+  coins: integer('coins').notNull().default(0),
+  look: text('look').notNull().default('{}'),
+  importKey: text('import_key'),
+  created: integer('created').notNull(),
+});
+export const commerceCoinLedger = sqliteTable(
+  'commerce_coin_ledger',
+  {
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    reference: text('reference').notNull(),
+    delta: integer('delta').notNull(),
+    created: integer('created').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.accountId, table.reference] })],
+);
+export const commerceGrants = sqliteTable(
+  'commerce_grants',
+  {
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    itemId: text('item_id').notNull(),
+    source: text('source').notNull(),
+    reference: text('reference').notNull(),
+    environment: text('environment').notNull(),
+    created: integer('created').notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.accountId,
+        table.itemId,
+        table.source,
+        table.reference,
+        table.environment,
+      ],
+    }),
+  ],
+);
+export const commerceTransactions = sqliteTable(
+  'commerce_transactions',
+  {
+    provider: text('provider').notNull(),
+    transactionId: text('transaction_id').notNull(),
+    environment: text('environment').notNull(),
+    ownerId: text('owner_id').references(() => accounts.id, {
+      onDelete: 'set null',
+    }),
+    offerId: text('offer_id').notNull(),
+    grants: text('grants').notNull(),
+    status: text('status').notNull(),
+    created: integer('created').notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.provider, table.transactionId, table.environment],
+    }),
+    index('commerce_transactions_owner_idx').on(table.ownerId),
+  ],
+);
+
+export const crews = sqliteTable('crews', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  emblem: text('emblem').notNull(),
+  ownerMemberId: text('owner_member_id'),
+  inviteHash: text('invite_hash').unique(),
+  inviteExpires: integer('invite_expires'),
+  created: integer('created').notNull(),
+  archived: integer('archived'),
+});
+export const crewMembers = sqliteTable(
+  'crew_members',
+  {
+    accountId: text('account_id')
+      .primaryKey()
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    crewId: text('crew_id')
+      .notNull()
+      .references(() => crews.id, { onDelete: 'cascade' }),
+    publicId: text('public_id').notNull().unique(),
+    seat: integer('seat').notNull(),
+    joined: integer('joined').notNull(),
+  },
+  (table) => [
+    uniqueIndex('crew_members_seat_idx').on(table.crewId, table.seat),
+    index('crew_members_crew_idx').on(table.crewId),
+  ],
+);
+
+export const challengeMembers = sqliteTable(
+  'challenge_members',
+  {
+    roomCode: text('room_code')
+      .notNull()
+      .references(() => rooms.code, { onDelete: 'cascade' }),
+    playerId: text('player_id').notNull(),
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.roomCode, table.playerId] }),
+    uniqueIndex('challenge_members_room_account_idx').on(
+      table.roomCode,
+      table.accountId,
+    ),
+    index('challenge_members_account_idx').on(table.accountId),
+  ],
+);
+export const challengeResults = sqliteTable(
+  'challenge_results',
+  {
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    runId: text('run_id').notNull(),
+    game: text('game').notNull(),
+    rules: integer('rules').notNull(),
+    week: integer('week').notNull(),
+    height: real('height').notNull(),
+    rescued: integer('rescued').notNull(),
+    completed: integer('completed').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.accountId, table.runId] })],
 );

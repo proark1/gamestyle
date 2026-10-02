@@ -2,9 +2,9 @@ import { mapConfig, type MapId } from './maps';
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 import { CLOTH } from '../../shared/rendering/palette';
-import { WORKER_HEAD_TOP } from '../../shared/rendering/worker';
+import { GAME_HEAD_TOP as WORKER_HEAD_TOP } from '../../shared/rendering/game-avatar';
 import type { Look } from '../../shared/wardrobe/look';
 import { PLAYER_COLORS, type ItemKind } from './model';
 import { paintHex, type Appearance } from './appearance';
@@ -187,8 +187,8 @@ export function worker(color = 0, look?: Look) {
     box(body, 0.6, 0.28, 0.56, c, 0, WORKER_HEAD_TOP + 0.18, 0, true);
     box(body, 0.1, 0.32, 0.58, CLOTH.sand, 0, WORKER_HEAD_TOP + 0.2, 0, true);
   }
-  box(body, 0.7, 0.1, 0.52, CLOTH.leather, 0, 0.68, 0.035);
-  box(body, 0.2, 0.2, 0.14, CLOTH.tan, 0.3, 0.58, 0.3, true);
+  box(body, 0.48, 0.07, 0.36, CLOTH.leather, 0, 0.64, 0.015);
+  box(body, 0.14, 0.16, 0.1, CLOTH.tan, 0.23, 0.58, 0.18, true);
   return g;
 }
 /**

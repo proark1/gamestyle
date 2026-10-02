@@ -1,3 +1,6 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { courtCameraDistance, courtViewport, movementAxes } from './controls';
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { getEquippedLook } from '../../shared/wardrobe/wardrobe-state';
 import {
@@ -32,6 +35,7 @@ export class BungeeScene {
   private scene = new T.Scene();
   private camera = new T.PerspectiveCamera(46, 1, 0.1, 150);
   private renderer: T.WebGLRenderer;
+  private viewport = { width: 1, height: 1, bottom: 0 };
   private courtGroup = tennisCourt();
   private ballMesh = tennisBall();
   private landingTarget = createLandingTarget();
@@ -39,6 +43,25 @@ export class BungeeScene {
   private bungeeCords: Record<TeamId, ReturnType<typeof createBungeeCord>>;
 
   private keys = new Set<string>();
+  private stick = { x: 0, z: 0 };
+  private inputEnabled = true;
+  private cancelPointer: () => void = () => {};
+
+  setTouchMovement(vector: { x: number; z: number }) {
+    this.stick = vector;
+  }
+
+  clearInput() {
+    this.keys.clear();
+    this.stick = { x: 0, z: 0 };
+    this.cancelPointer();
+    this.cb.input(idleInput());
+  }
+
+  setInputEnabled(enabled: boolean) {
+    if (this.inputEnabled !== enabled) this.clearInput();
+    this.inputEnabled = enabled;
+  }
   private abort = new AbortController();
   private observer: ResizeObserver;
   private frameId = 0;
@@ -101,7 +124,9 @@ export class BungeeScene {
   ) {
     this.renderer = createRenderer(this.container, {
       exposure: HOUSE_EXPOSURE,
-      focusable: false,
+      focusable: true,
+      label:
+        'Bungee Doubles court. Move with WASD or arrows, Space to hit, E to smash, Shift to dive, J to jump.',
     }).renderer;
 
     // Bungee cords for both teams
@@ -254,7 +279,23 @@ export class BungeeScene {
     window.addEventListener(
       'keydown',
       (e) => {
-        if (e.target instanceof HTMLInputElement) return;
+        if (
+          !this.inputEnabled ||
+          (e.target instanceof HTMLElement &&
+            (e.target.closest(
+              'input, textarea, select, [contenteditable], [role=dialog]',
+            ) ||
+              (e.target.closest('button') &&
+                ['Space', 'Enter'].includes(e.code))))
+        )
+          return;
+        if (
+          ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
+            e.code,
+          )
+        )
+          e.preventDefault();
+        if (e.repeat) return;
         this.keys.add(e.code);
 
         if (e.code === 'Space') {
@@ -266,7 +307,7 @@ export class BungeeScene {
         } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
           e.preventDefault();
           this.cb.action({ type: 'dive' });
-        } else if (e.code === 'KeyW' && e.altKey) {
+        } else if (e.code === 'KeyJ' || (e.code === 'KeyW' && e.altKey)) {
           this.cb.action({ type: 'jump' });
         } else if (e.code === 'KeyC') {
           e.preventDefault();
@@ -289,6 +330,7 @@ export class BungeeScene {
     dom.style.cursor = 'grab';
 
     let isPointerDown = false;
+    let pointerId: number | null = null;
     let downButton = 0;
     let dragStartX = 0;
     let dragStartY = 0;
@@ -299,6 +341,9 @@ export class BungeeScene {
     dom.addEventListener(
       'pointerdown',
       (e) => {
+        if (!this.inputEnabled || pointerId !== null) return;
+        pointerId = e.pointerId;
+        dom.focus({ preventScroll: true });
         isPointerDown = true;
         downButton = e.button;
         dragStartX = e.clientX;
@@ -317,7 +362,7 @@ export class BungeeScene {
     dom.addEventListener(
       'pointermove',
       (e) => {
-        if (!isPointerDown) return;
+        if (!isPointerDown || e.pointerId !== pointerId) return;
         const totalDist = Math.hypot(
           e.clientX - dragStartX,
           e.clientY - dragStartY,
@@ -342,14 +387,15 @@ export class BungeeScene {
     );
 
     const endPointer = (e: PointerEvent) => {
-      if (!isPointerDown) return;
+      if (!isPointerDown || e.pointerId !== pointerId) return;
+      pointerId = null;
       try {
         dom.releasePointerCapture(e.pointerId);
       } catch {}
       dom.style.cursor = 'grab';
       isPointerDown = false;
 
-      if (!hasDragged) {
+      if (!hasDragged && this.inputEnabled) {
         // Quick click / tap triggers swing or smash
         if (downButton === 0) {
           this.cb.action({ type: 'swing' });
@@ -361,7 +407,28 @@ export class BungeeScene {
     };
 
     dom.addEventListener('pointerup', endPointer, { signal });
-    dom.addEventListener('pointercancel', endPointer, { signal });
+    this.cancelPointer = () => {
+      const id = pointerId;
+      pointerId = null;
+      isPointerDown = false;
+      hasDragged = false;
+      dom.style.cursor = 'grab';
+      if (id !== null && dom.hasPointerCapture(id))
+        dom.releasePointerCapture(id);
+    };
+    const cancel = (event: PointerEvent) => {
+      if (event.pointerId === pointerId) this.cancelPointer();
+    };
+    dom.addEventListener('pointercancel', cancel, { signal });
+    dom.addEventListener('lostpointercapture', cancel, { signal });
+    window.addEventListener('blur', () => this.clearInput(), { signal });
+    document.addEventListener(
+      'visibilitychange',
+      () => {
+        if (document.hidden) this.clearInput();
+      },
+      { signal },
+    );
 
     // Scroll wheel zoom
     dom.addEventListener(
@@ -369,7 +436,7 @@ export class BungeeScene {
       (e) => {
         e.preventDefault();
         this.targetDist = Math.max(
-          12,
+          this.defaultDist,
           Math.min(34, this.targetDist + e.deltaY * 0.015),
         );
       },
@@ -388,24 +455,15 @@ export class BungeeScene {
       this.targetYaw += 1.8 * dt;
     }
 
-    let screenX = 0;
-    let screenZ = 0;
-
-    // A/Left Arrow is ALWAYS screen left (-1)
-    // D/Right Arrow is ALWAYS screen right (+1)
-    // W/Up Arrow is ALWAYS screen forward/into court (+1)
-    // S/Down Arrow is ALWAYS screen backward/toward viewer (-1)
-    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) screenX -= 1;
-    if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) screenX += 1;
-    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) screenZ += 1;
-    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) screenZ -= 1;
-
-    // Transform screen direction to world space using camera orientation matrix
+    if (!this.inputEnabled || document.hidden) return;
+    const axes = movementAxes(this.keys, this.stick);
     const worldMove = computeCameraRelativeMovement(
-      screenX,
-      screenZ,
+      axes.x,
+      axes.z,
       this.camera.matrixWorld.elements,
     );
+    worldMove.x *= axes.magnitude;
+    worldMove.z *= axes.magnitude;
 
     const nextInput: PlayerInput = {
       x: worldMove.x,
@@ -452,6 +510,7 @@ export class BungeeScene {
     for (const [id, mesh] of this.playerMeshes) {
       if (!currentIds.has(id)) {
         this.scene.remove(mesh);
+        disposeObject(mesh);
         this.playerMeshes.delete(id);
       }
     }
@@ -461,6 +520,7 @@ export class BungeeScene {
       // Players wear their team's kit, so switching team needs a fresh model.
       if (mesh && mesh.userData.team !== p.team) {
         this.scene.remove(mesh);
+        disposeObject(mesh);
         mesh = undefined;
       }
       if (!mesh) {
@@ -468,6 +528,15 @@ export class BungeeScene {
         const look = isLocal ? getEquippedLook() : undefined;
         mesh = tennisPlayer(p.team, look);
         mesh.userData.team = p.team;
+        if (isLocal) {
+          const marker = new T.Mesh(
+            new T.RingGeometry(0.55, 0.68, 32),
+            new T.MeshBasicMaterial({ color: '#fff4a8', side: T.DoubleSide }),
+          );
+          marker.rotation.x = -Math.PI / 2;
+          marker.position.y = 0.025;
+          mesh.add(marker);
+        }
         this.scene.add(mesh);
         this.playerMeshes.set(p.id, mesh);
       }
@@ -521,13 +590,7 @@ export class BungeeScene {
       }
     }
 
-    // Camera framing: smoothly follow the action across the court
-    const targetCamLookX = world.ball.x * 0.28;
-    const targetCamLookZ = world.ball.z * 0.35;
-    this.currentCamLook.lerp(
-      new T.Vector3(targetCamLookX, 1.0, targetCamLookZ),
-      0.06,
-    );
+    // Keep the whole court framed; the local player has a pale ground ring.
   }
 
   cycleCameraView(): string {
@@ -554,21 +617,35 @@ export class BungeeScene {
     this.shakeTimer = duration;
   }
 
+  private inputStamp = 0;
   private animate = () => {
     this.frameId = requestAnimationFrame(this.animate);
+    const inputNow = performance.now();
+    this.pollInput(
+      this.inputStamp ? Math.min(0.1, (inputNow - this.inputStamp) / 1000) : 0,
+    );
+    this.inputStamp = inputNow;
+    if (!shouldRenderFrame(this.renderer)) return;
     const now = performance.now();
     const dt = Math.min((now - this.lastTime) / 1000, 0.1);
     this.lastTime = now;
 
     // Smoothly interpolate camera spherical coordinates
-    this.currentYaw += (this.targetYaw - this.currentYaw) * 0.14;
-    this.currentPitch += (this.targetPitch - this.currentPitch) * 0.14;
-    this.currentDist += (this.targetDist - this.currentDist) * 0.14;
+    const blend = 1 - Math.pow(0.86, dt * 60);
+    this.currentYaw += (this.targetYaw - this.currentYaw) * blend;
+    this.currentPitch += (this.targetPitch - this.currentPitch) * blend;
+    this.currentDist += (this.targetDist - this.currentDist) * blend;
 
-    const horizDist = this.currentDist * Math.cos(this.currentPitch);
+    const distance =
+      Math.max(1, this.currentDist / this.defaultDist) *
+      courtCameraDistance(
+        this.currentYaw,
+        this.currentPitch,
+        this.camera.aspect,
+      );
+    const horizDist = distance * Math.cos(this.currentPitch);
     const camX = this.currentCamLook.x + horizDist * Math.sin(this.currentYaw);
-    const camY =
-      this.currentCamLook.y + this.currentDist * Math.sin(this.currentPitch);
+    const camY = this.currentCamLook.y + distance * Math.sin(this.currentPitch);
     const camZ = this.currentCamLook.z + horizDist * Math.cos(this.currentYaw);
     this.baseCamPos.set(camX, camY, camZ);
 
@@ -582,8 +659,6 @@ export class BungeeScene {
     }
     this.camera.lookAt(this.currentCamLook);
     this.camera.updateMatrixWorld();
-
-    this.pollInput(dt);
 
     // Update ball trails
     for (const t of this.trailPool) {
@@ -617,6 +692,13 @@ export class BungeeScene {
       }
     }
 
+    // Shared adaptive quality can reset the GL viewport when changing DPR.
+    this.renderer.setViewport(
+      0,
+      this.viewport.bottom,
+      this.viewport.width,
+      this.viewport.height,
+    );
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -624,15 +706,25 @@ export class BungeeScene {
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
     if (w === 0 || h === 0) return;
-    this.camera.aspect = w / h;
+    const style = getComputedStyle(this.container);
+    const safeTop =
+      parseFloat(style.getPropertyValue('--bungee-safe-top')) || 0;
+    const safeBottom =
+      parseFloat(style.getPropertyValue('--bungee-safe-bottom')) || 0;
+    const viewport = courtViewport(w, h, safeTop, safeBottom);
+    this.viewport = { ...viewport, width: w };
+    this.camera.aspect = w / viewport.height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
+    this.renderer.setViewport(0, viewport.bottom, w, viewport.height);
   }
 
   destroy() {
+    this.clearInput();
     cancelAnimationFrame(this.frameId);
     this.observer.disconnect();
     this.abort.abort();
+    disposeObject(this.scene);
     this.renderer.dispose();
     this.container.innerHTML = '';
   }

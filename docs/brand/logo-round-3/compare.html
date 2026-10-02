@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Jumbleyard — restrained mark study</title>
+<style>
+  @font-face { font-family: DM; src: url('../../../node_modules/@fontsource/dm-sans/files/dm-sans-latin-700-normal.woff2') format('woff2'); font-weight: 700; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #17233a; background: #e8edf2; font-family: Arial,sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 48px; }
+  h1 { font: 700 38px DM,Arial,sans-serif; margin: 0 0 6px; letter-spacing: -.045em; }
+  .lead { margin: 0 0 34px; color: #63738b; font-size: 17px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  article { background: white; border: 1px solid #d7e0eb; border-radius: 24px; padding: 20px; box-shadow: 0 4px 22px #17233a0a; }
+  h2 { font: 700 16px DM,Arial,sans-serif; margin: 4px 0 12px; letter-spacing: -.02em; }
+  .field { height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 16px; background: #f8fafc; }
+  .field img { width: 220px; height: 220px; object-fit: contain; }
+  .word { margin-top: -15px; font: 700 31px DM,Arial,sans-serif; letter-spacing: -.06em; }
+  .context { margin-top: 12px; height: 92px; display: flex; align-items: center; gap: 15px; border-radius: 13px; background: linear-gradient(100deg, #cfedf1, #e3efd9); padding: 16px; }
+  .context img { width: 64px; height: 64px; object-fit: contain; }
+  .context span { font: 700 26px DM,Arial,sans-serif; letter-spacing: -.055em; }
+  .sizes { display: flex; align-items: center; gap: 8px; margin-top: 18px; color: #748096; font-size: 13px; }
+  .sizes img { width: 32px; height: 32px; object-fit: contain; margin-left: auto; }
+  .sizes img + img { width: 48px; height: 48px; margin-left: 0; }
+  .app-icon { width: 58px; height: 58px; margin-left: 16px; border-radius: 15px; background: #245be7; display: grid; place-items: center; }
+  .app-icon img { width: 54px !important; height: 54px !important; margin: 0 !important; filter: brightness(0) invert(1); }
+  .desc { font-size: 14px; line-height: 1.5; color: #627086; min-height: 42px; margin: 12px 2px 0; }
+</style>
+<main>
+  <h1>Jumbleyard</h1>
+  <p class="lead">A single-color, modern mark study inspired by the restraint of Muse.</p>
+  <div class="grid">
+    <article>
+      <h2>01 / Interchange</h2>
+      <div class="field"><img src="01-interchange.png" alt="Fluid intertwined mark"><div class="word">jumbleyard</div></div>
+      <div class="context"><img src="01-interchange.png" alt=""><span>jumbleyard</span></div>
+      <div class="sizes">32 / 48 px <img src="01-interchange.png" alt=""><img src="01-interchange.png" alt=""><div class="app-icon"><img src="01-interchange.png" alt="App icon version"></div></div>
+      <p class="desc">Player paths cross and move in different directions.</p>
+    </article>
+    <article>
+      <h2>02 / Four-way</h2>
+      <div class="field"><img src="02-four-way.png" alt="Four connected forms"><div class="word">jumbleyard</div></div>
+      <div class="context"><img src="02-four-way.png" alt=""><span>jumbleyard</span></div>
+      <div class="sizes">32 / 48 px <img src="02-four-way.png" alt=""><img src="02-four-way.png" alt=""><div class="app-icon"><img src="02-four-way.png" alt="App icon version"></div></div>
+      <p class="desc">Four players make one compact shared shape.</p>
+    </article>
+    <article>
+      <h2>03 / JY Gesture</h2>
+      <div class="field"><img src="03-gesture-jy.png" alt="Custom curved JY monogram"><div class="word">jumbleyard</div></div>
+      <div class="context"><img src="03-gesture-jy.png" alt=""><span>jumbleyard</span></div>
+      <div class="sizes">32 / 48 px <img src="03-gesture-jy.png" alt=""><img src="03-gesture-jy.png" alt=""><div class="app-icon"><img src="03-gesture-jy.png" alt="App icon version"></div></div>
+      <p class="desc">One fluid gesture combines a J hook and Y branch.</p>
+    </article>
+  </div>
+</main>
+</html>

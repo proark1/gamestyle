@@ -1,0 +1,172 @@
+/* The Host's blue and warm-paper identity, applied after landing theme rules. */
+.collection {
+  --brand-blue: #1b718d;
+  --brand-ink: #203c49;
+  --brand-rust: #c96b4b;
+  --brand-paper: #f7f3e8;
+  --play-ink: var(--brand-ink);
+  --play-teal: var(--brand-blue);
+  --play-teal-dark: #14536a;
+  --play-sun: var(--brand-rust);
+  --play-sun-dark: #874b39;
+  --play-coral: var(--brand-rust);
+  --play-coral-dark: #874b39;
+  --play-cream: var(--brand-paper);
+  background: linear-gradient(
+    180deg,
+    #d4edf0 0,
+    #e1eeeb 640px,
+    var(--brand-paper) 1150px,
+    var(--brand-paper) 100%
+  );
+  color: var(--brand-ink);
+}
+
+.collection-header {
+  height: 94px;
+  border-bottom: 1px solid #203c4924;
+}
+.collection-brand {
+  gap: 6px;
+  color: var(--brand-ink);
+  font:
+    700 26px 'DM Sans',
+    sans-serif;
+  letter-spacing: -1.5px;
+  text-decoration: none;
+}
+.collection-brand > span.collection-brand-face:first-child {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.collection-brand-face > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition:
+    opacity 120ms ease,
+    transform 180ms ease;
+}
+.collection-brand-face-wink {
+  opacity: 0;
+}
+.collection-brand-face:hover > img:first-child,
+.collection-brand-face:active > img:first-child,
+.collection-brand:focus-visible .collection-brand-face > img:first-child {
+  opacity: 0;
+}
+.collection-brand-face:hover > .collection-brand-face-wink,
+.collection-brand-face:active > .collection-brand-face-wink,
+.collection-brand:focus-visible .collection-brand-face-wink {
+  opacity: 1;
+  transform: rotate(-7deg) scale(1.05);
+}
+
+.collection .clubhouse-hero {
+  border: 1px solid #b8d5d8;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #e1f1ee, #cde6e8);
+  box-shadow: 0 12px 32px #203c4918;
+}
+.collection .clubhouse-hero .clubhouse-eyebrow,
+.collection .clubhouse-facts li {
+  border: 1px solid #b8d5d8;
+  background: var(--brand-paper);
+  box-shadow: none;
+  transform: none;
+}
+.collection .clubhouse-crew-tag {
+  border-color: #874b39;
+  background: var(--brand-rust);
+  color: white;
+  box-shadow: 0 4px 0 #874b39;
+}
+.collection .clubhouse-actions .clay-button:first-child,
+.collection .adventure-picker-actions .clay-button,
+.collection .clubhouse-party > .clay-button {
+  border-color: #14536a;
+  background: var(--brand-blue);
+  color: white;
+  box-shadow: 0 5px 0 #14536a;
+}
+.collection .adventure-picker {
+  border: 1px solid #d6b8a8;
+  background: linear-gradient(160deg, #f7e8d8, #ecd6c3);
+  box-shadow: 0 12px 28px #203c491a;
+}
+.collection .adventure-die {
+  border-color: #874b39;
+  background: var(--brand-rust);
+  box-shadow: 0 6px 0 #874b39;
+}
+.collection .adventure-passport {
+  border-color: #b8d5d8;
+  background: var(--brand-paper);
+  box-shadow: 0 10px 28px #203c4918;
+}
+.collection .clubhouse-party {
+  background: linear-gradient(105deg, #1b718d, #14536a);
+}
+.collection .clubhouse-party .clubhouse-eyebrow {
+  color: #f7f3e8;
+}
+.collection .game-card {
+  border: 1px solid #bfd5d7;
+  background: var(--brand-paper);
+  box-shadow: 0 10px 26px #203c4918;
+}
+.collection .game-card:hover {
+  box-shadow: 0 16px 30px #203c4924;
+}
+.collection .game-card-tag,
+.collection .new-game-tag {
+  border-color: #a9c9ce;
+  background: var(--brand-paper);
+  box-shadow: none;
+}
+.collection .new-game-tag,
+.collection .game-card-play {
+  background: var(--brand-rust);
+  color: white;
+}
+
+@media (max-width: 700px) {
+  .collection-header {
+    height: 82px;
+  }
+  .collection-header .collection-brand {
+    font-size: 18px;
+  }
+}
+@media (max-width: 370px) {
+  .collection-header .collection-brand {
+    font-size: 14px;
+  }
+  .collection-header
+    .collection-brand
+    > span.collection-brand-face:first-child {
+    width: 32px;
+    height: 32px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .collection-brand-face > img {
+    transition: none;
+  }
+  .collection-brand-face:hover > .collection-brand-face-wink,
+  .collection-brand-face:active > .collection-brand-face-wink,
+  .collection-brand:focus-visible .collection-brand-face-wink {
+    transform: none;
+  }
+}

@@ -23,6 +23,7 @@ import { freshDebris, freshWeather, freshWildlife } from './chaos';
 
 const adapter: GameAdapter<ReelWorld, ReelSnapshot> = {
   game: 'reel-problems',
+  snapshotDetached: true,
   autonomous: (player) => !!player.bot,
   roster: (world, roster) => reconcileReelNpcs(world, roster.slots),
   actions: [

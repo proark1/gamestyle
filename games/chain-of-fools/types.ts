@@ -20,7 +20,7 @@ export const CHAIN_MAX = 4.6;
 export const CHAIN_STIFFNESS = 46;
 export const CHAIN_DAMPING = 6.0;
 /** Solver passes per tick. More passes propagate pull further along the line. */
-export const CHAIN_ITERATIONS = 6;
+export const CHAIN_ITERATIONS = 12;
 
 /** Inverse mass by stance: 0 is an immovable anchor, 1 is pure dead weight. */
 export const INV_MASS_BRACED = 0.0;
@@ -52,10 +52,11 @@ export const REVIVE_SECONDS = 1.6;
 export const CLIP_REACH = 2.4;
 
 export const LIMP_SECONDS = 9.0;
-export const ROUND_TIME_MS = 240_000;
+export const ROUND_TIME_MS = 270_000;
 export const RESPAWN_MS = 1600;
 
 export const CREW_SIZE = 4;
+import type { MapId } from './course';
 
 export type PlayerInput = {
   /** Camera-relative movement, already normalized by the scene. */
@@ -99,6 +100,7 @@ export type Player = {
   braceCooldown: number;
   /** Seconds since this worker last had boots on something. */
   airTime: number;
+  jumpGrace: number;
   /** Ring this worker clipped the line to, turning the link into a pivot. */
   anchorId: string | null;
   /** Ground height under the worker, or NO_SUPPORT over open air. */
@@ -155,12 +157,18 @@ export type GameEvent = {
 };
 
 export type ChainWorld = {
+  mapId: MapId;
+  /** Pressure plate occupancy and latch state for the Switchyard gates. */
+  plateActive: boolean[];
+  switchProgress: [number, number];
+  gatesOpen: [boolean, boolean];
   seed: number;
   clock: number;
   started: number;
   phase: 'lobby' | 'playing' | 'ended';
   startedAt: number;
   endsAt: number;
+  endedAt: number;
   winner: 'crew' | 'failed' | null;
   players: Player[];
   links: ChainLink[];
@@ -185,6 +193,7 @@ export type ChainWorld = {
 export type ChainAction =
   | { type: 'start' }
   | { type: 'restart' }
+  | { type: 'select_map'; mapId: MapId }
   | { type: 'jump' }
   | { type: 'clip' }
   | { type: 'ping' };
@@ -209,12 +218,13 @@ export const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
 export function timeLeft(world: ChainWorld): number {
-  if (world.phase !== 'playing') return ROUND_TIME_MS;
-  return Math.max(0, world.endsAt - world.clock);
+  if (world.phase === 'lobby') return ROUND_TIME_MS;
+  return Math.max(0, world.endsAt - (world.endedAt || world.clock));
 }
 
 /** Inverse mass for the chain solver: what this worker's stance can resist. */
 export function inverseMass(player: Player): number {
+  if (player.state === 'finished') return 0;
   if (player.state === 'limp') return INV_MASS_LIMP;
   if (player.braced && player.grounded) return INV_MASS_BRACED;
   if (player.anchorId) return INV_MASS_BRACED;

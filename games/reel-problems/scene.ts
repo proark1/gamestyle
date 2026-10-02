@@ -608,11 +608,18 @@ export class ReelScene {
           ? -0.5 + p.climb * 1.02
           : p.swimming
             ? moving
-              ? -0.56 + Math.sin(now / 160) * 0.04
+              ? -0.28 + Math.sin((now / 1500) * Math.PI * 4) * 0.025
               : -0.5 + Math.sin(now / 220) * 0.05
             : 0.52 + lift;
       object.position.lerp(new THREE.Vector3(p.x, height, p.z), smooth);
-      object.rotation.y = p.facing + (p.swimming ? b.yaw : 0);
+      // Yaw first keeps a prone swimmer aligned with their travel direction.
+      object.rotation.order = 'YXZ';
+      const facing = p.facing + (p.swimming ? b.yaw : 0);
+      const turn = Math.atan2(
+        Math.sin(facing - object.rotation.y),
+        Math.cos(facing - object.rotation.y),
+      );
+      object.rotation.y += turn * (p.swimming ? smooth : 1);
       const tumbling = !p.swimming && world.clock < (p.tumbleUntil ?? 0);
       const trophy = !p.swimming && world.clock < (p.trophyUntil ?? 0);
       const sliding =
@@ -657,8 +664,8 @@ export class ReelScene {
           targetRotZ = Math.sin(now / 90) * (p.input.reel ? 0.18 : 0.05);
         } else if (p.swimming) {
           if (moving) {
-            targetRotX = 1.25;
-            targetRotZ = Math.sin(now / 160) * 0.16;
+            targetRotX = 1.35;
+            targetRotZ = Math.sin((now / 1500) * Math.PI * 2) * 0.1;
           } else {
             targetRotX = 0.32;
             targetRotZ = Math.sin(now / 220) * 0.05;

@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element -- Local collection illustration on both hosting targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
@@ -421,7 +423,7 @@ export default function SiegeAndDesist() {
     try {
       const modeParam = w?.mode === 'clash2v2' ? '&mode=clash2v2' : '';
       await navigator.clipboard.writeText(
-        `${location.origin}/siege-and-desist?room=${session?.code}${modeParam}`,
+        gameInviteUrl('siege-and-desist', session?.code, modeParam),
       );
       setCopied(true);
     } catch {
@@ -499,7 +501,20 @@ export default function SiegeAndDesist() {
   return (
     <main
       className={`sad-game${session ? ' in-session' : ''}`}
-      {...partyRound(!!session && done, partyVersus(playerTeam, w?.winner))}
+      {...partyRound(
+        !!session && done,
+        partyVersus(
+          playerTeam,
+          w?.winner,
+          w?.towers
+            ? {
+                red: w.towers.red.filter(Boolean).length,
+                blue: w.towers.blue.filter(Boolean).length,
+              }
+            : undefined,
+          'towers',
+        ),
+      )}
     >
       <div className="sad-canvas" ref={container} />
       <header className="sad-header">
@@ -944,6 +959,7 @@ export default function SiegeAndDesist() {
               )}
               {is2v2 && (
                 <button
+                  data-party-setup-action=""
                   type="button"
                   className="sad-switch-team-btn"
                   onClick={() => action({ type: 'switchTeam' })}
@@ -1215,6 +1231,7 @@ export default function SiegeAndDesist() {
                 ))}
               </div>
               <button
+                data-party-setup-action=""
                 className="sad-primary"
                 disabled={!captain || status !== 'online'}
                 onClick={() => action({ type: 'restart', mode: w.mode })}

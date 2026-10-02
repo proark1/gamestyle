@@ -1,0 +1,221 @@
+.crew-panel {
+  margin: 24px 0;
+  padding: 22px;
+  border: 1px solid #b2c4b3;
+  border-radius: 20px;
+  background: #fff6df;
+  color: #244943;
+  box-shadow: 0 5px 0 #d4dec6;
+}
+.crew-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.crew-badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 64px;
+  height: 72px;
+  color: #fff6df;
+  background: #287c80;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+}
+.crew-header p {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+.crew-panel h2 {
+  margin: 0 0 4px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 24px;
+  overflow-wrap: anywhere;
+}
+.crew-header span:not(.crew-badge) {
+  font-size: 12px;
+}
+.crew-panel h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+.crew-panel button {
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid #b2c4b3;
+  border-radius: 10px;
+  background: #fffdf6;
+  color: #244943;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+}
+.crew-panel button[type='submit'],
+.crew-panel button[aria-pressed='true'] {
+  color: white;
+  background: #287c80;
+  border-color: #287c80;
+}
+.crew-panel button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.crew-panel :is(button, input):focus-visible {
+  outline: 3px solid #d96846;
+  outline-offset: 3px;
+}
+.crew-onboarding {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 28px;
+}
+.crew-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.crew-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 650;
+}
+.crew-panel input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #b2c4b3;
+  border-radius: 9px;
+  padding: 12px;
+  background: #fffdf6;
+  color: #244943;
+  font: inherit;
+  font-size: 16px;
+}
+.crew-emblems {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.crew-emblems legend {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.crew-emblems button {
+  padding: 8px;
+  width: 44px;
+}
+.crew-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+.crew-roster {
+  padding: 0;
+  list-style: none;
+  margin: 0 0 16px;
+}
+.crew-roster li {
+  padding: 12px 0;
+  border-bottom: 1px solid #dfdbc4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.crew-roster li > span {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.crew-roster strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.crew-roster li > div {
+  display: flex;
+  gap: 6px;
+}
+.crew-leader {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #926127;
+}
+.crew-invite,
+.crew-party-invite {
+  padding: 16px 0;
+  border-top: 1px dashed #b2c4b3;
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.crew-invite label,
+.crew-party-invite label {
+  flex: 1 1 190px;
+}
+.crew-invite input {
+  letter-spacing: 0.08em;
+  font-family: monospace;
+}
+.crew-panel p:not(.crew-header p),
+.crew-panel output {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.crew-invite p {
+  width: 100%;
+  margin: 0;
+}
+.crew-confirm {
+  border: 1px solid #d96846;
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 12px;
+}
+.crew-confirm button {
+  margin-right: 8px;
+}
+.crew-error {
+  color: #943e24;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.crew-panel output {
+  display: block;
+  margin-top: 10px;
+}
+@media (max-width: 600px) {
+  .crew-panel {
+    padding: 16px;
+  }
+  .crew-onboarding {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .crew-header {
+    align-items: flex-start;
+  }
+  .crew-panel h2 {
+    font-size: 21px;
+  }
+}

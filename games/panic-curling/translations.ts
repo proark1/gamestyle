@@ -1,6 +1,8 @@
 import type { Localized } from '../../shared/language/types';
 
 export interface PanicCurlingTranslation {
+  overviewLabel: string;
+  targetLabel: string;
   redRovers: string;
   blueBlazers: string;
   deliverer: string;
@@ -47,6 +49,8 @@ export interface PanicCurlingTranslation {
 
 export const PANIC_CURLING_TRANSLATIONS: Localized<PanicCurlingTranslation> = {
   en: {
+    overviewLabel: 'Rink overview with target and stones',
+    targetLabel: 'Target',
     redRovers: 'Red Rovers',
     blueBlazers: 'Blue Blazers',
     deliverer: 'Deliverer',
@@ -68,15 +72,15 @@ export const PANIC_CURLING_TRANSLATIONS: Localized<PanicCurlingTranslation> = {
     guardShot: '🛡️ Guard Shot',
     drawToHouse: '🎯 Draw to House (Tee)',
     highTakeout: '💥 High Takeout!',
-    zoneGuard: 'Guard (0-35%)',
-    zoneDraw: 'House Draw (35-72%)',
-    zoneTakeout: 'Takeout (72-100%)',
+    zoneGuard: 'Guard (0-40%)',
+    zoneDraw: 'House Draw (40-55%)',
+    zoneTakeout: 'Takeout (55-100%)',
     aimLeft: '◀ Aim Left',
     aimRight: 'Aim Right ▶',
     center: 'Center',
     reset: 'Reset',
     deliverStone: 'DELIVER STONE! 🚀',
-    releaseAtPeak: 'Release at peak power to shoot',
+    releaseAtPeak: 'Aim for 50% power to reach the target',
     steerLeft: '⇦ Steer Left',
     steerRight: 'Steer Right ⇨',
     sweepHarder: 'SWEEP HARDER!',
@@ -91,6 +95,8 @@ export const PANIC_CURLING_TRANSLATIONS: Localized<PanicCurlingTranslation> = {
     playAgain: 'PLAY AGAIN',
   },
   de: {
+    overviewLabel: 'Bahnübersicht mit Ziel und Steinen',
+    targetLabel: 'Ziel',
     redRovers: 'Red Rovers',
     blueBlazers: 'Blue Blazers',
     deliverer: 'Werfer',
@@ -112,15 +118,15 @@ export const PANIC_CURLING_TRANSLATIONS: Localized<PanicCurlingTranslation> = {
     guardShot: '🛡️ Guard-Wurf',
     drawToHouse: '🎯 Ins Haus (Tee)',
     highTakeout: '💥 Wegfegen!',
-    zoneGuard: 'Guard (0-35%)',
-    zoneDraw: 'Haus-Wurf (35-72%)',
-    zoneTakeout: 'Takeout (72-100%)',
+    zoneGuard: 'Guard (0-40%)',
+    zoneDraw: 'Haus-Wurf (40-55%)',
+    zoneTakeout: 'Takeout (55-100%)',
     aimLeft: '◀ Ziel Links',
     aimRight: 'Ziel Rechts ▶',
     center: 'Mitte',
     reset: 'Zurücksetzen',
     deliverStone: 'STEIN ABWERFEN! 🚀',
-    releaseAtPeak: 'Bei maximaler Kraft loslassen',
+    releaseAtPeak: 'Mit etwa 50 % Kraft ins Ziel werfen',
     steerLeft: '⇦ Links lenken',
     steerRight: 'Rechts lenken ⇨',
     sweepHarder: 'FESTER WISCHEN!',

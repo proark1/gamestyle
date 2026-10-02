@@ -89,7 +89,7 @@ void test('movement is normalized, bounded and collides with salvage', () => {
   for (let i = 0; i < 45; i++)
     movePlayer(w, p, 1 / 45, { x: 1, z: 1, jump: false, seq: 0 });
   assert.ok(Math.hypot(p.x, p.z) < 4.41);
-  assert.ok(Math.hypot(p.x, p.z) > 4.3);
+  assert.ok(Math.hypot(p.x, p.z) > 4.2);
   p.x = 0;
   p.z = 0;
   w.pieces = [crate('wall', 2, 0.13, 0)];

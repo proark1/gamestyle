@@ -1,16 +1,27 @@
 import { RoomError, type RoomStore } from '../../shared/rooms/types';
 import {
+  boundedPose,
+  spawnPose,
+  validPose,
+  PLAZA_SPEED,
+} from '../../shared/plaza/world';
+import type { Look } from '../../shared/wardrobe/look';
+import type { CrewBadge } from '../../shared/crews/types';
+import {
   hashToken,
   newRoomCode,
   playerName,
 } from '../../shared/rooms/identity';
 import { parsePartyResult } from '../../shared/ui/party-round';
 import { generatePlaylist, getPartyGameInfo } from './playlist';
+import { intermissionDue, progressIntermission } from './intermission';
+import type { GameId } from '../../shared/audio/types';
 import {
   calculateRoundPoints,
   roundTeams,
   scoreGoalRound,
   scoreTeamRound,
+  sharedRoundPoints,
   type RoundReports,
 } from './scoring';
 import type {
@@ -19,6 +30,13 @@ import type {
   PartyRoomState,
   RoundResult,
 } from './types';
+import {
+  beginBriefing,
+  progressBriefing,
+  roundAssignments,
+  PARTY_OFFLINE_MS,
+  PARTY_RECONNECT_MS,
+} from './flow';
 
 export const partyStorageKey = (code: string) => `party:${code}`;
 
@@ -40,11 +58,16 @@ type Passes = Record<string, string>;
  * leave the server. Parties created before passes existed have none and stay
  * open until they expire.
  */
-type StoredParty = PartyRoomState & { passes?: Passes };
+type Accounts = Record<string, string | null>;
+type StoredParty = PartyRoomState & { passes?: Passes; accounts?: Accounts };
 
-function readParty(raw: string): { room: PartyRoomState; passes?: Passes } {
-  const { passes, ...room } = JSON.parse(raw) as StoredParty;
-  return { room, passes };
+function readParty(raw: string): {
+  room: PartyRoomState;
+  passes?: Passes;
+  accounts?: Accounts;
+} {
+  const { passes, accounts, ...room } = JSON.parse(raw) as StoredParty;
+  return { room, passes, accounts };
 }
 
 async function newPass() {
@@ -86,6 +109,8 @@ export async function createPartyRoom(
     ready: true,
     score: 0,
     isHost: true,
+    seenAt: now,
+    connected: true,
   };
 
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -95,6 +120,7 @@ export async function createPartyRoom(
       code,
       hostId: playerId,
       status: 'lobby',
+      format: 'classic',
       players: [host],
       playlist,
       currentRound: 0,
@@ -124,14 +150,16 @@ export async function createPartyRoom(
 export async function getPartyRoom(
   store: RoomStore,
   code: string,
+  now = Date.now(),
 ): Promise<PartyRoomState | null> {
   const row = await store.get(partyStorageKey(code.toUpperCase()));
   if (!row) return null;
-  try {
-    return readParty(row.state).room;
-  } catch {
-    return null;
-  }
+  const room = readParty(row.state).room;
+  return intermissionDue(room, now) ||
+    progressPresence(room, now) !== room ||
+    progressBriefing(room, now) !== room
+    ? updatePartyRoom(store, code, null, (current) => current, now)
+    : { ...room, serverNow: now, revision: row.version };
 }
 
 /**
@@ -143,21 +171,48 @@ async function updatePartyRoom(
   store: RoomStore,
   code: string,
   actor: PartyPass | null,
-  updater: (current: PartyRoomState, passes?: Passes) => PartyRoomState,
+  updater: (
+    current: PartyRoomState,
+    passes?: Passes,
+    accounts?: Accounts,
+  ) => PartyRoomState,
   now = Date.now(),
 ): Promise<PartyRoomState> {
   const storageCode = partyStorageKey(code.toUpperCase());
   const hash = actor ? await passHash(actor.token) : null;
   for (let attempt = 0; attempt < 5; attempt++) {
     const row = await store.get(storageCode);
-    if (!row) throw new Error('Party room not found.');
-    const { room, passes } = readParty(row.state);
+    if (!row) throw new RoomError('Party room not found.', 404);
+    const { room, passes, accounts } = readParty(row.state);
+    const nextAccounts = { ...accounts };
     if (actor) checkPass(passes, actor.id, hash);
     const nextPasses = passes && { ...passes };
-    const next = { ...updater(room, nextPasses), updated: now };
-    const stored: StoredParty = nextPasses
-      ? { ...next, passes: nextPasses }
-      : next;
+    const present = actor
+      ? {
+          ...room,
+          players: room.players.map((p) =>
+            p.id === actor.id ? { ...p, seenAt: now, connected: true } : p,
+          ),
+        }
+      : room;
+    const current = progressBriefing(
+      progressIntermission(progressPresence(present, now), now),
+      now,
+    );
+    const next = {
+      ...progressBriefing(
+        progressIntermission(updater(current, nextPasses, nextAccounts), now),
+        now,
+      ),
+      updated: now,
+    };
+    for (const id of Object.keys(nextAccounts))
+      if (!next.players.some((p) => p.id === id)) delete nextAccounts[id];
+    const stored: StoredParty = {
+      ...next,
+      ...(nextPasses ? { passes: nextPasses } : {}),
+      accounts: nextAccounts,
+    };
 
     const ok = await store.compareAndSwap(
       {
@@ -169,7 +224,7 @@ async function updatePartyRoom(
       row.version,
     );
 
-    if (ok) return next;
+    if (ok) return { ...next, serverNow: now, revision: row.version + 1 };
   }
   throw new Error('Party room update conflict. Please retry.');
 }
@@ -190,6 +245,8 @@ export async function joinPartyRoom(
     ready: false,
     score: 0,
     isHost: false,
+    seenAt: now,
+    connected: true,
   };
 
   const state = await updatePartyRoom(
@@ -197,6 +254,7 @@ export async function joinPartyRoom(
     code,
     null,
     (room, passes) => {
+      room = { ...room, players: room.players.filter((p) => !p.isBot) };
       if (room.players.length >= 4) {
         throw new Error('This party room is already full (maximum 4 players).');
       }
@@ -204,6 +262,10 @@ export async function joinPartyRoom(
         throw new Error('This party has already started.');
       }
       if (passes) passes[playerId] = hash;
+      if (room.players.some((p) => p.color === player.color))
+        player.color =
+          [0, 1, 2, 3].find((c) => room.players.every((p) => p.color !== c)) ??
+          player.color;
       return {
         ...room,
         players: [...room.players, player],
@@ -261,10 +323,83 @@ export async function toggleReady(
     code,
     player,
     (room) => {
+      if (room.status !== 'lobby')
+        throw new Error('Ready can only change in the lobby.');
+      if (ready && room.players.find((p) => p.id === player.id)?.browsing)
+        throw new RoomError('Close the wardrobe before getting ready.', 409);
       const players = room.players.map((p) =>
         p.id === player.id ? { ...p, ready } : p,
       );
       return { ...room, players };
+    },
+    now,
+  );
+}
+
+/** Appearance and account identity must be resolved by the route, not supplied by the player. */
+export async function updateLobbyPresence(
+  store: RoomStore,
+  code: string,
+  player: PartyPass,
+  presence: {
+    pose: unknown;
+    browsing: boolean;
+    look: Look;
+    fullGame: boolean;
+    accountId: string | null;
+    crew?: CrewBadge | null;
+  },
+  now = Date.now(),
+) {
+  if (!validPose(presence.pose) || typeof presence.browsing !== 'boolean')
+    throw new RoomError('Invalid lobby position.');
+  const requested = boundedPose(presence.pose);
+  return updatePartyRoom(
+    store,
+    code,
+    player,
+    (room, _passes, accounts) => {
+      const me = room.players.find((p) => p.id === player.id && !p.isBot);
+      if (!me)
+        throw new RoomError('Join the party before entering the plaza.', 401);
+      if (room.status !== 'lobby') return room;
+      const previous = me.lobbyPose ?? spawnPose(me.color);
+      const distance = Math.hypot(
+        requested.x - previous.x,
+        requested.z - previous.z,
+      );
+      const maximum =
+        Math.min(2, Math.max(0, (now - (me.lobbySeenAt ?? now - 350)) / 1000)) *
+          PLAZA_SPEED +
+        0.3;
+      const ratio = distance > maximum ? maximum / distance : 1;
+      const lobbyPose = {
+        x: previous.x + (requested.x - previous.x) * ratio,
+        z: previous.z + (requested.z - previous.z) * ratio,
+        angle: requested.angle,
+      };
+      if (accounts) accounts[player.id] = presence.accountId;
+      return {
+        ...room,
+        players: room.players.map((p) =>
+          p.id === player.id
+            ? {
+                ...p,
+                lobbyPose,
+                lobbySeenAt: now,
+                look: presence.look,
+                fullGame: presence.fullGame,
+                crew: presence.crew ?? null,
+                browsing: presence.browsing,
+                ready: presence.browsing
+                  ? false
+                  : p.browsing && p.isHost
+                    ? true
+                    : p.ready,
+              }
+            : p,
+        ),
+      };
     },
     now,
   );
@@ -284,6 +419,8 @@ export async function addBotToParty(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can add bots.');
       }
+      if (room.status !== 'lobby')
+        throw new Error('Bots can only join in the lobby.');
       if (room.players.length >= 4) {
         throw new Error('The party room is already full.');
       }
@@ -361,9 +498,13 @@ export async function startPartyTournament(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can start the tournament.');
       }
-      if (room.players.length < 2) {
-        throw new Error('Need at least 2 players to start a party tournament.');
-      }
+      if (room.status !== 'lobby') return room;
+      const humans = room.players.filter((p) => !p.isBot);
+      if (
+        !humans.length ||
+        humans.some((p) => p.connected === false || !p.ready || p.browsing)
+      )
+        throw new Error('Every player must be connected and ready.');
       // Fill remaining seats with bots if needed to make 4 players
       const players = [...room.players];
       while (players.length < 4) {
@@ -390,19 +531,27 @@ export async function startPartyTournament(
         });
       }
 
-      // Ensure playlist has 6 games
+      const count = room.format === 'quick' ? 3 : 6;
       const playlist =
-        room.playlist.length === 6 ? room.playlist : generatePlaylist(6);
+        room.playlist.length === count
+          ? room.playlist
+          : generatePlaylist(count, Math.random, room.format);
 
-      return {
-        ...room,
-        players,
-        playlist,
-        currentRound: 0,
-        reports: undefined,
-        status: 'countdown',
-        countdownUntil: now + 4000,
-      };
+      return beginBriefing(
+        {
+          ...room,
+          players,
+          playlist,
+          currentRound: 0,
+          reports: undefined,
+          status: 'countdown',
+          runId: crypto.randomUUID(),
+          practice: humans.length === 1,
+          pausedAt: undefined,
+          rematchVotes: [],
+        },
+        now,
+      );
     },
     now,
   );
@@ -434,16 +583,24 @@ function finishRound(
     score: scores[p.id] ?? 0,
   }));
 
-  const pointsAwarded = calculateRoundPoints(scoreEntries, isTeam);
+  const pointsAwarded =
+    room.runId && detail.reports
+      ? sharedRoundPoints(detail.reports, gameInfo?.scoring ?? 'cooperative')
+      : calculateRoundPoints(scoreEntries, isTeam);
 
   // Find round winner
   let highestPts = -1;
   let winnerId: string | undefined;
   for (const [pId, pts] of Object.entries(pointsAwarded)) {
-    if (pts > highestPts) {
+    if (pts > 0 && pts > highestPts) {
       highestPts = pts;
       winnerId = pId;
     }
+  }
+  if (
+    Object.values(pointsAwarded).filter((pts) => pts === highestPts).length > 1
+  ) {
+    winnerId = undefined;
   }
 
   const result: RoundResult = {
@@ -453,6 +610,16 @@ function finishRound(
     pointsAwarded,
     winnerId,
     ...detail,
+    ...(room.runId
+      ? {
+          scoring: gameInfo?.scoring,
+          outcome: Object.values(detail.reports ?? {}).every((r) => r === null)
+            ? ('skipped' as const)
+            : Object.values(pointsAwarded).some((p) => p > 0)
+              ? ('completed' as const)
+              : ('failed' as const),
+        }
+      : {}),
   };
 
   // Accumulate scores
@@ -461,14 +628,13 @@ function finishRound(
     score: p.score + (pointsAwarded[p.id] ?? 0),
   }));
 
-  const isLastRound = round >= 5;
-
   return {
     ...room,
     players: updatedPlayers,
     roundResults: [...room.roundResults, result],
     reports: undefined,
-    status: isLastRound ? 'finished' : 'intermission',
+    status: 'intermission',
+    intermission: undefined,
   };
 }
 
@@ -477,6 +643,197 @@ const roundInPlay = (room: PartyRoomState) =>
   room.status === 'countdown' || room.status === 'in_game';
 
 const humansOf = (room: PartyRoomState) => room.players.filter((p) => !p.isBot);
+
+function progressPresence(room: PartyRoomState, now: number): PartyRoomState {
+  let changed = false;
+  const players = room.players.map((p) => {
+    if (
+      p.isBot ||
+      p.seenAt === undefined ||
+      now - p.seenAt < PARTY_OFFLINE_MS ||
+      p.connected === false
+    )
+      return p;
+    changed = true;
+    return { ...p, connected: false, ready: false };
+  });
+  const nextHost =
+    players.find(
+      (p) => p.id === room.hostId && p.connected !== false && !p.isBot,
+    ) ?? players.find((p) => !p.isBot && p.connected !== false);
+  let next =
+    changed || (nextHost && nextHost.id !== room.hostId)
+      ? {
+          ...room,
+          hostId: nextHost?.id ?? room.hostId,
+          players: players.map((p) => ({
+            ...p,
+            isHost: p.id === (nextHost?.id ?? room.hostId),
+            ready:
+              room.status === 'lobby' && p.id === nextHost?.id ? true : p.ready,
+          })),
+        }
+      : room;
+  if (roundInPlay(next)) {
+    const missing = players.filter(
+      (p) =>
+        !p.isBot &&
+        p.seenAt !== undefined &&
+        now - p.seenAt >= PARTY_RECONNECT_MS &&
+        next.reports?.[p.id] === undefined,
+    );
+    if (missing.length)
+      next = finishIfAllReported({
+        ...next,
+        reports: {
+          ...next.reports,
+          ...Object.fromEntries(missing.map((p) => [p.id, null])),
+        },
+      });
+  }
+  return next;
+}
+
+export async function partyPlayerAction(
+  store: RoomStore,
+  code: string,
+  player: PartyPass,
+  action: 'heartbeat' | 'briefing_ready' | 'vote_lock' | 'rematch_interest',
+  round?: number,
+  now = Date.now(),
+) {
+  return updatePartyRoom(
+    store,
+    code,
+    player,
+    (room) => {
+      if (!room.players.some((p) => p.id === player.id && !p.isBot))
+        throw new RoomError(
+          'Your seat is no longer in this party. Join another party.',
+          401,
+        );
+      if (action === 'heartbeat') return room;
+      if (action === 'rematch_interest') {
+        if (room.status !== 'finished')
+          throw new Error('Finish the party first.');
+        return {
+          ...room,
+          rematchVotes: [...new Set([...(room.rematchVotes ?? []), player.id])],
+        };
+      }
+      if (room.currentRound !== round)
+        throw new Error('This round has changed.');
+      if (action === 'briefing_ready') {
+        if (room.status !== 'briefing' || !room.briefing) return room;
+        return {
+          ...room,
+          briefing: {
+            ...room.briefing,
+            ready: [...new Set([...room.briefing.ready, player.id])],
+          },
+        };
+      }
+      if (
+        room.status !== 'intermission' ||
+        room.intermission?.phase !== 'voting' ||
+        !room.intermission.votes[player.id]
+      )
+        throw new Error('Choose a game before locking your vote.');
+      return {
+        ...room,
+        intermission: {
+          ...room.intermission,
+          locked: [
+            ...new Set([...(room.intermission.locked ?? []), player.id]),
+          ],
+        },
+      };
+    },
+    now,
+  );
+}
+
+export async function setPartyFormat(
+  store: RoomStore,
+  code: string,
+  host: PartyPass,
+  format: 'quick' | 'classic',
+  now = Date.now(),
+) {
+  return updatePartyRoom(
+    store,
+    code,
+    host,
+    (room) => {
+      if (room.hostId !== host.id || room.status !== 'lobby')
+        throw new Error('Only the host can change the format in the lobby.');
+      if (format !== 'quick' && format !== 'classic')
+        throw new Error('Choose Quick Party or Classic Party.');
+      return {
+        ...room,
+        format,
+        playlist: generatePlaylist(
+          format === 'quick' ? 3 : 6,
+          Math.random,
+          format,
+        ),
+        players: room.players.map((p) => ({
+          ...p,
+          ready: p.isHost || !!p.isBot,
+        })),
+      };
+    },
+    now,
+  );
+}
+
+export async function pauseParty(
+  store: RoomStore,
+  code: string,
+  player: PartyPass,
+  paused: boolean,
+  now = Date.now(),
+) {
+  return updatePartyRoom(
+    store,
+    code,
+    player,
+    (room) => {
+      if (!room.players.some((p) => p.id === player.id && !p.isBot))
+        throw new Error('Join the party first.');
+      if (!['briefing', 'intermission'].includes(room.status))
+        throw new Error('Take a break between rounds.');
+      if (!paused && room.hostId !== player.id)
+        throw new Error('The host resumes the party when everyone is back.');
+      if (paused)
+        return room.pausedAt === undefined ? { ...room, pausedAt: now } : room;
+      if (room.pausedAt === undefined) return room;
+      const delay = now - room.pausedAt;
+      return {
+        ...room,
+        pausedAt: undefined,
+        ...(room.briefing
+          ? {
+              briefing: {
+                ...room.briefing,
+                startedAt: room.briefing.startedAt + delay,
+              },
+            }
+          : {}),
+        ...(room.intermission
+          ? {
+              intermission: {
+                ...room.intermission,
+                startedAt: room.intermission.startedAt + delay,
+                endsAt: room.intermission.endsAt + delay,
+              },
+            }
+          : {}),
+      };
+    },
+    now,
+  );
+}
 
 /**
  * Scores the current round from the humans' reports. A human who has not
@@ -490,6 +847,27 @@ function scoreReportedRound(room: PartyRoomState): PartyRoomState {
   }
   const ids = room.players.map((p) => p.id);
   const game = getPartyGameInfo(room.playlist[round]);
+  if (room.runId) {
+    const scores = game?.teams
+      ? Object.fromEntries(
+          Object.entries(reports).map(([id, r]) => [
+            id,
+            r?.kind === 'versus'
+              ? { won: 1, draw: 0.5, lost: 0 }[r.outcome]
+              : -1,
+          ]),
+        )
+      : Object.fromEntries(
+          Object.entries(reports).map(([id, r]) => [
+            id,
+            r?.kind === 'goal' ? r.score : 0,
+          ]),
+        );
+    return finishRound(room, round, scores, {
+      reports,
+      ...(game?.teams ? { teams: roundAssignments(room) } : {}),
+    });
+  }
   if (game?.teams) {
     const teams = roundTeams(ids, round);
     return finishRound(room, round, scoreTeamRound(teams, reports), {
@@ -599,17 +977,8 @@ export async function advanceToNextRound(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can advance the round.');
       }
-      const nextRound = room.currentRound + 1;
-      if (nextRound >= 6) {
-        return { ...room, status: 'finished' };
-      }
-      return {
-        ...room,
-        currentRound: nextRound,
-        reports: undefined,
-        status: 'countdown',
-        countdownUntil: now + 4000,
-      };
+      // Compatibility for old clients: deadlines, not host clicks, advance.
+      return room;
     },
     now,
   );
@@ -629,6 +998,8 @@ export async function rematchParty(
       if (room.hostId !== host.id) {
         throw new Error('Only the party host can trigger a rematch.');
       }
+      if (room.status !== 'finished')
+        throw new Error('Finish the tournament before starting a rematch.');
       const resetPlayers = room.players.map((p) => ({
         ...p,
         score: 0,
@@ -637,12 +1008,60 @@ export async function rematchParty(
       return {
         ...room,
         players: resetPlayers,
-        playlist: generatePlaylist(6),
+        playlist: generatePlaylist(
+          room.format === 'quick' ? 3 : 6,
+          Math.random,
+          room.format,
+        ),
         currentRound: 0,
         roundResults: [],
         reports: undefined,
+        intermission: undefined,
         status: 'lobby',
         countdownUntil: undefined,
+        briefing: undefined,
+        pausedAt: undefined,
+        rematchVotes: [],
+      };
+    },
+    now,
+  );
+}
+
+export async function voteForNextGame(
+  store: RoomStore,
+  code: string,
+  round: number,
+  player: PartyPass,
+  game: GameId,
+  now = Date.now(),
+): Promise<PartyRoomState> {
+  return updatePartyRoom(
+    store,
+    code,
+    player,
+    (room) => {
+      const voter = room.players.find((seat) => seat.id === player.id);
+      if (!voter || voter.isBot)
+        throw new Error('Only a player in this party can vote.');
+      const ballot = room.intermission;
+      if (
+        room.currentRound !== round ||
+        room.status !== 'intermission' ||
+        ballot?.phase !== 'voting' ||
+        now >= ballot.endsAt
+      ) {
+        throw new Error('Voting is closed for this round.');
+      }
+      if (!ballot.candidates.includes(game))
+        throw new Error('Choose one of the three games.');
+      return {
+        ...room,
+        intermission: {
+          ...ballot,
+          votes: { ...ballot.votes, [player.id]: game },
+          locked: ballot.locked?.filter((id) => id !== player.id),
+        },
       };
     },
     now,

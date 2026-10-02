@@ -1,3 +1,4 @@
+import { PEER_PROTOCOL } from './protocol';
 import {
   readRoomRequest,
   withRequestBudget,
@@ -16,6 +17,8 @@ async function handleRequest(request: Request) {
     return json({ error: 'Open the game to use this room.' }, 403);
   try {
     const body = await readRoomRequest(request, 280_000);
+    if (body.protocol !== PEER_PROTOCOL)
+      return json({ error: 'Update the game before joining this room.' }, 426);
     return json(await handlePeerRoom(roomStore(), body));
   } catch (error) {
     if (error instanceof RoomError) return budgetError(error);

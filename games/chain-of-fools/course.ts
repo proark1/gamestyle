@@ -79,8 +79,38 @@ export const NET = {
   climbSpeed: 3.0,
 };
 
-export const FINISH_X = 146.0;
-export const COURSE_END_X = 152.0;
+export const FINISH_X = 174.0;
+export const COURSE_END_X = 180.0;
+
+export type MapId = 'demolition' | 'switchyard';
+
+/** A second, separate site. Plates latch each gate once different workers hold
+ * every pad together; the last bank needs the entire four-person crew. */
+export const SWITCHYARD = {
+  startX: 260,
+  finishX: 371,
+  endX: 380,
+  gates: [
+    {
+      x: 284,
+      plates: [
+        { x: 276, z: -3 },
+        { x: 276, z: 3 },
+      ],
+    },
+    {
+      x: 345,
+      plates: [
+        { x: 335, z: -3 },
+        { x: 335, z: -1 },
+        { x: 335, z: 1 },
+        { x: 335, z: 3 },
+      ],
+    },
+  ],
+  holdSeconds: 1.2,
+  plateRadius: 0.95,
+} as const;
 
 export const SURFACES: readonly Box[] = [
   // Site gate: solid ground, room to work out who stands where.
@@ -128,11 +158,78 @@ export const SURFACES: readonly Box[] = [
 
   // Net approach and the ground the net reaches down to.
   box('net-deck', 'ledge', 112, 118, 7.5, 8.0, -3, 3),
-  box('lower-pad', 'pad', 118, 138, -1.2, 0, -6, 6),
+  box('lower-pad', 'pad', 118, 144, -1.2, 0, -6, 6),
+
+  // Cargo chicane: jump the loads or take the slower route around the ends.
+  box('cargo-left', 'crate', 128, 129.2, 0, 1.0, -6, 1.2),
+  box('cargo-right', 'crate', 136, 137.2, 0, 1.0, -1.2, 6),
+  // One last narrow crossing. The landing is wide enough to regroup.
+  box('last-bridge-a', 'ledge', 144, 151, -0.5, 0, -1.6, 1.6),
+  box('last-bridge-b', 'ledge', 153.5, 161, -0.5, 0, -1.6, 1.6),
 
   // Site office.
-  box('office-pad', 'office', 138, COURSE_END_X, -1.2, 0, -8, 8),
+  box('office-pad', 'office', 161, COURSE_END_X, -1.2, 0, -8, 8),
+
+  // Switchyard: two crew operated gates, then exposed crossings with room to
+  // brace on each landing before the next worker jumps.
+  box('switch-start', 'yard', 260, 284, -1.2, 0, -6, 6),
+  box('switch-gate-one-landing', 'ledge', 284, 292, -0.5, 0, -4, 4),
+  box('switch-span-a', 'girder', 294.5, 304, -0.5, 0, -1.5, 1.5),
+  box('switch-span-b', 'girder', 306.5, 316, -0.5, 0, -1.5, 1.5),
+  box('switch-regroup', 'pad', 316, 326, -1.2, 0, -6, 6),
+  box('switch-bank', 'yard', 326, 345, -1.2, 0, -6, 6),
+  box('switch-gate-two-landing', 'ledge', 345, 354, -0.5, 0, -4, 4),
+  box('switch-final-span', 'girder', 356.5, 363, -0.5, 0, -1.6, 1.6),
+  box('switch-finish', 'office', 363, SWITCHYARD.endX, -1.2, 0, -7, 7),
 ];
+
+/** Solid props use the same bounds in rendering and collision. */
+export const PROPS: readonly Box[] = [
+  box('office-building', 'office', FINISH_X + 1, FINISH_X + 6, 0, 3, -3.5, 3.5),
+  box(
+    'switch-office-building',
+    'office',
+    SWITCHYARD.finishX + 1,
+    SWITCHYARD.finishX + 6,
+    0,
+    3,
+    -3.5,
+    3.5,
+  ),
+  ...SURFACES.filter(
+    (b) => b.kind === 'scaffold' && b.id !== 'scaffold-base',
+  ).flatMap((b) => [
+    ...[b.minX + 0.1, b.maxX - 0.1].flatMap((x, i) =>
+      [b.minZ + 0.1, b.maxZ - 0.1].map((z, j) =>
+        box(
+          `${b.id}-post-${i}-${j}`,
+          'pipe',
+          x - 0.09,
+          x + 0.09,
+          -1.2,
+          b.maxY + 1.1,
+          z - 0.09,
+          z + 0.09,
+        ),
+      ),
+    ),
+    box(
+      `${b.id}-rail`,
+      'pipe',
+      b.minX + 0.1,
+      b.maxX - 0.1,
+      b.maxY + 0.94,
+      b.maxY + 1.06,
+      b.minZ + 0.04,
+      b.minZ + 0.16,
+    ),
+  ]),
+  ...[-2.9, 2.9].map((z, i) =>
+    box(`catwalk-rail-${i}`, 'pipe', 23, 39, -1.5, -1.4, z - 0.05, z + 0.05),
+  ),
+];
+
+export const SOLIDS: readonly Box[] = [...SURFACES, ...PROPS];
 
 export type Anchor = {
   id: string;
@@ -150,6 +247,11 @@ export const ANCHORS: readonly Anchor[] = [
   { id: 'ring-plank-far', x: 76.4, y: 8.3, z: 0, label: 'Plank far end' },
   { id: 'ring-pipe', x: 91.2, y: 8.3, z: 0, label: 'Pipe mouth' },
   { id: 'ring-net', x: 117.4, y: 8.3, z: 0, label: 'Net head' },
+  { id: 'ring-last-near', x: 150.2, y: 0.3, z: 0, label: 'Final gap' },
+  { id: 'ring-last-far', x: 154.3, y: 0.3, z: 0, label: 'Final landing' },
+  { id: 'switch-ring-a', x: 290.5, y: 0.3, z: 0, label: 'First crossing' },
+  { id: 'switch-ring-b', x: 315.0, y: 0.3, z: 0, label: 'Regroup landing' },
+  { id: 'switch-ring-c', x: 352.5, y: 0.3, z: 0, label: 'Final crossing' },
 ];
 
 export type Checkpoint = {
@@ -168,13 +270,40 @@ export const CHECKPOINTS: readonly Checkpoint[] = [
   { index: 5, x: 92, spawn: [93.5, 8.1, 0], label: 'Pipe mouth' },
   { index: 6, x: 112, spawn: [114, 8.1, 0], label: 'Net head' },
   { index: 7, x: 118, spawn: [121, 0.1, 0], label: 'Lower pad' },
+  { index: 8, x: 144, spawn: [146, 0.1, 0], label: 'Last crossing' },
+  { index: 9, x: 161, spawn: [163, 0.1, 0], label: 'Office approach' },
 ];
+
+export const SWITCHYARD_CHECKPOINTS: readonly Checkpoint[] = [
+  { index: 0, x: 260, spawn: [265, 0.1, 0], label: 'Switchyard entrance' },
+  { index: 1, x: 284, spawn: [287, 0.1, 0], label: 'First gate' },
+  { index: 2, x: 316, spawn: [320, 0.1, 0], label: 'Regroup deck' },
+  { index: 3, x: 345, spawn: [349, 0.1, 0], label: 'Crew gate' },
+  { index: 4, x: 363, spawn: [366, 0.1, 0], label: 'Office landing' },
+];
+
+export function checkpointsFor(mapId: MapId): readonly Checkpoint[] {
+  return mapId === 'switchyard' ? SWITCHYARD_CHECKPOINTS : CHECKPOINTS;
+}
+
+export function finishXFor(mapId: MapId): number {
+  return mapId === 'switchyard' ? SWITCHYARD.finishX : FINISH_X;
+}
+
+export function endXFor(mapId: MapId): number {
+  return mapId === 'switchyard' ? SWITCHYARD.endX : COURSE_END_X;
+}
 
 /**
  * Where across the course a worker wants to be at this point: the middle,
  * except where the obvious line runs somewhere else.
  */
-export function laneZ(x: number, y: number): number {
+export function laneZ(
+  x: number,
+  y: number,
+  mapId: MapId = 'demolition',
+): number {
+  if (mapId === 'switchyard') return 0;
   // Climbing out of the low road happens beside the girders, not under them.
   if (y < -1.0 && x > 34 && x < 46) return -2.1;
   // Past the crate stack at the pipe mouth and into the pipe.
@@ -183,7 +312,14 @@ export function laneZ(x: number, y: number): number {
 }
 
 /** Course section a worker is standing in, used for milestones and the HUD. */
-export function sectionAt(x: number): string {
+export function sectionAt(x: number, mapId: MapId = 'demolition'): string {
+  if (mapId === 'switchyard') {
+    if (x < 284) return 'switch-pair';
+    if (x < 316) return 'switch-spans';
+    if (x < 345) return 'switch-crew';
+    if (x < 363) return 'switch-final';
+    return x < SWITCHYARD.finishX ? 'switch-office' : 'office';
+  }
   if (x < 16) return 'gate';
   if (x < 44) return 'girders';
   if (x < 70) return 'scaffold';
@@ -191,29 +327,36 @@ export function sectionAt(x: number): string {
   if (x < 92) return 'wrecking';
   if (x < 112) return 'pipe';
   if (x < 118) return 'net';
-  if (x < FINISH_X) return 'yard-run';
+  if (x < 144) return 'yard-run';
+  if (x < 161) return 'last-crossing';
+  if (x < FINISH_X) return 'office-approach';
   return 'office';
 }
 
-export function checkpointAt(x: number): number {
+export function checkpointAt(x: number, mapId: MapId = 'demolition'): number {
   let index = 0;
-  for (const point of CHECKPOINTS) if (x >= point.x) index = point.index;
+  for (const point of checkpointsFor(mapId))
+    if (x >= point.x) index = point.index;
   return index;
 }
 
-export function checkpoint(index: number): Checkpoint {
-  return CHECKPOINTS[Math.max(0, Math.min(CHECKPOINTS.length - 1, index))];
+export function checkpoint(
+  index: number,
+  mapId: MapId = 'demolition',
+): Checkpoint {
+  const points = checkpointsFor(mapId);
+  return points[Math.max(0, Math.min(points.length - 1, index))];
 }
 
 /** Surface height of the tipping plank at a given x, for the given tilt. */
 export function plankSurfaceY(x: number, tilt: number): number {
-  return PLANK.y + Math.sin(tilt) * (x - PLANK.pivotX);
+  return PLANK.y + Math.tan(tilt) * (x - PLANK.pivotX);
 }
 
-export function onPlank(x: number, z: number): boolean {
+export function onPlank(x: number, z: number, tilt = 0): boolean {
   return (
-    x >= PLANK.pivotX - PLANK.halfLength &&
-    x <= PLANK.pivotX + PLANK.halfLength &&
+    x >= PLANK.pivotX - PLANK.halfLength * Math.cos(tilt) &&
+    x <= PLANK.pivotX + PLANK.halfLength * Math.cos(tilt) &&
     z >= PLANK.minZ &&
     z <= PLANK.maxZ
   );

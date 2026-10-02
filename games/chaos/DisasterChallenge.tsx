@@ -1,4 +1,8 @@
 'use client';
+import { publicGameOrigin } from '../../shared/browser/public-url';
+
+import { apiFetch } from '../../shared/browser/api-fetch';
+
 import { useEffect, useRef, useState } from 'react';
 import type { Snapshot } from './model';
 import type { Session } from './connection';
@@ -31,7 +35,7 @@ export function DisasterChallenge({
     saving.current = abort;
     setBusy(true);
     try {
-      const response = await fetch('/api/handwerker/builds', {
+      const response = await apiFetch('/api/handwerker/builds', {
         method: 'POST',
         signal: abort.signal,
         headers: { 'Content-Type': 'application/json' },
@@ -56,7 +60,7 @@ export function DisasterChallenge({
     }
   }
   async function copy() {
-    const text = `${p.crewName || 'Our crew'} passed in ${formatChallengeTime(p.run!.elapsedMs!)} with ${p.run!.crewSize} builder${p.run!.crewSize === 1 ? '' : 's'}. Can your crew beat our disaster? ${location.origin}/build/${saved}`;
+    const text = `${p.crewName || 'Our crew'} passed in ${formatChallengeTime(p.run!.elapsedMs!)} with ${p.run!.crewSize} builder${p.run!.crewSize === 1 ? '' : 's'}. Can your crew beat our disaster? ${publicGameOrigin()}/build/${saved}`;
     try {
       await navigator.clipboard.writeText(text);
       notify('Challenge invitation copied.');

@@ -1,3 +1,4 @@
+import { expansion } from './expansion';
 import { cue } from '../../../shared/audio/catalog-helpers';
 import type { Cue } from '../../../shared/audio/types';
 const show =
@@ -20,6 +21,7 @@ const fx = (
     volume,
   );
 export const buttonCatalog: Cue[] = [
+  ...expansion,
   fx(
     'event.start',
     'Here comes trouble',

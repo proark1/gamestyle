@@ -1,286 +1,67 @@
-/**
- * Procedural Web Audio synthesizer for Zorb Clash.
- * Provides hyper-bouncy bumper bonks, spring cushions, dash whooshes,
- * and goal fanfare without requiring external asset downloads.
- */
-
+import { SiteAudio } from '../../shared/audio/player';
+import { bundledProfile } from '../../shared/audio/bundled-profile';
+import { zorbClashCatalog } from './audio/catalog';
+import { ZorbAudioDirector } from './audio/director';
+import type { ZorbClashWorld } from './types';
 export { zorbClashCatalog } from './audio/catalog';
-
-const MASTER_LEVEL = 0.35;
-
-export class ZorbClashAudio {
-  private ctx: AudioContext | null = null;
-  private masterGain: GainNode | null = null;
-  private chargeOsc: OscillatorNode | null = null;
-  private chargeGain: GainNode | null = null;
-  private unlocked = false;
-  private muted = false;
-
-  /** The toolbar's sound switch: silences everything through the master bus. */
+export class ZorbClashAudio extends SiteAudio {
+  private director = new ZorbAudioDirector();
+  constructor() {
+    super('zorb-clash', bundledProfile('zorb-clash', zorbClashCatalog));
+  }
   setMuted(muted: boolean) {
-    this.muted = muted;
-    if (this.masterGain) this.masterGain.gain.value = muted ? 0 : MASTER_LEVEL;
+    this.enabled = !muted;
   }
-
-  private init() {
-    if (this.ctx) return;
-    try {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      this.ctx = new AudioCtx();
-      this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = this.muted ? 0 : MASTER_LEVEL;
-      this.masterGain.connect(this.ctx.destination);
-    } catch {
-      // Audio not supported or blocked
-    }
-  }
-
-  unlock() {
-    this.init();
-    if (this.ctx && this.ctx.state === 'suspended') {
-      void this.ctx.resume();
-    }
-    this.unlocked = true;
-  }
-
   bonk(intensity = 0.5) {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-    const clamped = Math.max(0.2, Math.min(1.0, intensity));
-
-    // Low punchy sine sweep
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    const startFreq = 180 + clamped * 120;
-    osc.frequency.setValueAtTime(startFreq, t);
-    osc.frequency.exponentialRampToValueAtTime(45, t + 0.18);
-
-    gain.gain.setValueAtTime(0.7 * clamped, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(t);
-    osc.stop(t + 0.22);
-
-    // Comic rubber boing overtone
-    const boing = this.ctx.createOscillator();
-    const boingGain = this.ctx.createGain();
-    boing.type = 'triangle';
-    boing.frequency.setValueAtTime(320, t);
-    boing.frequency.linearRampToValueAtTime(140, t + 0.15);
-
-    boingGain.gain.setValueAtTime(0.4 * clamped, t);
-    boingGain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-
-    boing.connect(boingGain);
-    boingGain.connect(this.masterGain);
-
-    boing.start(t);
-    boing.stop(t + 0.16);
+    this.play('event.zorb_bonk', intensity);
   }
-
   springCushion() {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120, t);
-    osc.frequency.exponentialRampToValueAtTime(380, t + 0.12);
-    osc.frequency.exponentialRampToValueAtTime(80, t + 0.25);
-
-    gain.gain.setValueAtTime(0.3, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(t);
-    osc.stop(t + 0.25);
+    this.play('event.spring_recoil', 0.7);
   }
-
-  setDashCharge(charge: number) {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-
-    if (charge <= 0.05) {
-      if (this.chargeGain) {
-        this.chargeGain.gain.setValueAtTime(0, t);
-      }
-      return;
-    }
-
-    if (!this.chargeOsc) {
-      this.chargeOsc = this.ctx.createOscillator();
-      this.chargeGain = this.ctx.createGain();
-      this.chargeOsc.type = 'sine';
-      this.chargeGain.gain.value = 0;
-      this.chargeOsc.connect(this.chargeGain);
-      this.chargeGain.connect(this.masterGain);
-      this.chargeOsc.start();
-    }
-
-    const targetFreq = 160 + charge * 440;
-    this.chargeOsc.frequency.setValueAtTime(targetFreq, t);
-    this.chargeGain?.gain.setValueAtTime(Math.min(0.3, charge * 0.3), t);
-  }
-
   dashRelease() {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-
-    if (this.chargeGain) {
-      this.chargeGain.gain.setValueAtTime(0, t);
-    }
-
-    // Whoosh noise / explosive boost
-    const bufferSize = this.ctx.sampleRate * 0.25;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(600, t);
-    filter.frequency.exponentialRampToValueAtTime(150, t + 0.25);
-    filter.Q.value = 2.0;
-
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.5, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
-
-    noise.start(t);
+    this.play('event.dash_burst', 0.7);
   }
-
   brace() {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(90, t);
-    osc.frequency.exponentialRampToValueAtTime(35, t + 0.15);
-
-    gain.gain.setValueAtTime(0.4, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(t);
-    osc.stop(t + 0.15);
+    this.play('event.brace_thud', 0.7);
   }
-
   turtle() {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-
-    // Comic downward slide whistle
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(550, t);
-    osc.frequency.exponentialRampToValueAtTime(140, t + 0.4);
-
-    gain.gain.setValueAtTime(0.35, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(t);
-    osc.stop(t + 0.4);
+    this.play('event.turtle_slide', 0.7);
   }
-
-  goal(isTurtle: boolean) {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-
-    // Stadium Airhorn
-    const freqs = [311.13, 370.0, 466.16]; // Eb Minor triad horn
-    for (const f of freqs) {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(f, t);
-
-      gain.gain.setValueAtTime(0.2, t);
-      gain.gain.setValueAtTime(0.2, t + 0.6);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
-
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-
-      osc.start(t);
-      osc.stop(t + 0.9);
-    }
-
-    if (isTurtle) {
-      // Extra celebratory high trill for style points
-      const trill = this.ctx.createOscillator();
-      const trillGain = this.ctx.createGain();
-      trill.type = 'triangle';
-      trill.frequency.setValueAtTime(880, t + 0.2);
-      trill.frequency.exponentialRampToValueAtTime(1320, t + 0.7);
-
-      trillGain.gain.setValueAtTime(0.25, t + 0.2);
-      trillGain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
-
-      trill.connect(trillGain);
-      trillGain.connect(this.masterGain);
-
-      trill.start(t + 0.2);
-      trill.stop(t + 0.7);
-    }
+  goal() {
+    this.play('event.goal_cheer', 1);
   }
-
   whistle() {
-    if (!this.ctx || !this.masterGain) return;
-    const t = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(2400, t);
-    osc.frequency.setValueAtTime(2600, t + 0.08);
-    osc.frequency.setValueAtTime(2400, t + 0.16);
-
-    gain.gain.setValueAtTime(0.3, t);
-    gain.gain.setValueAtTime(0.3, t + 0.22);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(t);
-    osc.stop(t + 0.3);
+    this.play('event.referee_whistle', 0.7);
   }
-
+  setDashCharge(charge: number) {
+    this.setLoop(
+      'charge',
+      charge > 0.05 ? 'ambience.charge' : null,
+      Math.min(0.7, charge),
+    );
+  }
+  update(world: ZorbClashWorld | null, localId?: string) {
+    const plan = this.director.update(world);
+    this.listen(
+      world?.players.find((p) => p.id === localId) ?? { x: 0, z: 0 },
+      0,
+    );
+    this.setLoop(
+      'crowd',
+      world && world.status !== 'ended' ? 'ambience.crowd' : null,
+      0.65,
+    );
+    this.setLoop('music', plan.playing ? 'music.play' : null, 0.6);
+    this.setLoop('roll', plan.roll > 0.02 ? 'ambience.roll' : null, plan.roll);
+    if (!plan.playing) this.setDashCharge(0);
+    for (const hit of plan.hits)
+      this.play(hit.cue, hit.strength, hit.position, hit.source);
+  }
+  override reset() {
+    super.reset();
+    this.director.reset();
+  }
   destroy() {
-    try {
-      this.chargeOsc?.stop();
-      this.chargeOsc?.disconnect();
-      void this.ctx?.close();
-    } catch {
-      // ignore
-    }
-    this.ctx = null;
+    this.dispose();
   }
 }

@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import * as C from 'cannon-es';
 import {
   act,
   createPlayer,
@@ -8,7 +9,7 @@ import {
   placement,
   tick,
 } from './simulation';
-import { landingHeight, poseError, topOf } from './physics';
+import { Physics, STEP, landingHeight, poseError, topOf } from './physics';
 import { FLOOR, SCENERY } from './geometry';
 import { ITEMS, type Kind, type Piece, type World } from './types';
 const NOW = 100000;
@@ -262,4 +263,70 @@ void test('an eight-crate balanced tower remains settled for a minute of room sn
     Math.max(...w.pieces.map((p) => Math.hypot(p.x - 4, p.z - 1))) < 0.08,
   );
   assert.ok(w.pieces.every((p) => p.sleeping));
+});
+
+void test('ordinary walking cannot launch salvage across the yard', () => {
+  for (const kind of Object.keys(ITEMS) as Kind[]) {
+    for (const offset of [-0.5, 0, 0.5]) {
+      const w = world(),
+        p = w.players[0],
+        load = piece('load', kind);
+      p.x = -2.4;
+      p.z = offset;
+      p.input = { x: 1, z: 0, jump: false, seq: 0 };
+      w.pieces = [load];
+      let fastest = 0,
+        highest = FLOOR;
+      for (let i = 0; i < 120; i++) {
+        p.seen = w.clock + 1000 / 60;
+        tick(w, p.seen);
+        fastest = Math.max(fastest, Math.hypot(load.vx || 0, load.vz || 0));
+        highest = Math.max(highest, load.y);
+      }
+      assert.ok(
+        fastest < 1.5,
+        `${kind} at ${offset} reached ${fastest.toFixed(2)} m/s`,
+      );
+      assert.ok(
+        highest < 0.5,
+        `${kind} at ${offset} rose to ${highest.toFixed(2)} m`,
+      );
+    }
+  }
+});
+
+void test('a player slides off a tilted crate and an unsupported flat edge', () => {
+  for (const [tilt, startX] of [
+    [0.4, 0],
+    [0, 1],
+  ] as const) {
+    const w = world(),
+      p = w.players[0],
+      load = piece('support');
+    load.quaternion = {
+      x: 0,
+      y: 0,
+      z: Math.sin(tilt / 2),
+      w: Math.cos(tilt / 2),
+    };
+    w.pieces = [load];
+    Object.assign(p, {
+      x: startX,
+      y: tilt ? 3 : FLOOR + ITEMS.crate.h + 0.02,
+      z: 0,
+      grounded: false,
+    });
+    const physics = new Physics(w);
+    const support = physics.pieces.get(load.id)!;
+    support.mass = 0;
+    support.type = C.Body.STATIC;
+    support.updateMassProperties();
+    for (let i = 0; i < 120; i++) {
+      physics.controls(p, { x: 0, z: 0, jump: false, seq: 0 }, STEP);
+      physics.step(STEP);
+      physics.readPlayer(p);
+    }
+    assert.ok(p.y < 0.5, `tilt ${tilt}, edge ${startX}: feet at ${p.y}`);
+    assert.ok(Math.abs(p.x) > 1.15, `tilt ${tilt}, edge ${startX}: x ${p.x}`);
+  }
 });

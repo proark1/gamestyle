@@ -18,8 +18,8 @@ export const LOAD_BEARING_DEFAULT_AUDIO: AudioManifest['cues'] =
 export const loadBearingAudioProfile: AudioProfile = {
   crossfadeMusic: false,
   effectLimit: 24,
-  bufferLimit: 40,
-  warmLimit: 32,
+  bufferLimit: 64,
+  warmLimit: 48,
   musicVolume: 1,
   ambienceVolume: 0.75,
   preload: () => true,

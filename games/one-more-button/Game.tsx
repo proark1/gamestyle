@@ -1,4 +1,6 @@
 'use client';
+import { gameInviteUrl } from '../../shared/browser/public-url';
+
 /* eslint-disable next/no-img-element -- Local collection illustration on both hosting targets. */
 /* eslint-disable jsx-a11y/autocomplete-valid -- nickname is a valid HTML autocomplete token. */
 import { useEffect, useRef, useState } from 'react';
@@ -358,7 +360,7 @@ export default function OneMoreButton() {
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(
-        `${location.origin}/one-more-button?room=${session?.code}`,
+        gameInviteUrl('one-more-button', session?.code),
       );
       setCopied(true);
     } catch {
@@ -492,7 +494,7 @@ export default function OneMoreButton() {
           </div>
           <figure className="omb-menu-art">
             <img
-              src="/images/one-more-button.png"
+              src="/images/one-more-button.webp"
               alt="One toy contestant presses a huge red button as a giant boxing glove launches their three friends across a teal game-show room."
               width={1536}
               height={1024}
@@ -748,6 +750,7 @@ export default function OneMoreButton() {
                 </p>
               )}
               <button
+                data-party-setup-action=""
                 className="omb-primary"
                 disabled={!captain || status !== 'online'}
                 onClick={() => action({ type: 'restart' })}

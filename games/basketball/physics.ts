@@ -109,8 +109,8 @@ export function stepBallPhysics(
 
   // 1. Gravity & Drag
   ball.vy += GRAVITY * dt;
-  ball.vx *= AIR_DRAG;
-  ball.vz *= AIR_DRAG;
+  ball.vx *= Math.pow(AIR_DRAG, dt * 60);
+  ball.vz *= Math.pow(AIR_DRAG, dt * 60);
 
   ball.x += ball.vx * dt;
   ball.y += ball.vy * dt;
@@ -131,8 +131,8 @@ export function stepBallPhysics(
       ball.vz *= 0.85;
     } else {
       ball.vy = 0;
-      ball.vx *= 0.94;
-      ball.vz *= 0.94;
+      ball.vx *= Math.pow(0.94, dt * 60);
+      ball.vz *= Math.pow(0.94, dt * 60);
     }
   }
 
@@ -295,8 +295,8 @@ export function stepPlayerMovement(
     player.specialMove = 'stumbled';
     player.input.x = 0;
     player.input.z = 0;
-    player.vx *= 0.85;
-    player.vz *= 0.85;
+    player.vx *= Math.pow(0.85, dt * 60);
+    player.vz *= Math.pow(0.85, dt * 60);
   } else if (player.specialMove === 'stumbled') {
     player.specialMove = 'none';
   }

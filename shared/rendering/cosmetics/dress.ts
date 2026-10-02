@@ -18,6 +18,11 @@ const FACE = [0, 1.43, 0.25];
 /** The models a look really has, by slot. Unknown or misplaced ids are ignored. */
 export function modelsOf(look?: Look) {
   const models: Partial<Record<Slot, ItemModel>> = {};
+  const costume = look?.costume;
+  if (costume && ITEM_MODELS[costume]?.slot === 'costume') {
+    models.costume = ITEM_MODELS[costume];
+    return models;
+  }
   for (const slot of SLOTS) {
     const id = look?.[slot];
     if (!id || !Object.hasOwn(ITEM_MODELS, id)) continue;
@@ -112,9 +117,13 @@ export function dressWorker(
       addPart(lookGroup(rig.body), part, origin, 1, player);
       if (part.on === 'head') hatTop = Math.max(hatTop, partTop(part));
     }
-  if (models.hat) model.userData.hatTop = WORKER_HEAD_TOP + hatTop;
+  if (models.hat || models.costume)
+    model.userData.hatTop = WORKER_HEAD_TOP + hatTop;
   return Object.fromEntries(
-    SLOTS.map((slot) => [slot, !!models[slot]]),
+    SLOTS.map((slot) => [
+      slot,
+      !!models[slot] || (!!models.costume && slot !== 'beard'),
+    ]),
   ) as Worn;
 }
 
@@ -145,9 +154,11 @@ export function dressedWorker(
   const models = modelsOf(look);
   const model = worker(color, {
     ...outfit,
-    overalls: models.legs?.overalls ?? outfit.overalls,
-    boots: models.shoes?.boots ?? outfit.boots,
-    cap: models.hat ? false : outfit.cap,
+    shirt: models.costume?.shirt ?? outfit.shirt,
+    overalls:
+      models.costume?.overalls ?? models.legs?.overalls ?? outfit.overalls,
+    boots: models.costume?.boots ?? models.shoes?.boots ?? outfit.boots,
+    cap: models.hat || models.costume ? false : outfit.cap,
   });
   const worn = dressWorker(model, outfit.shirt ?? COLORS[color % 4], look);
   return { model, worn };

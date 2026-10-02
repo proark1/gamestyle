@@ -1,4 +1,13 @@
 import {
+  freshRush,
+  liftFries,
+  notifyRush,
+  orderProblems,
+  replaceBurntPatty,
+  stackLayer,
+  stepRush,
+} from './rush';
+import {
   computeWindowReachGap,
   GRILL_BOUNDS,
   stepCarPhysics,
@@ -21,10 +30,16 @@ import {
 
 const ORDER_TEMPLATES = [
   {
-    clear:
-      'No ice, extra ranch, a large diet water and a double cheese burger!',
-    scrambled:
-      'N-N-NO ICE... [KHZZZT] EXTRA R-RANCH... L-LARGE DIET W-WATER... [SQUELCH]',
+    clear: 'Cheeseburger and one soda. Easy does it!',
+    scrambled: 'CHEESE... [KHZZZT]... ONE S-SODA!',
+    burger: ['bottom_bun', 'patty', 'cheese', 'top_bun'] as BurgerLayer[],
+    drinks: 1,
+    shake: false,
+    fries: false,
+  },
+  {
+    clear: 'Double cheeseburger, two shakes and golden fries!',
+    scrambled: 'D-DOUBLE... [CRACKLE]... TWO SHAKES... FRIES!',
     burger: [
       'bottom_bun',
       'patty',
@@ -38,51 +53,15 @@ const ORDER_TEMPLATES = [
     fries: true,
   },
   {
-    clear:
-      'Triple mega burger, charred crisp, four large sodas and extra fries!',
-    scrambled:
-      'TRIP-PLE... [CRACKLE]... C-CHARRED CRISP... FOUR S-SODAS... [STATIC CRACKLE]',
+    clear: 'Triple burger with lettuce, three shakes and fries. Hurry!',
+    scrambled: 'TRIPLE... [HONK]... THREE SHAKES... [BUZZ]... FRIES!',
     burger: [
       'bottom_bun',
       'patty',
-      'patty',
       'cheese',
+      'patty',
       'patty',
       'lettuce',
-      'top_bun',
-    ] as BurgerLayer[],
-    drinks: 4,
-    shake: false,
-    fries: true,
-  },
-  {
-    clear:
-      'Single deluxe with lettuce, no pickles, and a high-foam strawberry shake!',
-    scrambled:
-      'SING-GL... [WHIRR]... DELUXE... [BEEP]... HIGH-FOAM S-SHAKE... [BUZZZT]',
-    burger: [
-      'bottom_bun',
-      'patty',
-      'lettuce',
-      'cheese',
-      'top_bun',
-    ] as BurgerLayer[],
-    drinks: 1,
-    shake: true,
-    fries: false,
-  },
-  {
-    clear:
-      'Quadruple carnivore stack, burnt patties only, zero greens, three drinks!',
-    scrambled:
-      'QUAD... [SCREECH]... B-BURNT ONLY... ZERO GREENS... [HONK SQUELCH]',
-    burger: [
-      'bottom_bun',
-      'patty',
-      'patty',
-      'cheese',
-      'patty',
-      'patty',
       'top_bun',
     ] as BurgerLayer[],
     drinks: 3,
@@ -185,13 +164,14 @@ export function freshDriveThruWorld(now = Date.now()): DriveThruWorld {
   return {
     clock: now,
     started: now,
+    rush: freshRush(),
     phase: 'ordering',
-    phaseTimer: 60,
+    phaseTimer: 75,
     ticket: generateOrderTicket(1),
     car: {
-      x: -3.8,
+      x: -1.2,
       y: 0,
-      z: 14.0, // Just before the intercom speaker pole
+      z: 14.0, // Clear lane beside the ordering speaker
       yaw: 0,
       speed: 0,
       steer: 0,
@@ -205,10 +185,10 @@ export function freshDriveThruWorld(now = Date.now()): DriveThruWorld {
       balanceMeter: 0,
     },
     kitchen: {
-      patties: initialPatties,
+      patties: initialPatties.slice(0, 1),
       spatulaX: 4.0,
       spatulaZ: -0.5,
-      fryerBasketDown: true,
+      fryerBasketDown: false,
       fryerTimer: 0.2,
       fryerGreaseFire: false,
       shakePressure: 25,
@@ -242,11 +222,16 @@ export function driveThruAction(
   const player = w.players.find((p) => p.id === playerId);
   if (!player && a.type !== 'start' && a.type !== 'restart') return;
 
+  if (
+    (w.phase === 'completed' || w.phase === 'meltdown') &&
+    a.type !== 'restart'
+  )
+    return;
   switch (a.type) {
     case 'start':
       if (w.phase === 'lobby') {
         w.phase = 'ordering';
-        w.phaseTimer = 60;
+        w.phaseTimer = 75;
         addDriveThruEvent(
           w,
           'order_placed',
@@ -276,6 +261,7 @@ export function driveThruAction(
       break;
 
     case 'flipPatty': {
+      if (w.rush.flipCooldown > 0) break;
       // Find the patty nearest the spatula
       let closest: Patty | null = null;
       let minDist = 0.85;
@@ -290,9 +276,12 @@ export function driveThruAction(
         }
       }
       if (closest && closest.vy === 0) {
+        w.rush.flipCooldown = 0.55;
+        if (!w.rush.flipped.includes(closest.id))
+          w.rush.flipped.push(closest.id);
         closest.vy = 4.2; // Upward flip impulse
-        closest.vx = (Math.random() - 0.5) * 0.4;
-        closest.vz = (Math.random() - 0.5) * 0.4;
+        closest.vx = 0;
+        closest.vz = 0;
         addDriveThruEvent(
           w,
           'patty_flipped',
@@ -302,37 +291,44 @@ export function driveThruAction(
       break;
     }
 
-    case 'stackIngredient':
-      if (w.kitchen.trayStack.length < 8) {
-        w.kitchen.trayStack.push(a.layer);
+    case 'selectPatty': {
+      const patty = w.kitchen.patties.find((p) => p.id === a.id);
+      if (patty) {
+        w.kitchen.spatulaX = patty.x;
+        w.kitchen.spatulaZ = patty.z;
       }
       break;
+    }
+    case 'stackIngredient':
+      stackLayer(w, a.layer);
+      break;
+    case 'stackNext': {
+      const next = w.ticket?.requestedBurger[w.kitchen.trayStack.length];
+      if (next) stackLayer(w, next);
+      break;
+    }
 
     case 'ventMilkshake':
-      w.kitchen.shakeVenting = true;
-      w.kitchen.shakePressure = Math.max(0, w.kitchen.shakePressure - 35);
-      addDriveThruEvent(
-        w,
-        'shake_vented',
-        'Milkshake pressure release valve vented safely!',
-      );
+      notifyRush(w, 'Hold the vent control to release pressure.');
       break;
-
     case 'liftFryer':
-      w.kitchen.fryerBasketDown = false;
-      addDriveThruEvent(
+      liftFries(w, addDriveThruEvent);
+      break;
+    case 'pourDrink':
+      notifyRush(w, 'Hold pour, then release inside the green fill band.');
+      break;
+    case 'pushTray':
+      notifyRush(
         w,
-        'fryer_lifted',
-        'Lifted fryer basket before grease ignited!',
+        orderProblems(w)[0] ??
+          'Hold slide, then release inside the green launch band.',
       );
       break;
-
-    case 'pushTray':
-      w.kitchen.trayAtWindow = true;
-      break;
-
     case 'reachTray':
-      w.car.passengerReach = Math.min(1.0, w.car.passengerReach + 0.3);
+      notifyRush(
+        w,
+        'Hold reach to secure the tray. Release to pull it inside.',
+      );
       break;
 
     case 'toggleWipers':
@@ -340,6 +336,7 @@ export function driveThruAction(
       break;
 
     case 'swatDistraction':
+      w.rush.warning = 0;
       w.distractions.toddlerSqueaking = false;
       w.distractions.screechingBelt = false;
       break;
@@ -369,183 +366,151 @@ export function advanceDriveThruWorld(
     return;
   }
 
-  // 1. Process inputs by role
+  if (dt <= 0 || !Number.isFinite(dt)) return;
+  if (dt > 1 / 30 + 1e-8) {
+    const count = Math.ceil(Math.min(dt, 2) * 30),
+      h = Math.min(dt, 2) / count;
+    for (let i = 0; i < count; i++)
+      advanceDriveThruWorld(w, h, now - (count - i - 1) * h * 1000);
+    return;
+  }
+  if (w.rush.stage === 'between') {
+    if (stepRush(w, dt, addDriveThruEvent)) {
+      const next = freshDriveThruWorld(now),
+        number = w.ordersServed + 1;
+      w.ticket = generateOrderTicket(number);
+      w.car = {
+        ...next.car,
+        x: number === 2 ? -1.9 : -1.5,
+        z: 14.5,
+        yaw: number === 2 ? 0.08 : -0.08,
+      };
+      w.kitchen = next.kitchen;
+      w.kitchen.patties = Array.from({ length: number }, (_, i) => ({
+        ...next.kitchen.patties[0],
+        id: `patty-${i}`,
+        x: GRILL_BOUNDS.minX + 0.3 + i * 0.4,
+      }));
+      w.kitchen.fryerBasketDown = !!w.ticket.wantsFries;
+      w.kitchen.shakePressure = 25 + number * 5;
+      w.rush = freshRush();
+      w.distractions = next.distractions;
+      w.phase = 'ordering';
+      w.phaseTimer = 80 - number * 5;
+      for (const p of w.players) p.input = idleInput();
+      notifyRush(w, `Order ${number} of 3. More food, less time.`, 4);
+      addDriveThruEvent(w, 'order_placed', w.ticket.clearText);
+    }
+    return;
+  }
   for (const p of w.players) {
     const inp = p.input;
-
     if (p.role === 'driver') {
-      // Driver controls car
-      stepCarPhysics(w.car, inp.action1, inp.action2, inp.x, dt);
-      if (inp.action3) {
-        w.car.honking = true;
-      }
-    } else if (p.role === 'passenger') {
-      // Passenger reach and distractions
-      if (inp.action1) {
-        w.car.passengerReach = Math.min(1.0, w.car.passengerReach + 1.2 * dt);
+      if (inp.jump) {
+        w.car.speed =
+          Math.sign(w.car.speed) * Math.max(0, Math.abs(w.car.speed) - dt * 14);
+        stepCarPhysics(w.car, false, false, inp.x, dt);
       } else {
-        w.car.passengerReach = Math.max(0, w.car.passengerReach - 1.5 * dt);
+        if (
+          ['offered', 'carrying'].includes(w.rush.stage) &&
+          computeWindowReachGap(w.car).canReach &&
+          !inp.action1 &&
+          !inp.action2 &&
+          Math.abs(w.car.speed) < 0.6
+        )
+          w.car.speed += dt * 3.5;
+        stepCarPhysics(w.car, inp.action1, inp.action2, inp.x, dt);
       }
-      if (inp.action2) {
-        w.distractions.toddlerSqueaking = false;
-      }
-      if (inp.action3) {
-        w.car.wipersActive = true;
-      }
-      // Balance drift based on lateral movement
-      w.car.balanceMeter += (inp.x * 1.5 - w.car.balanceMeter * 0.8) * dt;
+      w.car.honking = inp.action3;
+    } else if (p.role === 'passenger') {
+      if (inp.action2) w.distractions.toddlerSqueaking = false;
+      if (inp.action3) w.car.wipersActive = true;
     } else if (p.role === 'grill') {
-      // Move spatula over grill bounds
       w.kitchen.spatulaX = Math.max(
         GRILL_BOUNDS.minX,
-        Math.min(GRILL_BOUNDS.maxX, w.kitchen.spatulaX + inp.x * 2.5 * dt),
+        Math.min(GRILL_BOUNDS.maxX, w.kitchen.spatulaX + inp.x * dt * 2.5),
       );
       w.kitchen.spatulaZ = Math.max(
         GRILL_BOUNDS.minZ,
-        Math.min(GRILL_BOUNDS.maxZ, w.kitchen.spatulaZ + inp.z * 2.5 * dt),
+        Math.min(GRILL_BOUNDS.maxZ, w.kitchen.spatulaZ + inp.z * dt * 2.5),
       );
-      if (inp.action1) {
-        // Trigger flip
-        driveThruAction(w, p.id, { type: 'flipPatty' });
-      }
-      if (inp.action2) {
-        driveThruAction(w, p.id, { type: 'liftFryer' });
-      }
-      if (inp.action3 && w.kitchen.trayStack.length < 8) {
-        // Stacking next required layer
-        const cookedPatty = w.kitchen.patties.find(
-          (pat) => pat.state === 'cooked',
-        );
-        if (cookedPatty && !w.kitchen.trayStack.includes('patty')) {
-          w.kitchen.trayStack.push('patty');
-        } else if (!w.kitchen.trayStack.includes('bottom_bun')) {
-          w.kitchen.trayStack.push('bottom_bun');
-        } else if (!w.kitchen.trayStack.includes('cheese')) {
-          w.kitchen.trayStack.push('cheese');
-        } else if (!w.kitchen.trayStack.includes('lettuce')) {
-          w.kitchen.trayStack.push('lettuce');
-        } else if (!w.kitchen.trayStack.includes('top_bun')) {
-          w.kitchen.trayStack.push('top_bun');
-        }
-      }
-    } else if (p.role === 'barista') {
-      if (inp.action1) {
-        driveThruAction(w, p.id, { type: 'ventMilkshake' });
-      }
-      if (inp.action2 && w.kitchen.sodasPoured < 4) {
-        w.kitchen.sodasPoured += 1;
-      }
-      if (inp.action3) {
-        w.kitchen.trayAtWindow = true;
-      }
+      if (inp.action1) driveThruAction(w, p.id, { type: 'flipPatty' });
+      if (inp.action2) liftFries(w, addDriveThruEvent);
     }
   }
-
-  // 2. Step physics for patties
   for (const pat of w.kitchen.patties) {
     stepPattyPhysics(pat, dt);
-    if (pat.state === 'fire' && !w.kitchen.fryerGreaseFire) {
-      triggerFailState(
-        w,
-        'grease_fire',
-        'Burger patty caught fire on the flat-top grill!',
-      );
+    if (pat.state === 'fire') {
+      addDriveThruEvent(w, 'patty_burnt', 'Burnt patty replaced.');
+      replaceBurntPatty(w, pat.id);
     }
   }
-
-  // 3. Step fryer oil
   if (w.kitchen.fryerBasketDown) {
-    w.kitchen.fryerTimer += 0.04 * dt;
-    if (w.kitchen.fryerTimer >= 1.0 && !w.kitchen.fryerGreaseFire) {
-      w.kitchen.fryerGreaseFire = true;
-      triggerFailState(
+    w.kitchen.fryerTimer += (0.032 + w.ordersServed * 0.006) * dt;
+    if (w.kitchen.fryerTimer >= 1) {
+      w.kitchen.fryerTimer = 0;
+      w.phaseTimer = Math.max(0, w.phaseTimer - 4);
+      notifyRush(
         w,
-        'grease_fire',
-        'Deep fryer oil hit flashpoint! Massive grease fire!',
+        'Fryer smoked! Fresh fries down. Lift at 50-80%. -4 seconds.',
+        5,
       );
+      addDriveThruEvent(w, 'grease_fire', 'Fryer smoked; basket replaced.');
     }
   }
-
-  // 4. Step milkshake machine pressure
   if (!w.kitchen.shakeExploded) {
-    w.kitchen.shakePressure += 6.5 * dt;
+    w.kitchen.shakePressure += (4 + w.ordersServed * 2) * dt;
     if (w.kitchen.shakePressure >= 100) {
       w.kitchen.shakeExploded = true;
-      w.car.windshieldSplat = 1.0;
+      w.car.windshieldSplat = 1;
+      w.kitchen.sodasPoured = Math.max(0, w.kitchen.sodasPoured - 1);
       addDriveThruEvent(
         w,
         'shake_exploded',
-        'Milkshake machine exploded in a violent violent foam spray!',
+        'Milkshake blew! Vent the tank and refill the lost cup.',
       );
-      addDriveThruEvent(
+      addDriveThruEvent(w, 'windshield_splatted', 'Wipers needed!');
+      notifyRush(
         w,
-        'windshield_splatted',
-        'Milkshake splattered across the sedan windshield!',
+        'Shake blowout! Vent below 25%, refill, and use the wipers.',
+        5,
       );
     }
   }
-
-  // 5. Check fail states: pole crash
   if (w.car.reversedIntoPole) {
+    w.car.reversedIntoPole = false;
+    w.car.speed = 0;
+    w.phaseTimer = Math.max(0, w.phaseTimer - 5);
+    addDriveThruEvent(
+      w,
+      'pole_crashed',
+      'Bumper hit! Back off and try again. -5 seconds.',
+    );
+    notifyRush(w, 'Pole collision! Back off and try again. -5 seconds.', 4);
+  }
+  if (w.car.wipersActive)
+    w.car.windshieldSplat = Math.max(0, w.car.windshieldSplat - dt * 0.55);
+  w.phaseTimer -= dt;
+  if (w.phaseTimer <= 0) {
+    w.phaseTimer = 0;
     triggerFailState(
       w,
-      'pole_crash',
-      'Car reversed into the drive-thru speaker pole and destroyed it!',
+      'none',
+      `Order ${w.ticket?.orderNumber ?? 1} ran out of time. ${w.ordersServed}/3 orders served.`,
     );
+    return;
   }
-  // A failure this tick ends the round: the window check below must not
-  // reopen it.
-  if (w.failState !== 'none') return;
-
-  // 6. Phase timer countdown
-  w.phaseTimer -= dt;
-  if (w.phaseTimer <= 0 && w.phase === 'ordering') {
-    w.phase = 'assembling';
-    w.phaseTimer = 60;
-  }
-
-  // 7. Check Window Reach Phase & Short Stop
-  const { gapDistance, isShortStop, canReach } = computeWindowReachGap(w.car);
-
-  if (w.car.z <= 3.0 && w.car.z >= -3.0 && Math.abs(w.car.speed) < 0.8) {
-    // Car is stopped near the window
-    if (w.phase !== 'reaching') {
-      w.phase = 'reaching';
-      if (isShortStop) {
-        addDriveThruEvent(
-          w,
-          'short_stop_reach',
-          `SHORT STOP! Car parked ${gapDistance.toFixed(1)}m away. Passenger must lean!`,
-        );
-      }
-    }
-
-    // Checking handoff
-    if (w.kitchen.trayAtWindow && canReach && w.car.passengerReach > 0.75) {
-      // Balance check: if passenger loses balance, sodas drop!
-      if (Math.abs(w.car.balanceMeter) > 0.85) {
-        w.kitchen.trayDroppedInCurb = true;
-        triggerFailState(
-          w,
-          'curb_plop',
-          'Passenger overextended and dropped the 4 sodas down the curb drain!',
-        );
-      } else {
-        // Success!
-        w.kitchen.trayGrabbed = true;
-        w.phase = 'completed';
-        w.score += 500;
-        if (isShortStop) w.score += 250; // Bonus for surviving the Short Stop reach!
-        w.ordersServed += 1;
-        addDriveThruEvent(
-          w,
-          'order_delivered',
-          'ORDER SERVED! Successfully survived the drive-thru meltdown!',
-        );
-        addDriveThruEvent(w, 'round_win', `Shift complete! Score: ${w.score}`);
-      }
-    }
-  }
+  const gap = computeWindowReachGap(w.car);
+  if (gap.canReach && Math.abs(w.car.speed) < 0.8) {
+    if (w.phase !== 'reaching')
+      addDriveThruEvent(
+        w,
+        'short_stop_reach',
+        'Hold the handbrake. Passenger, prepare to reach.',
+      );
+    w.phase = 'reaching';
+  } else w.phase = 'assembling';
+  stepRush(w, dt, addDriveThruEvent);
 }
 
 function triggerFailState(
@@ -574,6 +539,11 @@ export function driveThruSnapshot(
     host: hostId,
     version: _version,
     world: w,
+    rush: {
+      ...w.rush,
+      flipped: [...w.rush.flipped],
+      botWait: { ...w.rush.botWait },
+    },
     clock: w.clock,
     phase: w.phase,
     phaseTimer: Math.max(0, Math.ceil(w.phaseTimer)),

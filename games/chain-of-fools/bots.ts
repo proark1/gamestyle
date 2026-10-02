@@ -1,4 +1,4 @@
-import { FINISH_X, NET, laneZ } from './course';
+import { NET, SWITCHYARD, finishXFor, laneZ } from './course';
 import { climbAhead, supportUnder } from './physics';
 import { newPlayer } from './simulation';
 import {
@@ -21,9 +21,11 @@ export function reconcileChainBots(world: ChainWorld) {
 
   while (bots.length < needed) {
     const index = bots.length;
+    let number = 1;
+    while (bots.some((p) => p.id === `bot-${number}`)) number++;
     bots.push(
       newPlayer(
-        `bot-${index + 1}`,
+        `bot-${number}`,
         BOT_NAMES[index % BOT_NAMES.length],
         (humans.length + index + 1) % 4,
         0,
@@ -97,11 +99,51 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
     return;
   }
 
-  if (bot.x >= FINISH_X) return;
+  if (bot.x >= finishXFor(world.mapId)) return;
+
+  // Bots take unoccupied plates so local practice remains solvable. The second
+  // bank is approached normally until the crew clears the exposed spans.
+  if (world.mapId === 'switchyard') {
+    const gateIndex = world.gatesOpen[0] ? 1 : 0;
+    const gate = SWITCHYARD.gates[gateIndex];
+    if (!world.gatesOpen[gateIndex] && (gateIndex === 0 || bot.x >= 326)) {
+      const reserved = new Set(
+        gate.plates.flatMap((plate, i) =>
+          world.players.some(
+            (p) =>
+              !p.bot &&
+              p.grounded &&
+              Math.hypot(p.x - plate.x, p.z - plate.z) <=
+                SWITCHYARD.plateRadius,
+          )
+            ? [i]
+            : [],
+        ),
+      );
+      const available = gate.plates.filter((_, i) => !reserved.has(i));
+      const firstHuman = world.players.find((p) => !p.bot);
+      if (firstHuman && firstHuman.z > 0) available.reverse();
+      const rank = world.players.filter(
+        (p) => p.bot && p.link < bot.link,
+      ).length;
+      const target = available[rank] ?? { x: gate.plates[0].x - 1.5, z: 0 };
+      bot.input.x = Math.max(-1, Math.min(1, (target.x - bot.x) * 1.5));
+      bot.input.z = Math.max(-1, Math.min(1, (target.z - bot.z) * 1.5));
+      if (Math.abs(target.x - bot.x) < 0.12) bot.input.x = 0;
+      if (Math.abs(target.z - bot.z) < 0.12) bot.input.z = 0;
+      return;
+    }
+  }
 
   // Do not out-walk the far end of the line.
   const trailing = trailingNeighbour(bot, world);
   if (trailing && bot.x - trailing.x > CHAIN_SLACK * 0.85) {
+    if (
+      trailing.link < bot.link &&
+      bot.grounded &&
+      Math.abs(trailing.y - bot.y) < 0.6
+    )
+      bot.input.x = -0.4;
     if (trailing.state === 'dangling' || trailing.state === 'limp') {
       bot.input.brace = true;
     }
@@ -119,13 +161,16 @@ export function stepChainBot(bot: Player, world: ChainWorld, _dt: number) {
     ? (bot.link - 1.5) * 1.2
     : following
       ? leader.z
-      : laneZ(bot.x, bot.y);
+      : laneZ(bot.x, bot.y, world.mapId);
   const lane = targetZ - bot.z;
   bot.input.z =
     Math.abs(lane) > 0.15 ? Math.max(-0.8, Math.min(0.8, lane * 1.6)) : 0;
   // Hang back behind the worker ahead, unless they have gone down a level:
   // then the way on is down after them.
-  if (following && bot.x > leader.x - 1.0 && leader.y >= bot.y - 1.2) return;
+  if (following && bot.x > leader.x - 1.0 && leader.y >= bot.y - 1.2) {
+    if (bot.grounded && bot.x > leader.x - 0.6) bot.input.x = -0.4;
+    return;
+  }
 
   // Forward, which on the cargo net also means down it.
   bot.input.x = 1;

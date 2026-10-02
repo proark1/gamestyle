@@ -1,0 +1,91 @@
+.stack-challenge {
+  padding: 20px;
+  border: 1px solid #c5cba9;
+  border-radius: 22px;
+  background: #fff7df;
+  color: #19464b;
+  text-align: left;
+  font:
+    14px/1.55 'DM Sans',
+    sans-serif;
+}
+.stack-challenge-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.stack-challenge h3 {
+  margin: 0;
+  font:
+    23px/1.25 'Fredoka',
+    sans-serif;
+}
+.stack-challenge small {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.stack-challenge p {
+  margin: 12px 0;
+}
+.stack-challenge ul {
+  padding: 0;
+  margin: 12px 0;
+  list-style: none;
+}
+.stack-challenge li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid #dedcc3;
+}
+.stack-challenge li strong {
+  flex-shrink: 0;
+}
+.stack-challenge .stack-challenge-note {
+  font-size: 12px;
+}
+.stack-challenge button,
+.stack-challenge a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #adc3ad;
+  border-radius: 12px;
+  background: #fffdf6;
+  color: #19464b;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+.stack-challenge button {
+  margin-left: 8px;
+}
+.stack-challenge :focus-visible {
+  outline: 3px solid #2a8477;
+  outline-offset: 3px;
+}
+.challenge-details summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+.verified-room-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 13px;
+}
+.verified-room-choice input {
+  width: 20px;
+  height: 20px;
+}
+.mission-panel .verified-target {
+  color: #1e6859;
+  font-size: 13px;
+  font-weight: 600;
+}

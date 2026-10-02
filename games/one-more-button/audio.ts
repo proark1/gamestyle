@@ -15,6 +15,13 @@ export class ButtonSound extends SiteAudio {
     this.listen(me ?? { x: 0, y: 1, z: 0 }, 0);
     this.setLoop('music', plan.music, plan.musicLevel);
     this.setLoop(
+      'studio',
+      world?.phase === 'playing' || world?.phase === 'escape'
+        ? 'ambience.studio'
+        : null,
+      0.5,
+    );
+    this.setLoop(
       'conveyor',
       plan.conveyor ? 'ambience.conveyor' : null,
       plan.conveyor,

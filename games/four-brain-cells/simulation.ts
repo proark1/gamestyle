@@ -103,9 +103,10 @@ export function addBrain(
   color: number,
 ) {
   const p = newBrain(id, name, color, w.clock);
+  const preferredLimb = (color + (w.partyRound ?? 0)) % 4;
   const slot =
-    w.limbs[color] && !w.limbs[color].owner
-      ? color
+    w.limbs[preferredLimb] && !w.limbs[preferredLimb].owner
+      ? preferredLimb
       : w.limbs.findIndex((l) => !l.owner);
   if (slot < 0) throw new Error('All four brain cells are occupied.');
   p.limb = slot;

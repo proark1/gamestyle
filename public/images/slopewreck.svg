@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" role="img" aria-labelledby="title desc">
+  <title id="title">Slopewreck</title><desc id="desc">Four colorful snowboarders race down a snowy mountain while ramps and rails rise behind them.</desc>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#7bcbd9"/><stop offset="1" stop-color="#e4f6ed"/></linearGradient><linearGradient id="snow" x2="0" y2="1"><stop stop-color="#f9fcf2"/><stop offset="1" stop-color="#b9e1dd"/></linearGradient></defs>
+  <path fill="url(#sky)" d="M0 0h1200v750H0z"/>
+  <path fill="#94c2c5" d="m0 410 192-231 122 130 190-252 208 250 156-151 332 260v334H0z"/>
+  <path fill="#dbefea" d="m0 482 197-260 103 113 200-234 199 243 170-148 331 260v294H0z"/>
+  <path fill="url(#snow)" d="M0 750 501 299h255l444 451z"/>
+  <path fill="#cae7e4" d="m170 750 381-450h115L999 750z"/>
+  <path fill="#f5fbf3" d="M206 750 545 324h118l294 426z"/>
+  <path d="M303 750 573 352M878 750 649 352" fill="none" stroke="#2d9fa7" stroke-width="10" stroke-dasharray="36 25" opacity=".65"/>
+  <path d="m78 490 32-95 33 95h-22v38H99v-38zm973-28 34-112 34 112h-22v42h-25v-42zM133 676l37-117 38 117h-25v43h-27v-43zm941-3 39-122 39 122h-25v45h-29v-45z" fill="#1f726b"/>
+  <g transform="translate(520 465) rotate(-11)"><ellipse cy="93" rx="125" ry="28" fill="#4b9a9d" opacity=".24"/><path d="M-100 72Q0 94 109 65" fill="none" stroke="#183e57" stroke-width="22" stroke-linecap="round"/><circle cy="-52" r="42" fill="#f1c4a4"/><path d="M-40-70q37-59 77 2" fill="#ef704e"/><path d="M-46-3q48-37 91 7l17 74H-57z" fill="#ef704e"/><path d="M-25 21-77 70M26 20 86 53" stroke="#f1c4a4" stroke-width="17" stroke-linecap="round"/></g>
+  <g transform="translate(340 595) rotate(18) scale(.74)"><path d="M-100 73Q0 93 106 66" fill="none" stroke="#173e5a" stroke-width="22" stroke-linecap="round"/><circle cy="-52" r="42" fill="#e6b68c"/><path d="M-42-71q39-55 80 1" fill="#f2b94c"/><path d="M-47-3q48-38 92 8l12 69H-56z" fill="#f2b94c"/></g>
+  <g transform="translate(759 551) rotate(-17) scale(.82)"><path d="M-100 73Q0 93 106 66" fill="none" stroke="#173e5a" stroke-width="22" stroke-linecap="round"/><circle cy="-52" r="42" fill="#e5b68f"/><path d="M-43-70q38-55 80 2" fill="#31a5bb"/><path d="M-47-3q48-38 92 8l12 69H-56z" fill="#31a5bb"/></g>
+  <g transform="translate(922 680) rotate(24) scale(.56)"><path d="M-100 73Q0 93 106 66" fill="none" stroke="#173e5a" stroke-width="22" stroke-linecap="round"/><circle cy="-52" r="42" fill="#dfb088"/><path d="M-43-70q38-55 80 2" fill="#8a6cc6"/><path d="M-47-3q48-38 92 8l12 69H-56z" fill="#8a6cc6"/></g>
+  <path d="M506 641 674 629l-13 35-157 12z" fill="#eeb447" stroke="#fff7d9" stroke-width="6"/><path d="M790 692h115m-115 0v-37m115 37v-37" fill="none" stroke="#21a4a9" stroke-width="13" stroke-linecap="round"/>
+  <text x="57" y="102" fill="#183e56" font-family="Arial,sans-serif" font-size="82" font-weight="900" letter-spacing="-4">SLOPE<tspan fill="#ef704e">WRECK</tspan></text>
+</svg>

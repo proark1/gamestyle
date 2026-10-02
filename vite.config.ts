@@ -109,6 +109,11 @@ export default defineConfig(async () => {
       ],
     ]);
     return {
+      define: {
+        __GAME_BUILD_ID__: JSON.stringify(
+          process.env.GAME_BUILD_ID ?? process.env.GITHUB_SHA ?? 'local',
+        ),
+      },
       css: { postcss: { plugins: [tailwindcss()] } },
       plugins: [
         {
@@ -141,6 +146,11 @@ export default defineConfig(async () => {
   const { cloudflare } = await import('@cloudflare/vite-plugin');
 
   return {
+    define: {
+      __GAME_BUILD_ID__: JSON.stringify(
+        process.env.GAME_BUILD_ID ?? process.env.GITHUB_SHA ?? 'local',
+      ),
+    },
     css: { postcss: { plugins: [tailwindcss()] } },
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }

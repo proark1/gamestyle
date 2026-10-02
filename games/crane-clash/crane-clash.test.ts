@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as C from 'cannon-es';
+import * as T from 'three';
 import {
   advanceCraneClash,
   craneClashAction,
@@ -8,6 +10,7 @@ import {
 } from './simulation';
 import { getTeamTargetCrate, reconcileClashBots } from './bots';
 import { CraneClashPhysics } from './physics';
+import { createCraneMesh } from './models';
 import { createEngine } from './peer';
 import { CRANE_CONFIG, CRATE_CONFIGS, PAD_Y } from './types';
 
@@ -62,6 +65,29 @@ void test('crane operator controls slew and trolley movement', () => {
   assert.ok(w.cranes.red.trolleyDist > initialDist, 'trolley moved out');
 });
 
+void test('operator seat stays inside the cab as its jib rotates', () => {
+  const crane = createCraneMesh('red');
+  const seat = crane.userData.operatorSeat;
+  const jib = crane.userData.jib;
+  assert.equal(seat.parent, jib);
+  assert.ok(Math.abs(seat.position.x - 1.1) < 0.3);
+  assert.ok(Math.abs(seat.position.z - 0.9) < 0.1);
+  assert.ok(seat.position.y < 0, 'seat is below the boom');
+  for (const angle of [0, 0.7, Math.PI]) {
+    jib.rotation.y = -angle;
+    crane.updateMatrixWorld(true);
+    const cabCenter = jib.localToWorld(
+      new T.Vector3(
+        1.1,
+        CRANE_CONFIG.red.cabinY - CRANE_CONFIG.red.boomY + 0.3,
+        0.9,
+      ),
+    );
+    const seatWorld = seat.getWorldPosition(new T.Vector3());
+    assert.ok(seatWorld.distanceTo(cabCenter) < 0.85);
+  }
+});
+
 void test('swinger can pump momentum and swing', () => {
   const w = freshClashWorld(1000);
   const physics = new CraneClashPhysics(w);
@@ -90,16 +116,24 @@ void test('swinger grabs and releases crates', () => {
 
   assert.equal(grabbed, crate.id, 'crate was grabbed');
   assert.equal(player.holdingCrateId, crate.id);
+  assert.equal(physics.crateBodies.get(crate.id)?.type, C.Body.KINEMATIC);
+  assert.equal(physics.crateBodies.get(crate.id)?.collisionResponse, false);
 
   // Step with held crate
   physics.step(1 / 60);
   assert.ok(crate.heldBy === player.id, 'crate remains held');
+  assert.ok(
+    Math.abs(crate.x - w.cranes.red.hookX) < 0.001,
+    'held crate tracks the swinger without frame lag',
+  );
 
   // Release crate
   const released = physics.releaseCrate(player);
   assert.equal(released, crate.id, 'crate was released');
   assert.equal(player.holdingCrateId, null);
   assert.equal(crate.heldBy, null);
+  assert.equal(physics.crateBodies.get(crate.id)?.type, C.Body.DYNAMIC);
+  assert.equal(physics.crateBodies.get(crate.id)?.collisionResponse, true);
 });
 
 void test('tower height calculates correctly for crates resting on pad', () => {

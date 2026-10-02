@@ -19,14 +19,25 @@ export interface ChainTranslations {
   tagline: string;
   desc: string;
   rules: [string, string, string];
+  switchDesc: string;
+  switchRules: [string, string, string];
   startShift: string;
   playAgain: string;
+  mapLabel: string;
+  mapClassicName: string;
+  mapClassicDesc: string;
+  mapSwitchName: string;
+  mapSwitchDesc: string;
+  switchPrompt: (active: number, total: number) => string;
 
   hudTime: string;
   hudWipes: string;
   hudLine: string;
   hudGrip: string;
   sections: Record<string, string>;
+  routeHints: Record<string, string>;
+  distanceLeft: (metres: number) => string;
+  checkpointSaved: (count: number, total: number) => string;
 
   keys: { desktop: KeyLabels; touch: KeyLabels };
   promptHaul: (name: string, k: KeyLabels) => string;
@@ -72,8 +83,23 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Haul danglers back up before the whole line goes over.',
       'Most obstacles have a fast way and a safe way. Pick as a crew.',
     ],
+    switchDesc:
+      'Open both crew gates by standing on separate pressure plates together. Stay linked across the exposed spans and bring every worker to the office.',
+    switchRules: [
+      'The first gate needs two workers; the second needs all four.',
+      'Hold every plate together until the gate latches open.',
+      'Brace, clip and haul teammates across the exposed gaps.',
+    ],
     startShift: 'Start the shift',
     playAgain: 'Another shift',
+    mapLabel: 'Choose a map',
+    mapClassicName: 'Demolition Site',
+    mapClassicDesc: 'The original route of beams, scaffolds and wrecking gear.',
+    mapSwitchName: 'Switchyard',
+    mapSwitchDesc:
+      'Split the crew across switches to open gates, then cross the exposed spans.',
+    switchPrompt: (active, total) =>
+      `Stand on separate floor switches together · ${active}/${total} held`,
 
     hudTime: 'Shift',
     hudWipes: 'Wipes',
@@ -87,8 +113,34 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       wrecking: 'Wrecking ledge',
       pipe: 'Pipe crawl',
       net: 'Cargo net',
-      'yard-run': 'Lower yard',
+      'yard-run': 'Cargo chicane',
+      'last-crossing': 'Last crossing',
+      'office-approach': 'Office approach',
       office: 'Site office',
+      'switch-pair': 'Two-worker gate',
+      'switch-spans': 'Exposed spans',
+      'switch-crew': 'Whole-crew gate',
+      'switch-final': 'Final crossing',
+      'switch-office': 'Crew office',
+    },
+    distanceLeft: (m) => `${m} m to go`,
+    checkpointSaved: (n, total) => `Checkpoints ${n}/${total}`,
+    routeHints: {
+      gate: 'Follow the beams ahead. Keep your crew close.',
+      girders: 'Jump the gaps, or drop to the lower catwalk.',
+      scaffold: 'Jump up the steps. Let the rest of the line catch up.',
+      plank: 'Spread your weight across the plank. Move together.',
+      wrecking: 'Wait for the ball to pass, then cross as a crew.',
+      pipe: 'Single file through the duct. Stay close to avoid a yank.',
+      net: 'Walk onto the net, then push forward to climb down.',
+      'yard-run': 'Jump the cargo, or weave around the open ends.',
+      'last-crossing': 'One last gap. Regroup before you jump.',
+      'office-approach': 'Bring every worker across the chequered line.',
+      'switch-pair': 'Two workers need to hold separate pads at the same time.',
+      'switch-spans': 'Cross one at a time. Brace and haul anyone who misses.',
+      'switch-crew': 'All four workers must stand on their own pad together.',
+      'switch-final': 'Clip or brace while the rest cross the last gap.',
+      'switch-office': 'Bring the entire line over the finish tape.',
     },
 
     keys: {
@@ -158,8 +210,24 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       'Zieht Hängende hoch, bevor die ganze Kette abrutscht.',
       'Fast jedes Hindernis hat einen schnellen und einen sicheren Weg. Entscheidet gemeinsam.',
     ],
+    switchDesc:
+      'Öffnet beide Tore, indem ihr gleichzeitig auf getrennten Druckplatten steht. Bleibt auf den schmalen Stegen verbunden und bringt alle ins Büro.',
+    switchRules: [
+      'Das erste Tor braucht zwei Arbeiter, das zweite alle vier.',
+      'Haltet alle Platten gleichzeitig, bis das Tor offen bleibt.',
+      'Stemmt euch ab, hakt euch ein und zieht andere über die Lücken.',
+    ],
     startShift: 'Schicht beginnen',
     playAgain: 'Noch eine Schicht',
+    mapLabel: 'Karte wählen',
+    mapClassicName: 'Abrissgelände',
+    mapClassicDesc:
+      'Der ursprüngliche Weg über Träger, Gerüste und Abrissgeräte.',
+    mapSwitchName: 'Schaltgelände',
+    mapSwitchDesc:
+      'Verteilt die Crew auf Schalter, öffnet Tore und überquert schmale Stege.',
+    switchPrompt: (active, total) =>
+      `Steht gleichzeitig auf getrennten Schaltern · ${active}/${total} besetzt`,
 
     hudTime: 'Schicht',
     hudWipes: 'Abstürze',
@@ -173,8 +241,38 @@ export const CHAIN_TRANSLATIONS: Localized<ChainTranslations> = {
       wrecking: 'Abrisskante',
       pipe: 'Rohrkriechgang',
       net: 'Frachtnetz',
-      'yard-run': 'Unterer Hof',
+      'yard-run': 'Fracht-Slalom',
+      'last-crossing': 'Letzte Überquerung',
+      'office-approach': 'Weg zum Büro',
       office: 'Baubüro',
+      'switch-pair': 'Zweiertor',
+      'switch-spans': 'Schmale Stege',
+      'switch-crew': 'Crewtor',
+      'switch-final': 'Letzter Übergang',
+      'switch-office': 'Crew-Büro',
+    },
+    distanceLeft: (m) => `Noch ${m} m`,
+    checkpointSaved: (n, total) => `Kontrollpunkte ${n}/${total}`,
+    routeHints: {
+      gate: 'Folgt den Trägern. Haltet die Crew zusammen.',
+      girders: 'Springt über die Lücken oder nehmt den unteren Steg.',
+      scaffold: 'Springt die Stufen hoch. Wartet auf den Rest der Crew.',
+      plank: 'Verteilt euer Gewicht. Geht gemeinsam über das Brett.',
+      wrecking: 'Wartet auf die Abrissbirne und geht dann gemeinsam los.',
+      pipe: 'Im Gänsemarsch durchs Rohr. Bleibt nah zusammen.',
+      net: 'Geht aufs Netz und drückt vorwärts zum Absteigen.',
+      'yard-run': 'Springt über die Fracht oder lauft außen herum.',
+      'last-crossing': 'Noch eine Lücke. Sammelt euch vor dem Sprung.',
+      'office-approach': 'Bringt alle über die Ziellinie.',
+      'switch-pair':
+        'Zwei Arbeiter müssen gleichzeitig getrennte Schalter halten.',
+      'switch-spans':
+        'Einer nach dem anderen. Stützt und zieht Abgestürzte hoch.',
+      'switch-crew':
+        'Alle vier Arbeiter müssen gleichzeitig einen eigenen Schalter halten.',
+      'switch-final':
+        'Hakt euch ein oder stemmt euch ab, während die anderen springen.',
+      'switch-office': 'Bringt die gesamte Kette über die Ziellinie.',
     },
 
     keys: {

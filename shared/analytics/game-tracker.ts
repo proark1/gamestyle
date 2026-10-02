@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { GameAnalytics, PlayState } from './protocol';
 import { SessionTracker, type TrackerEnvironment } from './tracker';
+import { activateDiagnosticGame } from '../diagnostics/game-context';
 
 /**
  * A game's reporting handle, created once at module scope so the callbacks
@@ -9,6 +10,7 @@ import { SessionTracker, type TrackerEnvironment } from './tracker';
  */
 export class GameTracker {
   private visit?: SessionTracker;
+  private releaseDiagnostics?: () => void;
 
   constructor(
     private readonly definition: GameAnalytics,
@@ -21,11 +23,14 @@ export class GameTracker {
   }
 
   mount() {
+    this.releaseDiagnostics ??= activateDiagnosticGame(this.definition.game);
     if (this.visit?.finished) this.visit = undefined;
     this.current.start();
   }
 
   unmount() {
+    this.releaseDiagnostics?.();
+    this.releaseDiagnostics = undefined;
     this.visit?.stop();
   }
 

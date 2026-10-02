@@ -863,7 +863,7 @@
     width: auto;
     padding: 9px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
   }
   .brain-crew-title {
@@ -872,6 +872,7 @@
   }
   .brain-limb {
     margin: 0;
+    min-width: 0;
     padding: 8px 5px;
     gap: 3px;
     border-left-width: 3px;

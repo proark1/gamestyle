@@ -1,6 +1,9 @@
+import { bundledProfile } from '../../../shared/audio/bundled-profile';
+import { siegeCatalog } from './catalog';
 import type { AudioProfile } from '../../../shared/audio/profile';
 
 export const siegeAudioProfile: AudioProfile = {
+  ...bundledProfile('siege-and-desist', siegeCatalog),
   crossfadeMusic: true,
   effectLimit: 18,
   bufferLimit: 32,

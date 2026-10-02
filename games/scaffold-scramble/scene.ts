@@ -1,3 +1,5 @@
+import { shouldRenderFrame } from '../../shared/rendering/runtime';
+import { disposeObject } from '../../shared/rendering/dispose-object';
 import * as T from 'three';
 import { CLOTH } from '../../shared/rendering/palette';
 import { cleaner, poseScaffoldWorker } from './avatar';
@@ -496,9 +498,23 @@ export class ScaffoldScene {
     }
   }
 
+  private controlsEnabled = false;
+
+  public setControlsEnabled(enabled: boolean) {
+    this.controlsEnabled = enabled;
+    this.keys.clear();
+  }
+
+  private clearKeys = () => {
+    this.keys.clear();
+    this.dragging = false;
+  };
+
   private bindEvents() {
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
+    window.addEventListener('blur', this.clearKeys);
+    document.addEventListener('visibilitychange', this.clearKeys);
     window.addEventListener('resize', this.handleResize);
 
     this.container.addEventListener('mousedown', this.handleMouseDown);
@@ -509,6 +525,8 @@ export class ScaffoldScene {
   private unbindEvents() {
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    window.removeEventListener('blur', this.clearKeys);
+    document.removeEventListener('visibilitychange', this.clearKeys);
     window.removeEventListener('resize', this.handleResize);
 
     this.container.removeEventListener('mousedown', this.handleMouseDown);
@@ -517,10 +535,30 @@ export class ScaffoldScene {
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
-    if (e.repeat) return;
+    if (!this.controlsEnabled || e.repeat || e.ctrlKey || e.metaKey || e.altKey)
+      return;
+    if (
+      e.target instanceof Element &&
+      e.target.closest(
+        'input, textarea, select, [contenteditable="true"], [role="dialog"]',
+      )
+    )
+      return;
+    if (
+      (e.code === 'Space' || e.code === 'Enter') &&
+      e.target instanceof Element &&
+      e.target.closest('button, a, summary')
+    )
+      return;
+    if (e.code === 'Tab') {
+      this.keys.clear();
+      return;
+    }
+    if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp'].includes(e.code))
+      e.preventDefault();
     this.keys.add(e.code);
 
-    if (e.code === 'KeyT' || e.code === 'Tab') {
+    if (e.code === 'KeyT') {
       e.preventDefault();
       this.cb.action({ type: 'switchTool' });
     } else if (e.code === 'KeyF' || e.code === 'Space') {
@@ -857,8 +895,10 @@ export class ScaffoldScene {
         // Tool models
         const toolSqueegee = createSqueegeeMesh();
         const toolSponge = createSpongeMesh();
-        root.add(toolSqueegee);
-        root.add(toolSponge);
+        const hand = root.userData.sleeveR as T.Group;
+        hand.add(toolSqueegee, toolSponge);
+        toolSqueegee.position.set(0, -0.39, 0.04);
+        toolSponge.position.set(0, -0.39, 0.04);
 
         // Safety harness tether line (high-visibility safety orange lanyard)
         const tetherGeo = new T.BufferGeometry().setFromPoints([
@@ -885,21 +925,13 @@ export class ScaffoldScene {
       if (player.tool === 'squeegee') {
         pObj.toolSqueegee.visible = true;
         pObj.toolSponge.visible = false;
-        pObj.toolSqueegee.position.set(0.25 * player.facing, 0.6, 0.3);
       } else if (player.tool === 'sponge') {
         pObj.toolSqueegee.visible = false;
         pObj.toolSponge.visible = true;
-        pObj.toolSponge.position.set(0.25 * player.facing, 0.6, 0.3);
       } else {
         pObj.toolSqueegee.visible = false;
         pObj.toolSponge.visible = false;
       }
-
-      // Safety tether line connecting player back to overhead rail
-      const tetherPos = pObj.tetherLine.geometry.attributes.position;
-      tetherPos.setXYZ(0, player.deckX, RAILING_HEIGHT + 0.9, -0.9);
-      tetherPos.setXYZ(1, player.deckX, player.deckY + 0.95, 0.25);
-      tetherPos.needsUpdate = true;
 
       // Pose avatar limbs
       poseScaffoldWorker(pObj.root, nowSec, {
@@ -908,6 +940,17 @@ export class ScaffoldScene {
         color: player.color,
         facing: player.facing,
       });
+      // Follow the animated back ring in cradle coordinates, including avatar scale.
+      pObj.root.updateWorldMatrix(true, true);
+      const ring = pObj.root.userData.harnessRing as T.Object3D;
+      const anchor = this.cradleGroup.worldToLocal(
+        ring.getWorldPosition(new T.Vector3()),
+      );
+      const tetherPos = pObj.tetherLine.geometry.attributes.position;
+      tetherPos.setXYZ(0, player.deckX, RAILING_HEIGHT + 0.9, -0.9);
+      tetherPos.setXYZ(1, anchor.x, anchor.y, anchor.z);
+      tetherPos.needsUpdate = true;
+      pObj.tetherLine.geometry.computeBoundingSphere();
     }
 
     // 11. Vertigo Camera Follow with Screen Shake
@@ -924,7 +967,9 @@ export class ScaffoldScene {
       (Math.cos(nowSec * 45) * 0.35 + Math.sin(nowSec * 60) * 0.2) *
       shakeFactor;
 
-    const camDistance = this.orbitOffset.distance;
+    // Keep both winches in frame when the viewport is taller than it is wide.
+    const camDistance =
+      this.orbitOffset.distance * Math.max(1, 1 / this.camera.aspect);
     const yaw = this.orbitOffset.yaw;
     const pitch = this.orbitOffset.pitch;
 
@@ -947,12 +992,11 @@ export class ScaffoldScene {
       if (this.destroyed) return;
       this.animId = requestAnimationFrame(loop);
 
+      this.pollInput();
+      if (!shouldRenderFrame(this.renderer)) return;
       const now = performance.now();
       const dt = Math.min(0.1, (now - this.lastTime) * 0.001);
       this.lastTime = now;
-
-      // Poll input keys
-      this.pollInput();
 
       // Decay screen shake trauma
       this.trauma = Math.max(0, this.trauma - dt * 1.6);
@@ -987,6 +1031,7 @@ export class ScaffoldScene {
     this.destroyed = true;
     cancelAnimationFrame(this.animId);
     this.unbindEvents();
+    disposeObject(this.scene);
     this.renderer.dispose();
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(

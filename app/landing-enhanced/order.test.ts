@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { GAME_IDS } from '../../shared/games/identity';
 import {
   createEnhancedCollectionOrder,
   STANDARD_GAME_SLUGS,
@@ -12,6 +13,7 @@ void test('enhanced routes preserve the standard homepage catalogue contract', (
 
   assert.equal(order.length, STANDARD_GAME_SLUGS.length);
   assert.equal(new Set(order).size, order.length);
+  assert.deepEqual(new Set(order), new Set(GAME_IDS));
   assert.deepEqual(order.slice(0, STANDARD_PINNED.length), STANDARD_PINNED);
   assert.deepEqual(
     new Set(order.slice(STANDARD_PINNED.length)),

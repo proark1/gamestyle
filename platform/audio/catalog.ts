@@ -1,8 +1,12 @@
 import type { Cue, GameId } from '../../shared/audio/types';
+import { castleCatalog } from '../../games/bouncy-castle-royale/catalog';
 import { stackCatalog } from '../../games/stack-or-sink/audio/catalog';
 import { farmCatalog } from '../../games/act-natural/audio/catalog';
 import { deliveryCatalog } from '../../games/uphill-delivery/audio/catalog';
 import { giantCatalog } from '../../games/dont-wake-the-giant/audio/catalog';
+import { reelCatalog as reel2Catalog } from '../../games/reel-problems-2/audio';
+import { reelProblems3Catalog } from '../../games/reel-problems-3/catalog';
+import { reelCatalog as reel4Catalog } from '../../games/reel-problems-4/audio';
 import { reelCatalog } from '../../games/reel-problems/audio';
 import { hotelCatalog } from '../../games/wrong-floor/audio';
 import { buttonCatalog } from '../../games/one-more-button/audio';
@@ -19,13 +23,27 @@ import { sampleStampedeCatalog } from '../../games/sample-stampede/audio';
 import { driveThruCatalog } from '../../games/drive-thru/audio';
 import { scaffoldScrambleCatalog } from '../../games/scaffold-scramble/audio';
 import { chainOfFoolsCatalog } from '../../games/chain-of-fools/audio';
+import { courseCorrectionCatalog } from '../../games/course-correction/catalog';
+
+import {
+  cageBundledCatalog,
+  cageCatalog,
+} from '../../games/cage-clash/audio/catalog';
+import { boxingCatalog } from '../../games/on-the-ropes/audio';
+import { slopewreckCatalog } from '../../games/slopewreck/catalog';
 
 const catalogs: Record<GameId, Cue[]> = {
+  'bouncy-castle-royale': castleCatalog,
+  'cage-clash': cageCatalog,
+  'on-the-ropes': boxingCatalog,
   'wrong-floor': hotelCatalog,
   'stack-or-sink': stackCatalog,
   'act-natural': farmCatalog,
   'uphill-delivery': deliveryCatalog,
   'dont-wake-the-giant': giantCatalog,
+  'reel-problems-2': reel2Catalog,
+  'reel-problems-3': reelProblems3Catalog,
+  'reel-problems-4': reel4Catalog,
   'reel-problems': reelCatalog,
   'one-more-button': buttonCatalog,
   'four-brain-cells': breakfastCatalog,
@@ -41,8 +59,14 @@ const catalogs: Record<GameId, Cue[]> = {
   'drive-thru': driveThruCatalog,
   'scaffold-scramble': scaffoldScrambleCatalog,
   'chain-of-fools': chainOfFoolsCatalog,
+  'course-correction': courseCorrectionCatalog,
+  slopewreck: slopewreckCatalog,
 };
 
 export function getCatalog(game: GameId): Cue[] {
   return catalogs[game];
+}
+
+export function getBundledCatalog(game: GameId): Cue[] {
+  return game === 'cage-clash' ? cageBundledCatalog : getCatalog(game);
 }

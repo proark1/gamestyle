@@ -1,0 +1,228 @@
+{
+  "verifiedAt": "2026-10-02T19:43:27.348Z",
+  "project": "Jumbleyard",
+  "status": "Implemented and verified locally",
+  "publication": "No deployment, production migration, commit or push performed",
+  "previousAudit": "docs/platform-audit-2026-10-02.json",
+  "changes": [
+    "Added anonymous bounded game diagnostics and the authenticated admin Health tab with game/date/platform/engine/build filters.",
+    "Added cumulative idempotent diagnostic storage, rate limits and 180-day retention through migration 0008.",
+    "Added production-route and Health tests, all-game Firefox/WebKit checks, Chromium/WebKit mobile checks and Windows startup verification to CI.",
+    "Added microphone denial/retry and offline signaling with ICE restart to the real browser voice integration suite.",
+    "Scoped Tailwind discovery to application source folders to avoid scanning generated bundles and local checkouts.",
+    "Rebuilt and synchronized the installed client and Windows package, and corrected startup test readiness and collection-card selection."
+  ],
+  "diagnostics": {
+    "sampleLimit": 120,
+    "minimumSampleIntervalSeconds": 30,
+    "retentionDays": 180,
+    "visitId": "Random, ephemeral and in memory only",
+    "excludes": [
+      "player names",
+      "error messages",
+      "stacks",
+      "URLs",
+      "persistent IDs",
+      "hardware identifiers"
+    ],
+    "disabledBy": ["Do Not Track", "Global Privacy Control"],
+    "readiness": "Time until the first available renderer diagnostic; not an exact first GPU frame timestamp",
+    "timings": "Averages of sampled p95 frame/work values; CI software rendering is not a device performance benchmark"
+  },
+  "checks": {
+    "tests": {
+      "passed": 2127,
+      "failed": 0,
+      "source": "tmp/improvements-tests-release.log"
+    },
+    "peerProcessRegressions": {
+      "passed": 3,
+      "source": "tmp/improvements-targeted-tests.log"
+    },
+    "architecture": {
+      "passed": true,
+      "source": "tmp/improvements-tests-release.log"
+    },
+    "typecheck": {
+      "passed": true,
+      "source": "tmp/improvements-typecheck-release.log"
+    },
+    "lint": {
+      "passed": true,
+      "source": "tmp/improvements-lint-release-final.log"
+    },
+    "formatting": {
+      "passed": true,
+      "filesChecked": 1589,
+      "extra": [
+        "README.md",
+        ".github/workflows/check.yml",
+        "vite.client.config.ts"
+      ]
+    },
+    "productionBuild": {
+      "passed": true,
+      "source": "tmp/improvements-web-build-release.log"
+    },
+    "installedBuild": {
+      "passed": true,
+      "seconds": 18.4,
+      "source": "tmp/improvements-client-build-release.log"
+    },
+    "productionRoutes": {
+      "gameRoutes": 31,
+      "pages": 41,
+      "redirects": 3,
+      "assets": 338,
+      "assetKinds": {
+        "script": 237,
+        "style": 54,
+        "image": 47
+      },
+      "api": 1,
+      "failures": 0
+    },
+    "reportingAndAdmin": {
+      "passed": true,
+      "checks": [
+        "admin authentication",
+        "invalid report rejection",
+        "first-frame timing",
+        "bounded frame samples",
+        "offline recovery",
+        "resource failures",
+        "no private error text",
+        "desktop and mobile Health UI",
+        "doNotTrack",
+        "globalPrivacyControl"
+      ],
+      "source": ".tmp/platform-audit/diagnostics-smoke.json"
+    },
+    "desktopBrowsers": [
+      {
+        "engine": "firefox",
+        "passed": 3,
+        "games": ["stack-or-sink", "course-correction", "reel-problems-3"]
+      },
+      {
+        "engine": "webkit",
+        "passed": 3,
+        "games": ["stack-or-sink", "course-correction", "reel-problems-3"]
+      }
+    ],
+    "mobileBrowsers": [
+      {
+        "engine": "chromium",
+        "passed": 5,
+        "games": [
+          "stack-or-sink",
+          "course-correction",
+          "reel-problems-3",
+          "cage-clash",
+          "on-the-ropes"
+        ],
+        "portrait": [320, 568],
+        "landscape": [844, 390]
+      },
+      {
+        "engine": "webkit",
+        "passed": 5,
+        "games": [
+          "stack-or-sink",
+          "course-correction",
+          "reel-problems-3",
+          "cage-clash",
+          "on-the-ropes"
+        ],
+        "portrait": [320, 568],
+        "landscape": [844, 390]
+      }
+    ],
+    "coordinatorMenus": {
+      "passed": 3,
+      "games": ["chaos", "first-person", "shelf-control"],
+      "scope": "Offline menus; gameplay requires a room coordinator",
+      "source": "tmp/improvements-coordinator-menus.log"
+    },
+    "windowsPackage": {
+      "passed": true,
+      "rendered": true,
+      "errors": 0,
+      "desktopPlatformReportAsserted": true,
+      "source": "tmp/improvements-desktop-smoke-final.log"
+    },
+    "installedBundles": {
+      "verifiedAt": "2026-10-02T19:28:01.224Z",
+      "assetCount": 213,
+      "indexHash": "8f10fa40c9fe8f0247c9c7e293dc54085818a5725617aa3b4759189d14104225",
+      "copies": [
+        {
+          "name": "android",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "staleAssets": 0
+        },
+        {
+          "name": "ios",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "staleAssets": 0
+        },
+        {
+          "name": "desktop-stage",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "staleAssets": 0
+        },
+        {
+          "name": "desktop-archive",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "shellMatches": true,
+          "staleAssets": 0
+        }
+      ]
+    },
+    "voiceRecovery": {
+      "passed": true,
+      "checks": [
+        "microphone permission denied",
+        "listening preserved",
+        "microphone retry",
+        "offline signaling",
+        "ICE restart",
+        "remote audio recovery",
+        "keyboard and touch push-to-talk"
+      ],
+      "source": "tmp/improvements-voice-final.log"
+    }
+  },
+  "ci": {
+    "workflow": ".github/workflows/check.yml",
+    "trigger": ["push", "pull_request"],
+    "allGameMatrix": [
+      "Firefox desktop",
+      "WebKit desktop",
+      "Chromium mobile",
+      "WebKit mobile"
+    ],
+    "gameCount": 31,
+    "windowsPackageJob": true,
+    "executedOnGitHub": false
+  },
+  "remaining": [
+    "Physical Android and iPhone performance, thermal and network-handover playtests; Android enumeration found zero connected devices.",
+    "A newcomer playtest of the first 30 seconds, followed by usability changes based on observed behavior.",
+    "Execute the complete CI matrix on GitHub after committing and pushing through the normal review process.",
+    "Apply drizzle/0008_diagnostics.sql during release; Node startup already runs migrations, while D1 uses its normal migration step."
+  ],
+  "previews": [
+    ".tmp/platform-audit/health-admin.png",
+    ".tmp/platform-audit/health-admin-mobile.png"
+  ],
+  "previewData": "Synthetic local test visits and deliberately induced interruptions"
+}

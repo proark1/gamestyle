@@ -1,0 +1,1093 @@
+{
+  "auditedAt": "2026-10-02T14:36:22.920Z",
+  "project": "Jumbleyard",
+  "status": "All listed local checks passed after fixes",
+  "deployment": "Local workspace only; not published",
+  "fixes": [
+    "Course Correction: frame-rate-independent keyboard aiming, reset input on focus changes, reuse aiming-line GPU buffers/materials.",
+    "Reel Problems 3: release gameplay input while typing and on blur; fit navigation/actions within 320px mobile viewport.",
+    "Crane Clash: block gameplay input during dialogs/background time, pause elapsed time, dispose audio and removed/replaced avatar GPU resources.",
+    "Load Bearing: ignore gameplay keys during typing, clear touch input on blur, dispose removed GPU resources.",
+    "Shared platform: handle wake-lock concurrent requests and stale grants, block gamepad input for accessible dialogs, fit long game titles on mobile.",
+    "Cage Clash: fit joystick, fight actions and status panels in short landscape views.",
+    "Slopewreck: compact narrow mobile navigation to keep all controls visible.",
+    "Collections: include all 31 games on main/enhanced landing pages and preserve dedicated Reel Problems 4 artwork.",
+    "Admin avatars: include Reel Problems 3 and retain coverage of all 31 games.",
+    "Images: optimize 35 artwork copies, add actual Course Correction/Slopewreck/On the Ropes gameplay captures, standardize all 24 party previews to 960x540.",
+    "Test tools: fix stale start detection, native Settings dialog resume, Reel Problems 2 scenario race and Reel Problems 3 start phase; bound native WebRTC child processes.",
+    "Build tools: scope lint to actual source roots, use trusted cached Electron checksums, replace stale desktop staging assets before packaging."
+  ],
+  "checks": {
+    "tests": {
+      "passed": 2118,
+      "failed": 0,
+      "source": ".tmp-game-audit-tests-final.log"
+    },
+    "peerProcessRegressions": {
+      "passed": 3,
+      "failed": 0,
+      "script": "scripts/peer-integration-runner.test.mjs"
+    },
+    "architecture": {
+      "passed": true,
+      "source": ".tmp-game-audit-tests-final.log"
+    },
+    "format": {
+      "passed": true,
+      "source": "tmp/audit-format-release.log"
+    },
+    "typecheck": {
+      "passed": true,
+      "source": "tmp/audit-typecheck-release.log"
+    },
+    "lint": {
+      "passed": true,
+      "source": "tmp/audit-lint-release.log"
+    },
+    "diffWhitespace": {
+      "passed": true
+    },
+    "webBuild": {
+      "passed": true,
+      "source": "tmp/audit-build-server.log"
+    },
+    "installedClientBuild": {
+      "passed": true,
+      "source": "tmp/audit-build-client-release.log"
+    },
+    "webHttp": {
+      "gameRoutes": 31,
+      "pages": 41,
+      "redirects": 3,
+      "assets": 333,
+      "assetKinds": {
+        "script": 232,
+        "style": 54,
+        "image": 47
+      },
+      "api": 1,
+      "failures": 0
+    },
+    "webHydration": {
+      "origin": "http://127.0.0.1:4194",
+      "results": [
+        {
+          "path": "/",
+          "errors": [],
+          "consoleErrors": [],
+          "images": [
+            {
+              "src": "/images/court-cast-v1/boys/slopewreck.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            },
+            {
+              "src": "/images/court-cast-v1/cage-clash-v2.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            },
+            {
+              "src": "/images/court-cast-v1/boys/brick-by-hand.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            }
+          ],
+          "cards": 31,
+          "passed": true
+        },
+        {
+          "path": "/landing4",
+          "errors": [],
+          "consoleErrors": [],
+          "images": [
+            {
+              "src": "/images/court-cast-v1/boys/slopewreck.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            },
+            {
+              "src": "/images/court-cast-v1/boys/bouncy-castle-royale-v2.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            },
+            {
+              "src": "/images/court-cast-v1/boys/zorb-clash.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            }
+          ],
+          "cards": 31,
+          "passed": true
+        },
+        {
+          "path": "/landing5",
+          "errors": [],
+          "consoleErrors": [],
+          "images": [
+            {
+              "src": "/images/court-cast-v1/boys/slopewreck.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            },
+            {
+              "src": "/images/court-cast-v1/boys/tiptoe-thieves.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            },
+            {
+              "src": "/images/court-cast-v1/on-the-ropes-v2.webp",
+              "width": 1024,
+              "height": 683,
+              "complete": true
+            }
+          ],
+          "cards": 31,
+          "passed": true
+        },
+        {
+          "path": "/party",
+          "errors": [],
+          "consoleErrors": [],
+          "images": [],
+          "headings": ["A little chaos. Together."],
+          "buttons": [
+            "LanguageEnglish",
+            "Host a party",
+            "Join friends",
+            "Create party "
+          ],
+          "passed": true
+        }
+      ],
+      "failures": 0
+    },
+    "browserGames": {
+      "passedRoutes": 31,
+      "offlineSoloStarts": 28,
+      "coordinatorOnlyMenus": ["chaos", "first-person", "shelf-control"],
+      "desktopSources": [
+        "tmp/audit-browser.log",
+        "tmp/audit-browser-retry.log",
+        "tmp/audit-boxing-retry.log"
+      ],
+      "mobileSources": [
+        ".tmp/mobile-audit/chromium/games.json",
+        ".tmp/mobile-audit/chromium/games-cage-clash-reel-problems-3-slopewreck-sample-stampede.json",
+        ".tmp/mobile-audit/chromium/games-reel-problems-3.json"
+      ],
+      "results": [
+        {
+          "game": "act-natural",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": ["menu-portrait", "play-portrait", "play-landscape"],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "basketball",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "bouncy-castle-royale",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "bungee-doubles",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "cage-clash",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "carry-on-carnage",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "chain-of-fools",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "chaos",
+          "desktop": {
+            "scope": "offline-menu",
+            "started": false,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-menu",
+            "started": false,
+            "javascriptErrors": 0,
+            "stages": ["menu-portrait", "menu-portrait", "menu-landscape"],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "course-correction",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "crane-clash",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "dont-wake-the-giant",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "drive-thru",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "first-person",
+          "desktop": {
+            "scope": "offline-menu",
+            "started": false,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-menu",
+            "started": false,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "menu-portrait",
+              "menu-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "four-brain-cells",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "load-bearing",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "on-the-ropes",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "one-more-button",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "panic-curling",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "reel-problems",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "reel-problems-2",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "reel-problems-3",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "reel-problems-4",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "sample-stampede",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "scaffold-scramble",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "shelf-control",
+          "desktop": {
+            "scope": "offline-menu",
+            "started": false,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-menu",
+            "started": false,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "menu-portrait",
+              "menu-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "siege-and-desist",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "slopewreck",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "stack-or-sink",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "uphill-delivery",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "wrong-floor",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": ["menu-portrait", "play-portrait", "play-landscape"],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        },
+        {
+          "game": "zorb-clash",
+          "desktop": {
+            "scope": "offline-solo",
+            "started": true,
+            "canvases": 1,
+            "javascriptErrors": 0
+          },
+          "mobile": {
+            "scope": "offline-solo",
+            "started": true,
+            "javascriptErrors": 0,
+            "stages": [
+              "menu-portrait",
+              "settings",
+              "play-portrait",
+              "play-landscape"
+            ],
+            "overflow": false,
+            "clippedPlayControls": false
+          }
+        }
+      ]
+    },
+    "realWebRtc": {
+      "passedAdapters": 28,
+      "results": [
+        {
+          "game": "act-natural",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "act-natural: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (597 ms graceful) passed."
+        },
+        {
+          "game": "basketball",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "basketball: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (1019 ms graceful) passed."
+        },
+        {
+          "game": "bouncy-castle-royale",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "bouncy-castle-royale: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (995 ms graceful) passed."
+        },
+        {
+          "game": "bungee-doubles",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "bungee-doubles: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (576 ms graceful) passed."
+        },
+        {
+          "game": "cage-clash",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "PASS: two real WebRTC clients, hidden selection, simultaneous reveal, direct voice audio, strike damage, guest takedown, abrupt host recovery and bot replacement."
+        },
+        {
+          "game": "carry-on-carnage",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "carry-on-carnage: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (1118 ms graceful) passed."
+        },
+        {
+          "game": "chain-of-fools",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "chain-of-fools: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (883 ms graceful) passed."
+        },
+        {
+          "game": "course-correction",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "course-correction: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (1006 ms graceful) passed."
+        },
+        {
+          "game": "crane-clash",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "crane-clash: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (4821 ms graceful) passed."
+        },
+        {
+          "game": "dont-wake-the-giant",
+          "source": ".tmp-game-audit-peer.log",
+          "result": "dont-wake-the-giant: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (3168 ms graceful) passed."
+        },
+        {
+          "game": "drive-thru",
+          "source": ".tmp-game-audit-peer-remaining.log",
+          "result": "drive-thru: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (893 ms graceful) passed."
+        },
+        {
+          "game": "four-brain-cells",
+          "source": ".tmp-game-audit-peer-rest.log",
+          "result": "four-brain-cells: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (763 ms graceful) passed."
+        },
+        {
+          "game": "load-bearing",
+          "source": ".tmp-game-audit-peer-rest.log",
+          "result": "load-bearing: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (531 ms graceful) passed."
+        },
+        {
+          "game": "on-the-ropes",
+          "source": ".tmp-game-audit-peer-rest.log",
+          "result": "on-the-ropes: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (957 ms graceful) passed."
+        },
+        {
+          "game": "one-more-button",
+          "source": ".tmp-game-audit-peer-rest.log",
+          "result": "one-more-button: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (367 ms graceful) passed."
+        },
+        {
+          "game": "panic-curling",
+          "source": ".tmp-game-audit-peer-rest.log",
+          "result": "panic-curling: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (876 ms graceful) passed."
+        },
+        {
+          "game": "reel-problems",
+          "source": ".tmp-game-audit-peer-rest.log",
+          "result": "reel-problems: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (498 ms graceful) passed."
+        },
+        {
+          "game": "reel-problems-2",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "reel-problems-2: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (971 ms graceful) passed."
+        },
+        {
+          "game": "reel-problems-3",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "reel-problems-3: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (952 ms graceful) passed."
+        },
+        {
+          "game": "reel-problems-4",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "reel-problems-4: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (398 ms graceful) passed."
+        },
+        {
+          "game": "sample-stampede",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "sample-stampede: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (662 ms graceful) passed."
+        },
+        {
+          "game": "scaffold-scramble",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "scaffold-scramble: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (1067 ms graceful) passed."
+        },
+        {
+          "game": "siege-and-desist",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "siege-and-desist: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (683 ms graceful) passed."
+        },
+        {
+          "game": "slopewreck",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "slopewreck: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (356 ms graceful) passed."
+        },
+        {
+          "game": "stack-or-sink",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "stack-or-sink: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (340 ms graceful) passed."
+        },
+        {
+          "game": "uphill-delivery",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "uphill-delivery: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (1033 ms graceful) passed."
+        },
+        {
+          "game": "wrong-floor",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "wrong-floor: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (847 ms graceful) passed."
+        },
+        {
+          "game": "zorb-clash",
+          "source": ".tmp-game-audit-peer-bounded.log",
+          "result": "zorb-clash: 4 real WebRTC clients, direct audio, abrupt recovery, preserved round, surviving voice links, and join-order handover (962 ms graceful) passed."
+        }
+      ]
+    },
+    "desktopStartup": {
+      "passed": true,
+      "route": "jumbleyard-app://client/stack-or-sink",
+      "javascriptErrors": 0,
+      "source": "tmp/audit-desktop.log"
+    },
+    "nativePackages": {
+      "buildPath": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\dist\\native",
+      "indexHash": "b54b515bc87dbc9b2ba6b8b6f3f35e176aaca040c2ca3e9d3e5d19ccb6a4a5b8",
+      "assetCount": 213,
+      "desktopOutput": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\output\\desktop\\Jumbleyard-win32-x64",
+      "copies": [
+        {
+          "name": "android",
+          "path": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\android\\app\\src\\main\\assets\\public",
+          "indexHash": "b54b515bc87dbc9b2ba6b8b6f3f35e176aaca040c2ca3e9d3e5d19ccb6a4a5b8",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "staleAssets": 0
+        },
+        {
+          "name": "ios",
+          "path": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\ios\\App\\App\\public",
+          "indexHash": "b54b515bc87dbc9b2ba6b8b6f3f35e176aaca040c2ca3e9d3e5d19ccb6a4a5b8",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "staleAssets": 0
+        },
+        {
+          "name": "desktop-stage",
+          "path": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\.tmp\\desktop-package\\client",
+          "indexHash": "b54b515bc87dbc9b2ba6b8b6f3f35e176aaca040c2ca3e9d3e5d19ccb6a4a5b8",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "staleAssets": 0
+        },
+        {
+          "name": "desktop-archive",
+          "path": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\output\\desktop\\Jumbleyard-win32-x64\\resources\\app.asar",
+          "indexHash": "b54b515bc87dbc9b2ba6b8b6f3f35e176aaca040c2ca3e9d3e5d19ccb6a4a5b8",
+          "assetCount": 213,
+          "indexMatches": true,
+          "assetsMatch": true,
+          "staleAssets": 0,
+          "shellMatches": true
+        }
+      ],
+      "configs": [
+        {
+          "path": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\android\\app\\src\\main\\assets\\capacitor.config.json",
+          "webDir": "dist/native",
+          "cleartext": false,
+          "nativeHttp": true,
+          "nativeCookies": true
+        },
+        {
+          "path": "C:\\Users\\assad\\Documents\\GitHub\\gamestyle\\ios\\App\\App\\capacitor.config.json",
+          "webDir": "dist/native",
+          "cleartext": false,
+          "nativeHttp": true,
+          "nativeCookies": true
+        }
+      ]
+    }
+  },
+  "images": {
+    "allReferencedStartAndBackgroundImagesDecode": true,
+    "optimizedCopies": 35,
+    "originalBytes": 33799643,
+    "optimizedBytes": 4710462,
+    "savedPercent": 86.1,
+    "collectionUniqueCovers": 30,
+    "collectionBytesBefore": 22204985,
+    "collectionBytesAfter": 4171330,
+    "collectionSavedPercent": 81.2,
+    "partyGameplayImages": 24,
+    "partyGameplayResolution": "960x540",
+    "partyGameplayTotalBytes": 813044,
+    "originalsPreserved": true,
+    "regressionTests": "platform/games/images.test.mjs",
+    "newlyCapturedGames": ["course-correction", "slopewreck", "on-the-ropes"]
+  },
+  "limits": [
+    "Android/iOS bundled web content and Capacitor configurations are synchronized; physical devices, OS signing and store builds were not tested.",
+    "Windows packaged app startup was exercised locally; macOS/Linux packages were not built.",
+    "Browser checks used Chromium with software WebGL; recorded frame rates are not hardware performance benchmarks.",
+    "WebRTC checks used local peers with generated voice audio; restrictive external networks require separate checks.",
+    "No site publication or production data mutation was performed."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "items": 12,
+  "purchase": true,
+  "equip": true,
+  "reload": true,
+  "itemPreview": true,
+  "avatarPreview": true,
+  "motion": true,
+  "mobile": true,
+  "errors": []
+}

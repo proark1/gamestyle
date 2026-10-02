@@ -1,6 +1,6 @@
 import type * as T from 'three';
 import type { AvatarLook } from '../../shared/rendering/avatar-preview';
-import { dressedWorker } from '../../shared/rendering/cosmetics/dress';
+import { dressedGameAvatar as dressedWorker } from '../../shared/rendering/game-avatar';
 
 /**
  * Walks a wrecker; `time` is in seconds. `hammer` is the arm angle while a

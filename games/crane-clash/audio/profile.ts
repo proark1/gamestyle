@@ -18,8 +18,8 @@ export const CRANE_CLASH_DEFAULT_AUDIO: AudioManifest['cues'] =
 export const craneClashAudioProfile: AudioProfile = {
   crossfadeMusic: false,
   effectLimit: 24,
-  bufferLimit: 40,
-  warmLimit: 32,
+  bufferLimit: 64,
+  warmLimit: 48,
   musicVolume: 1,
   ambienceVolume: 0.75,
   preload: () => true,

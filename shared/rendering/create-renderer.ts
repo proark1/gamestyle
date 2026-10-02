@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { attachRenderRuntime } from './runtime';
 import {
   renderQuality,
   type RenderQuality,
@@ -112,6 +113,7 @@ export function createRenderer(
   if (settings.focusable) canvas.tabIndex = 0;
   if (options.label) canvas.setAttribute('aria-label', options.label);
   host.appendChild(canvas);
+  attachRenderRuntime(renderer, quality);
 
   return { renderer, quality };
 }
